@@ -90,6 +90,57 @@ func (s *CatalogService) UpdateDraft(ctx context.Context, ownerUserID, productID
 	return product, nil
 }
 
+func (s *CatalogService) CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || sellerID <= 0 {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
+	input, err := normalizeDraft(input)
+	if err != nil {
+		return domaincommerce.ManagedProduct{}, err
+	}
+	return s.repository.CreateAdminProduct(ctx, actorID, sellerID, input)
+}
+
+func (s *CatalogService) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
+	return s.repository.GetAdminProduct(ctx, actorID, productID)
+}
+
+func (s *CatalogService) UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
+	input, err := normalizeDraft(input)
+	if err != nil {
+		return domaincommerce.ManagedProduct{}, err
+	}
+	return s.repository.UpdateAdminProduct(ctx, actorID, productID, input)
+}
+
+func (s *CatalogService) ArchiveSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error {
+	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProduct
+	}
+	return s.repository.ArchiveSellerProduct(ctx, ownerUserID, productID, reason)
+}
+
+func (s *CatalogService) ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProduct
+	}
+	return s.repository.ArchiveAdminProduct(ctx, actorID, productID, reason)
+}
+
 func (s *CatalogService) SubmitProduct(ctx context.Context, ownerUserID, productID int64) error {
 	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
 		return ports.ErrForbidden

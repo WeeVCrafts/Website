@@ -54,9 +54,13 @@ type webRoleAdminRepository struct{}
 func (webRoleAdminRepository) ListRoleAssignments(context.Context, int64) ([]domainidentity.RoleAssignment, error) {
 	return []domainidentity.RoleAssignment{{ID: 8, Email: "staff@example.com", DisplayName: "Staff", Status: "active", Roles: []string{"customer"}}}, nil
 }
-func (webRoleAdminRepository) UpdateRoleAssignment(context.Context, int64, int64, domainidentity.Role, bool, string) error {
+func (webRoleAdminRepository) UpdateRoleAssignment(context.Context, int64, int64, int64, domainidentity.Role, bool, string) error {
 	return nil
 }
+func (webRoleAdminRepository) CreateRoleUser(context.Context, int64, string, string, string, domainidentity.Role, int64, string) (int64, error) {
+	return 1, nil
+}
+func (webRoleAdminRepository) DeleteRoleUser(context.Context, int64, int64, string) error { return nil }
 
 type webAdminOperationsRepository struct{}
 

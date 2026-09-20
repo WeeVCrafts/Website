@@ -504,7 +504,7 @@ func (h *Handler) sellerOnboard(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not start your seller profile.")
 		return
 	}
-	h.redirect(w, r, "/seller")
+	h.redirect(w, r, "/seller-admin/onboarding?notice=Seller+application+submitted")
 }
 
 func (h *Handler) sellerNewProduct(w http.ResponseWriter, r *http.Request) {
@@ -619,6 +619,10 @@ func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {
 			h.renderError(w, http.StatusServiceUnavailable, "Seller product unavailable", "We could not load this draft.")
 			return
 		}
+		if product.Status == "archived" {
+			h.notFound(w, r)
+			return
+		}
 		h.render(w, http.StatusOK, "seller-product", pageData{Brand: identity.Name, Tagline: identity.Tagline, Description: identity.Description, Title: "Edit product · " + identity.Name, Authenticated: true, AccountUserID: session.UserID, CSRFToken: session.CSRFToken, ManagedProduct: product, HasManagedProduct: true})
 		return
 	}
@@ -626,28 +630,16 @@ func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-	price, priceErr := strconv.ParseInt(r.FormValue("price_cents"), 10, 64)
-	stock, stockErr := strconv.Atoi(r.FormValue("initial_stock"))
-	if priceErr != nil || stockErr != nil {
-		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Price and stock must be numeric.")
+	input, inputErr := productDraftFromForm(r, false)
+	if inputErr != nil {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the price and optional compare-at price.")
 		return
 	}
-	var compareAt *int64
-	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
-		if parseErr != nil {
-			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Compare-at price must be numeric.")
-			return
-		}
-		compareAt = &value
-	}
-	if _, updateErr := h.commerceCatalog.UpdateDraft(r.Context(), session.UserID, productID, domaincommerce.ProductDraftInput{
-		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"), CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"), Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"),
-	}); updateErr != nil {
+	if _, updateErr := h.commerceCatalog.UpdateDraft(r.Context(), session.UserID, productID, input); updateErr != nil {
 		h.renderCommerceError(w, r, updateErr, "We could not update that product draft.")
 		return
 	}
-	h.redirect(w, r, "/seller")
+	h.redirect(w, r, "/seller-admin/products?notice=Product+details+saved")
 }
 
 func sellerProductID(path string) (int64, error) {
@@ -691,7 +683,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
 		return
 	}
-	h.redirect(w, r, "/seller")
+	h.redirect(w, r, "/seller-admin/products?notice=Product+draft+created")
 	_ = product
 }
 
@@ -714,7 +706,136 @@ func (h *Handler) sellerSubmitProduct(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not submit this product for review.")
 		return
 	}
-	h.redirect(w, r, "/seller")
+	h.redirect(w, r, "/seller-admin/products?notice=Product+submitted+for+review")
+}
+
+func (h *Handler) sellerArchiveProduct(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if err := h.commerceCatalog.ArchiveSellerProduct(r.Context(), session.UserID, productID, r.FormValue("reason")); err != nil {
+		h.renderCommerceError(w, r, err, "We could not archive that product.")
+		return
+	}
+	h.redirect(w, r, "/seller-admin/products?notice=Product+archived+and+hidden+from+customers")
+}
+
+func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	input, err := productDraftFromForm(r, r.URL.Path == "/admin/products/new")
+	if err != nil {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the price and optional compare-at price.")
+		return
+	}
+	if r.URL.Path == "/admin/products/new" {
+		sellerID, parseErr := strconv.ParseInt(r.FormValue("seller_id"), 10, 64)
+		if parseErr != nil || sellerID <= 0 {
+			h.renderError(w, http.StatusUnprocessableEntity, "Seller required", "Choose an active seller for this product.")
+			return
+		}
+		if _, err := h.commerceCatalog.CreateAdminProduct(r.Context(), session.UserID, sellerID, input); err != nil {
+			h.renderCommerceError(w, r, err, "We could not create that product.")
+			return
+		}
+		h.redirect(w, r, "/super-admin/products?notice=Product+created+as+a+draft")
+		return
+	}
+	productID, err := adminProductID(r.URL.Path)
+	if err != nil {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if _, err := h.commerceCatalog.UpdateAdminProduct(r.Context(), session.UserID, productID, input); err != nil {
+		h.renderCommerceError(w, r, err, "We could not update that product.")
+		return
+	}
+	h.redirect(w, r, "/super-admin/products?notice=Product+details+saved")
+}
+
+func (h *Handler) adminProductArchive(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if err := h.commerceCatalog.ArchiveAdminProduct(r.Context(), session.UserID, productID, r.FormValue("reason")); err != nil {
+		h.renderCommerceError(w, r, err, "We could not archive that product.")
+		return
+	}
+	h.redirect(w, r, "/super-admin/products?notice=Product+archived+and+hidden+from+customers")
+}
+
+func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductDraftInput, error) {
+	price, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("price_cents")), 10, 64)
+	if err != nil {
+		return domaincommerce.ProductDraftInput{}, err
+	}
+	stock := 0
+	if includeStock {
+		stock, err = strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock")))
+		if err != nil {
+			return domaincommerce.ProductDraftInput{}, err
+		}
+	}
+	var compareAt *int64
+	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
+		value, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil {
+			return domaincommerce.ProductDraftInput{}, parseErr
+		}
+		compareAt = &value
+	}
+	return domaincommerce.ProductDraftInput{
+		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"),
+		CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"),
+		Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, SKU: r.FormValue("sku"),
+		InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"),
+	}, nil
+}
+
+func adminProductID(path string) (int64, error) {
+	trimmed := strings.TrimSuffix(strings.TrimPrefix(path, "/admin/products/"), "/edit")
+	return strconv.ParseInt(strings.Trim(trimmed, "/"), 10, 64)
 }
 
 func (h *Handler) adminProducts(w http.ResponseWriter, r *http.Request) {

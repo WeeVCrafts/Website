@@ -326,6 +326,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerProducts(w, r)
 	case r.URL.Path == "/seller/products/submit":
 		h.sellerSubmitProduct(w, r)
+	case r.URL.Path == "/seller/products/archive":
+		h.sellerArchiveProduct(w, r)
 	case r.URL.Path == "/seller/team":
 		h.sellerTeam(w, r)
 	case r.URL.Path == "/seller/team/add":
@@ -354,6 +356,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.adminRoles(w, r)
 	case r.URL.Path == "/admin/roles/update":
 		h.adminRoleUpdate(w, r)
+	case r.URL.Path == "/admin/users/create":
+		h.adminRoleUserCreate(w, r)
+	case r.URL.Path == "/admin/users/delete":
+		h.adminRoleUserDelete(w, r)
 	case r.URL.Path == "/admin/orders":
 		h.adminOrders(w, r)
 	case r.URL.Path == "/admin/brands":
@@ -376,6 +382,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerEditProduct(w, r)
 	case r.URL.Path == "/admin/products":
 		h.adminProducts(w, r)
+	case r.URL.Path == "/admin/products/new" || strings.HasPrefix(r.URL.Path, "/admin/products/") && strings.HasSuffix(r.URL.Path, "/edit"):
+		h.adminProductSave(w, r)
+	case r.URL.Path == "/admin/products/archive":
+		h.adminProductArchive(w, r)
 	case r.URL.Path == "/admin/products/review":
 		h.adminReviewProduct(w, r)
 	case r.URL.Path == "/admin/returns":

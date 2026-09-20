@@ -120,6 +120,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
     </form>
     <a class="admin-icon-button" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span></a>
     <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+    <form class="admin-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
   </header>
 }
 
@@ -148,7 +149,8 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
     <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>Live role assignments</h2><p>Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.</p></div></div></div>
     if len(p.RoleAssignments) == 0 {
       @AdminTableEmpty("No user accounts are available for role management.", "User role assignments will appear here after accounts are created.")
-    } else {
+    }
+    if len(p.RoleAssignments) > 0 {
       <div class="role-assignment-list">
         for _, assignment := range p.RoleAssignments {
           <section class="role-assignment-card">
@@ -160,18 +162,65 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                 <span class="status success">{ assignedRole }</span>
               }
             </div></div>
-            <form class="role-assignment-form" method="post" action="/super-admin/roles/update">
-              <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-              <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
-              <label>Role<select name="role" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
-              <label>Action<select name="action" required><option value="grant">Grant</option><option value="revoke">Revoke</option></select></label>
-              <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
-              <button class="admin-button primary" type="submit">Save role change</button>
-            </form>
+            if assignment.Status == "active" {
+              <div class="role-assignment-actions">
+                <form class="role-assignment-form" method="post" action="/super-admin/roles/update" x-data="{ selectedRole: 'customer' }">
+                  <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                  <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+                  <label>Role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
+                  <label x-cloak x-show="selectedRole === 'seller_staff'">Seller
+                    <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'"><option value="">Choose active seller</option>
+                      for _, seller := range p.Sellers {
+                        if seller.Status == "active" {
+                          <option value={ seller.ID }>{ seller.Name }</option>
+                        }
+                      }
+                    </select>
+                  </label>
+                  <label>Action<select name="action" required><option value="grant">Grant</option><option value="revoke">Revoke</option></select></label>
+                  <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
+                  <button class="admin-button primary" type="submit">Save role change</button>
+                </form>
+                <form class="role-delete-form" method="post" action="/super-admin/users/delete" onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
+                  <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                  <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+                  <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
+                  <button class="admin-button danger" type="submit">Delete account</button>
+                </form>
+              </div>
+            }
+            if assignment.Status != "active" {
+              <p class="role-assignment-disabled" role="status">This account is { assignment.Status } and cannot receive role changes.</p>
+            }
           </section>
         }
       </div>
     }
+  </article>
+}
+
+templ RoleUserCreateForm(p viewmodels.AdminPage) {
+  <article class="admin-panel security-panel role-create-panel">
+    <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">person_add</span><div><h2>Create a user account</h2><p>Create a working login and assign its first role. Super Admin accounts stay bootstrap-controlled.</p></div></div></div>
+    <form class="role-user-create-form" method="post" action="/super-admin/users/create" x-data="{ selectedRole: 'customer' }">
+      <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+      <label>Full name<input name="display_name" required minlength="2" maxlength="120" autocomplete="name"/></label>
+      <label>Email address<input name="email" type="email" required maxlength="320" autocomplete="email"/></label>
+      <label>Initial password<input name="password" type="password" required minlength="12" maxlength="1024" autocomplete="new-password"/><small>Use at least 12 characters and share it securely.</small></label>
+      <label>Initial role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
+      <label x-cloak x-show="selectedRole === 'seller_staff'">Seller for staff account
+        <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'"><option value="">Choose an active seller</option>
+          for _, seller := range p.Sellers {
+            if seller.Status == "active" {
+              <option value={ seller.ID }>{ seller.Name }</option>
+            }
+          }
+        </select>
+        <small>New seller staff starts with product and order read access.</small>
+      </label>
+      <label class="role-create-reason">Reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Required for the audit trail"/></label>
+      <button class="admin-button primary" type="submit">Create account</button>
+    </form>
   </article>
 }
 

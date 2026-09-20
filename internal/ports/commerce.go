@@ -27,6 +27,11 @@ type CatalogManagementRepository interface {
 	CreateDraft(ctx context.Context, ownerUserID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
 	GetSellerProduct(ctx context.Context, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error)
 	UpdateDraft(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
+	CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
+	GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error)
+	UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
+	ArchiveSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error
+	ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error
 	SubmitProduct(ctx context.Context, ownerUserID, productID int64) error
 	ApproveProduct(ctx context.Context, actorID, productID int64, approved bool, reason string) error
 	ListSellerProducts(ctx context.Context, ownerUserID int64) ([]domaincommerce.ManagedProduct, error)

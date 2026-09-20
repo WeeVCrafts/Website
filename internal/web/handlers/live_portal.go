@@ -145,6 +145,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
+		if role == domainidentity.RoleSuperAdmin && isSuperAdminProductEditorPath(r.URL.Path) {
+			h.renderSuperAdminProductEditor(w, r, session.UserID, h.userDisplayName(r, session.UserID), session.CSRFToken)
+			return
+		}
 		legacyPath := adminLegacyPagePath(r.URL.Path, root)
 		pageRequest := requestWithPath(r, legacyPath)
 		name := h.userDisplayName(r, session.UserID)
@@ -295,6 +299,7 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	page.CSRFToken = csrfToken
 	page.CanFinance = role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleFinanceOperator
 	page.CanSecurity = role == domainidentity.RoleSuperAdmin
+	page.CanManageCatalog = role == domainidentity.RoleSuperAdmin
 	page.IsFinance = role == domainidentity.RoleFinanceOperator
 	page.IsOperations = role == domainidentity.RoleOperations
 	page.NavActive = page.Active
@@ -341,6 +346,69 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		component = adminpages.Workspace(page)
 	}
 	h.renderAdminComponent(w, r, component, page)
+}
+
+func isSuperAdminProductEditorPath(path string) bool {
+	if path == "/super-admin/products/new" {
+		return true
+	}
+	if !strings.HasPrefix(path, "/super-admin/products/") || !strings.HasSuffix(path, "/edit") {
+		return false
+	}
+	id := strings.TrimSuffix(strings.TrimPrefix(path, "/super-admin/products/"), "/edit")
+	parsed, err := strconv.ParseInt(id, 10, 64)
+	return err == nil && parsed > 0 && !strings.Contains(id, "/")
+}
+
+func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter, r *http.Request, actorID int64, displayName, csrfToken string) {
+	pageRequest := requestWithPath(r, "/admin/products")
+	page := h.adminPage(pageRequest, actorID, domainidentity.RoleSuperAdmin)
+	page.PortalRoot = "/super-admin"
+	page.PortalLabel = portalLabel(domainidentity.RoleSuperAdmin)
+	page.RoleLabel = roleLabel(domainidentity.RoleSuperAdmin)
+	page.DisplayName = displayName
+	page.CSRFToken = csrfToken
+	page.CanFinance, page.CanSecurity, page.CanManageCatalog = true, true, true
+	page.Stats = h.portalStats(r, domainidentity.RoleSuperAdmin)
+	page.Sellers = h.adminSellers(r)
+
+	form := viewmodels.AdminProductEditor{Action: r.URL.Path, InitialStock: "0", DeliveryLabel: "Delivery to serviceable PIN codes in India"}
+	if r.URL.Path == "/super-admin/products/new" {
+		page.Title = "Add product"
+		page.Subtitle = "Create a product draft for an active Indian seller, then submit it for marketplace review."
+	} else {
+		idText := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/super-admin/products/"), "/edit")
+		productID, err := strconv.ParseInt(idText, 10, 64)
+		if err != nil || productID <= 0 {
+			http.NotFound(w, r)
+			return
+		}
+		var id, sellerID, price, compareAt, stock int64
+		var status string
+		var hasCompareAt bool
+		err = h.pool.QueryRow(r.Context(), `
+			SELECT p.id,p.seller_id,COALESCE(s.display_name,''),p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,
+			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,
+			       COALESCE(i.available_quantity,0),p.delivery_label,p.status
+			FROM products p LEFT JOIN sellers s ON s.id=p.seller_id
+			JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
+			LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
+			LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.id=$1`, productID).Scan(&id, &sellerID, &form.SellerName, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &form.SKU, &price, &compareAt, &hasCompareAt, &stock, &form.DeliveryLabel, &status)
+		if err != nil || status == "archived" {
+			http.NotFound(w, r)
+			return
+		}
+		form.ID = strconv.FormatInt(id, 10)
+		form.SellerID = strconv.FormatInt(sellerID, 10)
+		form.PriceCents = strconv.FormatInt(price, 10)
+		form.InitialStock = strconv.FormatInt(stock, 10)
+		if hasCompareAt {
+			form.CompareAtCents = strconv.FormatInt(compareAt, 10)
+		}
+		page.Title = "Edit product"
+		page.Subtitle = "Update all listing details. Stock remains in the permission-scoped Inventory workflow."
+	}
+	h.render(w, r, adminpages.ProductEditor(page, form))
 }
 
 func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domainidentity.Role) viewmodels.AdminPage {
@@ -739,21 +807,25 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 			http.NotFound(w, r)
 			return
 		}
-		var price, stock int64
+		var price, compareAt, stock int64
+		var hasCompareAt bool
 		err = h.pool.QueryRow(r.Context(), `
-			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,p.price_cents,
+			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,p.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id
-			WHERE p.id=$1 AND p.status IN ('draft','rejected') AND p.seller_id IN (
+			WHERE p.id=$1 AND p.status<>'archived' AND p.seller_id IN (
 				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 OR EXISTS (
-					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &form.SKU, &stock, &form.DeliveryLabel)
+					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &form.SKU, &stock, &form.DeliveryLabel)
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
 		form.PriceCents = strconv.FormatInt(price, 10)
+		if hasCompareAt {
+			form.CompareAtCents = strconv.FormatInt(compareAt, 10)
+		}
 		form.InitialStock = strconv.FormatInt(stock, 10)
 		form.Action = "/seller-admin/products/" + idText + "/edit"
 		page.Title = "Edit product draft"

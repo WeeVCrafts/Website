@@ -106,7 +106,7 @@ func main() {
 	sellerReportService := applicationcommerce.NewSellerReportService(commerceRepository, roleAuthorizer)
 	sellerAdminService := applicationcommerce.NewSellerAdminService(commerceRepository, roleAuthorizer)
 	auditService := applicationcommerce.NewAuditService(commerceRepository, roleAuthorizer)
-	roleAdminService := applicationauth.NewRoleAdminService(postgres.NewRoleAdministrationRepository(pool), roleAuthorizer)
+	roleAdminService := applicationauth.NewRoleAdminService(postgres.NewRoleAdministrationRepository(pool), roleAuthorizer, passwordHasher)
 	adminOperationsService := applicationcommerce.NewAdminOperationsService(commerceRepository, roleAuthorizer)
 	brandDirectoryService := applicationcommerce.NewBrandDirectoryService(commerceRepository, roleAuthorizer)
 	customerDirectoryService := applicationauth.NewCustomerDirectoryService(postgres.NewUserRepository(pool), roleAuthorizer)
@@ -363,7 +363,7 @@ func writeLocalJSON(w http.ResponseWriter, status int, value any) {
 
 func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isAuthenticationAttempt(r.URL.Path) {
+		if isAuthenticationAttempt(r.URL.Path) && !(r.URL.Path == "/login" && r.Method == http.MethodGet) {
 			allowed, err := limiter.Allow(r.Context(), "auth:"+clientAddress(r), 20, time.Minute)
 			if err != nil {
 				writeRateLimitAPIError(w, r, http.StatusServiceUnavailable, "RATE_LIMIT_UNAVAILABLE", "Authentication is temporarily unavailable.")

@@ -69,8 +69,11 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Category</span><span>Price</span><span>Stock</span><span>Status</span><span>Actions</span></div>
 			for _, product := range p.Products {
 				<div class="seller-product-row"><span class="seller-product-cell"><b>{ product.Name }</b></span><span>{ product.SKU }</span><span>{ product.Category }</span><span>{ product.Price }</span><span>{ product.Stock }</span><span>{ product.Status }</span><span class="seller-row-actions">
+					if p.CanProductWrite && product.Status != "archived" {
+						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit product</a>
+						<form method="post" action="/seller-admin/products/archive" onsubmit="return confirm('Archive this product? It will be hidden from customers while past orders remain available.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to archive" required/><button class="seller-button danger" type="submit">Archive</button></form>
+					}
 					if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
-						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit draft</a>
 						<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
 					}
 				</span></div>
@@ -94,10 +97,15 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
 			<label>SKU<input name="sku" value={ form.SKU } required/></label>
 			<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
-			if p.CanInventoryWrite {
-				<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+			<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
+			if form.ID == "" {
+				if p.CanInventoryWrite {
+					<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+				} else {
+					<input type="hidden" name="initial_stock" value="0"/>
+				}
 			} else {
-				<input type="hidden" name="initial_stock" value="0"/>
+				<div class="seller-form-wide seller-form-note">Stock is managed separately in Inventory. Editing this listing will not change available units.</div>
 			}
 			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } placeholder="Delivery to serviceable PIN codes in India"/></label>
 			<label class="seller-form-wide">Description<textarea name="description" required rows="5">{ form.Description }</textarea></label>

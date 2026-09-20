@@ -67,7 +67,9 @@ type RoleChecker interface {
 
 type RoleAdministrationRepository interface {
 	ListRoleAssignments(ctx context.Context, actorID int64) ([]domainidentity.RoleAssignment, error)
-	UpdateRoleAssignment(ctx context.Context, actorID, userID int64, role domainidentity.Role, grant bool, reason string) error
+	UpdateRoleAssignment(ctx context.Context, actorID, userID, sellerID int64, role domainidentity.Role, grant bool, reason string) error
+	CreateRoleUser(ctx context.Context, actorID int64, email, displayName, passwordHash string, role domainidentity.Role, sellerID int64, reason string) (int64, error)
+	DeleteRoleUser(ctx context.Context, actorID, userID int64, reason string) error
 }
 
 type CustomerDirectoryRepository interface {

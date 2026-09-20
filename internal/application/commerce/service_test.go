@@ -45,7 +45,20 @@ func (catalogRepository) GetSellerProduct(context.Context, int64, int64) (domain
 func (catalogRepository) UpdateDraft(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	return domaincommerce.ManagedProduct{ID: 1, Status: "draft"}, nil
 }
-func (catalogRepository) SubmitProduct(context.Context, int64, int64) error { return nil }
+func (catalogRepository) CreateAdminProduct(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	return domaincommerce.ManagedProduct{ID: 2, Status: "draft"}, nil
+}
+func (catalogRepository) GetAdminProduct(context.Context, int64, int64) (domaincommerce.ManagedProduct, error) {
+	return domaincommerce.ManagedProduct{ID: 1, Status: "approved"}, nil
+}
+func (catalogRepository) UpdateAdminProduct(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	return domaincommerce.ManagedProduct{ID: 1, Status: "approved"}, nil
+}
+func (catalogRepository) ArchiveSellerProduct(context.Context, int64, int64, string) error {
+	return nil
+}
+func (catalogRepository) ArchiveAdminProduct(context.Context, int64, int64, string) error { return nil }
+func (catalogRepository) SubmitProduct(context.Context, int64, int64) error               { return nil }
 func (catalogRepository) ApproveProduct(context.Context, int64, int64, bool, string) error {
 	return nil
 }
@@ -76,6 +89,45 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 	}
 	if err := service.ApproveProduct(context.Background(), 12, 1, true, "reviewed"); err != nil {
 		t.Fatalf("marketplace admin was denied approval: %v", err)
+	}
+}
+
+func TestCatalogServiceRestrictsAdministratorProductManagementToSuperAdmin(t *testing.T) {
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		12: {domainidentity.RoleMarketplaceAdmin: true},
+		14: {domainidentity.RoleSuperAdmin: true},
+	}, permissions: map[int64]map[string]bool{}}
+	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
+	if _, err := service.CreateAdminProduct(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("marketplace admin created an administrator product: %v", err)
+	}
+	if _, err := service.CreateAdminProduct(context.Background(), 14, 1, validDraft()); err != nil {
+		t.Fatalf("super admin could not create a product: %v", err)
+	}
+	if _, err := service.UpdateAdminProduct(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("marketplace admin updated a product directly: %v", err)
+	}
+	if err := service.ArchiveAdminProduct(context.Background(), 12, 1, "remove listing"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("marketplace admin archived a product: %v", err)
+	}
+	if err := service.ArchiveAdminProduct(context.Background(), 14, 1, "remove listing"); err != nil {
+		t.Fatalf("super admin could not archive a product: %v", err)
+	}
+}
+
+func TestCatalogServiceRequiresProductWriteToArchiveSellerProducts(t *testing.T) {
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		11: {domainidentity.RoleSellerOwner: true},
+		12: {domainidentity.RoleSellerStaff: true},
+	}, permissions: map[int64]map[string]bool{
+		12: {domaincommerce.SellerPermissionProductRead: true},
+	}}
+	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
+	if err := service.ArchiveSellerProduct(context.Background(), 12, 1, "remove listing"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("read-only staff archived a product: %v", err)
+	}
+	if err := service.ArchiveSellerProduct(context.Background(), 11, 1, "remove listing"); err != nil {
+		t.Fatalf("seller owner could not archive their product: %v", err)
 	}
 }
 

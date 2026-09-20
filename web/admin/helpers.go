@@ -184,3 +184,12 @@ func adminParentPath(workspace string) string {
 		return "/admin"
 	}
 }
+
+func hasPendingProducts(products []viewmodels.AdminProduct) bool {
+	for _, product := range products {
+		if product.Status == "pending_review" {
+			return true
+		}
+	}
+	return false
+}

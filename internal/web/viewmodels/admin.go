@@ -7,7 +7,7 @@ type AdminPage struct {
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                     string
 	CSRFToken                                                           string
-	CanFinance, CanSecurity, IsFinance, IsOperations                    bool
+	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog  bool
 	Stats                                                               []AdminStat
 	Bars                                                                []AdminBar
 	Donut                                                               []AdminDonut
@@ -46,6 +46,11 @@ type AdminSeller struct {
 
 type AdminProduct struct {
 	ID, Name, SKU, Seller, Category, Price, Submitted, Status, Image string
+}
+
+type AdminProductEditor struct {
+	ID, SellerID, SellerName, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName string
+	Description, SKU, PriceCents, CompareAtCents, InitialStock, DeliveryLabel, Action      string
 }
 
 type AdminInventory struct {
@@ -163,8 +168,8 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
-	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName  string
-	Description, PriceCents, SKU, InitialStock, DeliveryLabel, Action string
+	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                  string
+	Description, PriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action string
 }
 
 type SupportPortalStat struct {

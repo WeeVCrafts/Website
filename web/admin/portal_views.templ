@@ -64,10 +64,20 @@ templ PortalSellers(p viewmodels.AdminPage) {
 templ PortalProducts(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
-		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><div><h2>Product catalog</h2><p>Seller submissions and review decisions from the live catalog.</p></div></div></div>
+		<article class="admin-panel">
+			<div class="panel-heading">
+				<div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><div><h2>Product catalog</h2><p>Seller submissions and review decisions from the live catalog.</p></div></div>
+				if p.CanManageCatalog {
+					<a class="admin-button primary" href={ p.PortalRoot + "/products/new" }>Add product</a>
+				}
+			</div>
 			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>Seller</span><span>Category</span><span>Price</span><span>Status</span><span>Submitted</span><span>Review</span></div>
 				for _, product := range p.Products {
 					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions">
+						if p.CanManageCatalog && product.Status != "archived" {
+							<a class="admin-button secondary" href={ p.PortalRoot + "/products/" + product.ID + "/edit" }>Edit</a>
+							<form method="post" action={ p.PortalRoot + "/products/archive" } onsubmit="return confirm('Archive this product? It will be hidden from customers while past orders remain available.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason" required/><button class="admin-button danger" type="submit">Archive</button></form>
+						}
 						if product.Status == "pending_review" {
 							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
 							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="reject"/><input name="reason" minlength="4" maxlength="1000" placeholder="Rejection reason" required/><button class="admin-button danger" type="submit">Reject</button></form>
@@ -79,6 +89,48 @@ templ PortalProducts(p viewmodels.AdminPage) {
 				}
 			</div>
 		</article>
+	}
+}
+
+templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) {
+	@AdminDocument(p) {
+		<section class="admin-panel admin-product-editor-panel">
+			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">edit_square</span><div><h2>{ p.Title }</h2><p>Manage product content, India delivery details and paise pricing. Stock is managed separately in Inventory.</p></div></div></div>
+			<form class="admin-product-editor-form" method="post" action={ form.Action }>
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				if form.ID != "" {
+					<input type="hidden" name="product_id" value={ form.ID }/>
+				}
+				if form.ID == "" {
+					<label>Seller
+						<select name="seller_id" required><option value="">Choose an active seller</option>
+							for _, seller := range p.Sellers {
+								if seller.Status == "active" {
+									<option value={ seller.ID }>{ seller.Name }</option>
+								}
+							}
+						</select>
+					</label>
+				} else {
+					<label>Seller<input value={ form.SellerName } readonly/></label>
+				}
+				<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
+				<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
+				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
+				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
+				<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
+				<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
+				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
+				if form.ID == "" {
+					<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+				}
+				<label class="admin-product-editor-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
+				<label class="admin-product-editor-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
+				<div class="admin-product-editor-wide admin-product-editor-actions"><a class="admin-button secondary" href="/super-admin/products">Cancel</a><button class="admin-button primary" type="submit">Save product</button></div>
+			</form>
+		</section>
 	}
 }
 
@@ -178,6 +230,7 @@ templ PortalAnalytics(p viewmodels.AdminPage) {
 templ PortalSecurity(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
+		@RoleUserCreateForm(p)
 		@RoleAssignmentList(p)
 		@PortalAuditList(p)
 	}
@@ -282,9 +335,4 @@ templ PortalAuditList(p viewmodels.AdminPage) {
 			}
 		</div>
 	</article>
-}
-
-func hasPendingProducts(products []viewmodels.AdminProduct) bool {
-	for _, product := range products { if product.Status == "pending_review" { return true } }
-	return false
 }

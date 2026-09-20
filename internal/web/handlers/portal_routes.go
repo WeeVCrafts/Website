@@ -231,6 +231,8 @@ func canonicalSellerMutationPath(path string) string {
 		return "/seller/products"
 	case "/seller-admin/products/submit":
 		return "/seller/products/submit"
+	case "/seller-admin/products/archive":
+		return "/seller/products/archive"
 	case "/seller-admin/inventory/adjust":
 		return "/seller/inventory/adjust"
 	case "/seller-admin/orders/fulfill":
@@ -258,7 +260,7 @@ func sellerMutationAllowed(path string, isOwner bool, permissions []string) bool
 	}
 	permission := ""
 	switch {
-	case path == "/seller-admin/products" || path == "/seller-admin/products/submit" || strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit"):
+	case path == "/seller-admin/products" || path == "/seller-admin/products/submit" || path == "/seller-admin/products/archive" || strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit"):
 		permission = domaincommerce.SellerPermissionProductWrite
 	case path == "/seller-admin/inventory/adjust":
 		permission = domaincommerce.SellerPermissionInventoryWrite

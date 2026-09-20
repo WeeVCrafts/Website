@@ -52,6 +52,17 @@ func TestAuthRateLimitProtectsOnlyAuthenticationRoutes(t *testing.T) {
 	if len(limiter.keys) != 1 {
 		t.Fatalf("catalog request unexpectedly consumed auth limit: %v", limiter.keys)
 	}
+
+	request = httptest.NewRequest(http.MethodGet, "/login", nil)
+	request.RemoteAddr = "192.0.2.10:4000"
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("login form should remain available when the attempt limit is reached, got %d", recorder.Code)
+	}
+	if len(limiter.keys) != 1 {
+		t.Fatalf("opening the login form unexpectedly consumed auth limit: %v", limiter.keys)
+	}
 }
 
 func TestAuthRateLimitDoesNotCountSessionRefreshOrLogout(t *testing.T) {

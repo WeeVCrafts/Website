@@ -133,7 +133,7 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if err != nil {
 			return err
 		}
-		if current.Status != "draft" && current.Status != "rejected" {
+		if current.Status == "archived" {
 			return ports.ErrInvalidState
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO brands (slug, name) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name`, input.BrandSlug, input.BrandName); err != nil {
@@ -142,7 +142,7 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if _, err := tx.Exec(transactionContext, `INSERT INTO categories (slug, name) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name`, input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, status = CASE WHEN status = 'rejected' THEN 'draft' ELSE status END, updated_at = NOW() WHERE id = $9 AND seller_id = $10 AND status IN ('draft', 'rejected')`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID, current.SellerID); err != nil {
+		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $9 AND seller_id = $10 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID, current.SellerID); err != nil {
 			return mapCommerceError(err)
 		}
 		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku = $1, price_cents = $2, compare_at_cents = $3, updated_at = NOW() WHERE id = $4 AND product_id = $5 AND status = 'active'`, input.SKU, input.PriceCents, input.CompareAtCents, current.VariantID, productID); err != nil {
@@ -169,13 +169,215 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		// permission-scoped inventory workflow rather than changing it while
 		// editing catalogue copy or price.
 		product.Stock = current.Stock
+		product.Status = current.Status
+		if current.Status == "rejected" {
+			product.Status = "draft"
+		} else if current.Status == "approved" {
+			product.Status = "pending_review"
+		}
+		product.CategorySlug = input.CategorySlug
+		product.CategoryName = input.CategoryName
+		product.DeliveryLabel = input.DeliveryLabel
+		payload, _ := json.Marshal(map[string]any{"product_id": productID, "status": product.Status})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type, aggregate_type, aggregate_id, payload) VALUES ('ProductIndexRequested', 'Product', $1, $2)`, fmt.Sprint(productID), payload); err != nil {
+			return err
+		}
+		return nil
+	})
+	return product, err
+}
+
+func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	var product domaincommerce.ManagedProduct
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var allowed bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+			return err
+		}
+		if !allowed {
+			return ports.ErrForbidden
+		}
+		var sellerName string
+		if err := tx.QueryRow(transactionContext, `SELECT display_name FROM sellers WHERE id=$1 AND status='active'`, sellerID).Scan(&sellerName); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrSellerNotFound
+			}
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO brands (slug, name) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name`, input.BrandSlug, input.BrandName); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO categories (slug, name) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name`, input.CategorySlug, input.CategoryName); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(transactionContext, `INSERT INTO products (slug,brand_slug,category_slug,name,description,price_cents,compare_at_cents,delivery_label,seller_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft') RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, sellerID).Scan(&product.ID); err != nil {
+			return mapCommerceError(err)
+		}
+		if err := tx.QueryRow(transactionContext, `INSERT INTO product_variants (product_id,sku,price_cents,compare_at_cents) VALUES ($1,$2,$3,$4) RETURNING id`, product.ID, input.SKU, input.PriceCents, input.CompareAtCents).Scan(&product.VariantID); err != nil {
+			return mapCommerceError(err)
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_stock (variant_id,available_quantity) VALUES ($1,$2)`, product.VariantID, input.InitialStock); err != nil {
+			return err
+		}
+		product.SellerID = sellerID
+		product.SellerName = sellerName
+		product.Slug = input.Slug
+		product.BrandSlug = input.BrandSlug
+		product.BrandName = input.BrandName
+		product.Name = input.Name
+		product.Description = input.Description
+		product.SKU = input.SKU
+		product.PriceCents = input.PriceCents
+		product.Stock = input.InitialStock
 		product.Status = "draft"
 		product.CategorySlug = input.CategorySlug
 		product.CategoryName = input.CategoryName
 		product.DeliveryLabel = input.DeliveryLabel
-		return nil
+		product.HasCompareAt = input.CompareAtCents != nil
+		if input.CompareAtCents != nil {
+			product.CompareAtCents = *input.CompareAtCents
+		}
+		metadata, _ := json.Marshal(map[string]any{"source": "super_admin", "seller_id": sellerID})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_created','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(product.ID), ports.RequestID(transactionContext), metadata); err != nil {
+			return err
+		}
+		payload, _ := json.Marshal(map[string]any{"product_id": product.ID, "status": "draft"})
+		_, err := tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(product.ID), payload)
+		return err
 	})
 	return product, err
+}
+
+func (r *CommerceRepository) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
+	var allowed bool
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+		return domaincommerce.ManagedProduct{}, err
+	}
+	if !allowed {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
+	product, err := r.getAdminProduct(ctx, r.pool, productID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domaincommerce.ManagedProduct{}, ports.ErrNotFound
+	}
+	return product, err
+}
+
+func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	var product domaincommerce.ManagedProduct
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var allowed bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+			return err
+		}
+		if !allowed {
+			return ports.ErrForbidden
+		}
+		var currentStatus string
+		if err := tx.QueryRow(transactionContext, `SELECT status FROM products WHERE id=$1 FOR UPDATE`, productID).Scan(&currentStatus); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrNotFound
+			}
+			return err
+		}
+		if currentStatus == "archived" {
+			return ports.ErrInvalidState
+		}
+		current, err := r.getAdminProduct(transactionContext, tx, productID)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO brands (slug,name) VALUES ($1,$2) ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name`, input.BrandSlug, input.BrandName); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO categories (slug,name) VALUES ($1,$2) ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name`, input.CategorySlug, input.CategoryName); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,updated_at=NOW() WHERE id=$9 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID); err != nil {
+			return mapCommerceError(err)
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku=$1,price_cents=$2,compare_at_cents=$3,updated_at=NOW() WHERE id=$4 AND product_id=$5 AND status='active'`, input.SKU, input.PriceCents, input.CompareAtCents, current.VariantID, productID); err != nil {
+			return mapCommerceError(err)
+		}
+		metadata, _ := json.Marshal(map[string]any{"source": "super_admin", "previous_status": current.Status})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_updated','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(productID), ports.RequestID(transactionContext), metadata); err != nil {
+			return err
+		}
+		product = current
+		product.Slug, product.BrandSlug, product.BrandName = input.Slug, input.BrandSlug, input.BrandName
+		product.CategorySlug, product.CategoryName = input.CategorySlug, input.CategoryName
+		product.Name, product.Description, product.SKU = input.Name, input.Description, input.SKU
+		product.PriceCents, product.DeliveryLabel = input.PriceCents, input.DeliveryLabel
+		product.CompareAtCents, product.HasCompareAt = 0, input.CompareAtCents != nil
+		if input.CompareAtCents != nil {
+			product.CompareAtCents = *input.CompareAtCents
+		}
+		payload, _ := json.Marshal(map[string]any{"product_id": productID, "status": current.Status})
+		_, err = tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), payload)
+		return err
+	})
+	return product, err
+}
+
+func (r *CommerceRepository) ArchiveSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error {
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		current, err := r.getSellerProduct(transactionContext, tx, ownerUserID, productID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrForbidden
+		}
+		if err != nil {
+			return err
+		}
+		if current.Status == "archived" {
+			return ports.ErrInvalidState
+		}
+		result, err := tx.Exec(transactionContext, `UPDATE products SET status='archived',updated_at=NOW() WHERE id=$1 AND status<>'archived' AND seller_id=$2`, productID, current.SellerID)
+		if err != nil {
+			return err
+		}
+		if result.RowsAffected() != 1 {
+			return ports.ErrInvalidState
+		}
+		metadata, _ := json.Marshal(map[string]string{"source": "seller", "reason": reason})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_archived','product',$2,$3,$4)`, fmt.Sprint(ownerUserID), fmt.Sprint(productID), ports.RequestID(transactionContext), metadata); err != nil {
+			return err
+		}
+		payload, _ := json.Marshal(map[string]any{"product_id": productID, "status": "archived"})
+		_, err = tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), payload)
+		return err
+	})
+}
+
+func (r *CommerceRepository) ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var allowed bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+			return err
+		}
+		if !allowed {
+			return ports.ErrForbidden
+		}
+		var status string
+		if err := tx.QueryRow(transactionContext, `SELECT status FROM products WHERE id=$1 FOR UPDATE`, productID).Scan(&status); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrNotFound
+			}
+			return err
+		}
+		if status == "archived" {
+			return ports.ErrInvalidState
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE products SET status='archived',updated_at=NOW() WHERE id=$1`, productID); err != nil {
+			return err
+		}
+		metadata, _ := json.Marshal(map[string]string{"source": "super_admin", "reason": reason})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_archived','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(productID), ports.RequestID(transactionContext), metadata); err != nil {
+			return err
+		}
+		payload, _ := json.Marshal(map[string]any{"product_id": productID, "status": "archived"})
+		_, err := tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), payload)
+		return err
+	})
 }
 
 func (r *CommerceRepository) SubmitProduct(ctx context.Context, ownerUserID, productID int64) error {
@@ -260,6 +462,12 @@ type catalogProductQuerier interface {
 func (r *CommerceRepository) getSellerProduct(ctx context.Context, querier catalogProductQuerier, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
 	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(p.compare_at_cents, 0), p.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')) AND p.id = $2`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	return product, err
+}
+
+func (r *CommerceRepository) getAdminProduct(ctx context.Context, querier catalogProductQuerier, productID int64) (domaincommerce.ManagedProduct, error) {
+	var product domaincommerce.ManagedProduct
+	err := querier.QueryRow(ctx, `SELECT p.id,s.id,s.display_name,p.slug,p.brand_slug,b.name,p.name,p.description,pv.sku,pv.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),p.status,p.category_slug,c.name,p.delivery_label,pv.id FROM products p LEFT JOIN sellers s ON s.id=p.seller_id JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=pv.id WHERE p.id=$1`, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
 	return product, err
 }
 

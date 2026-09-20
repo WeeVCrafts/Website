@@ -76,6 +76,26 @@ func (r *webCatalogManagementRepository) UpdateDraft(_ context.Context, _ int64,
 	return r.product, nil
 }
 
+func (r *webCatalogManagementRepository) CreateAdminProduct(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	return r.product, nil
+}
+
+func (r *webCatalogManagementRepository) GetAdminProduct(context.Context, int64, int64) (domaincommerce.ManagedProduct, error) {
+	return r.product, nil
+}
+
+func (r *webCatalogManagementRepository) UpdateAdminProduct(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	return r.product, nil
+}
+
+func (r *webCatalogManagementRepository) ArchiveSellerProduct(context.Context, int64, int64, string) error {
+	return nil
+}
+
+func (r *webCatalogManagementRepository) ArchiveAdminProduct(context.Context, int64, int64, string) error {
+	return nil
+}
+
 func (r *webCatalogManagementRepository) SubmitProduct(context.Context, int64, int64) error {
 	return nil
 }
@@ -614,10 +634,10 @@ func TestSellerDraftEditRendersManagedValuesAndHTMXContract(t *testing.T) {
 	}, session)
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller" {
+	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller-admin/products?notice=Product+details+saved" {
 		t.Fatalf("expected HTMX seller edit redirect, got %d %q: %s", recorder.Code, recorder.Header().Get("HX-Redirect"), recorder.Body.String())
 	}
-	if managementRepository.updatedWith.Name != "Updated Soap" || managementRepository.updatedWith.PriceCents != 13900 || managementRepository.updatedWith.InitialStock != 12 {
+	if managementRepository.updatedWith.Name != "Updated Soap" || managementRepository.updatedWith.PriceCents != 13900 || managementRepository.updatedWith.InitialStock != 0 {
 		t.Fatalf("repository received incomplete draft update: %+v", managementRepository.updatedWith)
 	}
 }
