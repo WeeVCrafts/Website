@@ -27,14 +27,14 @@ type account struct {
 }
 
 var roleAccounts = []account{
-	{Email: "qa.customer@weevcrafts.test", Name: "QA Customer", Role: "customer"},
-	{Email: "qa.seller-owner@weevcrafts.test", Name: "QA Seller Owner", Role: "seller_owner"},
-	{Email: "qa.seller-staff@weevcrafts.test", Name: "QA Seller Staff", Role: "seller_staff"},
-	{Email: "qa.marketplace-admin@weevcrafts.test", Name: "QA Marketplace Admin", Role: "marketplace_admin"},
-	{Email: "qa.super-admin@weevcrafts.test", Name: "QA Super Admin", Role: "super_admin"},
-	{Email: "qa.support-agent@weevcrafts.test", Name: "QA Support Agent", Role: "support_agent"},
-	{Email: "qa.finance-operator@weevcrafts.test", Name: "QA Finance Operator", Role: "finance_operator"},
-	{Email: "qa.operations-returns@weevcrafts.test", Name: "QA Operations and Returns", Role: "operations_returns"},
+	{Email: "customer@weevcrafts.test", Name: "QA Customer", Role: "customer"},
+	{Email: "seller@weevcrafts.test", Name: "QA Seller Owner", Role: "seller_owner"},
+	{Email: "sellerstaff@weevcrafts.test", Name: "QA Seller Staff", Role: "seller_staff"},
+	{Email: "marketplaceadmin@weevcrafts.test", Name: "QA Marketplace Admin", Role: "marketplace_admin"},
+	{Email: "superadmin@weevcrafts.test", Name: "QA Super Admin", Role: "super_admin"},
+	{Email: "support@weevcrafts.test", Name: "QA Support Agent", Role: "support_agent"},
+	{Email: "finance@weevcrafts.test", Name: "QA Finance Operator", Role: "finance_operator"},
+	{Email: "operations@weevcrafts.test", Name: "QA Operations and Returns", Role: "operations_returns"},
 }
 
 func main() {
