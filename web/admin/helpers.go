@@ -2,10 +2,15 @@ package admin
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
+
+func adminID(id int64) string {
+	return strconv.FormatInt(id, 10)
+}
 
 func firstAdminOrder(orders []viewmodels.AdminOrder) viewmodels.AdminOrder {
 	if len(orders) == 0 {
@@ -82,6 +87,25 @@ func typeClass(value string) string {
 		return "review"
 	}
 	return "success"
+}
+
+func displayInitials(name string) string {
+	parts := strings.Fields(strings.TrimSpace(name))
+	if len(parts) == 0 {
+		return "W"
+	}
+	initials := make([]rune, 0, 2)
+	for _, part := range parts {
+		letters := []rune(part)
+		if len(letters) == 0 {
+			continue
+		}
+		initials = append(initials, []rune(strings.ToUpper(string(letters[0])))[0])
+		if len(initials) == 2 {
+			break
+		}
+	}
+	return string(initials)
 }
 
 func priorityClass(value string) string {

@@ -31,7 +31,6 @@ templ SupportDocument(p viewmodels.SupportPortalPage) {
             }
             { children... }
           </div>
-          @SupportFooter()
         </main>
       </div>
     </body>
@@ -43,14 +42,14 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
     <div class="support-header-main">
       <button class="support-menu-button" type="button" x-ref="supportMenu" aria-label="Open support navigation" aria-controls="support-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.supportSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
       <a class="support-wordmark" href="/support-portal" aria-label="WeeVCrafts support portal"><span class="support-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
-      <span class="support-portal-pill">Support Portal</span>
+      <span class="support-portal-pill">{ p.RoleLabel }</span>
       <form class="support-search" action={ supportPath(p.Active) } method="get">
         <label class="sr-only" for="support-search">Search support cases</label>
         <span class="material-symbols-outlined" aria-hidden="true">search</span>
         <input id="support-search" name="q" value={ p.Query } placeholder="Search cases, orders, customers, sellers or anything..."/>
       </form>
-      <a class="support-notification" href="/support-portal/cases?notice=Notifications+opened" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><b>3</b></a>
-      <a class="support-user" href="/support-portal/cases?notice=Agent+profile+opened"><img width="1254" height="1254" src="/assets/images/customer/maker-mithila.webp" alt="Aditi Rao"/><span><strong>Aditi Rao</strong><small>Support Team<br/><i></i> Online</small></span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a>
+      <a class="support-notification" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span></a>
+      <a class="support-user" href="/workspaces"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a>
     </div>
   </header>
 }
@@ -58,18 +57,16 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
 templ SupportSidebar(p viewmodels.SupportPortalPage) {
   <aside id="support-sidebar" class="support-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="support-sidebar-close" type="button" x-ref="supportSidebarClose" aria-label="Close support navigation" @click="sidebar=false; $nextTick(() => $refs.supportMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="support-profile-mini"><span class="support-profile-avatar">AR</span><span><strong>Aditi Rao</strong><small>Support Portal</small><small>Support Team</small></span></div>
+    <div class="support-profile-mini"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small><a href="/workspaces">Switch workspace</a></span></div>
     <nav class="support-nav" aria-label="Support portal navigation">
       @SupportNav("dashboard", "Dashboard", "home", p.Active, "/support-portal")
       @SupportNav("cases", "Cases", "work_outline", p.Active, "/support-portal/cases")
-      @SupportNav("customers", "Customers & Sellers", "person_outline", p.Active, "/support-portal/customers")
-      @SupportNav("orders", "Order / Transaction View", "inventory_2", p.Active, "/support-portal/orders")
-      @SupportNav("macros", "Macros / Knowledge Base", "menu_book", p.Active, "/support-portal/cases?notice=Knowledge+base+opened")
-      @SupportNav("sla", "SLA & Performance", "schedule", p.Active, "/support-portal/dashboard?notice=SLA+performance+opened")
-      @SupportNav("analytics", "Analytics", "bar_chart", p.Active, "/support-portal/dashboard?notice=Support+analytics+opened")
-      @SupportNav("settings", "Settings", "settings", p.Active, "/support-portal?notice=Support+settings+opened")
+      @SupportNav("customers", "Customers", "person_outline", p.Active, "/support-portal/customers")
+      @SupportNav("orders", "Orders", "inventory_2", p.Active, "/support-portal/orders")
+      <a class="support-nav-link" href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Switch workspace</span></a>
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="support-nav-link" type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </nav>
-    <div class="support-impact"><span class="material-symbols-outlined" aria-hidden="true">eco</span><p>Support great artisans.<br/>Happier customers.<br/>Stronger tomorrow.</p><a href="/support-portal/cases?notice=Impact+workspace+opened">Make a Difference <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    <div class="support-impact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><p>Resolve customer issues with care and keep every update on the ticket record.</p><a href="/support-portal/cases">Open case queue <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
   </aside>
 }
 

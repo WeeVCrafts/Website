@@ -18,6 +18,7 @@ import (
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/components"
 	"github.com/wecratfs/commerce/web/pages"
@@ -69,14 +70,28 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.fallback.ServeHTTP(w, r)
 		return
 	}
-	_, _, authenticated := h.session(r)
+	userID, _, authenticated := h.session(r)
 	if requiresCustomerSession(r.URL.Path) && !authenticated {
 		next := r.URL.RequestURI()
 		http.Redirect(w, r, "/login?next="+url.QueryEscape(next), http.StatusSeeOther)
 		return
 	}
+	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) {
+		roles := h.userRoles(r, userID)
+		destination := applicationauth.LoginDestination(roles)
+		if destination == "/account" {
+			destination = "/workspaces"
+		}
+		http.Redirect(w, r, destination, http.StatusSeeOther)
+		return
+	}
 	if isAuthRoute(r.URL.Path) && authenticated {
-		http.Redirect(w, r, safeCustomerNext(r.URL.Query().Get("next"), "/account"), http.StatusSeeOther)
+		roles := h.userRoles(r, userID)
+		destination := applicationauth.LoginDestination(roles)
+		if customerRoleAllowed(roles) {
+			destination = safeCustomerNext(r.URL.Query().Get("next"), destination)
+		}
+		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
 	}
 	page, err := h.page(r)
@@ -172,6 +187,10 @@ func (h *LiveStorefrontHandler) updateProfile(w http.ResponseWriter, r *http.Req
 	userID, csrf, ok := h.session(r)
 	if !ok {
 		http.Redirect(w, r, "/login?next=%2Faccount%2Fprofile", http.StatusSeeOther)
+		return
+	}
+	if !h.customerRole(userID, r) {
+		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -294,7 +313,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 }
 
 func needsAccountData(path string) bool {
-	return path == "/account" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || strings.HasPrefix(path, "/account/")
+	return path == "/account" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || path == "/payments" || strings.HasPrefix(path, "/account/")
 }
 
 func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
@@ -302,13 +321,16 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 		return fmt.Errorf("customer account data is unavailable")
 	}
 	var createdAt time.Time
-	if err := h.pool.QueryRow(ctx, `SELECT display_name, email, created_at FROM users WHERE id = $1 AND status = 'active'`, userID).Scan(&page.UserName, &page.UserEmail, &createdAt); err != nil {
+	var roleSlugs []string
+	if err := h.pool.QueryRow(ctx, `SELECT display_name, email, created_at, COALESCE(ARRAY(SELECT role_slug FROM user_roles WHERE user_id = $1 ORDER BY role_slug), ARRAY[]::text[]) FROM users WHERE id = $1 AND status = 'active'`, userID).Scan(&page.UserName, &page.UserEmail, &createdAt, &roleSlugs); err != nil {
 		return err
 	}
 	if strings.TrimSpace(page.UserName) == "" {
 		page.UserName = page.UserEmail
 	}
 	page.MemberSince = createdAt.Format("2 Jan 2006")
+	page.RoleLabel = customerPortalRoleLabel(roleSlugs)
+	page.PortalLabel = "Customer Account"
 	if err := h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM orders WHERE user_id = $1`, userID).Scan(&page.OrderCount); err != nil {
 		return err
 	}
@@ -328,39 +350,25 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	}
 	addresses.Close()
 
-	if h.orders == nil || !(page.Route == "/account" || page.Route == "/orders" || strings.HasPrefix(page.Route, "/orders/") || page.Route == "/tracking") {
-		return nil
-	}
-	orders, err := h.orders.List(ctx, userID, 20)
-	if err != nil {
-		return err
-	}
-	page.Orders = make([]viewmodels.Order, 0, len(orders))
-	for _, order := range orders {
-		detail, err := h.orders.Get(ctx, userID, order.OrderNumber)
+	if h.orders != nil && (page.Route == "/account" || page.Route == "/orders" || strings.HasPrefix(page.Route, "/orders/") || page.Route == "/tracking") {
+		orders, err := h.orders.List(ctx, userID, 20)
 		if err != nil {
 			return err
 		}
-		view, err := h.customerOrderView(ctx, detail)
-		if err != nil {
-			return err
+		page.Orders = make([]viewmodels.Order, 0, len(orders))
+		for _, order := range orders {
+			detail, err := h.orders.Get(ctx, userID, order.OrderNumber)
+			if err != nil {
+				return err
+			}
+			view, err := h.customerOrderView(ctx, detail)
+			if err != nil {
+				return err
+			}
+			page.Orders = append(page.Orders, view)
 		}
-		page.Orders = append(page.Orders, view)
-	}
-	if strings.HasPrefix(page.Route, "/orders/") && page.Route != "/orders/invoice" {
-		orderNumber := strings.TrimPrefix(page.Route, "/orders/")
-		detail, err := h.orders.Get(ctx, userID, orderNumber)
-		if err != nil {
-			return err
-		}
-		page.SelectedOrder, err = h.customerOrderView(ctx, detail)
-		if err != nil {
-			return err
-		}
-	}
-	if page.Route == "/tracking" {
-		orderNumber := strings.TrimSpace(page.Filters.Get("order"))
-		if orderNumber != "" {
+		if strings.HasPrefix(page.Route, "/orders/") && page.Route != "/orders/invoice" {
+			orderNumber := strings.TrimPrefix(page.Route, "/orders/")
 			detail, err := h.orders.Get(ctx, userID, orderNumber)
 			if err != nil {
 				return err
@@ -369,11 +377,45 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 			if err != nil {
 				return err
 			}
-		} else if len(page.Orders) > 0 {
-			page.SelectedOrder = page.Orders[0]
+		}
+		if page.Route == "/tracking" {
+			orderNumber := strings.TrimSpace(page.Filters.Get("order"))
+			if orderNumber != "" {
+				detail, err := h.orders.Get(ctx, userID, orderNumber)
+				if err != nil {
+					return err
+				}
+				page.SelectedOrder, err = h.customerOrderView(ctx, detail)
+				if err != nil {
+					return err
+				}
+			} else if len(page.Orders) > 0 {
+				page.SelectedOrder = page.Orders[0]
+			}
+		}
+	}
+	if page.Route == "/returns" {
+		page.Returns, err = h.customerReturns(ctx, userID)
+		if err != nil {
+			return err
+		}
+	}
+	if page.Route == "/payments" {
+		page.PaymentActivity, err = h.customerPaymentActivity(ctx, userID)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+func customerPortalRoleLabel(roles []string) string {
+	for _, role := range roles {
+		if role == string(domainidentity.RoleCustomer) {
+			return "Customer"
+		}
+	}
+	return "Account"
 }
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
@@ -382,6 +424,13 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	view := viewmodels.Order{
 		Number: order.OrderNumber, Status: status, State: order.Status, Payment: payment,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
+		CanRequestReturn: order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered",
+	}
+	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
+		return viewmodels.Order{}, err
+	}
+	if view.ReturnStatus != "" {
+		view.CanRequestReturn = false
 	}
 	rows, err := h.pool.Query(ctx, `
 		SELECT COALESCE(p.slug, ''), oi.product_name, oi.unit_price_cents, oi.quantity,
@@ -411,6 +460,72 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 		view.Items = append(view.Items, viewmodels.CartItem{Product: product, Quantity: quantity, Delivery: "4 - 6 days"})
 	}
 	return view, rows.Err()
+}
+
+func (h *LiveStorefrontHandler) customerReturns(ctx context.Context, userID int64) ([]viewmodels.Return, error) {
+	rows, err := h.pool.Query(ctx, `
+		SELECT rr.id::text,
+		       CASE WHEN pr.status = 'processed' THEN 'Refunded'
+	            WHEN rr.status = 'pending' THEN 'Pending review'
+	            WHEN rr.status = 'approved' THEN 'Approved'
+	            WHEN rr.status = 'received' THEN 'Item received'
+	            WHEN rr.status = 'rejected' THEN 'Declined'
+	            ELSE INITCAP(REPLACE(rr.status, '_', ' ')) END,
+		       rr.reason, TO_CHAR(rr.created_at, 'DD Mon YYYY'),
+		       COALESCE((SELECT oi.product_name FROM order_items oi WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), 'Order return'),
+		       COALESCE((SELECT p.image_url FROM order_items oi JOIN product_variants v ON v.id = oi.variant_id JOIN products p ON p.id = v.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), '/assets/images/customer/maker-mithila.webp'),
+		       o.order_number, o.total_cents
+		FROM return_requests rr
+		JOIN orders o ON o.id = rr.order_id
+		LEFT JOIN payment_refunds pr ON pr.order_id = o.id
+		WHERE rr.user_id = $1
+		ORDER BY rr.created_at DESC, rr.id DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	returns := make([]viewmodels.Return, 0)
+	for rows.Next() {
+		var item viewmodels.Return
+		var cents int64
+		if err := rows.Scan(&item.ID, &item.Status, &item.Reason, &item.Requested, &item.ProductName, &item.ImageURL, &item.OrderNumber, &cents); err != nil {
+			return nil, err
+		}
+		item.Amount = storefrontMoney(cents)
+		returns = append(returns, item)
+	}
+	return returns, rows.Err()
+}
+
+func (h *LiveStorefrontHandler) customerPaymentActivity(ctx context.Context, userID int64) ([]viewmodels.PaymentActivity, error) {
+	rows, err := h.pool.Query(ctx, `
+		SELECT COALESCE(NULLIF(pa.provider_payment_id, ''), NULLIF(pa.provider_order_id, ''), o.order_number),
+		       pa.amount_cents, pa.currency, pa.provider, o.order_number, pa.status, pa.created_at
+		FROM payment_attempts pa
+		JOIN orders o ON o.id = pa.order_id
+		WHERE o.user_id = $1
+		ORDER BY pa.created_at DESC, pa.id DESC
+		LIMIT 20`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	activities := make([]viewmodels.PaymentActivity, 0)
+	for rows.Next() {
+		var item viewmodels.PaymentActivity
+		var cents int64
+		var currency, provider, status string
+		var createdAt time.Time
+		if err := rows.Scan(&item.Reference, &cents, &currency, &provider, &item.OrderNumber, &status, &createdAt); err != nil {
+			return nil, err
+		}
+		item.Amount = storefrontMoney(cents)
+		item.Date = createdAt.Format("2 Jan 2006")
+		item.Method = strings.ToUpper(provider) + " · " + currency
+		item.Status = strings.ToUpper(status[:1]) + strings.ReplaceAll(status[1:], "_", " ")
+		activities = append(activities, item)
+	}
+	return activities, rows.Err()
 }
 
 func displayOrderStatus(status string) string {
@@ -636,6 +751,34 @@ func (h *LiveStorefrontHandler) session(r *http.Request) (int64, string, bool) {
 		return 0, "", false
 	}
 	return record.UserID, record.CSRFToken, true
+}
+
+func (h *LiveStorefrontHandler) customerRole(userID int64, r *http.Request) bool {
+	if h.pool == nil || userID <= 0 {
+		return false
+	}
+	var allowed bool
+	err := h.pool.QueryRow(r.Context(), `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='customer')`, userID).Scan(&allowed)
+	return err == nil && allowed
+}
+
+func (h *LiveStorefrontHandler) userRoles(r *http.Request, userID int64) []domainidentity.Role {
+	if h.pool == nil || userID <= 0 {
+		return nil
+	}
+	rows, err := h.pool.Query(r.Context(), `SELECT role_slug FROM user_roles WHERE user_id=$1 ORDER BY role_slug`, userID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var roles []domainidentity.Role
+	for rows.Next() {
+		var role string
+		if rows.Scan(&role) == nil {
+			roles = append(roles, domainidentity.Role(role))
+		}
+	}
+	return roles
 }
 
 func (h *LiveStorefrontHandler) categories(ctx context.Context) []viewmodels.Category {

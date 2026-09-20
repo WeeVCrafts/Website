@@ -11,7 +11,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
       <meta charset="utf-8"/>
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="robots" content="noindex,nofollow"/>
-      <title>{ p.Title } - WeeVCrafts Admin</title>
+      <title>{ p.Title } - WeeVCrafts { p.PortalLabel }</title>
       <link rel="preload" href="/assets/fonts/dm-sans-400.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
@@ -44,11 +44,11 @@ templ AdminDocument(p viewmodels.AdminPage) {
           <main id="admin-main" class="admin-content">
             <section class="admin-page-heading">
               <div class="admin-heading-copy">
-                <p class="admin-eyebrow">WEEVCRAFTS - SUPER ADMIN</p>
+                <p class="admin-eyebrow">WEEVCRAFTS · { p.PortalLabel }</p>
                 <h1>{ p.Title }</h1>
                 <p>{ p.Subtitle }</p>
               </div>
-              <div class="admin-heading-art"><img width="1254" height="1254" src="/assets/images/mock/global.webp" alt="Indian craft detail"/></div>
+              <div class="admin-heading-art"><img width="1254" height="1254" src="/assets/images/customer/hero-studio.webp" alt="Indian craft detail"/></div>
               <div class="admin-heading-note"><span>More artisans.<br/>More stories.<br/><strong>A kinder<br/>tomorrow.</strong></span></div>
             </section>
             if p.Notice != "" {
@@ -56,7 +56,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
             }
             { children... }
           </main>
-          @AdminFooter()
+          @AdminFooter(p)
         </div>
       </div>
     </body>
@@ -66,21 +66,37 @@ templ AdminDocument(p viewmodels.AdminPage) {
 templ Sidebar(p viewmodels.AdminPage) {
   <aside id="admin-sidebar" class="admin-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="admin-sidebar-close" type="button" x-ref="adminSidebarClose" aria-label="Close admin navigation" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <a class="admin-brand" href="/admin" aria-label="WeeVCrafts admin dashboard"><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
+    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "WeeVCrafts " + p.PortalLabel }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
     <nav class="admin-nav" aria-label="Admin navigation">
-      @AdminNav("dashboard", "Dashboard", "space_dashboard", p.Active, "/admin")
-      @AdminNav("sellers", "Sellers", "groups", p.Active, "/admin/sellers")
-      @AdminNav("products", "Products & Categories", "inventory_2", p.Active, "/admin/products")
-      @AdminNav("inventory", "Own Inventory", "warehouse", p.Active, "/admin/inventory")
-      @AdminNav("orders", "Orders & Shipping", "local_shipping", p.Active, "/admin/orders")
-      @AdminNav("returns", "Returns & Refunds", "undo", p.Active, "/admin/returns")
-      @AdminNav("finance", "Finance", "payments", p.Active, "/admin/finance")
-      @AdminNav("support", "Customers & Support", "support_agent", p.Active, "/admin/support")
-      @AdminNav("marketing", "Marketing & Content", "campaign", p.Active, "/admin/marketing")
-      @AdminNav("security", "Security & Roles", "admin_panel_settings", p.Active, "/admin/security")
-      @AdminNav("analytics", "Analytics & Settings", "settings", p.Active, "/admin/analytics")
+      if p.IsFinance {
+        @AdminNav("finance", "Payments & Finance", "payments", p.NavActive, p.PortalRoot)
+        @AdminNav("payments", "Payments", "receipt_long", p.NavActive, p.PortalRoot + "/payments")
+        @AdminNav("failed-payments", "Failed Payments", "error", p.NavActive, p.PortalRoot + "/failed-payments")
+        @AdminNav("refunds", "Refunds", "undo", p.NavActive, p.PortalRoot + "/refunds")
+        @AdminNav("finance-reconciliation", "Reconciliation", "fact_check", p.NavActive, p.PortalRoot + "/finance-reconciliation")
+        @AdminNav("settlements", "Settlements", "account_balance", p.NavActive, p.PortalRoot + "/settlements")
+      } else if p.IsOperations {
+        @AdminNav("orders", "Orders", "local_shipping", p.NavActive, p.PortalRoot + "/orders")
+        @AdminNav("returns", "Returns", "undo", p.NavActive, p.PortalRoot + "/returns")
+      } else {
+        @AdminNav("dashboard", "Dashboard", "space_dashboard", p.NavActive, p.PortalRoot)
+        @AdminNav("sellers", "Sellers", "groups", p.NavActive, p.PortalRoot + "/sellers")
+        @AdminNav("products", "Products & Categories", "inventory_2", p.NavActive, p.PortalRoot + "/products")
+        @AdminNav("inventory", "Inventory", "warehouse", p.NavActive, p.PortalRoot + "/inventory")
+        @AdminNav("orders", "Orders", "local_shipping", p.NavActive, p.PortalRoot + "/orders")
+        @AdminNav("returns", "Returns", "undo", p.NavActive, p.PortalRoot + "/returns")
+        @AdminNav("support", "Customers & Support", "support_agent", p.NavActive, p.PortalRoot + "/support")
+        @AdminNav("marketing", "Marketing & Content", "campaign", p.NavActive, p.PortalRoot + "/marketing")
+        if p.CanFinance {
+          @AdminNav("finance", "Finance", "payments", p.NavActive, p.PortalRoot + "/finance")
+        }
+        if p.CanSecurity {
+          @AdminNav("security", "Security & Roles", "admin_panel_settings", p.NavActive, p.PortalRoot + "/security")
+        }
+        @AdminNav("analytics", "Analytics & Settings", "settings", p.NavActive, p.PortalRoot + "/analytics")
+      }
     </nav>
-    <div class="admin-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><h2>Empowering<br/>Indian Crafts<br/>Globally</h2><p>More artisans.<br/>Brighter futures.</p><a href="/admin/marketing?notice=Impact+story+opened">Make an impact <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    <div class="admin-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><h2>Empowering<br/>Indian Crafts<br/>Across India</h2><p>More artisans.<br/>Brighter futures.</p><a href={ p.PortalRoot + "/analytics" }>View marketplace <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
   </aside>
 }
 
@@ -95,15 +111,15 @@ templ AdminTableEmpty(message, hint string) {
 templ AdminHeader(p viewmodels.AdminPage) {
   <header class="admin-header">
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
-    <a class="admin-header-brand" href="/admin"><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><strong>WeeVCrafts</strong></a>
-    <span class="admin-portal-pill">Admin Portal</span>
+    <a class="admin-header-brand" href={ p.PortalRoot }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><strong>WeeVCrafts</strong></a>
+    <span class="admin-portal-pill">{ p.PortalLabel }</span>
     <form class="admin-search" action={ adminPath(p.Active) } method="get">
       <label class="sr-only" for="admin-search">Search the admin portal</label>
       <span class="material-symbols-outlined" aria-hidden="true">search</span>
       <input id="admin-search" name="q" value={ p.Query } placeholder="Search orders, sellers, products, customers or tickets..."/>
     </form>
-    <a class="admin-icon-button" href="/admin/support?notice=Notifications+opened" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><b>3</b></a>
-    <div class="admin-user"><span class="admin-avatar">RM</span><span><strong>Rohan Mehta</strong><small>Super Admin <i></i> Online</small></span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></div>
+    <a class="admin-icon-button" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span></a>
+    <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
   </header>
 }
 
@@ -122,8 +138,41 @@ templ Security(p viewmodels.AdminPage) {
         <article class="admin-panel security-panel break-glass-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warning</span><div><h2>Break-glass access</h2><p>Temporary elevated access for incidents only.</p></div></div><mark class="status danger">Restricted</mark></div><p>Access is time-boxed, requires an incident reference and is visible to the security reviewer.</p><div class="break-glass-fields"><label>Incident reference<input value="INC-2024-0426"/></label><label>Reason<select><option>Production incident</option><option>Security investigation</option><option>Data-rights request</option></select></label></div><div class="action-row"><a class="admin-button danger" href="/admin/security?notice=Break-glass+request+recorded">Request temporary access</a><a class="admin-button secondary" href="/admin/security?notice=Break-glass+log+opened">View access log</a></div></article>
         <article class="admin-panel security-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">history</span><div><h2>Recent access events</h2><p>Security-sensitive activity in the preview workspace.</p></div></div><a class="panel-link" href="/admin/analytics?notice=Full+audit+log+opened">View audit log <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><div class="security-events"><div><span class="event-icon success"><span class="material-symbols-outlined" aria-hidden="true">login</span></span><span><b>Rohan Mehta signed in</b><small>Super Admin · 2 minutes ago · Chrome on Windows</small></span><mark class="status success">MFA</mark></div><div><span class="event-icon review"><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span></span><span><b>Seller permission set reviewed</b><small>Priya Sharma · Seller Staff · 18 minutes ago</small></span><mark class="status review">Logged</mark></div><div><span class="event-icon danger"><span class="material-symbols-outlined" aria-hidden="true">block</span></span><span><b>Unauthorized export blocked</b><small>Support Agent attempted full payment export · 42 minutes ago</small></span><mark class="status danger">Blocked</mark></div></div></article>
       </div>
+      @RoleAssignmentList(p)
     </section>
   }
+}
+
+templ RoleAssignmentList(p viewmodels.AdminPage) {
+  <article class="admin-panel security-panel role-assignment-panel">
+    <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>Live role assignments</h2><p>Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.</p></div></div></div>
+    if len(p.RoleAssignments) == 0 {
+      @AdminTableEmpty("No user accounts are available for role management.", "User role assignments will appear here after accounts are created.")
+    } else {
+      <div class="role-assignment-list">
+        for _, assignment := range p.RoleAssignments {
+          <section class="role-assignment-card">
+            <div class="role-assignment-user"><strong>{ assignment.DisplayName }</strong><span>{ assignment.Email }</span><small>User #{ adminID(assignment.ID) } · { assignment.Status }</small><div class="role-badges">
+              if len(assignment.Roles) == 0 {
+                <span class="status review">No roles</span>
+              }
+              for _, assignedRole := range assignment.Roles {
+                <span class="status success">{ assignedRole }</span>
+              }
+            </div></div>
+            <form class="role-assignment-form" method="post" action="/super-admin/roles/update">
+              <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+              <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+              <label>Role<select name="role" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
+              <label>Action<select name="action" required><option value="grant">Grant</option><option value="revoke">Revoke</option></select></label>
+              <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
+              <button class="admin-button primary" type="submit">Save role change</button>
+            </form>
+          </section>
+        }
+      </div>
+    }
+  </article>
 }
 
 templ Workspace(p viewmodels.AdminPage) {
@@ -189,11 +238,11 @@ templ Workspace(p viewmodels.AdminPage) {
   }
 }
 
-templ AdminFooter() {
-  <footer class="admin-footer">
-    <div class="admin-trust"><span><strong>Trusted by <em>1 Lakh+</em></strong><small>happy customers</small></span><span><strong>4.8/5</strong><small>Average rating</small></span><span><strong>10,000+</strong><small>Artisans supported</small></span><span><strong>Secure Payments</strong><small>100% safe and trusted</small></span><span><strong>Easy Returns</strong><small>Hassle-free shopping</small></span><span><strong>Domestic Delivery</strong><small>To serviceable PIN codes</small></span></div>
-    <div class="admin-footer-main"><div><a class="admin-brand inverse" href="/admin"><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for Indian arts, crafts and sarees.<br/>Supporting artisans. Preserving traditions.<br/>Building a brighter, more inclusive tomorrow.</p></div><div><h3>Admin Portal</h3><a href="/admin">Dashboard</a><a href="/admin/sellers">Sellers</a><a href="/admin/products">Products &amp; Categories</a><a href="/admin/inventory">Own Inventory</a><a href="/admin/orders">Orders &amp; Shipping</a></div><div><h3>Help</h3><a href="/admin/analytics">System Status</a><a href="/admin/support">Contact Support</a><a href="/admin/analytics">Community Guidelines</a><a href="/admin/analytics">Security</a><a href="/admin/analytics">Privacy &amp; Compliance</a></div><div><h3>About</h3><a href="/admin/marketing">Our Story</a><a href="/admin/marketing">Sustainability</a><a href="/admin/marketing">Impact</a><a href="/admin/marketing">Press</a><a href="/admin/marketing">Contact Us</a></div><div><h3>A stronger tomorrow, together.</h3><p>Empowering artisans and creating opportunities across India.</p><span class="footer-leaf material-symbols-outlined" aria-hidden="true">eco</span></div></div>
-    <div class="admin-footer-bottom"><span>(c) 2024 WeeVCrafts. All rights reserved.</span><span>Terms &amp; Conditions | Privacy Policy | Cookie Policy</span><span>Made with care in India</span></div>
+templ AdminFooter(p viewmodels.AdminPage) {
+  <footer class="admin-footer admin-footer-simple">
+    <a class="admin-brand inverse" href={ p.PortalRoot }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>{ p.PortalLabel }</small></span></a>
+    <span>Handmade in India · Delivery to serviceable PIN codes across India</span>
+    <a href="/workspaces">Switch workspace</a>
   </footer>
 }
 
@@ -264,7 +313,12 @@ templ Products(p viewmodels.AdminPage) {
     @StatGrid(p)
     <section class="admin-panel"><div class="panel-tabs"><a class="active" aria-current="page" href="/admin/products">All Products <b>5,842</b></a><a href="/admin/products?tab=pending">Pending Approvals (326)</a><a href="/admin/products?tab=flagged">Flagged (128)</a><a href="/admin/products?tab=drafts">Drafts (402)</a></div><div class="filter-row"><form id="admin-products-filters" class="inline-search" action="/admin/products" method="get"><span class="material-symbols-outlined" aria-hidden="true">search</span><input name="q" value={ p.Query } placeholder="Search product, SKU or seller..."/></form><select name="category" form="admin-products-filters" aria-label="Filter category"><option value="">All Categories</option><option value="sarees">Sarees</option><option value="handicrafts">Handicrafts</option><option value="home-decor">Home Decor</option></select><select name="status" form="admin-products-filters" aria-label="Filter status"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="flagged">Flagged</option></select><button class="admin-button secondary" type="submit" form="admin-products-filters">Apply Filters</button></div><div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>Seller</span><span>Category</span><span>Price</span><span>Status</span><span>Submitted</span><span>Action</span></div>
       for _, product := range p.Products {
-        <div class="table-row"><span class="person-cell"><img width="1254" height="1254" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions"><a href={ "/admin/products?notice=" + actionNotice("Viewing ", product.Name) } aria-label="View product"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></a><a href="/admin/products?notice=Product+approval+opened" aria-label="Approve product"><span class="material-symbols-outlined" aria-hidden="true">check</span></a><a href="/admin/products?notice=Product+flag+review+opened" aria-label="Flag product"><span class="material-symbols-outlined" aria-hidden="true">flag</span></a></span></div>
+        <div class="table-row"><span class="person-cell"><img width="1254" height="1254" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions">
+          if product.Status == "pending_review" {
+            <form method="post" action="/admin/products/review"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
+            <form method="post" action="/admin/products/review"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="reject"/><input name="reason" required maxlength="1000" placeholder="Reason for rejection"/><button class="admin-button danger" type="submit">Reject</button></form>
+          } else { <span>No review action</span> }
+        </span></div>
       }
       if len(p.Products) == 0 {
         @AdminTableEmpty("No products match this search.", "Try another product, SKU, seller or category.")
@@ -311,14 +365,14 @@ templ Returns(p viewmodels.AdminPage) {
   @AdminDocument(p) {
     @StatGrid(p)
     if len(p.Returns) > 0 {
-    <section class="admin-panel returns-workspace"><div class="return-queue"><div class="queue-heading"><h2>Return Queue</h2><span class="status pending">48 pending</span></div>
+    <section class="admin-panel returns-workspace"><div class="return-queue"><div class="queue-heading"><h2>Return Queue</h2><span class="status pending">Live records</span></div>
       for i, item := range p.Returns {
         <a class={ "return-queue-item " + returnClass(item.Status) } href={ "/admin/returns?notice=" + actionNotice("Selected return ", item.Number) }><img width="1254" height="1254" src={ item.Image } alt=""/><span><strong>{ item.Number }</strong><small>{ item.Customer }<br/>{ item.Reason }</small></span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></a>
         if i == 4 {
           <a class="admin-button secondary" href="/admin/returns?notice=Return+queue+expanded">View all returns</a>
         }
       }
-    </div><div class="return-detail"><div class="detail-label"><span class="status danger">Dispute requires attention</span><span>Updated 24 Apr 2024</span></div><h2>Return request { firstAdminReturn(p.Returns).Number }</h2><p>{ firstAdminReturn(p.Returns).Customer } requested a return for a damaged product.</p><div class="return-product-card"><img width="1254" height="1254" src={ firstAdminReturn(p.Returns).Image } alt={ firstAdminReturn(p.Returns).Product }/><div><h3>{ firstAdminReturn(p.Returns).Product }</h3><p>Sold by Weaver's Touch<br/>Reason: { firstAdminReturn(p.Returns).Reason }</p><strong>{ firstAdminReturn(p.Returns).Amount }</strong></div><dl><dt>Requested on</dt><dd>{ firstAdminReturn(p.Returns).Date }</dd><dt>Refund method</dt><dd>Original payment</dd><dt>Seller response</dt><dd>Evidence uploaded</dd><dt>Pickup</dt><dd>Not scheduled</dd></dl></div><div class="detail-cards"><div><span class="material-symbols-outlined" aria-hidden="true">photo_camera</span><h3>Evidence</h3><strong>4 images</strong><p>Customer photos and delivery proof</p></div><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><h3>Pickup</h3><strong>Awaiting decision</strong><p>Courier pickup will be scheduled</p></div><div><span class="material-symbols-outlined" aria-hidden="true">payments</span><h3>Refund</h3><strong>{ firstAdminReturn(p.Returns).Amount }</strong><p>Refund after item inspection</p></div><div><span class="material-symbols-outlined" aria-hidden="true">gavel</span><h3>Dispute</h3><strong>Admin review</strong><p>Seller and customer evidence</p></div></div><div class="decision-card"><div><h3>Decision checklist</h3><p>Confirm evidence, seller response and return-policy eligibility before issuing a refund.</p></div><div><h3>Policy outcome</h3><p>Potentially eligible for refund because the item arrived damaged.</p></div><div class="decision-actions"><a class="admin-button primary" href="/admin/returns?notice=Refund+approval+queued">Approve Refund</a><a class="admin-button secondary" href="/admin/returns?notice=Replacement+workflow+opened">Offer Replacement</a><a class="admin-button danger" href="/admin/returns?notice=Return+rejected+for+review">Reject Request</a></div></div></div></section>
+    </div><div class="return-detail"><div class="detail-label"><span class={ "status " + statusClass(firstAdminReturn(p.Returns).Status) }>{ firstAdminReturn(p.Returns).Status }</span><span>Request { firstAdminReturn(p.Returns).Number }</span></div><h2>Return request { firstAdminReturn(p.Returns).Number }</h2><p>{ firstAdminReturn(p.Returns).Customer } requested a return. Confirm the reason and update the request state.</p><div class="return-product-card"><img width="1254" height="1254" src={ firstAdminReturn(p.Returns).Image } alt={ firstAdminReturn(p.Returns).Product }/><div><h3>Order { firstAdminReturn(p.Returns).Product }</h3><p>Reason: { firstAdminReturn(p.Returns).Reason }</p><strong>{ firstAdminReturn(p.Returns).Amount }</strong></div><dl><dt>Requested on</dt><dd>{ firstAdminReturn(p.Returns).Date }</dd><dt>Current status</dt><dd>{ firstAdminReturn(p.Returns).Status }</dd></dl></div><div class="decision-card"><div><h3>Update return state</h3><p>Every decision is persisted with an audit event.</p></div><form class="decision-actions" method="post" action="/admin/returns/status"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ firstAdminReturn(p.Returns).ID }/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option><option value="received">Mark received</option></select></label><label>Reason / note<input name="reason" maxlength="1000" placeholder="Optional decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form></div></div></section>
     } else {
       <div class="admin-empty-state" role="status"><h2>No return requests</h2><p>The return queue is clear.</p></div>
     }
@@ -372,7 +426,7 @@ templ Marketing(p viewmodels.AdminPage) {
         <div class="table-row"><span><strong>{ campaign.Name }</strong></span><span>{ campaign.Type }</span><span>{ campaign.Start }</span><span>{ campaign.End }</span><span>{ campaign.Channel }</span><span>{ campaign.Reach }</span><strong>{ campaign.Revenue }</strong><span class={ "status " + statusClass(campaign.Status) }>{ campaign.Status }</span></div>
       }
     </div></section>
-    <section class="admin-two-grid homepage-content"><article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">web</span><div><h2>Homepage Content</h2><p>Manage the stories and collections customers see first.</p></div></div><a class="admin-button secondary" href="/admin/marketing?notice=Homepage+editor+opened">Edit page</a></div><div class="content-preview"><img width="1254" height="1254" src="/assets/images/mock/global.webp" alt="Indian craft marketplace"/><div><h3>From Indian Hands<br/>to Global Homes</h3><p>Featured homepage story / Published</p><a class="admin-button primary" href="/admin/marketing?notice=Story+editor+opened">Edit story</a></div></div></article><article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">collections_bookmark</span><div><h2>Featured Collections</h2><p>Curated catalog groups and maker spotlights.</p></div></div></div><div class="collection-images"><img width="1254" height="1254" src="/assets/images/mock/saree-maroon.webp" alt=""/><img width="1254" height="1254" src="/assets/images/mock/mugs.webp" alt=""/><img width="1254" height="1254" src="/assets/images/mock/box.webp" alt=""/></div><div class="content-columns"><div><h3>Publishing checklist</h3><span>Hero banner <b>Ready</b></span><span>Maker story <b>Ready</b></span><span>Collection links <b>Ready</b></span></div><div><h3>Moderation</h3><span>Scheduled content <b>4</b></span><span>Pending review <b>2</b></span><span>Expired content <b>1</b></span></div></div></article></section>
+    <section class="admin-two-grid homepage-content"><article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">web</span><div><h2>Homepage Content</h2><p>Manage the stories and collections customers see first.</p></div></div><a class="admin-button secondary" href="/admin/marketing?notice=Homepage+editor+opened">Edit page</a></div><div class="content-preview"><img width="1254" height="1254" src="/assets/images/customer/hero-studio.webp" alt="Indian craft marketplace"/><div><h3>From Indian Hands<br/>to Indian Homes</h3><p>Featured homepage story / Published</p><a class="admin-button primary" href="/admin/marketing?notice=Story+editor+opened">Edit story</a></div></div></article><article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">collections_bookmark</span><div><h2>Featured Collections</h2><p>Curated catalog groups and maker spotlights.</p></div></div></div><div class="collection-images"><img width="1254" height="1254" src="/assets/images/mock/saree-maroon.webp" alt=""/><img width="1254" height="1254" src="/assets/images/mock/mugs.webp" alt=""/><img width="1254" height="1254" src="/assets/images/mock/box.webp" alt=""/></div><div class="content-columns"><div><h3>Publishing checklist</h3><span>Hero banner <b>Ready</b></span><span>Maker story <b>Ready</b></span><span>Collection links <b>Ready</b></span></div><div><h3>Moderation</h3><span>Scheduled content <b>4</b></span><span>Pending review <b>2</b></span><span>Expired content <b>1</b></span></div></div></article></section>
   }
 }
 

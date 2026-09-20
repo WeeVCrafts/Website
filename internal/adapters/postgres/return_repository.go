@@ -39,7 +39,7 @@ func (r *CommerceRepository) CreateReturnRequest(ctx context.Context, userID int
 			}
 			return err
 		}
-		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'customer.return_requested', 'return_request', $2, $3, jsonb_build_object('order_number', $4, 'reason', $5))`, fmt.Sprint(userID), fmt.Sprint(request.ID), ports.RequestID(transactionContext), orderNumber, reason)
+		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'customer.return_requested', 'return_request', $2, $3, jsonb_build_object('order_number', $4::text, 'reason', $5::text))`, fmt.Sprint(userID), fmt.Sprint(request.ID), ports.RequestID(transactionContext), orderNumber, reason)
 		return err
 	})
 	return request, err
@@ -90,7 +90,7 @@ func (r *CommerceRepository) UpdateReturnRequest(ctx context.Context, actorID, r
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'operations.return_status_changed', 'return_request', $2, $3, jsonb_build_object('status', $4, 'reason', $5, 'order_id', $6))`, fmt.Sprint(actorID), fmt.Sprint(requestID), ports.RequestID(transactionContext), status, reason, orderID)
+		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'operations.return_status_changed', 'return_request', $2, $3, jsonb_build_object('status', $4::text, 'reason', $5::text, 'order_id', $6::bigint))`, fmt.Sprint(actorID), fmt.Sprint(requestID), ports.RequestID(transactionContext), status, reason, orderID)
 		return err
 	})
 }

@@ -414,9 +414,26 @@
     target.classList.toggle("is-error", Boolean(error));
   }
 
-  function authDestination(candidate) {
-    if (typeof candidate === "string" && candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\")) return candidate;
-    return "/account";
+  function authDestination(candidate, user) {
+    const roleDestinations = {
+      customer: "/account",
+      seller_owner: "/seller-admin",
+      seller_staff: "/seller-admin",
+      marketplace_admin: "/marketplace-admin",
+      super_admin: "/super-admin",
+      finance_operator: "/finance-portal",
+      operations_returns: "/operations-portal",
+      support_agent: "/support-portal"
+    };
+    const roles = new Set(Array.isArray(user && user.roles) ? user.roles : []);
+    if (roles.has("seller_owner")) roles.delete("seller_staff");
+    const destinations = [...new Set([...roles].map(role => roleDestinations[role]).filter(Boolean))];
+    if (destinations.length !== 1) return "/workspaces";
+
+    const destination = destinations[0];
+    const safeCandidate = typeof candidate === "string" && candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\");
+    if (destination === "/account" && safeCandidate) return candidate;
+    return destination;
   }
 
   async function submitAuth(form) {
@@ -425,8 +442,8 @@
     const values = formData(form);
     try {
       if (action === "login") {
-        await api.signIn({ email: values.email, password: values.password });
-        global.location.assign(authDestination(values.next));
+        const result = await api.signIn({ email: values.email, password: values.password });
+        global.location.assign(authDestination(values.next, unwrap(result) || result));
       } else if (action === "register") {
         const result = await api.signUp({ email: values.email, password: values.password, displayName: values.name });
         const data = unwrap(result) || result;

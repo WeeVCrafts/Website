@@ -607,7 +607,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), user.ID, r)
 	h.clearCSRFCookie(w)
-	h.redirect(w, r, "/account/sessions")
+	h.redirect(w, r, applicationauth.LoginDestination(user.Roles))
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
@@ -652,7 +652,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), user.ID, r)
 	h.clearCSRFCookie(w)
-	h.redirect(w, r, "/account/sessions")
+	h.redirect(w, r, applicationauth.LoginDestination(user.Roles))
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {

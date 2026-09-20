@@ -193,16 +193,19 @@ templ ReviewPanel() {
 
 templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
   <aside class="account-sidebar">
-    <div class="profile-mini"><div class="avatar">{ customerInitials(p.UserName) }</div><b>{ p.UserName }</b><small>{ p.UserEmail }</small></div>
+    <div class="profile-mini"><div class="avatar">{ customerInitials(p.UserName) }</div><b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
     <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
     <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
     <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
     <a href="/orders" class={ liveAccountLinkClass(active, "orders") } aria-current={ liveAccountCurrent(active, "orders") }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
+    <a href="/returns" class={ liveAccountLinkClass(active, "/returns") } aria-current={ liveAccountCurrent(active, "/returns") }><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Returns &amp; refunds</a>
+    <a href="/payments" class={ liveAccountLinkClass(active, "/payments") } aria-current={ liveAccountCurrent(active, "/payments") }><span class="material-symbols-outlined" aria-hidden="true">payments</span> Payments</a>
     <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a>
     <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
     <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
     <a href="/contact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
+    <a href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span> Switch workspace</a>
   </aside>
 }
 

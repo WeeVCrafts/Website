@@ -32,7 +32,6 @@ templ Document(p viewmodels.SellerAdminPage) {
             }
             { children... }
           </main>
-          @SellerFooter()
         </div>
       </div>
     </body>
@@ -52,35 +51,45 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
         <input id="seller-search" name="q" value={ p.Query } placeholder="Search orders, products, payouts, and more..."/>
         <button type="submit" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>
       </form>
-      <a class="seller-notification" href="/seller-admin/messages?notice=Notifications+opened" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><b>3</b><small>Notifications</small></a>
-      <a class="seller-user" href="/seller-admin/settings"><span class="seller-user-avatar">WT</span><span><strong>Weaver's Touch</strong><small>Seller Since 2023</small></span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a>
+      <a class="seller-notification" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span><small>Workspaces</small></a>
+      <a class="seller-user" href="/seller-admin"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
     </div>
-    <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/makers/mithila-arts">Makers</a><a href="/seller-admin/onboarding">Sell on WeeVCrafts</a><span></span><a href="/our-story">Our Story</a><a href="/orders">Track Order</a><a href="/returns">Help</a></nav>
+    <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/brands">Makers</a><span></span><a href="/">Storefront</a><a href="/workspaces">Switch workspace</a></nav>
   </header>
 }
 
 templ SellerSidebar(p viewmodels.SellerAdminPage) {
   <aside id="seller-sidebar" class="seller-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="seller-sidebar-close" type="button" x-ref="sellerSidebarClose" aria-label="Close seller navigation" @click="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="seller-profile-mini"><span class="seller-profile-avatar"><img width="1254" height="1254" src="/assets/images/customer/maker-mithila.webp" alt="Weaver's Touch"/></span><span><strong>Weaver's Touch</strong><small>seller@weaverstouch.in</small><a href="/makers/weavers-touch">View Store <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></span></div>
+    <div class="seller-profile-mini"><span class="seller-profile-avatar">{ p.Initials }</span><span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/brands">Browse makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></span></div>
     <nav class="seller-nav" aria-label="Seller portal navigation">
-      @SellerNav("onboarding", "Onboarding", "home_work", p.Active, "/seller-admin/onboarding")
       @SellerNav("dashboard", "Dashboard", "dashboard", p.Active, "/seller-admin")
-      @SellerNav("orders", "Orders & Shipping", "inventory_2", p.Active, "/seller-admin/orders")
-      @SellerNav("products", "Products", "category", p.Active, "/seller-admin/products")
-      @SellerNav("inventory", "Inventory", "inventory", p.Active, "/seller-admin/inventory")
-      @SellerNav("earnings", "Payments & Settlements", "account_balance_wallet", p.Active, "/seller-admin/earnings")
-      @SellerNav("commission", "Commission", "percent", p.Active, "/seller-admin/commission")
-      @SellerNav("promotions", "Promotions", "local_offer", p.Active, "/seller-admin/promotions")
-      @SellerNav("reviews", "Reviews", "star", p.Active, "/seller-admin/reviews")
-      @SellerNav("analytics", "Analytics", "bar_chart", p.Active, "/seller-admin/analytics")
-      @SellerNav("messages", "Messages", "chat_bubble_outline", p.Active, "/seller-admin/messages")
-      @SellerNav("support", "Help & Support", "help_outline", p.Active, "/seller-admin/support")
-      @SellerNav("team", "Team & Permissions", "manage_accounts", p.Active, "/seller-admin/team")
-      @SellerNav("settings", "Store & Account", "settings", p.Active, "/seller-admin/settings")
-      <a class="seller-nav-link" href="/seller-admin?notice=You+have+been+logged+out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log Out</span></a>
+      if p.CanProducts {
+        @SellerNav("products", "Products", "category", p.Active, "/seller-admin/products")
+      }
+      if p.CanInventory {
+        @SellerNav("inventory", "Inventory", "inventory", p.Active, "/seller-admin/inventory")
+      }
+      if p.CanOrders {
+        @SellerNav("orders", "Orders & Fulfilment", "inventory_2", p.Active, "/seller-admin/orders")
+      }
+      if p.CanReturns {
+        @SellerNav("returns", "Returns", "undo", p.Active, "/seller-admin/returns")
+      }
+      if p.CanReports {
+        @SellerNav("earnings", "Earnings & Settlements", "account_balance_wallet", p.Active, "/seller-admin/earnings")
+        @SellerNav("analytics", "Reports", "bar_chart", p.Active, "/seller-admin/analytics")
+      }
+      if p.CanTeam {
+        @SellerNav("team", "Team & Permissions", "manage_accounts", p.Active, "/seller-admin/team")
+      }
+      <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
+      <a class="seller-nav-link" href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Switch workspace</span></a>
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="seller-nav-link" type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </nav>
-    <div class="seller-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><p>Grow together<br/>Create with purpose.</p><strong>WeeVCrafts<br/>supports artisan<br/>businesses.</strong><a href="/seller-admin/products?notice=New+product+form+opened">List New Product <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    if p.CanProductWrite {
+      <div class="seller-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><p>Grow together<br/>Create with purpose.</p><strong>WeeVCrafts<br/>supports artisan<br/>businesses.</strong><a href="/seller/products/new">List New Product <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    }
   </aside>
 }
 

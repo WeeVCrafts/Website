@@ -37,6 +37,8 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 	}
 	page := viewmodels.AdminPage{
 		Active: active, Workspace: requested,
+		PortalRoot: "/admin", PortalLabel: "Admin Portal", RoleLabel: "Super Admin", DisplayName: "Preview Admin",
+		CanFinance: true, CanSecurity: true,
 		Query:  values.Get("q"),
 		Range:  values.Get("range"),
 		Notice: values.Get("notice"),

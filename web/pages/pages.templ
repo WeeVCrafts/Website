@@ -480,7 +480,7 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           <span class="badge">{ p.Product.Badge }</span><h1>{ p.Product.Name }</h1><p class="lead">{ productLead(p.Product) }</p>@ProductRating(p.Product)
           <a class="seller-line" href={ makerPath(p.Product.Seller) }><img src={ p.Product.ImageURL } alt={ p.Product.Seller } loading="lazy" width="64" height="64"/><span>By { p.Product.Seller }<small><span class="material-symbols-outlined" aria-hidden="true">location_on</span> { p.Product.Location }</small></span><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></a>
           @DetailPrice(p.Product)<p class="tax-note">Inclusive of all taxes</p><p class="description">{ productDescription(p.Product) }</p>
-          <fieldset x-data={ "color: '" + productColor(p.Product) + "'" }><legend>Color: <b x-text="color">{ productColor(p.Product) }</b></legend><button type="button" class="swatch maroon" :aria-pressed="color === 'Royal maroon'" @click="color='Royal maroon'" aria-label="Royal maroon"></button><button type="button" class="swatch green" :aria-pressed="color === 'Natural earth'" @click="color='Natural earth'" aria-label="Natural earth"></button><button type="button" class="swatch blue" :aria-pressed="color === 'Indigo blue'" @click="color='Indigo blue'" aria-label="Indigo blue"></button></fieldset>
+          <fieldset x-data={ "{color: '" + productColor(p.Product) + "'}" }><legend>Color: <b x-text="color">{ productColor(p.Product) }</b></legend><button type="button" class="swatch maroon" :aria-pressed="color === 'Royal maroon'" @click="color='Royal maroon'" aria-label="Royal maroon"></button><button type="button" class="swatch green" :aria-pressed="color === 'Natural earth'" @click="color='Natural earth'" aria-label="Natural earth"></button><button type="button" class="swatch blue" :aria-pressed="color === 'Indigo blue'" @click="color='Indigo blue'" aria-label="Indigo blue"></button></fieldset>
           <div class="quantity-row"><label>Quantity <span class="quantity-control"><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } @click="detailQuantity=Math.max(1, detailQuantity-1)">-</button><output aria-live="polite" x-text="detailQuantity">1</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } @click="detailQuantity=Math.min(99, detailQuantity+1)">+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> { productStockMessage(p.Product) }</span></div>
           <input id="detail-quantity" type="hidden" name="quantity" :value="detailQuantity"/>
           <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
@@ -591,11 +591,25 @@ templ Tracking(p viewmodels.CustomerPage) {
 
 templ Payments(p viewmodels.CustomerPage) {
   @Document(p) {
-    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Account", "Payments")<p class="eyebrow">CLEAR, SECURE, TRACEABLE</p><h1>Payments</h1><p>Review payment methods and reconcile the status of your recent order transactions.</p></section>
-    <section class="container payment-workspace"><div class="payment-main"><article class="payment-method-card"><header><div><span class="material-symbols-outlined" aria-hidden="true">credit_card</span><h2>Saved payment methods</h2></div><a href="/account/addresses?notice=Payment+method+form+opened">Add method</a></header><div class="saved-payment"><span class="payment-logo">VISA</span><div><strong>Card ending in 4586</strong><small>Expires 08/2027 · Default</small></div><a href="/payments?notice=Payment+method+editor+opened">Manage</a></div><div class="saved-payment"><span class="payment-logo upi">UPI</span><div><strong>ananya@upi</strong><small>Verified · Available for checkout</small></div><a href="/payments?notice=UPI+method+editor+opened">Manage</a></div></article><article class="payment-method-card"><header><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Recent payment activity</h2></div><a href="/payments?notice=Payment+history+export+queued">Export</a></header><div class="payment-activity">@PaymentActivityRows(p.PaymentActivity)</div></article></div><aside class="summary payment-aside"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><h2>Payment support</h2><p>A pending or failed payment does not create a duplicate order. Keep the reference number ready when contacting support.</p><a class="primary-button full" href="/contact?notice=Payment+support+opened">Get help with a payment</a><a class="text-link" href="/orders">View related orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside></section>
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Account", "Payments")<p class="eyebrow">CLEAR, SECURE, TRACEABLE</p><h1>Payments</h1><p>Review the real payment activity attached to your orders.</p></section>
+    <section class="container payment-workspace">
+      <div class="payment-main">
+        <article class="payment-method-card">
+          <header><div><span class="material-symbols-outlined" aria-hidden="true">credit_card</span><h2>Payment checkout</h2></div></header>
+          <p>Payment details are entered during checkout and are not saved to your WeeVCrafts account.</p>
+          if p.PaymentMode == "local" {
+            <p><mark>Mock payments active</mark> Checkout uses the local payment simulator.</p>
+          } else if p.PaymentMode != "" {
+            <p>Checkout provider: <b>{ p.PaymentMode }</b></p>
+          }
+          <a class="outline-button" href="/cart">Continue to checkout</a>
+        </article>
+        <article class="payment-method-card"><header><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Recent payment activity</h2></div></header><div class="payment-activity">@PaymentActivityRows(p.PaymentActivity)</div></article>
+      </div>
+      <aside class="summary payment-aside"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><h2>Payment support</h2><p>A pending or failed payment does not create a duplicate order. Keep the reference number ready when contacting support.</p><a class="primary-button full" href="/contact">Get help with a payment</a><a class="text-link" href="/orders">View related orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside>
+    </section>
   }
 }
-
 templ PaymentActivityRows(activities []viewmodels.PaymentActivity) {
   if len(activities) == 0 {
     <p class="empty-state">No recent payment activity.</p>
@@ -614,37 +628,48 @@ templ PaymentStatus(p viewmodels.CustomerPage, state string) {
 }
 
 templ Returns(p viewmodels.CustomerPage) {
-  @Document(p) {
-    <section class="container page-intro returns-intro">
-        @Breadcrumb("Home", "My Account", "Returns and Refunds")<p class="eyebrow">WE HAVE GOT YOU</p><h1>Returns &amp; refunds</h1><p>We want you to love what you bring home. If something is not right, we are here to make it easy.</p></section><section class="container returns-layout"><div class="returns-main"><nav class="tabs" role="tablist" aria-label="Return status"><a class={ returnTabClass(p.Filters, "") } role="tab" aria-current={ returnTabCurrent(p.Filters, "") } aria-selected={ tabSelected(returnTabClass(p.Filters, "") == "active") } href="/returns">Active returns ({ returnCount(p.Returns, "") })</a><a class={ returnTabClass(p.Filters, "refunds") } role="tab" aria-current={ returnTabCurrent(p.Filters, "refunds") } aria-selected={ tabSelected(returnTabClass(p.Filters, "refunds") == "active") } href="/returns?tab=refunds">Refunds ({ returnCount(p.Returns, "refunds") })</a><a class={ returnTabClass(p.Filters, "closed") } role="tab" aria-current={ returnTabCurrent(p.Filters, "closed") } aria-selected={ tabSelected(returnTabClass(p.Filters, "closed") == "active") } href="/returns?tab=closed">Closed requests ({ returnCount(p.Returns, "closed") })</a></nav><article class="return-card"><header><div><mark>{ firstReturn(p.Returns).Status }</mark><h2>Return request { firstReturn(p.Returns).ID }</h2></div><small>Requested { firstReturn(p.Returns).Requested }</small></header><div class="return-main"><img width="1254" height="1254" src={ firstReturn(p.Returns).ImageURL } alt={ firstReturn(p.Returns).ProductName }/><div><h2>{ firstReturn(p.Returns).ProductName }</h2><p>Order <b>{ firstReturn(p.Returns).OrderNumber }</b><br/>Sold by Weaver's Touch</p><strong>{ firstReturn(p.Returns).Amount }</strong></div><dl><dt>Return reason</dt><dd>{ firstReturn(p.Returns).Reason }</dd><dt>Pickup address</dt><dd>HSR Layout,<br/>Bengaluru, Karnataka</dd></dl></div><div class="return-status"><div><h3>Current status</h3><mark>Pickup scheduled</mark></div><p>Our logistics partner will pick up your item soon.</p><div class="status-box"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span> Pickup scheduled for <b>15 Nov 2024, 10 AM - 6 PM</b></div></div><div class="return-progress"><span class="done"><i>1</i><b>Return requested</b></span><span class="done"><i>2</i><b>Seller reviewed</b></span><span class="done"><i>3</i><b>Pickup scheduled</b></span><span><i>4</i><b>Item received</b></span><span><i>5</i><b>Refund initiated</b></span><span><i>6</i><b>Refunded</b></span></div><footer><a class="outline-button" href="/returns/RET123456/label">Download return label</a><a class="outline-button" href="/returns?notice=Return+cancel+requested">Cancel return</a><a class="text-link" href="/contact">Need help?</a></footer></article><article class="return-card compact-return"><header><div><mark>Under review</mark><h2>{ returnAt(p.Returns, 1).ProductName }</h2></div><strong>{ returnAt(p.Returns, 1).Amount }</strong></header><p>Request { returnAt(p.Returns, 1).ID } | { returnAt(p.Returns, 1).Reason }</p><a class="text-link" href={ "/returns?request=" + returnAt(p.Returns, 1).ID }>View request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></article><article class="return-card compact-return"><header><div><mark class="success-mark">Refund completed</mark><h2>{ returnAt(p.Returns, 2).ProductName }</h2></div><strong>{ returnAt(p.Returns, 2).Amount }</strong></header><p>Refund sent to original payment method on 08 Nov 2024.</p><a class="text-link" href={ "/returns?request=" + returnAt(p.Returns, 2).ID }>View refund details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></article></div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><h2>7-day return window</h2><p>You can request a return within 7 days of delivery.</p><a href="/shipping">View return policy <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><div id="support"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our support team is here for you, Monday to Saturday.</p><a href="/contact">Chat with us <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
-  }
+  @ReturnsFiltered(p, "active")
 }
 
 templ ReturnsFiltered(p viewmodels.CustomerPage, tab string) {
   @Document(p) {
     <section class="container page-intro returns-intro">
-      @Breadcrumb("Home", "My Account", "Returns and Refunds")<p class="eyebrow">WE HAVE GOT YOU</p><h1>Returns &amp; refunds</h1><p>We want you to love what you bring home. If something is not right, we are here to make it easy.</p>
+      @Breadcrumb("Home", "My Account", "Returns and refunds")
+      <p class="eyebrow">ORDER SUPPORT</p>
+      <h1>Returns &amp; refunds</h1>
+      <p>Review requests you have made and follow each update from our operations team.</p>
     </section>
     <section class="container returns-layout">
       <div class="returns-main">
-        <nav class="tabs" role="tablist" aria-label="Return status"><a class={ returnTabClass(p.Filters, "") } role="tab" aria-current={ returnTabCurrent(p.Filters, "") } aria-selected={ tabSelected(returnTabClass(p.Filters, "") == "active") } href="/returns">Active returns ({ returnCount(p.Returns, "") })</a><a class={ returnTabClass(p.Filters, "refunds") } role="tab" aria-current={ returnTabCurrent(p.Filters, "refunds") } aria-selected={ tabSelected(returnTabClass(p.Filters, "refunds") == "active") } href="/returns?tab=refunds">Refunds ({ returnCount(p.Returns, "refunds") })</a><a class={ returnTabClass(p.Filters, "closed") } role="tab" aria-current={ returnTabCurrent(p.Filters, "closed") } aria-selected={ tabSelected(returnTabClass(p.Filters, "closed") == "active") } href="/returns?tab=closed">Closed requests ({ returnCount(p.Returns, "closed") })</a></nav>
+        <nav class="tabs" role="tablist" aria-label="Return status">
+          <a class={ returnTabClass(p.Filters, "") } role="tab" aria-current={ returnTabCurrent(p.Filters, "") } aria-selected={ tabSelected(returnTabClass(p.Filters, "") == "active") } href="/returns">Current ({ returnCount(p.Returns, "") })</a>
+          <a class={ returnTabClass(p.Filters, "refunds") } role="tab" aria-current={ returnTabCurrent(p.Filters, "refunds") } aria-selected={ tabSelected(returnTabClass(p.Filters, "refunds") == "active") } href="/returns?tab=refunds">Refunded ({ returnCount(p.Returns, "refunds") })</a>
+          <a class={ returnTabClass(p.Filters, "closed") } role="tab" aria-current={ returnTabCurrent(p.Filters, "closed") } aria-selected={ tabSelected(returnTabClass(p.Filters, "closed") == "active") } href="/returns?tab=closed">Closed ({ returnCount(p.Returns, "closed") })</a>
+        </nav>
         if len(returnSubset(p.Returns, tab)) == 0 {
-          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><h2>No returns in this view</h2><p>There are no { tab } requests to show right now. Your return history will appear here when it changes.</p><a class="primary-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><h2>No return requests here</h2><p>Return requests and their latest status will appear here. To request a return, open an eligible order.</p><a class="primary-button" href="/orders">View your orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
         } else {
           for _, item := range returnSubset(p.Returns, tab) {
             @ReturnCompact(item)
           }
         }
       </div>
-      <aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><h2>7-day return window</h2><p>You can request a return within 7 days of delivery.</p><a href="/shipping">View return policy <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><div id="support"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our support team is here for you, Monday to Saturday.</p><a href="/contact">Chat with us <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside>
+      <aside class="returns-aside">
+        <div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><h2>Request a return</h2><p>Open an eligible order and describe the issue. Our operations team will review your request.</p><a href="/orders">View orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+        <div id="support"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Contact our support team if you need help with an order or return.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+      </aside>
     </section>
   }
 }
 
 templ ReturnCompact(item viewmodels.Return) {
-  <article class="return-card compact-return"><header><div><mark>{ item.Status }</mark><h2>{ item.ProductName }</h2></div><strong>{ item.Amount }</strong></header><p>Request { item.ID } | { item.Reason }</p><a class="text-link" href={ "/returns?request=" + item.ID }>{ returnActionLabel(item.Status) } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></article>
+  <article class="return-card compact-return">
+    <header><div><mark>{ item.Status }</mark><h2>{ item.ProductName }</h2></div><strong>{ item.Amount }</strong></header>
+    <p><b>Request { item.ID }</b> · { item.Requested } · Order { item.OrderNumber }</p>
+    <p>{ item.Reason }</p>
+    <a class="text-link" href={ "/orders/" + item.OrderNumber }>View order details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+  </article>
 }
-
 templ Account(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="account-welcome"><div class="container"><p class="eyebrow">YOUR WEEVCRAFTS HOME</p><h1>Welcome back,<br/><em>Ananya!</em></h1><p>Glad to have you here. Together, we support artisans and keep traditions alive.</p></div><img src="/assets/images/customer/maker-mithila.webp" alt="Artisan at work" width="1254" height="1254"/></section><section class="container account-layout">
@@ -664,6 +689,18 @@ templ OrderDetail(p viewmodels.CustomerPage) {
       <div class="order-detail-main">
         <div class="order-detail-status"><mark>{ p.SelectedOrder.Status }</mark><h2>{ orderStatusTitle(p.SelectedOrder) }</h2><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>
         @OrderDetailRows(p.SelectedOrder.Items)
+        if p.SelectedOrder.ReturnStatus != "" {
+          <section class="order-return-card"><h2>Return request</h2><p>Status: <mark>{ returnStatusLabel(p.SelectedOrder.ReturnStatus) }</mark></p><a class="text-link" href="/returns">View return history <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
+        } else if p.SelectedOrder.CanRequestReturn {
+          <form class="order-return-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/return" }>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <h2>Request a return</h2>
+            <p>Tell our operations team what went wrong. You can follow the request from Returns &amp; refunds.</p>
+            <label for="return-reason">Reason for return</label>
+            <textarea id="return-reason" name="reason" minlength="10" maxlength="1000" required></textarea>
+            <button class="primary-button" type="submit">Submit return request</button>
+          </form>
+        }
       </div>
       <aside class="summary"><h2>Order summary</h2><p>Items ({ len(p.SelectedOrder.Items) }) <b>{ p.SelectedOrder.Total }</b></p><p>Shipping <b>Included</b></p><hr/><h3>Total amount <strong>{ p.SelectedOrder.Total }</strong></h3><a class="outline-button full" href="/orders/invoice">View invoice</a><a class="outline-button full" href="/contact">Need help?</a></aside>
     </section>

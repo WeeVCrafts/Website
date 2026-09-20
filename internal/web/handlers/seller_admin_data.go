@@ -52,6 +52,9 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 
 	page := viewmodels.SellerAdminPage{
 		Active: active, Workspace: requested,
+		DisplayName: "Preview Seller", UserEmail: "seller@example.test", SellerName: "Weaver's Touch", RoleLabel: "Seller Owner", Initials: "PS", CSRFToken: "test-csrf",
+		CanProducts: true, CanProductWrite: true, CanInventory: true, CanInventoryWrite: true,
+		CanOrders: true, CanFulfill: true, CanReturns: true, CanReports: true, CanTeam: true,
 		Query:  values.Get("q"),
 		Range:  values.Get("range"),
 		Tab:    values.Get("tab"),

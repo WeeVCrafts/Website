@@ -1,0 +1,205 @@
+package selleradmin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalDashboard(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		@SellerStatGrid(p)
+		<section class="seller-two-grid">
+			<article class="seller-panel">
+				<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">category</span><span><h2>Products</h2><p>Current catalogue for { p.SellerName }</p></span></div>
+					if p.CanProducts {
+						<a class="seller-panel-link" href="/seller-admin/products">Open products</a>
+					}
+				</div>
+				if len(p.Products) == 0 {
+					@SellerTableEmpty("No products yet", "Products you create will appear here.")
+				} else {
+					<div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Price</span><span>Stock</span><span>Status</span></div>
+						for _, product := range p.Products {
+							<div class="seller-product-row"><span class="seller-product-cell"><b>{ product.Name }</b></span><span>{ product.SKU }</span><span>{ product.Price }</span><span>{ product.Stock }</span><span>{ product.Status }</span></div>
+						}
+					</div></div>
+				}
+			</article>
+			<article class="seller-panel">
+				<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span><h2>Recent orders</h2><p>Fulfil orders from this seller account.</p></span></div>
+					if p.CanOrders {
+						<a class="seller-panel-link" href="/seller-admin/orders">Open orders</a>
+					}
+				</div>
+				if len(p.Orders) == 0 {
+					@SellerTableEmpty("No orders yet", "Paid customer orders will appear here.")
+				} else {
+					<div class="seller-table-scroll"><div class="seller-mini-table orders-mini"><div class="seller-table-head"><span>Order</span><span>Customer</span><span>Items</span><span>Value</span><span>Status</span></div>
+						for _, order := range p.Orders {
+							<div class="seller-table-row"><b>{ order.Number }</b><span>{ order.Customer }</span><span>{ order.Items }</span><strong>{ order.Value }</strong><span>{ order.Status }</span></div>
+						}
+					</div></div>
+				}
+			</article>
+		</section>
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">bolt</span><span><h2>Available actions</h2><p>Actions are shown only when your seller account has the required permission.</p></span></div></div>
+			<div class="seller-quick-actions">
+				if p.CanProductWrite {
+					<a href="/seller-admin/products/new"><span class="material-symbols-outlined" aria-hidden="true">add</span><b>Create product draft</b><small>Submit a new listing for marketplace review.</small></a>
+				}
+				if p.CanInventory {
+					<a href="/seller-admin/inventory"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>Manage stock</b><small>Review available and reserved units.</small></a>
+				}
+				if p.CanFulfill {
+					<a href="/seller-admin/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Fulfil customer orders</b><small>Record processing and shipment details.</small></a>
+				}
+				if p.CanTeam {
+					<a href="/seller-admin/team"><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><b>Manage seller staff</b><small>Assign permissions for this seller only.</small></a>
+				}
+			</div>
+		</section>
+	}
+}
+
+templ PortalProducts(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<form class="seller-toolbar" action="/seller-admin/products" method="get"><label class="sr-only" for="portal-product-query">Search products</label><input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
+			if p.CanProductWrite {
+				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
+			}
+		</form>
+		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Category</span><span>Price</span><span>Stock</span><span>Status</span><span>Actions</span></div>
+			for _, product := range p.Products {
+				<div class="seller-product-row"><span class="seller-product-cell"><b>{ product.Name }</b></span><span>{ product.SKU }</span><span>{ product.Category }</span><span>{ product.Price }</span><span>{ product.Stock }</span><span>{ product.Status }</span><span class="seller-row-actions">
+					if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
+						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit draft</a>
+						<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
+					}
+				</span></div>
+			}
+			if len(p.Products) == 0 {
+				@SellerTableEmpty("No products found", "Create a product draft or change your search.")
+			}
+		</div></div></section>
+	}
+}
+
+templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductForm) {
+	@Document(p) {
+		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post">
+			<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+			<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
+			<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
+			<label>Brand name<input name="brand_name" value={ form.BrandName } required/></label>
+			<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
+			<label>Category name<input name="category_name" value={ form.CategoryName } required/></label>
+			<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+			<label>SKU<input name="sku" value={ form.SKU } required/></label>
+			<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
+			if p.CanInventoryWrite {
+				<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+			} else {
+				<input type="hidden" name="initial_stock" value="0"/>
+			}
+			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } placeholder="Delivery to serviceable PIN codes in India"/></label>
+			<label class="seller-form-wide">Description<textarea name="description" required rows="5">{ form.Description }</textarea></label>
+			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save draft</button></div>
+		</form></section>
+	}
+}
+
+templ PortalInventory(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Variant</span><span>Available</span><span>Reserved</span><span>Stock action</span></div>
+			for _, item := range p.Inventory {
+				<div class="seller-product-row"><span class="seller-product-cell"><b>{ item.Name }</b></span><span>{ item.SKU }</span><span>{ item.Variant }</span><span>{ item.Available }</span><span>{ item.Reserved }</span><span>
+					if p.CanInventoryWrite {
+						<form class="seller-inline-form" method="post" action="/seller-admin/inventory/adjust"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/><label class="sr-only" for={ "stock-delta-" + item.VariantID }>Stock change for { item.Name }</label><input id={ "stock-delta-" + item.VariantID } type="number" name="delta" required placeholder="+/- qty"/><input name="reason" required minlength="3" maxlength="500" placeholder="Reason"/><button class="seller-button primary" type="submit">Save</button></form>
+					} else { <span>Read only</span> }
+				</span></div>
+			}
+			if len(p.Inventory) == 0 {
+				@SellerTableEmpty("No inventory found", "Inventory records appear when a product variant is created.")
+			}
+		</div></div></section>
+	}
+}
+
+templ PortalOrders(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Order</span><span>Placed</span><span>Customer</span><span>Items</span><span>Order value</span><span>Payment</span><span>Fulfilment</span></div>
+			for _, order := range p.Orders {
+				<div class="seller-product-row"><span><b>{ order.Number }</b></span><span>{ order.Date }</span><span>{ order.Customer }</span><span>{ order.Items }</span><span>{ order.Value }</span><span>{ order.Payment }</span><span>
+					<strong>{ order.Status }</strong>
+					if p.CanFulfill && order.Status != "delivered" {
+						<form class="seller-inline-form" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ order.SellerID }/><input type="hidden" name="order_number" value={ order.Number }/><label class="sr-only" for={ "fulfil-status-" + order.Number }>Fulfilment status for { order.Number }</label><select id={ "fulfil-status-" + order.Number } name="status"><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option></select><input name="carrier" maxlength="80" placeholder="Carrier"/><input name="tracking_number" maxlength="120" placeholder="Tracking number (needed to ship)"/><input name="note" maxlength="500" placeholder="Fulfilment note"/><button class="seller-button primary" type="submit">Update fulfilment</button></form>
+					}
+				</span></div>
+			}
+			if len(p.Orders) == 0 {
+				@SellerTableEmpty("No orders to fulfil", "Paid orders containing your products will appear here.")
+			}
+		</div></div></section>
+	}
+}
+
+templ PortalReturns(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Return</span><span>Order</span><span>Customer</span><span>Item</span><span>Reason</span><span>Requested</span><span>Status</span></div>
+			for _, item := range p.Returns {
+				<div class="seller-product-row"><b>{ item.Number }</b><span>{ item.Order }</span><span>{ item.Customer }</span><span>{ item.Product }</span><span>{ item.Reason }</span><span>{ item.Date }</span><span>{ item.Status }</span></div>
+			}
+			if len(p.Returns) == 0 {
+				@SellerTableEmpty("No return requests", "Customer return requests that include your products appear here.")
+			}
+		</div></div></section>
+	}
+}
+
+templ PortalEarnings(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-two-grid"><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
+			if len(p.Ledger) == 0 {
+				@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
+			} else {
+				<div class="seller-table-scroll"><div class="seller-mini-table"><div class="seller-table-head"><span>Reference</span><span>Date</span><span>Sale</span><span>Commission</span><span>Net</span><span>Status</span></div>@LedgerRows(p.Ledger)</div></div>
+			}
+		</article><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div></div>
+			if len(p.Settlements) == 0 {
+				@SellerTableEmpty("No settlements", "Settlement records will appear here when available.")
+			} else {
+				@SettlementRows(p.Settlements)
+			}
+		</article></section>
+	}
+}
+
+templ PortalAnalytics(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		@SellerStatGrid(p)
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller activity</h2><p>Live order, catalogue and stock totals from PostgreSQL.</p></div></div><p>Detailed trend reporting will appear after this seller has completed orders.</p></section>
+	}
+}
+
+templ PortalUnavailable(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<div class="seller-table-empty seller-page-empty" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><strong>This workspace is not available yet</strong><small>It currently has no connected workflow. Use the live seller features in the navigation.</small></div>
+	}
+}
+
+templ PortalTeam(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller staff</h2><p>Staff accounts and their seller-scoped permissions.</p></div></div>
+			if p.CanTeam {
+				<form class="seller-inline-form" method="post" action="/seller-admin/team/add"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Email<input type="email" name="email" required/></label><fieldset><legend>Assign permissions</legend><label><input type="checkbox" name="permissions" value="PRODUCT_READ"/>Products</label><label><input type="checkbox" name="permissions" value="PRODUCT_WRITE"/>Edit products</label><label><input type="checkbox" name="permissions" value="INVENTORY_READ"/>Inventory</label><label><input type="checkbox" name="permissions" value="INVENTORY_WRITE"/>Adjust stock</label><label><input type="checkbox" name="permissions" value="ORDER_READ"/>Orders</label><label><input type="checkbox" name="permissions" value="ORDER_FULFILL"/>Fulfil orders</label><label><input type="checkbox" name="permissions" value="RETURN_READ"/>Returns</label><label><input type="checkbox" name="permissions" value="REPORT_READ"/>Reports</label></fieldset><button class="seller-button primary" type="submit">Add seller staff</button></form>
+			}
+			if len(p.Team) == 0 {
+				@SellerTableEmpty("No staff accounts", "Add a staff account and assign only the access it needs.")
+			} else {
+				<div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Name</span><span>Email</span><span>Status</span><span>Permissions</span><span>Action</span></div>
+					for _, member := range p.Team {
+						<div class="seller-product-row"><b>{ member.Name }</b><span>{ member.Email }</span><span>{ member.Status }</span><span>{ member.Permissions }</span><span><form method="post" action="/seller-admin/team/remove"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="user_id" value={ member.UserID }/><button class="seller-button outline" type="submit">Remove</button></form></span></div>
+					}
+				</div></div>
+			}
+		</section>
+	}
+}

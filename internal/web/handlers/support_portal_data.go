@@ -19,7 +19,8 @@ func supportPortalPage(path string, values url.Values) viewmodels.SupportPortalP
 	}
 
 	page := viewmodels.SupportPortalPage{
-		Active: active,
+		Active:      active,
+		DisplayName: "Preview Support Agent", RoleLabel: "Support Agent", Initials: "PSA",
 		Query:  values.Get("q"),
 		Range:  values.Get("range"),
 		Tab:    values.Get("tab"),
@@ -32,7 +33,7 @@ func supportPortalPage(path string, values url.Values) viewmodels.SupportPortalP
 	switch active {
 	case "dashboard":
 		page.Title = "Support Dashboard"
-		page.Subtitle = "Welcome back, Aditi! Here's what's happening with customer support today."
+		page.Subtitle = "Review and resolve customer support cases from the live queue."
 		page.Stats = supportDashboardStats()
 		page.Cases = supportCases()
 		page.Conversations = supportConversations()
@@ -55,7 +56,7 @@ func supportPortalPage(path string, values url.Values) viewmodels.SupportPortalP
 	default:
 		page.Active = "dashboard"
 		page.Title = "Support Dashboard"
-		page.Subtitle = "Welcome back, Aditi! Here's what's happening with customer support today."
+		page.Subtitle = "Review and resolve customer support cases from the live queue."
 		page.Stats = supportDashboardStats()
 		page.Cases = supportCases()
 		page.Conversations = supportConversations()

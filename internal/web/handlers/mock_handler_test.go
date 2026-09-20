@@ -222,12 +222,12 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/checkout", want: []string{"Delivery address", "Payment method", "Place order"}},
 		{route: "/orders", want: []string{"Track order", "Past orders", "Orders"}},
 		{route: "/tracking", want: []string{"Track your order", "Shipment in transit", "Tracking ID: 149730248756"}},
-		{route: "/payments", want: []string{"Saved payment methods", "Recent payment activity", "Failed"}},
+		{route: "/payments", want: []string{"Payment checkout", "Recent payment activity", "Failed"}},
 		{route: "/payments/success", want: []string{"Payment successful", "Payment captured", "#PAY25603421"}},
 		{route: "/payments/pending", want: []string{"Payment pending", "Reconciliation in progress", "#PAY25602912"}},
 		{route: "/payments/failed", want: []string{"Payment failed", "Action needed", "#PAY25601432"}},
 		{route: "/deals", want: []string{"Handmade deals", "Offers with a purpose", "Limited-time edit"}},
-		{route: "/returns", want: []string{"Active returns", "Pickup scheduled", "Refund completed"}},
+		{route: "/returns", want: []string{"Current", "Return in Progress"}},
 		{route: "/account", want: []string{"Profile information", "Security &amp; sessions", "Need a hand?"}},
 		{route: "/login", want: []string{"Sign in to WeeVCrafts", "Keep me signed in"}},
 		{route: "/faq", want: []string{"Frequently asked questions", "How do I know a product is handmade?"}},
@@ -292,16 +292,16 @@ func TestMockOrderStatusEmptyStateIsTruthful(t *testing.T) {
 func TestMockReturnTabsUseTheirOwnDataset(t *testing.T) {
 	refunds := httptest.NewRecorder()
 	NewMockHandler().ServeHTTP(refunds, httptest.NewRequest(http.MethodGet, "/returns?tab=refunds", nil))
-	if refunds.Code != http.StatusOK || !strings.Contains(refunds.Body.String(), "Refund completed") || !strings.Contains(refunds.Body.String(), "View refund details") {
+	if refunds.Code != http.StatusOK || !strings.Contains(refunds.Body.String(), "Refund completed") || !strings.Contains(refunds.Body.String(), "View order details") {
 		t.Fatal("refunds tab did not render the refund dataset")
 	}
-	if strings.Contains(refunds.Body.String(), "Return request RET123456") {
+	if strings.Contains(refunds.Body.String(), "RET123456") {
 		t.Fatal("refunds tab leaked the active return card")
 	}
 
 	closed := httptest.NewRecorder()
 	NewMockHandler().ServeHTTP(closed, httptest.NewRequest(http.MethodGet, "/returns?tab=closed", nil))
-	if closed.Code != http.StatusOK || !strings.Contains(closed.Body.String(), "No returns in this view") || strings.Contains(closed.Body.String(), "Return request RET123456") {
+	if closed.Code != http.StatusOK || !strings.Contains(closed.Body.String(), "No return requests here") || strings.Contains(closed.Body.String(), "RET123456") {
 		t.Fatal("closed returns tab should render a truthful empty state")
 	}
 }
@@ -397,7 +397,7 @@ func TestMockSellerAdminRoutes(t *testing.T) {
 				t.Fatalf("status = %d, want 200", res.Code)
 			}
 			body := res.Body.String()
-			if !strings.Contains(body, "Seller Portal") || !strings.Contains(body, "Weaver's Touch") || !strings.Contains(body, "Preview action completed") {
+			if !strings.Contains(body, "Seller Portal") || !strings.Contains(body, "Weaver&#39;s Touch") || !strings.Contains(body, "Preview action completed") {
 				t.Fatal("seller response is missing the portal identity, seller scope or action notice")
 			}
 		})
@@ -498,7 +498,7 @@ func TestMockSupportPortalRoutes(t *testing.T) {
 				t.Fatalf("status = %d, want 200", res.Code)
 			}
 			body := res.Body.String()
-			for _, want := range []string{"Support Portal", "Aditi Rao", "Preview action completed"} {
+			for _, want := range []string{"Support Agent", "Preview Support Agent", "Preview action completed"} {
 				if !strings.Contains(body, want) {
 					t.Errorf("response is missing %q", want)
 				}

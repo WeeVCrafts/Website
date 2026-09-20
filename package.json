@@ -3,9 +3,11 @@
   "private": true,
   "scripts": {
     "css:preview": "node ./scripts/minify-preview-css.js",
-    "css:build": "tailwindcss -i ./web/assets/css/source.css -o ./internal/transport/web/static/app.css --minify && npm run css:preview"
+    "css:build": "tailwindcss -i ./web/assets/css/source.css -o ./internal/transport/web/static/app.css --minify && npm run css:preview",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "clean-css": "5.3.3",
     "railway": "^3.11.0",
     "tailwindcss": "3.4.17"

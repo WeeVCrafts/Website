@@ -1,0 +1,290 @@
+package admin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalDashboard(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<section class="admin-portal-welcome admin-panel">
+			<p class="admin-eyebrow">{ p.RoleLabel } workspace</p>
+			<h2>Welcome back, { p.DisplayName }</h2>
+			<p>Live work queues and account activity for your assigned WeeVCrafts role.</p>
+		</section>
+		@StatGrid(p)
+		if p.IsFinance {
+			<section class="admin-two-grid">
+				@PortalTransactionTable(p)
+				@PortalSettlementTable(p)
+			</section>
+		} else if p.IsOperations {
+			<section class="admin-two-grid">
+				@PortalReturnList(p)
+				@PortalOrderList(p)
+			</section>
+		} else if p.CanSecurity {
+			<section class="admin-two-grid">
+				@PortalProductQueue(p)
+				@PortalAuditList(p)
+			</section>
+			<section class="admin-two-grid">
+				@PortalSellerList(p)
+				<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Review user roles and audited access changes.</p></div></div></div><a class="admin-button primary" href={ p.PortalRoot + "/security" }>Manage roles and security</a></article>
+			</section>
+		} else {
+			<section class="admin-two-grid">
+				@PortalProductQueue(p)
+				@PortalSellerList(p)
+			</section>
+			<section class="admin-two-grid">
+				@PortalReturnList(p)
+				@PortalOrderList(p)
+			</section>
+		}
+	}
+}
+
+templ PortalSellers(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel">
+			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><div><h2>Seller accounts</h2><p>Application status from the seller records in PostgreSQL.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Seller</span><span>Created</span><span>Status</span><span>Review</span></div>
+				for _, seller := range p.Sellers {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ seller.Image } alt=""/>{ seller.Name }</span><span>{ seller.Applied }</span><span class={ "status " + statusClass(seller.Status) }>{ seller.Status }</span><span>
+						<form class="seller-status-form" method="post" action={ p.PortalRoot + "/sellers/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ seller.ID }/><select name="status" aria-label={ "Set status for " + seller.Name }><option value="active">Approve / activate</option><option value="suspended">Suspend</option><option value="closed">Close</option></select><input name="reason" minlength="4" maxlength="1000" placeholder="Reason for audit log" required/><button class="admin-button secondary" type="submit">Save</button></form>
+					</span></div>
+				}
+				if len(p.Sellers) == 0 {
+					@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here when an account starts onboarding.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalProducts(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><div><h2>Product catalog</h2><p>Seller submissions and review decisions from the live catalog.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>Seller</span><span>Category</span><span>Price</span><span>Status</span><span>Submitted</span><span>Review</span></div>
+				for _, product := range p.Products {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions">
+						if product.Status == "pending_review" {
+							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
+							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="reject"/><input name="reason" minlength="4" maxlength="1000" placeholder="Rejection reason" required/><button class="admin-button danger" type="submit">Reject</button></form>
+						} else { <span>—</span> }
+					</span></div>
+				}
+				if len(p.Products) == 0 {
+					@AdminTableEmpty("No products are available.", "Seller product submissions will appear here for review.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalInventory(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warehouse</span><div><h2>Marketplace inventory</h2><p>Current variant stock and reservations across Indian sellers.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>On hand</span><span>Reserved</span><span>Available</span><span>Low stock threshold</span><span>Inventory value</span></div>
+				for _, item := range p.Inventory {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span><span>{ item.SKU }</span><span>{ item.Stock }</span><span>{ item.Reserved }</span><span>{ item.Available }</span><span class={ "status " + statusClass(item.Status) }>{ item.Reorder }</span><strong>{ item.Value }</strong></div>
+				}
+				if len(p.Inventory) == 0 {
+					@AdminTableEmpty("No active product variants are available.", "Inventory will appear after sellers create products and variants.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalOrders(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@PortalOrderList(p)
+	}
+}
+
+templ PortalReturns(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@PortalReturnList(p)
+	}
+}
+
+templ PortalFinance(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		if p.Workspace == "failed-payments" {
+			<p class="admin-page-note">Showing failed payment attempts from the live payment ledger.</p>
+		} else if p.Workspace == "refunds" {
+			<p class="admin-page-note">Showing payment attempts recorded as refunded.</p>
+		} else if p.Workspace == "settlements" {
+			<p class="admin-page-note">Showing persisted settlement records.</p>
+		}
+		<section class="admin-two-grid">
+			@PortalSettlementTable(p)
+			if p.Workspace != "settlements" {
+				@PortalTransactionTable(p)
+			}
+		</section>
+	}
+}
+
+templ PortalSupport(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Support cases</h2><p>Customer support queue from live PostgreSQL records.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Case</span><span>Customer</span><span>Subject</span><span>Priority</span><span>Created</span><span>Status</span></div>
+				for _, item := range p.SupportCases {
+					<div class="table-row"><strong>{ item.Case }</strong><span>{ item.Customer }</span><span>{ item.Subject }</span><span class={ "status " + priorityClass(item.Priority) }>{ item.Priority }</span><span>{ item.Date }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+				}
+				if len(p.SupportCases) == 0 {
+					@AdminTableEmpty("No support cases are open.", "New customer requests will appear in the support queue.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalMarketing(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">campaign</span><div><h2>Marketplace promotions</h2><p>Persisted promotion records. Creation and publishing controls are not enabled in this workspace.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Promotion</span><span>Type</span><span>Starts</span><span>Ends</span><span>Status</span><span>Channel</span></div>
+				for _, item := range p.Campaigns {
+					<div class="table-row"><strong>{ item.Name }</strong><span>{ item.Type }</span><span>{ item.Start }</span><span>{ item.End }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Channel }</span></div>
+				}
+				if len(p.Campaigns) == 0 {
+					@AdminTableEmpty("No promotions are configured.", "Promotion records will appear here when a promotion workflow is enabled.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalAnalytics(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div></div>@StatGrid(p)</article>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span><div><h2>Service configuration</h2><p>Runtime integrations configured for this deployment.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Service</span><span>Value</span><span>Purpose</span></div>
+				for _, config := range p.Configs {
+					<div class="table-row"><strong>{ config.Name }</strong><span>{ config.Value }</span><span>{ config.Detail }</span></div>
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalSecurity(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@RoleAssignmentList(p)
+		@PortalAuditList(p)
+	}
+}
+
+templ PortalProductQueue(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">fact_check</span><div><h2>Products awaiting review</h2><p>Seller submissions requiring an approval decision.</p></div></div><a class="panel-link" href={ p.PortalRoot + "/products" }>Open catalog</a></div>
+		<div class="admin-table compact"><div class="table-head"><span>Product</span><span>Seller</span><span>Status</span></div>
+			for _, product := range p.Products {
+				if product.Status == "pending_review" {
+					<div class="table-row"><strong>{ product.Name }</strong><span>{ product.Seller }</span><span class="status pending">{ product.Status }</span></div>
+				}
+			}
+			if !hasPendingProducts(p.Products) {
+				@AdminTableEmpty("No products are waiting for review.", "New submissions from sellers will appear here.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalSellerList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><div><h2>Seller applications</h2><p>Current application state in the seller directory.</p></div></div><a class="panel-link" href={ p.PortalRoot + "/sellers" }>Review sellers</a></div>
+		<div class="admin-table compact"><div class="table-head"><span>Seller</span><span>Submitted</span><span>Status</span></div>
+			for _, seller := range p.Sellers {
+				<div class="table-row"><strong>{ seller.Name }</strong><span>{ seller.Applied }</span><span class={ "status " + statusClass(seller.Status) }>{ seller.Status }</span></div>
+			}
+			if len(p.Sellers) == 0 {
+				@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here after onboarding.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalOrderList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><div><h2>Recent orders</h2><p>Marketplace order status and customer totals.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Order</span><span>Customer</span><span>Total</span><span>Status</span></div>
+			for _, order := range p.Orders {
+				<div class="table-row"><strong>{ order.Number }</strong><span>{ order.Customer }</span><span>{ order.Value }</span><span class={ "status " + statusClass(order.Fulfillment) }>{ order.Fulfillment }</span></div>
+			}
+			if len(p.Orders) == 0 {
+				@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalReturnList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Return requests</h2><p>Update return decisions in the persistent operations queue.</p></div></div></div>
+		<div class="portal-return-list">
+			for _, item := range p.Returns {
+				<section class="portal-return-item"><div><strong>{ item.Number } · { item.Customer }</strong><p>Order { item.Product } · { item.Reason }</p><small>Requested { item.Date } · { item.Amount }</small><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+					if item.Status == "pending" {
+						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
+					} else if item.Status == "approved" {
+						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark item received</button></form>
+					} else {
+						<p class="admin-page-note">This return request is closed for operations updates.</p>
+					}
+				</section>
+			}
+			if len(p.Returns) == 0 {
+				@AdminTableEmpty("No return requests are open.", "Customer return requests will appear in this queue.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalSettlementTable(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Persisted settlement batches and payable amounts.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Seller</span><span>Payable</span><span>Status</span><span>Period end</span></div>
+			for _, item := range p.Settlements {
+				<div class="table-row"><strong>{ item.Seller }</strong><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Date }</span></div>
+			}
+			if len(p.Settlements) == 0 {
+				@AdminTableEmpty("No settlement records yet.", "Seller settlement records will appear here after they are generated.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalTransactionTable(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><h2>Payment attempts</h2><p>Transactions from the configured mock or payment provider.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Date</span><span>Order</span><span>Amount</span><span>Status</span></div>
+			for _, item := range p.Transactions {
+				<div class="table-row"><span>{ item.Date }</span><strong>{ item.Reference }</strong><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+			}
+			if len(p.Transactions) == 0 {
+				@AdminTableEmpty("No payment attempts yet.", "Payment records will appear here after a customer starts checkout.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalAuditList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">history</span><div><h2>Recent audit events</h2><p>Recorded administrative and operational changes.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Time</span><span>Actor</span><span>Action</span><span>Record</span></div>
+			for _, item := range p.AuditEntries {
+				<div class="table-row"><span>{ item.Date }</span><span>{ item.User }</span><strong>{ item.Action }</strong><span>{ item.Entity } #{ item.Details }</span></div>
+			}
+			if len(p.AuditEntries) == 0 {
+				@AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.")
+			}
+		</div>
+	</article>
+}
+
+func hasPendingProducts(products []viewmodels.AdminProduct) bool {
+	for _, product := range products { if product.Status == "pending_review" { return true } }
+	return false
+}

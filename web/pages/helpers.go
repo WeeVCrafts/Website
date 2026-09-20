@@ -291,20 +291,8 @@ func returnAt(returns []viewmodels.Return, index int) viewmodels.Return {
 func returnCount(returns []viewmodels.Return, tab string) int {
 	count := 0
 	for _, item := range returns {
-		status := strings.ToLower(strings.TrimSpace(item.Status))
-		switch tab {
-		case "refunds":
-			if strings.Contains(status, "refund") {
-				count++
-			}
-		case "closed":
-			if strings.Contains(status, "closed") {
-				count++
-			}
-		default:
-			if !strings.Contains(status, "refund") && !strings.Contains(status, "closed") {
-				count++
-			}
+		if returnMatchesTab(item.Status, tab) {
+			count++
 		}
 	}
 	return count
@@ -314,21 +302,40 @@ func returnSubset(returns []viewmodels.Return, tab string) []viewmodels.Return {
 	tab = strings.ToLower(strings.TrimSpace(tab))
 	filtered := make([]viewmodels.Return, 0, len(returns))
 	for _, item := range returns {
-		status := strings.ToLower(strings.TrimSpace(item.Status))
-		matches := false
-		switch tab {
-		case "refunds":
-			matches = strings.Contains(status, "refund")
-		case "closed":
-			matches = strings.Contains(status, "closed")
-		default:
-			matches = !strings.Contains(status, "refund") && !strings.Contains(status, "closed")
-		}
-		if matches {
+		if returnMatchesTab(item.Status, tab) {
 			filtered = append(filtered, item)
 		}
 	}
 	return filtered
+}
+
+func returnMatchesTab(status, tab string) bool {
+	status = strings.ToLower(strings.TrimSpace(status))
+	switch strings.ToLower(strings.TrimSpace(tab)) {
+	case "refunds":
+		return status == "refunded" || strings.Contains(status, "refund")
+	case "closed":
+		return status == "declined" || status == "rejected" || status == "cancelled" || status == "closed"
+	default:
+		return !returnMatchesTab(status, "refunds") && !returnMatchesTab(status, "closed")
+	}
+}
+
+func returnStatusLabel(status string) string {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "pending":
+		return "Pending review"
+	case "approved":
+		return "Approved"
+	case "received":
+		return "Item received"
+	case "rejected":
+		return "Declined"
+	case "refunded":
+		return "Refunded"
+	default:
+		return status
+	}
 }
 
 func returnActionLabel(status string) string {

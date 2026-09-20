@@ -40,8 +40,10 @@ type CartItem struct {
 
 type Order struct {
 	Number, Status, State, Payment, Date string
+	ReturnStatus                         string
 	Total                                string
 	Items                                []CartItem
+	CanRequestReturn                     bool
 }
 
 type PaymentActivity struct {
@@ -61,6 +63,7 @@ type CustomerPage struct {
 	Route, Title, Query, Category, Sort, Notice     string
 	Brand, Tagline, Description                     string
 	UserName, UserEmail, MemberSince                string
+	RoleLabel, PortalLabel                          string
 	PaymentMode, PaymentPublicKey                   string
 	PaymentReady                                    bool
 	CSRFToken                                       string

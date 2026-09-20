@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,9 +27,12 @@ func (h *Handler) orderReturn(w http.ResponseWriter, r *http.Request, orderNumbe
 		return
 	}
 	if _, err := h.returnService.Create(r.Context(), session.UserID, orderNumber, r.FormValue("reason")); err != nil {
+		slog.Default().Error("customer return request failed", "request_id", ports.RequestID(r.Context()), "error", err)
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidReturnRequest):
 			h.renderError(w, http.StatusUnprocessableEntity, "Return request invalid", "Tell us what went wrong in at least 10 characters.")
+		case errors.Is(err, ports.ErrForbidden):
+			h.renderError(w, http.StatusForbidden, "Return request denied", "This customer account cannot request a return for that order.")
 		case errors.Is(err, ports.ErrReturnNotFound):
 			h.renderError(w, http.StatusNotFound, "Return unavailable", "This order is not available for a return request.")
 		case errors.Is(err, ports.ErrReturnState):
@@ -38,7 +42,7 @@ func (h *Handler) orderReturn(w http.ResponseWriter, r *http.Request, orderNumbe
 		}
 		return
 	}
-	h.redirect(w, r, "/orders/"+orderNumber)
+	h.redirect(w, r, "/orders/"+orderNumber+"?notice=Return+request+saved")
 }
 
 func (h *Handler) adminReturns(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +91,7 @@ func (h *Handler) adminReturnStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.returnService.Update(r.Context(), session.UserID, requestID, r.FormValue("status"), r.FormValue("reason")); err != nil {
+		slog.Default().Error("return status update failed", "request_id", ports.RequestID(r.Context()), "error", err)
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidReturnRequest):
 			h.renderError(w, http.StatusUnprocessableEntity, "Return update invalid", "Choose an available return status.")

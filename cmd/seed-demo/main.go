@@ -338,7 +338,7 @@ func seedPlatformData(ctx context.Context, tx pgx.Tx, users, products, sellers, 
 	if _, err := tx.Exec(ctx, `INSERT INTO promotion_products (promotion_id,product_id) VALUES ($1::bigint,$2::bigint) ON CONFLICT DO NOTHING`, promotionID, products["product-01"]); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `INSERT INTO content_entries (kind,slug,title,body,status,published_at,created_by) VALUES ('story','from-indian-hands','From Indian Hands to Global Homes','Stories, materials, and useful rituals from the makers behind every piece.','published',NOW(),$1::bigint) ON CONFLICT (slug) DO NOTHING`, admin); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO content_entries (kind,slug,title,body,status,published_at,created_by) VALUES ('story','from-indian-hands','From Indian Hands to Indian Homes','Stories, materials, and useful rituals from Indian makers for homes across India.','published',NOW(),$1::bigint) ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, body=EXCLUDED.body, status=EXCLUDED.status`, admin); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `INSERT INTO commission_rules (name,category_slug,percentage_basis_points,active,created_by) VALUES ('Default marketplace commission',NULL,1200,TRUE,$1::bigint) ON CONFLICT (name) DO NOTHING`, admin); err != nil {
