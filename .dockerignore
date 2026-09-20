@@ -8,3 +8,5 @@ bin
 docs
 Phases
 *.png
+*.exe
+node_modules

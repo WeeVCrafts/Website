@@ -1,23 +1,71 @@
-# WeCratfs
+# WeeVCrafts
 
-WeCratfs is a handmade and organic product marketplace focused on honest
-materials, useful rituals, and products that stay close to nature. The local
-V1 prototype now covers PostgreSQL-backed identity, seller/catalog moderation,
-inventory reservations, carts, wishlist, pending-payment checkout, server-side
-payment-order preparation, indexed-search hydration/rebuild, privacy deletion controls, JSON APIs,
-and provider adapters, plus live customer discovery and tracking screens.
+WeeVCrafts is a handmade and organic marketplace. The production app is a single
+Go service: it serves the storefront and role portals, exposes the `/api/v1`
+JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
+rate limits. Both the browser and the server-side pages use this application as
+the only backend.
+
+## Deploy on Railway
+
+The root `Dockerfile` builds and runs the Go application. Add PostgreSQL,
+Redis, and a Railway Storage Bucket to the same production environment. The
+current Railway resources are named `Postgres`, `Redis`, and
+`weevcrafts-media`. The app applies its embedded PostgreSQL migrations at
+startup.
+
+`.railway/railway.ts` keeps the app service linked to this repository, sets the
+`/health/ready` health check, and wires the resource variables. Install the
+Railway SDK with `npm install`, then review configuration with
+`railway config plan` and apply planned changes with `railway config apply`.
+The app service variables should resolve to:
+
+```text
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+S3_ADDR=${{weevcrafts-media.ENDPOINT}}
+S3_ACCESS_KEY=${{weevcrafts-media.ACCESS_KEY_ID}}
+S3_SECRET_KEY=${{weevcrafts-media.SECRET_ACCESS_KEY}}
+S3_BUCKET=${{weevcrafts-media.BUCKET}}
+S3_SECURE=true
+WECRATFS_ENV=production
+WECRATFS_SECURE_COOKIES=true
+WECRATFS_LOCAL_MODE=false
+WECRATFS_PAYMENT_MODE=razorpay
+WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
+```
+
+Generate a public domain for the app service in Railway Networking. The app
+binds to Railway's `PORT`, marks session cookies secure in production, and
+uses the public domain for account recovery links. Set `WECRATFS_PUBLIC_URL`
+to your canonical `https://` domain if you add a custom domain. Configure the
+bucket CORS policy for that origin when enabling browser uploads.
+
+PostgreSQL and Redis are required. Meilisearch and S3-compatible object storage
+are optional: search falls back to PostgreSQL, while product media uploads need
+storage configured. Set `MEILI_ADDR` and `MEILI_API_KEY` for Meilisearch; set
+`S3_ADDR`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, and `S3_SECURE` for
+your S3-compatible storage. Configure SMTP with `WECRATFS_SMTP_ADDR`,
+`WECRATFS_SMTP_USERNAME`, `WECRATFS_SMTP_PASSWORD`, and `WECRATFS_SMTP_FROM` to
+enable email verification and password recovery. Set `RAZORPAY_KEY_ID`,
+`RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`, then configure the
+provider webhook to `https://<your-domain>/webhooks/razorpay` before accepting
+live payments.
 
 ## Run locally
 
-Requirements: Go 1.26+ and Docker Compose.
+Requirements: Go 1.26+, Docker, and Docker Compose.
 
 ```sh
-cp .env.example .env
-go test ./...
 docker compose up -d --build
+docker compose --profile demo run --rm seed-demo
 ```
 
-Open <http://localhost:8080/>. The service reports:
+Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
+Meilisearch, MinIO, and Mailpit. Demo accounts and local payment scenarios are
+documented in [`docs/demo-accounts.md`](docs/demo-accounts.md).
+
+Useful endpoints:
 
 ```sh
 curl http://localhost:8080/health/live
@@ -27,114 +75,39 @@ curl http://localhost:8080/api/v1/products
 curl 'http://localhost:8080/api/v1/search?q=soap'
 ```
 
-To rebuild the disposable Meilisearch index from authoritative PostgreSQL
-catalogue records:
+The server-rendered storefront and account, seller, and admin workflows use
+the same PostgreSQL-backed application services. Authentication uses secure
+server-side sessions and CSRF tokens. Checkout creates pending orders; a
+verified Razorpay webhook is the path that marks an order paid. Payments are
+not collected in local mode.
+
+To rebuild the disposable Meilisearch index from PostgreSQL catalog data:
 
 ```sh
 go run ./cmd/rebuild-search
 ```
 
-The database does not contain startup seed data. The storefront never invents
-products or pretends that sample data is real. Create an account, submit a
-seller application, and use an explicitly assigned `marketplace_admin` or
-`super_admin` role to approve it before creating a draft. No credentials are
-committed. Seller owners can manage active existing accounts from
-`/seller/team`; marketplace and Super Admins can review sellers at
-`/admin/sellers` and inspect privileged changes at `/admin/audit`.
-Staff membership and permission changes are persisted and audited, and product
-read/write permissions are enforced by the live catalog workflow. Inventory,
-order, return, finance, support, seller-approval, audit, and role-management
-workflows are exposed through server-rendered HTMX-compatible routes with role
-checks at the application and repository boundaries. Settlement/commission
-reporting and provider reconciliation remain intentionally unimplemented until
-their business rules and provider contract are finalized.
+## Development
 
-Customers can browse real-data `/deals` and `/brands` directories, inspect a
-maker's approved products, see payment success/failure/pending states, and
-open `/orders/{orderNumber}/tracking` for seller-published fulfilment updates.
-Marketplace and Super Admins can inspect approved brands and masked customers;
-finance views are also available at `/admin/payments`,
-`/admin/failed-payments`, `/admin/refunds`, and
-`/admin/finance-reconciliation`.
-
-The runtime is a compiled Go binary. HTMX and Alpine are progressive
-enhancements, while CSS is embedded/check-in based; Node.js/npm is not started
-in production. When a stylesheet source changes, run `npm ci` followed by
-`make css-build`; the build generates the minified live stylesheet at
-`internal/transport/web/static/app.css` and minified preview styles beside
-their readable sources under `web/assets/css/*.min.css`. The local Compose dependencies
-(PostgreSQL, Redis, Meilisearch, and MinIO) are disposable infrastructure
-behind ports.
-
-Password recovery and email verification are wired through hashed one-time
-tokens. Configure `WECRATFS_SMTP_ADDR`, `WECRATFS_SMTP_USERNAME`,
-`WECRATFS_SMTP_PASSWORD`, and `WECRATFS_SMTP_FROM` to enable bounded SMTP
-delivery; without those values, local recovery pages remain available but the
-runtime returns an explicit delivery-unavailable response instead of exposing a
-fake token.
-
-After checkout, the authenticated payment endpoint creates or reuses the
-server-side provider order from the PostgreSQL total:
-`POST /api/v1/orders/{orderNumber}/payment`. A verified Razorpay webhook is the
-only path that changes an order to paid; expired reservations are released by
-the bounded background reaper. Paid orders expose an authenticated, idempotent
-full-refund endpoint at `POST /api/v1/orders/{orderNumber}/refund`; its amount
-is always derived from PostgreSQL, while provider-pending refunds remain open
-for a future reconciliation worker.
-
-## Verification
+Templates and checked-in CSS are build artifacts. When their sources change:
 
 ```sh
-bash scripts/check-architecture.sh
-find . -name '*.go' -not -path './vendor/*' -not -path './internal/adapters/postgres/generated/*' -print0 | xargs -0 gofmt -w
-go vet ./...
-go test ./...
-go test -race ./...
-docker compose config
+make templ-generate
+npm install
+make css-build
 ```
 
-The storefront stylesheet is checked in at
-`internal/transport/web/static/app.css` and embedded into the Go binary. No
-Node.js process is required to run the server; npm is only a build-time tool
-for regenerating that checked-in artifact.
+The Go process embeds the generated templates, CSS, JavaScript, and images; it
+does not start Node.js in production. `docs/architecture.md` describes the
+application boundaries, `docs/api/openapi.yaml` records the JSON API, and
+`docs/phase-status.md` tracks implementation status.
 
-`docs/phase-status.md` records the current implementation evidence and the
-remaining gates. `docs/architecture.md` describes dependency direction and
- provider boundaries. `docs/api/openapi.yaml` records the JSON contract. `docs/design/fidelity-ledger.md` records the visual
-prototype decisions.
-
-## Regenerate PostgreSQL access
-
-Generated sqlc files are never hand-edited. When query or schema inputs change:
+PostgreSQL query sources live in `internal/adapters/postgres/queries/` and
+generated sqlc files live in `internal/adapters/postgres/generated/`. After
+changing SQL queries or their schema inputs:
 
 ```sh
 go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
 sqlc generate -f sqlc.yaml
 bash scripts/check-sqlc-generated.sh
 ```
-
-The generated output lives under `internal/adapters/postgres/generated/`.
-PostgreSQL integration coverage can be run against the local Compose database:
-
-```sh
-DATABASE_URL='postgres://wecratfs:wecratfs@localhost:5432/wecratfs?sslmode=disable' \
-  go test -v ./internal/adapters/postgres -run 'Integration|WithinTransaction|PersistencePrimitives'
-```
-
-## WeeVCrafts UI-first preview
-
-The customer storefront milestone is available as an isolated templated Go
-preview. It does not connect to PostgreSQL, payments, shipping, or account
-services:
-
-```sh
-make templ-generate
-make web-mock                 # http://localhost:8090
-```
-
-`cmd/web` serves the responsive customer routes using a per-browser fixture
-session. HTMX mutation targets live under `/ui/*` (with stable
-`/ui/fragments/*` aliases), and Alpine is limited to local menus, galleries,
-tabs, and selectors. The existing `cmd/res2` backend composition and
-`Dockerfile` remain available for the later live integration milestone;
-`Dockerfile.web` packages this UI preview independently.

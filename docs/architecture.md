@@ -4,10 +4,15 @@ WeCratfs is a Go modular monolith. PostgreSQL owns authoritative business
 state; Redis, Meilisearch, S3-compatible storage, and payment providers are
 replaceable infrastructure behind ports.
 
+The Railway app runs from the root `Dockerfile`. One Go server renders the
+storefront and portals and serves the same-origin `/api/v1` endpoints used for
+browser interactions; there is no separate frontend deployment or provider
+switch.
+
 ## Dependency direction
 
 ```text
-cmd/res2 (composition root)
+cmd/website (composition root)
 ├── internal/adapters/postgres ─────┐
 ├── internal/transport/api          │
 ├── internal/transport/web          │
@@ -33,14 +38,16 @@ ports.
 - `internal/transport/web` owns HTML templates, Tailwind output, HTMX
   progressive enhancement, and Alpine-compatible markup.
 - `internal/transport/api` owns JSON-only `/api/v1` responses.
-- Both transports call the same application service and receive request
-  contexts from the HTTP layer.
+- The live storefront renders data from application services; browser actions
+  use the same server's same-origin JSON API. Both transports call the same
+  application services and receive request contexts from the HTTP layer.
 
 ## Data and runtime rules
 
 - The storefront reads only approved records from PostgreSQL.
-- An empty database renders an explicit empty state; no runtime product
-  fixtures or fake seed command are present.
+- An empty database renders an explicit empty state. `cmd/seed-demo` adds
+  stable local demo records only when explicitly run; startup never fabricates
+  product data.
 - Migrations are embedded, versioned, transactional, and applied at startup.
 - Cache/search/storage/payment ports are disposable or external and cannot
   become an alternate business-data source.
@@ -56,3 +63,7 @@ ports.
 Run `bash scripts/check-architecture.sh` from the repository root. It scans
 the business-boundary packages for forbidden provider imports and fails on a
 match.
+
+For Railway, provide PostgreSQL and Redis reference variables as `DATABASE_URL`
+and `REDIS_URL`. The service binds to Railway's `PORT`, retries both dependency
+connections during startup, and reports readiness at `/health/ready`.

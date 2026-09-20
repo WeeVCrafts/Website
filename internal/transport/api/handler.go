@@ -22,18 +22,19 @@ import (
 )
 
 type Handler struct {
-	catalog       *applicationcatalog.Service
-	search        *applicationcatalog.SearchService
-	auth          *applicationauth.Service
-	sessions      *applicationauth.SessionService
-	cart          *applicationcommerce.CartService
-	orders        *applicationcommerce.OrderService
-	privacy       *applicationprivacy.Service
-	media         *applicationcommerce.MediaService
-	payment       *applicationpayment.OrderService
-	refunds       *applicationpayment.RefundService
-	recovery      *applicationauth.RecoveryService
-	secureCookies bool
+	catalog         *applicationcatalog.Service
+	search          *applicationcatalog.SearchService
+	auth            *applicationauth.Service
+	sessions        *applicationauth.SessionService
+	cart            *applicationcommerce.CartService
+	orders          *applicationcommerce.OrderService
+	privacy         *applicationprivacy.Service
+	media           *applicationcommerce.MediaService
+	payment         *applicationpayment.OrderService
+	checkoutPayment *applicationpayment.CheckoutVerificationService
+	refunds         *applicationpayment.RefundService
+	recovery        *applicationauth.RecoveryService
+	secureCookies   bool
 }
 
 func NewHandler(catalogService *applicationcatalog.Service) *Handler {
@@ -80,6 +81,11 @@ func NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService *applica
 	handler := NewCompleteHandlerWithMediaPaymentAndRefund(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentService, refundService, secureCookies)
 	handler.recovery = recoveryService
 	return handler
+}
+
+func (h *Handler) WithCheckoutPaymentVerification(service *applicationpayment.CheckoutVerificationService) *Handler {
+	h.checkoutPayment = service
+	return h
 }
 
 func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
@@ -286,6 +292,10 @@ func (h *Handler) Orders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Order(w http.ResponseWriter, r *http.Request) {
+	if strings.HasSuffix(strings.TrimSuffix(r.URL.Path, "/"), "/payment/verify") {
+		h.VerifyCheckoutPayment(w, r)
+		return
+	}
 	if strings.HasSuffix(strings.TrimSuffix(r.URL.Path, "/"), "/payment") {
 		h.PaymentOrder(w, r)
 		return
@@ -314,6 +324,29 @@ func (h *Handler) Order(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": detail})
+}
+
+func (h *Handler) VerifyCheckoutPayment(w http.ResponseWriter, r *http.Request) {
+	session, ok := h.session(r)
+	if r.Method != http.MethodPost || !ok || h.checkoutPayment == nil || !h.validCSRF(r, session) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "Authentication and CSRF validation are required.")
+		return
+	}
+	var input ports.PaymentVerification
+	if !decodeJSON(w, r, &input) {
+		return
+	}
+	path := strings.TrimSuffix(strings.TrimSuffix(r.URL.Path, "/"), "/payment/verify")
+	orderNumber := strings.Trim(strings.TrimPrefix(path, "/api/v1/orders/"), "/")
+	if orderNumber == "" || strings.Contains(orderNumber, "/") {
+		writeError(w, http.StatusNotFound, "ORDER_NOT_FOUND", "Order not found.")
+		return
+	}
+	if err := h.checkoutPayment.Verify(r.Context(), session.UserID, orderNumber, input); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, "PAYMENT_VERIFICATION_FAILED", "The payment could not be verified. Check your order status before trying again.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"status": "authorized"}})
 }
 
 func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request) {
@@ -459,6 +492,15 @@ func (h *Handler) PrivacyDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	h.clearSessionCookie(w)
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func (h *Handler) CurrentSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Only GET is supported.")
+		return
+	}
+	_, authenticated := h.session(r)
+	writeJSON(w, http.StatusOK, map[string]bool{"data": authenticated})
 }
 
 func (h *Handler) session(r *http.Request) (ports.SessionRecord, bool) {

@@ -26,6 +26,7 @@ import (
 	domainprivacy "github.com/wecratfs/commerce/internal/domain/privacy"
 	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/ports"
+	previewassets "github.com/wecratfs/commerce/web/assets"
 )
 
 //go:embed templates/*.html templates/partials/*.html static/*
@@ -61,6 +62,7 @@ type Handler struct {
 	secureCookies       bool
 	templates           *template.Template
 	static              http.Handler
+	previewStatic       http.Handler
 }
 
 type pageData struct {
@@ -233,10 +235,16 @@ func newHandler(catalogService *applicationcatalog.Service, authService *applica
 		secureCookies:   secureCookies,
 		templates:       templates,
 		static:          http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))),
+		previewStatic:   http.StripPrefix("/assets/", http.FileServer(http.FS(previewassets.FS))),
 	}, nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/assets/") {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		h.previewStatic.ServeHTTP(w, r)
+		return
+	}
 	if strings.HasPrefix(r.URL.Path, "/static/") {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		h.static.ServeHTTP(w, r)
@@ -244,6 +252,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch {
+	case r.URL.Path == "/favicon.ico":
+		http.Redirect(w, r, "/assets/images/favicon.svg", http.StatusTemporaryRedirect)
 	case r.URL.Path == "/login":
 		h.login(w, r)
 	case r.URL.Path == "/register":

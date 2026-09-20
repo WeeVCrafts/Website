@@ -7,9 +7,11 @@ import (
 
 type Config struct {
 	Address               string
+	Environment           string
 	PublicURL             string
 	DatabaseURL           string
 	RedisAddress          string
+	RedisURL              string
 	MeiliAddress          string
 	MeiliAPIKey           string
 	S3Address             string
@@ -18,6 +20,9 @@ type Config struct {
 	RazorpayKeySecret     string
 	RazorpayWebhookSecret string
 	RazorpayBaseURL       string
+	PaymentMode           string
+	LocalPaymentSecret    string
+	LocalMode             bool
 	SMTPAddress           string
 	SMTPUsername          string
 	SMTPPassword          string
@@ -29,19 +34,34 @@ type Config struct {
 }
 
 func FromEnv() Config {
+	environment := env("WECRATFS_ENV", "development")
+	port := env("PORT", "8080")
+	publicURL := env("WECRATFS_PUBLIC_URL", "")
+	if publicURL == "" {
+		if domain := env("RAILWAY_PUBLIC_DOMAIN", ""); domain != "" {
+			publicURL = "https://" + domain
+		} else {
+			publicURL = "http://localhost:8080"
+		}
+	}
 	return Config{
-		Address:               env("WECRATFS_ADDR", ":8080"),
-		PublicURL:             env("WECRATFS_PUBLIC_URL", "http://localhost:8080"),
+		Address:               env("WECRATFS_ADDR", ":"+port),
+		Environment:           environment,
+		PublicURL:             publicURL,
 		DatabaseURL:           env("DATABASE_URL", "postgres://wecratfs:wecratfs@localhost:5432/wecratfs?sslmode=disable"),
 		RedisAddress:          env("REDIS_ADDR", "localhost:6379"),
+		RedisURL:              env("REDIS_URL", ""),
 		MeiliAddress:          env("MEILI_ADDR", "localhost:7700"),
 		MeiliAPIKey:           env("MEILI_API_KEY", ""),
 		S3Address:             env("S3_ADDR", "localhost:9000"),
-		SecureCookies:         boolEnv("WECRATFS_SECURE_COOKIES", false),
+		SecureCookies:         boolEnv("WECRATFS_SECURE_COOKIES", environment == "production"),
 		RazorpayKeyID:         env("RAZORPAY_KEY_ID", ""),
 		RazorpayKeySecret:     env("RAZORPAY_KEY_SECRET", ""),
 		RazorpayWebhookSecret: env("RAZORPAY_WEBHOOK_SECRET", ""),
 		RazorpayBaseURL:       env("RAZORPAY_BASE_URL", "https://api.razorpay.com"),
+		PaymentMode:           env("WECRATFS_PAYMENT_MODE", "razorpay"),
+		LocalPaymentSecret:    env("WECRATFS_LOCAL_PAYMENT_SECRET", "wecratfs-local-payment"),
+		LocalMode:             boolEnv("WECRATFS_LOCAL_MODE", false),
 		SMTPAddress:           env("WECRATFS_SMTP_ADDR", ""),
 		SMTPUsername:          env("WECRATFS_SMTP_USERNAME", ""),
 		SMTPPassword:          env("WECRATFS_SMTP_PASSWORD", ""),

@@ -1,8 +1,6 @@
 package viewmodels
 
-// AdminPage is the view model for the super-admin preview workspace. It is
-// intentionally fixture-backed until the live admin transport is connected to
-// the application services in cmd/res2.
+// AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
 	Active, Workspace, Title, Subtitle, Query, Range, Notice string
 	Stats                                                    []AdminStat
@@ -79,9 +77,7 @@ type AdminConfig struct {
 	Icon, Name, Value, Detail string
 }
 
-// SellerAdminPage is the seller-scoped preview workspace. The mock transport
-// feeds it representative data until the live seller application services are
-// connected; every record in this view model belongs to Weaver's Touch.
+// SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
 	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice string
 	Stats                                                         []SellerAdminStat
@@ -132,7 +128,7 @@ type SellerTeamMember struct {
 	Name, Email, Role, Status, LastActive, Permissions, Image string
 }
 
-// SupportPortalPage is the support-agent-scoped preview workspace. Customer
+// SupportPortalPage is the support-agent-scoped live workspace. Customer
 // contact and transaction fields are intentionally minimized or masked to
 // reflect the PRD's support data boundary.
 type SupportPortalPage struct {

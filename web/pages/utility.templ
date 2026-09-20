@@ -11,7 +11,8 @@ templ Auth(p viewmodels.CustomerPage) {
         }
         if p.Route == "/login" {
           @AuthHeading("WELCOME BACK", "Sign in to WeeVCrafts", "Keep your saved pieces, orders and maker stories close.")
-          <form class="utility-form" action="/login?notice=Sign-in+preview+submitted" method="get">
+          <form class="utility-form" action="/login" method="post" data-backend-auth="login">
+            <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Password<input name="password" type="password" required/></label>
             <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
@@ -20,7 +21,8 @@ templ Auth(p viewmodels.CustomerPage) {
           <div class="auth-links"><a href="/forgot-password">Forgot your password?</a><span>New here? <a href="/register">Create an account</a></span></div>
         } else if p.Route == "/register" {
           @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
-          <form class="utility-form" action="/register?notice=Registration+preview+submitted" method="get">
+          <form class="utility-form" action="/register" method="post" data-backend-auth="register">
+            <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Full name<input name="name" required/></label>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Password<input name="password" type="password" minlength="12" required/></label>
@@ -30,25 +32,24 @@ templ Auth(p viewmodels.CustomerPage) {
           <div class="auth-links"><span>Already have an account? <a href="/login">Sign in</a></span></div>
         } else if p.Route == "/forgot-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Reset your password", "Enter your email and we will guide you through the next step.")
-          <form class="utility-form" action="/forgot-password?notice=Recovery+request+preview+submitted" method="get">
+          <form class="utility-form" action="/forgot-password" method="post" data-backend-auth="recover">
             <label>Email address<input name="email" type="email" required/></label>
             <button class="primary-button full" type="submit">Send recovery link <span class="material-symbols-outlined" aria-hidden="true">mail</span></button>
           </form>
           <div class="auth-links"><a href="/login">Return to sign in</a></div>
         } else if p.Route == "/reset-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Choose a new password", "Use a long, unique password to keep your account safe.")
-          <form class="utility-form" action="/reset-password?notice=Password+reset+preview+submitted" method="get">
+          <form class="utility-form" action="/reset-password" method="post" data-backend-auth="reset">
             <label>New password<input name="password" type="password" minlength="12" required/></label>
             <label>Confirm password<input name="confirm_password" type="password" minlength="12" required/></label>
             <button class="primary-button full" type="submit">Update password <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span></button>
           </form>
         } else {
           @AuthHeading("VERIFY YOUR EMAIL", "Your account is almost ready", "Confirm your email to protect your account and receive order updates.")
-          <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">mark_email_read</span><div><strong>Check your inbox</strong><p>The verification link is valid for a limited time.</p></div></div>
-          <a class="primary-button full" href="/verify-email?notice=Verification+preview+confirmed">I have verified my email <span class="material-symbols-outlined" aria-hidden="true">check</span></a>
-          <a class="outline-button full utility-secondary-action" href="/verify-email?notice=Verification+email+preview+resent">Resend verification email</a>
+          <div class="utility-callout" data-backend-verification><span class="material-symbols-outlined" aria-hidden="true">mark_email_read</span><div><strong>Email verification</strong><p>Use the verification link sent to your email, then sign in to continue.</p></div></div>
+          <a class="primary-button full" href="/login" data-backend-verification-continue>Continue to sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
         }
-        <p class="preview-disclaimer"><span class="material-symbols-outlined" aria-hidden="true">visibility</span> Preview mode: this form demonstrates the flow without creating an account or sending email.</p>
+        <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by WeeVCrafts.</p>
       </div>
     </section>
   }
@@ -188,4 +189,122 @@ templ PaymentPanel() {
 
 templ ReviewPanel() {
   <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews to write</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div><div class="review-list"><article><img src="/assets/images/customer/saree-maroon.webp" alt="Chanderi saree" loading="lazy" width="320" height="320"/><div><b>Chanderi Silk Cotton Saree</b><small>Delivered 21 Apr 2024 · Weaver's Touch</small><form action="/account/reviews?notice=Review+saved+in+preview" method="get"><label class="stars-input">★★★★★<input class="sr-only" name="rating" value="5"/></label><textarea name="review" rows="3" placeholder="What did you love about it?"></textarea><button class="primary-button" type="submit">Publish review</button></form></div></article><article><img src="/assets/images/customer/ceramic-mugs.webp" alt="Ceramic mugs" loading="lazy" width="320" height="320"/><div><b>Handpainted Ceramic Mugs</b><small>Delivered 14 Apr 2024 · Clay &amp; Co.</small><a class="outline-button" href="/account/reviews?notice=Review+editor+opened">Write a review</a></div></article></div></section>
+}
+
+templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
+  <aside class="account-sidebar">
+    <div class="profile-mini"><div class="avatar">{ customerInitials(p.UserName) }</div><b>{ p.UserName }</b><small>{ p.UserEmail }</small></div>
+    <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
+    <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
+    <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
+    <a href="/orders" class={ liveAccountLinkClass(active, "orders") } aria-current={ liveAccountCurrent(active, "orders") }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
+    <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a>
+    <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
+    <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
+    <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
+    <a href="/contact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
+  </aside>
+}
+
+templ LiveAccount(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="account-welcome"><div class="container"><p class="eyebrow">YOUR WEEVCRAFTS HOME</p><h1>Welcome back,<br/><em>{ p.UserName }</em></h1><p>Glad to have you here. Together, we support artisans and keep traditions alive.</p></div><img src="/assets/images/customer/maker-mithila.webp" alt="Artisan at work" width="1254" height="1254"/></section>
+    <section class="container account-layout">
+      @LiveAccountSidebar(p, "account")
+      <div class="account-content">
+        if p.Notice != "" {
+          <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+        }
+        <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>—</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
+        <div class="account-cards">
+          <section id="profile"><h2>Profile information</h2><a href="/account/profile">Edit <span class="material-symbols-outlined" aria-hidden="true">edit</span></a><p><b>{ p.UserName }</b><br/>{ p.UserEmail }<br/><small>Member since { p.MemberSince }</small></p></section>
+          <section id="addresses"><h2>Saved addresses</h2><a href="/account/addresses">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+            if p.Address.Lines != "" {
+              <p><b>{ p.Address.Name }</b><br/>{ p.Address.Lines }</p>
+            } else {
+              <p>No saved addresses yet.<br/><a href="/checkout">Add one during checkout</a></p>
+            }
+          </section>
+          <section><h2>Recent orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+            if len(p.Orders) > 0 {
+              @HistoryRows(firstOrderList(p.Orders))
+            } else {
+              <p>Your orders will appear here after checkout.</p>
+            }
+          </section>
+          <section><h2>Returns &amp; refunds</h2><a href="/returns">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>View return requests linked to your orders.</p></section>
+          <section id="payments"><h2>Payment methods</h2><a href="/payments">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Payment options are shown securely during checkout. Card details are not stored in WeeVCrafts.</p></section>
+          <section id="preferences"><h2>Notification preferences</h2><a href="/account/notifications">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Order and delivery updates appear in your order history.</p></section>
+          <section id="privacy"><h2>Privacy preferences</h2><a href="/account/privacy">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Review your privacy choices and data requests.</p></section>
+          <section id="security"><h2>Security &amp; sessions</h2><a href="/account/security">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Change your password and protect your account.</p></section>
+          <section class="account-wide account-help"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Need a hand?</h2><p>Our customer care team is here for order, return and product questions.</p></div><a class="outline-button" href="/contact">Contact support</a></section>
+        </div>
+      </div>
+    </section>
+  }
+}
+
+templ LiveOrders(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro account-intro">
+      @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from WeeVCrafts.</p>
+      <nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav>
+    </section>
+    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders>
+      if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+      } else {
+        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))))
+        <h2 class="order-history-title">Past orders</h2>
+        @HistoryRows(orderSlice(orderSubset(p.Orders, p.Filters.Get("status")), 1))
+      }
+    </div></section>
+  }
+}
+
+templ LiveTracking(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Track order")<p class="eyebrow">EVERY STEP, KEPT CLEAR</p><h1>Track your order</h1><p>See the latest status recorded for your order.</p></section>
+    <section class="container tracking-layout"><div class="tracking-main">
+      <form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value={ p.SelectedOrder.Number } placeholder="Enter your order number" required/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form>
+      if p.SelectedOrder.Number != "" {
+        <article class="tracking-card-main"><header><div><span class="badge">{ p.SelectedOrder.Status }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
+      } else {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
+      }
+    </div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our customer care team can help with an order update.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
+  }
+}
+
+templ LiveAccountDetail(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro"><p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>{ p.Title }</h1><p>Manage the details that make your account yours.</p></section>
+    <section class="container account-layout utility-account-layout">@LiveAccountSidebar(p, p.Route)<div class="account-content utility-account-content">
+        if p.Notice != "" {
+          <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+        }
+      if p.Route == "/account/profile" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR DETAILS</p><h2>Profile information</h2></div><span class="material-symbols-outlined" aria-hidden="true">person</span></div><form class="utility-form two-column" action="/account/profile" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Full name<input name="name" value={ p.UserName } minlength="2" maxlength="100" required/></label><label>Email address<input name="email" type="email" value={ p.UserEmail } disabled/></label><label>Member since<input value={ p.MemberSince } disabled/></label><button class="primary-button" type="submit">Save changes</button></form><p class="muted">Email changes require verification. Contact support if you need to update your email address.</p></section>
+      } else if p.Route == "/account/addresses" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div>
+          if p.Address.Lines != "" {
+            <article class="address"><b>{ p.Address.Name }</b><p>{ p.Address.Lines }</p></article>
+          } else {
+            <p>No saved address yet. Add one during checkout and it will be available for your next order.</p>
+          }
+          <a class="outline-button" href="/checkout"><span class="material-symbols-outlined" aria-hidden="true">add</span>Continue to checkout</a>
+        </section>
+      } else if p.Route == "/account/security" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Choose a new password using account recovery.</small></span><a href="/forgot-password">Reset</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
+      } else if p.Route == "/account/notifications" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div><p>Order and delivery updates are available in your order history. Email notifications can be enabled when delivery email settings are configured.</p><a class="outline-button" href="/orders">View order updates</a></section>
+      } else if p.Route == "/account/privacy" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><p>We use your account and order details to provide checkout, delivery and customer support.</p><a class="outline-button" href="/privacy">Read the privacy policy</a><a class="outline-button" href="/contact">Request help with your data</a></section>
+      } else if p.Route == "/account/reviews" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div><p>Verified product reviews will appear here after the review service is enabled.</p></section>
+      } else {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><p>Payment options are offered securely during checkout. Payment details are never stored in your WeeVCrafts account.</p><a class="outline-button" href="/cart">Go to your cart</a></section>
+      }
+    </div></section>
+  }
 }

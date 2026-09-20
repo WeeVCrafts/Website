@@ -1,4 +1,4 @@
-.PHONY: templ-generate templ-check css-build css-check web-mock web-test
+.PHONY: templ-generate templ-check css-build css-check web-test seed-demo
 
 TEMPL_VERSION := v0.3.1020
 
@@ -20,8 +20,8 @@ css-check:
 	@test -s web/assets/css/seller-admin.min.css
 	@test -s web/assets/css/support-portal.min.css
 
-web-mock:
-	WEB_UI_MODE=mock go run ./cmd/web
-
 web-test:
 	go test ./internal/web/... ./web/...
+
+seed-demo:
+	go run ./cmd/seed-demo

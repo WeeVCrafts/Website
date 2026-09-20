@@ -25,9 +25,9 @@ type PaymentOrder struct {
 }
 
 type PaymentVerification struct {
-	ProviderOrderID   string
-	ProviderPaymentID string
-	Signature         string
+	ProviderOrderID   string `json:"provider_order_id"`
+	ProviderPaymentID string `json:"provider_payment_id"`
+	Signature         string `json:"signature"`
 }
 
 type PaymentWebhookVerifier interface {

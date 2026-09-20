@@ -53,6 +53,14 @@ func TestProductsRejectsNonGet(t *testing.T) {
 	}
 }
 
+func TestCurrentSessionReturnsUnauthenticatedStateWithoutAnError(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	NewHandler(nil).CurrentSession(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/auth/session", nil))
+	if recorder.Code != http.StatusOK || strings.TrimSpace(recorder.Body.String()) != `{"data":false}` {
+		t.Fatalf("anonymous session response = %d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestErrorsCarryRequestIDWhenProvidedByMiddleware(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	recorder.Header().Set("X-Request-ID", "req-test-123")

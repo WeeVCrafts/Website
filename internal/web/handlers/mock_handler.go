@@ -363,7 +363,7 @@ func (h *MockHandler) page(r *http.Request, w http.ResponseWriter) viewmodels.Cu
 	} else if category != "" {
 		filtered := make([]viewmodels.Product, 0, len(products))
 		for _, product := range products {
-			if strings.EqualFold(product.Category, category) || strings.Contains(strings.ToLower(product.Category), strings.ReplaceAll(strings.ToLower(category), "-", " ")) {
+			if previewCategoryMatches(product.Category, category) {
 				filtered = append(filtered, product)
 			}
 		}
@@ -483,12 +483,14 @@ func previewPaymentActivity(orders []viewmodels.Order) []viewmodels.PaymentActiv
 func previewFilterCounts(products []viewmodels.Product) map[string]int {
 	counts := make(map[string]int, 16)
 	for _, product := range products {
-		if strings.EqualFold(product.Category, "Sarees") {
-			counts["category:sarees"]++
+		for _, category := range mockCategories {
+			if previewCategoryMatches(product.Category, category.Slug) {
+				counts["category:"+category.Slug]++
+			}
 		}
-		for _, brand := range []string{"handloom", "silk cotton", "chanderi"} {
-			if matchesAny(product.Name+" "+product.Category+" "+product.Badge+" "+product.Seller, []string{brand}) {
-				counts["brand:"+brand]++
+		for _, brand := range mockBrands {
+			if comparableFilterText(product.Seller) == comparableFilterText(brand.Name) {
+				counts["brand:"+brand.Slug]++
 			}
 		}
 		for _, rating := range []string{"4.5+", "4.0+"} {
@@ -522,7 +524,14 @@ func filterProducts(products []viewmodels.Product, r *http.Request) []viewmodels
 	availability := values.Get("availability")
 	filtered := make([]viewmodels.Product, 0, len(products))
 	for _, product := range products {
-		if len(brands) > 0 && !matchesAny(product.Name+" "+product.Category+" "+product.Badge+" "+product.Seller, brands) {
+		matchesBrand := false
+		for _, brand := range brands {
+			if matchesPreviewBrand(product, brand) {
+				matchesBrand = true
+				break
+			}
+		}
+		if len(brands) > 0 && !matchesBrand {
 			continue
 		}
 		price := previewMoney(product.Price)
@@ -547,14 +556,48 @@ func filterProducts(products []viewmodels.Product, r *http.Request) []viewmodels
 }
 
 func matchesAny(value string, candidates []string) bool {
-	lower := strings.ToLower(value)
+	lower := comparableFilterText(value)
 	for _, candidate := range candidates {
-		candidate = strings.ToLower(strings.ReplaceAll(candidate, "-", " "))
+		candidate = comparableFilterText(candidate)
 		if strings.Contains(lower, candidate) {
 			return true
 		}
 	}
 	return false
+}
+
+func matchesPreviewBrand(product viewmodels.Product, candidate string) bool {
+	if brand, ok := brandBySlug(candidate); ok {
+		return comparableFilterText(product.Seller) == comparableFilterText(brand.Name)
+	}
+	return matchesAny(product.Name+" "+product.Category+" "+product.Badge+" "+product.Seller, []string{candidate})
+}
+
+func previewCategoryMatches(productCategory, candidate string) bool {
+	product := previewCategorySlug(productCategory)
+	filter := previewCategorySlug(candidate)
+	if product == filter {
+		return true
+	}
+	return (product == "sarees" && filter == "textiles") || (product == "textiles" && filter == "sarees")
+}
+
+func previewCategorySlug(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	switch value {
+	case "home & living", "home and living":
+		return "home-living"
+	case "fashion & accessories", "fashion":
+		return "fashion"
+	}
+	value = strings.NewReplacer("&", "", "'", "", " ", "-", "_", "-").Replace(value)
+	return strings.Trim(value, "-")
+}
+
+func comparableFilterText(value string) string {
+	value = strings.ToLower(value)
+	value = strings.NewReplacer("-", " ", "'", "", "&", "and").Replace(value)
+	return strings.Join(strings.Fields(value), " ")
 }
 
 func matchesPrice(price int, ranges []string) bool {

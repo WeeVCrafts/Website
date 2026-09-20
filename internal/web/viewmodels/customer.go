@@ -6,11 +6,14 @@ import (
 )
 
 type Product struct {
-	Slug, Name, Seller, Location, Category, ImageURL, ImageSrcSet, Badge string
-	Price, CompareAt, Discount                                           string
-	Rating                                                               string
-	Reviews                                                              int
-	InStock                                                              bool
+	ID, VariantID                                                                   int64
+	PriceCents                                                                      int64
+	Slug, Name, Seller, BrandName, Location, Category, ImageURL, ImageSrcSet, Badge string
+	CSRFToken                                                                       string
+	Price, CompareAt, Discount                                                      string
+	Rating                                                                          string
+	Reviews                                                                         int
+	InStock                                                                         bool
 }
 
 type Seller struct {
@@ -36,9 +39,9 @@ type CartItem struct {
 }
 
 type Order struct {
-	Number, Status, Payment, Date string
-	Total                         string
-	Items                         []CartItem
+	Number, Status, State, Payment, Date string
+	Total                                string
+	Items                                []CartItem
 }
 
 type PaymentActivity struct {
@@ -57,8 +60,13 @@ type Address struct {
 type CustomerPage struct {
 	Route, Title, Query, Category, Sort, Notice     string
 	Brand, Tagline, Description                     string
+	UserName, UserEmail, MemberSince                string
+	PaymentMode, PaymentPublicKey                   string
+	PaymentReady                                    bool
+	CSRFToken                                       string
 	Filters                                         url.Values
 	Product                                         Product
+	OrderCount                                      int
 	SavedProducts                                   []Product
 	ItemsTotal, ShippingTotal, DiscountTotal, Total string
 	Products                                        []Product

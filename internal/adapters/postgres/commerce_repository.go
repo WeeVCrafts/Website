@@ -527,6 +527,16 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 		if err != nil {
 			return mapCommerceError(err)
 		}
+		if _, err := tx.Exec(transactionContext, `
+			INSERT INTO addresses (user_id, recipient_name, line1, line2, city, state, postal_code, country_code)
+			SELECT $1, $2, $3, $4, $5, $6, $7, $8
+			WHERE NOT EXISTS (
+				SELECT 1 FROM addresses
+				WHERE user_id = $1 AND recipient_name = $2 AND line1 = $3 AND line2 = $4
+				  AND city = $5 AND state = $6 AND postal_code = $7 AND country_code = $8
+			)`, userID, address.RecipientName, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode); err != nil {
+			return err
+		}
 		var reservationID int64
 		if err := tx.QueryRow(transactionContext, `INSERT INTO inventory_reservations (order_id, expires_at) VALUES ($1, NOW() + INTERVAL '30 minutes') RETURNING id`, order.ID).Scan(&reservationID); err != nil {
 			return err

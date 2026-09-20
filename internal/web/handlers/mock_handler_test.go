@@ -102,7 +102,7 @@ func TestMockPortalRoutesHaveNoDeadGeneratedLinks(t *testing.T) {
 	routes := []string{
 		"/", "/categories", "/brands", "/brands/mithila-arts", "/products", "/deals", "/search?q=saree",
 		"/products/chanderi-royal", "/makers/mithila-arts", "/wishlist", "/cart", "/checkout", "/orders",
-			"/tracking", "/payments", "/payments/success", "/payments/pending", "/payments/failed", "/returns",
+		"/tracking", "/payments", "/payments/success", "/payments/pending", "/payments/failed", "/returns",
 		"/account", "/faq", "/contact", "/seller",
 		"/admin", "/admin/sellers", "/admin/products", "/admin/brands", "/admin/inventory", "/admin/orders",
 		"/admin/returns", "/admin/disputes", "/admin/finance", "/admin/payments", "/admin/failed-payments",
@@ -306,18 +306,18 @@ func TestMockReturnTabsUseTheirOwnDataset(t *testing.T) {
 	}
 }
 
-func TestMockCheckoutPaymentTabsAreAlpineControlled(t *testing.T) {
+func TestMockCheckoutDisablesPaymentUntilConfigured(t *testing.T) {
 	res := httptest.NewRecorder()
 	NewMockHandler().ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/checkout", nil))
 	if res.Code != http.StatusOK {
 		t.Fatalf("checkout status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	if !strings.Contains(body, `:class="payment === 'upi' ? 'active' : ''"`) || !strings.Contains(body, `@click="payment='card'"`) {
-		t.Fatal("checkout payment methods are missing Alpine state bindings")
+	if !strings.Contains(body, "Online payments are not configured for this deployment") || !strings.Contains(body, `disabled>Payment unavailable`) {
+		t.Fatal("checkout should explain that payment is unavailable until a provider is configured")
 	}
-	if strings.Contains(body, `<button class="active" type="button" role="tab"`) {
-		t.Fatal("checkout payment tabs must not keep a permanent active class")
+	if strings.Contains(body, `role="tablist" aria-label="Payment methods"`) {
+		t.Fatal("checkout should not present nonfunctional payment method tabs")
 	}
 }
 
@@ -595,12 +595,12 @@ func TestMockSessionIsolationAndMutations(t *testing.T) {
 func TestMockListingStateAndSafeLinks(t *testing.T) {
 	h := NewMockHandler()
 	res := httptest.NewRecorder()
-	h.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/products?category=sarees&sort=price-desc&brand=handloom", nil))
+	h.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/products?category=sarees&sort=price-desc&brand=weavers-touch", nil))
 	if res.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	for _, want := range []string{`option value="price-desc" selected`, `name="category" value="sarees" checked`, `name="brand" value="handloom" checked`, `Sarees`, `Handloom`, `<span>(2)</span>`, "2 results"} {
+	for _, want := range []string{`option value="price-desc" selected`, `name="category" value="sarees" checked`, `name="brand" value="weavers-touch" checked`, `Sarees`, `Weaver&#39;s Touch`, `<span>(1)</span>`, "1 results"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("listing response is missing %q", want)
 		}

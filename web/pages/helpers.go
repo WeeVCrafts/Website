@@ -59,6 +59,47 @@ func breadcrumbHref(item string) string {
 	}
 }
 
+func authNext(filters url.Values) string {
+	candidate := strings.TrimSpace(filters.Get("next"))
+	if candidate == "" || !strings.HasPrefix(candidate, "/") || strings.HasPrefix(candidate, "//") || strings.Contains(candidate, "\\") {
+		return ""
+	}
+	return candidate
+}
+
+func customerInitials(name string) string {
+	parts := strings.Fields(strings.TrimSpace(name))
+	if len(parts) == 0 {
+		return "W"
+	}
+	initials := []rune(strings.ToUpper(string([]rune(parts[0])[0])))
+	if len(parts) > 1 {
+		initials = append(initials, []rune(strings.ToUpper(string([]rune(parts[len(parts)-1])[0])))...)
+	}
+	return string(initials)
+}
+
+func liveAccountLinkClass(active, target string) string {
+	if active == target {
+		return "active"
+	}
+	return ""
+}
+
+func liveAccountCurrent(active, target string) string {
+	if active == target {
+		return "page"
+	}
+	return ""
+}
+
+func paymentMethodLabel(mode string) string {
+	if strings.EqualFold(strings.TrimSpace(mode), "local") {
+		return "Local test payment"
+	}
+	return "Razorpay secure checkout"
+}
+
 func breadcrumbCurrent(index, total int) string {
 	if index == total-1 {
 		return "page"
@@ -93,7 +134,10 @@ func orderSubset(orders []viewmodels.Order, status string) []viewmodels.Order {
 	}
 	filtered := make([]viewmodels.Order, 0, len(orders))
 	for _, order := range orders {
-		orderStatus := strings.ToLower(strings.TrimSpace(order.Status))
+		orderStatus := strings.ToLower(strings.TrimSpace(order.State))
+		if orderStatus == "" {
+			orderStatus = strings.ToLower(strings.TrimSpace(order.Status))
+		}
 		matches := (status == "active" && orderStatus != "delivered" && orderStatus != "cancelled") ||
 			(status == "delivered" && orderStatus == "delivered") ||
 			(status == "cancelled" && orderStatus == "cancelled")
@@ -117,7 +161,7 @@ func orderSeller(order viewmodels.Order) string {
 }
 
 func orderDeliveryCopy(order viewmodels.Order) string {
-	switch strings.ToLower(strings.TrimSpace(order.Status)) {
+	switch orderState(order) {
 	case "delivered":
 		return "Delivered"
 	case "cancelled":
@@ -186,6 +230,13 @@ func orderSlice(orders []viewmodels.Order, start int) []viewmodels.Order {
 	return orders[start:]
 }
 
+func firstOrderList(orders []viewmodels.Order) []viewmodels.Order {
+	if len(orders) == 0 {
+		return nil
+	}
+	return orders[:1]
+}
+
 func firstOrder(orders []viewmodels.Order) viewmodels.Order {
 	if len(orders) == 0 {
 		return viewmodels.Order{}
@@ -194,7 +245,7 @@ func firstOrder(orders []viewmodels.Order) viewmodels.Order {
 }
 
 func orderStatusTitle(order viewmodels.Order) string {
-	switch strings.ToLower(strings.TrimSpace(order.Status)) {
+	switch orderState(order) {
 	case "delivered":
 		return "Your order has arrived safely."
 	case "cancelled":
@@ -205,7 +256,7 @@ func orderStatusTitle(order viewmodels.Order) string {
 }
 
 func orderStatusCopy(order viewmodels.Order) string {
-	switch strings.ToLower(strings.TrimSpace(order.Status)) {
+	switch orderState(order) {
 	case "delivered":
 		return "We hope it brings something beautiful into your everyday."
 	case "cancelled":
@@ -213,6 +264,14 @@ func orderStatusCopy(order viewmodels.Order) string {
 	default:
 		return "We will notify you as soon as it ships."
 	}
+}
+
+func orderState(order viewmodels.Order) string {
+	state := strings.TrimSpace(order.State)
+	if state == "" {
+		state = order.Status
+	}
+	return strings.ToLower(strings.TrimSpace(state))
 }
 
 func firstReturn(returns []viewmodels.Return) viewmodels.Return {
@@ -303,7 +362,17 @@ func productAt(products []viewmodels.Product, index int) viewmodels.Product {
 func brandProducts(products []viewmodels.Product, brand string) []viewmodels.Product {
 	result := make([]viewmodels.Product, 0)
 	for _, product := range products {
-		if strings.EqualFold(product.Seller, brand) {
+		if strings.EqualFold(product.BrandName, brand) || strings.EqualFold(product.Seller, brand) {
+			result = append(result, product)
+		}
+	}
+	return result
+}
+
+func sellerProducts(products []viewmodels.Product, seller string) []viewmodels.Product {
+	result := make([]viewmodels.Product, 0)
+	for _, product := range products {
+		if strings.EqualFold(product.Seller, seller) {
 			result = append(result, product)
 		}
 	}
@@ -438,11 +507,15 @@ func normalizedSort(sort string) string {
 
 func hasFilter(filters url.Values, key, value string) bool {
 	for _, candidate := range filters[key] {
-		if candidate == value {
+		if candidate == value || key == "category" && equivalentTextileCategory(candidate, value) {
 			return true
 		}
 	}
 	return false
+}
+
+func equivalentTextileCategory(left, right string) bool {
+	return (left == "sarees" && right == "textiles") || (left == "textiles" && right == "sarees")
 }
 
 func filterCount(counts map[string]int, key, value string) string {

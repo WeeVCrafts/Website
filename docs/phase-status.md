@@ -1,6 +1,6 @@
 # WeCratfs phase status
 
-**Current status:** The locally verifiable V1 frontend is complete for the customer, seller, marketplace-admin, super-admin, and support role previews. It runs with mock data, is responsive, and is interactive without a backend; live integrations, staging, legal, and production gates remain separate follow-up work.
+**Current status:** The local live demo runs from `cmd/website` with PostgreSQL-backed customer, seller, marketplace-admin, super-admin, and support workflows. The responsive storefront UI is retained, while local integrations remain deterministic and production integrations are opt-in.
 
 **Current gate:** Local frontend V1 — complete; full production-release gates remain open
 **Completion estimate:** 100% of the requested locally verifiable frontend scope; approximately 45% of the broader production-release gate set.
@@ -320,7 +320,7 @@ The following checks passed in the current workspace:
   1024, and 1440px, with the customer interaction paths and fluid mobile
   checkout/returns controls exercised. A 21-route WCAG A/AA axe scan reports
   zero violations.
-- The live `cmd/res2` frontend now has customer commerce, real-data deals and
+- The live `cmd/website` frontend now has customer commerce, real-data deals and
   maker discovery, payment outcome pages, customer shipment tracking, seller catalog draft
   editing, owner-managed seller staff membership, catalog product permission
   enforcement, a seller inventory read/adjust workflow, and customer return

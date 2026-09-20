@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -17,6 +18,7 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 
 	emailadapter "github.com/wecratfs/commerce/internal/adapters/email"
+	localpayment "github.com/wecratfs/commerce/internal/adapters/localpayment"
 	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
 	metricsadapter "github.com/wecratfs/commerce/internal/adapters/metrics"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
@@ -34,6 +36,7 @@ import (
 	healthTransport "github.com/wecratfs/commerce/internal/transport/health"
 	webTransport "github.com/wecratfs/commerce/internal/transport/web"
 	webhookTransport "github.com/wecratfs/commerce/internal/transport/webhook"
+	webHandlers "github.com/wecratfs/commerce/internal/web/handlers"
 	"github.com/wecratfs/commerce/internal/worker"
 )
 
@@ -42,7 +45,7 @@ func main() {
 	slog.SetDefault(logger)
 	cfg := config.FromEnv()
 
-	startupContext, startupCancel := context.WithTimeout(context.Background(), 20*time.Second)
+	startupContext, startupCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer startupCancel()
 	pool, err := pgxpool.New(startupContext, cfg.DatabaseURL)
 	if err != nil {
@@ -50,7 +53,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
-	if err := pool.Ping(startupContext); err != nil {
+	if err := waitForPostgres(startupContext, pool); err != nil {
 		logger.Error("connect to PostgreSQL", "error", err)
 		os.Exit(1)
 	}
@@ -58,8 +61,20 @@ func main() {
 		logger.Error("apply PostgreSQL migrations", "error", err)
 		os.Exit(1)
 	}
-	redisClient := redisclient.NewClient(&redisclient.Options{Addr: cfg.RedisAddress})
+	redisOptions := &redisclient.Options{Addr: cfg.RedisAddress}
+	if cfg.RedisURL != "" {
+		redisOptions, err = redisclient.ParseURL(cfg.RedisURL)
+		if err != nil {
+			logger.Error("parse Redis URL", "error", err)
+			os.Exit(1)
+		}
+	}
+	redisClient := redisclient.NewClient(redisOptions)
 	defer redisClient.Close()
+	if err := waitForRedis(startupContext, redisClient); err != nil {
+		logger.Error("connect to Redis", "error", err)
+		os.Exit(1)
+	}
 	rateLimiter := redisadapter.NewRateLimiter(redisClient)
 
 	catalogService := applicationcatalog.NewService(postgres.NewProductRepository(pool))
@@ -97,10 +112,22 @@ func main() {
 	cartService := applicationcommerce.NewCartService(commerceRepository)
 	orderService := applicationcommerce.NewOrderService(commerceRepository)
 	privacyService := applicationprivacy.NewService(postgres.NewPrivacyRepository(pool))
-	paymentGateway := razorpayadapter.NewGateway(cfg.RazorpayKeyID, cfg.RazorpayKeySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
 	paymentRepository := postgres.NewPaymentRepository(pool)
-	paymentService := applicationpayment.NewService(paymentGateway, paymentRepository)
-	refundService := applicationpayment.NewRefundService(paymentGateway, paymentRepository)
+	var paymentGateway ports.PaymentGateway
+	var refundGateway ports.PaymentRefundGateway
+	var webhookVerifier ports.PaymentWebhookVerifier
+	var localGateway *localpayment.Gateway
+	if cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local") {
+		localGateway = localpayment.NewGateway(cfg.LocalPaymentSecret)
+		paymentGateway, refundGateway, webhookVerifier = localGateway, localGateway, localGateway
+		logger.Info("local deterministic payment mode enabled")
+	} else {
+		gateway := razorpayadapter.NewGateway(cfg.RazorpayKeyID, cfg.RazorpayKeySecret, cfg.RazorpayWebhookSecret, cfg.RazorpayBaseURL)
+		paymentGateway, refundGateway, webhookVerifier = gateway, gateway, gateway
+	}
+	paymentService := applicationpayment.NewService(webhookVerifier, paymentRepository)
+	checkoutPaymentService := applicationpayment.NewCheckoutVerificationService(paymentGateway, paymentRepository, paymentRepository)
+	refundService := applicationpayment.NewRefundService(refundGateway, paymentRepository)
 	mediaStorage, storageErr := storageadapter.NewS3(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure)
 	if storageErr != nil {
 		logger.Warn("S3 media adapter unavailable", "error", storageErr)
@@ -127,7 +154,7 @@ func main() {
 	webHandler.SetFinanceService(financeService)
 	webHandler.SetSupportService(supportService)
 	webHandler.SetReturnService(returnService)
-	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies)
+	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService)
 	backgroundWorker, err := worker.New(1, 16)
 	if err != nil {
 		logger.Error("configure background worker", "error", err)
@@ -165,10 +192,8 @@ func main() {
 	})
 	defer stopWorker()
 	healthHandler := healthTransport.NewHandlerWithMetrics(map[string]healthTransport.Probe{
-		"postgresql":  func(ctx context.Context) error { return postgres.Ping(ctx, pool) },
-		"redis":       tcpProbe(cfg.RedisAddress),
-		"meilisearch": tcpProbe(cfg.MeiliAddress),
-		"s3":          tcpProbe(cfg.S3Address),
+		"postgresql": func(ctx context.Context) error { return postgres.Ping(ctx, pool) },
+		"redis":      func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },
 	}, func() any { return searchMetrics.Snapshot() })
 
 	mux := http.NewServeMux()
@@ -176,9 +201,11 @@ func main() {
 	mux.HandleFunc("/health/ready", healthHandler.Ready)
 	mux.HandleFunc("/health/metrics", healthHandler.Metrics)
 	mux.HandleFunc("/api/v1/products", apiHandler.Products)
+	mux.HandleFunc("/api/v1/products/", apiHandler.Products)
 	mux.HandleFunc("/api/v1/search", apiHandler.Search)
 	mux.HandleFunc("/api/v1/auth/register", apiHandler.Register)
 	mux.HandleFunc("/api/v1/auth/login", apiHandler.Login)
+	mux.HandleFunc("/api/v1/auth/session", apiHandler.CurrentSession)
 	mux.HandleFunc("/api/v1/auth/logout", apiHandler.Logout)
 	mux.HandleFunc("/api/v1/auth/password-reset/request", apiHandler.PasswordResetRequest)
 	mux.HandleFunc("/api/v1/auth/password-reset/confirm", apiHandler.PasswordResetConfirm)
@@ -199,8 +226,22 @@ func main() {
 	mux.HandleFunc("/api/v1/seller/products/media-url", apiHandler.MediaUploadURL)
 	mux.HandleFunc("/api/v1/seller/products/media-finalize", apiHandler.MediaFinalize)
 	mux.HandleFunc("/api/v1/seller/products/media-delete", apiHandler.MediaDelete)
+	if cfg.LocalMode {
+		mux.Handle("/api/v1/local/", apiTransport.NewLocalDemoHandler(pool, sessionService))
+	}
 	mux.Handle("/webhooks/razorpay", webhookTransport.NewRazorpayHandler(paymentService))
-	mux.Handle("/", webHandler)
+	if localGateway != nil {
+		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway))
+	}
+	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", cfg.LocalMode, webHandler)
+	mux.Handle("/admin", portalHandler)
+	mux.Handle("/admin/", portalHandler)
+	mux.Handle("/seller-admin", portalHandler)
+	mux.Handle("/seller-admin/", portalHandler)
+	mux.Handle("/support-portal", portalHandler)
+	mux.Handle("/support-portal/", portalHandler)
+	mux.Handle("/", storefrontHandler)
 
 	server := &http.Server{
 		Addr:              cfg.Address,
@@ -236,6 +277,68 @@ func main() {
 		logger.Error("HTTP server stopped", "error", err)
 		os.Exit(1)
 	}
+}
+
+func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, service *applicationpayment.Service, gateway *localpayment.Gateway) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeLocalJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		cookie, err := r.Cookie("wecratfs_session")
+		if err != nil || sessions == nil {
+			writeLocalJSON(w, http.StatusUnauthorized, map[string]string{"error": "authentication_required"})
+			return
+		}
+		session, err := sessions.Get(r.Context(), cookie.Value)
+		if err != nil || session.CSRFToken == "" || subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Header.Get("X-CSRF-Token"))) != 1 {
+			writeLocalJSON(w, http.StatusForbidden, map[string]string{"error": "csrf_validation_failed"})
+			return
+		}
+		parts := strings.Split(strings.TrimPrefix(strings.Trim(r.URL.Path, "/"), "dev/payments/"), "/")
+		if len(parts) != 2 || parts[0] == "" || (parts[1] != "capture" && parts[1] != "fail" && parts[1] != "pending") {
+			writeLocalJSON(w, http.StatusNotFound, map[string]string{"error": "unknown_local_payment_action"})
+			return
+		}
+		orderNumber := parts[0]
+		var providerOrderID, currency string
+		var amount int64
+		if err := pool.QueryRow(r.Context(), `
+			SELECT pa.provider_order_id, pa.amount_cents, pa.currency
+			FROM orders o JOIN payment_attempts pa ON pa.order_id = o.id
+			WHERE o.order_number = $1 AND o.user_id = $2
+			ORDER BY pa.id DESC LIMIT 1`, orderNumber, session.UserID).Scan(&providerOrderID, &amount, &currency); err != nil {
+			writeLocalJSON(w, http.StatusNotFound, map[string]string{"error": "payment_order_not_found"})
+			return
+		}
+		if providerOrderID == "" {
+			writeLocalJSON(w, http.StatusConflict, map[string]string{"error": "payment_order_not_prepared"})
+			return
+		}
+		eventType, status := "payment.pending", "pending"
+		if parts[1] == "capture" {
+			eventType, status = "payment.captured", "captured"
+		} else if parts[1] == "fail" {
+			eventType, status = "payment.failed", "failed"
+		}
+		body, err := localpayment.WebhookPayload("local_evt_"+orderNumber+"_"+parts[1], eventType, providerOrderID, localpayment.PaymentID(orderNumber), status, amount, currency)
+		if err != nil {
+			writeLocalJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		processed, err := service.HandleWebhook(r.Context(), body, gateway.Sign(string(body)))
+		if err != nil {
+			writeLocalJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeLocalJSON(w, http.StatusOK, map[string]any{"order_number": orderNumber, "action": parts[1], "processed": processed})
+	}
+}
+
+func writeLocalJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
 }
 
 func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
@@ -275,14 +378,35 @@ func writeRateLimitAPIError(w http.ResponseWriter, r *http.Request, status int, 
 	}})
 }
 
-func tcpProbe(address string) healthTransport.Probe {
-	return func(ctx context.Context) error {
-		dialer := net.Dialer{Timeout: 2 * time.Second}
-		connection, err := dialer.DialContext(ctx, "tcp", address)
-		if err != nil {
-			return err
+func waitForPostgres(ctx context.Context, pool *pgxpool.Pool) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	var lastErr error
+	for {
+		if lastErr = postgres.Ping(ctx, pool); lastErr == nil {
+			return nil
 		}
-		return connection.Close()
+		select {
+		case <-ctx.Done():
+			return lastErr
+		case <-ticker.C:
+		}
+	}
+}
+
+func waitForRedis(ctx context.Context, client *redisclient.Client) error {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	var lastErr error
+	for {
+		if lastErr = client.Ping(ctx).Err(); lastErr == nil {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return lastErr
+		case <-ticker.C:
+		}
 	}
 }
 
