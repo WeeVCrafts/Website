@@ -39,13 +39,17 @@ type LiveStorefrontHandler struct {
 	fallback         http.Handler
 }
 
-func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *applicationcatalog.SearchService, cart *applicationcommerce.CartService, orders *applicationcommerce.OrderService, sessions *applicationauth.SessionService, pool *pgxpool.Pool, paymentMode, paymentPublicKey string, paymentConfigured, localMode bool, fallback http.Handler) *LiveStorefrontHandler {
+func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *applicationcatalog.SearchService, cart *applicationcommerce.CartService, orders *applicationcommerce.OrderService, sessions *applicationauth.SessionService, pool *pgxpool.Pool, paymentMode, paymentPublicKey string, paymentConfigured bool, fallback http.Handler) *LiveStorefrontHandler {
 	mode := strings.ToLower(strings.TrimSpace(paymentMode))
-	ready := localMode && mode == "local" || mode == "razorpay" && paymentConfigured
+	ready := paymentReady(mode, paymentConfigured)
 	return &LiveStorefrontHandler{
 		catalog: catalog, search: search, cart: cart, orders: orders, sessions: sessions, pool: pool,
 		paymentMode: mode, paymentPublicKey: paymentPublicKey, paymentReady: ready, fallback: fallback,
 	}
+}
+
+func paymentReady(mode string, paymentConfigured bool) bool {
+	return mode == "local" || mode == "razorpay" && paymentConfigured
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

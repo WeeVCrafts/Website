@@ -44,6 +44,10 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 	cfg := config.FromEnv()
+	if cfg.Environment == "production" && strings.EqualFold(cfg.PaymentMode, "local") && cfg.LocalPaymentSecret == "wecratfs-local-payment" {
+		logger.Error("local payment mode in production requires a unique WECRATFS_LOCAL_PAYMENT_SECRET")
+		os.Exit(1)
+	}
 
 	startupContext, startupCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer startupCancel()
@@ -117,7 +121,7 @@ func main() {
 	var refundGateway ports.PaymentRefundGateway
 	var webhookVerifier ports.PaymentWebhookVerifier
 	var localGateway *localpayment.Gateway
-	if cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local") {
+	if strings.EqualFold(cfg.PaymentMode, "local") {
 		localGateway = localpayment.NewGateway(cfg.LocalPaymentSecret)
 		paymentGateway, refundGateway, webhookVerifier = localGateway, localGateway, localGateway
 		logger.Info("local deterministic payment mode enabled")
@@ -234,7 +238,7 @@ func main() {
 		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway))
 	}
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
-	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", cfg.LocalMode, webHandler)
+	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler)
 	mux.Handle("/admin", portalHandler)
 	mux.Handle("/admin/", portalHandler)
 	mux.Handle("/seller-admin", portalHandler)
@@ -343,7 +347,7 @@ func writeLocalJSON(w http.ResponseWriter, status int, value any) {
 
 func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/login" || r.URL.Path == "/register" || r.URL.Path == "/forgot-password" || r.URL.Path == "/reset-password" || r.URL.Path == "/verify-email" || strings.HasPrefix(r.URL.Path, "/api/v1/auth/") {
+		if isAuthenticationAttempt(r.URL.Path) {
 			allowed, err := limiter.Allow(r.Context(), "auth:"+clientAddress(r), 20, time.Minute)
 			if err != nil {
 				writeRateLimitAPIError(w, r, http.StatusServiceUnavailable, "RATE_LIMIT_UNAVAILABLE", "Authentication is temporarily unavailable.")
@@ -357,6 +361,18 @@ func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func isAuthenticationAttempt(path string) bool {
+	switch path {
+	case "/login", "/register", "/forgot-password", "/reset-password", "/verify-email",
+		"/api/v1/auth/register", "/api/v1/auth/login",
+		"/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm",
+		"/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm":
+		return true
+	default:
+		return false
+	}
 }
 
 func clientAddress(r *http.Request) string {

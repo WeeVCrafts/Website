@@ -38,7 +38,7 @@ Reference screens reviewed from `Weevcrafts_Screens/super admin/`:
 | Payments, settlements, transactions and finance actions | Pass | `admin-qa/finance-clean.png` |
 | Customer support cases, satisfaction and care standards | Pass | `admin-qa/support-clean.png` |
 | Campaigns, coupons/content tabs and homepage content | Pass | `admin-qa/marketing-clean.png` |
-| Analytics, export destinations, audit log, settings and system health | Pass | `admin-qa/analytics-clean.png` |
+| Analytics, domestic delivery coverage, audit log, settings and system health | Pass | `admin-qa/analytics-clean.png` |
 | Admin navigation and notice actions | Pass | HTTP smoke check: all discovered `/admin*` links returned 200 |
 
 ## Review notes

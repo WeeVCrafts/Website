@@ -78,6 +78,23 @@ func TestLiveOrderStatusIsCustomerReadable(t *testing.T) {
 	}
 }
 
+func TestPaymentReadinessFollowsConfiguredMode(t *testing.T) {
+	for _, test := range []struct {
+		mode       string
+		configured bool
+		want       bool
+	}{
+		{mode: "local", want: true},
+		{mode: "razorpay", configured: true, want: true},
+		{mode: "razorpay", want: false},
+		{mode: "unknown", configured: true, want: false},
+	} {
+		if got := paymentReady(test.mode, test.configured); got != test.want {
+			t.Errorf("paymentReady(%q, %v) = %v, want %v", test.mode, test.configured, got, test.want)
+		}
+	}
+}
+
 func TestCheckoutPlaceOrderButtonTracksPaymentReadiness(t *testing.T) {
 	render := func(paymentReady bool) string {
 		recorder := httptest.NewRecorder()

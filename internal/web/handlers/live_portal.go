@@ -478,18 +478,31 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64) []v
 }
 
 func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []viewmodels.SellerAdminOrder {
-	rows, err := h.pool.Query(r.Context(), `SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status FROM orders o JOIN users u ON u.id=o.user_id JOIN seller_fulfillments sf ON sf.order_id=o.id WHERE sf.seller_id=$1 ORDER BY o.created_at DESC LIMIT 50`, sellerID)
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT o.order_number, o.created_at, u.display_name, COALESCE(SUM(oi.line_total_cents),0),
+		       COALESCE(sf.status,'pending'), COALESCE(pa.status,'created'), COALESCE(SUM(oi.quantity),0)
+		FROM orders o
+		JOIN users u ON u.id=o.user_id
+		JOIN order_items oi ON oi.order_id=o.id
+		JOIN product_variants pv ON pv.id=oi.variant_id
+		JOIN products p ON p.id=pv.product_id AND p.seller_id=$1
+		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
+		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
+		WHERE o.status IN ('paid','processing','shipped','delivered')
+		GROUP BY o.id, u.display_name, sf.status, pa.status
+		ORDER BY o.created_at DESC, o.id DESC
+		LIMIT 50`, sellerID)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 	var result []viewmodels.SellerAdminOrder
 	for rows.Next() {
-		var number, customer, status string
+		var number, customer, status, payment string
 		var created time.Time
-		var total int64
-		if rows.Scan(&number, &created, &customer, &total, &status) == nil {
-			result = append(result, viewmodels.SellerAdminOrder{Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Value: money(total), Status: status, Payment: "Provider-backed", Image: "/assets/images/customer/madhubani-tree.webp"})
+		var total, items int64
+		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &items) == nil {
+			result = append(result, viewmodels.SellerAdminOrder{Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Status: status, Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
 		}
 	}
 	return result

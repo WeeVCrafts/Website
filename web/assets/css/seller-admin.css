@@ -90,6 +90,7 @@ body.seller-body img { display: block; max-width: 100%; }
 .seller-sidebar { width: 202px; min-width: 202px; padding: 22px 10px 17px; border-right: 1px solid var(--seller-line); background: rgba(255,253,249,.78); }
 .seller-main { display: flex; flex: 1; min-width: 0; flex-direction: column; }
 .seller-content { flex: 1; min-width: 0; padding: 0 15px 26px; }
+.seller-content > *, .seller-panel, .seller-footer-main > * { min-width: 0; }
 .seller-profile-mini { display: flex; align-items: center; gap: 8px; min-height: 51px; padding: 0 8px 17px; }
 .seller-profile-avatar { width: 42px; height: 42px; flex: 0 0 42px; background: #eadfce; }
 .seller-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -299,6 +300,8 @@ body.seller-body img { display: block; max-width: 100%; }
 /* Shared keyboard and mobile-navigation affordances. */
 :where(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid #1b6d54; outline-offset: 3px; }
 body.seller-body { overflow-x: hidden; }
+.seller-app, .seller-main, .seller-content { min-width: 0; }
+.ledger-table-scroll { max-width: 100%; overflow-x: auto; }
 .seller-sidebar-close { display: none; }
 .seller-sidebar-backdrop { display: none; }
 @media (max-width: 820px) {
@@ -403,3 +406,17 @@ body.seller-body { overflow-x: hidden; }
 /* Preserve the dense visual language while keeping muted metadata readable. */
 .seller-wordmark small { color: #7c4f42; }
 .seller-chip.warning { color: #7f5a14; }
+
+@media (max-width: 820px) {
+  .seller-dashboard-grid > *, .seller-two-grid > *, .inventory-alert-layout > *, .inventory-table-layout > *, .earnings-layout > *, .products-layout > *, .settings-grid > * { min-width: 0; }
+}
+@media (max-width: 560px) {
+  .seller-alert-list a { grid-template-columns: 43px minmax(0, 1fr); min-width: 0; }
+  .seller-alert-list em { grid-column: 2; justify-self: start; }
+  .onboarding-steps { max-width: 100%; overflow-x: auto; }
+  .seller-pagination { flex-wrap: wrap; gap: 8px; }
+  .seller-pagination nav { max-width: 100%; overflow-x: auto; }
+  .ledger-table { min-width: 650px; }
+  .seller-footer-main > * { min-width: 0; overflow-wrap: anywhere; }
+  .settings-section dl, .settings-section dd { min-width: 0; overflow-wrap: anywhere; }
+}

@@ -54,6 +54,25 @@ func TestAuthRateLimitProtectsOnlyAuthenticationRoutes(t *testing.T) {
 	}
 }
 
+func TestAuthRateLimitDoesNotCountSessionRefreshOrLogout(t *testing.T) {
+	limiter := &fakeRateLimiter{allowed: false}
+	handler := authRateLimit(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}), limiter)
+	for _, path := range []string{"/api/v1/auth/session", "/api/v1/auth/logout", "/api/v1/products"} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		request.RemoteAddr = "192.0.2.12:4000"
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusNoContent {
+			t.Errorf("%s should bypass auth-attempt limiting, got %d", path, recorder.Code)
+		}
+	}
+	if len(limiter.keys) != 0 {
+		t.Fatalf("session refresh, logout, or catalog requests consumed auth limit: %v", limiter.keys)
+	}
+}
+
 func TestAuthRateLimitUnavailableReturnsJSONServiceError(t *testing.T) {
 	limiter := &fakeRateLimiter{err: context.DeadlineExceeded}
 	handler := authRateLimit(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

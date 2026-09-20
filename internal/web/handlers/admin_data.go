@@ -101,7 +101,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		}
 	case "orders":
 		page.Title = "Orders & Shipping"
-		page.Subtitle = "Manage marketplace orders, seller suborders, shipments, and deliveries across India and worldwide."
+		page.Subtitle = "Manage marketplace orders, seller suborders, shipments, and deliveries to serviceable PIN codes across India."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "shopping_cart", Value: "1,842", Label: "Total Marketplace Orders", Delta: "12%", Positive: true, Period: "vs. last month"},
 			{Icon: "receipt_long", Value: "1,968", Label: "Seller Suborders", Delta: "12%", Positive: true, Period: "vs. last month"},

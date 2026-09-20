@@ -357,3 +357,7 @@ body.admin-body { overflow-x: hidden; }
 /* Preserve the dense visual language while keeping muted metadata readable. */
 .table-head { color: #52657e; }
 .status.pending { color: #8a4e0b; }
+
+.admin-content > *, .admin-panel, .analytics-chart-grid > *, .admin-footer-main > * { min-width: 0; }
+
+@media (max-width: 640px) { .admin-body .status { max-width: 100%; white-space: normal; overflow-wrap: anywhere; } }

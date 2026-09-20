@@ -22,7 +22,7 @@ export default defineRailway(() => {
       WECRATFS_SECURE_COOKIES: "true",
       WECRATFS_PUBLIC_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
       WECRATFS_LOCAL_MODE: "false",
-      WECRATFS_PAYMENT_MODE: "razorpay",
+      WECRATFS_PAYMENT_MODE: "local",
     },
   });
   return project("attractive-warmth", {
