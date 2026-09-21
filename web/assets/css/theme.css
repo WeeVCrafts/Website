@@ -257,6 +257,9 @@ select { min-height: 31px; padding: 0 26px 0 8px; border: 1px solid var(--line);
 .thumbs img { width: 68px; height: 74px; object-fit: cover; }
 .gallery-main { position: relative; aspect-ratio: 1 / 1.12; overflow: hidden; background: #dfcfbc; }
 .gallery-main > img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-main > video { width: 100%; height: 100%; object-fit: contain; background: #211b17; }
+.gallery-video-thumb { width: 68px; height: 74px; display: grid; place-content: center; gap: 3px; border: 1px solid var(--line); color: var(--forest); background: var(--surface-2); font-size: 10px; }
+.detail-media-assets { display: grid; gap: 10px; }
 .gallery-main .gallery-heart { width: 36px; height: 36px; }
 .gallery-caption { grid-column: 2; margin-top: 8px; color: var(--muted); font-size: 10px; }
 .detail-copy h1 { margin: 12px 0 5px; font-size: 35px; line-height: 1.08; }
@@ -558,3 +561,22 @@ body :where(.order-progress i, .return-progress i, .steps > span b, .payment-log
 
 /* Inactive checkout steps remain legible against the paper background. */
 .steps > span { color: #625548; }
+
+.customer-support-tickets { display: grid; gap: 16px; margin-top: 18px; }
+.customer-support-ticket { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.customer-support-ticket > header, .customer-support-message > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.customer-support-ticket h3 { margin: 3px 0; }
+.customer-support-ticket .muted { margin: 8px 0; color: var(--muted); }
+.customer-support-messages { display: grid; gap: 10px; margin: 16px 0; }
+.customer-support-message { min-width: 0; padding: 12px; border-radius: 10px; background: #f6f1e9; }
+.customer-support-message--agent { background: #f2ece2; border-left: 3px solid var(--terracotta); }
+.customer-support-message > header { align-items: center; font-size: 12px; }
+.customer-support-message > header span { color: var(--muted); }
+.customer-support-message p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.customer-support-reply { padding-top: 12px; border-top: 1px solid var(--line); }
+.customer-support-reply textarea { width: 100%; }
+@media (max-width: 600px) {
+  .customer-support-ticket { padding: 12px; }
+  .customer-support-ticket > header { align-items: flex-start; }
+  .customer-support-message > header { align-items: flex-start; flex-direction: column; gap: 3px; }
+}

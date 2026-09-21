@@ -88,8 +88,9 @@ func main() {
 	searchMetrics := metricsadapter.NewSearchMetrics()
 	searchService := applicationcatalog.NewSearchServiceWithEngineAndObserver(searchRepository, searchCache, searchEngine, searchMetrics)
 	passwordHasher := applicationauth.NewArgon2idHasher()
-	authService := applicationauth.NewService(postgres.NewUserRepository(pool), passwordHasher)
-	sessionService := applicationauth.NewSessionService(redisadapter.NewSessionStore(redisClient))
+	userRepository := postgres.NewUserRepository(pool)
+	authService := applicationauth.NewService(userRepository, passwordHasher)
+	sessionService := applicationauth.NewSessionService(redisadapter.NewSessionStore(redisClient)).WithSessionChecker(userRepository)
 	var emailSender ports.EmailSender
 	if cfg.SMTPAddress != "" && cfg.SMTPFrom != "" {
 		emailSender = emailadapter.NewSMTP(cfg.SMTPAddress, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom)
@@ -106,10 +107,10 @@ func main() {
 	sellerReportService := applicationcommerce.NewSellerReportService(commerceRepository, roleAuthorizer)
 	sellerAdminService := applicationcommerce.NewSellerAdminService(commerceRepository, roleAuthorizer)
 	auditService := applicationcommerce.NewAuditService(commerceRepository, roleAuthorizer)
-	roleAdminService := applicationauth.NewRoleAdminService(postgres.NewRoleAdministrationRepository(pool), roleAuthorizer, passwordHasher)
+	roleAdminService := applicationauth.NewRoleAdminService(postgres.NewRoleAdministrationRepository(pool), roleAuthorizer, passwordHasher).WithSessionRevoker(sessionService)
 	adminOperationsService := applicationcommerce.NewAdminOperationsService(commerceRepository, roleAuthorizer)
 	brandDirectoryService := applicationcommerce.NewBrandDirectoryService(commerceRepository, roleAuthorizer)
-	customerDirectoryService := applicationauth.NewCustomerDirectoryService(postgres.NewUserRepository(pool), roleAuthorizer)
+	customerDirectoryService := applicationauth.NewCustomerDirectoryService(userRepository, roleAuthorizer)
 	financeService := applicationcommerce.NewFinanceService(commerceRepository, roleAuthorizer)
 	supportService := applicationcommerce.NewSupportService(commerceRepository, roleAuthorizer)
 	returnService := applicationcommerce.NewReturnService(commerceRepository, roleAuthorizer)
@@ -138,7 +139,7 @@ func main() {
 	} else if err := mediaStorage.EnsureBucket(startupContext); err != nil {
 		logger.Warn("S3 media bucket unavailable", "error", err)
 	}
-	mediaService := applicationcommerce.NewMediaService(mediaStorage, postgres.NewMediaRepository(pool))
+	mediaService := applicationcommerce.NewMediaService(mediaStorage, postgres.NewMediaRepository(pool), roleAuthorizer)
 	paymentOrderService := applicationpayment.NewOrderService(paymentGateway, paymentRepository)
 	webHandler, err := webTransport.NewFullHandlerWithPaymentConfigMediaRefundAndRecovery(catalogService, authService, sessionService, commerceCatalog, cartService, orderService, paymentOrderService, searchService, privacyService, mediaService, refundService, recoveryService, cfg.SecureCookies, cfg.RazorpayKeyID)
 	if err != nil {
@@ -228,6 +229,7 @@ func main() {
 	mux.HandleFunc("/api/v1/privacy/requests", apiHandler.PrivacyRequest)
 	mux.HandleFunc("/api/v1/privacy/delete", apiHandler.PrivacyDelete)
 	mux.HandleFunc("/api/v1/seller/products/media-url", apiHandler.MediaUploadURL)
+	mux.HandleFunc("/api/v1/seller/products/media-upload/", apiHandler.MediaUpload)
 	mux.HandleFunc("/api/v1/seller/products/media-finalize", apiHandler.MediaFinalize)
 	mux.HandleFunc("/api/v1/seller/products/media-delete", apiHandler.MediaDelete)
 	if cfg.LocalMode {
@@ -267,8 +269,8 @@ func main() {
 		Addr:              cfg.Address,
 		Handler:           requestID(authRateLimit(mux, rateLimiter)),
 		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      15 * time.Second,
+		ReadTimeout:       2 * time.Minute,
+		WriteTimeout:      2 * time.Minute,
 		IdleTimeout:       60 * time.Second,
 	}
 

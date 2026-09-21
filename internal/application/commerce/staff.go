@@ -48,6 +48,17 @@ func (s *SellerStaffService) Add(ctx context.Context, ownerUserID int64, email s
 	return s.repository.AddStaff(ctx, ownerUserID, email, permissions)
 }
 
+func (s *SellerStaffService) Update(ctx context.Context, ownerUserID, staffUserID int64, permissions []string) (domaincommerce.SellerStaffMember, error) {
+	if staffUserID <= 0 || staffUserID == ownerUserID || !s.ownerAllowed(ctx, ownerUserID) {
+		return domaincommerce.SellerStaffMember{}, ports.ErrForbidden
+	}
+	permissions, err := normalizeStaffPermissions(permissions)
+	if err != nil {
+		return domaincommerce.SellerStaffMember{}, err
+	}
+	return s.repository.UpdateStaff(ctx, ownerUserID, staffUserID, permissions)
+}
+
 func (s *SellerStaffService) Remove(ctx context.Context, ownerUserID, staffUserID int64) error {
 	if staffUserID <= 0 || staffUserID == ownerUserID || !s.ownerAllowed(ctx, ownerUserID) {
 		return ports.ErrForbidden

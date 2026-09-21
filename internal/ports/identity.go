@@ -23,6 +23,20 @@ type UserRepository interface {
 	ResetFailedLogin(ctx context.Context, userID int64) error
 }
 
+type UserStatusChecker interface {
+	IsUserActive(ctx context.Context, userID int64) (bool, error)
+}
+
+// UserSessionChecker invalidates sessions created before a security-sensitive
+// account or role change, even if disposable Redis cleanup fails.
+type UserSessionChecker interface {
+	IsSessionActive(ctx context.Context, userID int64, createdAt time.Time) (bool, error)
+}
+
+type SessionRevoker interface {
+	RevokeAll(ctx context.Context, userID int64) error
+}
+
 type PasswordHasher interface {
 	Hash(password string) (string, error)
 	Compare(encodedHash, password string) bool
@@ -66,7 +80,7 @@ type RoleChecker interface {
 }
 
 type RoleAdministrationRepository interface {
-	ListRoleAssignments(ctx context.Context, actorID int64) ([]domainidentity.RoleAssignment, error)
+	ListRoleAssignments(ctx context.Context, actorID int64, query string) ([]domainidentity.RoleAssignment, error)
 	UpdateRoleAssignment(ctx context.Context, actorID, userID, sellerID int64, role domainidentity.Role, grant bool, reason string) error
 	CreateRoleUser(ctx context.Context, actorID int64, email, displayName, passwordHash string, role domainidentity.Role, sellerID int64, reason string) (int64, error)
 	DeleteRoleUser(ctx context.Context, actorID, userID int64, reason string) error
@@ -74,4 +88,8 @@ type RoleAdministrationRepository interface {
 
 type CustomerDirectoryRepository interface {
 	ListCustomers(ctx context.Context, actorID int64, limit int) ([]domainidentity.AdminCustomer, error)
+}
+
+type UserProfileAdministrationRepository interface {
+	UpdateRoleUser(ctx context.Context, actorID, userID int64, email, displayName, status, passwordHash, reason string) error
 }

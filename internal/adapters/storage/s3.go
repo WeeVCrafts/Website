@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"io"
 	"net/url"
 	"strings"
 	"time"
@@ -47,6 +48,35 @@ func (s *S3) InspectObject(ctx context.Context, objectKey string) (ports.ObjectI
 		return ports.ObjectInfo{}, err
 	}
 	return ports.ObjectInfo{ContentType: info.ContentType, ByteSize: info.Size}, nil
+}
+
+func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteSize int64, body io.Reader) error {
+	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) || !allowedStoredMediaType(contentType) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
+		return errors.New("invalid object upload")
+	}
+	_, err := s.client.PutObject(ctx, s.bucket, objectKey, body, byteSize, minio.PutObjectOptions{ContentType: contentType})
+	return err
+}
+
+func (s *S3) OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, ports.ObjectInfo, error) {
+	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) {
+		return nil, ports.ObjectInfo{}, errors.New("invalid object read")
+	}
+	object, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	stat, err := object.Stat()
+	if err != nil {
+		_ = object.Close()
+		return nil, ports.ObjectInfo{}, err
+	}
+	return object, ports.ObjectInfo{ContentType: stat.ContentType, ByteSize: stat.Size}, nil
+}
+
+func allowedStoredMediaType(contentType string) bool {
+	value := strings.ToLower(strings.TrimSpace(contentType))
+	return value == "image/jpeg" || value == "image/png" || value == "image/webp" || value == "video/mp4" || value == "video/webm"
 }
 
 func (s *S3) CreateDownloadURL(ctx context.Context, objectKey string, lifetime time.Duration) (ports.DownloadURL, error) {

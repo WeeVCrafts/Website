@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -22,6 +23,18 @@ type UserRepository struct {
 
 func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{pool: pool, queries: generated.New(pool)}
+}
+
+func (r *UserRepository) IsUserActive(ctx context.Context, userID int64) (bool, error) {
+	var active bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND status='active')`, userID).Scan(&active)
+	return active, err
+}
+
+func (r *UserRepository) IsSessionActive(ctx context.Context, userID int64, createdAt time.Time) (bool, error) {
+	var active bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND status='active' AND (sessions_revoked_at IS NULL OR sessions_revoked_at < $2))`, userID, createdAt).Scan(&active)
+	return active, err
 }
 
 func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error) {
@@ -156,6 +169,8 @@ func maskCustomerEmail(email string) string {
 }
 
 var _ ports.CustomerDirectoryRepository = (*UserRepository)(nil)
+var _ ports.UserStatusChecker = (*UserRepository)(nil)
+var _ ports.UserSessionChecker = (*UserRepository)(nil)
 
 func mapUser(user generated.User, roles []string) domainidentity.User {
 	roleValues := make([]domainidentity.Role, 0, len(roles))

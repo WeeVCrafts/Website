@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"io"
 	"time"
 )
 
@@ -92,6 +93,18 @@ type ObjectStorageReader interface {
 	InspectObject(ctx context.Context, objectKey string) (ObjectInfo, error)
 	CreateDownloadURL(ctx context.Context, objectKey string, lifetime time.Duration) (DownloadURL, error)
 	DeleteObject(ctx context.Context, objectKey string) error
+}
+
+// ObjectStorageWriter accepts authenticated, server-proxied product uploads.
+// This keeps browser uploads usable with private buckets and providers without CORS.
+type ObjectStorageWriter interface {
+	PutObject(ctx context.Context, objectKey, contentType string, byteSize int64, body io.Reader) error
+}
+
+// ObjectStorageContentReader streams public objects through the application so
+// private bucket hostnames never need to be exposed to customers.
+type ObjectStorageContentReader interface {
+	OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, ObjectInfo, error)
 }
 
 type UploadRequest struct {

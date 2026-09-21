@@ -2,7 +2,10 @@ package api
 
 import (
 	"errors"
+	"mime"
 	"net/http"
+	"strconv"
+	"strings"
 
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
@@ -28,6 +31,39 @@ func (h *Handler) MediaUploadURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"data": media})
+}
+
+func (h *Handler) MediaUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Use PUT to upload product media.")
+		return
+	}
+	session, ok := h.session(r)
+	if !ok || h.media == nil || !h.validCSRF(r, session) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "Authentication and CSRF validation are required.")
+		return
+	}
+	mediaIDText := strings.TrimPrefix(r.URL.Path, "/api/v1/seller/products/media-upload/")
+	mediaID, err := strconv.ParseInt(mediaIDText, 10, 64)
+	if err != nil || mediaID <= 0 {
+		writeError(w, http.StatusUnprocessableEntity, "MEDIA_INVALID", "A valid media upload is required.")
+		return
+	}
+	if r.ContentLength <= 0 || r.ContentLength > 25<<20 {
+		writeError(w, http.StatusRequestEntityTooLarge, "MEDIA_TOO_LARGE", "Product media must be smaller than 25 MB.")
+		return
+	}
+	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		writeError(w, http.StatusUnsupportedMediaType, "MEDIA_TYPE_UNSUPPORTED", "Choose a JPEG, PNG, WebP, MP4 or WebM file.")
+		return
+	}
+	body := http.MaxBytesReader(w, r.Body, 25<<20)
+	if err := h.media.UploadObject(r.Context(), session.UserID, mediaID, contentType, r.ContentLength, body); err != nil {
+		h.writeMediaError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"uploaded": true}})
 }
 
 func (h *Handler) MediaFinalize(w http.ResponseWriter, r *http.Request) {

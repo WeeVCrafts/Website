@@ -80,6 +80,8 @@ func (h *Handler) supportCreate(w http.ResponseWriter, r *http.Request) {
 			h.renderError(w, http.StatusUnprocessableEntity, "Support request invalid", "Use a subject of 4–160 characters and a message of at least 10 characters.")
 		case errors.Is(createErr, ports.ErrOrderNotFound):
 			h.renderError(w, http.StatusNotFound, "Order unavailable", "That order does not belong to your account.")
+		case errors.Is(createErr, ports.ErrForbidden):
+			h.renderError(w, http.StatusForbidden, "Support access denied", "Sign in with a customer account to create a support request.")
 		default:
 			h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not create the support request.")
 		}
@@ -88,7 +90,7 @@ func (h *Handler) supportCreate(w http.ResponseWriter, r *http.Request) {
 	if seller {
 		h.redirect(w, r, "/seller/support")
 	} else {
-		h.redirect(w, r, "/support")
+		h.redirect(w, r, "/account/support?notice=Support+request+created")
 	}
 }
 
@@ -126,5 +128,77 @@ func (h *Handler) supportStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	h.redirect(w, r, "/support")
+	h.redirect(w, r, "/support/cases?ticket_id="+strconv.FormatInt(ticketID, 10))
+}
+
+func (h *Handler) supportReply(w http.ResponseWriter, r *http.Request) {
+	if h.supportService == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	ticketID, err := strconv.ParseInt(r.FormValue("ticket_id"), 10, 64)
+	if err != nil || ticketID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Choose a valid support ticket.")
+		return
+	}
+	if err := h.supportService.Reply(r.Context(), session.UserID, ticketID, r.FormValue("message")); err != nil {
+		switch {
+		case errors.Is(err, applicationcommerce.ErrInvalidSupportTicket):
+			h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Enter a response of 1 to 4,000 characters.")
+		case errors.Is(err, ports.ErrForbidden):
+			h.renderError(w, http.StatusForbidden, "Support access denied", "Only support agents can send customer responses.")
+		case errors.Is(err, ports.ErrSupportNotFound):
+			h.renderError(w, http.StatusNotFound, "Ticket unavailable", "That support ticket no longer exists.")
+		default:
+			h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not send that response.")
+		}
+		return
+	}
+	h.redirect(w, r, "/support/cases?ticket_id="+strconv.FormatInt(ticketID, 10))
+}
+
+func (h *Handler) supportCustomerReply(w http.ResponseWriter, r *http.Request) {
+	if h.supportService == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login?next=/account/support")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	ticketID, err := strconv.ParseInt(r.FormValue("ticket_id"), 10, 64)
+	if err != nil || ticketID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Choose a valid support ticket.")
+		return
+	}
+	if err := h.supportService.ReplyCustomer(r.Context(), session.UserID, ticketID, r.FormValue("message")); err != nil {
+		switch {
+		case errors.Is(err, applicationcommerce.ErrInvalidSupportTicket):
+			h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Enter a response of 1 to 4,000 characters.")
+		case errors.Is(err, ports.ErrForbidden):
+			h.renderError(w, http.StatusForbidden, "Support access denied", "You can only reply to your own support tickets.")
+		case errors.Is(err, ports.ErrSupportNotFound):
+			h.renderError(w, http.StatusNotFound, "Ticket unavailable", "That support ticket no longer exists.")
+		case errors.Is(err, ports.ErrSupportState):
+			h.renderError(w, http.StatusConflict, "Ticket closed", "This ticket is closed. Open a new support request if you still need help.")
+		default:
+			h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not send that response.")
+		}
+		return
+	}
+	h.redirect(w, r, "/account/support?ticket_id="+strconv.FormatInt(ticketID, 10)+"&notice=Reply+sent")
 }

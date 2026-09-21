@@ -8,31 +8,46 @@ import (
 )
 
 var (
-	ErrForbidden         = errors.New("forbidden")
-	ErrInvalidState      = errors.New("invalid state transition")
-	ErrInsufficientStock = errors.New("insufficient stock")
-	ErrCartNotFound      = errors.New("cart not found")
-	ErrOrderNotFound     = errors.New("order not found")
-	ErrReturnNotFound    = errors.New("return request not found")
-	ErrReturnState       = errors.New("return request state is invalid")
-	ErrSupportNotFound   = errors.New("support ticket not found")
-	ErrSupportState      = errors.New("support ticket state is invalid")
-	ErrSellerNotFound    = errors.New("seller not found")
-	ErrSellerState       = errors.New("seller state is invalid")
+	ErrForbidden            = errors.New("forbidden")
+	ErrInvalidState         = errors.New("invalid state transition")
+	ErrInsufficientStock    = errors.New("insufficient stock")
+	ErrCartNotFound         = errors.New("cart not found")
+	ErrOrderNotFound        = errors.New("order not found")
+	ErrReturnNotFound       = errors.New("return request not found")
+	ErrReturnState          = errors.New("return request state is invalid")
+	ErrSupportNotFound      = errors.New("support ticket not found")
+	ErrSupportState         = errors.New("support ticket state is invalid")
+	ErrSellerNotFound       = errors.New("seller not found")
+	ErrSellerState          = errors.New("seller state is invalid")
+	ErrCatalogConflict      = errors.New("brand or category name conflicts with its existing slug")
+	ErrFinalActiveVariant   = errors.New("cannot archive the final active product variant")
+	ErrVariantReservedStock = errors.New("cannot archive a variant with reserved stock")
 )
 
 type CatalogManagementRepository interface {
 	EnsureSeller(ctx context.Context, ownerUserID int64, displayName string) (domaincommerce.Seller, error)
 	GetSeller(ctx context.Context, userID int64) (domaincommerce.Seller, error)
+	UpdateSellerProfile(ctx context.Context, ownerUserID int64, displayName, reason string) error
 	CreateDraft(ctx context.Context, ownerUserID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
 	GetSellerProduct(ctx context.Context, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error)
 	UpdateDraft(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
 	CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
 	GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error)
 	UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error)
+	ListSellerProductVariants(ctx context.Context, ownerUserID, productID int64) ([]domaincommerce.ProductVariant, error)
+	CreateSellerProductVariant(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error)
+	UpdateSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error)
+	ArchiveSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, reason string) error
+	ListAdminProductVariants(ctx context.Context, actorID, productID int64) ([]domaincommerce.ProductVariant, error)
+	CreateAdminProductVariant(ctx context.Context, actorID, productID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error)
+	UpdateAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error)
+	ArchiveAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, reason string) error
 	ArchiveSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error
+	RestoreSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error
 	ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error
 	SubmitProduct(ctx context.Context, ownerUserID, productID int64) error
+	SubmitAdminProduct(ctx context.Context, actorID, productID int64) error
+	RestoreAdminProduct(ctx context.Context, actorID, productID int64, reason string) error
 	ApproveProduct(ctx context.Context, actorID, productID int64, approved bool, reason string) error
 	ListSellerProducts(ctx context.Context, ownerUserID int64) ([]domaincommerce.ManagedProduct, error)
 	ListPendingProducts(ctx context.Context, actorID int64) ([]domaincommerce.ManagedProduct, error)
@@ -59,6 +74,7 @@ type BrandDirectoryRepository interface {
 type SellerStaffRepository interface {
 	ListStaff(ctx context.Context, ownerUserID int64) ([]domaincommerce.SellerStaffMember, error)
 	AddStaff(ctx context.Context, ownerUserID int64, email string, permissions []string) (domaincommerce.SellerStaffMember, error)
+	UpdateStaff(ctx context.Context, ownerUserID, staffUserID int64, permissions []string) (domaincommerce.SellerStaffMember, error)
 	RemoveStaff(ctx context.Context, ownerUserID, staffUserID int64) error
 }
 
@@ -88,6 +104,11 @@ type SupportRepository interface {
 	ListSellerSupportTickets(ctx context.Context, userID int64) ([]domaincommerce.SupportTicket, error)
 	ListSupportTickets(ctx context.Context, limit int) ([]domaincommerce.SupportTicket, error)
 	UpdateSupportTicket(ctx context.Context, actorID, ticketID int64, status, note string) error
+	ReplySupportTicket(ctx context.Context, actorID, ticketID int64, reply string) error
+}
+
+type CustomerSupportReplyRepository interface {
+	ReplyCustomerSupportTicket(ctx context.Context, userID, ticketID int64, reply string) error
 }
 
 type ReturnRepository interface {

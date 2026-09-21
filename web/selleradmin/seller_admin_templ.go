@@ -44,7 +44,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - WeeVCrafts Seller Portal</title><link rel=\"preload\" href=\"/assets/fonts/dm-sans-400.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/playfair-display-500.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"/assets/css/seller-admin.min.css\"><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/htmx.min.js\"></script><script defer src=\"/assets/js/alpine.min.js\"></script></head><body class=\"seller-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"seller-skip-link\" href=\"#seller-main\">Skip to main content</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - WeeVCrafts Seller Portal</title><link rel=\"preload\" href=\"/assets/fonts/dm-sans-400.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/playfair-display-500.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"/assets/css/seller-admin.min.css\"><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/htmx.min.js\"></script><script defer src=\"/assets/js/alpine.min.js\"></script><script defer src=\"/assets/js/product-media.js\"></script></head><body class=\"seller-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"seller-skip-link\" href=\"#seller-main\">Skip to main content</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,7 +76,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 31, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 32, Col: 143}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -127,7 +127,7 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var5 templ.SafeURL
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(sellerPath(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 48, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 49, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -140,7 +140,7 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 51, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 52, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -153,7 +153,7 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 55, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 56, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -166,7 +166,7 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 55, Col: 133}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 56, Col: 133}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -179,7 +179,7 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 55, Col: 164}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 56, Col: 164}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -221,7 +221,7 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 64, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 65, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -234,7 +234,7 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.SellerName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 64, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 65, Col: 122}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -247,7 +247,7 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.UserEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 64, Col: 153}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 65, Col: 153}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -312,7 +312,7 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 88, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 89, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
@@ -382,7 +382,7 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var18 templ.SafeURL
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 97, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 98, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -395,7 +395,7 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 97, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 98, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 		if templ_7745c5c3_Err != nil {
@@ -408,7 +408,7 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 97, Col: 168}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 98, Col: 168}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -421,7 +421,7 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 97, Col: 190}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 98, Col: 190}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -463,7 +463,7 @@ func SellerTableEmpty(message, hint string) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 101, Col: 141}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 102, Col: 141}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -476,7 +476,7 @@ func SellerTableEmpty(message, hint string) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(hint)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 101, Col: 165}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 102, Col: 165}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -536,7 +536,7 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 106, Col: 263}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 107, Col: 263}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -549,7 +549,7 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 107, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 108, Col: 102}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -562,7 +562,7 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 107, Col: 124}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 108, Col: 124}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -575,7 +575,7 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerIntroImage(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 108, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 109, Col: 98}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 		if templ_7745c5c3_Err != nil {
@@ -717,7 +717,7 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStatIcon(stat.Icon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 133, Col: 111}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 134, Col: 111}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -730,7 +730,7 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 134, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 135, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -743,7 +743,7 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var40 string
 			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 134, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 135, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -817,7 +817,7 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(sellerTrendIcon(stat.Positive))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 144, Col: 144}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 145, Col: 144}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -830,7 +830,7 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 144, Col: 165}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 145, Col: 165}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -843,7 +843,7 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 144, Col: 185}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 145, Col: 185}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -861,7 +861,7 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			var templ_7745c5c3_Var47 string
 			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 146, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 147, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 			if templ_7745c5c3_Err != nil {
@@ -1036,7 +1036,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var56 string
 			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 208}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 208}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var56)
 			if templ_7745c5c3_Err != nil {
@@ -1071,7 +1071,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var59 string
 			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "draft"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 348}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 348}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
 			if templ_7745c5c3_Err != nil {
@@ -1106,7 +1106,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var62 string
 			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "review"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 501}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 501}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var62)
 			if templ_7745c5c3_Err != nil {
@@ -1141,7 +1141,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var65 string
 			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "approved"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 666}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 666}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var65)
 			if templ_7745c5c3_Err != nil {
@@ -1176,7 +1176,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var68 string
 			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "changes"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 827}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 827}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 			if templ_7745c5c3_Err != nil {
@@ -1211,7 +1211,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var71 string
 			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rejected"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 997}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 997}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
 			if templ_7745c5c3_Err != nil {
@@ -1246,7 +1246,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var74 string
 			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "stock"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 1154}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 1154}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var74)
 			if templ_7745c5c3_Err != nil {
@@ -1259,7 +1259,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var75 string
 			templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 170, Col: 1591}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 171, Col: 1591}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var75)
 			if templ_7745c5c3_Err != nil {
@@ -1277,7 +1277,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var76 string
 				templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.ResolveAttributeValue("Select " + product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 107}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 107}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var76)
 				if templ_7745c5c3_Err != nil {
@@ -1290,7 +1290,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var77 string
 				templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Image)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 204}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 204}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var77)
 				if templ_7745c5c3_Err != nil {
@@ -1303,7 +1303,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var78 string
 				templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 225}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 225}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var78)
 				if templ_7745c5c3_Err != nil {
@@ -1316,7 +1316,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var79 string
 				templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.JoinStringErrs(product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 246}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 246}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var79))
 				if templ_7745c5c3_Err != nil {
@@ -1329,7 +1329,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var80 string
 				templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.JoinStringErrs(product.SKU)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 277}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 277}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var80))
 				if templ_7745c5c3_Err != nil {
@@ -1342,7 +1342,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var81 string
 				templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(product.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 318}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 318}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 				if templ_7745c5c3_Err != nil {
@@ -1355,7 +1355,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var82 string
 				templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(product.Price)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 350}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 350}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
 				if templ_7745c5c3_Err != nil {
@@ -1368,7 +1368,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var83 string
 				templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinStringErrs(product.Variants)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 385}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 385}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
 				if templ_7745c5c3_Err != nil {
@@ -1403,7 +1403,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var86 string
 				templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(product.Stock)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 457}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 457}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
 				if templ_7745c5c3_Err != nil {
@@ -1416,7 +1416,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var87 string
 				templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStockLabel(product.Stock))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 499}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 499}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 				if templ_7745c5c3_Err != nil {
@@ -1451,7 +1451,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var90 string
 				templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(product.Status)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 599}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 599}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var90))
 				if templ_7745c5c3_Err != nil {
@@ -1464,7 +1464,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var91 string
 				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "D"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 691}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 691}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
 				if templ_7745c5c3_Err != nil {
@@ -1477,7 +1477,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var92 string
 				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "E"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 747}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 747}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var92))
 				if templ_7745c5c3_Err != nil {
@@ -1490,7 +1490,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var93 templ.SafeURL
 				templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/products?notice=" + sellerNotice("Product details opened: ", product.Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 878}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 878}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
 				if templ_7745c5c3_Err != nil {
@@ -1503,7 +1503,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var94 string
 				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.ResolveAttributeValue("Open " + product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 172, Col: 916}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 173, Col: 916}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var94)
 				if templ_7745c5c3_Err != nil {
@@ -1578,7 +1578,7 @@ func Inventory(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var97 string
 			templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 184, Col: 3433}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 3433}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var97)
 			if templ_7745c5c3_Err != nil {
@@ -1674,7 +1674,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var102 string
 			templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 161}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var102)
 			if templ_7745c5c3_Err != nil {
@@ -1709,7 +1709,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var105 string
 			templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "new"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 302}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 302}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var105)
 			if templ_7745c5c3_Err != nil {
@@ -1744,7 +1744,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var108 string
 			templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "processing"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 457}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 457}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var108)
 			if templ_7745c5c3_Err != nil {
@@ -1779,7 +1779,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var111 string
 			templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "ready"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 616}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 616}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var111)
 			if templ_7745c5c3_Err != nil {
@@ -1814,7 +1814,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var114 string
 			templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "shipped"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 777}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 777}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var114)
 			if templ_7745c5c3_Err != nil {
@@ -1849,7 +1849,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var117 string
 			templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "delivered"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 938}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 938}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var117)
 			if templ_7745c5c3_Err != nil {
@@ -1884,7 +1884,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var120 string
 			templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rto"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 1091}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 1091}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var120)
 			if templ_7745c5c3_Err != nil {
@@ -1897,7 +1897,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var121 string
 			templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 195, Col: 1732}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 196, Col: 1732}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var121)
 			if templ_7745c5c3_Err != nil {
@@ -1972,7 +1972,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var124 string
 				templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Number)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 671}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 671}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var124))
 				if templ_7745c5c3_Err != nil {
@@ -1985,7 +1985,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var125 string
 				templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Date)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 733}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 733}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var125))
 				if templ_7745c5c3_Err != nil {
@@ -1998,7 +1998,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var126 string
 				templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Order)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 807}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 807}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var126))
 				if templ_7745c5c3_Err != nil {
@@ -2011,7 +2011,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var127 string
 				templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Customer)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 991}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 991}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
 				if templ_7745c5c3_Err != nil {
@@ -2024,7 +2024,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var128 string
 				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Image)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 1121}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1121}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var128)
 				if templ_7745c5c3_Err != nil {
@@ -2037,7 +2037,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var129 string
 				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Product)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 1166}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1166}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var129)
 				if templ_7745c5c3_Err != nil {
@@ -2050,7 +2050,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var130 string
 				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Product)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 1217}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1217}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
 				if templ_7745c5c3_Err != nil {
@@ -2063,7 +2063,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var131 string
 				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Amount)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 1317}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1317}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 				if templ_7745c5c3_Err != nil {
@@ -2076,7 +2076,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var132 string
 				templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Reason)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 207, Col: 1403}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1403}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 				if templ_7745c5c3_Err != nil {
@@ -2353,7 +2353,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var143 string
 			templ_7745c5c3_Var143, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "promotions"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 244, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 245, Col: 161}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var143)
 			if templ_7745c5c3_Err != nil {
@@ -2388,7 +2388,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var146 string
 			templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "commission"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 245, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 246, Col: 161}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var146)
 			if templ_7745c5c3_Err != nil {
@@ -2423,7 +2423,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var149 string
 			templ_7745c5c3_Var149, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "audit"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 246, Col: 146}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 247, Col: 146}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var149)
 			if templ_7745c5c3_Err != nil {
@@ -2458,7 +2458,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var152 string
 			templ_7745c5c3_Var152, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "reviews"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 247, Col: 152}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 248, Col: 152}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var152)
 			if templ_7745c5c3_Err != nil {
@@ -2493,7 +2493,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var155 string
 			templ_7745c5c3_Var155, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "messages"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 248, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 249, Col: 155}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var155)
 			if templ_7745c5c3_Err != nil {
@@ -2528,7 +2528,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			var templ_7745c5c3_Var158 string
 			templ_7745c5c3_Var158, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "support"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 249, Col: 152}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 250, Col: 152}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var158)
 			if templ_7745c5c3_Err != nil {
@@ -2576,7 +2576,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var159 string
 				templ_7745c5c3_Var159, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 264, Col: 204}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 265, Col: 204}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var159))
 				if templ_7745c5c3_Err != nil {
@@ -2589,7 +2589,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var160 string
 				templ_7745c5c3_Var160, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 264, Col: 226}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 265, Col: 226}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var160))
 				if templ_7745c5c3_Err != nil {
@@ -2602,7 +2602,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				var templ_7745c5c3_Var161 templ.SafeURL
 				templ_7745c5c3_Var161, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/" + p.Workspace + "?notice=Workspace+action+opened")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 264, Col: 353}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 265, Col: 353}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var161))
 				if templ_7745c5c3_Err != nil {

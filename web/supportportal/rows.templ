@@ -1,6 +1,10 @@
 package supportportal
 
-import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import (
+  "fmt"
+
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
 
 templ SupportDashboardCaseRows(items []viewmodels.SupportPortalCase) {
   for index, item := range items {
@@ -11,7 +15,7 @@ templ SupportDashboardCaseRows(items []viewmodels.SupportPortalCase) {
 templ SupportConversationRows(items []viewmodels.SupportPortalConversation) {
   <div class="conversation-list">
     for _, item := range items {
-      <a class={ supportConversationClass(item.Tone) } href="/support-portal/cases?notice=Conversation+opened"><span class="conversation-avatar"><img width="1254" height="1254" src={ item.Image } alt=""/></span><span><b>{ item.Author }</b><small>{ item.Message }</small></span><time>{ item.Time }</time><i></i></a>
+      <a class={ supportConversationClass(item.Tone) } href={ "/support-portal/cases?ticket_id=" + fmt.Sprint(item.TicketID) }><span class="conversation-avatar"><img width="1254" height="1254" src={ item.Image } alt=""/></span><span><b>{ item.TicketNumber } · { item.Author }</b><small>{ item.Message }</small></span><time>{ item.Time }</time><i></i></a>
     }
   </div>
 }

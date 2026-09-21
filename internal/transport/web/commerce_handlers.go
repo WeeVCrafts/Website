@@ -507,6 +507,27 @@ func (h *Handler) sellerOnboard(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/seller-admin/onboarding?notice=Seller+application+submitted")
 }
 
+func (h *Handler) sellerSettingsUpdate(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	if err := h.commerceCatalog.UpdateSellerProfile(r.Context(), session.UserID, r.FormValue("display_name"), r.FormValue("reason")); err != nil {
+		h.renderCommerceError(w, r, err, "We could not update your seller profile.")
+		return
+	}
+	h.redirect(w, r, "/seller-admin/settings?notice=Seller+profile+updated")
+}
+
 func (h *Handler) sellerNewProduct(w http.ResponseWriter, r *http.Request) {
 	session, ok := h.sessionFromRequest(r)
 	if h.commerceCatalog == nil || !ok {
@@ -566,6 +587,32 @@ func (h *Handler) sellerTeamAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.redirect(w, r, "/seller/team")
+}
+
+func (h *Handler) sellerTeamUpdate(w http.ResponseWriter, r *http.Request) {
+	if h.sellerStaff == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	staffUserID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
+	if err != nil || staffUserID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Staff request invalid", "Choose a valid staff account.")
+		return
+	}
+	if _, err := h.sellerStaff.Update(r.Context(), session.UserID, staffUserID, r.Form["permissions"]); err != nil {
+		h.renderCommerceError(w, r, err, "We could not update that staff member's permissions.")
+		return
+	}
+	h.redirect(w, r, "/seller/team?notice=Staff+permissions+updated")
 }
 
 func (h *Handler) sellerTeamRemove(w http.ResponseWriter, r *http.Request) {
@@ -735,6 +782,144 @@ func (h *Handler) sellerArchiveProduct(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/seller-admin/products?notice=Product+archived+and+hidden+from+customers")
 }
 
+func (h *Handler) sellerRestoreProduct(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, 422, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if err := h.commerceCatalog.RestoreSellerProduct(r.Context(), session.UserID, productID, r.FormValue("reason")); err != nil {
+		h.renderCommerceError(w, r, err, "We could not restore that product draft.")
+		return
+	}
+	h.redirect(w, r, "/seller-admin/products?notice=Product+restored+as+a+private+draft")
+}
+
+func (h *Handler) sellerProductVariantCreate(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, false, "create")
+}
+
+func (h *Handler) sellerProductVariantUpdate(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, false, "update")
+}
+
+func (h *Handler) sellerProductVariantArchive(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, false, "archive")
+}
+
+func (h *Handler) adminProductVariantCreate(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, true, "create")
+}
+
+func (h *Handler) adminProductVariantUpdate(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, true, "update")
+}
+
+func (h *Handler) adminProductVariantArchive(w http.ResponseWriter, r *http.Request) {
+	h.mutateProductVariant(w, r, true, "archive")
+}
+
+func (h *Handler) mutateProductVariant(w http.ResponseWriter, r *http.Request, admin bool, action string) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("product_id")), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Product variant invalid", "Choose a valid product.")
+		return
+	}
+	variantID := int64(0)
+	if action != "create" {
+		variantID, err = strconv.ParseInt(strings.TrimSpace(r.FormValue("variant_id")), 10, 64)
+		if err != nil || variantID <= 0 {
+			h.renderError(w, http.StatusUnprocessableEntity, "Product variant invalid", "Choose a valid variant.")
+			return
+		}
+	}
+	productInput := domaincommerce.ProductVariantInput{}
+	if action != "archive" {
+		productInput, err = productVariantFromForm(r, action == "create")
+		if err != nil {
+			h.renderError(w, http.StatusUnprocessableEntity, "Product variant invalid", "Check the name, SKU, price, compare-at price and initial stock.")
+			return
+		}
+	}
+	if admin {
+		switch action {
+		case "create":
+			_, err = h.commerceCatalog.CreateAdminProductVariant(r.Context(), session.UserID, productID, productInput)
+		case "update":
+			_, err = h.commerceCatalog.UpdateAdminProductVariant(r.Context(), session.UserID, productID, variantID, productInput)
+		case "archive":
+			err = h.commerceCatalog.ArchiveAdminProductVariant(r.Context(), session.UserID, productID, variantID, r.FormValue("reason"))
+		}
+	} else {
+		switch action {
+		case "create":
+			_, err = h.commerceCatalog.CreateSellerProductVariant(r.Context(), session.UserID, productID, productInput)
+		case "update":
+			_, err = h.commerceCatalog.UpdateSellerProductVariant(r.Context(), session.UserID, productID, variantID, productInput)
+		case "archive":
+			err = h.commerceCatalog.ArchiveSellerProductVariant(r.Context(), session.UserID, productID, variantID, r.FormValue("reason"))
+		}
+	}
+	if err != nil {
+		h.renderCommerceError(w, r, err, "We could not save that product variant.")
+		return
+	}
+	prefix, notice := "/seller/products/", "Product+variant+saved"
+	if admin {
+		prefix, notice = "/admin/products/", "Product+variant+saved"
+	}
+	h.redirect(w, r, prefix+strconv.FormatInt(productID, 10)+"/edit?notice="+notice)
+}
+
+func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductVariantInput, error) {
+	price, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("price_cents")), 10, 64)
+	if err != nil {
+		return domaincommerce.ProductVariantInput{}, err
+	}
+	stock := 0
+	if includeStock {
+		stock, err = strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock")))
+		if err != nil {
+			return domaincommerce.ProductVariantInput{}, err
+		}
+	}
+	var compareAt *int64
+	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
+		value, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil {
+			return domaincommerce.ProductVariantInput{}, parseErr
+		}
+		compareAt = &value
+	}
+	return domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, InitialStock: stock}, nil
+}
+
 func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 	if h.commerceCatalog == nil || r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -861,6 +1046,58 @@ func (h *Handler) adminProducts(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "admin-products", pageData{Brand: identity.Name, Tagline: identity.Tagline, Description: identity.Description, Title: "Catalog moderation · " + identity.Name, Authenticated: true, AccountUserID: session.UserID, CSRFToken: session.CSRFToken, PendingProducts: products})
 }
 
+func (h *Handler) adminProductSubmit(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, 422, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if err := h.commerceCatalog.SubmitAdminProduct(r.Context(), session.UserID, productID); err != nil {
+		h.renderCommerceError(w, r, err, "We could not submit this product for review.")
+		return
+	}
+	h.redirect(w, r, "/super-admin/products?notice=Product+submitted+for+review")
+}
+
+func (h *Handler) adminProductRestore(w http.ResponseWriter, r *http.Request) {
+	if h.commerceCatalog == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	productID, err := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	if err != nil || productID <= 0 {
+		h.renderError(w, 422, "Product request invalid", "Choose a valid product.")
+		return
+	}
+	if err := h.commerceCatalog.RestoreAdminProduct(r.Context(), session.UserID, productID, r.FormValue("reason")); err != nil {
+		h.renderCommerceError(w, r, err, "We could not restore that product.")
+		return
+	}
+	h.redirect(w, r, "/super-admin/products?notice=Product+restored+as+a+private+draft")
+}
+
 func (h *Handler) adminReviewProduct(w http.ResponseWriter, r *http.Request) {
 	if h.commerceCatalog == nil || r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -925,6 +1162,13 @@ func (h *Handler) renderCommerceError(w http.ResponseWriter, r *http.Request, er
 	case errors.Is(err, ports.ErrForbidden):
 		status = http.StatusForbidden
 		message = "You do not have permission to perform that action."
+	case errors.Is(err, ports.ErrCatalogConflict):
+		status = http.StatusConflict
+		message = "That brand or category slug already has a different name. Choose its existing name or a new slug."
+	case errors.Is(err, ports.ErrFinalActiveVariant):
+		message = "Keep at least one active variant so customers can still order this product."
+	case errors.Is(err, ports.ErrVariantReservedStock):
+		message = "This variant has units reserved for customer orders. Resolve those reservations before archiving it."
 	case errors.Is(err, ports.ErrInsufficientStock):
 		message = "Some items do not have enough available stock."
 	case errors.Is(err, applicationcommerce.ErrInvalidQuantity), errors.Is(err, applicationcommerce.ErrInvalidAddress):

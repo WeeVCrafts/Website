@@ -1,12 +1,24 @@
 package pages
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
+
+func cartDeltaValues(variantID int64, delta int) string {
+	return fmt.Sprintf(`{"variant_id":"%d","delta":"%d"}`, variantID, delta)
+}
+
+func customerSupportMessageClass(role string) string {
+	if strings.EqualFold(strings.TrimSpace(role), "support agent") {
+		return "customer-support-message customer-support-message--agent"
+	}
+	return "customer-support-message customer-support-message--customer"
+}
 
 func breadcrumbHref(item string) string {
 	switch strings.ToLower(strings.TrimSpace(item)) {
@@ -657,4 +669,15 @@ func productStockMessage(product viewmodels.Product) string {
 		return "In stock"
 	}
 	return "Currently unavailable"
+}
+
+func firstProductVariant(product viewmodels.Product) viewmodels.ProductVariant {
+	if len(product.Variants) == 0 {
+		return viewmodels.ProductVariant{}
+	}
+	return product.Variants[0]
+}
+
+func selectedProductVariant(variant viewmodels.ProductVariant, product viewmodels.Product) bool {
+	return variant.ID != "" && variant.ID == strconv.FormatInt(product.VariantID, 10)
 }

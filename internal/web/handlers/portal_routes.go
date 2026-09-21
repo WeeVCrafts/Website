@@ -75,8 +75,6 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 		permission = domaincommerce.SellerPermissionInventoryWrite
 	case strings.HasPrefix(relative, "orders/") && strings.HasSuffix(relative, "/fulfill"):
 		permission = domaincommerce.SellerPermissionOrderFulfill
-	case relative == "returns/status":
-		permission = domaincommerce.SellerPermissionReturnProcess
 	default:
 		return false
 	}
@@ -233,14 +231,28 @@ func canonicalSellerMutationPath(path string) string {
 		return "/seller/products/submit"
 	case "/seller-admin/products/archive":
 		return "/seller/products/archive"
+	case "/seller-admin/products/restore":
+		return "/seller/products/restore"
+	case "/seller-admin/products/variants/create":
+		return "/seller/products/variants/create"
+	case "/seller-admin/products/variants/update":
+		return "/seller/products/variants/update"
+	case "/seller-admin/products/variants/archive":
+		return "/seller/products/variants/archive"
 	case "/seller-admin/inventory/adjust":
 		return "/seller/inventory/adjust"
 	case "/seller-admin/orders/fulfill":
 		return "/seller/orders/fulfill"
 	case "/seller-admin/team/add":
 		return "/seller/team/add"
+	case "/seller-admin/team/update":
+		return "/seller/team/update"
 	case "/seller-admin/team/remove":
 		return "/seller/team/remove"
+	case "/seller-admin/onboarding":
+		return "/seller/onboard"
+	case "/seller-admin/settings":
+		return "/seller/settings/update"
 	default:
 		if strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit") {
 			id := strings.TrimSuffix(strings.TrimPrefix(path, "/seller-admin/products/"), "/edit")
@@ -260,7 +272,7 @@ func sellerMutationAllowed(path string, isOwner bool, permissions []string) bool
 	}
 	permission := ""
 	switch {
-	case path == "/seller-admin/products" || path == "/seller-admin/products/submit" || path == "/seller-admin/products/archive" || strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit"):
+	case path == "/seller-admin/products" || path == "/seller-admin/products/submit" || path == "/seller-admin/products/archive" || path == "/seller-admin/products/restore" || path == "/seller-admin/products/variants/create" || path == "/seller-admin/products/variants/update" || path == "/seller-admin/products/variants/archive" || strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit"):
 		permission = domaincommerce.SellerPermissionProductWrite
 	case path == "/seller-admin/inventory/adjust":
 		permission = domaincommerce.SellerPermissionInventoryWrite

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
@@ -84,6 +85,19 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/status"), "/support-portal")
+			return
+		}
+		if r.URL.Path == "/support-portal/cases/reply" {
+			session, ok := h.session(r)
+			if !ok {
+				redirectToLogin(w, r)
+				return
+			}
+			if !h.hasRole(r, session.UserID, "support_agent") {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/reply"), "/support-portal")
 			return
 		}
 		h.delegate(w, r)
@@ -389,11 +403,11 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		err = h.pool.QueryRow(r.Context(), `
 			SELECT p.id,p.seller_id,COALESCE(s.display_name,''),p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,
 			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,
-			       COALESCE(i.available_quantity,0),p.delivery_label,p.status
+			       COALESCE(i.available_quantity,0),p.delivery_label,p.status,p.image_url
 			FROM products p LEFT JOIN sellers s ON s.id=p.seller_id
 			JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
-			LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.id=$1`, productID).Scan(&id, &sellerID, &form.SellerName, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &form.SKU, &price, &compareAt, &hasCompareAt, &stock, &form.DeliveryLabel, &status)
+			LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.id=$1`, productID).Scan(&id, &sellerID, &form.SellerName, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &form.SKU, &price, &compareAt, &hasCompareAt, &stock, &form.DeliveryLabel, &status, &form.Image)
 		if err != nil || status == "archived" {
 			http.NotFound(w, r)
 			return
@@ -404,6 +418,16 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		form.InitialStock = strconv.FormatInt(stock, 10)
 		if hasCompareAt {
 			form.CompareAtCents = strconv.FormatInt(compareAt, 10)
+		}
+		form.Variants, err = h.productVariantViews(r, id)
+		if err != nil {
+			http.Error(w, "Could not load product variants", http.StatusServiceUnavailable)
+			return
+		}
+		form.Media, err = productMediaViews(r.Context(), h.pool, id)
+		if err != nil {
+			http.Error(w, "Could not load product media", http.StatusServiceUnavailable)
+			return
 		}
 		page.Title = "Edit product"
 		page.Subtitle = "Update all listing details. Stock remains in the permission-scoped Inventory workflow."
@@ -443,14 +467,14 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 }
 
 func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, workspace, notice, query string) viewmodels.AdminPage {
-	page := viewmodels.AdminPage{Active: active, Workspace: workspace, Title: title(active), Subtitle: "Live marketplace operations backed by PostgreSQL.", Notice: notice, Query: query, Range: "Last 30 Days"}
+	page := viewmodels.AdminPage{ActorID: actorID, Active: active, Workspace: workspace, Title: title(active), Subtitle: "Live marketplace operations backed by PostgreSQL.", Notice: notice, Query: query, Range: "Last 30 Days"}
 	if workspace == "" {
 		page.Title = "Marketplace dashboard"
 	}
 	page.Stats = h.adminStats(r)
 	page.Bars = []viewmodels.AdminBar{{Label: "Week 1", Value: "Live order value", Height: "35", Color: "red"}, {Label: "Week 2", Value: "Live order value", Height: "50", Color: "green"}, {Label: "Week 3", Value: "Live order value", Height: "65", Color: "peach"}, {Label: "Week 4", Value: "Live order value", Height: "80", Color: "red"}}
 	page.Sellers = h.adminSellers(r)
-	page.Products = h.adminProducts(r)
+	page.Products = h.adminProducts(r, portalQuery(query))
 	page.Orders = h.adminOrders(r)
 	page.Returns = h.adminReturns(r)
 	page.Transactions = h.adminTransactions(r)
@@ -461,7 +485,7 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Configs = []viewmodels.AdminConfig{{Icon: "database", Name: "Authoritative store", Value: "PostgreSQL", Detail: "Business state source"}, {Icon: "search", Name: "Search index", Value: "Meilisearch", Detail: "Disposable read model"}, {Icon: "payments", Name: "Payment mode", Value: "Local demo", Detail: "Deterministic provider"}}
 	filterAdminPage(&page, query)
 	if active == "security" && h.roleAdmin != nil {
-		assignments, err := h.roleAdmin.List(r.Context(), actorID)
+		assignments, err := h.roleAdmin.List(r.Context(), actorID, query)
 		if err != nil {
 			page.Notice = "Role assignments could not be loaded."
 		} else {
@@ -581,8 +605,8 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 	return result
 }
 
-func (h *LivePortalHandler) adminProducts(r *http.Request) []viewmodels.AdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(pv.sku,''), COALESCE(s.display_name,''), c.name, p.price_cents, p.status, p.image_url,p.created_at FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) pv ON TRUE ORDER BY p.created_at DESC,p.id DESC LIMIT 50`)
+func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
+	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(pv.sku,''), COALESCE(s.display_name,''), c.name, p.price_cents, p.status, p.image_url,p.created_at FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR COALESCE(pv.sku,'') ILIKE '%'||$1||'%' OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
 	if err != nil {
 		return nil
 	}
@@ -747,7 +771,7 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 	case "dashboard":
 		component = sellerpages.PortalDashboard(page)
 	case "onboarding":
-		component = sellerpages.PortalUnavailable(page)
+		component = sellerpages.PortalOnboarding(page)
 	case "products":
 		component = sellerpages.PortalProducts(page)
 	case "inventory":
@@ -761,7 +785,7 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 	case "analytics":
 		component = sellerpages.PortalAnalytics(page)
 	case "settings":
-		component = sellerpages.PortalUnavailable(page)
+		component = sellerpages.PortalSettings(page)
 	case "team":
 		component = sellerpages.PortalTeam(page)
 	default:
@@ -810,14 +834,14 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		var price, compareAt, stock int64
 		var hasCompareAt bool
 		err = h.pool.QueryRow(r.Context(), `
-			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,p.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,
+			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,p.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,p.image_url,
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id
 			WHERE p.id=$1 AND p.status<>'archived' AND p.seller_id IN (
 				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 OR EXISTS (
-					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &form.SKU, &stock, &form.DeliveryLabel)
+					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -828,12 +852,67 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		}
 		form.InitialStock = strconv.FormatInt(stock, 10)
 		form.Action = "/seller-admin/products/" + idText + "/edit"
+		form.Variants, err = h.productVariantViews(r, id)
+		if err != nil {
+			http.Error(w, "Could not load product variants", http.StatusServiceUnavailable)
+			return
+		}
+		form.Media, err = productMediaViews(r.Context(), h.pool, id)
+		if err != nil {
+			http.Error(w, "Could not load product media", http.StatusServiceUnavailable)
+			return
+		}
 		page.Title = "Edit product draft"
 	} else {
 		page.Title = "Create product draft"
 	}
 	page.Subtitle = "Save a product draft, then submit it for marketplace review. Products ship to serviceable PIN codes in India."
 	h.render(w, r, sellerpages.ProductForm(page, form))
+}
+
+func productMediaViews(ctx context.Context, pool *pgxpool.Pool, productID int64) ([]viewmodels.ProductMedia, error) {
+	rows, err := pool.Query(ctx, `SELECT id,public_url,content_type,byte_size FROM product_media WHERE product_id=$1 AND status='ready' AND visibility='public' ORDER BY created_at,id`, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	media := make([]viewmodels.ProductMedia, 0)
+	for rows.Next() {
+		var id, byteSize int64
+		var path, contentType string
+		if err := rows.Scan(&id, &path, &contentType, &byteSize); err != nil {
+			return nil, err
+		}
+		media = append(media, viewmodels.ProductMedia{ID: strconv.FormatInt(id, 10), URL: path, ContentType: contentType, Size: strconv.FormatInt(byteSize, 10), IsVideo: strings.HasPrefix(contentType, "video/")})
+	}
+	return media, rows.Err()
+}
+
+func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
+	rows, err := h.pool.Query(r.Context(), `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
+		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
+		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
+		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	variants := make([]viewmodels.ProductVariant, 0)
+	for rows.Next() {
+		var id, price, compareAt, available, reserved int64
+		var name, sku, status string
+		var hasCompare bool
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status); err != nil {
+			return nil, err
+		}
+		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
+			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, HasCompareAt: hasCompare}
+		if hasCompare {
+			variant.CompareAtCents = strconv.FormatInt(compareAt, 10)
+		}
+		variants = append(variants, variant)
+	}
+	return variants, rows.Err()
 }
 
 func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bool, permissions []string) viewmodels.SellerAdminPage {
@@ -843,13 +922,13 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		active = "dashboard"
 	}
 	var sellerID int64
-	var name string
-	if err := h.pool.QueryRow(r.Context(), `SELECT s.id,s.display_name FROM sellers s WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$1 AND su.status='active') ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name); err != nil {
+	var name, sellerStatus string
+	if err := h.pool.QueryRow(r.Context(), `SELECT s.id,s.display_name,s.status FROM sellers s WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$1 AND su.status='active') ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus); err != nil {
 		return viewmodels.SellerAdminPage{Active: active, Title: "Seller workspace", Subtitle: "No seller profile is assigned to this account."}
 	}
-	page := viewmodels.SellerAdminPage{Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: r.URL.Query().Get("range"), Notice: r.URL.Query().Get("notice"), SellerName: name}
+	page := viewmodels.SellerAdminPage{Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: r.URL.Query().Get("range"), Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus}
 	if sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
-		page.Products = h.sellerProducts(r, sellerID)
+		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
 	}
 	if sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions) {
 		page.Inventory = h.sellerInventory(r, sellerID)
@@ -932,8 +1011,8 @@ func (h *LivePortalHandler) sellerStats(r *http.Request, sellerID int64) []viewm
 	return []viewmodels.SellerAdminStat{{Icon: "category", Value: strconv.FormatInt(products, 10), Label: "Products", Delta: "Live", Positive: true, Period: "database", Tone: "green"}, {Icon: "inventory_2", Value: strconv.FormatInt(orders, 10), Label: "Orders", Delta: "Live", Positive: true, Period: "database", Tone: "blue"}, {Icon: "warehouse", Value: strconv.FormatInt(stock, 10), Label: "Available stock", Delta: "Live", Positive: true, Period: "database", Tone: "orange"}}
 }
 
-func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64) []viewmodels.SellerAdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(v.sku,''), c.name, p.price_cents, p.status, COALESCE(i.available_quantity,0), (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 ORDER BY p.id LIMIT 50`, sellerID)
+func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
+	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(v.sku,''), c.name, p.price_cents, p.status, COALESCE(i.available_quantity,0), (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR COALESCE(v.sku,'') ILIKE '%'||$2||'%' OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, sellerID, query)
 	if err != nil {
 		return nil
 	}
@@ -941,11 +1020,11 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64) []vi
 	var result []viewmodels.SellerAdminProduct
 	for rows.Next() {
 		var id int64
-		var name, sku, category, status string
+		var name, sku, category, status, image string
 		var price, stock int64
 		var variants int
-		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants) == nil {
-			result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: "/assets/images/customer/madhubani-tree.webp"})
+		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image) == nil {
+			result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image})
 		}
 	}
 	return result
@@ -1073,7 +1152,7 @@ func (h *LivePortalHandler) sellerSettlements(r *http.Request, sellerID int64) [
 }
 
 func (h *LivePortalHandler) sellerTeam(r *http.Request, sellerID int64) []viewmodels.SellerTeamMember {
-	rows, err := h.pool.Query(r.Context(), `SELECT u.id,u.display_name,u.email,su.status,su.permissions FROM seller_users su JOIN users u ON u.id=su.user_id WHERE su.seller_id=$1 ORDER BY u.id`, sellerID)
+	rows, err := h.pool.Query(r.Context(), `SELECT u.id,u.display_name,u.email,su.status,su.permissions FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=$1 AND su.status='active' ORDER BY u.id`, sellerID)
 	if err != nil {
 		return nil
 	}
@@ -1084,10 +1163,28 @@ func (h *LivePortalHandler) sellerTeam(r *http.Request, sellerID int64) []viewmo
 		var name, email, status string
 		var permissions []string
 		if rows.Scan(&userID, &name, &email, &status, &permissions) == nil {
-			result = append(result, viewmodels.SellerTeamMember{UserID: strconv.FormatInt(userID, 10), Name: name, Email: email, Role: "Seller staff", Status: status, Permissions: strings.Join(permissions, ", "), LastActive: "Live account"})
+			result = append(result, viewmodels.SellerTeamMember{UserID: strconv.FormatInt(userID, 10), Name: name, Email: email, Role: "Seller staff", Status: status, Permissions: strings.Join(permissions, ", "), LastActive: "Live account", ProductRead: sellerHasPermission(permissions, "PRODUCT_READ"), ProductWrite: sellerHasPermission(permissions, "PRODUCT_WRITE"), InventoryRead: sellerHasPermission(permissions, "INVENTORY_READ"), InventoryWrite: sellerHasPermission(permissions, "INVENTORY_WRITE"), OrderRead: sellerHasPermission(permissions, "ORDER_READ"), OrderFulfill: sellerHasPermission(permissions, "ORDER_FULFILL"), ReturnRead: sellerHasPermission(permissions, "RETURN_READ"), ReportRead: sellerHasPermission(permissions, "REPORT_READ")})
 		}
 	}
 	return result
+}
+
+func portalQuery(value string) string {
+	value = strings.TrimSpace(value)
+	runes := []rune(value)
+	if len(runes) > 120 {
+		return string(runes[:120])
+	}
+	return value
+}
+
+func sellerHasPermission(permissions []string, wanted string) bool {
+	for _, permission := range permissions {
+		if permission == wanted {
+			return true
+		}
+	}
+	return false
 }
 
 func (h *LivePortalHandler) renderSupport(w http.ResponseWriter, r *http.Request, actorID int64, csrfToken string) {
@@ -1117,6 +1214,19 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 	page.Cases = h.supportCases(r)
 	if query := strings.ToLower(strings.TrimSpace(page.Query)); query != "" {
 		page.Cases = filterSupportCases(page.Cases, query)
+	}
+	page.Conversations = h.latestSupportConversations(r)
+	if strings.EqualFold(active, "cases") && len(page.Cases) > 0 {
+		selectedID, _ := strconv.ParseInt(r.URL.Query().Get("ticket_id"), 10, 64)
+		for _, item := range page.Cases {
+			if selectedID == 0 || item.DatabaseID == selectedID {
+				page.SelectedCase = item
+				break
+			}
+		}
+		if page.SelectedCase.DatabaseID > 0 {
+			page.Messages = append(page.Messages, h.supportTicketMessages(r, page.SelectedCase.DatabaseID)...)
+		}
 	}
 	if strings.EqualFold(active, "orders") {
 		linked := make([]viewmodels.SupportPortalCase, 0, len(page.Cases))
@@ -1154,7 +1264,7 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 }
 
 func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPortalCase {
-	rows, err := h.pool.Query(r.Context(), `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE ORDER BY t.created_at DESC LIMIT 200`)
+	rows, err := h.pool.Query(r.Context(), `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role='support_agent' ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE ORDER BY t.created_at DESC LIMIT 200`)
 	if err != nil {
 		return nil
 	}
@@ -1162,14 +1272,60 @@ func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPo
 	var result []viewmodels.SupportPortalCase
 	for rows.Next() {
 		var id, customerID int64
-		var number, subject, customer, priority, status, orderNumber, orderStatus, paymentStatus string
+		var number, subject, customer, priority, status, initialMessage, agentNote, orderNumber, orderStatus, paymentStatus, latestReply string
 		var orderTotal int64
 		var created time.Time
-		if rows.Scan(&id, &number, &subject, &customerID, &customer, &priority, &created, &status, &orderNumber, &orderStatus, &orderTotal, &paymentStatus) == nil {
-			result = append(result, viewmodels.SupportPortalCase{DatabaseID: id, CustomerID: customerID, ID: number, Subject: subject, Customer: maskName(customer), CustomerInitials: initials(customer), Category: "Support request", Priority: priority, Created: created.Format("2 Jan 2006 15:04"), Status: status, Order: orderNumber, OrderStatus: orderStatus, OrderValue: money(orderTotal), PaymentStatus: paymentStatus})
+		if rows.Scan(&id, &number, &subject, &customerID, &customer, &priority, &created, &status, &initialMessage, &agentNote, &orderNumber, &orderStatus, &orderTotal, &paymentStatus, &latestReply) == nil {
+			result = append(result, viewmodels.SupportPortalCase{DatabaseID: id, CustomerID: customerID, ID: number, Subject: subject, Customer: maskName(customer), CustomerInitials: initials(customer), Category: "Support request", Priority: priority, Created: created.Format("2 Jan 2006 15:04"), Status: status, InitialMessage: initialMessage, AgentNote: agentNote, Order: orderNumber, OrderStatus: orderStatus, OrderValue: money(orderTotal), PaymentStatus: paymentStatus, LatestReply: latestReply})
 		}
 	}
 	return result
+}
+
+func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int64) []viewmodels.SupportPortalConversation {
+	rows, err := h.pool.Query(r.Context(), `SELECT m.author_id,u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, ticketID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var messages []viewmodels.SupportPortalConversation
+	for rows.Next() {
+		var authorID int64
+		var author, authorRole, body string
+		var created time.Time
+		if rows.Scan(&authorID, &author, &authorRole, &body, &created) == nil {
+			role, tone := "Customer", "customer"
+			if authorRole == "support_agent" {
+				role, tone = "Support Agent", "agent"
+			}
+			messages = append(messages, viewmodels.SupportPortalConversation{TicketID: ticketID, Author: author, Initials: initials(author), Role: role, Message: body, Time: created.Format("2 Jan 2006 15:04"), Tone: tone})
+		}
+	}
+	return messages
+}
+
+func (h *LivePortalHandler) latestSupportConversations(r *http.Request) []viewmodels.SupportPortalConversation {
+	rows, err := h.pool.Query(r.Context(), `SELECT m.ticket_id,t.ticket_number,u.display_name,m.body,m.created_at FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id JOIN users u ON u.id=m.author_id WHERE m.author_role='support_agent' ORDER BY m.created_at DESC,m.id DESC LIMIT 12`)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	var messages []viewmodels.SupportPortalConversation
+	for rows.Next() {
+		var item viewmodels.SupportPortalConversation
+		var created time.Time
+		if rows.Scan(&item.TicketID, &item.TicketNumber, &item.Author, &item.Message, &created) == nil {
+			item.Initials = initials(item.Author)
+			item.Role = "Support Agent"
+			item.Time = created.Format("2 Jan 2006 15:04")
+			item.Tone = "agent"
+			if runes := []rune(item.Message); len(runes) > 120 {
+				item.Message = string(runes[:117]) + "…"
+			}
+			messages = append(messages, item)
+		}
+	}
+	return messages
 }
 
 func filterSupportCases(cases []viewmodels.SupportPortalCase, query string) []viewmodels.SupportPortalCase {

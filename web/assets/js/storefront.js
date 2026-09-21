@@ -276,7 +276,7 @@
 
   function cartItemMarkup(item) {
     const slug = esc(item.slug);
-    return "<article class=\"cart-seller\"><div class=\"cart-seller-head\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><b>" + esc(item.seller) + "</b></div></div><div class=\"cart-line\"><img src=\"" + esc(item.image) + "\" alt=\"" + esc(item.name) + "\" width=\"160\" height=\"173\"/><div class=\"cart-line-copy\"><span class=\"badge\">" + (item.available > 0 ? "In stock" : "Sold out") + "</span><h2>" + esc(item.name) + "</h2><div class=\"price\"><strong>" + money(item.priceCents) + "</strong>" + (item.compareAtCents > item.priceCents ? "<del>" + money(item.compareAtCents) + "</del>" : "") + "</div><div class=\"cart-line-actions\"><span class=\"quantity-control\"><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-1\" aria-label=\"Decrease quantity\">-</button><output aria-live=\"polite\">" + Number(item.quantity || 0) + "</output><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"1\" aria-label=\"Increase quantity\">+</button></span><button class=\"text-button\" type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-" + Number(item.quantity || 0) + "\">Remove</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-move\" data-product-slug=\"" + slug + "\">Move to wishlist</button></div></div></div></article>";
+      return "<article class=\"cart-seller\"><div class=\"cart-seller-head\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><b>" + esc(item.seller) + "</b></div></div><div class=\"cart-line\"><img src=\"" + esc(item.image) + "\" alt=\"" + esc(item.name) + "\" width=\"160\" height=\"173\"/><div class=\"cart-line-copy\"><span class=\"badge\">" + (item.available > 0 ? "In stock" : "Sold out") + "</span><h2>" + esc(item.name) + "</h2><p class=\"cart-variant\">Option: <b>" + esc(item.optionLabel || "Standard") + "</b></p><div class=\"price\"><strong>" + money(item.priceCents) + "</strong>" + (item.compareAtCents > item.priceCents ? "<del>" + money(item.compareAtCents) + "</del>" : "") + "</div><div class=\"cart-line-actions\"><span class=\"quantity-control\"><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-1\" aria-label=\"Decrease quantity\">-</button><output aria-live=\"polite\">" + Number(item.quantity || 0) + "</output><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"1\" aria-label=\"Increase quantity\">+</button></span><button class=\"text-button\" type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-" + Number(item.quantity || 0) + "\">Remove</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-move\" data-product-slug=\"" + slug + "\">Move to wishlist</button></div></div></div></article>";
   }
 
   async function hydrateCart() {
@@ -340,12 +340,12 @@
     return user;
   }
 
-  async function runAction(action, slug, delta) {
+  async function runAction(action, slug, delta, selectedVariantId) {
     const api = ensureBackend();
     if (action === "cart-add") {
       await requireUser();
       const quantity = Number(delta || document.getElementById("detail-quantity")?.value || 1);
-      await api.addCart(slug, quantity);
+      await api.addCart(slug, quantity, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await refreshCounts();
       if (document.querySelector("[data-backend-cart]")) await hydrateCart();
@@ -354,7 +354,7 @@
     }
     if (action === "cart-buy") {
       await requireUser();
-      await api.addCart(slug, Number(delta || document.getElementById("detail-quantity")?.value || 1));
+      await api.addCart(slug, Number(delta || document.getElementById("detail-quantity")?.value || 1), selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await refreshCounts();
       global.location.assign("/checkout");
@@ -618,7 +618,9 @@
       if (!backend) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      try { await runAction(action, slug, delta); }
+      const detailActions = element.closest(".detail-actions, .mobile-buy-bar");
+      const selectedVariantId = detailActions ? document.querySelector("#detail-variant")?.value : undefined;
+      try { await runAction(action, slug, delta, selectedVariantId); }
       catch (error) { notice(error.message, true); }
     }, true);
 

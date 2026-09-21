@@ -10,7 +10,6 @@ const (
 	SellerPermissionOrderRead      = "ORDER_READ"
 	SellerPermissionOrderFulfill   = "ORDER_FULFILL"
 	SellerPermissionReturnRead     = "RETURN_READ"
-	SellerPermissionReturnProcess  = "RETURN_PROCESS"
 	SellerPermissionReportRead     = "REPORT_READ"
 )
 
@@ -22,7 +21,6 @@ var SellerPermissions = []string{
 	SellerPermissionOrderRead,
 	SellerPermissionOrderFulfill,
 	SellerPermissionReturnRead,
-	SellerPermissionReturnProcess,
 	SellerPermissionReportRead,
 }
 
@@ -97,6 +95,30 @@ type ProductDraftInput struct {
 	SKU            string
 	InitialStock   int
 	DeliveryLabel  string
+}
+
+// ProductVariantInput contains catalogue fields managed by product writers.
+// Inventory is initialized only when the variant is created; later stock
+// changes go through the separate inventory permission workflow.
+type ProductVariantInput struct {
+	Name           string
+	SKU            string
+	PriceCents     int64
+	CompareAtCents *int64
+	InitialStock   int
+}
+
+type ProductVariant struct {
+	ID             int64
+	ProductID      int64
+	Name           string
+	SKU            string
+	PriceCents     int64
+	CompareAtCents int64
+	HasCompareAt   bool
+	Available      int
+	Reserved       int
+	Status         string
 }
 
 type ManagedProduct struct {
@@ -197,6 +219,7 @@ type CartItem struct {
 	ProductID      int64  `json:"product_id"`
 	ProductSlug    string `json:"product_slug"`
 	ProductName    string `json:"product_name"`
+	VariantName    string `json:"variant_name"`
 	SKU            string `json:"sku"`
 	Quantity       int    `json:"quantity"`
 	UnitPriceCents int64  `json:"unit_price_cents"`
@@ -310,6 +333,7 @@ type SupportTicket struct {
 	OrderNumber         string
 	Subject             string
 	Message             string
+	LatestAgentReply    string
 	Status              string
 	Priority            string
 	CustomerLabel       string

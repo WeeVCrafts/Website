@@ -1,6 +1,10 @@
 package pages
 
-import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import (
+  "strconv"
+
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
 
 templ Auth(p viewmodels.CustomerPage) {
   @Document(p) {
@@ -75,7 +79,7 @@ templ InfoPage(p viewmodels.CustomerPage) {
       if p.Route == "/faq" {
         @FaqContent()
       } else if p.Route == "/contact" {
-        @ContactContent()
+        @ContactContent(p)
       } else if p.Route == "/our-story" || p.Route == "/about" || p.Route == "/sustainability" || p.Route == "/press" || p.Route == "/careers" {
         @StoryContent()
       } else {
@@ -96,9 +100,24 @@ templ FaqContent() {
   <section class="info-contact-strip"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Still need a hand?</h2><p>Our customer care team can help with an order, return or product question.</p></div><a class="primary-button" href="/contact">Contact us</a></section>
 }
 
-templ ContactContent() {
+templ ContactContent(p viewmodels.CustomerPage) {
   <div class="contact-grid">
-    <section class="utility-card"><h2>Send us a note</h2><p>Share a little context so the right team can respond.</p><form class="utility-form" action="/contact?notice=Contact+message+preview+submitted" method="get"><label>Your name<input name="name" required/></label><label>Email address<input name="email" type="email" required/></label><label>How can we help?<select name="topic"><option>Order support</option><option>Returns and refunds</option><option>Product question</option><option>Seller support</option></select></label><label>Message<textarea name="message" rows="5" required></textarea></label><button class="primary-button" type="submit">Send message <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></form></section>
+    <section class="utility-card"><h2>Send us a note</h2><p>Share a little context so the right team can respond.</p>
+      if p.CanCreateSupport {
+        <form class="utility-form" action="/support/create" method="post" data-customer-support-create>
+          <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+          <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
+          <label>Order number (optional)<input name="order_number" autocomplete="off"/></label>
+          <label>Message<textarea name="message" rows="5" minlength="10" maxlength="4000" required></textarea></label>
+          <button class="primary-button" type="submit">Send support request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+        </form>
+      } else if p.Authenticated {
+        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Support requests are available from customer accounts. Choose your customer workspace from <a href="/workspaces">the workspace switcher</a>.</p></div>
+      } else {
+        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Sign in to a customer account to create and track support requests.</p></div>
+        <a class="primary-button" href="/login?next=%2Fcontact">Sign in to contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+      }
+    </section>
     <aside class="info-side-list"><div><span class="material-symbols-outlined" aria-hidden="true">schedule</span><h3>Customer care hours</h3><p>Monday–Saturday<br/>9:00 AM–7:00 PM IST</p></div><div><span class="material-symbols-outlined" aria-hidden="true">mail</span><h3>Email</h3><p>hello@weevcrafts.com<br/>Usually answered within 24 hours.</p></div><div><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>Quick answers</h3><p>Browse the <a href="/faq">FAQs</a> first.</p></div></aside>
   </div>
 }
@@ -204,7 +223,7 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
     <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
-    <a href="/contact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
+    <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
     <a href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span> Switch workspace</a>
   </aside>
 }
@@ -300,7 +319,9 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/security" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Choose a new password using account recovery.</small></span><a href="/forgot-password">Reset</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div><p>Order and delivery updates are available in your order history. Email notifications can be enabled when delivery email settings are configured.</p><a class="outline-button" href="/orders">View order updates</a></section>
+          <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div><p>Order and delivery updates are available in your order history. Email notifications can be enabled when delivery email settings are configured.</p><a class="outline-button" href="/orders">View order updates</a></section>
+      } else if p.Route == "/account/support" {
+        @CustomerSupportPanel(p)
       } else if p.Route == "/account/privacy" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><p>We use your account and order details to provide checkout, delivery and customer support.</p><a class="outline-button" href="/privacy">Read the privacy policy</a><a class="outline-button" href="/contact">Request help with your data</a></section>
       } else if p.Route == "/account/reviews" {
@@ -310,4 +331,45 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       }
     </div></section>
   }
+}
+
+templ CustomerSupportPanel(p viewmodels.CustomerPage) {
+  <section class="utility-card account-panel" data-customer-support>
+    <div class="utility-panel-heading"><div><p class="eyebrow">WE ARE HERE TO HELP</p><h2>Your support requests</h2></div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span></div>
+    <p>Replies from our customer care team and your follow-up messages stay together here.</p>
+    <a class="outline-button" href="/contact"><span class="material-symbols-outlined" aria-hidden="true">add</span>Start a new request</a>
+    if len(p.SupportTickets) == 0 {
+      <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>No support requests yet</h3><p>Your requests and replies will appear here.</p></div>
+    } else {
+      <div class="customer-support-tickets">
+        for _, ticket := range p.SupportTickets {
+          <article class="customer-support-ticket" id={ "ticket-" + strconv.FormatInt(ticket.ID, 10) }>
+            <header><div><p class="eyebrow">{ ticket.Number }</p><h3>{ ticket.Subject }</h3></div><span class="badge">{ ticket.Status }</span></header>
+            if ticket.OrderNumber != "" {
+              <p class="muted">Opened { ticket.Created } · Priority { ticket.Priority } · Order { ticket.OrderNumber }</p>
+            } else {
+              <p class="muted">Opened { ticket.Created } · Priority { ticket.Priority }</p>
+            }
+            <div class="customer-support-messages" aria-label="Conversation">
+              for _, message := range ticket.Messages {
+                <article class={ customerSupportMessageClass(message.Role) }>
+                  <header><b>{ message.Author }</b><span>{ message.Role } · { message.Created }</span></header>
+                  <p>{ message.Body }</p>
+                </article>
+              }
+            </div>
+            if ticket.Status != "closed" {
+              <form class="utility-form customer-support-reply" action="/support/customer-reply" method="post">
+                <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID, 10) }/>
+                <label>Reply<textarea name="message" rows="3" minlength="1" maxlength="4000" required></textarea></label>
+                <button class="primary-button" type="submit">Send reply</button>
+              </form>
+            } else {
+              <p class="muted">This request is closed. Start a new request if you still need help.</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
 }

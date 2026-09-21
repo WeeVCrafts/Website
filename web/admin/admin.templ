@@ -19,6 +19,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/alpine.min.js"></script>
       <script defer src="/assets/js/htmx.min.js"></script>
+      <script defer src="/assets/js/product-media.js"></script>
       <script>
         document.addEventListener("DOMContentLoaded", function () {
           document.querySelectorAll(".admin-table.wide").forEach(function (table) {
@@ -147,8 +148,19 @@ templ Security(p viewmodels.AdminPage) {
 templ RoleAssignmentList(p viewmodels.AdminPage) {
   <article class="admin-panel security-panel role-assignment-panel">
     <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>Live role assignments</h2><p>Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.</p></div></div></div>
+    <form method="get" action={ p.PortalRoot + "/security" } class="role-assignment-search">
+      <label>Find an account<input type="search" name="q" value={ p.Query } maxlength="120" placeholder="Name, email or role"/></label>
+      <button class="admin-button secondary" type="submit">Search</button>
+      if p.Query != "" {
+        <a class="admin-button secondary" href={ p.PortalRoot + "/security" }>Clear</a>
+      }
+    </form>
     if len(p.RoleAssignments) == 0 {
-      @AdminTableEmpty("No user accounts are available for role management.", "User role assignments will appear here after accounts are created.")
+      if p.Query != "" {
+        @AdminTableEmpty("No matching user accounts.", "Try a shorter name, email or role search.")
+      } else {
+        @AdminTableEmpty("No user accounts are available for role management.", "User role assignments will appear here after accounts are created.")
+      }
     }
     if len(p.RoleAssignments) > 0 {
       <div class="role-assignment-list">
@@ -162,9 +174,35 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                 <span class="status success">{ assignedRole }</span>
               }
             </div></div>
+            if assignment.Status != "deleted" {
+              <div class="role-assignment-actions">
+                <form class="role-user-edit-form" method="post" action={ p.PortalRoot + "/users/update" }>
+                  <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                  <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+                  <h3>Edit account</h3>
+                  <label>Display name<input name="display_name" value={ assignment.DisplayName } required minlength="2" maxlength="120"/></label>
+                  <label>Email<input name="email" value={ assignment.Email } type="email" required maxlength="320"/><small>Changing the email clears its verified status. The user must verify the new address.</small></label>
+                  <label>Account status<select name="status" required>
+                    if assignment.Status == "active" {
+                      <option value="active" selected>Active</option>
+                    } else {
+                      <option value="active">Active</option>
+                    }
+                    if assignment.Status == "suspended" {
+                      <option value="suspended" selected>Suspended</option>
+                    } else {
+                      <option value="suspended">Suspended</option>
+                    }
+                  </select></label>
+                  <label>Reset password <input name="password" type="password" minlength="12" maxlength="1024" autocomplete="new-password"/><small>Leave blank to keep the current password. A new password signs out existing sessions.</small></label>
+                  <label>Reason<input name="reason" minlength="4" maxlength="1000" required placeholder="Required for the audit trail"/></label>
+                  <button class="admin-button primary" type="submit">Save account</button>
+                </form>
+              </div>
+            }
             if assignment.Status == "active" {
               <div class="role-assignment-actions">
-                <form class="role-assignment-form" method="post" action="/super-admin/roles/update" x-data="{ selectedRole: 'customer' }">
+                <form class="role-assignment-form" method="post" action={ p.PortalRoot + "/roles/update" } x-data="{ selectedRole: 'customer' }">
                   <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
                   <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
                   <label>Role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
@@ -181,15 +219,19 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                   <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
                   <button class="admin-button primary" type="submit">Save role change</button>
                 </form>
-                <form class="role-delete-form" method="post" action="/super-admin/users/delete" onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
-                  <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-                  <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
-                  <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
-                  <button class="admin-button danger" type="submit">Delete account</button>
-                </form>
+                if assignment.ID != p.ActorID {
+                  <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
+                    <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                    <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+                    <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
+                    <button class="admin-button danger" type="submit">Delete account</button>
+                  </form>
+                }
               </div>
             }
-            if assignment.Status != "active" {
+            if assignment.Status == "deleted" {
+              <p class="role-assignment-disabled" role="status">This account was deleted and retained for order and audit history.</p>
+            } else if assignment.Status != "active" {
               <p class="role-assignment-disabled" role="status">This account is { assignment.Status } and cannot receive role changes.</p>
             }
           </section>

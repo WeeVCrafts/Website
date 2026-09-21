@@ -32,8 +32,9 @@ func (r *RoleAuthorizer) HasAnyRole(ctx context.Context, userID int64, roles ...
 	if err := r.pool.QueryRow(ctx, `
 		SELECT EXISTS (
 			SELECT 1
-			FROM user_roles
-			WHERE user_id = $1 AND role_slug = ANY($2::text[])
+			FROM user_roles ur
+			JOIN users u ON u.id = ur.user_id AND u.status = 'active'
+			WHERE ur.user_id = $1 AND ur.role_slug = ANY($2::text[])
 		)`, userID, roleSlugs).Scan(&allowed); err != nil {
 		return false, fmt.Errorf("check user roles: %w", err)
 	}
@@ -50,6 +51,7 @@ func (r *RoleAuthorizer) HasSellerPermission(ctx context.Context, userID int64, 
 			SELECT 1
 			FROM seller_users su
 			JOIN sellers s ON s.id = su.seller_id AND s.status = 'active'
+			JOIN users u ON u.id = su.user_id AND u.status = 'active'
 			WHERE su.user_id = $1 AND su.status = 'active' AND $2 = ANY(su.permissions)
 		)`, userID, permission).Scan(&allowed); err != nil {
 		return false, fmt.Errorf("check seller permission: %w", err)

@@ -63,6 +63,7 @@
         quantity: Number(row.quantity || 0),
         priceCents: Number(row.unit_price_cents || 0),
         variantId: row.variant_id,
+        optionLabel: row.variant_name || row.option_label || "Standard",
         available: Number(row.available || 0)
       };
     }
@@ -146,7 +147,13 @@
       const items = [];
       for (const item of (payload && payload.items) || []) {
         const product = await this.product(item.product_slug);
-        items.push(Object.assign(product, { quantity: Number(item.quantity), variantId: item.variant_id, priceCents: Number(item.unit_price_cents) }));
+        items.push(Object.assign(product, {
+          quantity: Number(item.quantity),
+          variantId: item.variant_id,
+          optionLabel: item.variant_name || product.optionLabel,
+          priceCents: Number(item.unit_price_cents),
+          available: Number(item.available || 0)
+        }));
       }
       return { id: payload && payload.id, items: items };
     }
@@ -160,12 +167,13 @@
       return this.cart();
     }
 
-    async addCart(slug, quantity) {
+    async addCart(slug, quantity, selectedVariantId) {
       const product = await this.product(slug);
       if (!product || !product.variantId) throw new Error("This product is unavailable for your cart.");
+      const variantId = Number(selectedVariantId) || Number(product.variantId);
       await this.call(ROOT + "/cart/add", {
         method: "POST", authenticated: true,
-        body: { variant_id: Number(product.variantId), quantity: Number(quantity || 1) }
+        body: { variant_id: variantId, quantity: Number(quantity || 1) }
       });
       return this.cart();
     }

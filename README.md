@@ -38,8 +38,9 @@ WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 Generate a public domain for the app service in Railway Networking. The app
 binds to Railway's `PORT`, marks session cookies secure in production, and
 uses the public domain for account recovery links. Set `WECRATFS_PUBLIC_URL`
-to your canonical `https://` domain if you add a custom domain. Configure the
-bucket CORS policy for that origin when enabling browser uploads.
+to your canonical `https://` domain if you add a custom domain. Product media
+uploads and public reads are proxied through the app, so the bucket endpoint can
+remain private to the Railway environment.
 
 PostgreSQL and Redis are required. Meilisearch and S3-compatible object storage
 are optional: search falls back to PostgreSQL, while product media uploads need

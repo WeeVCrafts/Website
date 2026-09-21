@@ -14,6 +14,21 @@ type sessionStore struct {
 	records map[string]ports.SessionRecord
 }
 
+type staticUserStatus struct {
+	active bool
+	err    error
+}
+
+type staticSessionStatus struct {
+	active bool
+	err    error
+}
+
+func (s staticUserStatus) IsUserActive(context.Context, int64) (bool, error) { return s.active, s.err }
+func (s staticSessionStatus) IsSessionActive(context.Context, int64, time.Time) (bool, error) {
+	return s.active, s.err
+}
+
 func (s *sessionStore) Create(_ context.Context, record ports.SessionRecord) error {
 	if s.records == nil {
 		s.records = map[string]ports.SessionRecord{}
@@ -73,5 +88,50 @@ func TestSessionServiceCreatesAndExpiresOpaqueRecords(t *testing.T) {
 	now = now.Add(2 * time.Hour)
 	if _, err := service.Get(context.Background(), record.ID); !errors.Is(err, ErrInvalidSession) {
 		t.Fatalf("expected expired session, got %v", err)
+	}
+}
+
+func TestSessionServiceRejectsAndDeletesSessionsForInactiveUsers(t *testing.T) {
+	store := &sessionStore{records: map[string]ports.SessionRecord{"old-cookie": {ID: "old-cookie", UserID: 42, ExpiresAt: time.Now().Add(time.Hour)}}}
+	service := NewSessionService(store).WithUserStatusChecker(staticUserStatus{active: false})
+	if _, err := service.Get(context.Background(), "old-cookie"); !errors.Is(err, ErrInvalidSession) {
+		t.Fatalf("suspended user's session was accepted: %v", err)
+	}
+	if _, ok := store.records["old-cookie"]; ok {
+		t.Fatal("inactive user's redis session was not removed")
+	}
+}
+
+func TestSessionServiceFailsClosedWhenUserStatusCannotBeChecked(t *testing.T) {
+	store := &sessionStore{records: map[string]ports.SessionRecord{"cookie": {ID: "cookie", UserID: 42, ExpiresAt: time.Now().Add(time.Hour)}}}
+	service := NewSessionService(store).WithUserStatusChecker(staticUserStatus{active: true, err: errors.New("database unavailable")})
+	if _, err := service.Get(context.Background(), "cookie"); !errors.Is(err, ErrInvalidSession) {
+		t.Fatalf("session survived failed status check: %v", err)
+	}
+	if _, ok := store.records["cookie"]; !ok {
+		t.Fatal("temporary status lookup failure should not destroy a valid session")
+	}
+}
+
+func TestSessionServiceRejectsSessionsRevokedByAccountChanges(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
+	store := &sessionStore{records: map[string]ports.SessionRecord{"old-cookie": {ID: "old-cookie", UserID: 42, CreatedAt: createdAt, ExpiresAt: time.Now().Add(time.Hour)}}}
+	service := NewSessionService(store).WithSessionChecker(staticSessionStatus{active: false})
+	if _, err := service.Get(context.Background(), "old-cookie"); !errors.Is(err, ErrInvalidSession) {
+		t.Fatalf("revoked session was accepted: %v", err)
+	}
+	if _, ok := store.records["old-cookie"]; ok {
+		t.Fatal("revoked Redis session was not removed")
+	}
+}
+
+func TestSessionServiceFailsClosedWithoutDeletingSessionWhenRevocationCheckFails(t *testing.T) {
+	store := &sessionStore{records: map[string]ports.SessionRecord{"cookie": {ID: "cookie", UserID: 42, CreatedAt: time.Now(), ExpiresAt: time.Now().Add(time.Hour)}}}
+	service := NewSessionService(store).WithSessionChecker(staticSessionStatus{active: true, err: errors.New("database unavailable")})
+	if _, err := service.Get(context.Background(), "cookie"); !errors.Is(err, ErrInvalidSession) {
+		t.Fatalf("session survived failed revocation check: %v", err)
+	}
+	if _, ok := store.records["cookie"]; !ok {
+		t.Fatal("temporary revocation lookup failure should not delete the session")
 	}
 }

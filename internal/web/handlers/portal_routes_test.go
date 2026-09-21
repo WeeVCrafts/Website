@@ -39,11 +39,14 @@ func TestCanonicalPortalPathsRequireTheirOwnRole(t *testing.T) {
 
 func TestRoleSpecificMutationRoutesDelegateToAuthorizedApplicationHandlers(t *testing.T) {
 	tests := map[string]string{
-		"/super-admin/roles/update":          "/admin/roles/update",
-		"/marketplace-admin/sellers/status":  "/admin/sellers/status",
-		"/marketplace-admin/products/review": "/admin/products/review",
-		"/operations-portal/returns/status":  "/admin/returns/status",
-		"/finance-portal/returns/status":     "/admin/returns/status",
+		"/super-admin/roles/update":              "/admin/roles/update",
+		"/super-admin/products/variants/create":  "/admin/products/variants/create",
+		"/super-admin/products/variants/update":  "/admin/products/variants/update",
+		"/super-admin/products/variants/archive": "/admin/products/variants/archive",
+		"/marketplace-admin/sellers/status":      "/admin/sellers/status",
+		"/marketplace-admin/products/review":     "/admin/products/review",
+		"/operations-portal/returns/status":      "/admin/returns/status",
+		"/finance-portal/returns/status":         "/admin/returns/status",
 	}
 	for path, want := range tests {
 		if got := canonicalAdminMutationPath(path); got != want {
@@ -94,17 +97,24 @@ func TestSellerPortalRoutesUseAssignedPermissions(t *testing.T) {
 
 func TestCanonicalSellerMutationsMapOnlySupportedWorkflows(t *testing.T) {
 	tests := map[string]string{
-		"/seller-admin/products":                 "/seller/products",
-		"/seller-admin/products/submit":          "/seller/products/submit",
-		"/seller-admin/products/42/edit":         "/seller/products/42/edit",
-		"/seller-admin/inventory/adjust":         "/seller/inventory/adjust",
-		"/seller-admin/orders/fulfill":           "/seller/orders/fulfill",
-		"/seller-admin/team/add":                 "/seller/team/add",
-		"/seller-admin/team/remove":              "/seller/team/remove",
-		"/seller-admin/returns/status":           "",
-		"/seller-admin/settings/notification":    "",
-		"/seller-admin/orders/fulfill/arbitrary": "",
-		"/marketplace-admin/products":            "",
+		"/seller-admin/products":                  "/seller/products",
+		"/seller-admin/products/submit":           "/seller/products/submit",
+		"/seller-admin/products/restore":          "/seller/products/restore",
+		"/seller-admin/products/variants/create":  "/seller/products/variants/create",
+		"/seller-admin/products/variants/update":  "/seller/products/variants/update",
+		"/seller-admin/products/variants/archive": "/seller/products/variants/archive",
+		"/seller-admin/products/42/edit":          "/seller/products/42/edit",
+		"/seller-admin/inventory/adjust":          "/seller/inventory/adjust",
+		"/seller-admin/orders/fulfill":            "/seller/orders/fulfill",
+		"/seller-admin/team/add":                  "/seller/team/add",
+		"/seller-admin/team/update":               "/seller/team/update",
+		"/seller-admin/team/remove":               "/seller/team/remove",
+		"/seller-admin/onboarding":                "/seller/onboard",
+		"/seller-admin/settings":                  "/seller/settings/update",
+		"/seller-admin/returns/status":            "",
+		"/seller-admin/settings/notification":     "",
+		"/seller-admin/orders/fulfill/arbitrary":  "",
+		"/marketplace-admin/products":             "",
 	}
 	for path, want := range tests {
 		if got := canonicalSellerMutationPath(path); got != want {
@@ -122,6 +132,8 @@ func TestSellerMutationPermissionsAreEnforcedAtPortalBoundary(t *testing.T) {
 	}{
 		{path: "/seller-admin/products", permissions: []string{"PRODUCT_WRITE"}, want: true},
 		{path: "/seller-admin/products", permissions: []string{"PRODUCT_READ"}, want: false},
+		{path: "/seller-admin/products/variants/create", permissions: []string{"PRODUCT_WRITE"}, want: true},
+		{path: "/seller-admin/products/variants/archive", permissions: []string{"PRODUCT_READ"}, want: false},
 		{path: "/seller-admin/inventory/adjust", permissions: []string{"INVENTORY_WRITE"}, want: true},
 		{path: "/seller-admin/orders/fulfill", permissions: []string{"ORDER_READ"}, want: false},
 		{path: "/seller-admin/orders/fulfill", permissions: []string{"ORDER_FULFILL"}, want: true},

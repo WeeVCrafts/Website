@@ -11,7 +11,7 @@ import (
 
 type roleAdminRepository struct{}
 
-func (roleAdminRepository) ListRoleAssignments(context.Context, int64) ([]domainidentity.RoleAssignment, error) {
+func (roleAdminRepository) ListRoleAssignments(context.Context, int64, string) ([]domainidentity.RoleAssignment, error) {
 	return []domainidentity.RoleAssignment{{ID: 9, Roles: []string{"customer"}}}, nil
 }
 func (roleAdminRepository) UpdateRoleAssignment(context.Context, int64, int64, int64, domainidentity.Role, bool, string) error {
@@ -28,9 +28,25 @@ func (r roleAdminChecker) HasAnyRole(context.Context, int64, ...domainidentity.R
 	return r.super, nil
 }
 
+type profileAdminRepository struct {
+	roleAdminRepository
+	gotEmail, gotName, gotStatus, gotHash string
+	gotReason                             string
+}
+
+func (r *profileAdminRepository) UpdateRoleUser(_ context.Context, _, _ int64, email, name, status, passwordHash, reason string) error {
+	r.gotEmail, r.gotName, r.gotStatus, r.gotHash, r.gotReason = email, name, status, passwordHash, reason
+	return nil
+}
+
+type fixedHasher struct{}
+
+func (fixedHasher) Hash(string) (string, error) { return "hashed", nil }
+func (fixedHasher) Compare(string, string) bool { return false }
+
 func TestRoleAdminServiceRequiresSuperAdmin(t *testing.T) {
 	service := NewRoleAdminService(roleAdminRepository{}, roleAdminChecker{})
-	if _, err := service.List(context.Background(), 42); !errors.Is(err, ports.ErrForbidden) {
+	if _, err := service.List(context.Background(), 42, ""); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("expected role list denial, got %v", err)
 	}
 }
@@ -51,6 +67,27 @@ func TestRoleAdminServiceValidatesAssignableRoleAndReason(t *testing.T) {
 	}
 	if err := service.Update(context.Background(), 42, 9, 12, "seller_staff", true, "staff responsibility"); err != nil {
 		t.Fatalf("seller staff assignment with a seller should be accepted: %v", err)
+	}
+}
+
+func TestRoleAdminServiceEditsAccountAndHashesOptionalPassword(t *testing.T) {
+	repository := &profileAdminRepository{}
+	service := NewRoleAdminService(repository, roleAdminChecker{super: true}, fixedHasher{})
+	if err := service.UpdateUser(context.Background(), 42, 9, " User@Example.com ", "Updated User", "suspended", "a-new-password-longer-than-12", "user update"); err != nil {
+		t.Fatalf("update user: %v", err)
+	}
+	if repository.gotEmail != "user@example.com" || repository.gotName != "Updated User" || repository.gotStatus != "suspended" || repository.gotHash != "hashed" || repository.gotReason != "user update" {
+		t.Fatalf("incorrect profile update passed to repository: %+v", repository)
+	}
+	if err := service.UpdateUser(context.Background(), 42, 9, "bad", "Updated User", "active", "", "valid reason"); !errors.Is(err, ErrInvalidRoleAssignment) {
+		t.Fatalf("expected invalid email rejection, got %v", err)
+	}
+}
+
+func TestRoleAdminServiceDoesNotAllowSuspendingSelf(t *testing.T) {
+	service := NewRoleAdminService(&profileAdminRepository{}, roleAdminChecker{super: true}, fixedHasher{})
+	if err := service.UpdateUser(context.Background(), 42, 42, "admin@example.com", "Admin User", "suspended", "", "suspension reason"); !errors.Is(err, ports.ErrRoleState) {
+		t.Fatalf("expected self-suspension rejection, got %v", err)
 	}
 }
 

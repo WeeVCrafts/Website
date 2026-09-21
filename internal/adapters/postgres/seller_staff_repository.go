@@ -27,7 +27,7 @@ func (r *SellerStaffRepository) ListStaff(ctx context.Context, ownerUserID int64
 		SELECT su.user_id, u.email, u.display_name, su.status, su.permissions, su.created_at
 		FROM seller_users su
 		JOIN sellers s ON s.id = su.seller_id AND s.owner_user_id = $1 AND s.status = 'active'
-		JOIN users u ON u.id = su.user_id
+		JOIN users u ON u.id = su.user_id AND u.status = 'active'
 		WHERE su.status = 'active'
 		ORDER BY su.created_at, su.user_id`, ownerUserID)
 	if err != nil {
@@ -43,6 +43,32 @@ func (r *SellerStaffRepository) ListStaff(ctx context.Context, ownerUserID int64
 		staff = append(staff, member)
 	}
 	return staff, rows.Err()
+}
+
+func (r *SellerStaffRepository) UpdateStaff(ctx context.Context, ownerUserID, staffUserID int64, permissions []string) (domaincommerce.SellerStaffMember, error) {
+	var member domaincommerce.SellerStaffMember
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var sellerID int64
+		if err := tx.QueryRow(transactionContext, `SELECT id FROM sellers WHERE owner_user_id=$1 AND status='active'`, ownerUserID).Scan(&sellerID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrForbidden
+			}
+			return err
+		}
+		result, err := tx.Exec(transactionContext, `UPDATE seller_users su SET permissions=$3,updated_at=NOW() FROM users u WHERE su.seller_id=$1 AND su.user_id=$2 AND su.status='active' AND u.id=su.user_id AND u.status='active'`, sellerID, staffUserID, permissions)
+		if err != nil {
+			return err
+		}
+		if result.RowsAffected() != 1 {
+			return ports.ErrNotFound
+		}
+		metadata, _ := json.Marshal(map[string]any{"permissions": permissions, "seller_id": sellerID})
+		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'seller.staff_permissions_updated','seller_user',$2,$3,$4)`, fmt.Sprint(ownerUserID), fmt.Sprint(staffUserID), ports.RequestID(transactionContext), metadata); err != nil {
+			return err
+		}
+		return tx.QueryRow(transactionContext, `SELECT u.id,u.email,u.display_name,su.status,su.permissions,su.created_at FROM seller_users su JOIN users u ON u.id=su.user_id WHERE su.seller_id=$1 AND su.user_id=$2`, sellerID, staffUserID).Scan(&member.UserID, &member.Email, &member.DisplayName, &member.Status, &member.Permissions, &member.AddedAt)
+	})
+	return member, err
 }
 
 func (r *SellerStaffRepository) AddStaff(ctx context.Context, ownerUserID int64, email string, permissions []string) (domaincommerce.SellerStaffMember, error) {

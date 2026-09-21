@@ -36,6 +36,9 @@ func (catalogRepository) EnsureSeller(context.Context, int64, string) (domaincom
 func (catalogRepository) GetSeller(context.Context, int64) (domaincommerce.Seller, error) {
 	return domaincommerce.Seller{ID: 1, Status: "active"}, nil
 }
+func (catalogRepository) UpdateSellerProfile(context.Context, int64, string, string) error {
+	return nil
+}
 func (catalogRepository) CreateDraft(context.Context, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	return domaincommerce.ManagedProduct{ID: 1}, nil
 }
@@ -54,11 +57,40 @@ func (catalogRepository) GetAdminProduct(context.Context, int64, int64) (domainc
 func (catalogRepository) UpdateAdminProduct(context.Context, int64, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	return domaincommerce.ManagedProduct{ID: 1, Status: "approved"}, nil
 }
+func (catalogRepository) ListSellerProductVariants(context.Context, int64, int64) ([]domaincommerce.ProductVariant, error) {
+	return nil, nil
+}
+func (catalogRepository) CreateSellerProductVariant(context.Context, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{ID: 1, Status: "active"}, nil
+}
+func (catalogRepository) UpdateSellerProductVariant(context.Context, int64, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{ID: 1, Status: "active"}, nil
+}
+func (catalogRepository) ArchiveSellerProductVariant(context.Context, int64, int64, int64, string) error {
+	return nil
+}
+func (catalogRepository) ListAdminProductVariants(context.Context, int64, int64) ([]domaincommerce.ProductVariant, error) {
+	return nil, nil
+}
+func (catalogRepository) CreateAdminProductVariant(context.Context, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{ID: 2, Status: "active"}, nil
+}
+func (catalogRepository) UpdateAdminProductVariant(context.Context, int64, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{ID: 2, Status: "active"}, nil
+}
+func (catalogRepository) ArchiveAdminProductVariant(context.Context, int64, int64, int64, string) error {
+	return nil
+}
 func (catalogRepository) ArchiveSellerProduct(context.Context, int64, int64, string) error {
+	return nil
+}
+func (catalogRepository) RestoreSellerProduct(context.Context, int64, int64, string) error {
 	return nil
 }
 func (catalogRepository) ArchiveAdminProduct(context.Context, int64, int64, string) error { return nil }
 func (catalogRepository) SubmitProduct(context.Context, int64, int64) error               { return nil }
+func (catalogRepository) SubmitAdminProduct(context.Context, int64, int64) error          { return nil }
+func (catalogRepository) RestoreAdminProduct(context.Context, int64, int64, string) error { return nil }
 func (catalogRepository) ApproveProduct(context.Context, int64, int64, bool, string) error {
 	return nil
 }
@@ -179,6 +211,58 @@ func TestCatalogServiceProtectsSellerDraftEditing(t *testing.T) {
 	}
 	if _, err := service.UpdateDraft(context.Background(), 11, 1, domaincommerce.ProductDraftInput{Slug: "invalid slug"}); !errors.Is(err, ErrInvalidProduct) {
 		t.Fatalf("invalid draft edit returned %v", err)
+	}
+}
+
+func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *testing.T) {
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		11: {domainidentity.RoleSellerOwner: true},
+		12: {domainidentity.RoleSellerStaff: true},
+	}, permissions: map[int64]map[string]bool{
+		12: {domaincommerce.SellerPermissionProductRead: true},
+	}}
+	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
+	input := domaincommerce.ProductVariantInput{Name: "Peacock Blue", SKU: "blue-001", PriceCents: 2000, InitialStock: 3}
+	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("read-only staff created a variant: %v", err)
+	}
+	checker.permissions[12][domaincommerce.SellerPermissionProductWrite] = true
+	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); err != nil {
+		t.Fatalf("product writer could not create a variant: %v", err)
+	}
+	if _, err := service.UpdateSellerProductVariant(context.Background(), 12, 5, 1, input); err != nil {
+		t.Fatalf("product writer could not update a variant: %v", err)
+	}
+	if err := service.ArchiveSellerProductVariant(context.Background(), 12, 5, 1, "retire blue option"); err != nil {
+		t.Fatalf("product writer could not archive a variant: %v", err)
+	}
+	input.InitialStock = -1
+	if _, err := service.CreateSellerProductVariant(context.Background(), 11, 5, input); !errors.Is(err, ErrInvalidProductVariant) {
+		t.Fatalf("negative initial stock passed validation: %v", err)
+	}
+	input.InitialStock, input.PriceCents = 0, 2000
+	compare := int64(1999)
+	input.CompareAtCents = &compare
+	if _, err := service.CreateSellerProductVariant(context.Background(), 11, 5, input); !errors.Is(err, ErrInvalidProductVariant) {
+		t.Fatalf("compare price under sale price passed validation: %v", err)
+	}
+}
+
+func TestCatalogServiceRestrictsAdminVariantManagementToSuperAdmin(t *testing.T) {
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		12: {domainidentity.RoleMarketplaceAdmin: true},
+		14: {domainidentity.RoleSuperAdmin: true},
+	}, permissions: map[int64]map[string]bool{}}
+	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
+	input := domaincommerce.ProductVariantInput{Name: "Small", SKU: "tee-small", PriceCents: 2500}
+	if _, err := service.CreateAdminProductVariant(context.Background(), 12, 5, input); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("marketplace admin created a direct product variant: %v", err)
+	}
+	if _, err := service.CreateAdminProductVariant(context.Background(), 14, 5, input); err != nil {
+		t.Fatalf("super admin was denied variant creation: %v", err)
+	}
+	if _, err := service.AdminProductVariants(context.Background(), 12, 5); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("marketplace admin read direct product variants: %v", err)
 	}
 }
 

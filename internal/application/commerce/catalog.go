@@ -12,6 +12,7 @@ import (
 )
 
 var ErrInvalidProduct = errors.New("product details are invalid")
+var ErrInvalidProductVariant = errors.New("product variant details are invalid")
 
 type CatalogService struct {
 	repository  ports.CatalogManagementRepository
@@ -47,6 +48,17 @@ func (s *CatalogService) SellerProfile(ctx context.Context, userID int64) (domai
 		return domaincommerce.Seller{}, ports.ErrForbidden
 	}
 	return s.repository.GetSeller(ctx, userID)
+}
+
+func (s *CatalogService) UpdateSellerProfile(ctx context.Context, ownerUserID int64, displayName, reason string) error {
+	displayName, reason = strings.TrimSpace(displayName), strings.TrimSpace(reason)
+	if ownerUserID <= 0 || !s.allowed(ctx, ownerUserID, domainidentity.RoleSellerOwner) {
+		return ports.ErrForbidden
+	}
+	if len(displayName) < 2 || len(displayName) > 120 || len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProduct
+	}
+	return s.repository.UpdateSellerProfile(ctx, ownerUserID, displayName, reason)
 }
 
 func (s *CatalogService) CreateDraft(ctx context.Context, ownerUserID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
@@ -119,6 +131,86 @@ func (s *CatalogService) UpdateAdminProduct(ctx context.Context, actorID, produc
 	return s.repository.UpdateAdminProduct(ctx, actorID, productID, input)
 }
 
+func (s *CatalogService) SellerProductVariants(ctx context.Context, ownerUserID, productID int64) ([]domaincommerce.ProductVariant, error) {
+	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return nil, ports.ErrForbidden
+	}
+	return s.repository.ListSellerProductVariants(ctx, ownerUserID, productID)
+}
+
+func (s *CatalogService) CreateSellerProductVariant(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return domaincommerce.ProductVariant{}, ports.ErrForbidden
+	}
+	input, err := normalizeVariant(input, true)
+	if err != nil {
+		return domaincommerce.ProductVariant{}, err
+	}
+	return s.repository.CreateSellerProductVariant(ctx, ownerUserID, productID, input)
+}
+
+func (s *CatalogService) UpdateSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	if productID <= 0 || variantID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return domaincommerce.ProductVariant{}, ports.ErrForbidden
+	}
+	input, err := normalizeVariant(input, false)
+	if err != nil {
+		return domaincommerce.ProductVariant{}, err
+	}
+	return s.repository.UpdateSellerProductVariant(ctx, ownerUserID, productID, variantID, input)
+}
+
+func (s *CatalogService) ArchiveSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, reason string) error {
+	if productID <= 0 || variantID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProductVariant
+	}
+	return s.repository.ArchiveSellerProductVariant(ctx, ownerUserID, productID, variantID, reason)
+}
+
+func (s *CatalogService) AdminProductVariants(ctx context.Context, actorID, productID int64) ([]domaincommerce.ProductVariant, error) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return nil, ports.ErrForbidden
+	}
+	return s.repository.ListAdminProductVariants(ctx, actorID, productID)
+}
+
+func (s *CatalogService) CreateAdminProductVariant(ctx context.Context, actorID, productID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return domaincommerce.ProductVariant{}, ports.ErrForbidden
+	}
+	input, err := normalizeVariant(input, true)
+	if err != nil {
+		return domaincommerce.ProductVariant{}, err
+	}
+	return s.repository.CreateAdminProductVariant(ctx, actorID, productID, input)
+}
+
+func (s *CatalogService) UpdateAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return domaincommerce.ProductVariant{}, ports.ErrForbidden
+	}
+	input, err := normalizeVariant(input, false)
+	if err != nil {
+		return domaincommerce.ProductVariant{}, err
+	}
+	return s.repository.UpdateAdminProductVariant(ctx, actorID, productID, variantID, input)
+}
+
+func (s *CatalogService) ArchiveAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, reason string) error {
+	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProductVariant
+	}
+	return s.repository.ArchiveAdminProductVariant(ctx, actorID, productID, variantID, reason)
+}
+
 func (s *CatalogService) ArchiveSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error {
 	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
 		return ports.ErrForbidden
@@ -128,6 +220,17 @@ func (s *CatalogService) ArchiveSellerProduct(ctx context.Context, ownerUserID, 
 		return ErrInvalidProduct
 	}
 	return s.repository.ArchiveSellerProduct(ctx, ownerUserID, productID, reason)
+}
+
+func (s *CatalogService) RestoreSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error {
+	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProduct
+	}
+	return s.repository.RestoreSellerProduct(ctx, ownerUserID, productID, reason)
 }
 
 func (s *CatalogService) ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
@@ -146,6 +249,24 @@ func (s *CatalogService) SubmitProduct(ctx context.Context, ownerUserID, product
 		return ports.ErrForbidden
 	}
 	return s.repository.SubmitProduct(ctx, ownerUserID, productID)
+}
+
+func (s *CatalogService) SubmitAdminProduct(ctx context.Context, actorID, productID int64) error {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return ports.ErrForbidden
+	}
+	return s.repository.SubmitAdminProduct(ctx, actorID, productID)
+}
+
+func (s *CatalogService) RestoreAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return ports.ErrForbidden
+	}
+	reason = strings.TrimSpace(reason)
+	if len(reason) < 4 || len(reason) > 1000 {
+		return ErrInvalidProduct
+	}
+	return s.repository.RestoreAdminProduct(ctx, actorID, productID, reason)
 }
 
 func (s *CatalogService) ApproveProduct(ctx context.Context, actorID, productID int64, approved bool, reason string) error {
@@ -222,6 +343,25 @@ func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.Prod
 	}
 	if input.DeliveryLabel == "" {
 		input.DeliveryLabel = "Dispatch details at checkout"
+	}
+	return input, nil
+}
+
+func normalizeVariant(input domaincommerce.ProductVariantInput, includeInitialStock bool) (domaincommerce.ProductVariantInput, error) {
+	input.Name = strings.TrimSpace(input.Name)
+	input.SKU = strings.TrimSpace(strings.ToUpper(input.SKU))
+	if len(input.Name) < 1 || len(input.Name) > 120 || len(input.SKU) < 1 || len(input.SKU) > 120 || input.PriceCents <= 0 {
+		return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
+	}
+	if input.CompareAtCents != nil && *input.CompareAtCents < input.PriceCents {
+		return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
+	}
+	if includeInitialStock {
+		if input.InitialStock < 0 || input.InitialStock > 100000 {
+			return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
+		}
+	} else {
+		input.InitialStock = 0
 	}
 	return input, nil
 }

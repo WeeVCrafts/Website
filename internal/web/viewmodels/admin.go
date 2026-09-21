@@ -4,6 +4,7 @@ import domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	ActorID                                                             int64
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                     string
 	CSRFToken                                                           string
@@ -49,8 +50,16 @@ type AdminProduct struct {
 }
 
 type AdminProductEditor struct {
-	ID, SellerID, SellerName, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName string
-	Description, SKU, PriceCents, CompareAtCents, InitialStock, DeliveryLabel, Action      string
+	ID, SellerID, SellerName, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName   string
+	Description, SKU, PriceCents, CompareAtCents, InitialStock, DeliveryLabel, Action, Image string
+	Variants                                                                                 []ProductVariant
+	Media                                                                                    []ProductMedia
+}
+
+type ProductVariant struct {
+	ID, Name, SKU, PriceCents, CompareAtCents, Available, Reserved, Status string
+	Price, CompareAt, Discount, StockMessage                               string
+	HasCompareAt, InStock                                                  bool
 }
 
 type AdminInventory struct {
@@ -91,19 +100,19 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
-	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice      string
-	DisplayName, UserEmail, SellerName, RoleLabel, Initials, CSRFToken string
-	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite      bool
-	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam             bool
-	Stats                                                              []SellerAdminStat
-	Products                                                           []SellerAdminProduct
-	Inventory                                                          []SellerAdminInventory
-	Orders                                                             []SellerAdminOrder
-	Returns                                                            []SellerAdminReturn
-	Ledger                                                             []SellerAdminLedger
-	Settlements                                                        []SellerAdminSettlement
-	AnalyticsBars                                                      []SellerAdminBar
-	Team                                                               []SellerTeamMember
+	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice                    string
+	DisplayName, UserEmail, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
+	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite                    bool
+	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam                           bool
+	Stats                                                                            []SellerAdminStat
+	Products                                                                         []SellerAdminProduct
+	Inventory                                                                        []SellerAdminInventory
+	Orders                                                                           []SellerAdminOrder
+	Returns                                                                          []SellerAdminReturn
+	Ledger                                                                           []SellerAdminLedger
+	Settlements                                                                      []SellerAdminSettlement
+	AnalyticsBars                                                                    []SellerAdminBar
+	Team                                                                             []SellerTeamMember
 }
 
 type SellerAdminStat struct {
@@ -141,6 +150,8 @@ type SellerAdminSettlement struct {
 
 type SellerTeamMember struct {
 	UserID, Name, Email, Role, Status, LastActive, Permissions, Image string
+	ProductRead, ProductWrite, InventoryRead, InventoryWrite          bool
+	OrderRead, OrderFulfill, ReturnRead, ReportRead                   bool
 }
 
 // SupportPortalPage is the support-agent-scoped live workspace. Customer
@@ -153,6 +164,8 @@ type SupportPortalPage struct {
 	Stats                                              []SupportPortalStat
 	Cases                                              []SupportPortalCase
 	Conversations                                      []SupportPortalConversation
+	SelectedCase                                       SupportPortalCase
+	Messages                                           []SupportPortalConversation
 	Directory                                          []SupportPortalDirectoryEntry
 	Timeline                                           []SupportPortalTimelineEntry
 }
@@ -168,8 +181,10 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
-	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                  string
-	Description, PriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action string
+	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                         string
+	Description, PriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action, Image string
+	Variants                                                                                 []ProductVariant
+	Media                                                                                    []ProductMedia
 }
 
 type SupportPortalStat struct {
@@ -182,10 +197,12 @@ type SupportPortalCase struct {
 	CustomerID                                                                                                                  int64
 	ID, Subject, Customer, CustomerInitials, Category, Priority, Created, Status, Age, Seller, Order, Avatar, Assignee, Channel string
 	OrderStatus, OrderValue, PaymentStatus                                                                                      string
+	LatestReply, InitialMessage, AgentNote                                                                                      string
 }
 
 type SupportPortalConversation struct {
-	Author, Initials, Role, Message, Time, Tone, Image string
+	Author, Initials, Role, Message, Time, Tone, Image, TicketNumber string
+	TicketID                                                         int64
 }
 
 type SupportPortalDirectoryEntry struct {

@@ -37,19 +37,8 @@ func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndMinIO(t *testing.T) {
 		t.Fatalf("prepare upload: %v", err)
 	}
 	t.Cleanup(func() { _ = storage.DeleteObject(context.Background(), upload.ObjectKey) })
-	request, err := http.NewRequestWithContext(ctx, http.MethodPut, upload.UploadURL, bytes.NewReader(payload))
-	if err != nil {
-		t.Fatalf("create upload request: %v", err)
-	}
-	request.Header.Set("Content-Type", "image/png")
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		t.Fatalf("put presigned media: %v", err)
-	}
-	_, _ = io.Copy(io.Discard, response.Body)
-	_ = response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		t.Fatalf("presigned upload returned status %d", response.StatusCode)
+	if err := storage.PutObject(ctx, upload.ObjectKey, "image/png", int64(len(payload)), bytes.NewReader(payload)); err != nil {
+		t.Fatalf("put media object into MinIO: %v", err)
 	}
 	ready, err := service.FinalizeUpload(ctx, fixture.ownerID, upload.ID)
 	if err != nil {

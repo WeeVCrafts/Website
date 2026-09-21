@@ -16,13 +16,25 @@ var ErrInvalidSession = errors.New("session is invalid or expired")
 const DefaultSessionTTL = 24 * time.Hour
 
 type SessionService struct {
-	store ports.SessionStore
-	now   func() time.Time
-	newID func() (string, error)
+	store          ports.SessionStore
+	statusChecker  ports.UserStatusChecker
+	sessionChecker ports.UserSessionChecker
+	now            func() time.Time
+	newID          func() (string, error)
 }
 
 func NewSessionService(store ports.SessionStore) *SessionService {
 	return &SessionService{store: store, now: time.Now, newID: randomToken}
+}
+
+func (s *SessionService) WithUserStatusChecker(checker ports.UserStatusChecker) *SessionService {
+	s.statusChecker = checker
+	return s
+}
+
+func (s *SessionService) WithSessionChecker(checker ports.UserSessionChecker) *SessionService {
+	s.sessionChecker = checker
+	return s
 }
 
 func (s *SessionService) Start(ctx context.Context, user domainidentity.User, userAgent, ipAddress string, ttl time.Duration) (ports.SessionRecord, error) {
@@ -66,6 +78,25 @@ func (s *SessionService) Get(ctx context.Context, sessionID string) (ports.Sessi
 	if record.ExpiresAt.IsZero() || !record.ExpiresAt.After(s.now()) {
 		_ = s.store.Delete(ctx, sessionID)
 		return ports.SessionRecord{}, ErrInvalidSession
+	}
+	if s.sessionChecker != nil {
+		active, err := s.sessionChecker.IsSessionActive(ctx, record.UserID, record.CreatedAt)
+		if err != nil {
+			return ports.SessionRecord{}, ErrInvalidSession
+		}
+		if !active {
+			_ = s.store.Delete(ctx, sessionID)
+			return ports.SessionRecord{}, ErrInvalidSession
+		}
+	} else if s.statusChecker != nil {
+		active, err := s.statusChecker.IsUserActive(ctx, record.UserID)
+		if err != nil {
+			return ports.SessionRecord{}, ErrInvalidSession
+		}
+		if !active {
+			_ = s.store.Delete(ctx, sessionID)
+			return ports.SessionRecord{}, ErrInvalidSession
+		}
 	}
 	return record, nil
 }

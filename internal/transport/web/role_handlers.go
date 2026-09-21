@@ -21,7 +21,7 @@ func (h *Handler) adminRoles(w http.ResponseWriter, r *http.Request) {
 		h.redirect(w, r, "/login")
 		return
 	}
-	assignments, err := h.roleAdminService.List(r.Context(), session.UserID)
+	assignments, err := h.roleAdminService.List(r.Context(), session.UserID, r.URL.Query().Get("q"))
 	if errors.Is(err, ports.ErrForbidden) {
 		h.renderError(w, http.StatusForbidden, "Role administration restricted", "Only Super Admin can change operational role assignments.")
 		return
@@ -160,5 +160,43 @@ func (h *Handler) adminRoleUserDelete(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusConflict, "User deletion rejected", "The request is invalid or would remove the last Super Admin account.")
 	default:
 		h.renderError(w, http.StatusServiceUnavailable, "User deletion unavailable", "We could not delete this account.")
+	}
+}
+
+func (h *Handler) adminRoleUserUpdate(w http.ResponseWriter, r *http.Request) {
+	if h.roleAdminService == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	userID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
+	if err != nil || userID <= 0 {
+		h.renderError(w, 422, "Invalid user", "Choose a valid account.")
+		return
+	}
+	err = h.roleAdminService.UpdateUser(r.Context(), session.UserID, userID, r.FormValue("email"), r.FormValue("display_name"), r.FormValue("status"), r.FormValue("password"), r.FormValue("reason"))
+	switch {
+	case err == nil:
+		h.redirect(w, r, "/super-admin/security?notice=Account+updated")
+	case errors.Is(err, ports.ErrForbidden):
+		h.renderError(w, 403, "User management restricted", "Only Super Admin can edit accounts.")
+	case errors.Is(err, ports.ErrUserAlreadyExists):
+		h.renderError(w, 409, "Email already in use", "Choose a different email address.")
+	case errors.Is(err, ports.ErrNotFound):
+		h.renderError(w, 404, "User not found", "This account no longer exists.")
+	case errors.Is(err, ports.ErrRoleState):
+		h.renderError(w, 409, "Account protected", "You cannot suspend yourself, edit a deleted account, or disable the last active Super Admin.")
+	case errors.Is(err, applicationauth.ErrInvalidRoleAssignment):
+		h.renderError(w, 422, "Invalid account details", "Check the email, name, status and audit reason. New passwords need at least 12 characters.")
+	default:
+		h.renderError(w, 503, "Account update failed", "Please try again.")
 	}
 }

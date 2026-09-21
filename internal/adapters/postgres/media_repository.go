@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -17,9 +18,11 @@ type MediaRepository struct{ pool *pgxpool.Pool }
 
 func NewMediaRepository(pool *pgxpool.Pool) *MediaRepository { return &MediaRepository{pool: pool} }
 
+const mediaManageCondition = `(s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su JOIN users member ON member.id=su.user_id AND member.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions)) OR EXISTS(SELECT 1 FROM user_roles ur JOIN users admin ON admin.id=ur.user_id AND admin.status='active' WHERE ur.user_id=$2 AND ur.role_slug='super_admin'))`
+
 func (r *MediaRepository) PrepareUpload(ctx context.Context, sellerOwnerID, productID int64, objectKey, contentType string, byteSize int64) (int64, error) {
 	var mediaID int64
-	err := r.pool.QueryRow(ctx, `INSERT INTO product_media (product_id, seller_id, object_key, content_type, byte_size) SELECT p.id, s.id, $3, $4, $5 FROM products p JOIN sellers s ON s.id = p.seller_id WHERE p.id = $1 AND s.owner_user_id = $2 RETURNING product_media.id`, productID, sellerOwnerID, objectKey, contentType, byteSize).Scan(&mediaID)
+	err := r.pool.QueryRow(ctx, `INSERT INTO product_media (product_id, seller_id, object_key, content_type, byte_size) SELECT p.id, s.id, $3, $4, $5 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=$1 AND `+mediaManageCondition+` RETURNING product_media.id`, productID, sellerOwnerID, objectKey, contentType, byteSize).Scan(&mediaID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, ports.ErrForbidden
 	}
@@ -39,7 +42,7 @@ func scanMediaRecord(row pgx.Row) (domaincommerce.MediaRecord, error) {
 }
 
 func (r *MediaRepository) GetOwnedMedia(ctx context.Context, sellerOwnerID, mediaID int64) (domaincommerce.MediaRecord, error) {
-	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`JOIN sellers s ON s.id = pm.seller_id WHERE pm.id = $1 AND s.owner_user_id = $2 AND pm.status <> 'deleted'`, mediaID, sellerOwnerID))
+	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`JOIN sellers s ON s.id=pm.seller_id WHERE pm.id=$1 AND `+mediaManageCondition+` AND pm.status <> 'deleted'`, mediaID, sellerOwnerID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domaincommerce.MediaRecord{}, ports.ErrForbidden
 	}
@@ -49,7 +52,7 @@ func (r *MediaRepository) GetOwnedMedia(ctx context.Context, sellerOwnerID, medi
 func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, mediaID int64, publicPath, contentType string, byteSize int64) (domaincommerce.MediaRecord, error) {
 	var record domaincommerce.MediaRecord
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		row := tx.QueryRow(transactionContext, mediaRecordSelect+`JOIN sellers s ON s.id = pm.seller_id WHERE pm.id = $1 AND s.owner_user_id = $2 FOR UPDATE`, mediaID, sellerOwnerID)
+		row := tx.QueryRow(transactionContext, mediaRecordSelect+`JOIN sellers s ON s.id=pm.seller_id WHERE pm.id=$1 AND `+mediaManageCondition+` FOR UPDATE OF pm`, mediaID, sellerOwnerID)
 		current, err := scanMediaRecord(row)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden
@@ -73,8 +76,10 @@ func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, medi
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE products SET image_url = $1, updated_at = NOW() WHERE id = $2`, publicPath, record.ProductID); err != nil {
-			return err
+		if strings.HasPrefix(contentType, "image/") {
+			if _, err := tx.Exec(transactionContext, `UPDATE products SET image_url = $1, updated_at = NOW() WHERE id = $2`, publicPath, record.ProductID); err != nil {
+				return err
+			}
 		}
 		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'catalog.media_finalized', 'product_media', $2, $3, jsonb_build_object('product_id', $4::bigint, 'content_type', $5::text, 'byte_size', $6::bigint))`, fmt.Sprint(sellerOwnerID), fmt.Sprint(mediaID), ports.RequestID(transactionContext), record.ProductID, contentType, byteSize)
 		return err
@@ -96,7 +101,7 @@ func (r *MediaRepository) ClaimOwnedMedia(ctx context.Context, sellerOwnerID, me
 			SELECT pm.id
 			FROM product_media pm
 			JOIN sellers s ON s.id = pm.seller_id
-			WHERE pm.id = $1 AND s.owner_user_id = $2 AND pm.status IN ('pending', 'ready')
+			WHERE pm.id = $1 AND `+mediaManageCondition+` AND pm.status IN ('pending', 'ready')
 			FOR UPDATE
 		)
 		UPDATE product_media pm
@@ -114,11 +119,19 @@ func (r *MediaRepository) ClaimOwnedMedia(ctx context.Context, sellerOwnerID, me
 
 func (r *MediaRepository) MarkMediaDeleted(ctx context.Context, mediaID int64) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if _, err := tx.Exec(transactionContext, `UPDATE products p SET image_url = '' FROM product_media pm WHERE pm.id = $1 AND p.id = pm.product_id AND p.image_url = pm.public_url`, mediaID); err != nil {
+		var productID int64
+		var publicPath, contentType string
+		if err := tx.QueryRow(transactionContext, `SELECT product_id,public_url,content_type FROM product_media WHERE id=$1 AND status IN ('pending','deleting') FOR UPDATE`, mediaID).Scan(&productID, &publicPath, &contentType); err != nil {
 			return err
 		}
-		_, err := tx.Exec(transactionContext, `UPDATE product_media SET status = 'deleted', public_url = '', updated_at = NOW() WHERE id = $1 AND status IN ('pending', 'deleting')`, mediaID)
-		return err
+		if _, err := tx.Exec(transactionContext, `UPDATE product_media SET status = 'deleted', public_url = '', updated_at = NOW() WHERE id = $1 AND status IN ('pending', 'deleting')`, mediaID); err != nil {
+			return err
+		}
+		if strings.HasPrefix(contentType, "image/") && publicPath != "" {
+			_, err := tx.Exec(transactionContext, `UPDATE products p SET image_url=COALESCE((SELECT other.public_url FROM product_media other WHERE other.product_id=p.id AND other.id<>$2 AND other.status='ready' AND other.visibility='public' AND other.content_type LIKE 'image/%' ORDER BY other.created_at DESC,other.id DESC LIMIT 1),''),updated_at=NOW() WHERE p.id=$1 AND p.image_url=$3`, productID, mediaID, publicPath)
+			return err
+		}
+		return nil
 	})
 }
 

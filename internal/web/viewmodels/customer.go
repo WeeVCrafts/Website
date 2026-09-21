@@ -7,13 +7,32 @@ import (
 
 type Product struct {
 	ID, VariantID                                                                   int64
-	PriceCents                                                                      int64
+	PriceCents, CompareAtCents                                                      int64
+	Available                                                                       int
 	Slug, Name, Seller, BrandName, Location, Category, ImageURL, ImageSrcSet, Badge string
+	SKU                                                                             string
 	CSRFToken                                                                       string
 	Price, CompareAt, Discount                                                      string
 	Rating                                                                          string
 	Reviews                                                                         int
-	InStock                                                                         bool
+	InStock, HasCompareAt                                                           bool
+	Variants                                                                        []ProductVariant
+	Media                                                                           []ProductMedia
+}
+
+type ProductMedia struct {
+	ID, URL, ContentType, Size string
+	IsVideo                    bool
+}
+
+type CustomerSupportTicket struct {
+	ID                                                                      int64
+	Number, Subject, InitialMessage, Status, Priority, Created, OrderNumber string
+	Messages                                                                []CustomerSupportMessage
+}
+
+type CustomerSupportMessage struct {
+	Author, Role, Body, Created string
 }
 
 type Seller struct {
@@ -33,9 +52,10 @@ type Category struct {
 }
 
 type CartItem struct {
-	Product  Product
-	Quantity int
-	Delivery string
+	Product     Product
+	VariantName string
+	Quantity    int
+	Delivery    string
 }
 
 type Order struct {
@@ -66,6 +86,7 @@ type CustomerPage struct {
 	RoleLabel, PortalLabel                          string
 	PaymentMode, PaymentPublicKey                   string
 	PaymentReady                                    bool
+	CanCreateSupport                                bool
 	CSRFToken                                       string
 	Filters                                         url.Values
 	Product                                         Product
@@ -82,6 +103,7 @@ type CustomerPage struct {
 	PaymentActivity                                 []PaymentActivity
 	SelectedOrder                                   Order
 	Returns                                         []Return
+	SupportTickets                                  []CustomerSupportTicket
 	Address                                         Address
 	CartCount, WishlistCount                        int
 	Page, Pages                                     int

@@ -65,13 +65,18 @@ func (r *CommerceRepository) ListSupportTickets(ctx context.Context, limit int) 
 
 func (r *CommerceRepository) listSupportTickets(ctx context.Context, suffix string, arg any) ([]domaincommerce.SupportTicket, error) {
 	query := `
-		SELECT st.id, st.ticket_number, COALESCE(o.order_number, ''), st.subject, st.message, st.status, st.priority,
+		SELECT st.id, st.ticket_number, COALESCE(o.order_number, ''), st.subject, st.message, COALESCE(reply.body, ''), st.status, st.priority,
 		       CASE WHEN st.user_id IS NOT NULL THEN 'Customer ' || LEFT(COALESCE(u.display_name, 'account'), 1) || '***' ELSE 'Customer' END,
 		       CASE WHEN POSITION('@' IN u.email) > 1 THEN LEFT(u.email, 1) || '***' || SUBSTRING(u.email FROM POSITION('@' IN u.email)) ELSE '***' END,
 		       st.agent_note, st.created_at, st.updated_at
 		FROM support_tickets st
 		JOIN users u ON u.id = st.user_id
 		LEFT JOIN orders o ON o.id = st.order_id
+		LEFT JOIN LATERAL (
+			SELECT body FROM support_ticket_messages
+			WHERE ticket_id = st.id AND author_role = 'support_agent'
+			ORDER BY created_at DESC, id DESC LIMIT 1
+		) reply ON TRUE
 		` + suffix
 	rows, err := r.pool.Query(ctx, query, arg)
 	if err != nil {
@@ -81,7 +86,7 @@ func (r *CommerceRepository) listSupportTickets(ctx context.Context, suffix stri
 	tickets := make([]domaincommerce.SupportTicket, 0)
 	for rows.Next() {
 		var ticket domaincommerce.SupportTicket
-		if err := rows.Scan(&ticket.ID, &ticket.TicketNumber, &ticket.OrderNumber, &ticket.Subject, &ticket.Message, &ticket.Status, &ticket.Priority, &ticket.CustomerLabel, &ticket.CustomerEmailMasked, &ticket.AgentNote, &ticket.CreatedAt, &ticket.UpdatedAt); err != nil {
+		if err := rows.Scan(&ticket.ID, &ticket.TicketNumber, &ticket.OrderNumber, &ticket.Subject, &ticket.Message, &ticket.LatestAgentReply, &ticket.Status, &ticket.Priority, &ticket.CustomerLabel, &ticket.CustomerEmailMasked, &ticket.AgentNote, &ticket.CreatedAt, &ticket.UpdatedAt); err != nil {
 			return nil, err
 		}
 		tickets = append(tickets, ticket)
@@ -109,6 +114,58 @@ func (r *CommerceRepository) UpdateSupportTicket(ctx context.Context, actorID, t
 		}
 		metadata, _ := json.Marshal(map[string]any{"from_status": current, "to_status": status, "note": note})
 		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'support.ticket_updated', 'support_ticket', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(ticketID), ports.RequestID(transactionContext), metadata)
+		return err
+	})
+}
+
+func (r *CommerceRepository) ReplySupportTicket(ctx context.Context, actorID, ticketID int64, reply string) error {
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var lockedTicketID int64
+		if err := tx.QueryRow(transactionContext, `SELECT id FROM support_tickets WHERE id = $1 FOR UPDATE`, ticketID).Scan(&lockedTicketID); errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrSupportNotFound
+		} else if err != nil {
+			return err
+		}
+		var messageID int64
+		if err := tx.QueryRow(transactionContext, `
+			INSERT INTO support_ticket_messages (ticket_id, author_id, author_role, body)
+			VALUES ($1, $2, 'support_agent', $3)
+			RETURNING id`, ticketID, actorID, reply).Scan(&messageID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE support_tickets SET updated_by = $1, updated_at = NOW() WHERE id = $2`, actorID, ticketID); err != nil {
+			return err
+		}
+		metadata, _ := json.Marshal(map[string]any{"message_id": messageID})
+		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'support.ticket_replied', 'support_ticket', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(ticketID), ports.RequestID(transactionContext), metadata)
+		return err
+	})
+}
+
+func (r *CommerceRepository) ReplyCustomerSupportTicket(ctx context.Context, userID, ticketID int64, reply string) error {
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var ownerID int64
+		var status string
+		if err := tx.QueryRow(transactionContext, `SELECT user_id,status FROM support_tickets WHERE id=$1 FOR UPDATE`, ticketID).Scan(&ownerID, &status); errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrSupportNotFound
+		} else if err != nil {
+			return err
+		}
+		if ownerID != userID {
+			return ports.ErrForbidden
+		}
+		if status == "closed" {
+			return ports.ErrSupportState
+		}
+		var messageID int64
+		if err := tx.QueryRow(transactionContext, `INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) VALUES($1,$2,'customer',$3) RETURNING id`, ticketID, userID, reply).Scan(&messageID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE support_tickets SET status=CASE WHEN status IN ('resolved','waiting_customer') THEN 'in_progress' ELSE status END,updated_by=$1,updated_at=NOW() WHERE id=$2`, userID, ticketID); err != nil {
+			return err
+		}
+		metadata, _ := json.Marshal(map[string]any{"message_id": messageID})
+		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'support.ticket_customer_replied','support_ticket',$2,$3,$4)`, fmt.Sprint(userID), fmt.Sprint(ticketID), ports.RequestID(transactionContext), metadata)
 		return err
 	})
 }

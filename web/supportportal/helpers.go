@@ -85,6 +85,24 @@ func supportStatusClass(value string) string {
 	}
 }
 
+func supportStatusTransitionAllowed(current, target string) bool {
+	if current == target {
+		return true
+	}
+	switch current {
+	case "open":
+		return target == "in_progress" || target == "waiting_customer" || target == "resolved"
+	case "in_progress":
+		return target == "waiting_customer" || target == "resolved"
+	case "waiting_customer":
+		return target == "in_progress" || target == "resolved"
+	case "resolved":
+		return target == "closed"
+	default:
+		return false
+	}
+}
+
 func supportPriorityClass(value string) string {
 	switch strings.ToLower(value) {
 	case "high":

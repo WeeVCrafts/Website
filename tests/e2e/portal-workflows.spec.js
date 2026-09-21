@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const path = require("node:path");
 
 const password = "WeeVCrafts-Demo-2026!";
 const target = new URL(process.env.WEEVCRAFTS_BASE_URL || "http://127.0.0.1:8080");
@@ -44,6 +45,21 @@ async function deleteRoleUser(page, card, reason) {
   await form.getByRole("button", { name: "Delete account" }).click();
   const response = await responsePromise;
   expect(response.status()).toBe(303);
+  await page.goto("/super-admin/security");
+}
+
+async function updateRoleUser(page, card, { email, displayName, status, password = "", reason }) {
+  const form = card.locator("form.role-user-edit-form");
+  if (email) await form.locator('input[name="email"]').fill(email);
+  if (displayName) await form.locator('input[name="display_name"]').fill(displayName);
+  if (status) await form.locator('select[name="status"]').selectOption(status);
+  if (password) await form.locator('input[name="password"]').fill(password);
+  await form.locator('input[name="reason"]').fill(reason);
+  const responsePromise = page.waitForResponse(response =>
+    response.url().includes("/super-admin/users/update") && response.request().method() === "POST"
+  );
+  await form.getByRole("button", { name: "Save account" }).click();
+  expect((await responsePromise).status()).toBe(303);
   await page.goto("/super-admin/security");
 }
 
@@ -98,9 +114,12 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
 
   const suffix = Date.now().toString();
   const email = `qa.role.${suffix}@example.test`;
+  const updatedEmail = `qa.updated.${suffix}@example.test`;
   const passwordForNewUser = "QA-Role-Setup-2026!";
+  const passwordAfterReset = "QA-Role-Updated-2026!";
   const adminContext = await browser.newContext();
   const userContext = await browser.newContext();
+  const ownerContext = await browser.newContext();
   const admin = await adminContext.newPage();
   let accountCreated = false;
   let accountDeleted = false;
@@ -140,15 +159,46 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
 
     await admin.goto("/super-admin/security");
     userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
+    await updateRoleUser(admin, userCard, {
+      email: updatedEmail,
+      displayName: `QA Finance Updated ${suffix}`,
+      status: "active",
+      password: passwordAfterReset,
+      reason: "Local account edit, email verification and password reset verification",
+    });
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
+    await expect(userCard).toContainText(`QA Finance Updated ${suffix}`);
+    await user.goto("/finance-portal");
+    await expect(user).toHaveURL(/\/login/);
+    await signIn(user, updatedEmail, "/finance-portal", passwordAfterReset);
+
+    await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
+    await updateRoleUser(admin, userCard, { status: "suspended", reason: "Local session revocation verification" });
+    await expect(admin.locator(".role-assignment-card").filter({ hasText: updatedEmail })).toContainText("suspended");
+    await user.goto("/finance-portal");
+    await expect(user).toHaveURL(/\/login/);
+
+    await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
+    await updateRoleUser(admin, userCard, { status: "active", reason: "Reactivate local account for role checks" });
+    await user.goto("/finance-portal");
+    await expect(user).toHaveURL(/\/login/);
+    await signIn(user, updatedEmail, "/finance-portal", passwordAfterReset);
+
+    await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     const roleForm = userCard.locator("form.role-assignment-form");
     await roleForm.locator('select[name="role"]').selectOption("seller_staff");
     const sellerSelect = roleForm.locator('select[name="seller_id"]');
     await expect(sellerSelect).toBeVisible();
     await expect.poll(() => sellerSelect.locator("option").count()).toBeGreaterThan(1);
-    const sellerID = await sellerSelect.locator("option").nth(1).getAttribute("value");
+    const ownerSellerOption = sellerSelect.locator("option").filter({ hasText: "Weaver's Touch" });
+    await expect(ownerSellerOption).toHaveCount(1);
+    const sellerID = await ownerSellerOption.getAttribute("value");
     await submitRoleChange(userCard, "seller_staff", "grant", "Local seller staff role assignment verification", sellerID);
 
-    await user.goto("/workspaces");
+    await signIn(user, updatedEmail, "/workspaces", passwordAfterReset);
     const availableWorkspaces = user.getByRole("navigation", { name: "Available workspaces" });
     await expect(availableWorkspaces.getByRole("link")).toHaveCount(2);
     await expect(availableWorkspaces).toContainText("Finance");
@@ -159,24 +209,36 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     const deniedCreate = await userContext.request.get("/seller-admin/products/new", { maxRedirects: 0 });
     expect(deniedCreate.status()).toBe(403);
 
+    const owner = await ownerContext.newPage();
+    await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
+    await owner.goto("/seller-admin/team");
+    const permissionForm = owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` });
+    await expect(permissionForm).toHaveCount(1);
+    await permissionForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
+    await permissionForm.getByRole("button", { name: "Save permissions" }).click();
+    await owner.goto("/seller-admin/team");
+    await expect(owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` })).toContainText("Edit products");
+    await user.goto("/seller-admin/products/new");
+    await expect(user.locator("form.seller-form-grid")).toBeVisible();
+
     await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     await submitRoleChange(userCard, "seller_staff", "revoke", "Local seller staff role revocation verification", sellerID);
 
     await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     await deleteRoleUser(admin, userCard, "Local end-to-end role lifecycle cleanup");
     accountDeleted = true;
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: email })).toHaveCount(0);
+    await expect(admin.locator(".role-assignment-card").filter({ hasText: updatedEmail })).toHaveCount(0);
   } finally {
     if (accountCreated && !accountDeleted) {
       await admin.goto("/super-admin/security");
-      const card = admin.locator(".role-assignment-card").filter({ hasText: email });
+      const card = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
       if (await card.count()) {
         await deleteRoleUser(admin, card, "Cleanup failed local browser run");
       }
     }
-    await Promise.all([adminContext.close(), userContext.close()]);
+    await Promise.all([adminContext.close(), userContext.close(), ownerContext.close()]);
   }
 });
 
@@ -217,9 +279,9 @@ test("super admin can create, edit and archive product listings", async ({ brows
 
     await admin.goto(`/super-admin/products?q=${encodeURIComponent(sku)}`);
     let productRow = admin.locator(".table-row").filter({ hasText: productName });
-    await expect(productRow).toContainText("draft");
+    await expect(productRow.locator(".status")).toHaveText("draft");
     await productRow.getByRole("link", { name: "Edit" }).click();
-    const editForm = admin.locator("form.admin-product-editor-form");
+    const editForm = admin.locator("form.admin-product-editor-form").first();
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated description, price and catalogue details.");
     await editForm.getByRole("button", { name: "Save product" }).click();
@@ -232,7 +294,21 @@ test("super admin can create, edit and archive product listings", async ({ brows
     await productRow.getByRole("button", { name: "Archive" }).click();
     productArchived = true;
     await admin.goto(`/super-admin/products?q=${encodeURIComponent(sku)}`);
-    await expect(admin.locator(".table-row").filter({ hasText: productName })).toContainText("archived");
+    productRow = admin.locator(".table-row").filter({ hasText: productName });
+    await expect(productRow.locator(".status")).toHaveText("archived");
+    const restoreForm = productRow.locator('form[action="/super-admin/products/restore"]');
+    await restoreForm.locator('input[name="reason"]').fill("Local product restore workflow test");
+    admin.once("dialog", dialog => dialog.accept());
+    await restoreForm.getByRole("button", { name: "Restore draft" }).click();
+    productArchived = false;
+    await admin.goto(`/super-admin/products?q=${encodeURIComponent(sku)}`);
+    productRow = admin.locator(".table-row").filter({ hasText: productName });
+    await expect(productRow.locator(".status")).toHaveText("draft");
+    const archiveForm = productRow.locator('form[action="/super-admin/products/archive"]');
+    await archiveForm.locator('input[name="reason"]').fill("Local E2E cleanup after restore");
+    admin.once("dialog", dialog => dialog.accept());
+    await archiveForm.getByRole("button", { name: "Archive" }).click();
+    productArchived = true;
   } finally {
     if (productCreated && !productArchived) {
       await admin.goto(`/super-admin/products?q=${encodeURIComponent(sku)}`);
@@ -287,13 +363,29 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const sellerProduct = seller.locator(".seller-product-row").filter({ hasText: productName });
     await expect(sellerProduct).toHaveCount(1);
     await sellerProduct.getByRole("link", { name: "Edit product" }).click();
-    const editForm = seller.locator("form.seller-form-grid");
+    const editForm = seller.locator("form.seller-form-grid").first();
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
     await editForm.getByRole("button", { name: "Save draft" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products/);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     const updatedSellerProduct = seller.locator(".seller-product-row").filter({ hasText: productName });
+    await expect(updatedSellerProduct).toContainText("2599");
+    await updatedSellerProduct.getByRole("link", { name: "Edit product" }).click();
+    const variantForm = seller.locator('form[action="/seller-admin/products/variants/create"]');
+    await variantForm.locator('input[name="name"]').fill("Indigo edition");
+    await variantForm.locator('input[name="sku"]').fill(`QA-ALT-${suffix}`);
+    await variantForm.locator('input[name="price_cents"]').fill("279900");
+    await variantForm.locator('input[name="compare_at_cents"]').fill("299900");
+    await variantForm.locator('input[name="initial_stock"]').fill("5");
+    await variantForm.getByRole("button", { name: "Add variant" }).click();
+    await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
+    const mediaPanel = seller.locator("[data-product-media]");
+    await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "../../web/assets/images/customer/maker-mithila.webp"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset img")).toHaveCount(1);
+    await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
 
@@ -304,13 +396,32 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await reviewRow.getByRole("button", { name: "Approve" }).click();
 
     await signIn(customer, "demo.customer08@weevcrafts.local", "/account");
+    await customer.goto("/cart");
+    const removeCartItems = customer.getByRole("button", { name: "Remove", exact: true });
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const itemCount = await removeCartItems.count();
+      if (itemCount === 0) break;
+      await removeCartItems.first().click();
+      await expect(removeCartItems).toHaveCount(itemCount - 1);
+    }
     await customer.goto(`/products/${slug}`);
     await expect(customer.getByRole("heading", { name: productName })).toBeVisible();
+    const productImage = customer.locator('.gallery-main img[src^="/media/products/"]').first();
+    await expect(productImage).toBeVisible();
+    const imageResponse = await customer.request.get(await productImage.getAttribute("src"));
+    expect(imageResponse.status()).toBe(200);
+    expect(imageResponse.headers()["content-type"]).toContain("image/webp");
+    await expect(customer.locator("#detail-variant option")).toHaveCount(2);
+    const variantValue = await customer.locator("#detail-variant option").filter({ hasText: "Indigo edition" }).getAttribute("value");
+    expect(variantValue).toBeTruthy();
+    await customer.locator("#detail-variant").selectOption(variantValue);
+    await expect(customer.locator("[data-selected-variant-price]")).toHaveText("INR 2799");
     const cartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
     await customer.getByRole("button", { name: "Add to cart" }).click();
     expect((await cartResponse).ok()).toBeTruthy();
     await customer.goto("/cart");
     await expect(customer.locator("body")).toContainText(productName);
+    await expect(customer.locator("body")).toContainText("Indigo edition");
     await customer.getByRole("link", { name: /Proceed to checkout/ }).click();
     await customer.getByLabel("Recipient name").fill("Browser QA Customer");
     await customer.getByLabel("Phone number").fill("9876543210");
@@ -367,5 +478,69 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator("body")).toContainText(orderNumber);
   } finally {
     await Promise.all([sellerContext.close(), marketplaceContext.close(), customerContext.close(), operationsContext.close()]);
+  }
+});
+
+test("customer and support agent share a persisted ticket conversation", async ({ browser }) => {
+  test.skip(!localMutationTarget, "Support workflow mutations are restricted to the local test deployment.");
+
+  const suffix = Date.now().toString();
+  const subject = `QA support request ${suffix}`;
+  const customerContext = await browser.newContext();
+  const supportContext = await browser.newContext();
+  const customer = await customerContext.newPage();
+  const support = await supportContext.newPage();
+
+  try {
+    await signIn(customer, "demo.customer08@weevcrafts.local", "/account");
+    await customer.goto("/contact");
+    const createForm = customer.locator('form[data-customer-support-create]');
+    await expect(createForm).toBeVisible();
+    await createForm.locator('input[name="subject"]').fill(subject);
+    await createForm.locator('input[name="order_number"]').fill("");
+    await createForm.locator('textarea[name="message"]').fill("Please help me check a question about this handmade order.");
+    await createForm.getByRole("button", { name: "Send support request" }).click();
+    await expect(customer).toHaveURL(/\/account\/support\?/);
+    const ticket = customer.locator("article.customer-support-ticket").filter({ hasText: subject });
+    await expect(ticket).toBeVisible();
+    const ticketID = (await ticket.getAttribute("id")).replace("ticket-", "");
+    await expect(ticket).toContainText("Please help me check a question about this handmade order.");
+
+    await signIn(support, "demo.support01@weevcrafts.local", "/support-portal");
+    await support.goto(`/support-portal/cases?ticket_id=${ticketID}`);
+    await expect(support.locator("body")).toContainText(subject);
+    await expect(support.locator("body")).toContainText("Please help me check a question about this handmade order.");
+    const agentReply = `We have received your request ${suffix} and will follow up here.`;
+    const replyForm = support.locator('form[action="/support-portal/cases/reply"]');
+    await replyForm.locator('textarea[name="message"]').fill(agentReply);
+    await replyForm.getByRole("button", { name: "Send Reply" }).click();
+    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
+
+    await customer.goto(`/account/support?ticket_id=${ticketID}`);
+    const customerTicket = customer.locator(`#ticket-${ticketID}`);
+    await expect(customerTicket).toContainText(agentReply);
+    const customerReply = `Additional details for support request ${suffix}.`;
+    const customerReplyForm = customerTicket.locator('form[action="/support/customer-reply"]');
+    await customerReplyForm.locator('textarea[name="message"]').fill(customerReply);
+    await customerReplyForm.getByRole("button", { name: "Send reply" }).click();
+    await expect(customer).toHaveURL(new RegExp(`/account/support\\?ticket_id=${ticketID}`));
+
+    await support.goto(`/support-portal/cases?ticket_id=${ticketID}`);
+    await expect(support.locator("body")).toContainText(customerReply);
+    const updateForm = support.locator('.live-support-row').filter({ hasText: subject }).locator('form[action="/support-portal/cases/status"]');
+    await updateForm.locator('select[name="status"]').selectOption("resolved");
+    await updateForm.locator('input[name="note"]').fill("Resolved after customer follow-up.");
+    await updateForm.getByRole("button", { name: "Save" }).click();
+    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
+    const closeForm = support.locator('.live-support-row').filter({ hasText: subject }).locator('form[action="/support-portal/cases/status"]');
+    await closeForm.locator('select[name="status"]').selectOption("closed");
+    await closeForm.locator('input[name="note"]').fill("Resolved after customer follow-up.");
+    await closeForm.getByRole("button", { name: "Save" }).click();
+    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
+    await customer.goto(`/account/support?ticket_id=${ticketID}`);
+    await expect(customer.locator(`#ticket-${ticketID}`)).toContainText("closed");
+    await expect(customer.locator(`#ticket-${ticketID} form[action="/support/customer-reply"]`)).toHaveCount(0);
+  } finally {
+    await Promise.all([customerContext.close(), supportContext.close()]);
   }
 });

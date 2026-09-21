@@ -48,7 +48,7 @@ func TestMockProductDetailUsesProductAndMakerData(t *testing.T) {
 			t.Errorf("product detail is missing %q", want)
 		}
 	}
-	for _, want := range []string{`id="detail-quantity"`, `hx-include="#detail-quantity"`, `hx-vals='{"intent":"buy"}'`} {
+	for _, want := range []string{`id="detail-quantity"`, `hx-include="#detail-quantity,#detail-variant"`, `hx-vals='{"intent":"buy"}'`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("product detail is missing quantity/buy-now contract %q", want)
 		}

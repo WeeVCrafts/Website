@@ -236,8 +236,9 @@ func TestPersistencePrimitivesAreReplaySafeAndAuditable(t *testing.T) {
 	}
 
 	outbox := NewOutboxRepository(pool)
+	eventType := "IntegrationProbe-" + suffix
 	published, err := outbox.Publish(ctx, ports.OutboxEventInput{
-		EventType:     "IntegrationProbe",
+		EventType:     eventType,
 		AggregateType: "Probe",
 		AggregateID:   suffix,
 		Payload:       json.RawMessage(`{"safe":true}`),
@@ -246,7 +247,7 @@ func TestPersistencePrimitivesAreReplaySafeAndAuditable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("publish outbox event: %v", err)
 	}
-	claimed, err := outbox.Claim(ctx, 10)
+	claimed, err := outbox.ClaimByType(ctx, eventType, 10)
 	if err != nil {
 		t.Fatalf("claim outbox event: %v", err)
 	}

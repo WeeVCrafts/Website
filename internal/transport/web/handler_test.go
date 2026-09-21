@@ -50,6 +50,16 @@ func (r *webSellerStaffRepository) AddStaff(_ context.Context, _ int64, email st
 	return member, nil
 }
 
+func (r *webSellerStaffRepository) UpdateStaff(_ context.Context, _ int64, staffUserID int64, permissions []string) (domaincommerce.SellerStaffMember, error) {
+	for i := range r.members {
+		if r.members[i].UserID == staffUserID {
+			r.members[i].Permissions = permissions
+			return r.members[i], nil
+		}
+	}
+	return domaincommerce.SellerStaffMember{}, ports.ErrNotFound
+}
+
 func (r *webSellerStaffRepository) RemoveStaff(_ context.Context, _ int64, staffUserID int64) error {
 	r.removedUserID = staffUserID
 	return nil
@@ -61,6 +71,10 @@ func (r *webCatalogManagementRepository) EnsureSeller(context.Context, int64, st
 
 func (r *webCatalogManagementRepository) GetSeller(context.Context, int64) (domaincommerce.Seller, error) {
 	return domaincommerce.Seller{ID: 1, Status: "active", DisplayName: "Test seller"}, nil
+}
+
+func (r *webCatalogManagementRepository) UpdateSellerProfile(context.Context, int64, string, string) error {
+	return nil
 }
 
 func (r *webCatalogManagementRepository) CreateDraft(context.Context, int64, domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
@@ -88,7 +102,36 @@ func (r *webCatalogManagementRepository) UpdateAdminProduct(context.Context, int
 	return r.product, nil
 }
 
+func (r *webCatalogManagementRepository) ListSellerProductVariants(context.Context, int64, int64) ([]domaincommerce.ProductVariant, error) {
+	return nil, nil
+}
+func (r *webCatalogManagementRepository) CreateSellerProductVariant(context.Context, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{}, nil
+}
+func (r *webCatalogManagementRepository) UpdateSellerProductVariant(context.Context, int64, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{}, nil
+}
+func (r *webCatalogManagementRepository) ArchiveSellerProductVariant(context.Context, int64, int64, int64, string) error {
+	return nil
+}
+func (r *webCatalogManagementRepository) ListAdminProductVariants(context.Context, int64, int64) ([]domaincommerce.ProductVariant, error) {
+	return nil, nil
+}
+func (r *webCatalogManagementRepository) CreateAdminProductVariant(context.Context, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{}, nil
+}
+func (r *webCatalogManagementRepository) UpdateAdminProductVariant(context.Context, int64, int64, int64, domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
+	return domaincommerce.ProductVariant{}, nil
+}
+func (r *webCatalogManagementRepository) ArchiveAdminProductVariant(context.Context, int64, int64, int64, string) error {
+	return nil
+}
+
 func (r *webCatalogManagementRepository) ArchiveSellerProduct(context.Context, int64, int64, string) error {
+	return nil
+}
+
+func (r *webCatalogManagementRepository) RestoreSellerProduct(context.Context, int64, int64, string) error {
 	return nil
 }
 
@@ -97,6 +140,14 @@ func (r *webCatalogManagementRepository) ArchiveAdminProduct(context.Context, in
 }
 
 func (r *webCatalogManagementRepository) SubmitProduct(context.Context, int64, int64) error {
+	return nil
+}
+
+func (r *webCatalogManagementRepository) SubmitAdminProduct(context.Context, int64, int64) error {
+	return nil
+}
+
+func (r *webCatalogManagementRepository) RestoreAdminProduct(context.Context, int64, int64, string) error {
 	return nil
 }
 

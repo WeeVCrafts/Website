@@ -73,6 +73,9 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit product</a>
 						<form method="post" action="/seller-admin/products/archive" onsubmit="return confirm('Archive this product? It will be hidden from customers while past orders remain available.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to archive" required/><button class="seller-button danger" type="submit">Archive</button></form>
 					}
+					if p.CanProductWrite && product.Status == "archived" {
+						<form method="post" action="/seller-admin/products/restore" onsubmit="return confirm('Restore this as a private draft? It must be resubmitted for review before customers can see it.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to restore" required/><button class="seller-button outline" type="submit">Restore draft</button></form>
+					}
 					if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
 						<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
 					}
@@ -110,7 +113,66 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } placeholder="Delivery to serviceable PIN codes in India"/></label>
 			<label class="seller-form-wide">Description<textarea name="description" required rows="5">{ form.Description }</textarea></label>
 			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save draft</button></div>
-		</form></section>
+		</form>
+		if form.ID != "" {
+			if form.Image != "" {
+				<img class="product-media-preview" src={ form.Image } alt={ "Current image for " + form.Name }/>
+			}
+			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
+				<legend>Product images and videos</legend><p>Upload JPEG, PNG, WebP, MP4 or WebM files up to 25 MB. Images update the main product photo; videos appear in the customer product gallery.</p>
+				<label>Choose an image or video<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button><p role="status" aria-live="polite" data-media-status></p>
+				<div class="product-media-assets">
+					if len(form.Media) == 0 {
+						<p>No uploaded media yet.</p>
+					}
+					for _, media := range form.Media {
+						<article class="product-media-asset">
+							if media.IsVideo {
+								<video controls preload="metadata" aria-label={ "Product video " + media.ID }><source src={ media.URL } type={ media.ContentType }/></video>
+							} else {
+								<img src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
+							}
+							<p>{ media.ContentType } · { media.Size } bytes</p><button class="seller-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
+						</article>
+					}
+				</div>
+			</fieldset>
+			<section class="seller-panel product-variant-manager">
+				<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><span><h2>Product variants</h2><p>Prices use paise. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></span></div></div>
+			for _, variant := range form.Variants {
+				<div class="product-variant-row">
+					<form class="seller-form-grid product-variant-edit" method="post" action="/seller-admin/products/variants/update">
+						<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+						<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+						<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+						<label>Price in paise<input name="price_cents" type="number" min="1" value={ variant.PriceCents } required disabled?={ variant.Status != "active" }/></label>
+						<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ variant.CompareAtCents } disabled?={ variant.Status != "active" }/></label>
+						<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
+						if variant.Status == "active" {
+							<button class="seller-button primary" type="submit">Save variant</button>
+						}
+					</form>
+					if variant.Status == "active" {
+						<form method="post" action="/seller-admin/products/variants/archive" onsubmit="return confirm('Archive this variant? Existing orders will remain intact.');">
+							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+							<label>Archive reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Why this option is being removed"/></label><button class="seller-button danger" type="submit">Archive variant</button>
+						</form>
+					}
+				</div>
+			}
+			<form class="seller-form-grid product-variant-create" method="post" action="/seller-admin/products/variants/create">
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/>
+				<h3>Add variant</h3>
+				<label>Variant name<input name="name" required maxlength="120" placeholder="Color, size or option"/></label>
+				<label>SKU<input name="sku" required maxlength="120"/></label>
+				<label>Price in paise<input name="price_cents" type="number" min="1" required/></label>
+				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1"/></label>
+				<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
+				<button class="seller-button primary" type="submit">Add variant</button>
+			</form>
+			</section>
+		}
+		</section>
 	}
 }
 
@@ -121,7 +183,9 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 				<div class="seller-product-row"><span class="seller-product-cell"><b>{ item.Name }</b></span><span>{ item.SKU }</span><span>{ item.Variant }</span><span>{ item.Available }</span><span>{ item.Reserved }</span><span>
 					if p.CanInventoryWrite {
 						<form class="seller-inline-form" method="post" action="/seller-admin/inventory/adjust"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/><label class="sr-only" for={ "stock-delta-" + item.VariantID }>Stock change for { item.Name }</label><input id={ "stock-delta-" + item.VariantID } type="number" name="delta" required placeholder="+/- qty"/><input name="reason" required minlength="3" maxlength="500" placeholder="Reason"/><button class="seller-button primary" type="submit">Save</button></form>
-					} else { <span>Read only</span> }
+					} else {
+						<span>Read only</span>
+					}
 				</span></div>
 			}
 			if len(p.Inventory) == 0 {
@@ -193,6 +257,32 @@ templ PortalUnavailable(p viewmodels.SellerAdminPage) {
 	}
 }
 
+templ PortalOnboarding(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller application</h2><p>Your seller profile and marketplace approval state.</p></div><span class="seller-status-pill">{ p.SellerStatus }</span></div>
+			if p.SellerStatus == "" {
+				<form class="seller-inline-form" method="post" action="/seller-admin/onboarding"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Maker or studio name<input name="display_name" minlength="2" maxlength="120" required/></label><button class="seller-button primary" type="submit">Submit application</button></form>
+			} else if p.SellerStatus == "pending" {
+				<p>Your seller application for <strong>{ p.SellerName }</strong> is awaiting marketplace review. Product creation and fulfilment tools unlock after approval.</p>
+			} else if p.SellerStatus == "active" {
+				<p><strong>{ p.SellerName }</strong> is approved. Your seller workspace is ready.</p><a class="seller-button primary" href="/seller-admin/products">Manage products</a>
+			} else if p.SellerStatus == "suspended" {
+				<p><strong>{ p.SellerName }</strong> is suspended. Contact support to review the decision.</p>
+			} else {
+				<p>This seller profile is closed and retained for order and audit records.</p>
+			}
+		</section>
+	}
+}
+
+templ PortalSettings(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Store profile</h2><p>Update the maker or studio name customers see on your seller profile.</p></div></div>
+			<form class="seller-inline-form" method="post" action="/seller-admin/settings"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Seller display name<input name="display_name" value={ p.SellerName } minlength="2" maxlength="120" required/></label><label>Reason for change<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label><button class="seller-button primary" type="submit">Save store profile</button></form>
+		</section>
+	}
+}
+
 templ PortalTeam(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller staff</h2><p>Staff accounts and their seller-scoped permissions.</p></div></div>
@@ -205,6 +295,14 @@ templ PortalTeam(p viewmodels.SellerAdminPage) {
 				<div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Name</span><span>Email</span><span>Status</span><span>Permissions</span><span>Action</span></div>
 					for _, member := range p.Team {
 						<div class="seller-product-row"><b>{ member.Name }</b><span>{ member.Email }</span><span>{ member.Status }</span><span>{ member.Permissions }</span><span><form method="post" action="/seller-admin/team/remove"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="user_id" value={ member.UserID }/><button class="seller-button outline" type="submit">Remove</button></form></span></div>
+						if p.CanTeam {
+							<form class="seller-inline-form" method="post" action="/seller-admin/team/update"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="user_id" value={ member.UserID }/><fieldset><legend>Update permissions for { member.Name }</legend>
+								<label><input type="checkbox" name="permissions" value="PRODUCT_READ" checked?={ member.ProductRead }/> View products</label><label><input type="checkbox" name="permissions" value="PRODUCT_WRITE" checked?={ member.ProductWrite }/> Edit products</label>
+								<label><input type="checkbox" name="permissions" value="INVENTORY_READ" checked?={ member.InventoryRead }/> View inventory</label><label><input type="checkbox" name="permissions" value="INVENTORY_WRITE" checked?={ member.InventoryWrite }/> Adjust inventory</label>
+								<label><input type="checkbox" name="permissions" value="ORDER_READ" checked?={ member.OrderRead }/> View orders</label><label><input type="checkbox" name="permissions" value="ORDER_FULFILL" checked?={ member.OrderFulfill }/> Fulfil orders</label>
+								<label><input type="checkbox" name="permissions" value="RETURN_READ" checked?={ member.ReturnRead }/> View returns</label><label><input type="checkbox" name="permissions" value="REPORT_READ" checked?={ member.ReportRead }/> View reports</label>
+							</fieldset><button class="seller-button primary" type="submit">Save permissions</button></form>
+						}
 					}
 				</div></div>
 			}

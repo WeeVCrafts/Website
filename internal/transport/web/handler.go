@@ -320,6 +320,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerPage(w, r)
 	case r.URL.Path == "/seller/onboard":
 		h.sellerOnboard(w, r)
+	case r.URL.Path == "/seller/settings/update":
+		h.sellerSettingsUpdate(w, r)
 	case r.URL.Path == "/seller/products/new":
 		h.sellerNewProduct(w, r)
 	case r.URL.Path == "/seller/products":
@@ -328,10 +330,20 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerSubmitProduct(w, r)
 	case r.URL.Path == "/seller/products/archive":
 		h.sellerArchiveProduct(w, r)
+	case r.URL.Path == "/seller/products/restore":
+		h.sellerRestoreProduct(w, r)
+	case r.URL.Path == "/seller/products/variants/create":
+		h.sellerProductVariantCreate(w, r)
+	case r.URL.Path == "/seller/products/variants/update":
+		h.sellerProductVariantUpdate(w, r)
+	case r.URL.Path == "/seller/products/variants/archive":
+		h.sellerProductVariantArchive(w, r)
 	case r.URL.Path == "/seller/team":
 		h.sellerTeam(w, r)
 	case r.URL.Path == "/seller/team/add":
 		h.sellerTeamAdd(w, r)
+	case r.URL.Path == "/seller/team/update":
+		h.sellerTeamUpdate(w, r)
 	case r.URL.Path == "/seller/team/remove":
 		h.sellerTeamRemove(w, r)
 	case r.URL.Path == "/seller/inventory":
@@ -358,6 +370,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.adminRoleUpdate(w, r)
 	case r.URL.Path == "/admin/users/create":
 		h.adminRoleUserCreate(w, r)
+	case r.URL.Path == "/admin/users/update":
+		h.adminRoleUserUpdate(w, r)
 	case r.URL.Path == "/admin/users/delete":
 		h.adminRoleUserDelete(w, r)
 	case r.URL.Path == "/admin/orders":
@@ -374,6 +388,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.supportCreate(w, r)
 	case r.URL.Path == "/support/status":
 		h.supportStatus(w, r)
+	case r.URL.Path == "/support/reply":
+		h.supportReply(w, r)
+	case r.URL.Path == "/support/customer-reply":
+		h.supportCustomerReply(w, r)
 	case r.URL.Path == "/seller/support":
 		h.supportPage(w, r)
 	case r.URL.Path == "/seller/support/create":
@@ -382,8 +400,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerEditProduct(w, r)
 	case r.URL.Path == "/admin/products":
 		h.adminProducts(w, r)
+	case r.URL.Path == "/admin/products/variants/create":
+		h.adminProductVariantCreate(w, r)
+	case r.URL.Path == "/admin/products/variants/update":
+		h.adminProductVariantUpdate(w, r)
+	case r.URL.Path == "/admin/products/variants/archive":
+		h.adminProductVariantArchive(w, r)
 	case r.URL.Path == "/admin/products/new" || strings.HasPrefix(r.URL.Path, "/admin/products/") && strings.HasSuffix(r.URL.Path, "/edit"):
 		h.adminProductSave(w, r)
+	case r.URL.Path == "/admin/products/submit":
+		h.adminProductSubmit(w, r)
+	case r.URL.Path == "/admin/products/restore":
+		h.adminProductRestore(w, r)
 	case r.URL.Path == "/admin/products/archive":
 		h.adminProductArchive(w, r)
 	case r.URL.Path == "/admin/products/review":

@@ -1,8 +1,10 @@
 package commerce
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"testing"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 
 type mediaLifecycleRepository struct {
 	record       domaincommerce.MediaRecord
+	ownerID      int64
 	finalized    bool
 	deleted      bool
 	finalizePath string
@@ -21,7 +24,10 @@ func (r *mediaLifecycleRepository) PrepareUpload(context.Context, int64, int64, 
 	return r.record.ID, nil
 }
 
-func (r *mediaLifecycleRepository) GetOwnedMedia(context.Context, int64, int64) (domaincommerce.MediaRecord, error) {
+func (r *mediaLifecycleRepository) GetOwnedMedia(_ context.Context, sellerOwnerID, _ int64) (domaincommerce.MediaRecord, error) {
+	if r.ownerID > 0 && sellerOwnerID != r.ownerID {
+		return domaincommerce.MediaRecord{}, ports.ErrForbidden
+	}
 	return r.record, nil
 }
 
@@ -66,6 +72,7 @@ func (r *mediaLifecycleRepository) ListExpiredMedia(context.Context, time.Time, 
 
 type mediaStorage struct {
 	info       ports.ObjectInfo
+	object     []byte
 	deleted    bool
 	inspected  int
 	downloaded int
@@ -83,6 +90,20 @@ func (s *mediaStorage) InspectObject(context.Context, string) (ports.ObjectInfo,
 func (s *mediaStorage) CreateDownloadURL(context.Context, string, time.Duration) (ports.DownloadURL, error) {
 	s.downloaded++
 	return ports.DownloadURL{URL: "https://storage.invalid/read"}, nil
+}
+
+func (s *mediaStorage) PutObject(_ context.Context, _ string, contentType string, byteSize int64, body io.Reader) error {
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	s.object = data
+	s.info = ports.ObjectInfo{ContentType: contentType, ByteSize: byteSize}
+	return nil
+}
+
+func (s *mediaStorage) OpenObject(context.Context, string) (io.ReadCloser, ports.ObjectInfo, error) {
+	return io.NopCloser(bytes.NewReader(s.object)), s.info, nil
 }
 
 func (s *mediaStorage) DeleteObject(context.Context, string) error {
@@ -111,6 +132,36 @@ func TestMediaFinalizeVerifiesStoredObjectBeforePublishing(t *testing.T) {
 	}
 	if storage.inspected != 1 {
 		t.Fatalf("ready replay re-inspected the object: %d", storage.inspected)
+	}
+}
+
+func TestMediaUploadUsesAuthenticatedPreparedRecordAndCanStreamPublicObject(t *testing.T) {
+	payload := []byte("verified image bytes")
+	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 70, ProductID: 9, ObjectKey: "products/9/image", ContentType: "image/webp", ByteSize: int64(len(payload)), Visibility: "public", Status: "pending"}, ownerID: 9}
+	storage := &mediaStorage{}
+	service := NewMediaService(storage, repository)
+	if err := service.UploadObject(context.Background(), 9, 70, "image/webp", int64(len(payload)), bytes.NewReader(payload)); err != nil {
+		t.Fatalf("upload prepared product image: %v", err)
+	}
+	if !bytes.Equal(storage.object, payload) || storage.info.ContentType != "image/webp" {
+		t.Fatalf("uploaded bytes or type differ: bytes=%q info=%+v", storage.object, storage.info)
+	}
+	if err := service.UploadObject(context.Background(), 10, 70, "image/webp", int64(len(payload)), bytes.NewReader(payload)); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("unrelated seller uploaded media: %v", err)
+	}
+	if err := service.UploadObject(context.Background(), 9, 70, "image/png", int64(len(payload)), bytes.NewReader(payload)); !errors.Is(err, ErrInvalidMedia) {
+		t.Fatalf("mismatched content type upload returned %v", err)
+	}
+
+	repository.record.Status = "ready"
+	body, info, err := service.OpenPublicMedia(context.Background(), 70)
+	if err != nil {
+		t.Fatalf("open public product image: %v", err)
+	}
+	defer body.Close()
+	readBack, err := io.ReadAll(body)
+	if err != nil || !bytes.Equal(readBack, payload) || info.ContentType != "image/webp" {
+		t.Fatalf("streamed public image mismatch: bytes=%q info=%+v err=%v", readBack, info, err)
 	}
 }
 
@@ -148,5 +199,18 @@ func TestMediaDeleteClaimsReadyMediaBeforeRemovingObject(t *testing.T) {
 	}
 	if !storage.deleted || !repository.deleted || repository.record.Status != "deleted" {
 		t.Fatalf("ready media was not deleted safely: storage=%v repository=%v status=%s", storage.deleted, repository.deleted, repository.record.Status)
+	}
+}
+
+func TestAllowedMediaTypeSupportsCustomerGalleryImagesAndVideos(t *testing.T) {
+	for _, contentType := range []string{"image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm", " VIDEO/WEBM "} {
+		if !allowedMediaType(contentType) {
+			t.Errorf("supported product media type %q was rejected", contentType)
+		}
+	}
+	for _, contentType := range []string{"image/svg+xml", "video/quicktime", "application/octet-stream", "text/html"} {
+		if allowedMediaType(contentType) {
+			t.Errorf("unsupported product media type %q was accepted", contentType)
+		}
 	}
 }

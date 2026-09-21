@@ -105,6 +105,31 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.render(w, r, pages.Empty(page))
 		return
 	}
+	if strings.HasPrefix(r.URL.Path, "/products/") {
+		variants, variantsErr := h.customerProductVariants(r, page.Product.Slug)
+		if variantsErr != nil {
+			http.Error(w, "Product variants are temporarily unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		page.Product.Variants = variants
+		if len(variants) > 0 {
+			first := variants[0]
+			page.Product.VariantID, _ = strconv.ParseInt(first.ID, 10, 64)
+			page.Product.PriceCents, _ = strconv.ParseInt(first.PriceCents, 10, 64)
+			page.Product.Price, page.Product.CompareAt, page.Product.Discount = first.Price, first.CompareAt, first.Discount
+			page.Product.CompareAtCents, _ = strconv.ParseInt(first.CompareAtCents, 10, 64)
+			page.Product.HasCompareAt = first.HasCompareAt
+			page.Product.Available, _ = strconv.Atoi(first.Available)
+			page.Product.InStock = first.InStock
+			page.Product.Badge = map[bool]string{true: "In stock", false: "Sold out"}[first.InStock]
+		}
+		media, mediaErr := productMediaViews(r.Context(), h.pool, page.Product.ID)
+		if mediaErr != nil {
+			http.Error(w, "Product media are temporarily unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		page.Product.Media = media
+	}
 	var component templ.Component
 	switch {
 	case r.URL.Path == "/":
@@ -288,7 +313,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
-		Authenticated: authenticated, CSRFToken: csrf, Now: time.Now(), Page: 1, Pages: 1,
+		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: 1, Pages: 1,
 	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
 		product, productErr := h.catalog.Get(r.Context(), strings.TrimPrefix(r.URL.Path, "/products/"))
@@ -321,6 +346,7 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 		return fmt.Errorf("customer account data is unavailable")
 	}
 	var createdAt time.Time
+	var err error
 	var roleSlugs []string
 	if err := h.pool.QueryRow(ctx, `SELECT display_name, email, created_at, COALESCE(ARRAY(SELECT role_slug FROM user_roles WHERE user_id = $1 ORDER BY role_slug), ARRAY[]::text[]) FROM users WHERE id = $1 AND status = 'active'`, userID).Scan(&page.UserName, &page.UserEmail, &createdAt, &roleSlugs); err != nil {
 		return err
@@ -331,6 +357,12 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	page.MemberSince = createdAt.Format("2 Jan 2006")
 	page.RoleLabel = customerPortalRoleLabel(roleSlugs)
 	page.PortalLabel = "Customer Account"
+	if page.Route == "/account/support" {
+		page.SupportTickets, err = h.customerSupportTickets(ctx, userID, page.UserName)
+		if err != nil {
+			return err
+		}
+	}
 	if err := h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM orders WHERE user_id = $1`, userID).Scan(&page.OrderCount); err != nil {
 		return err
 	}
@@ -416,6 +448,55 @@ func customerPortalRoleLabel(roles []string) string {
 		}
 	}
 	return "Account"
+}
+
+func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, userID int64, customerName string) ([]viewmodels.CustomerSupportTicket, error) {
+	rows, err := h.pool.Query(ctx, `SELECT t.id,t.ticket_number,t.subject,t.message,t.status,t.priority,t.created_at,COALESCE(o.order_number,'') FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id WHERE t.user_id=$1 ORDER BY t.created_at DESC,t.id DESC LIMIT 100`, userID)
+	if err != nil {
+		return nil, err
+	}
+	tickets := make([]viewmodels.CustomerSupportTicket, 0)
+	for rows.Next() {
+		var item viewmodels.CustomerSupportTicket
+		var created time.Time
+		if err := rows.Scan(&item.ID, &item.Number, &item.Subject, &item.InitialMessage, &item.Status, &item.Priority, &created, &item.OrderNumber); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		item.Created = created.Format("2 Jan 2006, 15:04")
+		item.Messages = append(item.Messages, viewmodels.CustomerSupportMessage{Author: customerName, Role: "You", Body: item.InitialMessage, Created: item.Created})
+		tickets = append(tickets, item)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	for index := range tickets {
+		messages, err := h.pool.Query(ctx, `SELECT u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, tickets[index].ID)
+		if err != nil {
+			return nil, err
+		}
+		for messages.Next() {
+			var author, authorRole, body string
+			var created time.Time
+			if err := messages.Scan(&author, &authorRole, &body, &created); err != nil {
+				messages.Close()
+				return nil, err
+			}
+			role := "You"
+			if authorRole == "support_agent" {
+				role = "Support agent"
+			}
+			tickets[index].Messages = append(tickets[index].Messages, viewmodels.CustomerSupportMessage{Author: author, Role: role, Body: body, Created: created.Format("2 Jan 2006, 15:04")})
+		}
+		if err := messages.Err(); err != nil {
+			messages.Close()
+			return nil, err
+		}
+		messages.Close()
+	}
+	return tickets, nil
 }
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
@@ -634,7 +715,25 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 	}
 	slug := strings.TrimPrefix(strings.TrimPrefix(r.URL.Path, "/ui/cart/"), "/ui/wishlist/")
 	var productID, variantID int64
-	if err := h.pool.QueryRow(r.Context(), `SELECT p.id,v.id FROM products p JOIN product_variants v ON v.product_id=p.id WHERE p.slug=$1 AND p.status='approved' ORDER BY v.id LIMIT 1`, slug).Scan(&productID, &variantID); err != nil {
+	requestedVariantID := int64(0)
+	if raw := r.FormValue("variant_id"); raw != "" {
+		requestedVariantID, _ = strconv.ParseInt(raw, 10, 64)
+		if requestedVariantID <= 0 {
+			http.Error(w, "invalid product option", http.StatusUnprocessableEntity)
+			return
+		}
+	}
+	variantQuery := `SELECT p.id,v.id FROM products p JOIN product_variants v ON v.product_id=p.id AND v.status='active' LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.slug=$1 AND p.status='approved' ORDER BY (COALESCE(i.available_quantity,0)>0) DESC,v.id LIMIT 1`
+	variantArgs := []any{slug}
+	if requestedVariantID > 0 {
+		variantQuery = `SELECT p.id,v.id FROM products p JOIN product_variants v ON v.product_id=p.id AND v.status='active' WHERE p.slug=$1 AND p.status='approved' AND v.id=$2`
+		variantArgs = append(variantArgs, requestedVariantID)
+	}
+	if err := h.pool.QueryRow(r.Context(), variantQuery, variantArgs...).Scan(&productID, &variantID); err != nil {
+		if requestedVariantID > 0 {
+			http.Error(w, "invalid product option", http.StatusUnprocessableEntity)
+			return
+		}
 		http.NotFound(w, r)
 		return
 	}
@@ -716,7 +815,14 @@ func (h *LiveStorefrontHandler) liveCart(ctx context.Context, userID int64, csrf
 		}
 		productView := liveProduct(product, csrf)
 		productView.Seller = h.sellerName(ctx, product.Slug)
-		items = append(items, viewmodels.CartItem{Product: productView, Quantity: item.Quantity, Delivery: "4 - 6 days"})
+		productView.VariantID = item.VariantID
+		productView.SKU = item.SKU
+		productView.PriceCents = item.UnitPriceCents
+		productView.Price = storefrontMoney(item.UnitPriceCents)
+		productView.Available = item.Available
+		productView.InStock = item.Available > 0
+		productView.Badge = map[bool]string{true: "In stock", false: "Sold out"}[productView.InStock]
+		items = append(items, viewmodels.CartItem{Product: productView, VariantName: item.VariantName, Quantity: item.Quantity, Delivery: "4 - 6 days"})
 	}
 	return items, cart.ItemCount
 }
@@ -949,6 +1055,41 @@ func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product 
 		rating = strconv.FormatFloat(product.Rating, 'f', 1, 64)
 	}
 	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Seller: product.Brand, BrandName: product.Brand, Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
+}
+
+func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug string) ([]viewmodels.ProductVariant, error) {
+	rows, err := h.pool.Query(r.Context(), `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
+		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
+		FROM products p JOIN product_variants pv ON pv.product_id=p.id AND pv.status='active'
+		LEFT JOIN inventory_stock i ON i.variant_id=pv.id
+		WHERE p.slug=$1 AND p.status='approved' ORDER BY (COALESCE(i.available_quantity,0)>0) DESC,pv.id`, slug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	variants := make([]viewmodels.ProductVariant, 0)
+	for rows.Next() {
+		var id, price, compareAt, available, reserved int64
+		var name, sku, status string
+		var hasCompare bool
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status); err != nil {
+			return nil, err
+		}
+		view := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
+			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status,
+			Price: storefrontMoney(price), InStock: available > 0, StockMessage: "Currently unavailable"}
+		if view.InStock {
+			view.StockMessage = "In stock"
+		}
+		view.HasCompareAt = hasCompare && compareAt > price
+		if view.HasCompareAt {
+			view.CompareAtCents = strconv.FormatInt(compareAt, 10)
+			view.CompareAt = storefrontMoney(compareAt)
+			view.Discount = fmt.Sprintf("%d%% OFF", (compareAt-price)*100/compareAt)
+		}
+		variants = append(variants, view)
+	}
+	return variants, rows.Err()
 }
 
 func liveTotals(items []viewmodels.CartItem) (string, string, string, string) {

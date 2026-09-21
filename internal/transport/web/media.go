@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,7 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 		h.notFound(w, r)
 		return
 	}
-	url, err := h.mediaService.ResolvePublicURL(r.Context(), id)
+	body, info, err := h.mediaService.OpenPublicMedia(r.Context(), id)
 	if errors.Is(err, ports.ErrNotFound) {
 		h.notFound(w, r)
 		return
@@ -27,6 +28,13 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 		h.renderError(w, http.StatusServiceUnavailable, "Media unavailable", "This product image is temporarily unavailable.")
 		return
 	}
-	w.Header().Set("Cache-Control", "public, max-age=60")
-	http.Redirect(w, r, url, http.StatusFound)
+	defer body.Close()
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("Content-Type", info.ContentType)
+	w.Header().Set("Content-Length", strconv.FormatInt(info.ByteSize, 10))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Disposition", "inline")
+	if _, err := io.Copy(w, body); err != nil {
+		return
+	}
 }

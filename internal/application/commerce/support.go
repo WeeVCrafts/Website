@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"unicode/utf8"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
@@ -85,6 +86,32 @@ func (s *SupportService) Update(ctx context.Context, actorID, ticketID int64, st
 		return ErrInvalidSupportTicket
 	}
 	return s.repository.UpdateSupportTicket(ctx, actorID, ticketID, status, note)
+}
+
+func (s *SupportService) Reply(ctx context.Context, actorID, ticketID int64, message string) error {
+	if !s.hasRole(ctx, actorID, domainidentity.RoleSupportAgent) {
+		return ports.ErrForbidden
+	}
+	message = strings.TrimSpace(message)
+	if ticketID <= 0 || utf8.RuneCountInString(message) == 0 || utf8.RuneCountInString(message) > 4000 {
+		return ErrInvalidSupportTicket
+	}
+	return s.repository.ReplySupportTicket(ctx, actorID, ticketID, message)
+}
+
+func (s *SupportService) ReplyCustomer(ctx context.Context, userID, ticketID int64, message string) error {
+	if !s.hasRole(ctx, userID, domainidentity.RoleCustomer) {
+		return ports.ErrForbidden
+	}
+	message = strings.TrimSpace(message)
+	if ticketID <= 0 || utf8.RuneCountInString(message) == 0 || utf8.RuneCountInString(message) > 4000 {
+		return ErrInvalidSupportTicket
+	}
+	repository, ok := s.repository.(ports.CustomerSupportReplyRepository)
+	if !ok {
+		return ports.ErrForbidden
+	}
+	return repository.ReplyCustomerSupportTicket(ctx, userID, ticketID, message)
 }
 
 func (s *SupportService) hasRole(ctx context.Context, userID int64, role domainidentity.Role) bool {

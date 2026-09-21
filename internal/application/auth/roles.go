@@ -26,6 +26,12 @@ type RoleAdminService struct {
 	repository ports.RoleAdministrationRepository
 	roles      ports.RoleChecker
 	hasher     ports.PasswordHasher
+	sessions   ports.SessionRevoker
+}
+
+func (s *RoleAdminService) WithSessionRevoker(revoker ports.SessionRevoker) *RoleAdminService {
+	s.sessions = revoker
+	return s
 }
 
 func NewRoleAdminService(repository ports.RoleAdministrationRepository, roles ports.RoleChecker, hashers ...ports.PasswordHasher) *RoleAdminService {
@@ -36,11 +42,16 @@ func NewRoleAdminService(repository ports.RoleAdministrationRepository, roles po
 	return service
 }
 
-func (s *RoleAdminService) List(ctx context.Context, actorID int64) ([]domainidentity.RoleAssignment, error) {
+func (s *RoleAdminService) List(ctx context.Context, actorID int64, query string) ([]domainidentity.RoleAssignment, error) {
 	if !s.allowed(ctx, actorID) {
 		return nil, ports.ErrForbidden
 	}
-	return s.repository.ListRoleAssignments(ctx, actorID)
+	query = strings.TrimSpace(query)
+	queryRunes := []rune(query)
+	if len(queryRunes) > 120 {
+		query = string(queryRunes[:120])
+	}
+	return s.repository.ListRoleAssignments(ctx, actorID, query)
 }
 
 func (s *RoleAdminService) Update(ctx context.Context, actorID, userID, sellerID int64, role string, grant bool, reason string) error {
@@ -55,7 +66,13 @@ func (s *RoleAdminService) Update(ctx context.Context, actorID, userID, sellerID
 	if actorID == userID && roleValue == domainidentity.RoleSuperAdmin {
 		return ports.ErrRoleState
 	}
-	return s.repository.UpdateRoleAssignment(ctx, actorID, userID, sellerID, roleValue, grant, reason)
+	if err := s.repository.UpdateRoleAssignment(ctx, actorID, userID, sellerID, roleValue, grant, reason); err != nil {
+		return err
+	}
+	if s.sessions != nil {
+		_ = s.sessions.RevokeAll(ctx, userID)
+	}
+	return nil
 }
 
 func (s *RoleAdminService) CreateUser(ctx context.Context, actorID int64, email, displayName, password, role string, sellerID int64, reason string) error {
@@ -89,7 +106,49 @@ func (s *RoleAdminService) DeleteUser(ctx context.Context, actorID, userID int64
 	if actorID <= 0 || userID <= 0 || actorID == userID || len(reason) < 4 || len(reason) > 1000 {
 		return ErrInvalidRoleAssignment
 	}
-	return s.repository.DeleteRoleUser(ctx, actorID, userID, reason)
+	if err := s.repository.DeleteRoleUser(ctx, actorID, userID, reason); err != nil {
+		return err
+	}
+	if s.sessions != nil {
+		_ = s.sessions.RevokeAll(ctx, userID)
+	}
+	return nil
+}
+
+func (s *RoleAdminService) UpdateUser(ctx context.Context, actorID, userID int64, email, displayName, status, password, reason string) error {
+	if !s.allowed(ctx, actorID) {
+		return ports.ErrForbidden
+	}
+	repository, ok := s.repository.(ports.UserProfileAdministrationRepository)
+	if !ok {
+		return ports.ErrForbidden
+	}
+	email = strings.ToLower(strings.TrimSpace(email))
+	displayName, reason = strings.TrimSpace(displayName), strings.TrimSpace(reason)
+	parsed, err := mail.ParseAddress(email)
+	if err != nil || parsed.Address != email || len(email) > 320 || len(displayName) < 2 || len(displayName) > 120 || userID <= 0 || (status != "active" && status != "suspended") || len(reason) < 4 || len(reason) > 1000 || (password != "" && (len(password) < 12 || len(password) > 1024)) {
+		return ErrInvalidRoleAssignment
+	}
+	if actorID == userID && status != "active" {
+		return ports.ErrRoleState
+	}
+	passwordHash := ""
+	if password != "" {
+		if s.hasher == nil {
+			return ErrInvalidRoleAssignment
+		}
+		passwordHash, err = s.hasher.Hash(password)
+		if err != nil {
+			return err
+		}
+	}
+	if err := repository.UpdateRoleUser(ctx, actorID, userID, email, displayName, status, passwordHash, reason); err != nil {
+		return err
+	}
+	if s.sessions != nil {
+		_ = s.sessions.RevokeAll(ctx, userID)
+	}
+	return nil
 }
 
 func (s *RoleAdminService) allowed(ctx context.Context, actorID int64) bool {

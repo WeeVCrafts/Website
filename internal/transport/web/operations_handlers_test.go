@@ -51,7 +51,7 @@ func (webAuditRepository) ListSellerAuditEntries(context.Context, int64, int) ([
 
 type webRoleAdminRepository struct{}
 
-func (webRoleAdminRepository) ListRoleAssignments(context.Context, int64) ([]domainidentity.RoleAssignment, error) {
+func (webRoleAdminRepository) ListRoleAssignments(context.Context, int64, string) ([]domainidentity.RoleAssignment, error) {
 	return []domainidentity.RoleAssignment{{ID: 8, Email: "staff@example.com", DisplayName: "Staff", Status: "active", Roles: []string{"customer"}}}, nil
 }
 func (webRoleAdminRepository) UpdateRoleAssignment(context.Context, int64, int64, int64, domainidentity.Role, bool, string) error {
@@ -109,6 +109,9 @@ func (webSupportRepository) ListSupportTickets(context.Context, int) ([]domainco
 	return []domaincommerce.SupportTicket{{TicketNumber: "SUP-9", Subject: "A real question", Message: "A real support request.", Status: "open", CustomerLabel: "Customer A***", CustomerEmailMasked: "a***@example.com"}}, nil
 }
 func (webSupportRepository) UpdateSupportTicket(context.Context, int64, int64, string, string) error {
+	return nil
+}
+func (webSupportRepository) ReplySupportTicket(context.Context, int64, int64, string) error {
 	return nil
 }
 

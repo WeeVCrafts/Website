@@ -26,6 +26,11 @@ func (r *sellerStaffRepository) AddStaff(_ context.Context, _ int64, email strin
 	return domaincommerce.SellerStaffMember{UserID: 7, Email: email, Permissions: permissions, Status: "active"}, nil
 }
 
+func (r *sellerStaffRepository) UpdateStaff(_ context.Context, _ int64, staffUserID int64, permissions []string) (domaincommerce.SellerStaffMember, error) {
+	r.addedPermissions = permissions
+	return domaincommerce.SellerStaffMember{UserID: staffUserID, Status: "active", Permissions: permissions}, nil
+}
+
 func (r *sellerStaffRepository) RemoveStaff(_ context.Context, _ int64, staffUserID int64) error {
 	r.removedUserID = staffUserID
 	return nil
@@ -57,6 +62,13 @@ func TestSellerStaffServiceScopesOwnerManagementAndNormalizesPermissions(t *test
 	}
 	if _, err := service.Add(context.Background(), 10, "staff@example.com", []string{"SECURITY_ADMIN"}); !errors.Is(err, ErrInvalidStaffPermissions) {
 		t.Fatalf("invalid staff permission returned %v", err)
+	}
+	updated, err := service.Update(context.Background(), 10, 7, []string{"PRODUCT_READ", "REPORT_READ", "PRODUCT_READ"})
+	if err != nil || updated.UserID != 7 || len(repository.addedPermissions) != 2 || repository.addedPermissions[0] != "PRODUCT_READ" || repository.addedPermissions[1] != "REPORT_READ" {
+		t.Fatalf("owner could not update staff permissions: member=%+v permissions=%v err=%v", updated, repository.addedPermissions, err)
+	}
+	if _, err := service.Update(context.Background(), 11, 7, []string{"PRODUCT_READ"}); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("seller staff changed team permissions: %v", err)
 	}
 	if err := service.Remove(context.Background(), 10, 10); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("owner removed itself: %v", err)

@@ -22,7 +22,7 @@ func NewRoleAdministrationRepository(pool *pgxpool.Pool) *RoleAdministrationRepo
 	return &RoleAdministrationRepository{pool: pool}
 }
 
-func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, actorID int64) ([]domainidentity.RoleAssignment, error) {
+func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, actorID int64, query string) ([]domainidentity.RoleAssignment, error) {
 	if err := r.requireSuperAdmin(ctx, actorID); err != nil {
 		return nil, err
 	}
@@ -31,9 +31,10 @@ func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, 
 		       COALESCE(array_agg(ur.role_slug ORDER BY ur.role_slug) FILTER (WHERE ur.role_slug IS NOT NULL), ARRAY[]::text[])
 		FROM users u
 		LEFT JOIN user_roles ur ON ur.user_id = u.id
+		WHERE ($1 = '' OR u.email ILIKE '%' || $1 || '%' OR u.display_name ILIKE '%' || $1 || '%' OR EXISTS (SELECT 1 FROM user_roles search_role WHERE search_role.user_id = u.id AND search_role.role_slug ILIKE '%' || $1 || '%'))
 		GROUP BY u.id, u.email, u.display_name, u.status
 		ORDER BY u.created_at DESC, u.id DESC
-		LIMIT 200`)
+		LIMIT 200`, query)
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +55,8 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 		return err
 	}
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if _, err := tx.Exec(transactionContext, `SELECT pg_advisory_xact_lock(5165538220001)`); err != nil {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
 			return err
-		}
-		var actorAllowed bool
-		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&actorAllowed); err != nil {
-			return err
-		}
-		if !actorAllowed {
-			return ports.ErrForbidden
 		}
 		var status string
 		if err := tx.QueryRow(transactionContext, `SELECT status FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&status); err != nil {
@@ -73,6 +67,11 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 		}
 		if status != "active" {
 			return ports.ErrRoleState
+		}
+		if role == domainidentity.RoleSellerOwner && grant {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'pending' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO NOTHING`, userID); err != nil {
+				return err
+			}
 		}
 		if role == domainidentity.RoleSellerStaff {
 			if sellerID <= 0 {
@@ -137,6 +136,9 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 				}
 			}
 		}
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET sessions_revoked_at=NOW() WHERE id=$1`, userID); err != nil {
+			return err
+		}
 		action := "identity.role_revoked"
 		if grant {
 			action = "identity.role_granted"
@@ -153,6 +155,9 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 		return 0, err
 	}
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
+			return err
+		}
 		if role == domainidentity.RoleSellerStaff {
 			var active bool
 			if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM sellers WHERE id=$1 AND status='active')`, sellerID).Scan(&active); err != nil {
@@ -180,6 +185,11 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 				return err
 			}
 		}
+		if role == domainidentity.RoleSellerOwner {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'pending')`, userID, displayName); err != nil {
+				return err
+			}
+		}
 		metadata, _ := json.Marshal(map[string]any{"email": email, "role": role, "seller_id": sellerID, "reason": reason})
 		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'identity.user_created', 'user', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(userID), ports.RequestID(transactionContext), metadata)
 		return err
@@ -195,15 +205,8 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 		return err
 	}
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if _, err := tx.Exec(transactionContext, `SELECT pg_advisory_xact_lock(5165538220001)`); err != nil {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
 			return err
-		}
-		var actorAllowed bool
-		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, actorID).Scan(&actorAllowed); err != nil {
-			return err
-		}
-		if !actorAllowed {
-			return ports.ErrForbidden
 		}
 		var email, status string
 		if err := tx.QueryRow(transactionContext, `SELECT email, status FROM users WHERE id=$1 FOR UPDATE`, userID).Scan(&email, &status); err != nil {
@@ -230,7 +233,7 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 			return err
 		}
 		rows.Close()
-		if status == "deleted" {
+		if actorID == userID || status == "deleted" {
 			return ports.ErrRoleState
 		}
 		for _, role := range roles {
@@ -244,7 +247,7 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 				}
 			}
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE users SET email=$2, display_name='Deleted account', status='deleted', updated_at=NOW() WHERE id=$1`, userID, fmt.Sprintf("deleted+%d@invalid.weevcrafts.local", userID)); err != nil {
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET email=$2, display_name='Deleted account', status='deleted', sessions_revoked_at=NOW(), updated_at=NOW() WHERE id=$1`, userID, fmt.Sprintf("deleted+%d@invalid.weevcrafts.local", userID)); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(transactionContext, `DELETE FROM user_roles WHERE user_id=$1`, userID); err != nil {
@@ -253,7 +256,41 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 		if _, err := tx.Exec(transactionContext, `UPDATE seller_users SET status='revoked',updated_at=NOW() WHERE user_id=$1 AND status='active'`, userID); err != nil {
 			return err
 		}
+		archivedRows, err := tx.Query(transactionContext, `UPDATE products SET status='archived',updated_at=NOW() WHERE seller_id IN (SELECT id FROM sellers WHERE owner_user_id=$1) AND status <> 'archived' RETURNING id`, userID)
+		if err != nil {
+			return err
+		}
+		archivedProductIDs := make([]int64, 0)
+		for archivedRows.Next() {
+			var productID int64
+			if err := archivedRows.Scan(&productID); err != nil {
+				archivedRows.Close()
+				return err
+			}
+			archivedProductIDs = append(archivedProductIDs, productID)
+		}
+		if err := archivedRows.Err(); err != nil {
+			archivedRows.Close()
+			return err
+		}
+		archivedRows.Close()
+		for _, productID := range archivedProductIDs {
+			productMetadata, _ := json.Marshal(map[string]string{"source": "account_deletion", "reason": reason})
+			if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'catalog.product_archived','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(productID), ports.RequestID(transactionContext), productMetadata); err != nil {
+				return err
+			}
+			productEvent, _ := json.Marshal(map[string]any{"product_id": productID, "status": "archived"})
+			if _, err := tx.Exec(transactionContext, `INSERT INTO outbox_events(event_type,aggregate_type,aggregate_id,payload) VALUES('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), productEvent); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE sellers SET status='closed',updated_at=NOW() WHERE owner_user_id=$1 AND status <> 'closed'`, userID); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(transactionContext, `UPDATE sessions_metadata SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE auth_action_tokens SET consumed_at=NOW() WHERE user_id=$1 AND consumed_at IS NULL`, userID); err != nil {
 			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"email": email, "roles": roles, "reason": reason})
@@ -269,7 +306,7 @@ func isUniqueViolation(err error) bool {
 
 func (r *RoleAdministrationRepository) requireSuperAdmin(ctx context.Context, actorID int64) error {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug = $2)`, actorID, string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles ur JOIN users u ON u.id=ur.user_id WHERE u.status='active' AND ur.user_id = $1 AND ur.role_slug = $2)`, actorID, string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {
