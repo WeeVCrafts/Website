@@ -23,13 +23,23 @@ func NewOrderService(repository ports.OrderRepository) *OrderService {
 	return &OrderService{repository: repository}
 }
 
-func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
-	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(idempotencyKey)) < 16 || len(idempotencyKey) > 200 {
-		return domaincommerce.Order{}, ports.ErrForbidden
-	}
+func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.AddressInput, error) {
+	address.RecipientName = strings.TrimSpace(address.RecipientName)
 	address.Phone = strings.TrimSpace(address.Phone)
-	if strings.TrimSpace(address.RecipientName) == "" || strings.TrimSpace(address.Line1) == "" || strings.TrimSpace(address.City) == "" || strings.TrimSpace(address.State) == "" {
-		return domaincommerce.Order{}, ErrInvalidAddress
+	address.Line1 = strings.TrimSpace(address.Line1)
+	address.Line2 = strings.TrimSpace(address.Line2)
+	address.City = strings.TrimSpace(address.City)
+	address.State = strings.TrimSpace(address.State)
+	address.PostalCode = strings.TrimSpace(address.PostalCode)
+	address.CountryCode = strings.ToUpper(strings.TrimSpace(address.CountryCode))
+	if address.CountryCode == "" {
+		address.CountryCode = "IN"
+	}
+	if address.RecipientName == "" || address.Line1 == "" || address.City == "" || address.State == "" {
+		return domaincommerce.AddressInput{}, ErrInvalidAddress
+	}
+	if len([]rune(address.RecipientName)) > 100 || len([]rune(address.Line1)) > 250 || len([]rune(address.Line2)) > 250 || len([]rune(address.City)) > 100 || len([]rune(address.State)) > 100 {
+		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
 	if address.Phone != "" {
 		digits := strings.Map(func(r rune) rune {
@@ -39,15 +49,23 @@ func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempot
 			return r
 		}, address.Phone)
 		if !phoneNumber.MatchString(address.Phone) || len(digits) < 7 || len(digits) > 15 {
-			return domaincommerce.Order{}, ErrInvalidAddress
+			return domaincommerce.AddressInput{}, ErrInvalidAddress
 		}
 	}
-	address.CountryCode = strings.ToUpper(strings.TrimSpace(address.CountryCode))
-	if address.CountryCode == "" {
-		address.CountryCode = "IN"
+	if address.CountryCode != "IN" || !indiaPostalCode.MatchString(address.PostalCode) {
+		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
-	if address.CountryCode != "IN" || !indiaPostalCode.MatchString(strings.TrimSpace(address.PostalCode)) {
-		return domaincommerce.Order{}, ErrInvalidAddress
+	return address, nil
+}
+
+func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
+	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(idempotencyKey)) < 16 || len(idempotencyKey) > 200 {
+		return domaincommerce.Order{}, ports.ErrForbidden
+	}
+	var err error
+	address, err = NormalizeAddressInput(address)
+	if err != nil {
+		return domaincommerce.Order{}, err
 	}
 	return s.repository.CreateOrder(ctx, userID, cartID, idempotencyKey, address)
 }

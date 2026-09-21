@@ -58,6 +58,14 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.updateProfile(w, r)
 		return
 	}
+	if r.URL.Path == "/account/addresses" && r.Method == http.MethodPost {
+		h.saveAddress(w, r)
+		return
+	}
+	if r.URL.Path == "/account/addresses/delete" && r.Method == http.MethodPost {
+		h.deleteAddress(w, r)
+		return
+	}
 	if r.URL.Path == "/ui/search-suggest" && r.Method == http.MethodGet {
 		h.searchSuggestions(w, r)
 		return
@@ -242,6 +250,106 @@ func (h *LiveStorefrontHandler) updateProfile(w http.ResponseWriter, r *http.Req
 	http.Redirect(w, r, "/account/profile?notice=Profile+updated", http.StatusSeeOther)
 }
 
+func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.customerMutationActor(w, r)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid address form", http.StatusBadRequest)
+		return
+	}
+	address, err := applicationcommerce.NormalizeAddressInput(domaincommerce.AddressInput{
+		RecipientName: r.Form.Get("recipient_name"), Phone: r.Form.Get("phone"),
+		Line1: r.Form.Get("line1"), Line2: r.Form.Get("line2"), City: r.Form.Get("city"),
+		State: r.Form.Get("state"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
+	})
+	if err != nil {
+		http.Error(w, "shipping address is invalid", http.StatusUnprocessableEntity)
+		return
+	}
+	addressIDText := strings.TrimSpace(r.Form.Get("address_id"))
+	if addressIDText == "" {
+		_, err = h.pool.Exec(r.Context(), `
+			INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode)
+	} else {
+		var addressID int64
+		addressID, err = strconv.ParseInt(addressIDText, 10, 64)
+		if err != nil || addressID <= 0 {
+			http.Error(w, "invalid address id", http.StatusBadRequest)
+			return
+		}
+		result, updateErr := h.pool.Exec(r.Context(), `
+			UPDATE addresses
+			SET recipient_name = $1, phone = $2, line1 = $3, line2 = $4, city = $5, state = $6, postal_code = $7, country_code = $8, updated_at = NOW()
+			WHERE id = $9 AND user_id = $10`,
+			address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode, addressID, userID)
+		err = updateErr
+		if err == nil && result.RowsAffected() == 0 {
+			http.NotFound(w, r)
+			return
+		}
+	}
+	if err != nil {
+		http.Error(w, "address could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	http.Redirect(w, r, "/account/addresses?notice=Address+saved", http.StatusSeeOther)
+}
+
+func (h *LiveStorefrontHandler) deleteAddress(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.customerMutationActor(w, r)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid address form", http.StatusBadRequest)
+		return
+	}
+	addressID, err := strconv.ParseInt(strings.TrimSpace(r.Form.Get("address_id")), 10, 64)
+	if err != nil || addressID <= 0 {
+		http.Error(w, "invalid address id", http.StatusBadRequest)
+		return
+	}
+	result, err := h.pool.Exec(r.Context(), `DELETE FROM addresses WHERE id = $1 AND user_id = $2`, addressID, userID)
+	if err != nil {
+		http.Error(w, "address could not be deleted", http.StatusServiceUnavailable)
+		return
+	}
+	if result.RowsAffected() == 0 {
+		http.NotFound(w, r)
+		return
+	}
+	http.Redirect(w, r, "/account/addresses?notice=Address+deleted", http.StatusSeeOther)
+}
+
+func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	userID, csrf, authenticated := h.session(r)
+	if !authenticated {
+		http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusSeeOther)
+		return 0, false
+	}
+	if !h.customerRole(userID, r) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return 0, false
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return 0, false
+	}
+	providedToken := r.Header.Get("X-CSRF-Token")
+	if providedToken == "" {
+		providedToken = r.Form.Get("csrf_token")
+	}
+	if subtle.ConstantTimeCompare([]byte(csrf), []byte(providedToken)) != 1 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return 0, false
+	}
+	return userID, true
+}
+
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
 	return path == "/" || path == "/categories" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || path == "/account" || strings.HasPrefix(path, "/account/") || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
 }
@@ -338,7 +446,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 }
 
 func needsAccountData(path string) bool {
-	return path == "/account" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || path == "/payments" || strings.HasPrefix(path, "/account/")
+	return path == "/account" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || path == "/payments" || strings.HasPrefix(path, "/account/")
 }
 
 func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
@@ -366,21 +474,30 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	if err := h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM orders WHERE user_id = $1`, userID).Scan(&page.OrderCount); err != nil {
 		return err
 	}
-	addresses, err := h.pool.Query(ctx, `SELECT recipient_name, concat_ws(', ', line1, NULLIF(line2, ''), city, state, postal_code, country_code) FROM addresses WHERE user_id = $1 ORDER BY id DESC LIMIT 1`, userID)
+	addresses, err := h.pool.Query(ctx, `SELECT id, recipient_name, phone, line1, line2, city, state, postal_code, country_code FROM addresses WHERE user_id = $1 ORDER BY id DESC`, userID)
 	if err != nil {
 		return err
 	}
-	if addresses.Next() {
-		if err := addresses.Scan(&page.Address.Name, &page.Address.Lines); err != nil {
+	page.Addresses = make([]viewmodels.Address, 0)
+	for addresses.Next() {
+		var address viewmodels.Address
+		var addressID int64
+		if err := addresses.Scan(&addressID, &address.Name, &address.Phone, &address.Line1, &address.Line2, &address.City, &address.State, &address.PostalCode, &address.CountryCode); err != nil {
 			addresses.Close()
 			return err
 		}
+		address.ID = strconv.FormatInt(addressID, 10)
+		address.Lines = strings.Join(nonEmptyAddressLines(address), ", ")
+		page.Addresses = append(page.Addresses, address)
 	}
 	if err := addresses.Err(); err != nil {
 		addresses.Close()
 		return err
 	}
 	addresses.Close()
+	if len(page.Addresses) > 0 {
+		page.Address = page.Addresses[0]
+	}
 
 	if h.orders != nil && (page.Route == "/account" || page.Route == "/orders" || strings.HasPrefix(page.Route, "/orders/") || page.Route == "/tracking") {
 		orders, err := h.orders.List(ctx, userID, 20)
@@ -439,6 +556,17 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 		}
 	}
 	return nil
+}
+
+func nonEmptyAddressLines(address viewmodels.Address) []string {
+	parts := []string{address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode}
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part = strings.TrimSpace(part); part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
 
 func customerPortalRoleLabel(roles []string) string {

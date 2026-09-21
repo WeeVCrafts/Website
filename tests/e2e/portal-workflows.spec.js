@@ -108,6 +108,123 @@ test("multi-role login and workspace switcher expose only assigned roles", async
   }
 });
 
+test("customer address create, edit and delete persist with field validation", async ({ browser, page }) => {
+  test.skip(!localMutationTarget, "Customer address mutations are restricted to the local test deployment.");
+  const suffix = Date.now().toString();
+  const recipient = `QA Address ${suffix}`;
+  await signIn(page, "demo.customer03@weevcrafts.local", "/account");
+  await page.goto("/account/addresses");
+
+  const createForm = page.locator("form[data-address-create]");
+  const csrfToken = await createForm.locator('input[name="csrf_token"]').inputValue();
+  const invalidAddress = await page.request.post("/account/addresses", { form: {
+    csrf_token: csrfToken, recipient_name: recipient, phone: "9876543210", line1: "12 QA Road", line2: "",
+    city: "Bengaluru", state: "Karnataka", postal_code: "12", country_code: "IN",
+  } });
+  expect(invalidAddress.status()).toBe(422);
+
+  await createForm.locator('input[name="recipient_name"]').fill(recipient);
+  await createForm.locator('input[name="phone"]').fill("+91 98765 43210");
+  await createForm.locator('input[name="line1"]').fill("12 QA Road");
+  await createForm.locator('input[name="line2"]').fill("Near QA Park");
+  await createForm.locator('input[name="city"]').fill("Bengaluru");
+  await createForm.locator('input[name="state"]').fill("Karnataka");
+  await createForm.locator('input[name="postal_code"]').fill("560034");
+  const createResponse = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/account/addresses");
+  await createForm.getByRole("button", { name: "Add address" }).click();
+  expect((await createResponse).status()).toBe(303);
+
+  let addressCard = page.locator(".saved-address").filter({ hasText: recipient });
+  await expect(addressCard).toHaveCount(1);
+  let addressID = await addressCard.getAttribute("data-address-card");
+  let editForm = addressCard.locator("form[data-address-edit]");
+  await expect(editForm.locator('input[name="phone"]')).toHaveValue("+91 98765 43210");
+  await expect(editForm.locator('input[name="country_code"]')).toHaveValue("IN");
+
+  const otherContext = await browser.newContext();
+  const otherCustomer = await otherContext.newPage();
+  await signIn(otherCustomer, "demo.customer04@weevcrafts.local", "/account");
+  await otherCustomer.goto("/account/addresses");
+  const otherForm = otherCustomer.locator("form[data-address-create]");
+  const otherCSRF = await otherForm.locator('input[name="csrf_token"]').inputValue();
+  const foreignUpdate = await otherCustomer.request.post("/account/addresses", { form: {
+    csrf_token: otherCSRF, address_id: addressID, recipient_name: recipient, phone: "+91 98765 43210",
+    line1: "12 QA Road", line2: "Near QA Park", city: "Bengaluru", state: "Karnataka", postal_code: "560034", country_code: "IN",
+  } });
+  expect(foreignUpdate.status()).toBe(404);
+  await expect(otherCustomer.locator(`.saved-address[data-address-card="${addressID}"]`)).toHaveCount(0);
+  await otherContext.close();
+
+  await editForm.locator('input[name="line2"]').fill("Opposite QA Library");
+  const updateResponse = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/account/addresses");
+  await editForm.getByRole("button", { name: "Save address" }).click();
+  expect((await updateResponse).status()).toBe(303);
+  addressCard = page.locator(`.saved-address[data-address-card="${addressID}"]`);
+  editForm = addressCard.locator("form[data-address-edit]");
+  await expect(editForm.locator('input[name="line2"]')).toHaveValue("Opposite QA Library");
+
+  for (const width of [360, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const dimensions = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+    expect(dimensions.document, `address page document overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+    expect(dimensions.body, `address page body overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+  }
+
+  const deleteResponse = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/account/addresses/delete");
+  page.once("dialog", dialog => dialog.accept());
+  await addressCard.locator("form[data-address-delete]").getByRole("button", { name: "Delete address" }).click();
+  expect((await deleteResponse).status()).toBe(303);
+  await expect(page.locator(`.saved-address[data-address-card="${addressID}"]`)).toHaveCount(0);
+});
+
+test("seller owner profile edits persist while seller staff remain blocked", async ({ browser }) => {
+  test.skip(!localMutationTarget, "Seller profile mutations are restricted to the local test deployment.");
+  const suffix = Date.now().toString();
+  const ownerContext = await browser.newContext();
+  const staffContext = await browser.newContext();
+  const owner = await ownerContext.newPage();
+  const staff = await staffContext.newPage();
+  let originalName = "";
+  let restored = false;
+
+  const saveProfile = async (name, reason) => {
+    await owner.goto("/seller-admin/settings");
+    const form = owner.locator('form[action="/seller-admin/settings"]');
+    await form.locator('input[name="display_name"]').fill(name);
+    await form.locator('input[name="reason"]').fill(reason);
+    const response = owner.waitForResponse(item => item.request().method() === "POST" && new URL(item.url()).pathname === "/seller-admin/settings");
+    await form.getByRole("button", { name: "Save store profile" }).click();
+    expect((await response).status()).toBe(303);
+  };
+
+  try {
+    await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
+    await owner.goto("/seller-admin/settings");
+    const editForm = owner.locator('form[action="/seller-admin/settings"]');
+    originalName = await editForm.locator('input[name="display_name"]').inputValue();
+    const updatedName = `${originalName} QA ${suffix}`;
+    await saveProfile(updatedName, "Local end-to-end seller profile update verification");
+    await owner.goto("/seller-admin/settings");
+    await expect(owner.locator('form[action="/seller-admin/settings"] input[name="display_name"]')).toHaveValue(updatedName);
+
+    await signIn(staff, "demo.staff01@weevcrafts.local", "/seller-admin");
+    const staffSettings = await staff.request.get("/seller-admin/settings", { maxRedirects: 0 });
+    expect(staffSettings.status()).toBe(403);
+    const staffMutation = await staff.request.post("/seller-admin/settings", { form: { display_name: "Unauthorized QA Edit", reason: "Should be rejected" } });
+    expect(staffMutation.status()).toBe(403);
+
+    await saveProfile(originalName, "Restore seller profile after local verification");
+    restored = true;
+  } finally {
+    if (originalName && !restored) {
+      try {
+        await saveProfile(originalName, "Restore seller profile after interrupted local verification");
+      } catch {}
+    }
+    await Promise.all([ownerContext.close(), staffContext.close()]);
+  }
+});
+
 test("super admin logout and user lifecycle work end to end", async ({ browser }) => {
   test.skip(!localMutationTarget, "User management mutations are restricted to the local test deployment.");
   test.setTimeout(180_000);
@@ -429,6 +546,19 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await reviewRow.getByRole("button", { name: "Approve" }).click();
 
     await signIn(customer, "demo.customer08@weevcrafts.local", "/account");
+    await customer.goto("/account/addresses");
+    const shippingRecipient = `Browser QA Customer ${suffix}`;
+    const savedAddressForm = customer.locator("form[data-address-create]");
+    await savedAddressForm.locator('input[name="recipient_name"]').fill(shippingRecipient);
+    await savedAddressForm.locator('input[name="phone"]').fill("9876543210");
+    await savedAddressForm.locator('input[name="line1"]').fill("12 QA Test Street");
+    await savedAddressForm.locator('input[name="line2"]').fill(`QA-${suffix}`);
+    await savedAddressForm.locator('input[name="city"]').fill("Bengaluru");
+    await savedAddressForm.locator('input[name="state"]').fill("Karnataka");
+    await savedAddressForm.locator('input[name="postal_code"]').fill("560034");
+    const savedAddressResponse = customer.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/account/addresses");
+    await savedAddressForm.getByRole("button", { name: "Add address" }).click();
+    expect((await savedAddressResponse).status()).toBe(303);
     await customer.goto("/cart");
     const removeCartItems = customer.getByRole("button", { name: "Remove", exact: true });
     for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -465,12 +595,13 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator("body")).toContainText(productName);
     await expect(customer.locator("body")).toContainText("Indigo edition");
     await customer.getByRole("link", { name: /Proceed to checkout/ }).click();
-    await customer.getByLabel("Recipient name").fill("Browser QA Customer");
-    await customer.getByLabel("Phone number").fill("9876543210");
-    await customer.getByLabel("Address line").fill("12 QA Test Street");
-    await customer.getByLabel("City").fill("Bengaluru");
-    await customer.getByLabel("State / region").fill("Karnataka");
-    await customer.getByLabel("Postal code").fill("560034");
+    await expect(customer.getByLabel("Recipient name")).toHaveValue(shippingRecipient);
+    await expect(customer.getByLabel("Phone number")).toHaveValue("9876543210");
+    await expect(customer.getByLabel("Address line")).toHaveValue("12 QA Test Street");
+    await expect(customer.getByLabel("Apartment / landmark (optional)")).toHaveValue(`QA-${suffix}`);
+    await expect(customer.getByLabel("City")).toHaveValue("Bengaluru");
+    await expect(customer.getByLabel("State / region")).toHaveValue("Karnataka");
+    await expect(customer.getByLabel("Postal code")).toHaveValue("560034");
     const country = customer.locator('#checkout-address-form input[name="country_code"]');
     await expect(country).toHaveValue("IN");
     await expect(customer.getByLabel("Delivery country")).toBeDisabled();
@@ -525,6 +656,14 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.goto("/returns");
     await expect(customer.locator("body")).toContainText("Item received");
     await expect(customer.locator("body")).toContainText(orderNumber);
+
+    await customer.goto("/account/addresses");
+    const savedShippingAddress = customer.locator(".saved-address").filter({ hasText: shippingRecipient });
+    await expect(savedShippingAddress).toHaveCount(1);
+    await expect(savedShippingAddress.locator('input[name="phone"]')).toHaveValue("9876543210");
+    customer.once("dialog", dialog => dialog.accept());
+    await savedShippingAddress.locator("form[data-address-delete]").getByRole("button", { name: "Delete address" }).click();
+    await expect(customer.locator(".saved-address").filter({ hasText: shippingRecipient })).toHaveCount(0);
 
     await seller.goto(productEditURL);
     const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator("video source[type='video/mp4']") });

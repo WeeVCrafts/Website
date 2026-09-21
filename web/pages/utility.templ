@@ -309,12 +309,30 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR DETAILS</p><h2>Profile information</h2></div><span class="material-symbols-outlined" aria-hidden="true">person</span></div><form class="utility-form two-column" action="/account/profile" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Full name<input name="name" value={ p.UserName } minlength="2" maxlength="100" required/></label><label>Email address<input name="email" type="email" value={ p.UserEmail } disabled/></label><label>Member since<input value={ p.MemberSince } disabled/></label><button class="primary-button" type="submit">Save changes</button></form><p class="muted">Email changes require verification. Contact support if you need to update your email address.</p></section>
       } else if p.Route == "/account/addresses" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div>
-          if p.Address.Lines != "" {
-            <article class="address"><b>{ p.Address.Name }</b><p>{ p.Address.Lines }</p></article>
+          if len(p.Addresses) > 0 {
+            <div class="saved-address-list">
+              for _, address := range p.Addresses {
+                <article class="saved-address" data-address-card={ address.ID }>
+                  <h3>{ address.Name }</h3>
+                  <form class="utility-form two-column" action="/account/addresses" method="post" data-address-edit={ address.ID }>
+                    @AddressFormFields(address, p.CSRFToken)
+                    <button class="primary-button" type="submit">Save address</button>
+                  </form>
+                  <form action="/account/addresses/delete" method="post" data-address-delete={ address.ID } onsubmit="return confirm('Delete this saved address?');">
+                    <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="address_id" value={ address.ID }/>
+                    <button class="outline-button" type="submit">Delete address</button>
+                  </form>
+                </article>
+              }
+            </div>
           } else {
-            <p>No saved address yet. Add one during checkout and it will be available for your next order.</p>
+            <p>No saved addresses yet. Add an address here or during checkout.</p>
           }
-          <a class="outline-button" href="/checkout"><span class="material-symbols-outlined" aria-hidden="true">add</span>Continue to checkout</a>
+          <h3>Add an address</h3>
+          <form class="utility-form two-column" action="/account/addresses" method="post" data-address-create>
+            @AddressFormFields(viewmodels.Address{}, p.CSRFToken)
+            <button class="primary-button" type="submit">Add address</button>
+          </form>
         </section>
       } else if p.Route == "/account/security" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Choose a new password using account recovery.</small></span><a href="/forgot-password">Reset</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
@@ -331,6 +349,21 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       }
     </div></section>
   }
+}
+
+templ AddressFormFields(address viewmodels.Address, csrfToken string) {
+  <input type="hidden" name="csrf_token" value={ csrfToken }/>
+  if address.ID != "" {
+    <input type="hidden" name="address_id" value={ address.ID }/>
+  }
+  <label>Recipient name<input name="recipient_name" value={ address.Name } autocomplete="name" maxlength="100" required/></label>
+  <label>Phone number<input name="phone" value={ address.Phone } type="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" required/></label>
+  <label>Address line<input name="line1" value={ address.Line1 } autocomplete="address-line1" maxlength="250" required/></label>
+  <label>Apartment / landmark<input name="line2" value={ address.Line2 } autocomplete="address-line2" maxlength="250"/></label>
+  <label>City<input name="city" value={ address.City } autocomplete="address-level2" maxlength="100" required/></label>
+  <label>State / region<input name="state" value={ address.State } autocomplete="address-level1" maxlength="100" required/></label>
+  <label>Postal code<input name="postal_code" value={ address.PostalCode } autocomplete="postal-code" inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" required/></label>
+  <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
 }
 
 templ CustomerSupportPanel(p viewmodels.CustomerPage) {

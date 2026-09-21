@@ -814,7 +814,20 @@ templ Checkout(p viewmodels.CustomerPage) {
     </section>
     <section class="container checkout-layout">
       <div class="checkout-main">
-        <section class="checkout-card" x-show="checkoutStep === 1"><header><h2><span>1</span> Delivery address</h2></header><form id="checkout-address-form" class="utility-form" data-backend-address><label>Recipient name<input name="recipient_name" autocomplete="name" required minlength="2"/></label><label>Phone number<input name="phone" type="tel" autocomplete="tel" required minlength="7" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter a valid phone number"/></label><label>Address line<input name="line1" autocomplete="address-line1" required minlength="4"/></label><label>Apartment / landmark (optional)<input name="line2" autocomplete="address-line2"/></label><label>City<input name="city" autocomplete="address-level2" required/></label><label>State / region<input name="region" autocomplete="address-level1" required/></label><label>Postal code<input name="postal_code" autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label><label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label><button class="primary-button full" type="button" @click="checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></form></section>
+        <section class="checkout-card" x-show="checkoutStep === 1">
+          <header><h2><span>1</span> Delivery address</h2></header>
+          <form id="checkout-address-form" class="utility-form" data-backend-address>
+            <label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
+            <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" autocomplete="tel" required minlength="7" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter a valid phone number"/></label>
+            <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
+            <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
+            <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
+            <label>State / region<input name="region" value={ p.Address.State } autocomplete="address-level1" required/></label>
+            <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
+            <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
+            <button class="primary-button full" type="button" @click="checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          </form>
+        </section>
         <section class="checkout-card" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ p.CartCount } items from { len(p.Cart) } sellers</span></header>
         @CheckoutItems(p.Cart)<button class="primary-button full" type="button" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
         <section class="checkout-card" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>

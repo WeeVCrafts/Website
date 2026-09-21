@@ -76,7 +76,7 @@ type Return struct {
 }
 
 type Address struct {
-	Name, Lines, Phone string
+	ID, Name, Phone, Line1, Line2, City, State, PostalCode, CountryCode, Lines string
 }
 
 type CustomerPage struct {
@@ -105,6 +105,7 @@ type CustomerPage struct {
 	Returns                                         []Return
 	SupportTickets                                  []CustomerSupportTicket
 	Address                                         Address
+	Addresses                                       []Address
 	CartCount, WishlistCount                        int
 	Page, Pages                                     int
 	CheckoutStep                                    int
