@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -49,15 +50,27 @@ func (s *SearchService) SearchWithOptions(ctx context.Context, query, category, 
 }
 
 func (s *SearchService) SearchWithOptionsAndFacets(ctx context.Context, query, category, sort string, limit, offset int) ([]domaincatalog.Product, int, []ports.SearchFacet, error) {
+	return s.SearchWithFilters(ctx, ports.ProductSearchOptions{Query: query, CategorySlug: category, Sort: sort, Limit: limit, Offset: offset})
+}
+
+func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.ProductSearchOptions) ([]domaincatalog.Product, int, []ports.SearchFacet, error) {
 	started := time.Now()
-	if limit <= 0 || limit > 48 {
-		limit = 24
+	if options.Limit <= 0 || options.Limit > 48 {
+		options.Limit = 24
 	}
-	if offset < 0 || offset > 10000 {
-		offset = 0
+	if options.Offset < 0 || options.Offset > 10000 {
+		options.Offset = 0
 	}
-	sort = normalizeSearchSort(sort)
-	cacheKey := fmt.Sprintf("catalog:search:%s:%s:%s:%d:%d", query, category, sort, limit, offset)
+	options.Query = strings.TrimSpace(options.Query)
+	options.Sort = normalizeSearchSort(options.Sort)
+	options.PriceRange = normalizePriceRange(options.PriceRange)
+	if options.CategorySlug != "" {
+		options.CategorySlug = normalizeSlug(options.CategorySlug)
+	}
+	options.CategorySlugs = normalizeSlugs(options.CategorySlugs)
+	options.BrandSlugs = normalizeSlugs(options.BrandSlugs)
+	cacheKeyBytes, _ := json.Marshal(options)
+	cacheKey := fmt.Sprintf("catalog:search:%x", sha256.Sum256(cacheKeyBytes))
 	if s.cache != nil {
 		if value, err := s.cache.Get(ctx, cacheKey); err == nil {
 			var cached searchResult
@@ -76,22 +89,26 @@ func (s *SearchService) SearchWithOptionsAndFacets(ctx context.Context, query, c
 			return nil, 0, nil, ctx.Err()
 		}
 	}
-	result, err := s.searchBackend(ctx, query, category, sort, limit, offset, cacheKey)
+	result, err := s.searchBackend(ctx, options, cacheKey)
 	s.flight.finish(cacheKey, call, result, err)
 	s.observe(ctx, ports.SearchObservation{Backend: result.Backend, Error: err != nil, Duration: time.Since(started), ResultCount: len(result.Products)})
 	return result.Products, result.Total, result.Facets, err
 }
 
-func (s *SearchService) searchBackend(ctx context.Context, query, category, sort string, limit, offset int, cacheKey string) (searchResult, error) {
-	if s.engine != nil {
-		indexed, engineErr := s.engine.Search(ctx, ports.SearchRequest{Query: query, CategorySlug: category, Sort: sort, Limit: limit, Offset: offset})
+func (s *SearchService) searchBackend(ctx context.Context, options ports.ProductSearchOptions, cacheKey string) (searchResult, error) {
+	if s.engine != nil && !requiresDatabaseSearch(options) {
+		indexed, engineErr := s.engine.Search(ctx, ports.SearchRequest{
+			Query: options.Query, CategorySlug: options.CategorySlug, CategorySlugs: options.CategorySlugs,
+			BrandSlugs: options.BrandSlugs, Sort: options.Sort, PriceRange: options.PriceRange,
+			InStock: options.InStock, OffersOnly: options.OffersOnly, Limit: options.Limit, Offset: options.Offset,
+		})
 		if engineErr == nil {
 			indexed.ProductSlugs = normalizeSearchSlugs(indexed.ProductSlugs)
 			products, hydrateErr := s.repository.SearchBySlugs(ctx, indexed.ProductSlugs)
 			if hydrateErr == nil {
 				facets := indexed.Facets
 				if len(facets) == 0 {
-					facets = s.searchFacets(ctx, query, category, sort, limit, offset)
+					facets = s.searchFacets(ctx, options)
 				}
 				result := searchResult{Products: products, Total: indexed.Total, Facets: facets, Backend: "index"}
 				if s.cache != nil {
@@ -107,14 +124,14 @@ func (s *SearchService) searchBackend(ctx context.Context, query, category, sort
 	var total int
 	var err error
 	if advanced, ok := s.repository.(ports.ProductSearchOptionsRepository); ok {
-		products, total, err = advanced.SearchWithOptions(ctx, ports.ProductSearchOptions{Query: query, CategorySlug: category, Sort: sort, Limit: limit, Offset: offset})
+		products, total, err = advanced.SearchWithOptions(ctx, options)
 	} else {
-		products, total, err = s.repository.Search(ctx, query, category, limit, offset)
+		products, total, err = s.repository.Search(ctx, options.Query, options.CategorySlug, options.Limit, options.Offset)
 	}
 	if err != nil {
 		return searchResult{}, err
 	}
-	result := searchResult{Products: products, Total: total, Facets: s.searchFacets(ctx, query, category, sort, limit, offset), Backend: "postgresql"}
+	result := searchResult{Products: products, Total: total, Facets: s.searchFacets(ctx, options), Backend: "postgresql"}
 	if s.cache != nil {
 		if value, marshalErr := json.Marshal(result); marshalErr == nil {
 			_ = s.cache.Set(ctx, cacheKey, value, 30)
@@ -123,16 +140,65 @@ func (s *SearchService) searchBackend(ctx context.Context, query, category, sort
 	return result, nil
 }
 
-func (s *SearchService) searchFacets(ctx context.Context, query, category, sort string, limit, offset int) []ports.SearchFacet {
+func requiresDatabaseSearch(options ports.ProductSearchOptions) bool {
+	return options.CategorySlug != "" || len(options.CategorySlugs) > 0 || len(options.BrandSlugs) > 0 ||
+		options.PriceRange != "" || options.InStock || options.OffersOnly || options.DatabaseOnly || options.Sort != "" || options.Offset > 0
+}
+
+func (s *SearchService) searchFacets(ctx context.Context, options ports.ProductSearchOptions) []ports.SearchFacet {
 	provider, ok := s.repository.(ports.ProductSearchFacetsRepository)
 	if !ok {
 		return nil
 	}
-	facets, err := provider.SearchFacets(ctx, ports.ProductSearchOptions{Query: query, CategorySlug: category, Sort: sort, Limit: limit, Offset: offset})
+	facets, err := provider.SearchFacets(ctx, options)
 	if err != nil {
 		return nil
 	}
 	return facets
+}
+
+func normalizePriceRange(value string) string {
+	switch value {
+	case "under-1000", "1000-2500", "2500-5000", "over-5000":
+		return value
+	default:
+		return ""
+	}
+}
+
+func normalizeSlugs(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value == "" || len(value) > 120 {
+			continue
+		}
+		valid := true
+		for _, char := range value {
+			if !(char >= 'a' && char <= 'z' || char >= '0' && char <= '9' || char == '-') {
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
+}
+
+func normalizeSlug(value string) string {
+	values := normalizeSlugs([]string{value})
+	if len(values) == 0 {
+		return ""
+	}
+	return values[0]
 }
 
 func (s *SearchService) observe(ctx context.Context, observation ports.SearchObservation) {

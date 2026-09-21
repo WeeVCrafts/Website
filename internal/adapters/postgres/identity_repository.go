@@ -39,7 +39,8 @@ func (r *UserRepository) IsSessionActive(ctx context.Context, userID int64, crea
 
 func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error) {
 	var user generated.InsertUserRow
-	err := WithinTransactionWithQueries(ctx, r.pool, func(transactionContext context.Context, queries *generated.Queries) error {
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		queries := generated.New(tx)
 		var err error
 		user, err = queries.InsertUser(transactionContext, generated.InsertUserParams{
 			Email:       email,
@@ -55,10 +56,18 @@ func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName,
 		}); err != nil {
 			return err
 		}
-		return queries.AssignUserRole(transactionContext, generated.AssignUserRoleParams{
+		if err := queries.AssignUserRole(transactionContext, generated.AssignUserRoleParams{
 			UserID:   user.ID,
 			RoleSlug: string(domainidentity.RoleCustomer),
-		})
+		}); err != nil {
+			return err
+		}
+		_, err = tx.Exec(transactionContext, `INSERT INTO consent_records (user_id, purpose, policy_version, granted, source) VALUES ($1, 'necessary', 'privacy-2026-09', TRUE, 'registration')`, user.ID)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(transactionContext, `INSERT INTO consent_records (user_id, purpose, policy_version, granted, source) VALUES ($1, 'terms', 'privacy-2026-09', TRUE, 'registration')`, user.ID)
+		return err
 	})
 	if err != nil {
 		var pgError *pgconn.PgError

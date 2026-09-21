@@ -29,6 +29,9 @@ test.describe("role-specific portals", () => {
       const browserErrors = [];
       page.on("pageerror", error => browserErrors.push(error.message));
       page.on("console", message => { if (message.type() === "error") browserErrors.push(message.text()); });
+      page.on("response", response => {
+        if (response.status() === 404) browserErrors.push(`404 ${new URL(response.url()).pathname}`);
+      });
       await signIn(page, account.email, account.landing);
       const landingPattern = new RegExp(`${account.landing.replaceAll("/", "\\/")}\\/?$`);
       await expect(page).toHaveURL(landingPattern);

@@ -31,11 +31,17 @@ type ProductSearchFacetsRepository interface {
 }
 
 type ProductSearchOptions struct {
-	Query        string
-	CategorySlug string
-	Sort         string
-	Limit        int
-	Offset       int
+	Query         string
+	CategorySlug  string
+	CategorySlugs []string
+	BrandSlugs    []string
+	Sort          string
+	PriceRange    string
+	InStock       bool
+	OffersOnly    bool
+	DatabaseOnly  bool
+	Limit         int
+	Offset        int
 }
 
 type SearchFacet struct {

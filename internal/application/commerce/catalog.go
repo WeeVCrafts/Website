@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
@@ -145,6 +146,9 @@ func (s *CatalogService) CreateSellerProductVariant(ctx context.Context, ownerUs
 	input, err := normalizeVariant(input, true)
 	if err != nil {
 		return domaincommerce.ProductVariant{}, err
+	}
+	if input.InitialStock > 0 && !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionInventoryWrite) {
+		return domaincommerce.ProductVariant{}, ports.ErrForbidden
 	}
 	return s.repository.CreateSellerProductVariant(ctx, ownerUserID, productID, input)
 }
@@ -335,16 +339,25 @@ func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.Prod
 	input.Description = strings.TrimSpace(input.Description)
 	input.SKU = strings.TrimSpace(strings.ToUpper(input.SKU))
 	input.DeliveryLabel = strings.TrimSpace(input.DeliveryLabel)
-	if !validSlug(input.Slug) || !validSlug(input.BrandSlug) || !validSlug(input.CategorySlug) || input.BrandName == "" || input.CategoryName == "" || input.Name == "" || input.Description == "" || input.SKU == "" || input.PriceCents <= 0 || input.InitialStock < 0 || input.InitialStock > 100000 {
+	if input.DeliveryLabel == "" {
+		input.DeliveryLabel = "Dispatch details at checkout"
+	}
+	if !validSlug(input.Slug) || !validSlug(input.BrandSlug) || !validSlug(input.CategorySlug) ||
+		!withinTextLimit(input.BrandName, 120) || !withinTextLimit(input.CategoryName, 120) ||
+		!withinTextLimit(input.Name, 180) || !withinTextLimit(input.Description, 10000) ||
+		!withinTextLimit(input.SKU, 120) || !withinTextLimit(input.DeliveryLabel, 180) ||
+		input.PriceCents <= 0 || input.InitialStock < 0 || input.InitialStock > 100000 {
 		return domaincommerce.ProductDraftInput{}, ErrInvalidProduct
 	}
 	if input.CompareAtCents != nil && *input.CompareAtCents < input.PriceCents {
 		return domaincommerce.ProductDraftInput{}, ErrInvalidProduct
 	}
-	if input.DeliveryLabel == "" {
-		input.DeliveryLabel = "Dispatch details at checkout"
-	}
 	return input, nil
+}
+
+func withinTextLimit(value string, max int) bool {
+	length := utf8.RuneCountInString(value)
+	return length > 0 && length <= max
 }
 
 func normalizeVariant(input domaincommerce.ProductVariantInput, includeInitialStock bool) (domaincommerce.ProductVariantInput, error) {

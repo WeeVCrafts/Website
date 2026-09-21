@@ -45,10 +45,17 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 		if err != nil {
 			return err
 		}
+		var returnReceived bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM return_requests WHERE order_id=$1 AND status='received')`, orderID).Scan(&returnReceived); err != nil {
+			return err
+		}
+		if !returnReceived {
+			return ports.ErrRefundState
+		}
 		var refundID int64
 		err = tx.QueryRow(transactionContext, `SELECT id FROM payment_refunds WHERE order_id = $1 FOR UPDATE`, orderID).Scan(&refundID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			if orderStatus != "paid" || paymentStatus != "captured" || providerPaymentID == "" || amountCents <= 0 || currency == "" {
+			if !refundableOrderStatus(orderStatus) || paymentStatus != "captured" || providerPaymentID == "" || amountCents <= 0 || currency == "" {
 				return ports.ErrRefundState
 			}
 			err = tx.QueryRow(transactionContext, `
@@ -88,7 +95,7 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 					)
 				}
 			}
-			if orderStatus != "paid" || paymentStatus != "captured" || providerPaymentID == "" || amountCents <= 0 || currency == "" {
+			if !refundableOrderStatus(orderStatus) || paymentStatus != "captured" || providerPaymentID == "" || amountCents <= 0 || currency == "" {
 				return ports.ErrRefundState
 			}
 			if existingStatus == "failed" {
@@ -154,19 +161,23 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 			return err
 		}
 		if refund.Status == "processed" {
-			if orderStatus != "paid" || paymentStatus != "captured" {
+			var returnReceived bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM return_requests WHERE order_id=$1 AND status='received')`, orderID).Scan(&returnReceived); err != nil {
+				return err
+			}
+			if !returnReceived || !refundableOrderStatus(orderStatus) || paymentStatus != "captured" {
 				return ports.ErrRefundState
 			}
 			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET status = 'refunded', updated_at = NOW() WHERE order_id = $1 AND status = 'captured'`, orderID); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(transactionContext, `UPDATE orders SET status = 'refunded', updated_at = NOW() WHERE id = $1 AND status = 'paid'`, orderID); err != nil {
+			if _, err := tx.Exec(transactionContext, `UPDATE orders SET status = 'refunded', updated_at = NOW() WHERE id = $1 AND status = $2`, orderID, orderStatus); err != nil {
 				return err
 			}
 			if _, err := tx.Exec(transactionContext, `
 				INSERT INTO order_status_history (order_id, from_status, to_status, reason)
-				SELECT $1, 'paid', 'refunded', 'payment refund processed'
-				WHERE NOT EXISTS (SELECT 1 FROM order_status_history WHERE order_id = $1 AND to_status = 'refunded')`, orderID); err != nil {
+				SELECT $1, $2, 'refunded', 'payment refund processed'
+				WHERE NOT EXISTS (SELECT 1 FROM order_status_history WHERE order_id = $1 AND to_status = 'refunded')`, orderID, orderStatus); err != nil {
 				return err
 			}
 			if err := recordSellerRefundLedger(transactionContext, tx, orderID); err != nil {
@@ -188,6 +199,15 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 		)
 	})
 	return record, err
+}
+
+func refundableOrderStatus(status string) bool {
+	switch status {
+	case "paid", "processing", "shipped", "delivered":
+		return true
+	default:
+		return false
+	}
 }
 
 func (r *PaymentRepository) FailRefund(ctx context.Context, refundID int64, reason string) error {

@@ -5,7 +5,7 @@ import domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
 	ActorID                                                             int64
-	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice string
+	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                     string
 	SettlementRoot                                                      string
 	CSRFToken                                                           string
@@ -49,6 +49,7 @@ type AdminSeller struct {
 
 type AdminProduct struct {
 	ID, Name, SKU, Seller, Category, Price, Submitted, Status, Image string
+	SearchSKUs                                                       string
 }
 
 type AdminProductEditor struct {
@@ -109,7 +110,7 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
-	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice                    string
+	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning        string
 	DisplayName, UserEmail, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
 	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite                    bool
 	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam                           bool
@@ -135,6 +136,7 @@ type SellerAdminBar struct {
 
 type SellerAdminProduct struct {
 	ID, Name, SKU, Category, Price, Variants, Stock, Status, Availability, Image string
+	SearchSKUs                                                                   string
 }
 
 type SellerAdminInventory struct {
@@ -142,7 +144,7 @@ type SellerAdminInventory struct {
 }
 
 type SellerAdminOrder struct {
-	SellerID, Number, Date, Customer, Items, Value, Type, Payment, Status, Destination, Image string
+	SellerID, Number, Date, Customer, Items, Value, Type, Payment, Status, Destination, Image, NextStatus string
 }
 
 type SellerAdminReturn struct {

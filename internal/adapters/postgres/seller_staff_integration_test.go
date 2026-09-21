@@ -12,6 +12,9 @@ func TestSellerStaffCRUDPersistsPermissionsAndRemoval(t *testing.T) {
 	if err := pool.QueryRow(context.Background(), `SELECT email FROM users WHERE id=$1`, fixture.userIDs[0]).Scan(&staffEmail); err != nil {
 		t.Fatalf("load staff fixture email: %v", err)
 	}
+	if _, err := pool.Exec(context.Background(), `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'seller_staff') ON CONFLICT DO NOTHING`, fixture.userIDs[0]); err != nil {
+		t.Fatalf("grant seller staff role for test member: %v", err)
+	}
 	repository := NewSellerStaffRepository(pool)
 
 	member, err := repository.AddStaff(context.Background(), fixture.ownerID, staffEmail, []string{"PRODUCT_READ"})
@@ -51,7 +54,7 @@ func TestSellerStaffCRUDPersistsPermissionsAndRemoval(t *testing.T) {
 	if err := pool.QueryRow(context.Background(), `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller_staff')`, member.UserID).Scan(&staffRoleExists); err != nil {
 		t.Fatalf("check removed staff role: %v", err)
 	}
-	if staffRoleExists {
-		t.Fatal("seller_staff role remains after the user's only seller membership was removed")
+	if !staffRoleExists {
+		t.Fatal("seller staff membership removal changed the super-admin-managed global role")
 	}
 }

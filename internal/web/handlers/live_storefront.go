@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,6 +22,7 @@ import (
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/components"
 	"github.com/wecratfs/commerce/web/pages"
@@ -136,6 +139,14 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.render(w, r, pages.Empty(page))
 		return
 	}
+	if isAuthRoute(r.URL.Path) && !page.Authenticated {
+		csrf, csrfErr := h.ensureAnonymousCSRF(w, r)
+		if csrfErr != nil {
+			http.Error(w, "Authentication form could not be secured", http.StatusInternalServerError)
+			return
+		}
+		page.CSRFToken = csrf
+	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
 		variants, variantsErr := h.customerProductVariants(r, page.Product.Slug)
 		if variantsErr != nil {
@@ -160,6 +171,14 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 		page.Product.Media = media
+	}
+	if page.SelectedOrder.CanRequestRefund {
+		key := make([]byte, 24)
+		if _, err := rand.Read(key); err != nil {
+			http.Error(w, "Refund form could not be secured", http.StatusInternalServerError)
+			return
+		}
+		page.RefundKey = base64.RawURLEncoding.EncodeToString(key)
 	}
 	var component templ.Component
 	switch {
@@ -204,15 +223,13 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case r.URL.Path == "/orders":
 		component = pages.LiveOrders(page)
 	case strings.HasPrefix(r.URL.Path, "/orders/"):
-		if r.URL.Path == "/orders/invoice" {
-			page.Title = "Invoice"
-			page.Notice = "Invoices are available after payment is confirmed."
-			component = pages.Empty(page)
+		if page.SelectedOrder.Number == "" {
+			http.NotFound(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/invoice") {
+			component = pages.OrderReceipt(page)
 		} else {
-			if page.SelectedOrder.Number == "" {
-				http.NotFound(w, r)
-				return
-			}
 			component = pages.OrderDetail(page)
 		}
 	case r.URL.Path == "/tracking":
@@ -245,6 +262,20 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 	h.render(w, r, component)
+}
+
+func (h *LiveStorefrontHandler) ensureAnonymousCSRF(w http.ResponseWriter, r *http.Request) (string, error) {
+	if cookie, err := r.Cookie("wecratfs_csrf"); err == nil && cookie.Value != "" {
+		return cookie.Value, nil
+	}
+	buffer := make([]byte, 32)
+	if _, err := rand.Read(buffer); err != nil {
+		return "", err
+	}
+	token := base64.RawURLEncoding.EncodeToString(buffer)
+	secure := r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(w, &http.Cookie{Name: "wecratfs_csrf", Value: token, Path: "/", Secure: secure, SameSite: http.SameSiteLaxMode, MaxAge: 3600})
+	return token, nil
 }
 
 func (h *LiveStorefrontHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
@@ -296,6 +327,10 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 		State: r.Form.Get("state"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
 	})
 	if err != nil {
+		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {
+			http.Error(w, "Phone number must contain 7 to 15 digits.", http.StatusUnprocessableEntity)
+			return
+		}
 		http.Error(w, "shipping address is invalid", http.StatusUnprocessableEntity)
 		return
 	}
@@ -426,16 +461,59 @@ func safeCustomerNext(candidate, fallback string) string {
 
 func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, error) {
 	userID, csrf, authenticated := h.session(r)
-	query := strings.TrimSpace(r.URL.Query().Get("q"))
-	category := strings.TrimSpace(r.URL.Query().Get("category"))
-	sortMode := strings.TrimSpace(r.URL.Query().Get("sort"))
+	filters := r.URL.Query()
+	query := strings.TrimSpace(filters.Get("q"))
+	category := strings.TrimSpace(filters.Get("category"))
+	sortMode := strings.TrimSpace(filters.Get("sort"))
 	if r.URL.Path == "/deals" && category == "" {
 		category = "offers"
 	}
 
-	products, err := h.products(r.Context(), r.URL.Path, query, category, sortMode)
-	if err != nil {
-		return viewmodels.CustomerPage{}, err
+	products := make([]viewmodels.Product, 0)
+	totalResults, currentPage, totalPages := 0, 1, 1
+	var err error
+	if r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" {
+		currentPage = listingPage(filters.Get("page"))
+		offersOnly := r.URL.Path == "/deals"
+		categories := make([]string, 0, len(filters["category"]))
+		for _, selected := range filters["category"] {
+			if strings.EqualFold(strings.TrimSpace(selected), "offers") {
+				offersOnly = true
+				continue
+			}
+			if normalized := categoryForSearch(selected); normalized != "" {
+				categories = append(categories, normalized)
+			}
+		}
+		searchSort := map[string]string{"price-asc": applicationcatalog.SearchSortPriceAsc, "price-desc": applicationcatalog.SearchSortPriceDesc, "newest": applicationcatalog.SearchSortNewest}[sortMode]
+		options := ports.ProductSearchOptions{
+			Query: query, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
+			PriceRange: filters.Get("price"), InStock: hasQueryValue(filters["availability"], "in-stock"),
+			OffersOnly: offersOnly, DatabaseOnly: true, Limit: 24, Offset: (currentPage - 1) * 24,
+		}
+		source, total, _, searchErr := h.search.SearchWithFilters(r.Context(), options)
+		if searchErr != nil {
+			return viewmodels.CustomerPage{}, searchErr
+		}
+		totalResults = total
+		totalPages = (total + options.Limit - 1) / options.Limit
+		if totalPages < 1 {
+			totalPages = 1
+		}
+		if currentPage > totalPages {
+			currentPage = totalPages
+			options.Offset = (currentPage - 1) * options.Limit
+			source, _, _, searchErr = h.search.SearchWithFilters(r.Context(), options)
+			if searchErr != nil {
+				return viewmodels.CustomerPage{}, searchErr
+			}
+		}
+		products = h.productViews(r.Context(), source)
+	} else {
+		products, err = h.products(r.Context(), r.URL.Path, query, category, sortMode)
+		if err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
 	}
 	if strings.HasPrefix(r.URL.Path, "/brands/") {
 		products, err = h.productsForBrand(r.Context(), strings.TrimPrefix(r.URL.Path, "/brands/"), csrf)
@@ -449,7 +527,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, err
 		}
 	}
-	if requestedBrand := strings.TrimSpace(r.URL.Query().Get("brand")); requestedBrand != "" {
+	if requestedBrand := strings.TrimSpace(filters.Get("brand")); requestedBrand != "" && r.URL.Path != "/products" && r.URL.Path != "/search" && r.URL.Path != "/deals" {
 		products, err = h.productsForBrand(r.Context(), requestedBrand, csrf)
 		if err != nil {
 			return viewmodels.CustomerPage{}, err
@@ -457,12 +535,12 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	}
 	page := viewmodels.CustomerPage{
 		Route: r.URL.Path, Title: liveTitle(r.URL.Path), Query: query, Category: category, Sort: sortMode,
-		CouponCode: strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("coupon"))),
-		Notice:     r.URL.Query().Get("notice"), Filters: r.URL.Query(), Brand: "WeeVCrafts",
+		CouponCode: strings.ToUpper(strings.TrimSpace(filters.Get("coupon"))),
+		Notice:     filters.Get("notice"), Filters: filters, Brand: "WeeVCrafts",
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
-		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: 1, Pages: 1,
+		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
 		product, productErr := h.catalog.Get(r.Context(), strings.TrimPrefix(r.URL.Path, "/products/"))
@@ -562,8 +640,12 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 			}
 			page.Orders = append(page.Orders, view)
 		}
-		if strings.HasPrefix(page.Route, "/orders/") && page.Route != "/orders/invoice" {
+		if strings.HasPrefix(page.Route, "/orders/") {
 			orderNumber := strings.TrimPrefix(page.Route, "/orders/")
+			orderNumber = strings.TrimSuffix(orderNumber, "/invoice")
+			if orderNumber == "" || strings.Contains(orderNumber, "/") {
+				return nil
+			}
 			detail, err := h.orders.Get(ctx, userID, orderNumber)
 			if err != nil {
 				return err
@@ -867,6 +949,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	view := viewmodels.Order{
 		Number: order.OrderNumber, Status: status, State: order.Status, Payment: payment,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
+		CanCancel:        order.Status == "pending_payment",
 		CanRequestReturn: order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered",
 	}
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
@@ -875,6 +958,10 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	if view.ReturnStatus != "" {
 		view.CanRequestReturn = false
 	}
+	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM payment_refunds WHERE order_id=$1 ORDER BY id DESC LIMIT 1), '')`, order.ID).Scan(&view.RefundStatus); err != nil {
+		return viewmodels.Order{}, err
+	}
+	view.CanRequestRefund = view.ReturnStatus == "received" && view.RefundStatus == "" && order.PaymentStatus == "captured" && (order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered")
 	rows, err := h.pool.Query(ctx, `
 		SELECT COALESCE(p.slug, ''), oi.product_name, oi.unit_price_cents, oi.quantity,
 		       COALESCE(p.image_url, ''), COALESCE(s.display_name, 'Independent maker')
@@ -1024,12 +1111,22 @@ func (h *LiveStorefrontHandler) products(ctx context.Context, path, query, categ
 	if err != nil {
 		return nil, err
 	}
+	if category == "offers" {
+		offerProducts := make([]domaincatalog.Product, 0, len(source))
+		for _, product := range source {
+			if product.HasCompareAt && product.CompareAtCents > product.PriceCents {
+				offerProducts = append(offerProducts, product)
+			}
+		}
+		source = offerProducts
+	}
+	return h.productViews(ctx, source), nil
+}
+
+func (h *LiveStorefrontHandler) productViews(ctx context.Context, source []domaincatalog.Product) []viewmodels.Product {
 	result := make([]viewmodels.Product, 0, len(source))
 	sellerNames := h.sellerNames(ctx, source)
 	for _, product := range source {
-		if category == "offers" && !product.HasCompareAt {
-			continue
-		}
 		view := liveProduct(product, "")
 		if seller := sellerNames[product.Slug]; seller != "" {
 			view.Seller = seller
@@ -1037,7 +1134,27 @@ func (h *LiveStorefrontHandler) products(ctx context.Context, path, query, categ
 		}
 		result = append(result, view)
 	}
-	return result, nil
+	return result
+}
+
+func listingPage(raw string) int {
+	page, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || page < 1 {
+		return 1
+	}
+	if page > 417 {
+		return 417
+	}
+	return page
+}
+
+func hasQueryValue(values []string, selected string) bool {
+	for _, value := range values {
+		if strings.EqualFold(strings.TrimSpace(value), selected) {
+			return true
+		}
+	}
+	return false
 }
 
 func categoryForSearch(category string) string {
@@ -1205,6 +1322,9 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 				}
 			}
 		}
+	}
+	if r.FormValue("remove") == "true" {
+		quantity = 0
 	}
 	var err error
 	if quantity <= 0 {

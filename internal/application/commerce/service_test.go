@@ -3,6 +3,7 @@ package commerce
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
@@ -187,6 +188,39 @@ func TestCatalogServiceRejectsInvalidSlugsAndPrices(t *testing.T) {
 	}
 }
 
+func TestNormalizeDraftEnforcesTextFieldLimits(t *testing.T) {
+	tests := []struct {
+		name   string
+		change func(*domaincommerce.ProductDraftInput)
+	}{
+		{name: "name", change: func(input *domaincommerce.ProductDraftInput) { input.Name = strings.Repeat("n", 181) }},
+		{name: "brand name", change: func(input *domaincommerce.ProductDraftInput) { input.BrandName = strings.Repeat("b", 121) }},
+		{name: "category name", change: func(input *domaincommerce.ProductDraftInput) { input.CategoryName = strings.Repeat("c", 121) }},
+		{name: "description", change: func(input *domaincommerce.ProductDraftInput) { input.Description = strings.Repeat("d", 10001) }},
+		{name: "sku", change: func(input *domaincommerce.ProductDraftInput) { input.SKU = strings.Repeat("s", 121) }},
+		{name: "delivery label", change: func(input *domaincommerce.ProductDraftInput) { input.DeliveryLabel = strings.Repeat("l", 181) }},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := validDraft()
+			test.change(&input)
+			if _, err := normalizeDraft(input); !errors.Is(err, ErrInvalidProduct) {
+				t.Fatalf("over-limit %s was accepted: %v", test.name, err)
+			}
+		})
+	}
+	input := validDraft()
+	input.Name = strings.Repeat("n", 180)
+	input.BrandName = strings.Repeat("b", 120)
+	input.CategoryName = strings.Repeat("c", 120)
+	input.Description = strings.Repeat("d", 10000)
+	input.SKU = strings.Repeat("s", 120)
+	input.DeliveryLabel = strings.Repeat("l", 180)
+	if _, err := normalizeDraft(input); err != nil {
+		t.Fatalf("maximum valid text limits were rejected: %v", err)
+	}
+}
+
 func TestCatalogServiceProtectsSellerDraftEditing(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		11: {domainidentity.RoleSellerOwner: true},
@@ -227,14 +261,23 @@ func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *test
 		t.Fatalf("read-only staff created a variant: %v", err)
 	}
 	checker.permissions[12][domaincommerce.SellerPermissionProductWrite] = true
+	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("product-only staff could create variant inventory: %v", err)
+	}
+	input.InitialStock = 0
 	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); err != nil {
-		t.Fatalf("product writer could not create a variant: %v", err)
+		t.Fatalf("product writer could not create a zero-stock variant: %v", err)
 	}
 	if _, err := service.UpdateSellerProductVariant(context.Background(), 12, 5, 1, input); err != nil {
 		t.Fatalf("product writer could not update a variant: %v", err)
 	}
 	if err := service.ArchiveSellerProductVariant(context.Background(), 12, 5, 1, "retire blue option"); err != nil {
 		t.Fatalf("product writer could not archive a variant: %v", err)
+	}
+	checker.permissions[12][domaincommerce.SellerPermissionInventoryWrite] = true
+	input.InitialStock = 3
+	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); err != nil {
+		t.Fatalf("product and inventory writer could not create a stocked variant: %v", err)
 	}
 	input.InitialStock = -1
 	if _, err := service.CreateSellerProductVariant(context.Background(), 11, 5, input); !errors.Is(err, ErrInvalidProductVariant) {
@@ -315,8 +358,23 @@ func TestOrderServiceRestrictsDeliveryToIndiaAndValidPINCodes(t *testing.T) {
 	}
 	legacyAddress := address
 	legacyAddress.Phone = ""
-	if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-legacy", legacyAddress); err != nil {
-		t.Fatalf("legacy checkout without optional phone field was rejected: %v", err)
+	if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-legacy", legacyAddress); !errors.Is(err, ErrInvalidPhone) {
+		t.Fatalf("checkout without required phone field was not rejected as a phone error: %v", err)
+	}
+
+	for _, phone := range []string{"123456", "1234567890123456"} {
+		invalidPhone := address
+		invalidPhone.Phone = phone
+		if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-1234", invalidPhone); !errors.Is(err, ErrInvalidPhone) {
+			t.Errorf("expected field-specific phone validation for %q, got %v", phone, err)
+		}
+	}
+	for _, phone := range []string{"1234567", "123456789012345"} {
+		validPhone := address
+		validPhone.Phone = phone
+		if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-1234", validPhone); err != nil {
+			t.Errorf("valid phone boundary %q was rejected: %v", phone, err)
+		}
 	}
 
 	for _, invalid := range []domaincommerce.AddressInput{

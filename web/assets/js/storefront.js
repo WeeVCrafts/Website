@@ -279,6 +279,24 @@
       return "<article class=\"cart-seller\"><div class=\"cart-seller-head\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><b>" + esc(item.seller) + "</b></div></div><div class=\"cart-line\"><img src=\"" + esc(item.image) + "\" alt=\"" + esc(item.name) + "\" width=\"160\" height=\"173\"/><div class=\"cart-line-copy\"><span class=\"badge\">" + (item.available > 0 ? "In stock" : "Sold out") + "</span><h2>" + esc(item.name) + "</h2><p class=\"cart-variant\">Option: <b>" + esc(item.optionLabel || "Standard") + "</b></p><div class=\"price\"><strong>" + money(item.priceCents) + "</strong>" + (item.compareAtCents > item.priceCents ? "<del>" + money(item.compareAtCents) + "</del>" : "") + "</div><div class=\"cart-line-actions\"><span class=\"quantity-control\"><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-1\" aria-label=\"Decrease quantity\">-</button><output aria-live=\"polite\">" + Number(item.quantity || 0) + "</output><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"1\" aria-label=\"Increase quantity\">+</button></span><button class=\"text-button\" type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-" + Number(item.quantity || 0) + "\">Remove</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-move\" data-product-slug=\"" + slug + "\">Move to wishlist</button></div></div></div></article>";
   }
 
+  function wireCartLineActions(host, items) {
+    if (!host) return;
+    const lines = host.querySelectorAll(".cart-line");
+    items.forEach(function (item, index) {
+      const line = lines[index];
+      if (!line) return;
+      const variantID = String(item.variantId || "");
+      line.querySelectorAll(".quantity-control button").forEach(function (button) { button.dataset.variantId = variantID; });
+      const actions = line.querySelectorAll(".cart-line-actions > .text-button");
+      if (actions[0]) {
+        actions[0].dataset.backendAction = "cart-remove";
+        actions[0].dataset.variantId = variantID;
+        delete actions[0].dataset.delta;
+      }
+      if (actions[1]) actions[1].dataset.variantId = variantID;
+    });
+  }
+
   async function hydrateCart() {
     const cartRoot = document.querySelector("[data-backend-cart]");
     const wishlistRoot = document.getElementById("wishlist-grid");
@@ -306,6 +324,7 @@
     if (cartRoot) {
       const host = cartRoot.querySelector(".cart-items");
       host.innerHTML = cart.items.length ? cart.items.map(cartItemMarkup).join("") : "<div class=\"empty-state\"><h2>Your cart is empty</h2><p>Browse handmade treasures and bring a little India home.</p><a class=\"primary-button\" href=\"/products\">Continue shopping</a></div>";
+      wireCartLineActions(host, cart.items);
       const totals = cartTotals(cart.items);
       const summary = cartRoot.querySelector(".cart-summary");
       if (summary) {
@@ -362,7 +381,14 @@
     }
     if (action === "cart-change") {
       await requireUser();
-      await api.changeCart(slug, Number(delta));
+      await api.changeCart(slug, Number(delta), selectedVariantId);
+      global.sessionStorage.removeItem(CHECKOUT_KEY);
+      await hydrateCart();
+      return;
+    }
+    if (action === "cart-remove") {
+      await requireUser();
+      await api.removeCart(slug, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await hydrateCart();
       return;
@@ -382,7 +408,7 @@
     }
     if (action === "wishlist-move") {
       await requireUser();
-      await api.moveCartToWishlist(slug);
+      await api.moveCartToWishlist(slug, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await hydrateCart();
       notice("Moved to your wishlist.", false);
@@ -442,10 +468,10 @@
     const values = formData(form);
     try {
       if (action === "login") {
-        const result = await api.signIn({ email: values.email, password: values.password });
+        const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on" });
         global.location.assign(authDestination(values.next, unwrap(result) || result));
       } else if (action === "register") {
-        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.name });
+        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, acceptedTerms: values.consent === "on" });
         const data = unwrap(result) || result;
         if (data && (data.access_token || result.csrf_token)) global.location.assign(authDestination(values.next, data));
         else showFormMessage(form, "Check your email to verify your new account.", false);
@@ -574,6 +600,29 @@
   }
 
   function bindActions() {
+    const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
+    if (savedAddressSelect) {
+      savedAddressSelect.addEventListener("change", function () {
+        const option = savedAddressSelect.selectedOptions[0];
+        if (!option || !option.value) return;
+        const form = document.getElementById("checkout-address-form");
+        if (!form) return;
+        const fields = {
+          recipient_name: option.dataset.name,
+          phone: option.dataset.phone,
+          line1: option.dataset.line1,
+          line2: option.dataset.line2,
+          city: option.dataset.city,
+          region: option.dataset.state,
+          postal_code: option.dataset.postalCode,
+          country_code: "IN"
+        };
+        for (const [name, value] of Object.entries(fields)) {
+          const field = form.elements.namedItem(name);
+          if (field) field.value = value || "";
+        }
+      });
+    }
     document.addEventListener("click", async function (event) {
       const localPaymentButton = event.target.closest("[data-local-payment]");
       if (localPaymentButton) {
@@ -599,6 +648,7 @@
       let action = element.dataset.backendAction;
       let slug = element.dataset.productSlug || "";
       let delta = element.dataset.delta || "";
+      let selectedVariantId = element.dataset.variantId || "";
       if (!action) {
         const path = element.getAttribute("hx-post") || "";
         const match = path.match(/^\/ui\/(cart|wishlist)\/([^/?#]+)/);
@@ -607,8 +657,9 @@
         const values = element.getAttribute("hx-vals");
         let extras = {};
         try { extras = values ? JSON.parse(values) : {}; } catch (_) { extras = {}; }
+        selectedVariantId = extras.variant_id || selectedVariantId;
         if (match[1] === "cart") {
-          action = extras.delta ? "cart-change" : element.closest(".saved-card") ? "wishlist-to-cart" : extras.intent === "buy" ? "cart-buy" : "cart-add";
+          action = extras.remove ? "cart-remove" : extras.delta ? "cart-change" : element.closest(".saved-card") ? "wishlist-to-cart" : extras.intent === "buy" ? "cart-buy" : "cart-add";
           delta = extras.delta || document.getElementById("detail-quantity")?.value || "1";
         } else {
           action = extras.source === "cart" ? "wishlist-move" : extras.source === "wishlist" ? "wishlist-remove" : "wishlist-add";
@@ -624,7 +675,7 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       const detailActions = element.closest(".detail-actions, .mobile-buy-bar");
-      const selectedVariantId = detailActions ? document.querySelector("#detail-variant")?.value : undefined;
+      selectedVariantId = selectedVariantId || (detailActions ? document.querySelector("#detail-variant")?.value : undefined);
       try { await runAction(action, slug, delta, selectedVariantId); }
       catch (error) { notice(error.message, true); }
     }, true);

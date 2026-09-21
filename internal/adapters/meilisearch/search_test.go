@@ -95,3 +95,28 @@ func TestSearchMapsCategoryFacetDistribution(t *testing.T) {
 		t.Fatalf("unexpected facet result: %+v err=%v", result, err)
 	}
 }
+
+func TestSearchBuildsAllListingFilters(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Filter string `json:"filter"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode search payload: %v", err)
+		}
+		want := `category_slug IN ["crafts", "textiles"] AND brand_slug IN ["handloom-house"] AND price_cents >= 250000 AND price_cents < 500000 AND available > 0 AND has_offer = true`
+		if payload.Filter != want {
+			t.Fatalf("unexpected listing filter: got %q want %q", payload.Filter, want)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"hits": []any{}, "estimatedTotalHits": 0})
+	}))
+	defer server.Close()
+
+	_, err := NewSearchEngine(server.URL).Search(context.Background(), ports.SearchRequest{
+		CategorySlugs: []string{"crafts", "textiles"}, BrandSlugs: []string{"handloom-house"},
+		PriceRange: "2500-5000", InStock: true, OffersOnly: true, Limit: 24,
+	})
+	if err != nil {
+		t.Fatalf("search with listing filters: %v", err)
+	}
+}

@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!finalize.ok || !finalized.data) throw new Error("Stored media did not pass verification.");
         preparedMediaID = 0;
         status.textContent = mediaKind === "video" ? "Product video saved." : "Product image saved.";
-        window.setTimeout(function () { window.location.reload(); }, 500);
+        window.setTimeout(function () { window.location.reload(); }, 1500);
       } catch (error) {
         if (preparedMediaID) {
           await fetch("/api/v1/seller/products/media-delete", {
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
           var result = await response.json();
           if (!response.ok || !result.data) throw new Error("Media could not be removed.");
           status.textContent = "Product media removed.";
-          window.setTimeout(function () { window.location.reload(); }, 300);
+          window.setTimeout(function () { window.location.reload(); }, 1500);
         } catch (error) {
           status.textContent = error && error.message ? error.message : "Media removal failed. Please try again.";
           button.disabled = false;

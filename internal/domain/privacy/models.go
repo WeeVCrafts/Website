@@ -20,7 +20,8 @@ type Request struct {
 }
 
 type Center struct {
-	Consents       []Consent `json:"consents"`
-	Requests       []Request `json:"requests"`
-	EmailMarketing bool      `json:"email_marketing"`
+	Consents         []Consent `json:"consents"`
+	Requests         []Request `json:"requests"`
+	EmailMarketing   bool      `json:"email_marketing"`
+	AnalyticsAllowed bool      `json:"analytics_allowed"`
 }

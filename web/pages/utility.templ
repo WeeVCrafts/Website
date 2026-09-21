@@ -16,6 +16,7 @@ templ Auth(p viewmodels.CustomerPage) {
         if p.Route == "/login" {
           @AuthHeading("WELCOME BACK", "Sign in to WeeVCrafts", "Keep your saved pieces, orders and maker stories close.")
           <form class="utility-form" action="/login" method="post" data-backend-auth="login">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Password<input name="password" type="password" required/></label>
@@ -26,8 +27,9 @@ templ Auth(p viewmodels.CustomerPage) {
         } else if p.Route == "/register" {
           @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
           <form class="utility-form" action="/register" method="post" data-backend-auth="register">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <label>Full name<input name="name" required/></label>
+            <label>Full name<input name="display_name" autocomplete="name" maxlength="120" required/></label>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Password<input name="password" type="password" minlength="12" required/></label>
             <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>
@@ -221,6 +223,7 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
     <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
     <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
+    <a href="/account/reviews" class={ liveAccountLinkClass(active, "/account/reviews") } aria-current={ liveAccountCurrent(active, "/account/reviews") }><span class="material-symbols-outlined" aria-hidden="true">reviews</span> Reviews</a>
     <a href="/orders" class={ liveAccountLinkClass(active, "orders") } aria-current={ liveAccountCurrent(active, "orders") }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
     <a href="/returns" class={ liveAccountLinkClass(active, "/returns") } aria-current={ liveAccountCurrent(active, "/returns") }><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Returns &amp; refunds</a>
     <a href="/payments" class={ liveAccountLinkClass(active, "/payments") } aria-current={ liveAccountCurrent(active, "/payments") }><span class="material-symbols-outlined" aria-hidden="true">payments</span> Payments</a>
@@ -242,7 +245,7 @@ templ LiveAccount(p viewmodels.CustomerPage) {
         if p.Notice != "" {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
-        <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>—</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
+        <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>{ p.ReviewCount }</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
         <div class="account-cards">
           <section id="profile"><h2>Profile information</h2><a href="/account/profile">Edit <span class="material-symbols-outlined" aria-hidden="true">edit</span></a><p><b>{ p.UserName }</b><br/>{ p.UserEmail }<br/><small>Member since { p.MemberSince }</small></p></section>
           <section id="addresses"><h2>Saved addresses</h2><a href="/account/addresses">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
@@ -281,7 +284,7 @@ templ LiveOrders(p viewmodels.CustomerPage) {
       if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
       } else {
-        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))))
+        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))), p.CSRFToken)
         <h2 class="order-history-title">Past orders</h2>
         @HistoryRows(orderSlice(orderSubset(p.Orders, p.Filters.Get("status")), 1))
       }
@@ -409,7 +412,7 @@ templ AddressFormFields(address viewmodels.Address, csrfToken string) {
     <input type="hidden" name="address_id" value={ address.ID }/>
   }
   <label>Recipient name<input name="recipient_name" value={ address.Name } autocomplete="name" maxlength="100" required/></label>
-  <label>Phone number<input name="phone" value={ address.Phone } type="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" required/></label>
+  <label>Phone number<input name="phone" value={ address.Phone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
   <label>Address line<input name="line1" value={ address.Line1 } autocomplete="address-line1" maxlength="250" required/></label>
   <label>Apartment / landmark<input name="line2" value={ address.Line2 } autocomplete="address-line2" maxlength="250"/></label>
   <label>City<input name="city" value={ address.City } autocomplete="address-level2" maxlength="100" required/></label>

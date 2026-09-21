@@ -80,6 +80,7 @@ func newCommerceFixture(t *testing.T, pool *pgxpool.Pool, userCount, stock int) 
 		cleanupContext, cleanupCancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cleanupCancel()
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM outbox_events WHERE aggregate_type = 'Order' AND aggregate_id IN (SELECT order_number FROM orders WHERE user_id = ANY($1))`, userIDs)
+		_, _ = pool.Exec(cleanupContext, `DELETE FROM return_requests WHERE user_id = ANY($1)`, userIDs)
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM orders WHERE user_id = ANY($1)`, userIDs)
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM carts WHERE user_id = ANY($1)`, userIDs)
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM users WHERE id = ANY($1)`, userIDs)
@@ -97,7 +98,7 @@ func TestInventoryReservationConcurrencyCheckpoint(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 100, 10)
 	repository := NewCommerceRepository(pool)
-	address := domaincommerce.AddressInput{RecipientName: "Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 
 	results := make(chan error, len(fixture.userIDs))
 	var group sync.WaitGroup
@@ -180,7 +181,7 @@ func TestCancelPendingOrderReleasesReservation(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
 	repository := NewCommerceRepository(pool)
-	address := domaincommerce.AddressInput{RecipientName: "Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	order, err := repository.CreateOrder(context.Background(), fixture.userIDs[0], fixture.cartIDs[0], "cancel-checkout-key-1234", address)
 	if err != nil {
 		t.Fatalf("create cancellable order: %v", err)

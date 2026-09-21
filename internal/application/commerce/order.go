@@ -12,6 +12,7 @@ import (
 )
 
 var ErrInvalidAddress = errors.New("shipping address is invalid")
+var ErrInvalidPhone = fmt.Errorf("%w: phone number must contain 7 to 15 digits", ErrInvalidAddress)
 
 var indiaPostalCode = regexp.MustCompile(`^[1-9][0-9]{5}$`)
 var phoneNumber = regexp.MustCompile(`^\+?[0-9][0-9 ()-]{5,22}$`)
@@ -43,16 +44,14 @@ func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.
 	if len([]rune(address.RecipientName)) > 100 || len([]rune(address.Line1)) > 250 || len([]rune(address.Line2)) > 250 || len([]rune(address.City)) > 100 || len([]rune(address.State)) > 100 {
 		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
-	if address.Phone != "" {
-		digits := strings.Map(func(r rune) rune {
-			if r < '0' || r > '9' {
-				return -1
-			}
-			return r
-		}, address.Phone)
-		if !phoneNumber.MatchString(address.Phone) || len(digits) < 7 || len(digits) > 15 {
-			return domaincommerce.AddressInput{}, ErrInvalidAddress
+	digits := strings.Map(func(r rune) rune {
+		if r < '0' || r > '9' {
+			return -1
 		}
+		return r
+	}, address.Phone)
+	if !phoneNumber.MatchString(address.Phone) || len(digits) < 7 || len(digits) > 15 {
+		return domaincommerce.AddressInput{}, ErrInvalidPhone
 	}
 	if address.CountryCode != "IN" || !indiaPostalCode.MatchString(address.PostalCode) {
 		return domaincommerce.AddressInput{}, ErrInvalidAddress

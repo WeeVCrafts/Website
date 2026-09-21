@@ -33,7 +33,7 @@ func NewSearchEngineWithKey(address, apiKey string) *SearchEngine {
 }
 
 func (s *SearchEngine) Search(ctx context.Context, request ports.SearchRequest) (ports.SearchResult, error) {
-	payloadValues := map[string]any{"q": request.Query, "limit": request.Limit, "offset": request.Offset, "filter": categoryFilter(request.CategorySlug), "facets": []string{"category_slug"}}
+	payloadValues := map[string]any{"q": request.Query, "limit": request.Limit, "offset": request.Offset, "filter": searchFilter(request), "facets": []string{"category_slug"}}
 	if sort := meiliSort(request.Sort); sort != "" {
 		payloadValues["sort"] = []string{sort}
 	}
@@ -89,7 +89,7 @@ func (s *SearchEngine) Rebuild(ctx context.Context, documents []ports.SearchDocu
 	if err := s.ensureIndex(ctx); err != nil {
 		return err
 	}
-	if err := s.request(ctx, http.MethodPut, "/indexes/products/settings/filterable-attributes", []byte(`["category_slug"]`), nil); err != nil {
+	if err := s.request(ctx, http.MethodPut, "/indexes/products/settings/filterable-attributes", []byte(`["category_slug","brand_slug","price_cents","available","compare_at_cents","has_offer"]`), nil); err != nil {
 		return err
 	}
 	if err := s.request(ctx, http.MethodPut, "/indexes/products/settings/sortable-attributes", []byte(`["price_cents","id"]`), nil); err != nil {
@@ -161,6 +161,67 @@ func categoryFilter(category string) string {
 		return ""
 	}
 	return "category_slug = '" + strings.ReplaceAll(category, "'", "") + "'"
+}
+
+func searchFilter(request ports.SearchRequest) string {
+	parts := make([]string, 0, 5)
+	categories := append([]string(nil), request.CategorySlugs...)
+	if request.CategorySlug != "" {
+		categories = append(categories, request.CategorySlug)
+	}
+	if clause := slugFilter("category_slug", categories); clause != "" {
+		parts = append(parts, clause)
+	}
+	if clause := slugFilter("brand_slug", request.BrandSlugs); clause != "" {
+		parts = append(parts, clause)
+	}
+	switch request.PriceRange {
+	case "under-1000":
+		parts = append(parts, "price_cents < 100000")
+	case "1000-2500":
+		parts = append(parts, "price_cents >= 100000 AND price_cents < 250000")
+	case "2500-5000":
+		parts = append(parts, "price_cents >= 250000 AND price_cents < 500000")
+	case "over-5000":
+		parts = append(parts, "price_cents >= 500000")
+	}
+	if request.InStock {
+		parts = append(parts, "available > 0")
+	}
+	if request.OffersOnly {
+		parts = append(parts, "has_offer = true")
+	}
+	return strings.Join(parts, " AND ")
+}
+
+func slugFilter(attribute string, values []string) string {
+	unique := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value == "" || len(value) > 120 {
+			continue
+		}
+		valid := true
+		for _, char := range value {
+			if !(char >= 'a' && char <= 'z' || char >= '0' && char <= '9' || char == '-') {
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			continue
+		}
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		unique = append(unique, `"`+value+`"`)
+	}
+	if len(unique) == 0 {
+		return ""
+	}
+	return attribute + " IN [" + strings.Join(unique, ", ") + "]"
 }
 
 func meiliSort(sort string) string {

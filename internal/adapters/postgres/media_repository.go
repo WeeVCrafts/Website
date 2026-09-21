@@ -18,7 +18,7 @@ type MediaRepository struct{ pool *pgxpool.Pool }
 
 func NewMediaRepository(pool *pgxpool.Pool) *MediaRepository { return &MediaRepository{pool: pool} }
 
-const mediaManageCondition = `(s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su JOIN users member ON member.id=su.user_id AND member.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions)) OR EXISTS(SELECT 1 FROM user_roles ur JOIN users admin ON admin.id=ur.user_id AND admin.status='active' WHERE ur.user_id=$2 AND ur.role_slug='super_admin'))`
+const mediaManageCondition = `(s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su JOIN users member ON member.id=su.user_id AND member.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions)) OR EXISTS(SELECT 1 FROM user_roles ur JOIN users admin ON admin.id=ur.user_id AND admin.status='active' WHERE ur.user_id=$2 AND ur.role_slug IN ('marketplace_admin','super_admin')))`
 
 func (r *MediaRepository) PrepareUpload(ctx context.Context, sellerOwnerID, productID int64, objectKey, contentType string, byteSize int64) (int64, error) {
 	var mediaID int64
@@ -88,7 +88,7 @@ func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, medi
 }
 
 func (r *MediaRepository) GetPublicMedia(ctx context.Context, mediaID int64) (domaincommerce.MediaRecord, error) {
-	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`WHERE pm.id = $1 AND pm.status = 'ready' AND pm.visibility = 'public'`, mediaID))
+	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`WHERE pm.id = $1 AND pm.status = 'ready' AND pm.visibility = 'public' AND EXISTS (SELECT 1 FROM products p WHERE p.id = pm.product_id AND p.status = 'approved')`, mediaID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domaincommerce.MediaRecord{}, ports.ErrNotFound
 	}

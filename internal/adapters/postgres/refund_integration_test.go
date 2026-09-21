@@ -27,12 +27,12 @@ func (g *integrationRefundGateway) CreateRefund(_ context.Context, request ports
 	}, nil
 }
 
-func TestRefundTransitionsPaidOrderAtomicallyAndReplays(t *testing.T) {
+func TestRefundAfterReceivedReturnTransitionsDeliveredOrderAndReplays(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	address := domaincommerce.AddressInput{RecipientName: "Refund Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Refund Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	order, err := NewCommerceRepository(pool).CreateOrder(ctx, fixture.userIDs[0], fixture.cartIDs[0], "refund-integration-key-1234", address)
 	if err != nil {
 		t.Fatalf("create pending order: %v", err)
@@ -57,6 +57,15 @@ func TestRefundTransitionsPaidOrderAtomicallyAndReplays(t *testing.T) {
 
 	gateway := &integrationRefundGateway{}
 	service := applicationpayment.NewRefundService(gateway, paymentRepository)
+	if _, err := service.Refund(ctx, fixture.userIDs[0], order.OrderNumber, "refund-request-key-1234", "customer request"); !errors.Is(err, ports.ErrRefundState) {
+		t.Fatalf("refund should be blocked until operations receive the returned item, got %v", err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE orders SET status='delivered' WHERE id=$1`, order.ID); err != nil {
+		t.Fatalf("mark order delivered: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO return_requests(order_id,user_id,reason,status) VALUES($1,$2,'fixture return','received')`, order.ID, fixture.userIDs[0]); err != nil {
+		t.Fatalf("record received return: %v", err)
+	}
 	refund, err := service.Refund(ctx, fixture.userIDs[0], order.OrderNumber, "refund-request-key-1234", "customer request")
 	if err != nil {
 		t.Fatalf("process refund: %v", err)

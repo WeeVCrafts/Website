@@ -21,8 +21,9 @@
         <form class="mt-4" method="post" action="/privacy/consent">
           <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
           <input type="hidden" name="purpose" value="analytics">
-          <input type="hidden" name="granted" value="true">
-          <button class="text-sm font-semibold text-indigo underline" type="submit">Allow optional analytics</button>
+          <input type="hidden" name="granted" value="{{if .PrivacyCenter.AnalyticsAllowed}}false{{else}}true{{end}}">
+          <p class="text-sm leading-6 text-ink/65">Optional analytics are currently <strong>{{if .PrivacyCenter.AnalyticsAllowed}}enabled{{else}}disabled{{end}}</strong>.</p>
+          <button class="text-sm font-semibold text-indigo underline" type="submit">{{if .PrivacyCenter.AnalyticsAllowed}}Withdraw analytics consent{{else}}Allow optional analytics{{end}}</button>
         </form>
       </div>
       <div class="rounded-2xl border border-line bg-white p-6">

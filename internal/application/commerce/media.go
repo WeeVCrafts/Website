@@ -161,6 +161,30 @@ func (s *MediaService) OpenPublicMedia(ctx context.Context, mediaID int64) (io.R
 	return body, info, nil
 }
 
+func (s *MediaService) OpenOwnedMedia(ctx context.Context, actorID, mediaID int64) (io.ReadCloser, ports.ObjectInfo, error) {
+	lifecycle, _, err := s.lifecycle()
+	if err != nil || actorID <= 0 || mediaID <= 0 || !s.canManageProduct(ctx, actorID) {
+		return nil, ports.ObjectInfo{}, ErrInvalidMedia
+	}
+	record, err := lifecycle.GetOwnedMedia(ctx, actorID, mediaID)
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	reader, ok := s.storage.(ports.ObjectStorageContentReader)
+	if !ok {
+		return nil, ports.ObjectInfo{}, ErrInvalidMedia
+	}
+	body, info, err := reader.OpenObject(ctx, record.ObjectKey)
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	if info.ContentType != record.ContentType || info.ByteSize != record.ByteSize {
+		_ = body.Close()
+		return nil, ports.ObjectInfo{}, ErrInvalidMedia
+	}
+	return body, info, nil
+}
+
 func (s *MediaService) DeleteUpload(ctx context.Context, sellerOwnerID, mediaID int64) error {
 	lifecycle, reader, err := s.lifecycle()
 	if err != nil || sellerOwnerID <= 0 || mediaID <= 0 || !s.canManageProduct(ctx, sellerOwnerID) {
@@ -181,7 +205,7 @@ func (s *MediaService) canManageProduct(ctx context.Context, userID int64) bool 
 	if s.roles == nil {
 		return true
 	}
-	allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSuperAdmin, domainidentity.RoleSellerOwner)
+	allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin, domainidentity.RoleSellerOwner)
 	if err == nil && allowed {
 		return true
 	}

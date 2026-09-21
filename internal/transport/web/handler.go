@@ -90,6 +90,7 @@ type pageData struct {
 	Authenticated      bool
 	AccountUserID      int64
 	CSRFToken          string
+	CurrentSessionID   string
 	Sessions           []ports.SessionRecord
 	FormEmail          string
 	FormName           string
@@ -268,7 +269,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.requestEmailVerification(w, r)
 	case r.URL.Path == "/logout":
 		h.logout(w, r)
-	case r.URL.Path == "/account/sessions":
+	case r.URL.Path == "/account/sessions" || r.URL.Path == "/account/sessions/revoke":
 		h.sessionsPage(w, r)
 	case r.URL.Path == "/privacy":
 		h.privacyPage(w, r)
@@ -315,7 +316,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(r.URL.Path, "/orders/"):
 		h.orderPage(w, r, strings.TrimPrefix(r.URL.Path, "/orders/"))
 	case strings.HasPrefix(r.URL.Path, "/media/products/"):
-		h.publicMedia(w, r, strings.TrimPrefix(r.URL.Path, "/media/products/"))
+		mediaPath := strings.TrimPrefix(r.URL.Path, "/media/products/")
+		if strings.HasSuffix(mediaPath, "/preview") {
+			h.ownedMediaPreview(w, r, strings.TrimSuffix(mediaPath, "/preview"))
+		} else {
+			h.publicMedia(w, r, mediaPath)
+		}
 	case r.URL.Path == "/seller":
 		h.sellerPage(w, r)
 	case r.URL.Path == "/seller/onboard":
@@ -637,7 +643,11 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		h.renderAuth(w, r, "login", http.StatusUnauthorized, r.FormValue("email"), "Email or password is incorrect.")
 		return
 	}
-	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), clientIP(r), applicationauth.DefaultSessionTTL)
+	ttl := applicationauth.DefaultSessionTTL
+	if r.FormValue("remember") == "on" {
+		ttl = applicationauth.RememberSessionTTL
+	}
+	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), clientIP(r), ttl)
 	if err != nil {
 		h.renderAuth(w, r, "login", http.StatusServiceUnavailable, r.FormValue("email"), "We could not start a secure session. Please try again.")
 		return
@@ -645,7 +655,19 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), user.ID, r)
 	h.clearCSRFCookie(w)
-	h.redirect(w, r, applicationauth.LoginDestination(user.Roles))
+	h.redirect(w, r, authRedirectDestination(user.Roles, r.FormValue("next")))
+}
+
+func authRedirectDestination(roles []domainidentity.Role, next string) string {
+	destination := applicationauth.LoginDestination(roles)
+	if destination != "/account" {
+		return destination
+	}
+	candidate := strings.TrimSpace(next)
+	if !strings.HasPrefix(candidate, "/") || strings.HasPrefix(candidate, "//") || strings.Contains(candidate, "\\") {
+		return destination
+	}
+	return candidate
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
@@ -670,12 +692,13 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{
-		Email:       r.FormValue("email"),
-		DisplayName: r.FormValue("display_name"),
-		Password:    r.FormValue("password"),
+		Email:         r.FormValue("email"),
+		DisplayName:   r.FormValue("display_name"),
+		Password:      r.FormValue("password"),
+		AcceptedTerms: r.FormValue("consent") == "on",
 	})
 	if err != nil {
-		message := "Please check your name, email, and password. Use at least 12 characters."
+		message := "Please check your name, email, password, and privacy notice agreement. Use at least 12 characters."
 		if errors.Is(err, ports.ErrUserAlreadyExists) {
 			message = "An account with that email already exists."
 		}
@@ -690,7 +713,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), user.ID, r)
 	h.clearCSRFCookie(w)
-	h.redirect(w, r, applicationauth.LoginDestination(user.Roles))
+	h.redirect(w, r, authRedirectDestination(user.Roles, r.FormValue("next")))
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
@@ -723,6 +746,35 @@ func (h *Handler) sessionsPage(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
+		if r.URL.Path == "/account/sessions/revoke" {
+			targetID := strings.TrimSpace(r.FormValue("session_id"))
+			if targetID == "" || targetID == session.ID {
+				h.renderError(w, http.StatusUnprocessableEntity, "Session update invalid", "Choose another active session to sign out.")
+				return
+			}
+			activeSessions, err := h.sessions.List(r.Context(), session.UserID)
+			if err != nil {
+				h.renderError(w, http.StatusServiceUnavailable, "Sessions unavailable", "We could not load your active sessions.")
+				return
+			}
+			ownedSession := false
+			for _, activeSession := range activeSessions {
+				if activeSession.ID == targetID {
+					ownedSession = true
+					break
+				}
+			}
+			if !ownedSession {
+				h.notFound(w, r)
+				return
+			}
+			if err := h.sessions.Revoke(r.Context(), targetID); err != nil {
+				h.renderError(w, http.StatusServiceUnavailable, "Sessions unavailable", "We could not sign out that session.")
+				return
+			}
+			h.redirect(w, r, "/account/sessions?notice=Session+signed+out")
+			return
+		}
 		if err := h.sessions.RevokeAll(r.Context(), session.UserID); err != nil {
 			h.renderError(w, http.StatusServiceUnavailable, "Sessions unavailable", "We could not revoke the active sessions.")
 			return
@@ -741,16 +793,17 @@ func (h *Handler) sessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.render(w, http.StatusOK, "sessions", pageData{
-		Brand:           identity.Name,
-		Tagline:         identity.Tagline,
-		Description:     identity.Description,
-		Title:           "Your sessions · " + identity.Name,
-		Authenticated:   true,
-		AccountUserID:   session.UserID,
-		CSRFToken:       session.CSRFToken,
-		Sessions:        sessions,
-		Notice:          verificationNotice(r),
-		RecoveryEnabled: h.recoveryService != nil,
+		Brand:            identity.Name,
+		Tagline:          identity.Tagline,
+		Description:      identity.Description,
+		Title:            "Your sessions · " + identity.Name,
+		Authenticated:    true,
+		AccountUserID:    session.UserID,
+		CSRFToken:        session.CSRFToken,
+		CurrentSessionID: session.ID,
+		Sessions:         sessions,
+		Notice:           verificationNotice(r),
+		RecoveryEnabled:  h.recoveryService != nil,
 	})
 }
 

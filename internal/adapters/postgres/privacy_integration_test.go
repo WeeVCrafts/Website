@@ -36,6 +36,20 @@ func TestMarketingConsentUpdatesPreferenceAndHistoryTogether(t *testing.T) {
 	if !center.EmailMarketing || len(center.Consents) != 1 || !center.Consents[0].Granted {
 		t.Fatalf("marketing consent and saved preference diverged after grant: %+v", center)
 	}
+	if err := repository.RecordConsent(ctx, userID, "analytics", "test-policy", true, "integration-test"); err != nil {
+		t.Fatalf("grant analytics consent: %v", err)
+	}
+	center, err = repository.GetCenter(ctx, userID)
+	if err != nil || !center.AnalyticsAllowed {
+		t.Fatalf("analytics consent was not reflected in center: center=%+v err=%v", center, err)
+	}
+	if err := repository.RecordConsent(ctx, userID, "analytics", "test-policy", false, "integration-test"); err != nil {
+		t.Fatalf("withdraw analytics consent: %v", err)
+	}
+	center, err = repository.GetCenter(ctx, userID)
+	if err != nil || center.AnalyticsAllowed {
+		t.Fatalf("analytics withdrawal was not reflected in center: center=%+v err=%v", center, err)
+	}
 
 	if err := repository.RecordConsent(ctx, userID, "marketing", "test-policy", false, "integration-test"); err != nil {
 		t.Fatalf("withdraw marketing consent: %v", err)
@@ -44,7 +58,7 @@ func TestMarketingConsentUpdatesPreferenceAndHistoryTogether(t *testing.T) {
 	if err != nil {
 		t.Fatalf("reload privacy center: %v", err)
 	}
-	if center.EmailMarketing || len(center.Consents) != 2 || center.Consents[0].Granted {
+	if center.EmailMarketing || center.AnalyticsAllowed || len(center.Consents) != 4 || center.Consents[0].Granted {
 		t.Fatalf("marketing consent and saved preference diverged after withdrawal: %+v", center)
 	}
 }

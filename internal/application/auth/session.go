@@ -14,6 +14,7 @@ import (
 var ErrInvalidSession = errors.New("session is invalid or expired")
 
 const DefaultSessionTTL = 24 * time.Hour
+const RememberSessionTTL = 30 * 24 * time.Hour
 
 type SessionService struct {
 	store          ports.SessionStore

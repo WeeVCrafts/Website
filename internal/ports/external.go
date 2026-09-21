@@ -52,14 +52,17 @@ type SearchEngine interface {
 }
 
 type SearchDocument struct {
-	ID           int64  `json:"id"`
-	Slug         string `json:"slug"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Brand        string `json:"brand"`
-	CategorySlug string `json:"category_slug"`
-	PriceCents   int64  `json:"price_cents"`
-	Available    int    `json:"available"`
+	ID             int64  `json:"id"`
+	Slug           string `json:"slug"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Brand          string `json:"brand"`
+	BrandSlug      string `json:"brand_slug"`
+	CategorySlug   string `json:"category_slug"`
+	PriceCents     int64  `json:"price_cents"`
+	CompareAtCents int64  `json:"compare_at_cents"`
+	HasOffer       bool   `json:"has_offer"`
+	Available      int    `json:"available"`
 }
 
 type SearchIndexer interface {
@@ -67,11 +70,16 @@ type SearchIndexer interface {
 }
 
 type SearchRequest struct {
-	Query        string
-	CategorySlug string
-	Sort         string
-	Limit        int
-	Offset       int
+	Query         string
+	CategorySlug  string
+	CategorySlugs []string
+	BrandSlugs    []string
+	Sort          string
+	PriceRange    string
+	InStock       bool
+	OffersOnly    bool
+	Limit         int
+	Offset        int
 }
 
 type SearchResult struct {

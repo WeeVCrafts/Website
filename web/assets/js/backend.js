@@ -105,7 +105,7 @@
 
     async signUp(input) {
       const result = await this.call(ROOT + "/auth/register", {
-        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "" }
+        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", accepted_terms: input.acceptedTerms === true }
       });
       this.csrf = result.csrf_token || "";
       return result;
@@ -159,11 +159,20 @@
       return { id: payload && payload.id, items: items };
     }
 
-    async changeCart(slug, delta) {
+    async changeCart(slug, delta, variantID) {
       await fetch(this.base + "/ui/cart/" + encodeURIComponent(slug), {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
-        body: new URLSearchParams({ delta: String(delta) }).toString()
+        body: new URLSearchParams({ delta: String(delta), variant_id: String(variantID || "") }).toString()
+      }).then(async function (response) { if (!response.ok) throw new Error(messageFrom(response, await response.json().catch(function () { return {}; }))); });
+      return this.cart();
+    }
+
+    async removeCart(slug, variantID) {
+      await fetch(this.base + "/ui/cart/" + encodeURIComponent(slug), {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
+        body: new URLSearchParams({ remove: "true", variant_id: String(variantID || "") }).toString()
       }).then(async function (response) { if (!response.ok) throw new Error(messageFrom(response, await response.json().catch(function () { return {}; }))); });
       return this.cart();
     }
@@ -178,11 +187,11 @@
       });
       return this.cart();
     }
-    async moveCartToWishlist(slug) {
+    async moveCartToWishlist(slug, variantID) {
       const response = await fetch(this.base + "/ui/wishlist/" + encodeURIComponent(slug), {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
-        body: "source=cart"
+        body: new URLSearchParams({ source: "cart", variant_id: String(variantID || "") }).toString()
       });
       if (!response.ok) throw new Error("The item could not be moved to the wishlist.");
       return this.cart();

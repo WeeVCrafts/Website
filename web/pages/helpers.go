@@ -13,6 +13,10 @@ func cartDeltaValues(variantID int64, delta int) string {
 	return fmt.Sprintf(`{"variant_id":"%d","delta":"%d"}`, variantID, delta)
 }
 
+func cartRemoveValues(variantID int64) string {
+	return fmt.Sprintf(`{"variant_id":"%d","remove":"true"}`, variantID)
+}
+
 func customerSupportMessageClass(role string) string {
 	if strings.EqualFold(strings.TrimSpace(role), "support agent") {
 		return "customer-support-message customer-support-message--agent"
@@ -136,6 +140,13 @@ func paginationCurrent(page, current int) string {
 }
 
 func pageLabel(page int) string { return strconv.Itoa(page) }
+
+func listingResultCount(page viewmodels.CustomerPage) int {
+	if page.TotalResults > 0 || len(page.Products) == 0 {
+		return page.TotalResults
+	}
+	return len(page.Products)
+}
 
 func orderPath(number string) string {
 	return "/orders/" + strings.TrimPrefix(strings.TrimSpace(number), "#")

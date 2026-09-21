@@ -386,7 +386,7 @@ templ PortalReturnList(p viewmodels.AdminPage) {
 					if item.Status == "pending" {
 						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
 					} else if item.Status == "approved" {
-						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark item received</button></form>
+						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark returned order received</button></form>
 					} else {
 						<p class="admin-page-note">This return request is closed for operations updates.</p>
 					}

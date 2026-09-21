@@ -27,14 +27,15 @@ func NewService(repository ports.UserRepository, hasher ports.PasswordHasher) *S
 }
 
 type RegisterInput struct {
-	Email       string
-	DisplayName string
-	Password    string
+	Email         string
+	DisplayName   string
+	Password      string
+	AcceptedTerms bool
 }
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (domainidentity.User, error) {
 	email := normalizeEmail(input.Email)
-	if !validEmail(email) || strings.TrimSpace(input.DisplayName) == "" || len(input.Password) < 12 || len(input.Password) > 1024 {
+	if !validEmail(email) || strings.TrimSpace(input.DisplayName) == "" || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
 		return domainidentity.User{}, ErrInvalidRegistration
 	}
 	passwordHash, err := s.hasher.Hash(input.Password)

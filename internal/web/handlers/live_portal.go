@@ -360,6 +360,9 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		component = adminpages.PortalProducts(page)
 	case "inventory":
 		page.Inventory = h.adminInventory(r)
+		if page.Inventory == nil {
+			page.DataWarning = joinPortalWarning(page.DataWarning, "The inventory list could not be loaded. Refresh the page to try again.")
+		}
 		component = adminpages.PortalInventory(page)
 	case "orders":
 		component = adminpages.PortalOrders(page)
@@ -425,11 +428,11 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		var hasCompareAt bool
 		err = h.pool.QueryRow(r.Context(), `
 			SELECT p.id,p.seller_id,COALESCE(s.display_name,''),p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,
-			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,
+			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,
 			       COALESCE(i.available_quantity,0),p.delivery_label,p.status,p.image_url
 			FROM products p LEFT JOIN sellers s ON s.id=p.seller_id
 			JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
-			LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
+			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.id=$1`, productID).Scan(&id, &sellerID, &form.SellerName, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &form.SKU, &price, &compareAt, &hasCompareAt, &stock, &form.DeliveryLabel, &status, &form.Image)
 		if err != nil || status == "archived" {
 			http.NotFound(w, r)
@@ -452,6 +455,7 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 			http.Error(w, "Could not load product media", http.StatusServiceUnavailable)
 			return
 		}
+		productMediaPreviewURLs(form.Media)
 		page.Title = "Edit product"
 		page.Subtitle = "Update all listing details. Stock remains in the permission-scoped Inventory workflow."
 	}
@@ -505,6 +509,9 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Bars = []viewmodels.AdminBar{{Label: "Week 1", Value: "Live order value", Height: "35", Color: "red"}, {Label: "Week 2", Value: "Live order value", Height: "50", Color: "green"}, {Label: "Week 3", Value: "Live order value", Height: "65", Color: "peach"}, {Label: "Week 4", Value: "Live order value", Height: "80", Color: "red"}}
 	page.Sellers = h.adminSellers(r)
 	page.Products = h.adminProducts(r, portalQuery(query))
+	if page.Products == nil {
+		page.DataWarning = "The product list could not be loaded. Refresh the page to try again."
+	}
 	page.Orders = h.adminOrders(r)
 	page.Returns = h.adminReturns(r)
 	page.Transactions = h.adminTransactions(r)
@@ -598,7 +605,7 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 		var available, reserved int64
 		var price int64
 		if rows.Scan(&name, &sku, &available, &reserved, &price, &image) != nil {
-			continue
+			return nil
 		}
 		onHand := available + reserved
 		status := "in_stock"
@@ -618,6 +625,9 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 			Location: "India", Value: money(price * available), Status: status,
 			Image: image,
 		})
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return items
 }
@@ -644,20 +654,23 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 }
 
 func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(pv.sku,''), COALESCE(s.display_name,''), c.name, p.price_cents, p.status, p.image_url,p.created_at FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR COALESCE(pv.sku,'') ILIKE '%'||$1||'%' OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
+	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,CASE WHEN p.status <> 'approved' AND p.image_url LIKE '/media/products/%' THEN p.image_url || '/preview' ELSE p.image_url END,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminProduct
+	result := make([]viewmodels.AdminProduct, 0)
 	for rows.Next() {
 		var id int64
-		var name, sku, seller, category, status, image string
+		var name, sku, seller, category, status, image, searchSKUs string
 		var submitted time.Time
 		var price int64
-		if rows.Scan(&id, &name, &sku, &seller, &category, &price, &status, &image, &submitted) == nil {
-			result = append(result, viewmodels.AdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, Seller: seller, Category: category, Price: money(price), Status: status, Submitted: submitted.Format("2 Jan 2006"), Image: image})
+		if rows.Scan(&id, &name, &sku, &seller, &category, &price, &status, &image, &submitted, &searchSKUs) == nil {
+			result = append(result, viewmodels.AdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Seller: seller, Category: category, Price: money(price), Status: status, Submitted: submitted.Format("2 Jan 2006"), Image: image})
 		}
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return result
 }
@@ -1265,7 +1278,9 @@ func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, st
 	if err := tx.QueryRow(r.Context(), `SELECT status FROM seller_settlements WHERE id=$1 FOR UPDATE`, id).Scan(&current); err != nil {
 		return err
 	}
-	if current == "pending" && status != "approved" || current == "approved" && status != "paid" && status != "failed" {
+	validTransition := current == "pending" && status == "approved" ||
+		current == "approved" && (status == "paid" || status == "failed")
+	if !validTransition {
 		return fmt.Errorf("invalid state transition from %s to %s", current, status)
 	}
 	if _, err := tx.Exec(r.Context(), `UPDATE seller_settlements SET status=$1,updated_at=NOW() WHERE id=$2`, status, id); err != nil {
@@ -1316,7 +1331,7 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 		page.RoleLabel = "Seller Owner"
 	}
 	page.CanProducts = sellerPortalAllowed("/seller-admin/products", isOwner, permissions)
-	page.CanProductWrite = isOwner || containsString(permissions, "PRODUCT_WRITE")
+	page.CanProductWrite = page.SellerStatus == "active" && (isOwner || containsString(permissions, "PRODUCT_WRITE"))
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
 	page.CanInventoryWrite = isOwner || containsString(permissions, "INVENTORY_WRITE")
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
@@ -1371,7 +1386,11 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		page.RoleLabel = roleLabel(domainidentity.RoleSellerOwner)
 	}
 	page.CanProducts = true
-	page.CanProductWrite = true
+	page.CanProductWrite = page.SellerStatus == "active" && (isOwner || containsString(permissions, "PRODUCT_WRITE"))
+	if !page.CanProductWrite {
+		http.Redirect(w, r, "/seller-admin/onboarding", http.StatusSeeOther)
+		return
+	}
 	page.CanInventoryWrite = isOwner || containsString(permissions, "INVENTORY_WRITE")
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
@@ -1392,10 +1411,10 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		var price, compareAt, stock int64
 		var hasCompareAt bool
 		err = h.pool.QueryRow(r.Context(), `
-			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,p.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,p.image_url,
+			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,p.image_url,
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
-			LEFT JOIN LATERAL (SELECT id,sku FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
+			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id
 			WHERE p.id=$1 AND p.status<>'archived' AND p.seller_id IN (
 				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 OR EXISTS (
@@ -1420,6 +1439,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 			http.Error(w, "Could not load product media", http.StatusServiceUnavailable)
 			return
 		}
+		productMediaPreviewURLs(form.Media)
 		page.Title = "Edit product draft"
 	} else {
 		page.Title = "Create product draft"
@@ -1444,6 +1464,12 @@ func productMediaViews(ctx context.Context, pool *pgxpool.Pool, productID int64)
 		media = append(media, viewmodels.ProductMedia{ID: strconv.FormatInt(id, 10), URL: path, ContentType: contentType, Size: strconv.FormatInt(byteSize, 10), IsVideo: strings.HasPrefix(contentType, "video/")})
 	}
 	return media, rows.Err()
+}
+
+func productMediaPreviewURLs(media []viewmodels.ProductMedia) {
+	for index := range media {
+		media[index].URL = "/media/products/" + media[index].ID + "/preview"
+	}
 }
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
@@ -1487,9 +1513,15 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	page := viewmodels.SellerAdminPage{Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: r.URL.Query().Get("range"), Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus}
 	if sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
 		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
+		if page.Products == nil {
+			page.DataWarning = joinPortalWarning(page.DataWarning, "The product list could not be loaded. Refresh the page to try again.")
+		}
 	}
 	if sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions) {
 		page.Inventory = h.sellerInventory(r, sellerID, portalQuery(page.Query))
+		if page.Inventory == nil {
+			page.DataWarning = joinPortalWarning(page.DataWarning, "The inventory list could not be loaded. Refresh the page to try again.")
+		}
 	}
 	if sellerPortalAllowed("/seller-admin/orders", isOwner, permissions) {
 		page.Orders = h.sellerOrders(r, sellerID)
@@ -1516,7 +1548,7 @@ func filterSellerLivePage(page *viewmodels.SellerAdminPage) {
 	if query != "" {
 		filteredProducts := page.Products[:0]
 		for _, item := range page.Products {
-			if strings.Contains(strings.ToLower(item.Name+" "+item.SKU+" "+item.Category+" "+item.Status), query) {
+			if strings.Contains(strings.ToLower(item.Name+" "+item.SKU+" "+item.SearchSKUs+" "+item.Category+" "+item.Status), query) {
 				filteredProducts = append(filteredProducts, item)
 			}
 		}
@@ -1569,21 +1601,32 @@ func (h *LivePortalHandler) sellerStats(r *http.Request, sellerID int64) []viewm
 	return []viewmodels.SellerAdminStat{{Icon: "category", Value: strconv.FormatInt(products, 10), Label: "Products", Delta: "Live", Positive: true, Period: "database", Tone: "green"}, {Icon: "inventory_2", Value: strconv.FormatInt(orders, 10), Label: "Orders", Delta: "Live", Positive: true, Period: "database", Tone: "blue"}, {Icon: "warehouse", Value: strconv.FormatInt(stock, 10), Label: "Available stock", Delta: "Live", Positive: true, Period: "database", Tone: "orange"}}
 }
 
+func joinPortalWarning(current, warning string) string {
+	if current == "" {
+		return warning
+	}
+	return current + " " + warning
+}
+
 func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name, COALESCE(v.sku,''), c.name, p.price_cents, p.status, COALESCE(i.available_quantity,0), (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR COALESCE(v.sku,'') ILIKE '%'||$2||'%' OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, sellerID, query)
+	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, sellerID, query)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminProduct
+	result := make([]viewmodels.SellerAdminProduct, 0)
 	for rows.Next() {
 		var id int64
-		var name, sku, category, status, image string
+		var name, sku, category, status, image, searchSKUs string
 		var price, stock int64
 		var variants int
-		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image) == nil {
-			result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image})
+		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image, &searchSKUs) != nil {
+			return nil
 		}
+		result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image})
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return result
 }
@@ -1594,20 +1637,24 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminInventory
+	result := make([]viewmodels.SellerAdminInventory, 0)
 	for rows.Next() {
 		var variantID int64
 		var name, sku, variant string
 		var available, reserved int64
-		if rows.Scan(&variantID, &name, &sku, &variant, &available, &reserved) == nil {
-			status := "In stock"
-			if available == 0 {
-				status = "Out of stock"
-			} else if available <= 5 {
-				status = "Low stock"
-			}
-			result = append(result, viewmodels.SellerAdminInventory{VariantID: strconv.FormatInt(variantID, 10), Name: name, SKU: sku, Variant: variant, Location: "India", Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Reorder: "5", Status: status, Image: "/assets/images/customer/madhubani-tree.webp"})
+		if rows.Scan(&variantID, &name, &sku, &variant, &available, &reserved) != nil {
+			return nil
 		}
+		status := "In stock"
+		if available == 0 {
+			status = "Out of stock"
+		} else if available <= 5 {
+			status = "Low stock"
+		}
+		result = append(result, viewmodels.SellerAdminInventory{VariantID: strconv.FormatInt(variantID, 10), Name: name, SKU: sku, Variant: variant, Location: "India", Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Reorder: "5", Status: status, Image: "/assets/images/customer/madhubani-tree.webp"})
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return result
 }
@@ -1637,10 +1684,23 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		var created time.Time
 		var total, items int64
 		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &items) == nil {
-			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Destination: "India", Status: status, Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
+			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Destination: "India", Status: status, NextStatus: nextFulfillmentStatus(status), Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
 		}
 	}
 	return result
+}
+
+func nextFulfillmentStatus(status string) string {
+	switch status {
+	case "pending":
+		return "processing"
+	case "processing":
+		return "shipped"
+	case "shipped":
+		return "delivered"
+	default:
+		return ""
+	}
 }
 
 func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []viewmodels.SellerAdminReturn {
@@ -1988,7 +2048,7 @@ func filterAdminPage(page *viewmodels.AdminPage, query string) {
 	}
 	products := page.Products[:0]
 	for _, item := range page.Products {
-		if contains(item.Name, item.SKU, item.Seller, item.Category, item.Status) {
+		if contains(item.Name, item.SKU, item.SearchSKUs, item.Seller, item.Category, item.Status) {
 			products = append(products, item)
 		}
 	}

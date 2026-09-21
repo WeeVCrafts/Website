@@ -567,7 +567,7 @@ func (r *CommerceRepository) ListPendingProducts(ctx context.Context, actorID in
 }
 
 func (r *CommerceRepository) listManagedProducts(ctx context.Context, filter string, args ...any) ([]domaincommerce.ManagedProduct, error) {
-	query := `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(p.compare_at_cents, 0), p.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id ` + filter + ` ORDER BY p.updated_at DESC, p.id DESC LIMIT 100`
+	query := `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(pv.compare_at_cents, 0), pv.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE LEFT JOIN inventory_stock i ON i.variant_id = pv.id ` + filter + ` ORDER BY p.updated_at DESC, p.id DESC LIMIT 100`
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -590,13 +590,13 @@ type catalogProductQuerier interface {
 
 func (r *CommerceRepository) getSellerProduct(ctx context.Context, querier catalogProductQuerier, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
-	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(p.compare_at_cents, 0), p.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')) AND p.id = $2`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(pv.compare_at_cents, 0), pv.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')) AND p.id = $2 ORDER BY pv.id LIMIT 1`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
 	return product, err
 }
 
 func (r *CommerceRepository) getAdminProduct(ctx context.Context, querier catalogProductQuerier, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
-	err := querier.QueryRow(ctx, `SELECT p.id,s.id,s.display_name,p.slug,p.brand_slug,b.name,p.name,p.description,pv.sku,pv.price_cents,COALESCE(p.compare_at_cents,0),p.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),p.status,p.category_slug,c.name,p.delivery_label,pv.id FROM products p LEFT JOIN sellers s ON s.id=p.seller_id JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=pv.id WHERE p.id=$1`, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	err := querier.QueryRow(ctx, `SELECT p.id,s.id,s.display_name,p.slug,p.brand_slug,b.name,p.name,p.description,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),p.status,p.category_slug,c.name,p.delivery_label,pv.id FROM products p LEFT JOIN sellers s ON s.id=p.seller_id JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=pv.id WHERE p.id=$1`, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
 	return product, err
 }
 
@@ -652,6 +652,7 @@ func (r *CommerceRepository) MoveCartItemToWishlist(ctx context.Context, cartID,
 			JOIN cart_items ci ON ci.cart_id = c.id AND ci.variant_id = $3
 			JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active'
 			JOIN products p ON p.id = pv.product_id AND p.status = 'approved'
+			JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 			WHERE c.id = $1 AND c.user_id = $2 AND c.status = 'active' AND c.expires_at > NOW()
 			FOR UPDATE OF c, ci`, cartID, userID, variantID).Scan(&cartProductID)
 		if err != nil {
@@ -698,6 +699,7 @@ func (r *CommerceRepository) MergeGuestCart(ctx context.Context, userID int64, g
 			FROM cart_items ci
 			JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active'
 			JOIN products p ON p.id = pv.product_id AND p.status = 'approved'
+			JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 			JOIN inventory_stock i ON i.variant_id = pv.id
 			WHERE ci.cart_id = $2
 			ON CONFLICT (cart_id, variant_id) DO UPDATE SET quantity = LEAST(99, cart_items.quantity + EXCLUDED.quantity), updated_at = NOW()`, userCartID, guestID); err != nil {
@@ -737,7 +739,7 @@ func (r *CommerceRepository) GetCart(ctx context.Context, cartID int64) (domainc
 
 func (r *CommerceRepository) AddWishlist(ctx context.Context, userID, productID int64) error {
 	var exists bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM products WHERE id = $1 AND status = 'approved')`, productID).Scan(&exists); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' WHERE p.id = $1 AND p.status = 'approved')`, productID).Scan(&exists); err != nil {
 		return err
 	}
 	if !exists {
@@ -761,6 +763,7 @@ func (r *CommerceRepository) ListWishlist(ctx context.Context, userID int64) ([]
 		       COALESCE(i.available_quantity, 0)
 		FROM wishlist_items wi
 		JOIN products p ON p.id = wi.product_id AND p.status = 'approved'
+		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN brands b ON b.slug = p.brand_slug
 		LEFT JOIN LATERAL (
 			SELECT pv.id
@@ -823,24 +826,32 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			}
 			return ports.ErrCartNotFound
 		}
-		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, i.available_quantity FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active' JOIN products p ON p.id = pv.product_id AND p.status = 'approved' JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF i`, cartID)
+		var cartItemCount int
+		if err := tx.QueryRow(transactionContext, `SELECT COUNT(*) FROM cart_items WHERE cart_id=$1`, cartID).Scan(&cartItemCount); err != nil {
+			return err
+		}
+		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, i.available_quantity, p.status, pv.status, s.status FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id JOIN products p ON p.id = pv.product_id JOIN sellers s ON s.id = p.seller_id JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF i, s`, cartID)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 		type line struct {
-			variantID           int64
-			productID           int64
-			name, sku           string
-			price               int64
-			quantity, available int
+			variantID                                  int64
+			productID                                  int64
+			name, sku                                  string
+			price                                      int64
+			quantity, available                        int
+			productStatus, variantStatus, sellerStatus string
 		}
 		lines := make([]line, 0)
 		var subtotal int64
 		for rows.Next() {
 			var item line
-			if err := rows.Scan(&item.variantID, &item.productID, &item.name, &item.sku, &item.price, &item.quantity, &item.available); err != nil {
+			if err := rows.Scan(&item.variantID, &item.productID, &item.name, &item.sku, &item.price, &item.quantity, &item.available, &item.productStatus, &item.variantStatus, &item.sellerStatus); err != nil {
 				return err
+			}
+			if item.productStatus != "approved" || item.variantStatus != "active" || item.sellerStatus != "active" {
+				return ports.ErrInvalidState
 			}
 			if item.quantity > item.available {
 				return ports.ErrInsufficientStock
@@ -853,6 +864,9 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if len(lines) == 0 {
 			return ports.ErrCartNotFound
+		}
+		if len(lines) != cartItemCount {
+			return ports.ErrInvalidState
 		}
 		orderNumber := newOrderNumber(userID)
 		shipping := int64(0)
@@ -1130,7 +1144,7 @@ func (r *CommerceRepository) ReleaseExpiredReservations(ctx context.Context, lim
 
 func (r *CommerceRepository) assertAvailableVariant(ctx context.Context, variantID int64) error {
 	var exists bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM product_variants pv JOIN products p ON p.id = pv.product_id JOIN inventory_stock i ON i.variant_id = pv.id WHERE pv.id = $1 AND pv.status = 'active' AND p.status = 'approved')`, variantID).Scan(&exists); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM product_variants pv JOIN products p ON p.id = pv.product_id AND p.status = 'approved' JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN inventory_stock i ON i.variant_id = pv.id WHERE pv.id = $1 AND pv.status = 'active')`, variantID).Scan(&exists); err != nil {
 		return err
 	}
 	if !exists {

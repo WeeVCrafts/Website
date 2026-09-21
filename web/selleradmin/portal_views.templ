@@ -61,6 +61,9 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 
 templ PortalProducts(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		if p.SellerStatus != "active" {
+			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
+		}
 		<form class="seller-toolbar" action="/seller-admin/products" method="get"><label class="sr-only" for="portal-product-query">Search products</label><input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
 				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
@@ -94,11 +97,11 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 			<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
 			<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
-			<label>Brand name<input name="brand_name" value={ form.BrandName } required/></label>
+			<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
 			<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
-			<label>Category name<input name="category_name" value={ form.CategoryName } required/></label>
+			<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
 			<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
-			<label>SKU<input name="sku" value={ form.SKU } required/></label>
+			<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
 			<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
 			<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
 			if form.ID == "" {
@@ -110,8 +113,8 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			} else {
 				<div class="seller-form-wide seller-form-note">Stock is managed separately in Inventory. Editing this listing will not change available units.</div>
 			}
-			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } placeholder="Delivery to serviceable PIN codes in India"/></label>
-			<label class="seller-form-wide">Description<textarea name="description" required rows="5">{ form.Description }</textarea></label>
+			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
+			<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
 			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save draft</button></div>
 		</form>
 		if form.ID != "" {
@@ -167,7 +170,11 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 				<label>SKU<input name="sku" required maxlength="120"/></label>
 				<label>Price in paise<input name="price_cents" type="number" min="1" required/></label>
 				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1"/></label>
-				<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
+				if p.CanInventoryWrite {
+					<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
+				} else {
+					<p class="seller-form-wide seller-form-note">This variant starts at zero stock. An owner must grant Inventory write access before you can add stock.</p>
+				}
 				<button class="seller-button primary" type="submit">Add variant</button>
 			</form>
 			</section>
@@ -202,8 +209,8 @@ templ PortalOrders(p viewmodels.SellerAdminPage) {
 			for _, order := range p.Orders {
 				<div class="seller-product-row"><span><b>{ order.Number }</b></span><span>{ order.Date }</span><span>{ order.Customer }</span><span>{ order.Items }</span><span>{ order.Value }</span><span>{ order.Payment }</span><span>
 					<strong>{ order.Status }</strong>
-					if p.CanFulfill && order.Status != "delivered" {
-						<form class="seller-inline-form" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ order.SellerID }/><input type="hidden" name="order_number" value={ order.Number }/><label class="sr-only" for={ "fulfil-status-" + order.Number }>Fulfilment status for { order.Number }</label><select id={ "fulfil-status-" + order.Number } name="status"><option value="processing">Processing</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option></select><input name="carrier" maxlength="80" placeholder="Carrier"/><input name="tracking_number" maxlength="120" placeholder="Tracking number (needed to ship)"/><input name="note" maxlength="500" placeholder="Fulfilment note"/><button class="seller-button primary" type="submit">Update fulfilment</button></form>
+					if p.CanFulfill && order.NextStatus != "" {
+						<form class="seller-inline-form" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ order.SellerID }/><input type="hidden" name="order_number" value={ order.Number }/><label class="sr-only" for={ "fulfil-status-" + order.Number }>Next fulfilment status for { order.Number }</label><select id={ "fulfil-status-" + order.Number } name="status"><option value={ order.NextStatus }>{ order.NextStatus }</option></select><input name="carrier" maxlength="80" placeholder="Carrier"/><input name="tracking_number" maxlength="120" placeholder="Tracking number needed to ship"/><input name="note" maxlength="500" placeholder="Fulfilment note"/><button class="seller-button primary" type="submit">Update fulfilment</button></form>
 					}
 				</span></div>
 			}
@@ -286,9 +293,9 @@ templ PortalSettings(p viewmodels.SellerAdminPage) {
 
 templ PortalTeam(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller staff</h2><p>Staff accounts and their seller-scoped permissions.</p></div></div>
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller staff</h2><p>A Super Admin assigns the Seller Staff role first. You can then add that account here and set its seller-scoped permissions.</p></div></div>
 			if p.CanTeam {
-				<p class="seller-muted">Add an existing active account by email. Create the account and assign Seller Staff access in Super Admin first.</p>
+				<p class="seller-muted">Use an active account that already has the Seller Staff role. Account creation and global role assignment stay with Super Admin.</p>
 				<form class="seller-inline-form" method="post" action="/seller-admin/team/add"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Email<input type="email" name="email" autocomplete="email" required/></label><fieldset><legend>Assign permissions</legend><label><input type="checkbox" name="permissions" value="PRODUCT_READ"/>Products</label><label><input type="checkbox" name="permissions" value="PRODUCT_WRITE"/>Edit products</label><label><input type="checkbox" name="permissions" value="INVENTORY_READ"/>Inventory</label><label><input type="checkbox" name="permissions" value="INVENTORY_WRITE"/>Adjust stock</label><label><input type="checkbox" name="permissions" value="ORDER_READ"/>Orders</label><label><input type="checkbox" name="permissions" value="ORDER_FULFILL"/>Fulfil orders</label><label><input type="checkbox" name="permissions" value="RETURN_READ"/>Returns</label><label><input type="checkbox" name="permissions" value="REPORT_READ"/>Reports</label></fieldset><button class="seller-button primary" type="submit">Add seller staff</button></form>
 			}
 			if len(p.Team) == 0 {

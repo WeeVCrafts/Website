@@ -27,10 +27,11 @@ func (r *PrivacyRepository) GetCenter(ctx context.Context, userID int64) (domain
 	} else if err != nil {
 		return center, err
 	}
-	consentRows, err := r.pool.Query(ctx, `SELECT purpose, policy_version, granted, source, created_at FROM consent_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`, userID)
+	consentRows, err := r.pool.Query(ctx, `SELECT purpose, policy_version, granted, source, created_at FROM consent_records WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT 50`, userID)
 	if err != nil {
 		return center, err
 	}
+	analyticsConsentSeen := false
 	for consentRows.Next() {
 		var consent domainprivacy.Consent
 		if err := consentRows.Scan(&consent.Purpose, &consent.PolicyVersion, &consent.Granted, &consent.Source, &consent.CreatedAt); err != nil {
@@ -38,6 +39,10 @@ func (r *PrivacyRepository) GetCenter(ctx context.Context, userID int64) (domain
 			return center, err
 		}
 		center.Consents = append(center.Consents, consent)
+		if consent.Purpose == "analytics" && !analyticsConsentSeen {
+			center.AnalyticsAllowed = consent.Granted
+			analyticsConsentSeen = true
+		}
 	}
 	if err := consentRows.Err(); err != nil {
 		consentRows.Close()

@@ -20,7 +20,7 @@ func TestVerifiedPaymentWebhookTransitionsOrderOnceAndCommitsReservation(t *test
 	fixture := newCommerceFixture(t, pool, 1, 1)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	address := domaincommerce.AddressInput{RecipientName: "Payment Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Payment Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	order, err := NewCommerceRepository(pool).CreateOrder(ctx, fixture.userIDs[0], fixture.cartIDs[0], "webhook-integration-key-1234", address)
 	if err != nil {
 		t.Fatalf("create pending order: %v", err)

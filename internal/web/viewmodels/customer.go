@@ -74,11 +74,11 @@ type CartItem struct {
 }
 
 type Order struct {
-	Number, Status, State, Payment, Date string
-	ReturnStatus                         string
-	Total                                string
-	Items                                []CartItem
-	CanRequestReturn                     bool
+	Number, Status, State, Payment, Date          string
+	ReturnStatus, RefundStatus                    string
+	Total                                         string
+	Items                                         []CartItem
+	CanCancel, CanRequestReturn, CanRequestRefund bool
 }
 
 type PaymentActivity struct {
@@ -104,6 +104,7 @@ type CustomerPage struct {
 	PaymentReady                                    bool
 	CanCreateSupport, CanFollowSeller               bool
 	CSRFToken                                       string
+	RefundKey                                       string
 	Filters                                         url.Values
 	Product                                         Product
 	OrderCount                                      int
@@ -126,7 +127,7 @@ type CustomerPage struct {
 	Address                                         Address
 	Addresses                                       []Address
 	CartCount, WishlistCount                        int
-	Page, Pages                                     int
+	Page, Pages, TotalResults                       int
 	CheckoutStep                                    int
 	Authenticated, Mock                             bool
 	Now                                             time.Time

@@ -71,6 +71,40 @@ async function signIn(page, email, landing, passwordValue = password) {
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === landing.replace(/\/$/, ""), { timeout: 30_000 });
 }
 
+async function createMockPaidOrder(page, email) {
+  await signIn(page, email, "/account");
+  await page.goto("/products/natural-soap");
+  const addResponse = page.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
+  await page.getByRole("button", { name: "Add to cart" }).click();
+  expect((await addResponse).ok()).toBeTruthy();
+
+  await page.goto("/checkout");
+  const savedAddresses = page.locator("#checkout-saved-address");
+  if (await savedAddresses.count() && await savedAddresses.locator("option").count() > 1) {
+    await savedAddresses.selectOption({ index: 1 });
+  }
+  const addressFields = [
+    ["recipient_name", "Finance QA Customer"], ["phone", "9876543210"],
+    ["line1", "12 Finance QA Road"], ["line2", "Settlement workflow"],
+    ["city", "Bengaluru"], ["region", "Karnataka"], ["postal_code", "560034"],
+  ];
+  for (const [name, value] of addressFields) {
+    const field = page.locator(`#checkout-address-form input[name="${name}"]`);
+    if (await field.inputValue() === "") await field.fill(value);
+  }
+  await page.getByRole("button", { name: /Continue to delivery/ }).click();
+  await page.getByRole("button", { name: /Continue to payment/ }).click();
+  await page.getByRole("button", { name: /Continue to review/ }).click();
+  const checkoutResponse = page.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
+  await page.getByRole("button", { name: /Place order/ }).click();
+  expect((await checkoutResponse).ok()).toBeTruthy();
+  const capture = page.getByRole("button", { name: "Simulate successful payment" });
+  await expect(capture).toBeVisible();
+  const orderNumber = await capture.getAttribute("data-order-number");
+  await capture.click();
+  await expect(page).toHaveURL(new RegExp(`/orders/${orderNumber}$`));
+}
+
 async function submitRoleChange(card, role, action, reason, sellerID = "") {
   const form = card.locator("form.role-assignment-form");
   await form.locator('select[name="role"]').selectOption(role);
@@ -224,13 +258,16 @@ test("registration, email verification, password recovery and login complete end
       if (staleEmail.startsWith("qa.auth.")) await deleteRoleUser(admin, staleCard, "Clean up interrupted local E2E auth-flow account");
     }
 
+    await page.route("**/*.js", route => route.abort());
     await page.goto("/register");
-    await page.locator('#page input[name="name"]').fill(name);
+    await expect(page.locator('#page input[name="csrf_token"]')).not.toHaveValue("");
+    await page.locator('#page input[name="display_name"]').fill(name);
     await page.locator('#page input[name="email"]').fill(email);
     await page.locator('#page input[name="password"]').fill(initialPassword);
     await page.locator('#page input[name="consent"]').check();
     await page.getByRole("button", { name: "Create account" }).click();
     await page.waitForURL(/\/account\/?$/);
+    await page.unrouteAll();
     accountCreated = true;
     await expect(page.locator("body")).toContainText(name);
 
@@ -257,11 +294,17 @@ test("registration, email verification, password recovery and login complete end
     await page.getByRole("button", { name: "Update password" }).click();
     await expect(page.locator('[data-backend-form-message]')).toContainText("Password updated");
 
+    await page.route("**/*.js", route => route.abort());
     await page.goto("/login");
     await page.locator('#page input[name="email"]').fill(email);
     await page.locator('#page input[name="password"]').fill(recoveredPassword);
+    await page.locator('#page input[name="remember"]').check();
     await page.getByRole("button", { name: /sign in/i }).click();
     await page.waitForURL(/\/account\/?$/);
+    const sessionCookie = (await page.context().cookies()).find(cookie => cookie.name === "wecratfs_session");
+    expect(sessionCookie).toBeTruthy();
+    expect(sessionCookie.expires * 1000 - Date.now()).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
+    await page.unrouteAll();
     await expect(page.locator("body")).toContainText(name);
   } finally {
     if (accountCreated && admin) {
@@ -282,6 +325,14 @@ test("customer address create, edit and delete persist with field validation", a
 
   const createForm = page.locator("form[data-address-create]");
   const csrfToken = await createForm.locator('input[name="csrf_token"]').inputValue();
+  for (const phone of ["123456", "1234567890123456"]) {
+    const invalidPhone = await page.request.post("/account/addresses", { form: {
+      csrf_token: csrfToken, recipient_name: recipient, phone, line1: "12 QA Road", city: "Bengaluru",
+      state: "Karnataka", postal_code: "560034", country_code: "IN",
+    } });
+    expect(invalidPhone.status(), `phone ${phone}`).toBe(422);
+    await expect(invalidPhone.text()).resolves.toContain("Phone number");
+  }
   const invalidAddress = await page.request.post("/account/addresses", { form: {
     csrf_token: csrfToken, recipient_name: recipient, phone: "9876543210", line1: "12 QA Road", line2: "",
     city: "Bengaluru", state: "Karnataka", postal_code: "12", country_code: "IN",
@@ -328,6 +379,13 @@ test("customer address create, edit and delete persist with field validation", a
   editForm = addressCard.locator("form[data-address-edit]");
   await expect(editForm.locator('input[name="line2"]')).toHaveValue("Opposite QA Library");
 
+  await page.goto("/checkout");
+  await page.locator("#checkout-saved-address").selectOption(addressID);
+  await expect(page.locator('#checkout-address-form input[name="recipient_name"]')).toHaveValue(recipient);
+  await expect(page.locator('#checkout-address-form input[name="line2"]')).toHaveValue("Opposite QA Library");
+  await page.goto("/account/addresses");
+  addressCard = page.locator(`.saved-address[data-address-card="${addressID}"]`);
+
   for (const width of [360, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const dimensions = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
@@ -367,6 +425,13 @@ test("customer security and privacy controls reach their persisted workflows", a
     await page.locator('form[action="/privacy/consent"]').first().getByRole("button").click();
     await expect(page.locator("body")).toContainText(wasEnabled ? "Email marketing is currently enabled" : "Email marketing is currently disabled");
 
+    const analyticsForm = page.locator('form[action="/privacy/consent"]').nth(1);
+    const analyticsWasEnabled = /Optional analytics are currently enabled/i.test(await page.locator("body").innerText());
+    await analyticsForm.getByRole("button").click();
+    await expect(page.locator("body")).toContainText(analyticsWasEnabled ? "Optional analytics are currently disabled" : "Optional analytics are currently enabled");
+    await page.locator('form[action="/privacy/consent"]').nth(1).getByRole("button").click();
+    await expect(page.locator("body")).toContainText(analyticsWasEnabled ? "Optional analytics are currently enabled" : "Optional analytics are currently disabled");
+
     const requestForm = page.locator('form[action="/privacy/requests"]');
     await requestForm.locator('select[name="request_type"]').selectOption("access");
     await requestForm.locator('textarea[name="details"]').fill(`Local E2E privacy access request ${Date.now()}`);
@@ -376,6 +441,104 @@ test("customer security and privacy controls reach their persisted workflows", a
 
   const unknownAccountResponse = await page.request.get("/account/not-a-real-setting");
   expect(unknownAccountResponse.status()).toBe(404);
+});
+
+test("customer can revoke one device session without ending the current session", async ({ browser }) => {
+  test.skip(!localMutationTarget, "Session mutations are restricted to the local test deployment.");
+  const currentContext = await browser.newContext();
+  const otherContext = await browser.newContext();
+  const current = await currentContext.newPage();
+  const other = await otherContext.newPage();
+  try {
+    await signIn(current, "demo.customer03@weevcrafts.local", "/account");
+    await signIn(other, "demo.customer03@weevcrafts.local", "/account");
+    const otherCookie = (await otherContext.cookies(target.origin)).find(cookie => cookie.name === "wecratfs_session");
+    expect(otherCookie).toBeTruthy();
+
+    await current.goto("/account/sessions");
+    const currentCard = current.locator(`[data-session-id="${(await currentContext.cookies(target.origin)).find(cookie => cookie.name === "wecratfs_session").value}"]`);
+    await expect(currentCard).toContainText("This is your current session");
+    const otherCard = current.locator(`[data-session-id="${otherCookie.value}"]`);
+    await expect(otherCard).toHaveCount(1);
+    const revokeResponse = current.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/account/sessions/revoke");
+    await otherCard.getByRole("button", { name: "Sign out this session" }).click();
+    const revokedResponse = await revokeResponse;
+    expect([204, 303]).toContain(revokedResponse.status());
+    if (revokedResponse.status() === 204) {
+      expect(revokedResponse.headers()["hx-redirect"]).toMatch(/\/account\/sessions\?notice=Session\+signed\+out/);
+    }
+    await expect(current).toHaveURL(/\/account\/sessions\?notice=Session\+signed\+out/);
+    await expect(current.locator(`[data-session-id="${otherCookie.value}"]`)).toHaveCount(0);
+    await expect(current.locator(`[data-session-id="${(await currentContext.cookies(target.origin)).find(cookie => cookie.name === "wecratfs_session").value}"]`)).toContainText("This is your current session");
+
+    await other.goto("/account");
+    await expect(other).toHaveURL(/\/login/);
+  } finally {
+    if (await current.locator('form[action="/account/sessions"]').count()) {
+      await current.locator('form[action="/account/sessions"]').getByRole("button", { name: "Sign out all sessions" }).click().catch(() => {});
+    }
+    await currentContext.close();
+    await otherContext.close();
+  }
+});
+
+test("customer profile name saves to PostgreSQL and restores cleanly", async ({ page }) => {
+  test.skip(!localMutationTarget, "Profile mutations are restricted to the local test deployment.");
+  await signIn(page, "demo.customer03@weevcrafts.local", "/account");
+  await expect(page.getByRole("link", { name: "Reviews", exact: true })).toBeVisible();
+  const reviewCount = page.locator(".account-stats > span").nth(2).locator("b");
+  await expect(reviewCount).not.toHaveText("—");
+  await page.goto("/account/profile");
+  const form = page.locator('form[action="/account/profile"]');
+  const originalName = await form.locator('input[name="name"]').inputValue();
+  const updatedName = `${originalName} QA ${Date.now()}`;
+
+  const saveName = async name => {
+    await page.goto("/account/profile");
+    const profileForm = page.locator('form[action="/account/profile"]');
+    await profileForm.locator('input[name="name"]').fill(name);
+    const response = page.waitForResponse(item => item.request().method() === "POST" && new URL(item.url()).pathname === "/account/profile");
+    await profileForm.getByRole("button", { name: "Save changes" }).click();
+    expect((await response).status()).toBe(303);
+    await page.goto("/account/profile");
+    await expect(page.locator('form[action="/account/profile"] input[name="name"]')).toHaveValue(name);
+  };
+
+  try {
+    await saveName(updatedName);
+    await page.goto("/account");
+    await expect(page.locator("#profile")).toContainText(updatedName);
+  } finally {
+    await saveName(originalName);
+  }
+});
+
+test("cart Remove deletes an entire line at quantity two", async ({ page }) => {
+  test.skip(!localMutationTarget, "Cart mutations are restricted to the local test deployment.");
+  await signIn(page, "demo.customer06@weevcrafts.local", "/account");
+  await page.goto("/cart");
+  await expect(page.locator("[data-backend-cart]")).toHaveAttribute("data-backend-ready", "true");
+  let cartLine = page.locator(".cart-line").first();
+  if (await cartLine.count() === 0) {
+    await page.goto("/products/natural-soap");
+    const addResponse = page.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
+    await page.getByRole("button", { name: "Add to cart" }).click();
+    expect((await addResponse).ok()).toBeTruthy();
+    await page.goto("/cart");
+    cartLine = page.locator(".cart-line").first();
+  }
+  const productName = await cartLine.locator("h2").innerText();
+  const quantity = cartLine.locator("output");
+  if (await quantity.innerText() === "1") {
+    await cartLine.locator(".quantity-control button").nth(1).click();
+    await expect(quantity).toHaveText("2");
+  }
+  const remove = cartLine.locator("button.text-button").filter({ hasText: "Remove" });
+  const removeResponsePromise = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname.startsWith("/ui/cart/"));
+  await remove.click();
+  const removeResponse = await removeResponsePromise;
+  expect(removeResponse.status()).toBe(200);
+  await expect(page.locator(".cart-line").filter({ hasText: productName })).toHaveCount(0);
 });
 
 test("customer notification choices persist and preserve consent state", async ({ page }) => {
@@ -519,6 +682,7 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
   const userContext = await browser.newContext();
   const ownerContext = await browser.newContext();
   const admin = await adminContext.newPage();
+  let owner;
   let accountCreated = false;
   let accountDeleted = false;
 
@@ -570,6 +734,19 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await expect(user).toHaveURL(/\/login/);
     await signIn(user, updatedEmail, "/finance-portal", passwordAfterReset);
 
+    owner = await ownerContext.newPage();
+    await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
+    await owner.goto("/seller-admin/team");
+    const unauthorizedStaffForm = owner.locator('form[action="/seller-admin/team/add"]');
+    await unauthorizedStaffForm.locator('input[name="email"]').fill(updatedEmail);
+    await unauthorizedStaffForm.locator('input[name="permissions"][value="PRODUCT_READ"]').check();
+    const unauthorizedStaff = await owner.request.post("/seller-admin/team/add", { maxRedirects: 0, form: {
+      csrf_token: await unauthorizedStaffForm.locator('input[name="csrf_token"]').inputValue(),
+      email: updatedEmail, permissions: ["PRODUCT_READ"],
+    } });
+    expect(unauthorizedStaff.status()).toBe(422);
+    await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
+
     await admin.goto("/super-admin/security");
     userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     await updateRoleUser(admin, userCard, { status: "suspended", reason: "Local session revocation verification" });
@@ -613,8 +790,6 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     const deniedFulfillment = await userContext.request.post("/seller-admin/orders/fulfill", { maxRedirects: 0 });
     expect(deniedFulfillment.status()).toBe(403);
 
-    const owner = await ownerContext.newPage();
-    await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
     await owner.goto("/seller-admin/team");
     const permissionForm = owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` });
     await expect(permissionForm).toHaveCount(1);
@@ -638,6 +813,47 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await expect(owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` })).toContainText("Edit products");
     await user.goto("/seller-admin/products/new");
     await expect(user.locator("form.seller-form-grid")).toBeVisible();
+    await expect(user.locator('form.seller-form-grid input[name="initial_stock"]')).toHaveValue("0");
+    const staffProductName = `QA Staff Draft ${suffix}`;
+    const staffProductSKU = `STAFF-QA-${suffix}`;
+    const staffProductForm = user.locator("form.seller-form-grid").first();
+    await staffProductForm.locator('input[name="name"]').fill(staffProductName);
+    await staffProductForm.locator('input[name="slug"]').fill(`qa-staff-draft-${suffix}`);
+    await staffProductForm.locator('input[name="brand_name"]').fill(`QA Staff Brand ${suffix}`);
+    await staffProductForm.locator('input[name="brand_slug"]').fill(`qa-staff-brand-${suffix}`);
+    await staffProductForm.locator('input[name="category_name"]').fill("Crafts");
+    await staffProductForm.locator('input[name="category_slug"]').fill("crafts");
+    await staffProductForm.locator('input[name="sku"]').fill(staffProductSKU);
+    await staffProductForm.locator('input[name="price_cents"]').fill("1500");
+    await staffProductForm.locator('input[name="initial_stock"]').evaluate(input => { if (input.type === "hidden") input.value = "0"; });
+    await staffProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
+    await staffProductForm.locator('textarea[name="description"]').fill("A staff-created draft used to verify product write access and zero-stock variant creation.");
+    const staffProductCreate = user.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products");
+    await staffProductForm.getByRole("button", { name: "Save draft" }).click();
+    expect((await staffProductCreate).status()).toBe(303);
+    await user.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
+    const staffDraftRow = user.locator(".seller-product-row").filter({ hasText: staffProductSKU });
+    await expect(staffDraftRow).toHaveCount(1);
+    await staffDraftRow.getByRole("link", { name: "Edit product" }).click();
+    const staffZeroVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
+    const zeroVariantResponse = await user.request.post("/seller-admin/products/variants/create", { maxRedirects: 0, form: {
+      csrf_token: await staffZeroVariantForm.locator('input[name="csrf_token"]').inputValue(),
+      product_id: await staffZeroVariantForm.locator('input[name="product_id"]').inputValue(),
+      name: "Staff created zero-stock option", sku: `STAFF-ALT-${suffix}`, price_cents: "1750", initial_stock: "0",
+    } });
+    expect(zeroVariantResponse.status()).toBe(303);
+    await owner.goto("/seller-admin/products");
+    const existingProductEdit = owner.locator('.seller-product-row a[href*="/edit"]').first();
+    await existingProductEdit.click();
+    await user.goto(owner.url());
+    const staffVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
+    const deniedVariant = await user.request.post("/seller-admin/products/variants/create", { maxRedirects: 0, form: {
+      csrf_token: await staffVariantForm.locator('input[name="csrf_token"]').inputValue(),
+      product_id: await staffVariantForm.locator('input[name="product_id"]').inputValue(),
+      name: `Forbidden stocked variant ${suffix}`, sku: `DENIED-${suffix}`, price_cents: "1000", initial_stock: "2",
+    } });
+    expect(deniedVariant.status()).toBe(403);
+    await owner.goto("/seller-admin/team");
 
     const addStaffForm = owner.locator('form[action="/seller-admin/team/add"]');
     await addStaffForm.locator('input[name="email"]').fill(updatedEmail);
@@ -654,6 +870,15 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+removed/);
     await owner.goto("/seller-admin/team");
     await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
+    await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
+    const staffDraftOwnerRow = owner.locator(".seller-product-row").filter({ hasText: staffProductSKU });
+    await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] input[name="reason"]').fill("Archive local E2E staff draft after permission check");
+    const archiveStaffDraft = owner.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/archive");
+    owner.once("dialog", dialog => dialog.accept());
+    await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] button').click();
+    expect((await archiveStaffDraft).status()).toBe(303);
+    await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
+    await expect(owner.locator(".seller-product-row").filter({ hasText: staffProductSKU })).toContainText("archived");
     const staffDenied = await userContext.request.get("/seller-admin", { maxRedirects: 0 });
     expect(staffDenied.status()).toBe(403);
 
@@ -666,6 +891,8 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await submitRoleChange(userCard, "seller_staff", "revoke", "Local seller staff role revocation verification", sellerID);
 
     await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
+    await updateRoleUser(admin, userCard, { status: "suspended", reason: "Suspend account before deletion verification" });
     userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     await deleteRoleUser(admin, userCard, "Local end-to-end role lifecycle cleanup");
     accountDeleted = true;
@@ -680,6 +907,53 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     }
     await adminContext.close();
     await userContext.close();
+    await ownerContext.close();
+  }
+});
+
+test("pending seller owner accounts see an honest onboarding state", async ({ browser }) => {
+  test.skip(!localMutationTarget, "User management mutations are restricted to the local test deployment.");
+  const suffix = Date.now().toString();
+  const email = `qa.pending-owner.${suffix}@example.test`;
+  const userPassword = "QA-Pending-Owner-2026!";
+  const adminContext = await browser.newContext();
+  const ownerContext = await browser.newContext();
+  const admin = await adminContext.newPage();
+  const owner = await ownerContext.newPage();
+  let created = false;
+
+  try {
+    await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
+    await admin.goto("/super-admin/security");
+    const form = admin.locator("form.role-user-create-form");
+    await form.locator('input[name="display_name"]').fill(`QA Pending Owner ${suffix}`);
+    await form.locator('input[name="email"]').fill(email);
+    await form.locator('input[name="password"]').fill(userPassword);
+    await form.locator('select[name="role"]').selectOption("seller_owner");
+    await form.locator('input[name="reason"]').fill("Verify pending seller onboarding restrictions");
+    await form.getByRole("button", { name: "Create account" }).click();
+    created = true;
+    await expect(admin).toHaveURL(/\/super-admin\/security/);
+    await expect(admin.locator(".role-assignment-card").filter({ hasText: email })).toContainText("seller_owner");
+
+    await signIn(owner, email, "/seller-admin", userPassword);
+    await owner.goto("/seller-admin/onboarding");
+    await expect(owner.locator("body")).toContainText("awaiting marketplace review");
+    await owner.goto("/seller-admin/products");
+    await expect(owner.locator("body")).toContainText("Product management is locked");
+    await expect(owner.getByRole("link", { name: "Create product draft" })).toHaveCount(0);
+    const blockedEditor = await ownerContext.request.get("/seller-admin/products/new", { maxRedirects: 0 });
+    expect(blockedEditor.status()).toBe(303);
+    expect(new URL(blockedEditor.headers().location, target).pathname).toBe("/seller-admin/onboarding");
+  } finally {
+    if (created) {
+      try {
+        await admin.goto("/super-admin/security");
+        const card = admin.locator(".role-assignment-card").filter({ hasText: email });
+        if (await card.count()) await deleteRoleUser(admin, card, "Clean up pending seller owner E2E account");
+      } catch {}
+    }
+    await adminContext.close();
     await ownerContext.close();
   }
 });
@@ -896,6 +1170,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await addedVariantForm.getByRole("button", { name: "Save variant" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
 
+    await seller.goto(`/seller-admin/products?q=${encodeURIComponent(`QA-ALT-EDIT-${suffix}`)}`);
+    const alternateSKUSearchRow = seller.locator(".seller-product-row").filter({ hasText: productName });
+    await expect(alternateSKUSearchRow).toHaveCount(1);
+    await expect(alternateSKUSearchRow).toContainText("2599");
+    await alternateSKUSearchRow.getByRole("link", { name: "Edit product" }).click();
+    const mainProductForm = seller.locator("form.seller-form-grid").first();
+    await expect(mainProductForm.locator('input[name="price_cents"]')).toHaveValue("259900");
+    await expect(mainProductForm.locator('input[name="compare_at_cents"]')).toHaveValue("299900");
+    await mainProductForm.getByRole("button", { name: "Save draft" }).click();
+    await expect(seller).toHaveURL(/\/seller-admin\/products/);
+    await seller.goto(productEditURL);
+    const preservedAlternateVariant = seller.locator("form.product-variant-edit").nth(1);
+    await expect(preservedAlternateVariant.locator('input[name="price_cents"]')).toHaveValue("284900");
+    await expect(preservedAlternateVariant.locator('input[name="compare_at_cents"]')).toHaveValue("309900");
+
     await seller.goto(`/seller-admin/inventory?q=${encodeURIComponent(`QA-ALT-EDIT-${suffix}`)}`);
     const inventoryRow = seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` });
     await expect(inventoryRow).toHaveCount(1);
@@ -911,14 +1200,15 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
 
     await seller.goto(productEditURL);
     const mediaPanel = seller.locator("[data-product-media]");
-    await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "../../web/assets/images/customer/maker-mithila.webp"));
-    await mediaPanel.locator("[data-media-upload]").click();
-    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
-    await expect(mediaPanel.locator(".product-media-asset img")).toHaveCount(1);
     await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "fixtures/flower.mp4"));
     await mediaPanel.locator("[data-media-upload]").click();
     await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product video saved.", { timeout: 30_000 });
     await expect(mediaPanel.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(1);
+    await expect(mediaPanel.locator(".product-media-asset img")).toHaveCount(0);
+    await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "../../web/assets/images/customer/maker-mithila.webp"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset img")).toHaveCount(1);
 
     await mediaPanel.locator("[data-media-file]").setInputFiles({ name: "not-an-image.png", mimeType: "image/png", buffer: Buffer.from("%PDF-1.7 not a PNG file") });
     await mediaPanel.locator("[data-media-upload]").click();
@@ -959,8 +1249,11 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     expect(savedMediaTypes.join(" ")).toContain("video/webm");
     const uploadedMedia = await mediaPanel.locator(".product-media-asset").evaluateAll(assets => assets.map(asset => {
       const media = asset.querySelector("img, source");
-      return { url: media.src, contentType: media.tagName === "SOURCE" ? media.type : asset.querySelector("p").textContent.trim().split(/\s/)[0] };
+      const previewURL = new URL(media.src);
+      return { url: previewURL.pathname.replace(/\/preview$/, ""), preview: previewURL.pathname, contentType: media.tagName === "SOURCE" ? media.type : asset.querySelector("p").textContent.trim().split(/\s/)[0] };
     }));
+    expect((await seller.request.get(uploadedMedia[0].preview)).status()).toBe(200);
+    expect((await seller.request.get(uploadedMedia[0].url)).status()).toBe(404);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
@@ -990,7 +1283,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(reviewRow).toHaveCount(1);
     await reviewRow.getByRole("button", { name: "Approve" }).click();
 
-    await signIn(customer, "demo.customer08@weevcrafts.local", "/account");
+    const latestUploadedImage = uploadedMedia.filter(media => media.contentType.startsWith("image/")).at(-1);
+    await customer.goto(`/products/${slug}`);
+    await expect(customer.locator(".gallery-main img:visible")).toHaveAttribute("src", latestUploadedImage.url);
+
+    await customer.goto(`/products?category=crafts&category=arts&brand=qa-artisan-${suffix}&price=2500-5000&availability=in-stock&sort=price-desc`);
+    await expect(customer.locator(`article[data-product="${slug}"]`)).toHaveCount(1);
+    await expect(customer.locator("[data-backend-result-count]")).toHaveText("1 results");
+    await customer.goto(`/products?category=home-living&brand=qa-artisan-${suffix}`);
+    await expect(customer.locator(`article[data-product="${slug}"]`)).toHaveCount(0);
+    await customer.goto(`/products?category=crafts&brand=qa-artisan-${suffix}&price=under-1000`);
+    await expect(customer.locator(`article[data-product="${slug}"]`)).toHaveCount(0);
+    await customer.goto(`/deals?brand=qa-artisan-${suffix}`);
+    await expect(customer.locator(`article[data-product="${slug}"]`)).toHaveCount(1);
+
+    await signIn(customer, "demo.customer07@weevcrafts.local", "/account");
     await customer.goto("/account/addresses");
     const shippingRecipient = `Browser QA Customer ${suffix}`;
     const savedAddressForm = customer.locator("form[data-address-create]");
@@ -1005,13 +1312,8 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await savedAddressForm.getByRole("button", { name: "Add address" }).click();
     expect((await savedAddressResponse).status()).toBe(303);
     await customer.goto("/cart");
-    const removeCartItems = customer.getByRole("button", { name: "Remove", exact: true });
-    for (let attempt = 0; attempt < 20; attempt += 1) {
-      const itemCount = await removeCartItems.count();
-      if (itemCount === 0) break;
-      await removeCartItems.first().click();
-      await expect(removeCartItems).toHaveCount(itemCount - 1);
-    }
+    await expect(customer.locator("[data-backend-cart]")).toHaveAttribute("data-backend-ready", "true");
+    await expect(customer.locator(".cart-line")).toHaveCount(0);
     await customer.goto(`/products/${slug}`);
     await expect(customer.getByRole("heading", { name: productName })).toBeVisible();
     await expect(customer.locator("#product-panel-description")).toContainText("Updated local browser test product description.");
@@ -1025,8 +1327,14 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
       const response = await customer.request.get(media.url);
       expect(response.status(), media.url).toBe(200);
       expect(response.headers()["content-type"]).toContain(media.contentType);
+      expect((await customer.request.get(media.preview)).status()).toBe(404);
     }
-    const videoButton = customer.getByRole("button", { name: "Show product media 2" });
+    const videoMedia = uploadedMedia.find(media => media.contentType === "video/mp4");
+    const rangeResponse = await customer.request.get(videoMedia.url, { headers: { Range: "bytes=0-99" } });
+    expect(rangeResponse.status()).toBe(206);
+    expect(rangeResponse.headers()["content-range"]).toMatch(/^bytes 0-99\//);
+    expect((await rangeResponse.body()).byteLength).toBe(100);
+    const videoButton = customer.locator(".gallery .thumbs button:has(.gallery-video-thumb)").first();
     await expect(videoButton).toBeVisible();
     await videoButton.click();
     const productVideo = customer.locator(".gallery-main video").filter({ has: customer.locator("source[type='video/mp4']") });
@@ -1047,6 +1355,26 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.goto("/cart");
     await expect(customer.locator("body")).toContainText(productName);
     await expect(customer.locator("body")).toContainText("Indigo edition");
+    const cartRow = customer.locator(".cart-seller").filter({ hasText: productName });
+    await expect(cartRow.locator("output")).toHaveText("1");
+    const quantityButtons = cartRow.locator(".quantity-control button");
+    await expect(quantityButtons).toHaveCount(2);
+    await quantityButtons.nth(1).click({ timeout: 10_000 });
+    await expect(cartRow.locator("output")).toHaveText("2");
+    await quantityButtons.nth(0).click({ timeout: 10_000 });
+    await expect(cartRow.locator("output")).toHaveText("1");
+    await quantityButtons.nth(1).click({ timeout: 10_000 });
+    await expect(cartRow.locator("output")).toHaveText("2");
+    await cartRow.locator("button.text-button").filter({ hasText: "Remove" }).click();
+    await expect(cartRow).toHaveCount(0);
+    await customer.goto(`/products/${slug}`);
+    await customer.locator("#detail-variant").selectOption(variantValue);
+    const restoreCartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
+    await customer.getByRole("button", { name: "Add to cart" }).click();
+    expect((await restoreCartResponse).ok()).toBeTruthy();
+    await customer.goto("/cart");
+    await expect(cartRow.locator("output")).toHaveText("1");
+    await expect(cartRow).toContainText("Indigo edition updated");
     await customer.getByRole("link", { name: /Proceed to checkout/ }).click();
     await expect(customer.getByLabel("Recipient name")).toHaveValue(shippingRecipient);
     await expect(customer.getByLabel("Phone number")).toHaveValue("9876543210");
@@ -1079,6 +1407,24 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await capture.click();
     await expect(customer).toHaveURL(new RegExp(`/orders/${orderNumber}$`));
     await expect(customer.locator("body")).toContainText("Confirmed");
+    await expect(customer.getByRole("button", { name: "Cancel order" })).toHaveCount(0);
+    await customer.getByRole("link", { name: "View/print receipt" }).click();
+    await expect(customer.getByRole("heading", { name: "Order receipt" })).toBeVisible();
+    await expect(customer.locator("body")).toContainText(orderNumber);
+    await customer.goto(`/orders/${orderNumber}`);
+
+    await customer.goto(`/products/${slug}`);
+    const saveProduct = customer.getByRole("button", { name: `Save ${productName}` });
+    const saveProductResponse = customer.waitForResponse(response => new URL(response.url()).pathname === "/api/v1/wishlist/add" && response.request().method() === "POST");
+    await saveProduct.click();
+    expect((await saveProductResponse).ok()).toBeTruthy();
+    await customer.goto("/wishlist");
+    const savedCard = customer.locator(".saved-card").filter({ hasText: productName });
+    await expect(savedCard).toHaveCount(1);
+    const removeSavedProduct = customer.waitForResponse(response => new URL(response.url()).pathname.startsWith("/api/v1/wishlist/") && response.request().method() === "DELETE");
+    await savedCard.getByRole("button", { name: "Remove", exact: true }).click();
+    expect((await removeSavedProduct).ok()).toBeTruthy();
+    await expect(customer.locator(".saved-card").filter({ hasText: productName })).toHaveCount(0);
 
     await seller.goto("/seller-admin/earnings");
     const saleLedgerRow = seller.locator(".ledger-row").filter({ hasText: orderNumber });
@@ -1156,11 +1502,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await operations.goto(`/operations-portal/returns?q=${encodeURIComponent(orderNumber)}`);
     const approvedReturn = operations.locator(".portal-return-item").filter({ hasText: orderNumber });
     await expect(approvedReturn).toContainText("approved");
-    await approvedReturn.getByRole("button", { name: "Mark item received" }).click();
+    await approvedReturn.getByRole("button", { name: "Mark returned order received" }).click();
 
-    await customer.goto("/returns");
-    await expect(customer.locator("body")).toContainText("Item received");
-    await expect(customer.locator("body")).toContainText(orderNumber);
+    await customer.goto(`/orders/${orderNumber}`);
+    await expect(customer.getByRole("heading", { name: "Request your refund" })).toBeVisible();
+    await customer.getByLabel("Refund reason").fill("The returned item was inspected and the full refund is requested.");
+    const refundResponse = customer.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === `/orders/${orderNumber}/refund`);
+    await customer.getByRole("button", { name: "Request full refund" }).click();
+    expect((await refundResponse).status()).toBe(204);
+    await expect(customer).toHaveURL(new RegExp(`/orders/${orderNumber}$`));
+    await expect(customer.locator("body")).toContainText("processed");
+    await expect(customer.locator("body")).toContainText("Refunded");
+
+    await customer.goto("/returns?tab=refunds");
+    const refundedReturn = customer.locator("article.return-card").filter({ hasText: orderNumber });
+    await expect(refundedReturn).toContainText("Refunded");
 
     await customer.goto("/account/addresses");
     const savedShippingAddress = customer.locator(".saved-address").filter({ hasText: shippingRecipient });
@@ -1175,20 +1531,29 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
       const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator(`video source[type='${contentType}']`) });
       await expect(uploadedVideo).toHaveCount(1);
       const uploadedVideoURL = await uploadedVideo.locator(`video source[type='${contentType}']`).getAttribute("src");
+      const publicVideoURL = uploadedVideoURL.replace(/\/preview$/, "");
       seller.once("dialog", dialog => dialog.accept());
       await uploadedVideo.locator("[data-media-delete]").click();
       await expect(seller.locator(`.product-media-asset video source[type='${contentType}']`)).toHaveCount(0);
-      expect((await customer.request.get(uploadedVideoURL)).status()).toBe(404);
+      expect((await customer.request.get(publicVideoURL)).status()).toBe(404);
     }
 
+    let primaryImageFallbackVerified = false;
     while (await seller.locator(".product-media-asset img").count()) {
-      const uploadedImage = seller.locator(".product-media-asset").filter({ has: seller.locator("img") }).first();
+      const imageAssets = seller.locator(".product-media-asset").filter({ has: seller.locator("img") });
+      const uploadedImage = imageAssets.last();
       const uploadedImageURL = await uploadedImage.locator("img").getAttribute("src");
-      const imageCount = await seller.locator(".product-media-asset img").count();
+      const imageCount = await imageAssets.count();
+      const expectedFallbackURL = imageCount > 1 ? (await imageAssets.nth(imageCount - 2).locator("img").getAttribute("src")).replace(/\/preview$/, "") : "";
       seller.once("dialog", dialog => dialog.accept());
       await uploadedImage.locator("[data-media-delete]").click();
       await expect(seller.locator(".product-media-asset img")).toHaveCount(imageCount - 1);
       expect((await customer.request.get(uploadedImageURL)).status()).toBe(404);
+      if (!primaryImageFallbackVerified && expectedFallbackURL) {
+        await customer.goto(`/products/${slug}`);
+        await expect(customer.locator(".gallery-main img:visible")).toHaveAttribute("src", expectedFallbackURL);
+        primaryImageFallbackVerified = true;
+      }
     }
     await customer.goto(`/products/${slug}`);
     await expect(customer.locator('.gallery-main img[src^="/media/products/"]')).toHaveCount(0);
@@ -1199,6 +1564,26 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await archiveVariant.getByRole("button", { name: "Archive variant" }).click();
     await seller.goto(productEditURL);
     await expect(seller.locator(".variant-stock-summary").filter({ hasText: "archived" })).toHaveCount(1);
+
+    await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
+    let productRow = seller.locator(".seller-product-row").filter({ hasText: sku });
+    await expect(productRow).toHaveCount(1);
+    await productRow.locator('form[action="/seller-admin/products/archive"] input[name="reason"]').fill("Local seller archive workflow verification");
+    const archiveResponse = seller.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/archive");
+    seller.once("dialog", dialog => dialog.accept());
+    await productRow.locator('form[action="/seller-admin/products/archive"] button').click();
+    expect((await archiveResponse).status()).toBe(303);
+
+    await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
+    productRow = seller.locator(".seller-product-row").filter({ hasText: sku });
+    await expect(productRow).toContainText("archived");
+    await productRow.locator('form[action="/seller-admin/products/restore"] input[name="reason"]').fill("Local seller restore workflow verification");
+    const restoreResponse = seller.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/restore");
+    seller.once("dialog", dialog => dialog.accept());
+    await productRow.locator('form[action="/seller-admin/products/restore"] button').click();
+    expect((await restoreResponse).status()).toBe(303);
+    await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
+    await expect(seller.locator(".seller-product-row").filter({ hasText: sku })).toContainText("draft");
   } finally {
     await sellerContext.close();
     await marketplaceContext.close();
@@ -1207,7 +1592,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
   }
 });
 
-test("finance operator reconciles and simulates seller settlement payouts", async ({ page }) => {
+test("finance operator reconciles and simulates seller settlement payouts", async ({ browser, page }) => {
   test.skip(!localMutationTarget, "Settlement mutations are restricted to the local test deployment.");
   await signIn(page, "demo.finance01@weevcrafts.local", "/finance-portal");
   await page.goto("/finance-portal/settlements");
@@ -1218,8 +1603,22 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
   await page.waitForURL(/\/finance-portal\/settlements/);
 
   let pendingRow = panel.locator(".table-row").filter({ hasText: "pending" }).first();
+  if (await pendingRow.count() === 0) {
+    const customerContext = await browser.newContext();
+    try {
+      await createMockPaidOrder(await customerContext.newPage(), "demo.customer05@weevcrafts.local");
+    } finally {
+      await customerContext.close();
+    }
+    const retryBatchResponse = page.waitForResponse(response => response.url().includes("/settlements/create") && response.request().method() === "POST");
+    await panel.getByRole("button", { name: "Create settlement batches" }).click();
+    expect((await retryBatchResponse).status()).toBe(303);
+    await page.waitForURL(/\/finance-portal\/settlements/);
+  }
   await expect(pendingRow).toBeVisible();
   const reference = (await pendingRow.locator("span").nth(0).textContent()).trim();
+  const settlementID = await pendingRow.locator('input[name="settlement_id"]').first().inputValue();
+  const csrfToken = await pendingRow.locator('input[name="csrf_token"]').first().inputValue();
   const approveResponse = page.waitForResponse(response => response.url().includes("/settlements/status") && response.request().method() === "POST");
   await pendingRow.getByRole("button", { name: "Approve" }).click();
   expect((await approveResponse).status()).toBe(303);
@@ -1232,6 +1631,15 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
   await approvedRow.getByRole("button", { name: "Record mock payout" }).click();
   expect((await payoutResponse).status()).toBe(303);
   await page.waitForURL(/\/finance-portal\/settlements/);
+  const paidRow = panel.locator(".table-row").filter({ hasText: reference });
+  await expect(paidRow).toContainText("paid");
+
+  const terminalMutation = await page.request.post("/finance-portal/settlements/status", {
+    maxRedirects: 0,
+    form: { csrf_token: csrfToken, settlement_id: settlementID, status: "failed" },
+  });
+  expect(terminalMutation.status()).toBe(409);
+  await page.reload();
   await expect(panel.locator(".table-row").filter({ hasText: reference })).toContainText("paid");
 });
 

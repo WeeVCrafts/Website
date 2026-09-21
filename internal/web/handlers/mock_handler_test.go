@@ -220,7 +220,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/wishlist", want: []string{"items in your wishlist", "Move to cart", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},
 		{route: "/checkout", want: []string{"Delivery address", "Payment method", "Place order"}},
-		{route: "/orders", want: []string{"Track order", "Past orders", "Orders"}},
+		{route: "/orders", want: []string{"View order", "Past orders", "Orders"}},
 		{route: "/tracking", want: []string{"Track your order", "Shipment in transit", "Tracking ID: 149730248756"}},
 		{route: "/payments", want: []string{"Payment checkout", "Recent payment activity", "Failed"}},
 		{route: "/payments/success", want: []string{"Payment successful", "Payment captured", "#PAY25603421"}},

@@ -43,7 +43,7 @@ func (s *Service) SetMarketing(ctx context.Context, userID int64, enabled bool) 
 func (s *Service) Request(ctx context.Context, userID int64, requestType, details string) (domainprivacy.Request, error) {
 	requestType = strings.TrimSpace(requestType)
 	details = strings.TrimSpace(details)
-	if userID <= 0 || !validRequestType(requestType) || len(details) > 2000 {
+	if userID <= 0 || !validRequestType(requestType) || details == "" || len(details) > 2000 {
 		return domainprivacy.Request{}, ErrInvalidRequest
 	}
 	return s.repository.CreatePrivacyRequest(ctx, userID, requestType, details)

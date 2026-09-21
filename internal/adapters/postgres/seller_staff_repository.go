@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
-	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -82,7 +81,7 @@ func (r *SellerStaffRepository) AddStaff(ctx context.Context, ownerUserID int64,
 			return err
 		}
 		var userID int64
-		if err := tx.QueryRow(transactionContext, `SELECT id FROM users WHERE lower(email) = lower($1) AND status = 'active'`, email).Scan(&userID); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT u.id FROM users u WHERE lower(u.email) = lower($1) AND u.status = 'active' AND EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id=u.id AND ur.role_slug='seller_staff')`, email).Scan(&userID); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrNotFound
 			}
@@ -97,9 +96,6 @@ func (r *SellerStaffRepository) AddStaff(ctx context.Context, ownerUserID int64,
 			ON CONFLICT (seller_id, user_id) DO UPDATE
 			SET status = 'active', permissions = EXCLUDED.permissions, added_by = EXCLUDED.added_by, updated_at = NOW()`, sellerID, userID, permissions, ownerUserID)
 		if err != nil {
-			return err
-		}
-		if _, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2) ON CONFLICT DO NOTHING`, userID, string(domainidentity.RoleSellerStaff)); err != nil {
 			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"permissions": permissions, "seller_id": sellerID})
@@ -129,9 +125,6 @@ func (r *SellerStaffRepository) RemoveStaff(ctx context.Context, ownerUserID, st
 		}
 		if result.RowsAffected() != 1 {
 			return ports.ErrNotFound
-		}
-		if _, err := tx.Exec(transactionContext, `DELETE FROM user_roles WHERE user_id = $1 AND role_slug = $2 AND NOT EXISTS (SELECT 1 FROM seller_users WHERE user_id = $1 AND status = 'active')`, staffUserID, string(domainidentity.RoleSellerStaff)); err != nil {
-			return err
 		}
 		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'seller.staff_removed', 'seller_user', $2, $3, jsonb_build_object('seller_id', $4::bigint))`, fmt.Sprint(ownerUserID), fmt.Sprint(staffUserID), ports.RequestID(transactionContext), sellerID)
 		return err

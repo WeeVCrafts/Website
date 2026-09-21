@@ -56,6 +56,9 @@ templ AdminDocument(p viewmodels.AdminPage) {
             if p.Notice != "" {
               <div class="admin-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
             }
+            if p.DataWarning != "" {
+              <div class="admin-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>{ p.DataWarning }</div>
+            }
             { children... }
           </main>
           @AdminFooter(p)
@@ -220,20 +223,22 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                   <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
                   <button class="admin-button primary" type="submit">Save role change</button>
                 </form>
-                if assignment.ID != p.ActorID {
-                  <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
-                    <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-                    <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
-                    <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
-                    <button class="admin-button danger" type="submit">Delete account</button>
-                  </form>
-                }
               </div>
             }
             if assignment.Status == "deleted" {
               <p class="role-assignment-disabled" role="status">This account was deleted and retained for order and audit history.</p>
             } else if assignment.Status != "active" {
               <p class="role-assignment-disabled" role="status">This account is { assignment.Status } and cannot receive role changes.</p>
+            }
+            if assignment.Status != "deleted" && assignment.ID != p.ActorID {
+              <div class="role-assignment-actions">
+                <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
+                  <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                  <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
+                  <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
+                  <button class="admin-button danger" type="submit">Delete account</button>
+                </form>
+              </div>
             }
           </section>
         }

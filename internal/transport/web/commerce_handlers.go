@@ -1174,6 +1174,9 @@ func (h *Handler) renderCommerceError(w http.ResponseWriter, r *http.Request, er
 		message = "Some items do not have enough available stock."
 	case errors.Is(err, applicationcommerce.ErrInvalidQuantity), errors.Is(err, applicationcommerce.ErrInvalidAddress):
 		message = "Please check the submitted details."
+		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {
+			message = "Enter a phone number with 7 to 15 digits."
+		}
 	case errors.Is(err, applicationcommerce.ErrInvalidInventoryAdjustment):
 		message = "Enter a non-zero stock adjustment and a reason between 3 and 500 characters."
 	case errors.Is(err, applicationcommerce.ErrInvalidSellerFulfillment):

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -217,6 +218,24 @@ func TestMediaUploadRejectsContentTypeSpoofing(t *testing.T) {
 	}
 	if len(storage.object) != 0 {
 		t.Fatal("mislabeled file was stored")
+	}
+}
+
+func TestMarketplaceAdminCanPreviewUnapprovedProductMedia(t *testing.T) {
+	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 76, ObjectKey: "products/9/review-image", ContentType: "image/png", ByteSize: 12, Status: "ready"}}
+	storage := &mediaStorage{info: ports.ObjectInfo{ContentType: "image/png", ByteSize: 12}, object: []byte("review-image")}
+	roles := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		111: {domainidentity.RoleMarketplaceAdmin: true},
+	}}
+	service := NewMediaService(storage, repository, roles)
+
+	body, _, err := service.OpenOwnedMedia(context.Background(), 111, 76)
+	if err != nil {
+		t.Fatalf("marketplace admin should preview a submitted listing: %v", err)
+	}
+	_ = body.Close()
+	if _, _, err := service.OpenOwnedMedia(context.Background(), 112, 76); !errors.Is(err, ErrInvalidMedia) {
+		t.Fatalf("customer must not preview private product media, got %v", err)
 	}
 }
 

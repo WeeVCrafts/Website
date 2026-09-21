@@ -59,9 +59,10 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	service := NewService(repository, fakeHasher{})
 	ctx := context.Background()
 	user, err := service.Register(ctx, RegisterInput{
-		Email:       "  PERSON@Example.COM ",
-		DisplayName: " A maker ",
-		Password:    "correct-password",
+		Email:         "  PERSON@Example.COM ",
+		DisplayName:   " A maker ",
+		Password:      "correct-password",
+		AcceptedTerms: true,
 	})
 	if err != nil {
 		t.Fatalf("register: %v", err)
@@ -71,6 +72,19 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	}
 	if repository.seenContext != ctx {
 		t.Fatal("register did not propagate context")
+	}
+}
+
+func TestRegisterRequiresTermsAcceptance(t *testing.T) {
+	repository := &fakeUserRepository{}
+	service := NewService(repository, fakeHasher{})
+	if _, err := service.Register(context.Background(), RegisterInput{
+		Email: "person@example.com", DisplayName: "A maker", Password: "correct-password",
+	}); !errors.Is(err, ErrInvalidRegistration) {
+		t.Fatalf("registration without consent should fail, got %v", err)
+	}
+	if repository.created.Email != "" {
+		t.Fatal("registration without terms consent reached persistence")
 	}
 }
 

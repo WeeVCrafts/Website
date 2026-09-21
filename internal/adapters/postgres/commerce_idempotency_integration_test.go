@@ -16,7 +16,7 @@ func TestCheckoutIdenticalRetriesCreateOneOrderReservationPaymentAndOutbox(t *te
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 20)
 	repository := NewCommerceRepository(pool)
-	address := domaincommerce.AddressInput{RecipientName: "Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	const attempts = 20
 	orders := make(chan domaincommerce.Order, attempts)
 	errorsSeen := make(chan error, attempts)
@@ -73,7 +73,7 @@ func TestCheckoutIdempotencyKeyRejectsDifferentRequest(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 2)
 	repository := NewCommerceRepository(pool)
-	firstAddress := domaincommerce.AddressInput{RecipientName: "Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	firstAddress := domaincommerce.AddressInput{RecipientName: "Fixture", Phone: "9876543210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	secondAddress := firstAddress
 	secondAddress.Line1 = "2 Different Lane"
 	key := fmt.Sprintf("conflict-checkout-%d", time.Now().UnixNano())

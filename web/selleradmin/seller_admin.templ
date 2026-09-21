@@ -31,6 +31,9 @@ templ Document(p viewmodels.SellerAdminPage) {
             if p.Notice != "" {
               <div class="seller-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
             }
+            if p.DataWarning != "" {
+              <div class="seller-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>{ p.DataWarning }</div>
+            }
             { children... }
           </main>
         </div>

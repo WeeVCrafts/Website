@@ -153,16 +153,17 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input struct {
-		Email       string `json:"email"`
-		DisplayName string `json:"display_name"`
-		Password    string `json:"password"`
+		Email         string `json:"email"`
+		DisplayName   string `json:"display_name"`
+		Password      string `json:"password"`
+		AcceptedTerms bool   `json:"accepted_terms"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Email: input.Email, DisplayName: input.DisplayName, Password: input.Password})
+	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Email: input.Email, DisplayName: input.DisplayName, Password: input.Password, AcceptedTerms: input.AcceptedTerms})
 	if err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "REGISTRATION_INVALID", "Registration details are invalid.")
+		writeError(w, http.StatusUnprocessableEntity, "REGISTRATION_INVALID", "Registration details and required privacy notice agreement are invalid.")
 		return
 	}
 	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), "", applicationauth.DefaultSessionTTL)
@@ -183,6 +184,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Remember bool   `json:"remember"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -192,7 +194,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "Email or password is incorrect.")
 		return
 	}
-	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), "", applicationauth.DefaultSessionTTL)
+	ttl := applicationauth.DefaultSessionTTL
+	if input.Remember {
+		ttl = applicationauth.RememberSessionTTL
+	}
+	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), "", ttl)
 	if err != nil {
 		writeError(w, http.StatusServiceUnavailable, "SESSION_UNAVAILABLE", "A secure session could not be started.")
 		return
