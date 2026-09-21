@@ -211,7 +211,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                   <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
                   <label>Role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
                   <label x-cloak x-show="selectedRole === 'seller_staff'">Seller
-                    <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'"><option value="">Choose active seller</option>
+                    <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'" x-bind:required="selectedRole === 'seller_staff'"><option value="">Choose active seller</option>
                       for _, seller := range p.Sellers {
                         if seller.Status == "active" {
                           <option value={ seller.ID }>{ seller.Name }</option>
@@ -257,7 +257,7 @@ templ RoleUserCreateForm(p viewmodels.AdminPage) {
       <label>Initial password<input name="password" type="password" required minlength="12" maxlength="1024" autocomplete="new-password"/><small>Use at least 12 characters and share it securely.</small></label>
       <label>Initial role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
       <label x-cloak x-show="selectedRole === 'seller_staff'">Seller for staff account
-        <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'"><option value="">Choose an active seller</option>
+        <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'" x-bind:required="selectedRole === 'seller_staff'"><option value="">Choose an active seller</option>
           for _, seller := range p.Sellers {
             if seller.Status == "active" {
               <option value={ seller.ID }>{ seller.Name }</option>

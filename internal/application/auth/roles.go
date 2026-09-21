@@ -142,10 +142,11 @@ func (s *RoleAdminService) UpdateUser(ctx context.Context, actorID, userID int64
 			return err
 		}
 	}
-	if err := repository.UpdateRoleUser(ctx, actorID, userID, email, displayName, status, passwordHash, reason); err != nil {
+	securityChanged, err := repository.UpdateRoleUser(ctx, actorID, userID, email, displayName, status, passwordHash, reason)
+	if err != nil {
 		return err
 	}
-	if s.sessions != nil {
+	if securityChanged && s.sessions != nil {
 		_ = s.sessions.RevokeAll(ctx, userID)
 	}
 	return nil

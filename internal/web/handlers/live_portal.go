@@ -456,6 +456,7 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 			return
 		}
 		productMediaPreviewURLs(form.Media)
+		form.Image = productImagePreviewURL(form.Image)
 		page.Title = "Edit product"
 		page.Subtitle = "Update all listing details. Stock remains in the permission-scoped Inventory workflow."
 	}
@@ -1440,6 +1441,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 			return
 		}
 		productMediaPreviewURLs(form.Media)
+		form.Image = productImagePreviewURL(form.Image)
 		page.Title = "Edit product draft"
 	} else {
 		page.Title = "Create product draft"
@@ -1470,6 +1472,13 @@ func productMediaPreviewURLs(media []viewmodels.ProductMedia) {
 	for index := range media {
 		media[index].URL = "/media/products/" + media[index].ID + "/preview"
 	}
+}
+
+func productImagePreviewURL(image string) string {
+	if !strings.HasPrefix(image, "/media/products/") || strings.HasSuffix(image, "/preview") {
+		return image
+	}
+	return image + "/preview"
 }
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {

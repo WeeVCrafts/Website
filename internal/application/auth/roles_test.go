@@ -32,12 +32,17 @@ type profileAdminRepository struct {
 	roleAdminRepository
 	gotEmail, gotName, gotStatus, gotHash string
 	gotReason                             string
+	securityChanged                       bool
 }
 
-func (r *profileAdminRepository) UpdateRoleUser(_ context.Context, _, _ int64, email, name, status, passwordHash, reason string) error {
+func (r *profileAdminRepository) UpdateRoleUser(_ context.Context, _, _ int64, email, name, status, passwordHash, reason string) (bool, error) {
 	r.gotEmail, r.gotName, r.gotStatus, r.gotHash, r.gotReason = email, name, status, passwordHash, reason
-	return nil
+	return r.securityChanged || passwordHash != "", nil
 }
+
+type sessionRevokerSpy struct{ calls int }
+
+func (s *sessionRevokerSpy) RevokeAll(context.Context, int64) error { s.calls++; return nil }
 
 type fixedHasher struct{}
 
@@ -72,15 +77,31 @@ func TestRoleAdminServiceValidatesAssignableRoleAndReason(t *testing.T) {
 
 func TestRoleAdminServiceEditsAccountAndHashesOptionalPassword(t *testing.T) {
 	repository := &profileAdminRepository{}
-	service := NewRoleAdminService(repository, roleAdminChecker{super: true}, fixedHasher{})
+	revoker := &sessionRevokerSpy{}
+	service := NewRoleAdminService(repository, roleAdminChecker{super: true}, fixedHasher{}).WithSessionRevoker(revoker)
 	if err := service.UpdateUser(context.Background(), 42, 9, " User@Example.com ", "Updated User", "suspended", "a-new-password-longer-than-12", "user update"); err != nil {
 		t.Fatalf("update user: %v", err)
 	}
 	if repository.gotEmail != "user@example.com" || repository.gotName != "Updated User" || repository.gotStatus != "suspended" || repository.gotHash != "hashed" || repository.gotReason != "user update" {
 		t.Fatalf("incorrect profile update passed to repository: %+v", repository)
 	}
+	if revoker.calls != 1 {
+		t.Fatalf("security-sensitive edit should revoke sessions once, got %d", revoker.calls)
+	}
 	if err := service.UpdateUser(context.Background(), 42, 9, "bad", "Updated User", "active", "", "valid reason"); !errors.Is(err, ErrInvalidRoleAssignment) {
 		t.Fatalf("expected invalid email rejection, got %v", err)
+	}
+}
+
+func TestRoleAdminServiceDoesNotRevokeSessionsForNameOnlyEdit(t *testing.T) {
+	repository := &profileAdminRepository{}
+	revoker := &sessionRevokerSpy{}
+	service := NewRoleAdminService(repository, roleAdminChecker{super: true}, fixedHasher{}).WithSessionRevoker(revoker)
+	if err := service.UpdateUser(context.Background(), 42, 9, "user@example.com", "New Display Name", "active", "", "name correction"); err != nil {
+		t.Fatalf("name-only edit failed: %v", err)
+	}
+	if revoker.calls != 0 {
+		t.Fatalf("name-only edit revoked sessions %d times", revoker.calls)
 	}
 }
 

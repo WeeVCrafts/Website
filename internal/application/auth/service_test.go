@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -72,6 +73,22 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	}
 	if repository.seenContext != ctx {
 		t.Fatal("register did not propagate context")
+	}
+}
+
+func TestRegisterRequiresDisplayNameBetweenTwoAnd120Runes(t *testing.T) {
+	for name, displayName := range map[string]string{"empty": " ", "one rune": "A", "too long": strings.Repeat("a", 121)} {
+		t.Run(name, func(t *testing.T) {
+			repository := &fakeUserRepository{}
+			service := NewService(repository, fakeHasher{})
+			_, err := service.Register(context.Background(), RegisterInput{Email: "person@example.test", DisplayName: displayName, Password: "correct-password", AcceptedTerms: true})
+			if !errors.Is(err, ErrInvalidRegistration) {
+				t.Fatalf("expected invalid display name rejection, got %v", err)
+			}
+			if repository.created.Email != "" {
+				t.Fatal("invalid display name reached persistence")
+			}
+		})
 	}
 }
 

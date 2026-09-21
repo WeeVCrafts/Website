@@ -37,7 +37,14 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 
 	oldSessionCreated := time.Now().Add(-time.Hour)
 	repository := NewRoleAdministrationRepository(pool)
-	if err := repository.UpdateRoleUser(ctx, actorID, userID, "renamed-"+suffix+"@example.invalid", "Updated fixture", "active", "new-hash", "Integration account edit"); err != nil {
+	if changed, err := repository.UpdateRoleUser(ctx, actorID, userID, "session-target-"+suffix+"@example.invalid", "Renamed fixture", "active", "", "Integration display name edit"); err != nil || changed {
+		t.Fatalf("display-name-only edit should not change security state: changed=%t err=%v", changed, err)
+	}
+	checker := NewUserRepository(pool)
+	if active, err := checker.IsSessionActive(ctx, userID, oldSessionCreated); err != nil || !active {
+		t.Fatalf("display-name-only edit should keep session active: active=%t err=%v", active, err)
+	}
+	if changed, err := repository.UpdateRoleUser(ctx, actorID, userID, "renamed-"+suffix+"@example.invalid", "Updated fixture", "active", "new-hash", "Integration account edit"); err != nil || !changed {
 		t.Fatalf("update account: %v", err)
 	}
 	var verifiedAt, revokedAt, passwordChangedAt *time.Time
@@ -53,7 +60,6 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 	if passwordChangedAt == nil {
 		t.Fatal("password change timestamp was not set")
 	}
-	checker := NewUserRepository(pool)
 	if active, err := checker.IsSessionActive(ctx, userID, oldSessionCreated); err != nil || active {
 		t.Fatalf("old session should be invalid: active=%t err=%v", active, err)
 	}
@@ -71,7 +77,7 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 	if active, err := checker.IsSessionActive(ctx, userID, newSessionCreated); err != nil || active {
 		t.Fatalf("role change should invalidate the old session: active=%t err=%v", active, err)
 	}
-	if err := repository.UpdateRoleUser(ctx, actorID, userID, "renamed-"+suffix+"@example.invalid", "Updated fixture", "suspended", "", "Integration suspend"); err != nil {
+	if changed, err := repository.UpdateRoleUser(ctx, actorID, userID, "renamed-"+suffix+"@example.invalid", "Updated fixture", "suspended", "", "Integration suspend"); err != nil || !changed {
 		t.Fatalf("suspend account: %v", err)
 	}
 	if active, err := checker.IsSessionActive(ctx, userID, time.Now().Add(time.Minute)); err != nil || active {

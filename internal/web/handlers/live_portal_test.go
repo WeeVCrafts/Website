@@ -1,6 +1,11 @@
 package handlers
 
-import "testing"
+import (
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+)
 
 func TestNextFulfillmentStatusFollowsOrder(t *testing.T) {
 	tests := map[string]string{
@@ -14,5 +19,41 @@ func TestNextFulfillmentStatusFollowsOrder(t *testing.T) {
 		if got := nextFulfillmentStatus(current); got != want {
 			t.Errorf("nextFulfillmentStatus(%q) = %q, want %q", current, got, want)
 		}
+	}
+}
+
+func TestReadPromotionFormDiscountTypes(t *testing.T) {
+	tests := []struct {
+		name, kind, amount string
+		wantValue          int64
+		wantError          bool
+	}{
+		{name: "percentage whole number", kind: "percentage", amount: "15", wantValue: 15},
+		{name: "percentage decimal rejected", kind: "percentage", amount: "15.5", wantError: true},
+		{name: "percentage capped at 100", kind: "percentage", amount: "101", wantError: true},
+		{name: "fixed rupees with paise", kind: "fixed", amount: "12.50", wantValue: 1250},
+		{name: "free shipping ignores amount", kind: "free_shipping", amount: "", wantValue: 0},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			form := url.Values{
+				"name":           {"QA campaign"},
+				"code":           {"QA-CODE"},
+				"discount_type":  {test.kind},
+				"discount_value": {test.amount},
+			}
+			request := httptest.NewRequest("POST", "/marketing/create", strings.NewReader(form.Encode()))
+			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			if err := request.ParseForm(); err != nil {
+				t.Fatal(err)
+			}
+			got, err := readPromotionForm(request)
+			if (err != nil) != test.wantError {
+				t.Fatalf("readPromotionForm() error = %v, wantError %t", err, test.wantError)
+			}
+			if err == nil && got.value != test.wantValue {
+				t.Fatalf("discount value = %d, want %d", got.value, test.wantValue)
+			}
+		})
 	}
 }

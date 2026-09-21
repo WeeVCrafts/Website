@@ -91,5 +91,5 @@ type CustomerDirectoryRepository interface {
 }
 
 type UserProfileAdministrationRepository interface {
-	UpdateRoleUser(ctx context.Context, actorID, userID int64, email, displayName, status, passwordHash, reason string) error
+	UpdateRoleUser(ctx context.Context, actorID, userID int64, email, displayName, status, passwordHash, reason string) (securityChanged bool, err error)
 }

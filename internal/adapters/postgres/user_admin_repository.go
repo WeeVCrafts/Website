@@ -10,11 +10,12 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
-func (r *RoleAdministrationRepository) UpdateRoleUser(ctx context.Context, actorID, userID int64, email, displayName, status, passwordHash, reason string) error {
+func (r *RoleAdministrationRepository) UpdateRoleUser(ctx context.Context, actorID, userID int64, email, displayName, status, passwordHash, reason string) (bool, error) {
 	if status != "active" && status != "suspended" {
-		return ports.ErrRoleState
+		return false, ports.ErrRoleState
 	}
-	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+	securityChanged := false
+	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
 		if err := lockRoleAdministrator(ctx, tx, actorID); err != nil {
 			return err
 		}
@@ -52,7 +53,8 @@ func (r *RoleAdministrationRepository) UpdateRoleUser(ctx context.Context, actor
 				return ports.ErrCredentialsNotFound
 			}
 		}
-		if oldEmail != email || oldStatus != status || passwordHash != "" {
+		securityChanged = oldEmail != email || oldStatus != status || passwordHash != ""
+		if securityChanged {
 			if _, err := tx.Exec(ctx, `UPDATE users SET sessions_revoked_at=NOW() WHERE id=$1`, userID); err != nil {
 				return err
 			}
@@ -67,6 +69,10 @@ func (r *RoleAdministrationRepository) UpdateRoleUser(ctx context.Context, actor
 		_, err := tx.Exec(ctx, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'identity.user_updated','user',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(userID), ports.RequestID(ctx), metadata)
 		return err
 	})
+	if err != nil {
+		return false, err
+	}
+	return securityChanged, nil
 }
 
 func lockRoleAdministrator(ctx context.Context, tx pgx.Tx, actorID int64) error {

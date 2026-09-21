@@ -705,6 +705,11 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await createForm.locator('input[name="display_name"]').fill(`QA Finance ${suffix}`);
     await createForm.locator('input[name="email"]').fill(email);
     await createForm.locator('input[name="password"]').fill(passwordForNewUser);
+    const initialRole = createForm.locator('select[name="role"]');
+    await initialRole.selectOption("seller_staff");
+    await expect(createForm.locator('select[name="seller_id"]')).toHaveAttribute("required", "required");
+    await initialRole.selectOption("finance_operator");
+    await expect(createForm.locator('select[name="seller_id"]')).toBeDisabled();
     await createForm.locator('select[name="role"]').selectOption("finance_operator");
     await createForm.locator('input[name="reason"]').fill("Local end-to-end role lifecycle verification");
     await createForm.getByRole("button", { name: "Create account" }).click();
@@ -718,6 +723,18 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await signIn(user, email, "/finance-portal", passwordForNewUser);
     await expect(user.locator("body")).toContainText(`QA Finance ${suffix}`);
     await expect(user.locator("body")).toContainText("Finance Operator");
+
+    await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
+    await updateRoleUser(admin, userCard, {
+      email,
+      displayName: `QA Finance Renamed ${suffix}`,
+      status: "active",
+      reason: "Local display-name-only session persistence verification",
+    });
+    await user.goto("/finance-portal");
+    await expect(user).toHaveURL(/\/finance-portal/);
+    await expect(user.locator("body")).toContainText(`QA Finance Renamed ${suffix}`);
 
     await admin.goto("/super-admin/security");
     userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
@@ -975,6 +992,7 @@ test("super admin can create, edit and archive product listings", async ({ brows
     await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
     await admin.goto("/super-admin/products/new");
     const form = admin.locator("form.admin-product-editor-form");
+    const mediaPanel = admin.locator("[data-product-media]");
     const seller = form.locator('select[name="seller_id"]');
     await expect.poll(() => seller.locator("option").count()).toBeGreaterThan(1);
     await seller.selectOption({ index: 1 });
@@ -997,6 +1015,14 @@ test("super admin can create, edit and archive product listings", async ({ brows
     let productRow = admin.locator(".table-row").filter({ hasText: productName });
     await expect(productRow.locator(".status")).toHaveText("draft");
     await productRow.getByRole("link", { name: "Edit" }).click();
+    await mediaPanel.locator("[data-media-file]").setInputFiles(await canvasImageFile(admin, "image/png"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
+    await admin.reload();
+    const previewImageURL = await admin.locator("img.product-media-preview").getAttribute("src");
+    expect(previewImageURL).toMatch(/^\/media\/products\/\d+\/preview$/);
+    expect((await admin.request.get(previewImageURL)).status()).toBe(200);
+
     const editForm = admin.locator("form.admin-product-editor-form").first();
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated description, price and catalogue details.");
@@ -1067,6 +1093,9 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
   const edit = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
   await edit.locator('input[name="name"]').fill(editedName);
   await edit.locator('input[name="code"]').fill(`EDIT${suffix}`);
+  await edit.locator('select[name="discount_type"]').selectOption("fixed");
+  await expect(edit.locator('input[name="discount_value"]')).toHaveAttribute("step", "0.01");
+  await edit.locator('input[name="discount_value"]').fill("12.50");
   const updateResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
   await edit.getByRole("button", { name: "Save changes" }).click();
   expect((await updateResponse).status()).toBe(303);
@@ -1075,6 +1104,25 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
   campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
   await campaign.locator("summary").click();
   await expect(campaign).toContainText(`EDIT${suffix}`);
+  let editForm = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  await editForm.locator('select[name="discount_type"]').selectOption("free_shipping");
+  await expect(editForm.locator('input[name="discount_value"]')).toBeDisabled();
+  const freeShippingResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
+  await editForm.getByRole("button", { name: "Save changes" }).click();
+  expect((await freeShippingResponse).status()).toBe(303);
+  await page.goto("/marketplace-admin/marketing");
+  campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
+  await campaign.locator("summary").click();
+  editForm = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  await editForm.locator('select[name="discount_type"]').selectOption("percentage");
+  await expect(editForm.locator('input[name="discount_value"]')).toHaveAttribute("step", "1");
+  await editForm.locator('input[name="discount_value"]').fill("15");
+  const percentageResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
+  await editForm.getByRole("button", { name: "Save changes" }).click();
+  expect((await percentageResponse).status()).toBe(303);
+  await page.goto("/marketplace-admin/marketing");
+  campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
+  await campaign.locator("summary").click();
   for (const [index, status, button] of [[0, "active", "Activate"], [1, "draft", "Pause"], [2, "archived", "Archive"]]) {
     const statusForm = campaign.locator('form[action="/marketplace-admin/marketing/status"]').nth(index);
     const response = page.waitForResponse(item => item.url().includes("/marketing/status") && item.request().method() === "POST");

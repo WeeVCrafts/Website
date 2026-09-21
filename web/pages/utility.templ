@@ -29,7 +29,7 @@ templ Auth(p viewmodels.CustomerPage) {
           <form class="utility-form" action="/register" method="post" data-backend-auth="register">
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <label>Full name<input name="display_name" autocomplete="name" maxlength="120" required/></label>
+            <label>Full name<input name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></label>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Password<input name="password" type="password" minlength="12" required/></label>
             <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>

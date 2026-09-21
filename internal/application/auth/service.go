@@ -35,14 +35,15 @@ type RegisterInput struct {
 
 func (s *Service) Register(ctx context.Context, input RegisterInput) (domainidentity.User, error) {
 	email := normalizeEmail(input.Email)
-	if !validEmail(email) || strings.TrimSpace(input.DisplayName) == "" || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
+	displayName := strings.TrimSpace(input.DisplayName)
+	if !validEmail(email) || len([]rune(displayName)) < 2 || len([]rune(displayName)) > 120 || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
 		return domainidentity.User{}, ErrInvalidRegistration
 	}
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return domainidentity.User{}, err
 	}
-	return s.repository.CreateCustomer(ctx, email, strings.TrimSpace(input.DisplayName), passwordHash)
+	return s.repository.CreateCustomer(ctx, email, displayName, passwordHash)
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (domainidentity.User, error) {

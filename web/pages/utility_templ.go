@@ -136,7 +136,7 @@ func Auth(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"> <label>Full name<input name=\"display_name\" autocomplete=\"name\" maxlength=\"120\" required></label> <label>Email address<input name=\"email\" type=\"email\" required></label> <label>Password<input name=\"password\" type=\"password\" minlength=\"12\" required></label> <label class=\"check-line\"><input type=\"checkbox\" name=\"consent\" required> I agree to the privacy notice and account terms</label> <button class=\"primary-button full\" type=\"submit\">Create account <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form><div class=\"auth-links\"><span>Already have an account? <a href=\"/login\">Sign in</a></span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"> <label>Full name<input name=\"display_name\" autocomplete=\"name\" minlength=\"2\" maxlength=\"120\" required></label> <label>Email address<input name=\"email\" type=\"email\" required></label> <label>Password<input name=\"password\" type=\"password\" minlength=\"12\" required></label> <label class=\"check-line\"><input type=\"checkbox\" name=\"consent\" required> I agree to the privacy notice and account terms</label> <button class=\"primary-button full\" type=\"submit\">Create account <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form><div class=\"auth-links\"><span>Already have an account? <a href=\"/login\">Sign in</a></span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

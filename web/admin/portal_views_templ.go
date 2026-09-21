@@ -2315,7 +2315,7 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 184, "\" x-data=\"{ discountType: 'percentage' }\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2328,7 +2328,7 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "\"> <label>Campaign name<input name=\"name\" required minlength=\"3\" maxlength=\"100\"></label> <label>Description<textarea name=\"description\" maxlength=\"2000\"></textarea></label> <label>Coupon code<input name=\"code\" required minlength=\"3\" maxlength=\"40\" pattern=\"[A-Za-z0-9][A-Za-z0-9_-]{2,39}\"></label> <label>Discount type<select name=\"discount_type\"><option value=\"percentage\">Percent off</option><option value=\"fixed\">Amount off</option><option value=\"free_shipping\">Free shipping</option></select></label> <label>Discount value<input name=\"discount_value\" type=\"number\" min=\"0.01\" step=\"0.01\" value=\"10\"></label> <label>Starts on<input name=\"starts_on\" type=\"date\"></label><label>Ends on<input name=\"ends_on\" type=\"date\"></label> <label>Maximum redemptions<input name=\"usage_limit\" type=\"number\" min=\"1\" step=\"1\"></label> <button class=\"admin-button primary\" type=\"submit\">Create draft</button></form></article><article class=\"admin-panel\"><div class=\"panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">list_alt</span><div><h2>Marketplace promotions</h2><p>Manage campaign details, coupon codes, eligibility dates and redemption limits. A customer can redeem each code once.</p></div></div></div><div class=\"admin-campaign-list\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 185, "\"> <label>Campaign name<input name=\"name\" required minlength=\"3\" maxlength=\"100\"></label> <label>Description<textarea name=\"description\" maxlength=\"2000\"></textarea></label> <label>Coupon code<input name=\"code\" required minlength=\"3\" maxlength=\"40\" pattern=\"[A-Za-z0-9][A-Za-z0-9_-]{2,39}\"></label> <label>Discount type<select name=\"discount_type\" x-model=\"discountType\"><option value=\"percentage\">Percent off</option><option value=\"fixed\">Amount off</option><option value=\"free_shipping\">Free shipping</option></select></label> <label x-cloak x-show=\"discountType !== 'free_shipping'\">Discount value<input name=\"discount_value\" type=\"number\" x-bind:min=\"discountType === 'percentage' ? 1 : 0.01\" x-bind:max=\"discountType === 'percentage' ? 100 : null\" x-bind:step=\"discountType === 'percentage' ? 1 : 0.01\" x-bind:required=\"discountType !== 'free_shipping'\" x-bind:disabled=\"discountType === 'free_shipping'\" value=\"10\"></label> <label>Starts on<input name=\"starts_on\" type=\"date\"></label><label>Ends on<input name=\"ends_on\" type=\"date\"></label> <label>Maximum redemptions<input name=\"usage_limit\" type=\"number\" min=\"1\" step=\"1\"></label> <button class=\"admin-button primary\" type=\"submit\">Create draft</button></form></article><article class=\"admin-panel\"><div class=\"panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">list_alt</span><div><h2>Marketplace promotions</h2><p>Manage campaign details, coupon codes, eligibility dates and redemption limits. A customer can redeem each code once.</p></div></div></div><div class=\"admin-campaign-list\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2433,7 +2433,7 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 194, "\" x-data=\"{ discountType: $el.querySelector('[name=discount_type]').value }\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2498,14 +2498,14 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "\" required minlength=\"3\" maxlength=\"40\" pattern=\"[A-Za-z0-9][A-Za-z0-9_-]{2,39}\"></label> <label>Discount type<select name=\"discount_type\"><option value=\"percentage\" selected=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 199, "\" required minlength=\"3\" maxlength=\"40\" pattern=\"[A-Za-z0-9][A-Za-z0-9_-]{2,39}\"></label> <label>Discount type<select name=\"discount_type\" x-model=\"discountType\"><option value=\"percentage\" selected=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var145 string
 				templ_7745c5c3_Var145, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Type == "percentage")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 119}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 142}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var145)
 				if templ_7745c5c3_Err != nil {
@@ -2518,7 +2518,7 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 				var templ_7745c5c3_Var146 string
 				templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Type == "fixed")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 195}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 218}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var146)
 				if templ_7745c5c3_Err != nil {
@@ -2531,26 +2531,26 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 				var templ_7745c5c3_Var147 string
 				templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Type == "free_shipping")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 286}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 295, Col: 309}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var147)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "\">Free shipping</option></select></label> <label>Discount value<input name=\"discount_value\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 202, "\">Free shipping</option></select></label> <label x-cloak x-show=\"discountType !== 'free_shipping'\">Discount value<input name=\"discount_value\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var148 string
 				templ_7745c5c3_Var148, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 296, Col: 75}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/portal_views.templ`, Line: 296, Col: 125}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var148)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, "\" type=\"number\" min=\"0.01\" step=\"0.01\"></label> <label>Starts on<input name=\"starts_on\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 203, "\" type=\"number\" x-bind:min=\"discountType === 'percentage' ? 1 : 0.01\" x-bind:max=\"discountType === 'percentage' ? 100 : null\" x-bind:step=\"discountType === 'percentage' ? 1 : 0.01\" x-bind:required=\"discountType !== 'free_shipping'\" x-bind:disabled=\"discountType === 'free_shipping'\"></label> <label>Starts on<input name=\"starts_on\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
