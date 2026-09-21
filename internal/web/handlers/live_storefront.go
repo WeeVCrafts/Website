@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -108,6 +109,10 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	page, err := h.page(r)
 	if err != nil {
+		if errors.Is(err, applicationcatalog.ErrProductNotFound) {
+			http.NotFound(w, r)
+			return
+		}
 		page = viewmodels.CustomerPage{
 			Route: r.URL.Path, Title: "We are having a little trouble", Brand: "WeeVCrafts",
 			Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Please try again in a moment.",

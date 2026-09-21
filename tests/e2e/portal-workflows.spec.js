@@ -108,6 +108,11 @@ test("multi-role login and workspace switcher expose only assigned roles", async
   }
 });
 
+test("unknown product URLs return not found", async ({ request }) => {
+  const response = await request.get("/products/missing-qa-product-" + Date.now());
+  expect(response.status()).toBe(404);
+});
+
 test("customer address create, edit and delete persist with field validation", async ({ browser, page }) => {
   test.skip(!localMutationTarget, "Customer address mutations are restricted to the local test deployment.");
   const suffix = Date.now().toString();
