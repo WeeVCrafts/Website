@@ -547,7 +547,8 @@
         key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
         global.sessionStorage.setItem(CHECKOUT_KEY, key);
       }
-      const result = unwrap(await ensureBackend().checkout(address, key)) || {};
+      const couponCode = (document.getElementById("checkout-coupon-code") || {}).value || "";
+      const result = unwrap(await ensureBackend().checkout(address, key, couponCode.trim())) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       global.sessionStorage.removeItem(CHECKOUT_KEY);

@@ -262,6 +262,7 @@ type Order struct {
 	Currency      string    `json:"currency"`
 	SubtotalCents int64     `json:"subtotal_cents"`
 	ShippingCents int64     `json:"shipping_cents"`
+	DiscountCents int64     `json:"discount_cents"`
 	TotalCents    int64     `json:"total_cents"`
 	CreatedAt     time.Time `json:"created_at"`
 }

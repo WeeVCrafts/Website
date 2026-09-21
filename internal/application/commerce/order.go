@@ -3,6 +3,7 @@ package commerce
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -14,6 +15,7 @@ var ErrInvalidAddress = errors.New("shipping address is invalid")
 
 var indiaPostalCode = regexp.MustCompile(`^[1-9][0-9]{5}$`)
 var phoneNumber = regexp.MustCompile(`^\+?[0-9][0-9 ()-]{5,22}$`)
+var couponCodePattern = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_-]{2,39}$`)
 
 type OrderService struct {
 	repository ports.OrderRepository
@@ -59,6 +61,18 @@ func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.
 }
 
 func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
+	return s.create(ctx, userID, cartID, idempotencyKey, address, "")
+}
+
+func (s *OrderService) CreateWithCoupon(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
+	code := strings.ToUpper(strings.TrimSpace(couponCode))
+	if code != "" && !couponCodePattern.MatchString(code) {
+		return domaincommerce.Order{}, ports.ErrCouponInvalid
+	}
+	return s.create(ctx, userID, cartID, idempotencyKey, address, code)
+}
+
+func (s *OrderService) create(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
 	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(idempotencyKey)) < 16 || len(idempotencyKey) > 200 {
 		return domaincommerce.Order{}, ports.ErrForbidden
 	}
@@ -66,6 +80,13 @@ func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempot
 	address, err = NormalizeAddressInput(address)
 	if err != nil {
 		return domaincommerce.Order{}, err
+	}
+	if couponCode != "" {
+		couponRepository, ok := s.repository.(ports.CouponOrderRepository)
+		if !ok {
+			return domaincommerce.Order{}, fmt.Errorf("coupon checkout is not available")
+		}
+		return couponRepository.CreateOrderWithCoupon(ctx, userID, cartID, idempotencyKey, address, couponCode)
 	}
 	return s.repository.CreateOrder(ctx, userID, cartID, idempotencyKey, address)
 }

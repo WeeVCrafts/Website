@@ -257,6 +257,7 @@ func (h *Handler) Checkout(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		CartID         int64                       `json:"cart_id"`
 		IdempotencyKey string                      `json:"idempotency_key"`
+		CouponCode     string                      `json:"coupon_code"`
 		Address        domaincommerce.AddressInput `json:"address"`
 	}
 	if !decodeJSON(w, r, &input) {
@@ -265,10 +266,14 @@ func (h *Handler) Checkout(w http.ResponseWriter, r *http.Request) {
 	if headerKey := strings.TrimSpace(r.Header.Get("Idempotency-Key")); headerKey != "" {
 		input.IdempotencyKey = headerKey
 	}
-	order, err := h.orders.Create(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address)
+	order, err := h.orders.CreateWithCoupon(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address, input.CouponCode)
 	if err != nil {
 		if errors.Is(err, ports.ErrIdempotencyConflict) {
 			writeError(w, http.StatusConflict, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for a different checkout request.")
+			return
+		}
+		if errors.Is(err, ports.ErrCouponInvalid) {
+			writeError(w, http.StatusUnprocessableEntity, "COUPON_INVALID", "This coupon is invalid, expired, or not available for the items in your cart.")
 			return
 		}
 		writeError(w, http.StatusUnprocessableEntity, "CHECKOUT_FAILED", "Order could not be created.")

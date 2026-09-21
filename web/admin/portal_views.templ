@@ -241,7 +241,7 @@ templ PortalFinance(p viewmodels.AdminPage) {
 		} else if p.Workspace == "refunds" {
 			<p class="admin-page-note">Showing payment attempts recorded as refunded.</p>
 		} else if p.Workspace == "settlements" {
-			<p class="admin-page-note">Showing persisted settlement records.</p>
+			<p class="admin-page-note">Settlement batches use captured order ledger entries. Payout actions simulate status changes and do not transfer money.</p>
 		}
 		<section class="admin-two-grid">
 			@PortalSettlementTable(p)
@@ -270,13 +270,45 @@ templ PortalSupport(p viewmodels.AdminPage) {
 
 templ PortalMarketing(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
-		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">campaign</span><div><h2>Marketplace promotions</h2><p>Persisted promotion records. Creation and publishing controls are not enabled in this workspace.</p></div></div></div>
-			<div class="admin-table wide"><div class="table-head"><span>Promotion</span><span>Discount type</span><span>Starts</span><span>Ends</span><span>Status</span><span>Applies to</span></div>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">campaign</span><div><h2>Create promotion</h2><p>Campaigns start as drafts. Activate a code to make it available at checkout. Fixed discounts are entered in rupees.</p></div></div></div>
+			<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/create" }>
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				<label>Campaign name<input name="name" required minlength="3" maxlength="100"/></label>
+				<label>Description<textarea name="description" maxlength="2000"></textarea></label>
+				<label>Coupon code<input name="code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+				<label>Discount type<select name="discount_type"><option value="percentage">Percent off</option><option value="fixed">Amount off</option><option value="free_shipping">Free shipping</option></select></label>
+				<label>Discount value<input name="discount_value" type="number" min="0.01" step="0.01" value="10"/></label>
+				<label>Starts on<input name="starts_on" type="date"/></label><label>Ends on<input name="ends_on" type="date"/></label>
+				<label>Maximum redemptions<input name="usage_limit" type="number" min="1" step="1"/></label>
+				<button class="admin-button primary" type="submit">Create draft</button>
+			</form>
+		</article>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">list_alt</span><div><h2>Marketplace promotions</h2><p>Manage campaign details, coupon codes, eligibility dates and redemption limits. A customer can redeem each code once.</p></div></div></div>
+			<div class="admin-campaign-list">
 				for _, item := range p.Campaigns {
-					<div class="table-row"><strong>{ item.Name }</strong><span>{ item.Type }</span><span>{ item.Start }</span><span>{ item.End }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Channel }</span></div>
+					<details class="admin-campaign-item"><summary><strong>{ item.Name }</strong><code>{ item.Code }</code><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Type }</span><span>{ item.UsageCount } used</span></summary>
+						<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/update" }>
+							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/>
+							<label>Campaign name<input name="name" value={ item.Name } required minlength="3" maxlength="100"/></label>
+							<label>Description<textarea name="description" maxlength="2000">{ item.Description }</textarea></label>
+							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+							<label>Discount type<select name="discount_type"><option value="percentage" selected={ item.Type == "percentage" }>Percent off</option><option value="fixed" selected={ item.Type == "fixed" }>Amount off</option><option value="free_shipping" selected={ item.Type == "free_shipping" }>Free shipping</option></select></label>
+							<label>Discount value<input name="discount_value" value={ item.Value } type="number" min="0.01" step="0.01"/></label>
+							<label>Starts on<input name="starts_on" value={ item.StartsOn } type="date"/></label><label>Ends on<input name="ends_on" value={ item.EndsOn } type="date"/></label>
+							<label>Maximum redemptions<input name="usage_limit" value={ item.UsageLimit } type="number" min="1" step="1"/></label>
+							<p>Current schedule: { item.Start } – { item.End }. Applies to: { item.Channel }.</p>
+							<button class="admin-button primary" type="submit">Save changes</button>
+						</form>
+						<div class="row-actions">
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "active" }/><button class="admin-button secondary" type="submit">Activate</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "draft" }/><button class="admin-button secondary" type="submit">Pause</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "archived" }/><button class="admin-button secondary" type="submit">Archive</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/delete" } onsubmit="return confirm('Permanently delete this unused promotion? Used promotions must be archived.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><button class="admin-button danger" type="submit">Delete unused campaign</button></form>
+						</div>
+					</details>
 				}
 				if len(p.Campaigns) == 0 {
-					@AdminTableEmpty("No promotions are configured.", "Promotion records will appear here when a promotion workflow is enabled.")
+					@AdminTableEmpty("No promotions are configured.", "Create a draft above to set up a coupon campaign.")
 				}
 			</div>
 		</article>
@@ -368,13 +400,26 @@ templ PortalReturnList(p viewmodels.AdminPage) {
 }
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {
-	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Persisted settlement batches and payable amounts.</p></div></div></div>
-		<div class="admin-table compact"><div class="table-head"><span>Seller</span><span>Payable</span><span>Status</span><span>Period end</span></div>
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Payable amounts reconciled from captured orders and commission rules.</p></div></div>
+		if p.CanFinance {
+			<form method="post" action={ p.SettlementRoot + "/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Create settlement batches</button></form>
+		}
+	</div>
+		<div class="admin-table wide"><div class="table-head"><span>Seller</span><span>Reference</span><span>Orders</span><span>Gross</span><span>Commission</span><span>Payable</span><span>Status</span><span>Period</span><span>Actions</span></div>
 			for _, item := range p.Settlements {
-				<div class="table-row"><strong>{ item.Seller }</strong><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Date }</span></div>
+				<div class="table-row"><strong>{ item.Seller }</strong><span>{ item.Reference }</span><span>{ item.Orders }</span><span>{ item.Gross }</span><span>{ item.Commission }</span><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Period }</span><span class="row-actions">
+					if p.CanFinance && item.Status == "pending" {
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="approved"/><button class="admin-button secondary" type="submit">Approve</button></form>
+					} else if p.CanFinance && item.Status == "approved" {
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" } onsubmit="return confirm('Record this mock payout as paid? No bank transfer will be made.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="paid"/><button class="admin-button primary" type="submit">Record mock payout</button></form>
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="failed"/><button class="admin-button danger" type="submit">Mark failed</button></form>
+					} else {
+						<span>—</span>
+					}
+				</span></div>
 			}
 			if len(p.Settlements) == 0 {
-				@AdminTableEmpty("No settlement records yet.", "Seller settlement records will appear here after they are generated.")
+				@AdminTableEmpty("No settlement records yet.", "Create a batch after captured seller orders appear in the ledger.")
 			}
 		</div>
 	</article>

@@ -156,6 +156,9 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 			if _, err := tx.Exec(transactionContext, `UPDATE inventory_reservations SET status = 'committed', updated_at = NOW() WHERE order_id = $1 AND status = 'active'`, orderID); err != nil {
 				return err
 			}
+			if err := recordSellerSalesLedger(transactionContext, tx, orderID); err != nil {
+				return err
+			}
 		} else if webhook.EventType == "payment.failed" {
 			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'failed', updated_at = NOW() WHERE order_id = $2`, webhook.ProviderPaymentID, orderID); err != nil {
 				return err

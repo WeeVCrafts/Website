@@ -788,15 +788,23 @@ func (r *CommerceRepository) ListWishlist(ctx context.Context, userID int64) ([]
 }
 
 func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
+	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, "")
+}
+
+func (r *CommerceRepository) CreateOrderWithCoupon(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
+	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, strings.ToUpper(strings.TrimSpace(couponCode)))
+}
+
+func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
 	var order domaincommerce.Order
 	addressJSON, err := json.Marshal(address)
 	if err != nil {
 		return order, err
 	}
-	requestHash := checkoutRequestHash(cartID, addressJSON)
+	requestHash := checkoutRequestHash(cartID, addressJSON, couponCode)
 	err = WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var existingHash *string
-		if err := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.TotalCents, &order.CreatedAt, &existingHash); err == nil {
+		if err := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); err == nil {
 			if existingHash != nil && *existingHash != requestHash {
 				return ports.ErrIdempotencyConflict
 			}
@@ -807,7 +815,7 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 		var cartOwner int64
 		if err := tx.QueryRow(transactionContext, `SELECT user_id FROM carts WHERE id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, cartID).Scan(&cartOwner); err != nil || cartOwner != userID {
 			var existingHash *string
-			if existingErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.TotalCents, &order.CreatedAt, &existingHash); existingErr == nil {
+			if existingErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); existingErr == nil {
 				if existingHash != nil && *existingHash != requestHash {
 					return ports.ErrIdempotencyConflict
 				}
@@ -815,13 +823,14 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 			}
 			return ports.ErrCartNotFound
 		}
-		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.name, pv.sku, pv.price_cents, ci.quantity, i.available_quantity FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active' JOIN products p ON p.id = pv.product_id AND p.status = 'approved' JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF i`, cartID)
+		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, i.available_quantity FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active' JOIN products p ON p.id = pv.product_id AND p.status = 'approved' JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF i`, cartID)
 		if err != nil {
 			return err
 		}
 		defer rows.Close()
 		type line struct {
 			variantID           int64
+			productID           int64
 			name, sku           string
 			price               int64
 			quantity, available int
@@ -830,7 +839,7 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 		var subtotal int64
 		for rows.Next() {
 			var item line
-			if err := rows.Scan(&item.variantID, &item.name, &item.sku, &item.price, &item.quantity, &item.available); err != nil {
+			if err := rows.Scan(&item.variantID, &item.productID, &item.name, &item.sku, &item.price, &item.quantity, &item.available); err != nil {
 				return err
 			}
 			if item.quantity > item.available {
@@ -850,11 +859,65 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 		if subtotal < 150000 {
 			shipping = 9900
 		}
-		total := subtotal + shipping
-		err = tx.QueryRow(transactionContext, `INSERT INTO orders (order_number, user_id, status, subtotal_cents, shipping_cents, total_cents, address_snapshot, idempotency_scope, idempotency_key, idempotency_request_hash) VALUES ($1, $2, 'pending_payment', $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (idempotency_scope, idempotency_key) DO NOTHING RETURNING id, order_number, status, currency, subtotal_cents, shipping_cents, total_cents, created_at`, orderNumber, userID, subtotal, shipping, total, addressJSON, fmt.Sprintf("checkout:%d", userID), idempotencyKey, requestHash).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.TotalCents, &order.CreatedAt)
+		var couponID, promotionID int64
+		var discount int64
+		if couponCode != "" {
+			var discountType string
+			var discountValue int64
+			var hasProductRules bool
+			err = tx.QueryRow(transactionContext, `
+				SELECT c.id, p.id, p.discount_type, p.discount_value,
+				       EXISTS (SELECT 1 FROM promotion_products pp WHERE pp.promotion_id=p.id)
+				FROM coupons c JOIN promotions p ON p.id=c.promotion_id
+				WHERE UPPER(c.code)=UPPER($1) AND c.active AND p.status='active'
+				  AND (p.starts_at IS NULL OR p.starts_at<=NOW()) AND (p.ends_at IS NULL OR p.ends_at>NOW())
+				  AND (c.usage_limit IS NULL OR c.usage_count<c.usage_limit)
+				  AND (p.usage_limit IS NULL OR p.usage_count<p.usage_limit)
+				  AND NOT EXISTS (SELECT 1 FROM promotion_usages pu WHERE pu.coupon_id=c.id AND pu.user_id=$2)
+				FOR UPDATE OF c,p`, couponCode, userID).Scan(&couponID, &promotionID, &discountType, &discountValue, &hasProductRules)
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrCouponInvalid
+			}
+			if err != nil {
+				return err
+			}
+			var eligibleSubtotal int64
+			for _, item := range lines {
+				if !hasProductRules {
+					eligibleSubtotal += item.price * int64(item.quantity)
+					continue
+				}
+				var eligible bool
+				if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM promotion_products WHERE promotion_id=$1 AND product_id=$2)`, promotionID, item.productID).Scan(&eligible); err != nil {
+					return err
+				}
+				if eligible {
+					eligibleSubtotal += item.price * int64(item.quantity)
+				}
+			}
+			if eligibleSubtotal == 0 {
+				return ports.ErrCouponInvalid
+			}
+			switch discountType {
+			case "percentage":
+				if discountValue <= 0 || discountValue > 100 {
+					return ports.ErrCouponInvalid
+				}
+				discount = eligibleSubtotal * discountValue / 100
+			case "fixed":
+				discount = min(discountValue, eligibleSubtotal)
+			case "free_shipping":
+				discount = shipping
+			default:
+				return ports.ErrCouponInvalid
+			}
+		}
+		total := subtotal + shipping - discount
+
+		err = tx.QueryRow(transactionContext, `INSERT INTO orders (order_number, user_id, status, subtotal_cents, shipping_cents, discount_cents, total_cents, address_snapshot, idempotency_scope, idempotency_key, idempotency_request_hash) VALUES ($1, $2, 'pending_payment', $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (idempotency_scope, idempotency_key) DO NOTHING RETURNING id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at`, orderNumber, userID, subtotal, shipping, discount, total, addressJSON, fmt.Sprintf("checkout:%d", userID), idempotencyKey, requestHash).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
 			var existingHash *string
-			if selectErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.TotalCents, &order.CreatedAt, &existingHash); selectErr != nil {
+			if selectErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); selectErr != nil {
 				return selectErr
 			} else if existingHash != nil && *existingHash != requestHash {
 				return ports.ErrIdempotencyConflict
@@ -863,6 +926,17 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 		}
 		if err != nil {
 			return mapCommerceError(err)
+		}
+		if couponID != 0 {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO promotion_usages (promotion_id,coupon_id,user_id,order_id,amount_cents) VALUES ($1,$2,$3,$4,$5)`, promotionID, couponID, userID, order.ID, discount); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(transactionContext, `UPDATE coupons SET usage_count=usage_count+1 WHERE id=$1`, couponID); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(transactionContext, `UPDATE promotions SET usage_count=usage_count+1,updated_at=NOW() WHERE id=$1`, promotionID); err != nil {
+				return err
+			}
 		}
 		if _, err := tx.Exec(transactionContext, `
 			INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
@@ -907,7 +981,7 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 }
 
 func (r *CommerceRepository) ListOrders(ctx context.Context, userID int64, limit int) ([]domaincommerce.Order, error) {
-	rows, err := r.pool.Query(ctx, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, total_cents, created_at FROM orders WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2`, userID, limit)
+	rows, err := r.pool.Query(ctx, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at FROM orders WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2`, userID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -915,7 +989,7 @@ func (r *CommerceRepository) ListOrders(ctx context.Context, userID int64, limit
 	orders := make([]domaincommerce.Order, 0)
 	for rows.Next() {
 		var order domaincommerce.Order
-		if err := rows.Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.TotalCents, &order.CreatedAt); err != nil {
+		if err := rows.Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt); err != nil {
 			return nil, err
 		}
 		orders = append(orders, order)
@@ -927,10 +1001,10 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	var detail domaincommerce.OrderDetail
 	if err := r.pool.QueryRow(ctx, `
 		SELECT o.id, o.order_number, o.status, o.currency, o.subtotal_cents,
-		       o.shipping_cents, o.total_cents, o.created_at,
+		       o.shipping_cents, o.discount_cents, o.total_cents, o.created_at,
 		       COALESCE((SELECT pa.status FROM payment_attempts pa WHERE pa.order_id = o.id ORDER BY pa.id DESC LIMIT 1), '')
 		FROM orders o
-		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus); err != nil {
+		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.DiscountCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domaincommerce.OrderDetail{}, ports.ErrOrderNotFound
 		}
@@ -1078,8 +1152,8 @@ func hashGuestToken(token string) string {
 	return hex.EncodeToString(digest[:])
 }
 
-func checkoutRequestHash(cartID int64, addressJSON []byte) string {
-	digest := sha256.Sum256([]byte(fmt.Sprintf("%d:", cartID) + string(addressJSON)))
+func checkoutRequestHash(cartID int64, addressJSON []byte, couponCode string) string {
+	digest := sha256.Sum256([]byte(fmt.Sprintf("%d:%s:", cartID, strings.ToUpper(strings.TrimSpace(couponCode))) + string(addressJSON)))
 	return hex.EncodeToString(digest[:])
 }
 

@@ -214,8 +214,36 @@ test("customer security and privacy controls reach their persisted workflows", a
     await expect(page.locator("body")).toContainText(/access.*open/);
   }
 
-  const unknownAccountPage = await page.goto("/account/not-a-real-setting");
-  expect(unknownAccountPage.status()).toBe(404);
+  const unknownAccountResponse = await page.request.get("/account/not-a-real-setting");
+  expect(unknownAccountResponse.status()).toBe(404);
+});
+
+test("customer notification choices persist and preserve consent state", async ({ page }) => {
+  test.skip(!localMutationTarget, "Account preference mutations are restricted to the local test deployment.");
+  await signIn(page, "demo.customer03@weevcrafts.local", "/account");
+  await page.goto("/account/notifications");
+
+  const fields = {
+    order_updates: page.locator('input[name="order_updates"]'),
+    maker_messages: page.locator('input[name="maker_messages"]'),
+    offers: page.locator('input[name="offers"]'),
+    maker_stories: page.locator('input[name="maker_stories"]'),
+  };
+  const original = {};
+  for (const [name, field] of Object.entries(fields)) original[name] = await field.isChecked();
+  const changed = { ...original, order_updates: !original.order_updates, maker_messages: !original.maker_messages, offers: !original.offers, maker_stories: !original.maker_stories };
+
+  const save = async expected => {
+    for (const [name, field] of Object.entries(fields)) await field.setChecked(expected[name]);
+    const responsePromise = page.waitForResponse(response => response.url().includes("/account/notifications") && response.request().method() === "POST");
+    await page.getByRole("button", { name: "Save preferences" }).click();
+    expect((await responsePromise).status()).toBe(303);
+    await page.goto("/account/notifications");
+    for (const [name, field] of Object.entries(fields)) await expect(field).toBeChecked({ checked: expected[name] });
+  };
+
+  await save(changed);
+  await save(original);
 });
 
 test("customer seller follows persist and seller catalog sorting is applied", async ({ browser }) => {
@@ -562,6 +590,58 @@ test("super admin can create, edit and archive product listings", async ({ brows
   }
 });
 
+test("marketplace promotions support create, edit, activate, pause, archive and delete", async ({ page }) => {
+  test.skip(!localMutationTarget, "Promotion mutations are restricted to the local test deployment.");
+  const suffix = Date.now().toString();
+  const name = `QA Campaign ${suffix}`;
+  const editedName = `QA Campaign Edited ${suffix}`;
+  await signIn(page, "demo.marketplace01@weevcrafts.local", "/marketplace-admin");
+  await page.goto("/marketplace-admin/marketing");
+
+  const create = page.locator('form[action="/marketplace-admin/marketing/create"]');
+  await create.locator('input[name="name"]').fill(name);
+  await create.locator('textarea[name="description"]').fill("Browser verification campaign.");
+  await create.locator('input[name="code"]').fill(`CRUD${suffix}`);
+  await create.locator('select[name="discount_type"]').selectOption("percentage");
+  await create.locator('input[name="discount_value"]').fill("10");
+  const createResponse = page.waitForResponse(response => response.url().includes("/marketing/create") && response.request().method() === "POST");
+  await create.getByRole("button", { name: "Create draft" }).click();
+  expect((await createResponse).status()).toBe(303);
+  await page.goto("/marketplace-admin/marketing");
+
+  let campaign = page.locator(".admin-campaign-item").filter({ hasText: name });
+  await expect(campaign).toHaveCount(1);
+  await campaign.locator("summary").click();
+  const edit = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  await edit.locator('input[name="name"]').fill(editedName);
+  await edit.locator('input[name="code"]').fill(`EDIT${suffix}`);
+  const updateResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
+  await edit.getByRole("button", { name: "Save changes" }).click();
+  expect((await updateResponse).status()).toBe(303);
+  await page.goto("/marketplace-admin/marketing");
+
+  campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
+  await campaign.locator("summary").click();
+  await expect(campaign).toContainText(`EDIT${suffix}`);
+  for (const [index, status, button] of [[0, "active", "Activate"], [1, "draft", "Pause"], [2, "archived", "Archive"]]) {
+    const statusForm = campaign.locator('form[action="/marketplace-admin/marketing/status"]').nth(index);
+    const response = page.waitForResponse(item => item.url().includes("/marketing/status") && item.request().method() === "POST");
+    await statusForm.getByRole("button", { name: button }).click();
+    expect((await response).status()).toBe(303);
+    await page.goto("/marketplace-admin/marketing");
+    campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
+    await campaign.locator("summary").click();
+    await expect(campaign.locator("summary")).toContainText(status);
+  }
+  const deleteForm = campaign.locator('form[action="/marketplace-admin/marketing/delete"]');
+  const deleteResponse = page.waitForResponse(response => response.url().includes("/marketing/delete") && response.request().method() === "POST");
+  page.once("dialog", dialog => dialog.accept());
+  await deleteForm.getByRole("button", { name: "Delete unused campaign" }).click();
+  expect((await deleteResponse).status()).toBe(303);
+  await page.goto("/marketplace-admin/marketing");
+  await expect(page.locator(".admin-campaign-item").filter({ hasText: editedName })).toHaveCount(0);
+});
+
 test("seller listing approval, mock-paid order, fulfilment and return handling work across roles", async ({ browser }) => {
   test.skip(!localMutationTarget, "Cross-role workflow mutations are restricted to the local test deployment.");
   test.setTimeout(240_000);
@@ -654,6 +734,25 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
 
     await signIn(marketplace, "demo.marketplace01@weevcrafts.local", "/marketplace-admin");
+    const couponCode = `QA${suffix}`;
+    await marketplace.goto("/marketplace-admin/marketing");
+    const campaignForm = marketplace.locator('form[action="/marketplace-admin/marketing/create"]');
+    await campaignForm.locator('input[name="name"]').fill(`QA Checkout Campaign ${suffix}`);
+    await campaignForm.locator('textarea[name="description"]').fill("End-to-end checkout coupon verification.");
+    await campaignForm.locator('input[name="code"]').fill(couponCode);
+    await campaignForm.locator('select[name="discount_type"]').selectOption("percentage");
+    await campaignForm.locator('input[name="discount_value"]').fill("10");
+    const campaignCreated = marketplace.waitForResponse(response => response.url().includes("/marketing/create") && response.request().method() === "POST");
+    await campaignForm.getByRole("button", { name: "Create draft" }).click();
+    expect((await campaignCreated).status()).toBe(303);
+    await marketplace.goto("/marketplace-admin/marketing");
+    const checkoutCampaign = marketplace.locator(".admin-campaign-item").filter({ hasText: couponCode });
+    await checkoutCampaign.locator("summary").click();
+    const activateCampaign = checkoutCampaign.locator('form[action="/marketplace-admin/marketing/status"]').nth(0);
+    const activationResponse = marketplace.waitForResponse(response => response.url().includes("/marketing/status") && response.request().method() === "POST");
+    await activateCampaign.getByRole("button", { name: "Activate" }).click();
+    expect((await activationResponse).status()).toBe(303);
+
     await marketplace.goto(`/marketplace-admin/products?q=${encodeURIComponent(sku)}`);
     const reviewRow = marketplace.locator(".table-row").filter({ hasText: productName });
     await expect(reviewRow).toHaveCount(1);
@@ -726,11 +825,17 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.getByRole("button", { name: /Continue to delivery/ }).click();
     await customer.getByRole("button", { name: /Continue to payment/ }).click();
     await customer.getByRole("button", { name: /Continue to review/ }).click();
+    await customer.getByLabel("Coupon code").fill(couponCode);
     const checkoutRequest = customer.waitForRequest(request => request.url().includes("/api/v1/checkout") && request.method() === "POST");
+    const checkoutResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
     await customer.getByRole("button", { name: /Place order/ }).click();
     const checkoutPayload = JSON.parse((await checkoutRequest).postData());
     expect(checkoutPayload.address.phone).toBe("9876543210");
     expect(checkoutPayload.address.country_code).toBe("IN");
+    expect(checkoutPayload.coupon_code).toBe(couponCode);
+    const checkoutOrder = (await (await checkoutResponse).json()).data;
+    expect(checkoutOrder.discount_cents).toBeGreaterThan(0);
+    expect(checkoutOrder.total_cents).toBeLessThan(checkoutOrder.subtotal_cents + checkoutOrder.shipping_cents);
     const capture = customer.getByRole("button", { name: "Simulate successful payment" });
     await expect(capture).toBeVisible();
     const orderNumber = await capture.getAttribute("data-order-number");
@@ -738,6 +843,11 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await capture.click();
     await expect(customer).toHaveURL(new RegExp(`/orders/${orderNumber}$`));
     await expect(customer.locator("body")).toContainText("Confirmed");
+
+    await seller.goto("/seller-admin/earnings");
+    const saleLedgerRow = seller.locator(".ledger-row").filter({ hasText: orderNumber });
+    await expect(saleLedgerRow).toHaveCount(1);
+    await expect(saleLedgerRow).toContainText("open");
 
     const sellerOrdersPath = `/seller-admin/orders?q=${encodeURIComponent(orderNumber)}`;
     for (const status of ["processing", "shipped", "delivered"]) {
@@ -753,6 +863,47 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
       expect((await fulfillmentResponse).status()).toBe(303);
       await seller.waitForURL(url => url.pathname === "/seller-admin/orders");
     }
+
+    const reviewTitle = `QA review ${suffix}`;
+    const reviewBody = `The handmade item arrived as described and the finish looks lovely. ${suffix}`;
+    await customer.goto("/account/reviews");
+    const reviewForm = customer.locator("article[data-review-product]").filter({ hasText: productName }).locator('form[action="/account/reviews"]');
+    await expect(reviewForm).toBeVisible();
+    const reviewProductID = await reviewForm.locator('input[name="product_id"]').inputValue();
+    const reviewOrderID = await reviewForm.locator('input[name="order_id"]').inputValue();
+    const reviewCSRF = await reviewForm.locator('input[name="csrf_token"]').inputValue();
+    const deniedModeration = await customer.request.post("/marketplace-admin/reviews/status", { form: {
+      csrf_token: reviewCSRF, review_id: "1", decision: "published",
+    } });
+    expect(deniedModeration.status()).toBe(403);
+    await reviewForm.locator('select[name="rating"]').selectOption("5");
+    await reviewForm.locator('input[name="title"]').fill(reviewTitle);
+    await reviewForm.locator('textarea[name="body"]').fill(reviewBody);
+    const reviewResponsePromise = customer.waitForResponse(response => response.url().includes("/account/reviews") && response.request().method() === "POST");
+    await reviewForm.getByRole("button", { name: "Submit verified review" }).click();
+    expect((await reviewResponsePromise).status()).toBe(303);
+    await expect(customer.locator("body")).toContainText("pending");
+    const duplicateReview = await customer.request.post("/account/reviews", { form: {
+      csrf_token: reviewCSRF, product_id: reviewProductID, order_id: reviewOrderID,
+      rating: "5", title: reviewTitle, body: reviewBody,
+    } });
+    expect(duplicateReview.status()).toBe(409);
+
+    await marketplace.goto("/marketplace-admin/reviews");
+    const reviewCard = marketplace.locator("article.rounded-2xl").filter({ hasText: reviewTitle });
+    await expect(reviewCard).toBeVisible();
+    await expect(reviewCard).toContainText("Verified purchase");
+    const approveReview = marketplace.waitForResponse(response => response.url().includes("/marketplace-admin/reviews/status") && response.request().method() === "POST");
+    await reviewCard.getByRole("button", { name: "Approve and publish" }).click();
+    const moderationResponse = await approveReview;
+    expect(moderationResponse.status()).toBe(303);
+
+    await customer.goto(`/products/${slug}`);
+    await customer.getByRole("tab", { name: /Reviews/ }).click();
+    await expect(customer.locator("#product-panel-reviews")).toContainText(reviewTitle);
+    await expect(customer.locator("#product-panel-reviews")).toContainText(reviewBody);
+    await expect(customer.locator("#product-panel-reviews")).toContainText("Verified purchase");
+    await expect(customer.locator("#product-panel-reviews .review-highlight")).toContainText("1 reviews");
 
     await customer.goto(`/orders/${orderNumber}`);
     await expect(customer.getByRole("heading", { name: "Request a return" })).toBeVisible();
@@ -811,6 +962,34 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
   } finally {
     await Promise.all([sellerContext.close(), marketplaceContext.close(), customerContext.close(), operationsContext.close()]);
   }
+});
+
+test("finance operator reconciles and simulates seller settlement payouts", async ({ page }) => {
+  test.skip(!localMutationTarget, "Settlement mutations are restricted to the local test deployment.");
+  await signIn(page, "demo.finance01@weevcrafts.local", "/finance-portal");
+  await page.goto("/finance-portal/settlements");
+  const panel = page.locator(".admin-panel").filter({ hasText: "Seller settlements" });
+  const createResponse = page.waitForResponse(response => response.url().includes("/settlements/create") && response.request().method() === "POST");
+  await panel.getByRole("button", { name: "Create settlement batches" }).click();
+  expect((await createResponse).status()).toBe(303);
+  await page.waitForURL(/\/finance-portal\/settlements/);
+
+  let pendingRow = panel.locator(".table-row").filter({ hasText: "pending" }).first();
+  await expect(pendingRow).toBeVisible();
+  const reference = (await pendingRow.locator("span").nth(0).textContent()).trim();
+  const approveResponse = page.waitForResponse(response => response.url().includes("/settlements/status") && response.request().method() === "POST");
+  await pendingRow.getByRole("button", { name: "Approve" }).click();
+  expect((await approveResponse).status()).toBe(303);
+  await page.waitForURL(/\/finance-portal\/settlements/);
+
+  let approvedRow = panel.locator(".table-row").filter({ hasText: reference });
+  await expect(approvedRow).toContainText("approved");
+  const payoutResponse = page.waitForResponse(response => response.url().includes("/settlements/status") && response.request().method() === "POST");
+  page.once("dialog", dialog => dialog.accept());
+  await approvedRow.getByRole("button", { name: "Record mock payout" }).click();
+  expect((await payoutResponse).status()).toBe(303);
+  await page.waitForURL(/\/finance-portal\/settlements/);
+  await expect(panel.locator(".table-row").filter({ hasText: reference })).toContainText("paid");
 });
 
 test("customer and support agent share a persisted ticket conversation", async ({ browser }) => {

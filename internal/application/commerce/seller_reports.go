@@ -9,8 +9,8 @@ import (
 )
 
 // SellerReportService exposes seller-owned operational metrics without
-// pretending that order totals are settled payouts. Commission and settlement
-// reporting belongs to the future seller-finance ledger.
+// pretending that order totals are settled payouts. Commission and payable
+// balances come from the transaction-backed seller-finance ledger.
 type SellerReportService struct {
 	repository  ports.SellerOrderRepository
 	roles       ports.RoleChecker

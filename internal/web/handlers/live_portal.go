@@ -3,8 +3,11 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -53,6 +56,18 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method != http.MethodGet {
+		if isSettlementMutationPath(r.URL.Path) {
+			h.adminSettlementMutation(w, r)
+			return
+		}
+		if isPromotionMutationPath(r.URL.Path) {
+			h.adminPromotionMutation(w, r)
+			return
+		}
+		if r.URL.Path == "/marketplace-admin/reviews/status" || r.URL.Path == "/super-admin/reviews/status" {
+			h.adminReviewStatus(w, r)
+			return
+		}
 		if legacyPath := canonicalAdminMutationPath(r.URL.Path); legacyPath != "" {
 			_, root, _ := canonicalAdminPortal(r.URL.Path)
 			h.delegateWithPortalRedirect(w, requestWithPath(r, legacyPath), root)
@@ -307,6 +322,10 @@ func (h *LivePortalHandler) renderWorkspaces(w http.ResponseWriter, r *http.Requ
 func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, actorID int64, role domainidentity.Role, root, displayName, csrfToken string) {
 	page := h.adminPage(r, actorID, role)
 	page.PortalRoot = root
+	page.SettlementRoot = root
+	if role == domainidentity.RoleSuperAdmin {
+		page.SettlementRoot = root + "/finance"
+	}
 	page.PortalLabel = portalLabel(role)
 	page.RoleLabel = roleLabel(role)
 	page.DisplayName = displayName
@@ -349,7 +368,11 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	case "finance":
 		component = adminpages.PortalFinance(page)
 	case "support":
-		component = adminpages.PortalSupport(page)
+		if page.Workspace == "reviews" {
+			component = adminpages.Workspace(page)
+		} else {
+			component = adminpages.PortalSupport(page)
+		}
 	case "marketing":
 		component = adminpages.PortalMarketing(page)
 	case "analytics":
@@ -442,6 +465,9 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 	if active == "" {
 		active = "dashboard"
 	}
+	if requestedWorkspace := r.URL.Query().Get("workspace"); requestedWorkspace == "settlements" && (role == domainidentity.RoleFinanceOperator || role == domainidentity.RoleSuperAdmin) {
+		workspace = requestedWorkspace
+	}
 	switch active {
 	case "brands", "product-details", "category-management":
 		active = "products"
@@ -471,6 +497,10 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	if workspace == "" {
 		page.Title = "Marketplace dashboard"
 	}
+	if workspace == "reviews" {
+		page.Title = "Review moderation"
+		page.Subtitle = "Moderate verified customer reviews and publish approved feedback."
+	}
 	page.Stats = h.adminStats(r)
 	page.Bars = []viewmodels.AdminBar{{Label: "Week 1", Value: "Live order value", Height: "35", Color: "red"}, {Label: "Week 2", Value: "Live order value", Height: "50", Color: "green"}, {Label: "Week 3", Value: "Live order value", Height: "65", Color: "peach"}, {Label: "Week 4", Value: "Live order value", Height: "80", Color: "red"}}
 	page.Sellers = h.adminSellers(r)
@@ -479,6 +509,7 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Returns = h.adminReturns(r)
 	page.Transactions = h.adminTransactions(r)
 	page.SupportCases = h.adminCases(r)
+	page.Reviews = h.adminReviews(r)
 	page.Campaigns = h.adminCampaigns(r)
 	page.Settlements = h.adminSettlements(r)
 	page.AuditEntries = h.adminAudit(r)
@@ -702,49 +733,559 @@ func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSuppor
 	return result
 }
 
+func (h *LivePortalHandler) adminReviews(r *http.Request) []viewmodels.AdminReview {
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT pr.id, pr.product_id, p.name, COALESCE(s.display_name,''), u.display_name,
+		       pr.title, pr.body, pr.status, pr.rating, pr.verified_purchase, pr.created_at
+		FROM product_reviews pr
+		JOIN products p ON p.id=pr.product_id
+		JOIN users u ON u.id=pr.user_id
+		LEFT JOIN sellers s ON s.id=p.seller_id
+		ORDER BY CASE pr.status WHEN 'pending' THEN 0 ELSE 1 END, pr.created_at DESC, pr.id DESC
+		LIMIT 100`)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	result := make([]viewmodels.AdminReview, 0)
+	for rows.Next() {
+		var review viewmodels.AdminReview
+		var id, productID int64
+		var created time.Time
+		if rows.Scan(&id, &productID, &review.Product, &review.Seller, &review.Customer, &review.Title, &review.Body, &review.Status, &review.Rating, &review.VerifiedPurchase, &created) == nil {
+			review.ID = strconv.FormatInt(id, 10)
+			review.ProductID = strconv.FormatInt(productID, 10)
+			review.Date = created.Format("2 Jan 2006")
+			result = append(result, review)
+		}
+	}
+	return result
+}
+
+var promotionCodePattern = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_-]{2,39}$`)
+var promotionAmountPattern = regexp.MustCompile(`^[0-9]{1,8}(?:\.[0-9]{1,2})?$`)
+
+func isPromotionMutationPath(path string) bool {
+	return path == "/marketplace-admin/marketing/create" || path == "/marketplace-admin/marketing/update" || path == "/marketplace-admin/marketing/status" || path == "/marketplace-admin/marketing/delete" ||
+		path == "/super-admin/marketing/create" || path == "/super-admin/marketing/update" || path == "/super-admin/marketing/status" || path == "/super-admin/marketing/delete"
+}
+
+func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *http.Request) {
+	root, requiredRole := "/marketplace-admin", "marketplace_admin"
+	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
+		root, requiredRole = "/super-admin", "super_admin"
+	}
+	session, ok := h.session(r)
+	if !ok {
+		redirectToLogin(w, r)
+		return
+	}
+	if r.Method != http.MethodPost || !h.hasRole(r, session.UserID, requiredRole) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid promotion request", http.StatusBadRequest)
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Form.Get("csrf_token"))) != 1 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	action := strings.TrimPrefix(r.URL.Path, root+"/marketing/")
+	id, idErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("promotion_id")), 10, 64)
+	var err error
+	switch action {
+	case "create":
+		err = h.createPromotion(r, session.UserID)
+	case "update":
+		if idErr != nil || id <= 0 {
+			err = fmt.Errorf("invalid campaign id")
+		} else {
+			err = h.updatePromotion(r, id, session.UserID)
+		}
+	case "status":
+		status := strings.TrimSpace(r.Form.Get("status"))
+		if idErr != nil || id <= 0 || (status != "active" && status != "draft" && status != "archived") {
+			err = fmt.Errorf("invalid campaign status")
+		} else {
+			result, execErr := h.pool.Exec(r.Context(), `UPDATE promotions SET status=$1,updated_at=NOW() WHERE id=$2`, status, id)
+			err = execErr
+			if err == nil && result.RowsAffected() == 0 {
+				err = fmt.Errorf("campaign not found")
+			}
+		}
+	case "delete":
+		if idErr != nil || id <= 0 {
+			err = fmt.Errorf("invalid campaign id")
+		} else {
+			err = h.deletePromotion(r, id)
+		}
+	default:
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		status := http.StatusUnprocessableEntity
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate key") || strings.Contains(err.Error(), "already used") {
+			status = http.StatusConflict
+		}
+		http.Error(w, err.Error(), status)
+		return
+	}
+	if idErr == nil && id > 0 && action != "create" {
+		_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,$2,'promotion',$3,$4,jsonb_build_object('status',$5::text))`, strconv.FormatInt(session.UserID, 10), "promotion."+action, strconv.FormatInt(id, 10), r.Header.Get("X-Request-ID"), r.Form.Get("status"))
+	} else {
+		_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'promotion.create','promotion','new',$2,'{}'::jsonb)`, strconv.FormatInt(session.UserID, 10), r.Header.Get("X-Request-ID"))
+	}
+	http.Redirect(w, r, root+"/marketing?notice=Promotion+saved", http.StatusSeeOther)
+}
+
+type promotionForm struct {
+	name, description, code, kind, slug, start, end string
+	value, limit                                    int64
+}
+
+func readPromotionForm(r *http.Request) (promotionForm, error) {
+	f := promotionForm{name: strings.TrimSpace(r.Form.Get("name")), description: strings.TrimSpace(r.Form.Get("description")), code: strings.ToUpper(strings.TrimSpace(r.Form.Get("code"))), kind: strings.TrimSpace(r.Form.Get("discount_type")), start: strings.TrimSpace(r.Form.Get("starts_on")), end: strings.TrimSpace(r.Form.Get("ends_on"))}
+	if len([]rune(f.name)) < 3 || len([]rune(f.name)) > 100 || len([]rune(f.description)) > 2000 || !promotionCodePattern.MatchString(f.code) {
+		return f, fmt.Errorf("enter a campaign name, optional description, and valid 3-40 character coupon code")
+	}
+	if f.kind != "percentage" && f.kind != "fixed" && f.kind != "free_shipping" {
+		return f, fmt.Errorf("choose a valid discount type")
+	}
+	if f.kind == "fixed" {
+		amount := strings.TrimSpace(r.Form.Get("discount_value"))
+		if !promotionAmountPattern.MatchString(amount) {
+			return f, fmt.Errorf("enter a fixed discount in rupees")
+		}
+		parts := strings.SplitN(amount, ".", 2)
+		whole, e := strconv.ParseInt(parts[0], 10, 64)
+		if e != nil {
+			return f, fmt.Errorf("fixed discount is too large")
+		}
+		fraction := "00"
+		if len(parts) == 2 {
+			fraction = parts[1] + "00"
+			fraction = fraction[:2]
+		}
+		f.value = whole * 100
+		paise, _ := strconv.ParseInt(fraction, 10, 64)
+		f.value += paise
+		if f.value <= 0 {
+			return f, fmt.Errorf("fixed discount must be greater than zero")
+		}
+	} else if f.kind == "percentage" {
+		value, e := strconv.ParseInt(strings.TrimSpace(r.Form.Get("discount_value")), 10, 64)
+		if e != nil || value < 1 || value > 100 {
+			return f, fmt.Errorf("percentage discount must be from 1 to 100")
+		}
+		f.value = value
+	}
+	limitText := strings.TrimSpace(r.Form.Get("usage_limit"))
+	if limitText != "" {
+		limit, e := strconv.ParseInt(limitText, 10, 32)
+		if e != nil || limit < 1 {
+			return f, fmt.Errorf("usage limit must be a positive whole number")
+		}
+		f.limit = limit
+	}
+	if f.start != "" {
+		if _, e := parsePromotionDate(f.start, false); e != nil {
+			return f, e
+		}
+	}
+	if f.end != "" {
+		if _, e := parsePromotionDate(f.end, true); e != nil {
+			return f, e
+		}
+	}
+	if f.start != "" && f.end != "" {
+		start, _ := parsePromotionDate(f.start, false)
+		end, _ := parsePromotionDate(f.end, true)
+		if !start.Before(*end) {
+			return f, fmt.Errorf("end date must be on or after the start date")
+		}
+	}
+	f.slug = promotionSlug(f.name)
+	if f.slug == "" {
+		return f, fmt.Errorf("campaign name must include letters or numbers")
+	}
+	return f, nil
+}
+
+func parsePromotionDate(value string, end bool) (*time.Time, error) {
+	d, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return nil, fmt.Errorf("dates must use YYYY-MM-DD")
+	}
+	location, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		location = time.FixedZone("IST", 19800)
+	}
+	date := time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, location)
+	if end {
+		date = date.AddDate(0, 0, 1)
+	}
+	utc := date.UTC()
+	return &utc, nil
+}
+
+func promotionSlug(value string) string {
+	var b strings.Builder
+	lastDash := false
+	for _, r := range strings.ToLower(value) {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+			lastDash = false
+		} else if !lastDash && b.Len() > 0 {
+			b.WriteByte('-')
+			lastDash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
+func (h *LivePortalHandler) createPromotion(r *http.Request, actorID int64) error {
+	f, err := readPromotionForm(r)
+	if err != nil {
+		return err
+	}
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(r.Context())
+	var id int64
+	start, end := promotionDateArgs(f)
+	if err = tx.QueryRow(r.Context(), `INSERT INTO promotions(slug,name,description,discount_type,discount_value,status,starts_at,ends_at,usage_limit,created_by) VALUES($1,$2,$3,$4,$5,'draft',$6,$7,NULLIF($8,0),$9) RETURNING id`, f.slug, f.name, f.description, f.kind, f.value, start, end, f.limit, actorID).Scan(&id); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO coupons(promotion_id,code,usage_limit) VALUES($1,$2,NULLIF($3,0))`, id, f.code, f.limit); err != nil {
+		return err
+	}
+	return tx.Commit(r.Context())
+}
+
+func (h *LivePortalHandler) updatePromotion(r *http.Request, id, _ int64) error {
+	f, err := readPromotionForm(r)
+	if err != nil {
+		return err
+	}
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(r.Context())
+	start, end := promotionDateArgs(f)
+	result, err := tx.Exec(r.Context(), `UPDATE promotions SET name=$1,slug=$2,description=$3,discount_type=$4,discount_value=$5,starts_at=$6,ends_at=$7,usage_limit=NULLIF($8,0),updated_at=NOW() WHERE id=$9`, f.name, f.slug, f.description, f.kind, f.value, start, end, f.limit, id)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("campaign not found")
+	}
+	result, err = tx.Exec(r.Context(), `UPDATE coupons SET code=$1,usage_limit=NULLIF($2,0),active=TRUE WHERE promotion_id=$3`, f.code, f.limit, id)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		if _, err = tx.Exec(r.Context(), `INSERT INTO coupons(promotion_id,code,usage_limit) VALUES($1,$2,NULLIF($3,0))`, id, f.code, f.limit); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(r.Context())
+}
+
+func promotionDateArgs(f promotionForm) (*time.Time, *time.Time) {
+	var start, end *time.Time
+	if f.start != "" {
+		start, _ = parsePromotionDate(f.start, false)
+	}
+	if f.end != "" {
+		end, _ = parsePromotionDate(f.end, true)
+	}
+	return start, end
+}
+
+func (h *LivePortalHandler) deletePromotion(r *http.Request, id int64) error {
+	result, err := h.pool.Exec(r.Context(), `DELETE FROM promotions p WHERE p.id=$1 AND NOT EXISTS(SELECT 1 FROM promotion_usages pu WHERE pu.promotion_id=p.id)`, id)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("campaign not found or already used; archive used campaigns")
+	}
+	return nil
+}
+
+func (h *LivePortalHandler) adminReviewStatus(w http.ResponseWriter, r *http.Request) {
+	session, ok := h.session(r)
+	if !ok {
+		redirectToLogin(w, r)
+		return
+	}
+	root := "/marketplace-admin"
+	if r.URL.Path == "/super-admin/reviews/status" {
+		root = "/super-admin"
+	}
+	if !h.hasRole(r, session.UserID, "marketplace_admin", "super_admin") {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid review decision", http.StatusBadRequest)
+		return
+	}
+	token := r.Form.Get("csrf_token")
+	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(token)) != 1 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	reviewID, err := strconv.ParseInt(strings.TrimSpace(r.Form.Get("review_id")), 10, 64)
+	decision, reason := strings.TrimSpace(r.Form.Get("decision")), strings.TrimSpace(r.Form.Get("reason"))
+	if err != nil || reviewID <= 0 || (decision != "published" && decision != "rejected") || decision == "rejected" && (len([]rune(reason)) < 4 || len([]rune(reason)) > 1000) {
+		http.Error(w, "provide a valid review decision and a rejection reason when rejecting", http.StatusUnprocessableEntity)
+		return
+	}
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		http.Error(w, "review could not be updated", http.StatusServiceUnavailable)
+		return
+	}
+	defer tx.Rollback(r.Context())
+	var productID int64
+	err = tx.QueryRow(r.Context(), `UPDATE product_reviews SET status=$1,updated_at=NOW() WHERE id=$2 AND status='pending' RETURNING product_id`, decision, reviewID).Scan(&productID)
+	if err != nil {
+		http.Error(w, "review is missing or has already been moderated", http.StatusConflict)
+		return
+	}
+	if decision == "published" {
+		if _, err = tx.Exec(r.Context(), `
+			UPDATE products p SET rating=COALESCE(review_stats.average_rating,0),
+				review_count=COALESCE(review_stats.review_count,0), updated_at=NOW()
+			FROM (SELECT ROUND(AVG(rating),1)::numeric(2,1) AS average_rating, COUNT(*)::integer AS review_count
+			      FROM product_reviews WHERE product_id=$1 AND status='published') review_stats
+			WHERE p.id=$1`, productID); err != nil {
+			http.Error(w, "product rating could not be updated", http.StatusServiceUnavailable)
+			return
+		}
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,$2,'product_review',$3,$4,jsonb_build_object('decision',$2::text,'reason',$5::text))`, strconv.FormatInt(session.UserID, 10), "review."+decision, strconv.FormatInt(reviewID, 10), r.Header.Get("X-Request-ID"), reason); err != nil {
+		http.Error(w, "review audit could not be written", http.StatusServiceUnavailable)
+		return
+	}
+	if err = tx.Commit(r.Context()); err != nil {
+		http.Error(w, "review could not be updated", http.StatusServiceUnavailable)
+		return
+	}
+	http.Redirect(w, r, root+"/reviews?notice=Review+"+url.QueryEscape(decision), http.StatusSeeOther)
+}
+
 func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCampaign {
 	rows, err := h.pool.Query(r.Context(), `
-		SELECT p.name, p.discount_type, p.status,
+		SELECT p.id,p.name,p.description,COALESCE(c.code,''),p.discount_type,p.discount_value,p.status,
 		       COALESCE(to_char(p.starts_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'Not scheduled'),
 		       COALESCE(to_char(p.ends_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'No end date'),
-	       COUNT(pp.product_id)
+	       COALESCE(to_char(p.starts_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD'),''),
+	       COALESCE(to_char(p.ends_at AT TIME ZONE 'Asia/Kolkata' - INTERVAL '1 day', 'YYYY-MM-DD'),''),
+	       COUNT(pp.product_id),COALESCE(c.usage_limit,p.usage_limit,0),COALESCE(c.usage_count,0)
 		FROM promotions p LEFT JOIN promotion_products pp ON pp.promotion_id = p.id
-		GROUP BY p.id ORDER BY p.id DESC LIMIT 20`)
+		LEFT JOIN LATERAL (SELECT code,usage_limit,usage_count FROM coupons WHERE promotion_id=p.id ORDER BY id LIMIT 1) c ON TRUE
+		GROUP BY p.id,c.code,c.usage_limit,c.usage_count ORDER BY p.id DESC LIMIT 50`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 	var result []viewmodels.AdminCampaign
 	for rows.Next() {
-		var name, discountType, status, start, end string
+		var item viewmodels.AdminCampaign
+		var value int64
 		var productCount int64
-		if rows.Scan(&name, &discountType, &status, &start, &end, &productCount) == nil {
+		var usageLimit, usageCount int64
+		if rows.Scan(&item.ID, &item.Name, &item.Description, &item.Code, &item.Type, &value, &item.Status, &item.Start, &item.End, &item.StartsOn, &item.EndsOn, &productCount, &usageLimit, &usageCount) == nil {
 			appliesTo := "All eligible products"
 			if productCount > 0 {
 				appliesTo = fmt.Sprintf("%d selected products", productCount)
 			}
-			result = append(result, viewmodels.AdminCampaign{Name: name, Status: status, Start: start, End: end, Type: discountType, Channel: appliesTo})
+			item.Channel = appliesTo
+			item.Value = strconv.FormatInt(value, 10)
+			if item.Type == "fixed" {
+				item.Value = strconv.FormatFloat(float64(value)/100, 'f', 2, 64)
+			}
+			item.UsageCount = strconv.FormatInt(usageCount, 10)
+			if usageLimit > 0 {
+				item.UsageLimit = strconv.FormatInt(usageLimit, 10)
+			}
+			result = append(result, item)
 		}
 	}
 	return result
 }
 
 func (h *LivePortalHandler) adminSettlements(r *http.Request) []viewmodels.AdminSettlement {
-	rows, err := h.pool.Query(r.Context(), `SELECT s.display_name, ss.net_cents, ss.status, ss.period_end FROM seller_settlements ss JOIN sellers s ON s.id=ss.seller_id ORDER BY ss.id DESC LIMIT 20`)
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT ss.id,s.display_name,ss.reference,ss.gross_cents,ss.commission_cents,ss.net_cents,ss.status,
+		       ss.period_start,ss.period_end,
+	       COUNT(DISTINCT sl.order_id) FILTER (WHERE sl.entry_type='sale')
+		FROM seller_settlements ss JOIN sellers s ON s.id=ss.seller_id
+		LEFT JOIN seller_ledger sl ON sl.settlement_id=ss.id
+		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC LIMIT 50`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 	var result []viewmodels.AdminSettlement
 	for rows.Next() {
-		var seller, status string
-		var amount int64
-		var date time.Time
-		if rows.Scan(&seller, &amount, &status, &date) == nil {
-			result = append(result, viewmodels.AdminSettlement{Seller: seller, Amount: money(amount), Status: status, Date: date.Format("2 Jan 2006")})
+		var item viewmodels.AdminSettlement
+		var id, gross, commission, amount, orderCount int64
+		var periodStart, periodEnd time.Time
+		if rows.Scan(&id, &item.Seller, &item.Reference, &gross, &commission, &amount, &item.Status, &periodStart, &periodEnd, &orderCount) == nil {
+			item.ID = strconv.FormatInt(id, 10)
+			item.Orders = strconv.FormatInt(orderCount, 10)
+			item.Gross, item.Commission, item.Amount = money(gross), money(commission), money(amount)
+			item.Date = periodEnd.Format("2 Jan 2006")
+			item.Period = periodStart.Format("2 Jan 2006") + " – " + periodEnd.Format("2 Jan 2006")
+			result = append(result, item)
 		}
 	}
 	return result
+}
+
+func isSettlementMutationPath(path string) bool {
+	return path == "/finance-portal/settlements/create" || path == "/finance-portal/settlements/status" ||
+		path == "/super-admin/finance/settlements/create" || path == "/super-admin/finance/settlements/status"
+}
+
+func (h *LivePortalHandler) adminSettlementMutation(w http.ResponseWriter, r *http.Request) {
+	root, role := "/finance-portal", "finance_operator"
+	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
+		root, role = "/super-admin/finance", "super_admin"
+	}
+	session, ok := h.session(r)
+	if !ok {
+		redirectToLogin(w, r)
+		return
+	}
+	if r.Method != http.MethodPost || !h.hasRole(r, session.UserID, role) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid settlement request", http.StatusBadRequest)
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Form.Get("csrf_token"))) != 1 {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+	action := strings.TrimPrefix(r.URL.Path, root+"/settlements/")
+	var err error
+	if action == "create" {
+		err = h.createSettlementBatches(r, session.UserID)
+	} else if action == "status" {
+		id, parseErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("settlement_id")), 10, 64)
+		status := strings.TrimSpace(r.Form.Get("status"))
+		if parseErr != nil || id <= 0 || (status != "approved" && status != "paid" && status != "failed") {
+			err = fmt.Errorf("invalid settlement decision")
+		} else {
+			err = h.updateSettlementStatus(r, id, status, session.UserID)
+		}
+	} else {
+		http.NotFound(w, r)
+		return
+	}
+	if err != nil {
+		http.Error(w, "settlement could not be updated: "+err.Error(), http.StatusConflict)
+		return
+	}
+	_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,$2,'seller_settlement',$3,$4,jsonb_build_object('status',$5::text))`, strconv.FormatInt(session.UserID, 10), "settlement."+action, r.Form.Get("settlement_id"), r.Header.Get("X-Request-ID"), r.Form.Get("status"))
+	destination := root + "?workspace=settlements&notice=Settlement+workflow+saved"
+	if root == "/finance-portal" {
+		destination = root + "/settlements?notice=Settlement+workflow+saved"
+	}
+	http.Redirect(w, r, destination, http.StatusSeeOther)
+}
+
+type settlementBatch struct {
+	sellerID, gross, commission, net int64
+	start, end                       time.Time
+}
+
+func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int64) error {
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(r.Context())
+	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
+		return err
+	}
+	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger WHERE status='open' AND settlement_id IS NULL GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
+	if err != nil {
+		return err
+	}
+	batches := make([]settlementBatch, 0)
+	for rows.Next() {
+		var item settlementBatch
+		if err := rows.Scan(&item.sellerID, &item.gross, &item.commission, &item.net, &item.start, &item.end); err != nil {
+			rows.Close()
+			return err
+		}
+		batches = append(batches, item)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+	for _, item := range batches {
+		reference := fmt.Sprintf("SETTLE-%d-%s", item.sellerID, time.Now().UTC().Format("20060102T150405.000000000Z"))
+		var settlementID int64
+		if err := tx.QueryRow(r.Context(), `INSERT INTO seller_settlements(seller_id,period_start,period_end,gross_cents,commission_cents,net_cents,status,reference) VALUES($1,$2,$3,$4,$5,$6,'pending',$7) RETURNING id`, item.sellerID, item.start, item.end, item.gross, item.commission, item.net, reference).Scan(&settlementID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL`, settlementID, item.sellerID); err != nil {
+			return err
+		}
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'settlement.batch_created','seller_settlement','batch',$2,jsonb_build_object('batch_count',$3::integer))`, strconv.FormatInt(actorID, 10), r.Header.Get("X-Request-ID"), len(batches)); err != nil {
+		return err
+	}
+	return tx.Commit(r.Context())
+}
+
+func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, status string, actorID int64) error {
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(r.Context())
+	var current string
+	if err := tx.QueryRow(r.Context(), `SELECT status FROM seller_settlements WHERE id=$1 FOR UPDATE`, id).Scan(&current); err != nil {
+		return err
+	}
+	if current == "pending" && status != "approved" || current == "approved" && status != "paid" && status != "failed" {
+		return fmt.Errorf("invalid state transition from %s to %s", current, status)
+	}
+	if _, err := tx.Exec(r.Context(), `UPDATE seller_settlements SET status=$1,updated_at=NOW() WHERE id=$2`, status, id); err != nil {
+		return err
+	}
+	switch status {
+	case "paid":
+		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET status='settled' WHERE settlement_id=$1 AND status='open'`, id); err != nil {
+			return err
+		}
+	case "failed":
+		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET settlement_id=NULL WHERE settlement_id=$1 AND status='open'`, id); err != nil {
+			return err
+		}
+	}
+	_, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,$2,'seller_settlement',$3,$4,jsonb_build_object('previous_status',$5::text,'status',$6::text))`, strconv.FormatInt(actorID, 10), "settlement."+status, strconv.FormatInt(id, 10), r.Header.Get("X-Request-ID"), current, status)
+	if err != nil {
+		return err
+	}
+	return tx.Commit(r.Context())
 }
 
 func (h *LivePortalHandler) adminAudit(r *http.Request) []viewmodels.AdminAuditEntry {
@@ -1132,7 +1673,7 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 }
 
 func (h *LivePortalHandler) sellerLedger(r *http.Request, sellerID int64) []viewmodels.SellerAdminLedger {
-	rows, err := h.pool.Query(r.Context(), `SELECT id,created_at,gross_cents,commission_cents,net_cents,status FROM seller_ledger WHERE seller_id=$1 ORDER BY id DESC LIMIT 50`, sellerID)
+	rows, err := h.pool.Query(r.Context(), `SELECT sl.id,sl.created_at,sl.gross_cents,sl.commission_cents,sl.net_cents,sl.status,sl.entry_type,COALESCE(o.order_number,'') FROM seller_ledger sl LEFT JOIN orders o ON o.id=sl.order_id WHERE sl.seller_id=$1 ORDER BY sl.id DESC LIMIT 50`, sellerID)
 	if err != nil {
 		return nil
 	}
@@ -1142,9 +1683,22 @@ func (h *LivePortalHandler) sellerLedger(r *http.Request, sellerID int64) []view
 		var id int64
 		var created time.Time
 		var gross, commission, net int64
-		var status string
-		if rows.Scan(&id, &created, &gross, &commission, &net, &status) == nil {
-			result = append(result, viewmodels.SellerAdminLedger{Number: fmt.Sprintf("LEDGER-%d", id), Date: created.Format("2 Jan 2006"), Sale: money(gross), Commission: money(commission), Net: money(net), Status: status})
+		var status, kind, orderNumber string
+		if rows.Scan(&id, &created, &gross, &commission, &net, &status, &kind, &orderNumber) == nil {
+			entry := viewmodels.SellerAdminLedger{Number: orderNumber, Date: created.Format("2 Jan 2006"), Net: money(net), Status: status}
+			if entry.Number == "" {
+				entry.Number = fmt.Sprintf("LEDGER-%d", id)
+			}
+			if kind == "refund" {
+				entry.Sale = "—"
+				entry.Commission = "—"
+				entry.Adjustments = money(net)
+			} else {
+				entry.Sale = money(gross)
+				entry.Commission = money(commission)
+				entry.Adjustments = "INR 0.00"
+			}
+			result = append(result, entry)
 		}
 	}
 	return result
@@ -1401,8 +1955,13 @@ func (h *LivePortalHandler) renderAdminComponent(w http.ResponseWriter, r *http.
 		`href="/finance`, `href="`+financeTarget,
 		`action="/finance`, `action="`+financeTarget,
 	)
+	bodyHTML := strings.ReplaceAll(body.String(), `href="/finance-portal`, `href="__CANONICAL_FINANCE_LINK__`)
+	bodyHTML = strings.ReplaceAll(bodyHTML, `action="/finance-portal`, `action="__CANONICAL_FINANCE_ACTION__`)
+	bodyHTML = replacer.Replace(bodyHTML)
+	bodyHTML = strings.ReplaceAll(bodyHTML, `href="__CANONICAL_FINANCE_LINK__`, `href="/finance-portal`)
+	bodyHTML = strings.ReplaceAll(bodyHTML, `action="__CANONICAL_FINANCE_ACTION__`, `action="/finance-portal`)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = w.Write([]byte(replacer.Replace(body.String())))
+	_, _ = w.Write([]byte(bodyHTML))
 }
 
 func containsString(values []string, wanted string) bool {

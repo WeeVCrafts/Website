@@ -35,6 +35,18 @@ type CustomerSupportMessage struct {
 	Author, Role, Body, Created string
 }
 
+type NotificationPreferences struct {
+	OrderUpdates, MakerMessages, Offers, MakerStories bool
+}
+
+type ProductReview struct {
+	ID, ProductID, OrderID                         int64
+	ProductName, ProductSlug, SellerName           string
+	Rating                                         int
+	Title, Body, Status, Created, ImageURL, Author string
+	VerifiedPurchase                               bool
+}
+
 type Seller struct {
 	Slug, Name, Location, ImageURL, Description string
 	Rating                                      string
@@ -84,6 +96,7 @@ type Address struct {
 
 type CustomerPage struct {
 	Route, Title, Query, Category, Sort, Notice     string
+	CouponCode                                      string
 	Brand, Tagline, Description                     string
 	UserName, UserEmail, MemberSince                string
 	RoleLabel, PortalLabel                          string
@@ -107,6 +120,9 @@ type CustomerPage struct {
 	SelectedOrder                                   Order
 	Returns                                         []Return
 	SupportTickets                                  []CustomerSupportTicket
+	NotificationPreferences                         NotificationPreferences
+	PendingReviews, WrittenReviews, ProductReviews  []ProductReview
+	ReviewCount                                     int
 	Address                                         Address
 	Addresses                                       []Address
 	CartCount, WishlistCount                        int

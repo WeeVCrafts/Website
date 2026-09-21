@@ -69,6 +69,14 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.saveAddress(w, r)
 		return
 	}
+	if r.URL.Path == "/account/notifications" && r.Method == http.MethodPost {
+		h.saveNotificationPreferences(w, r)
+		return
+	}
+	if r.URL.Path == "/account/reviews" && r.Method == http.MethodPost {
+		h.submitProductReview(w, r)
+		return
+	}
 	if r.URL.Path == "/account/addresses/delete" && r.Method == http.MethodPost {
 		h.deleteAddress(w, r)
 		return
@@ -449,7 +457,8 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	}
 	page := viewmodels.CustomerPage{
 		Route: r.URL.Path, Title: liveTitle(r.URL.Path), Query: query, Category: category, Sort: sortMode,
-		Notice: r.URL.Query().Get("notice"), Filters: r.URL.Query(), Brand: "WeeVCrafts",
+		CouponCode: strings.ToUpper(strings.TrimSpace(r.URL.Query().Get("coupon"))),
+		Notice:     r.URL.Query().Get("notice"), Filters: r.URL.Query(), Brand: "WeeVCrafts",
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
@@ -464,6 +473,10 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		page.Product.Seller = h.sellerName(r.Context(), product.Slug)
 		page.Product.SellerSlug = liveSlug(page.Product.Seller)
 		page.Products = []viewmodels.Product{page.Product}
+		page.ProductReviews, err = h.publishedProductReviews(r.Context(), product.ID)
+		if err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
 	}
 	if authenticated && h.cart != nil {
 		page.Cart, page.CartCount = h.liveCart(r.Context(), userID, csrf)
@@ -588,7 +601,195 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 			return err
 		}
 	}
+	if page.Route == "/account/notifications" {
+		if err := h.loadNotificationPreferences(ctx, userID, page); err != nil {
+			return err
+		}
+	}
+	if page.Route == "/account/reviews" {
+		if err := h.loadCustomerReviews(ctx, userID, page); err != nil {
+			return err
+		}
+	}
+	if page.Route == "/account" {
+		if err := h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM product_reviews WHERE user_id=$1 AND status IN ('pending','published')`, userID).Scan(&page.ReviewCount); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (h *LiveStorefrontHandler) loadNotificationPreferences(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
+	_, err := h.pool.Exec(ctx, `INSERT INTO notification_preferences (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`, userID)
+	if err != nil {
+		return err
+	}
+	return h.pool.QueryRow(ctx, `
+		SELECT np.order_updates, np.maker_messages, COALESCE(mp.email_marketing,FALSE), np.maker_stories
+		FROM notification_preferences np LEFT JOIN marketing_preferences mp ON mp.user_id=np.user_id
+		WHERE np.user_id=$1`, userID).Scan(
+		&page.NotificationPreferences.OrderUpdates,
+		&page.NotificationPreferences.MakerMessages,
+		&page.NotificationPreferences.Offers,
+		&page.NotificationPreferences.MakerStories,
+	)
+}
+
+func (h *LiveStorefrontHandler) loadCustomerReviews(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
+	page.PendingReviews = make([]viewmodels.ProductReview, 0)
+	rows, err := h.pool.Query(ctx, `
+		SELECT DISTINCT p.id, o.id, p.name, p.slug, COALESCE(s.display_name,''), COALESCE(p.image_url,'')
+		FROM orders o
+		JOIN order_items oi ON oi.order_id=o.id
+		JOIN product_variants pv ON pv.id=oi.variant_id
+		JOIN products p ON p.id=pv.product_id
+		JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=p.seller_id AND sf.status='delivered'
+		LEFT JOIN sellers s ON s.id=p.seller_id
+		LEFT JOIN product_reviews pr ON pr.user_id=o.user_id AND pr.order_id=o.id AND pr.product_id=p.id
+		WHERE o.user_id=$1 AND pr.id IS NULL
+		ORDER BY o.id DESC, p.id`, userID)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var review viewmodels.ProductReview
+		if err := rows.Scan(&review.ProductID, &review.OrderID, &review.ProductName, &review.ProductSlug, &review.SellerName, &review.ImageURL); err != nil {
+			rows.Close()
+			return err
+		}
+		page.PendingReviews = append(page.PendingReviews, review)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	page.WrittenReviews = make([]viewmodels.ProductReview, 0)
+	rows, err = h.pool.Query(ctx, `
+		SELECT pr.id, pr.product_id, COALESCE(pr.order_id,0), p.name, p.slug, COALESCE(s.display_name,''),
+		       pr.rating, pr.title, pr.body, pr.status, pr.verified_purchase, pr.created_at
+		FROM product_reviews pr JOIN products p ON p.id=pr.product_id
+		LEFT JOIN sellers s ON s.id=p.seller_id
+		WHERE pr.user_id=$1 ORDER BY pr.created_at DESC, pr.id DESC`, userID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var review viewmodels.ProductReview
+		var created time.Time
+		if err := rows.Scan(&review.ID, &review.ProductID, &review.OrderID, &review.ProductName, &review.ProductSlug, &review.SellerName, &review.Rating, &review.Title, &review.Body, &review.Status, &review.VerifiedPurchase, &created); err != nil {
+			return err
+		}
+		review.Created = created.Format("2 Jan 2006")
+		page.WrittenReviews = append(page.WrittenReviews, review)
+	}
+	return rows.Err()
+}
+
+func (h *LiveStorefrontHandler) publishedProductReviews(ctx context.Context, productID int64) ([]viewmodels.ProductReview, error) {
+	rows, err := h.pool.Query(ctx, `
+		SELECT pr.rating, pr.title, pr.body, split_part(u.display_name,' ',1), pr.created_at, pr.verified_purchase
+		FROM product_reviews pr JOIN users u ON u.id=pr.user_id
+		WHERE pr.product_id=$1 AND pr.status='published'
+		ORDER BY pr.created_at DESC, pr.id DESC LIMIT 50`, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make([]viewmodels.ProductReview, 0)
+	for rows.Next() {
+		var review viewmodels.ProductReview
+		var created time.Time
+		if err := rows.Scan(&review.Rating, &review.Title, &review.Body, &review.Author, &created, &review.VerifiedPurchase); err != nil {
+			return nil, err
+		}
+		review.Created = created.Format("2 Jan 2006")
+		result = append(result, review)
+	}
+	return result, rows.Err()
+}
+
+func (h *LiveStorefrontHandler) saveNotificationPreferences(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.customerMutationActor(w, r)
+	if !ok {
+		return
+	}
+	preference := func(key string) bool {
+		value := strings.TrimSpace(r.Form.Get(key))
+		return value == "1" || value == "on" || value == "true"
+	}
+	orderUpdates, makerMessages := preference("order_updates"), preference("maker_messages")
+	makerStories, offers := preference("maker_stories"), preference("offers")
+	tx, err := h.pool.Begin(r.Context())
+	if err != nil {
+		http.Error(w, "preferences could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	defer tx.Rollback(r.Context())
+	if _, err = tx.Exec(r.Context(), `
+		INSERT INTO notification_preferences (user_id,order_updates,maker_messages,maker_stories,updated_at)
+		VALUES ($1,$2,$3,$4,NOW())
+		ON CONFLICT (user_id) DO UPDATE SET order_updates=EXCLUDED.order_updates,
+		maker_messages=EXCLUDED.maker_messages, maker_stories=EXCLUDED.maker_stories, updated_at=NOW()`,
+		userID, orderUpdates, makerMessages, makerStories); err != nil {
+		http.Error(w, "preferences could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	var oldOffers bool
+	_ = tx.QueryRow(r.Context(), `SELECT email_marketing FROM marketing_preferences WHERE user_id=$1`, userID).Scan(&oldOffers)
+	if _, err = tx.Exec(r.Context(), `
+		INSERT INTO marketing_preferences (user_id,email_marketing,updated_at) VALUES ($1,$2,NOW())
+		ON CONFLICT (user_id) DO UPDATE SET email_marketing=EXCLUDED.email_marketing,updated_at=NOW()`, userID, offers); err != nil {
+		http.Error(w, "preferences could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	if oldOffers != offers {
+		if _, err = tx.Exec(r.Context(), `INSERT INTO consent_records (user_id,purpose,policy_version,granted,source) VALUES ($1,'marketing','account-preferences-v1',$2,'account_notifications')`, userID, offers); err != nil {
+			http.Error(w, "preferences could not be saved", http.StatusServiceUnavailable)
+			return
+		}
+	}
+	if err = tx.Commit(r.Context()); err != nil {
+		http.Error(w, "preferences could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	http.Redirect(w, r, "/account/notifications?notice=Notification+preferences+saved", http.StatusSeeOther)
+}
+
+func (h *LiveStorefrontHandler) submitProductReview(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.customerMutationActor(w, r)
+	if !ok {
+		return
+	}
+	productID, productErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("product_id")), 10, 64)
+	orderID, orderErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("order_id")), 10, 64)
+	rating, ratingErr := strconv.Atoi(strings.TrimSpace(r.Form.Get("rating")))
+	title, body := strings.TrimSpace(r.Form.Get("title")), strings.TrimSpace(r.Form.Get("body"))
+	if productErr != nil || orderErr != nil || productID <= 0 || orderID <= 0 || ratingErr != nil || rating < 1 || rating > 5 || len([]rune(title)) < 2 || len([]rune(title)) > 120 || len([]rune(body)) < 10 || len([]rune(body)) > 2000 {
+		http.Error(w, "provide a rating from 1 to 5, a title, and a review of 10 to 2000 characters", http.StatusUnprocessableEntity)
+		return
+	}
+	result, err := h.pool.Exec(r.Context(), `
+		INSERT INTO product_reviews (product_id,user_id,order_id,rating,title,body,status,verified_purchase)
+		SELECT $1,$2,$3,$4,$5,$6,'pending',TRUE
+		FROM orders o
+		JOIN order_items oi ON oi.order_id=o.id
+		JOIN product_variants pv ON pv.id=oi.variant_id
+		JOIN products p ON p.id=pv.product_id
+		JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=p.seller_id AND sf.status='delivered'
+		WHERE o.id=$3 AND o.user_id=$2 AND pv.product_id=$1
+		ON CONFLICT DO NOTHING`, productID, userID, orderID, rating, title, body)
+	if err != nil {
+		http.Error(w, "review could not be saved", http.StatusServiceUnavailable)
+		return
+	}
+	if result.RowsAffected() == 0 {
+		http.Error(w, "a delivered purchase is required and each purchase can be reviewed once", http.StatusConflict)
+		return
+	}
+	http.Redirect(w, r, "/account/reviews?notice=Review+submitted+for+moderation", http.StatusSeeOther)
 }
 
 func nonEmptyAddressLines(address viewmodels.Address) []string {

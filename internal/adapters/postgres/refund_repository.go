@@ -169,6 +169,9 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 				WHERE NOT EXISTS (SELECT 1 FROM order_status_history WHERE order_id = $1 AND to_status = 'refunded')`, orderID); err != nil {
 				return err
 			}
+			if err := recordSellerRefundLedger(transactionContext, tx, orderID); err != nil {
+				return err
+			}
 		}
 		metadata, _ := json.Marshal(map[string]string{
 			"provider_refund_id":  refund.ProviderRefundID,

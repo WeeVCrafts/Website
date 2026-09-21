@@ -547,7 +547,21 @@ templ ProductDetail(p viewmodels.CustomerPage) {
         <div id="product-panel-details" role="tabpanel" aria-labelledby="product-tab-details" x-show="tab==='details'" x-cloak>
           <dl class="spec-grid"><div><dt>Category</dt><dd>{ p.Product.Category }</dd></div><div><dt>Seller</dt><dd>{ p.Product.Seller }</dd></div><div><dt>SKU</dt><dd data-selected-variant-sku>{ firstProductVariant(p.Product).SKU }</dd></div><div><dt>Delivery</dt><dd>{ p.Product.DeliveryLabel }</dd></div></dl>
         </div>
-        <div id="product-panel-reviews" role="tabpanel" aria-labelledby="product-tab-reviews" x-show="tab==='reviews'" x-cloak><div class="review-highlight"><strong>{ p.Product.Rating }</strong><span>Published customer reviews<br/>{ p.Product.Reviews } reviews</span></div><p>Only reviews approved for publication appear here.</p></div>
+        <div id="product-panel-reviews" role="tabpanel" aria-labelledby="product-tab-reviews" x-show="tab==='reviews'" x-cloak><div class="review-highlight"><strong>{ p.Product.Rating }</strong><span>Published customer reviews<br/>{ p.Product.Reviews } reviews</span></div>
+          if len(p.ProductReviews) > 0 {
+            <div class="grid gap-4">
+              for _, review := range p.ProductReviews {
+                <article class="rounded-2xl border border-line bg-white p-5"><div class="flex flex-wrap justify-between gap-2"><h3 class="font-semibold text-indigo">{ review.Title }</h3><span aria-label={ fmt.Sprintf("%d out of 5 stars", review.Rating) }>{ fmt.Sprintf("%d/5", review.Rating) }</span></div><p class="mt-3 text-sm leading-6 text-ink/70">{ review.Body }</p><p class="mt-3 text-xs text-ink/50">{ review.Author } · { review.Created }
+                  if review.VerifiedPurchase {
+                    <span> · Verified purchase</span>
+                  }
+                </p></article>
+              }
+            </div>
+          } else {
+            <p>No published reviews yet. Reviews from delivered purchases appear here after moderation.</p>
+          }
+        </div>
       </section>
     </section>
     <section class="container section">@SectionHeading("YOU MAY ALSO LIKE", "More made-for-you finds", "Keep exploring the beautiful things our makers make.")<div class="product-grid product-grid--four" data-backend-products="listing">@ProductCards(productSlice(p.Products, 3, 7), true)</div></section>
@@ -833,7 +847,7 @@ templ CartContent(p viewmodels.CustomerPage) {
     @Breadcrumb("Home", "Your Cart")<p class="eyebrow">ALMOST YOURS</p><h1>Your cart</h1><p data-backend-cart-count>{ p.CartCount } items from independent Indian makers</p>
   </section>
   <section id="cart-layout" class="container cart-layout" data-backend-cart><div class="cart-items">
-    @CartRows(p.Cart)</div><aside class="summary cart-summary"><h2>Order summary</h2><p>Items ({ p.CartCount }) <b>{ p.ItemsTotal }</b></p><p>Delivery charges <b>{ p.ShippingTotal }</b></p><p class="discount">You saved <b>{ p.DiscountTotal }</b></p><hr/><h3>Total amount <strong>{ p.Total }</strong></h3><p class="coupon mvp-unavailable">Promotions are not connected in this MVP.</p><a class="primary-button full" href="/checkout">Proceed to checkout <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><small class="secure-note"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Safe and secure checkout</small></aside></section><section class="container section">
+    @CartRows(p.Cart)</div><aside class="summary cart-summary"><h2>Order summary</h2><p>Items ({ p.CartCount }) <b>{ p.ItemsTotal }</b></p><p>Delivery charges <b>{ p.ShippingTotal }</b></p><p class="discount">You saved <b>{ p.DiscountTotal }</b></p><hr/><h3>Total amount <strong>{ p.Total }</strong></h3><p>Coupons can be entered and checked at checkout.</p><a class="primary-button full" href="/checkout">Proceed to checkout <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><small class="secure-note"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Safe and secure checkout</small></aside></section><section class="container section">
     @SectionHeading("BEAUTIFUL EXTRAS", "You might also like", "Complete your cart with something made with care.")<div class="product-grid product-grid--four" data-backend-products="listing">
     @ProductCards(productSlice(p.Products, 6, 10), true)</div></section>
 }
@@ -889,7 +903,7 @@ templ Checkout(p viewmodels.CustomerPage) {
           }
           <p data-backend-message role="status"></p></section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b>{ p.ItemsTotal }</b></p><p>Shipping <b>{ p.ShippingTotal }</b></p><p class="discount">Discount <b>- { p.DiscountTotal }</b></p><hr/><h3>Total payable <strong>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b>{ p.ItemsTotal }</b></p><p>Shipping <b>{ p.ShippingTotal }</b></p><p class="discount">Product savings <b>- { p.DiscountTotal }</b></p><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><small>Eligible coupons are checked when you place the order. The final discounted total is charged.</small><hr/><h3>Total payable <strong>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
     </section>
   }
 }

@@ -337,13 +337,60 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/security" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
-          <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div><p>Order and delivery updates are available in your order history. Email notifications can be enabled when delivery email settings are configured.</p><a class="outline-button" href="/orders">View order updates</a></section>
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div>
+          <p>Choose the updates you want. Your choices are saved to your account; order status also remains available in your order history.</p>
+          <form class="preference-list" action="/account/notifications" method="post">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <label><span><b>Order updates</b><small>Dispatch, delivery and return changes</small></span><input type="checkbox" name="order_updates" value="1" checked?={ p.NotificationPreferences.OrderUpdates }/></label>
+            <label><span><b>Maker messages</b><small>Replies about products and orders</small></span><input type="checkbox" name="maker_messages" value="1" checked?={ p.NotificationPreferences.MakerMessages }/></label>
+            <label><span><b>Offers and promotions</b><small>Marketing email consent; your choice is recorded in privacy history</small></span><input type="checkbox" name="offers" value="1" checked?={ p.NotificationPreferences.Offers }/></label>
+            <label><span><b>Maker stories</b><small>New collections and studio updates</small></span><input type="checkbox" name="maker_stories" value="1" checked?={ p.NotificationPreferences.MakerStories }/></label>
+            <button class="primary-button" type="submit">Save preferences</button>
+          </form>
+          <p class="muted">Account preference storage is active. Email delivery depends on the store email service configuration.</p>
+          <a class="outline-button" href="/orders">View order updates</a>
+        </section>
       } else if p.Route == "/account/support" {
         @CustomerSupportPanel(p)
       } else if p.Route == "/account/privacy" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><p>Review or change saved consent, manage email marketing, and submit data access, correction, grievance, or account deletion requests.</p><a class="outline-button" href="/privacy/center">Manage privacy choices and data requests</a><a class="outline-button" href="/privacy">Read the privacy policy</a></section>
       } else if p.Route == "/account/reviews" {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div><p>Verified product reviews will appear here after the review service is enabled.</p></section>
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div>
+          <p>Review products from delivered orders. Reviews are marked verified and appear publicly after marketplace moderation.</p>
+          if len(p.PendingReviews) > 0 {
+            <h3>Purchases ready for review</h3>
+            <div class="review-list">
+              for _, review := range p.PendingReviews {
+                <article data-review-product={ strconv.FormatInt(review.ProductID, 10) }>
+                  if review.ImageURL != "" {
+                    <img src={ review.ImageURL } alt={ review.ProductName } loading="lazy" width="320" height="320"/>
+                  }
+                  <div><b>{ review.ProductName }</b><small>Delivered purchase · { review.SellerName }</small>
+                    <form action="/account/reviews" method="post" class="utility-form">
+                      <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ strconv.FormatInt(review.ProductID, 10) }/><input type="hidden" name="order_id" value={ strconv.FormatInt(review.OrderID, 10) }/>
+                      <label>Rating<select name="rating" required><option value="">Choose a rating</option><option value="5">5 — Loved it</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Needs improvement</option><option value="1">1 — Not satisfied</option></select></label>
+                      <label>Review title<input name="title" minlength="2" maxlength="120" required/></label>
+                      <label>Your review<textarea name="body" rows="4" minlength="10" maxlength="2000" required></textarea></label>
+                      <button class="primary-button" type="submit">Submit verified review</button>
+                    </form>
+                  </div>
+                </article>
+              }
+            </div>
+          } else {
+            <div class="empty-state"><h3>No delivered purchases waiting for a review</h3><p>Once an order is delivered, you can leave one verified review for each product.</p></div>
+          }
+          <h3>Your reviews</h3>
+          if len(p.WrittenReviews) > 0 {
+            <div class="review-list">
+              for _, review := range p.WrittenReviews {
+                <article><div><b>{ review.ProductName }</b><small>{ review.Created } · { review.Rating }/5 · { review.Status }</small><p><strong>{ review.Title }</strong></p><p>{ review.Body }</p></div></article>
+              }
+            </div>
+          } else {
+            <p>You have not submitted any reviews.</p>
+          }
+        </section>
       } else {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><p>Payment options are offered securely during checkout. Payment details are never stored in your WeeVCrafts account.</p><a class="outline-button" href="/cart">Go to your cart</a></section>
       }

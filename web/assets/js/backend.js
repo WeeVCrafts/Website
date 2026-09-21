@@ -206,7 +206,7 @@
       return this.wishlist();
     }
 
-    async checkout(address, idempotencyKey) {
+    async checkout(address, idempotencyKey, couponCode) {
       const cart = await this.call(ROOT + "/cart");
       return this.call(ROOT + "/checkout", {
         method: "POST", authenticated: true,
@@ -215,7 +215,7 @@
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.region,
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        } }
+        }, coupon_code: couponCode || "" }
       });
     }
 

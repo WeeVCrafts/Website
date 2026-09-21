@@ -1,6 +1,7 @@
 package admin
 
 import (
+  "fmt"
   "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -310,11 +311,31 @@ templ Workspace(p viewmodels.AdminPage) {
           </div>
         } else if p.Workspace == "reviews" {
           <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">reviews</span><div><h2>Review Moderation</h2><p>Keep customer feedback useful, authentic and connected to the maker who fulfilled the order.</p></div></div><a class="admin-button secondary" href="/admin/reviews?notice=Moderation+rules+opened">Rules</a></div>
-          <div class="admin-table wide"><div class="table-head"><span>Case</span><span>Customer</span><span>Review context</span><span>Priority</span><span>Status</span><span>Action</span></div>
-            for _, item := range p.SupportCases {
-              <div class="table-row"><span><strong>{ item.Case }</strong></span><span>{ item.Customer }</span><span>{ item.Subject }</span><span class={ "status " + priorityClass(item.Priority) }>{ item.Priority }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><a class="table-action" href="/admin/reviews?notice=Review+moderation+opened">Moderate</a></div>
-            }
-          </div>
+          if len(p.Reviews) > 0 {
+            <div class="grid gap-4">
+              for _, item := range p.Reviews {
+                <article class="rounded-2xl border border-line bg-white p-5">
+                  <div class="flex flex-wrap items-start justify-between gap-4"><div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-ink/50">Review #{ item.ID } · { item.Date }</p>
+                    <h3 class="mt-2 text-lg font-semibold text-indigo">{ item.Title } ({ fmt.Sprintf("%d/5", item.Rating) })</h3>
+                    <p class="mt-2 text-sm text-ink/70">{ item.Body }</p>
+                    <p class="mt-2 text-xs text-ink/55">{ item.Customer } · { item.Product } · { item.Seller }</p>
+                    if item.VerifiedPurchase {
+                      <p class="mt-1 text-xs font-semibold text-ink/55">Verified purchase</p>
+                    }
+                  </div><span class={ "status " + item.Status }>{ item.Status }</span></div>
+                  if item.Status == "pending" {
+                    <div class="mt-5 flex flex-wrap gap-3 border-t border-line pt-4">
+                      <form method="post" action={ p.PortalRoot + "/reviews/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="review_id" value={ item.ID }/><input type="hidden" name="decision" value="published"/><button class="admin-button primary" type="submit">Approve and publish</button></form>
+                      <form class="flex flex-wrap items-end gap-3" method="post" action={ p.PortalRoot + "/reviews/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="review_id" value={ item.ID }/><input type="hidden" name="decision" value="rejected"/><label class="grid gap-1 text-xs font-semibold uppercase tracking-wide text-ink/55">Reason<input class="field" name="reason" minlength="4" maxlength="1000" required/></label><button class="admin-button secondary" type="submit">Reject</button></form>
+                    </div>
+                  }
+                </article>
+              }
+            </div>
+          } else {
+            <div class="empty-state"><h3>No customer reviews to moderate</h3><p>Reviews from delivered purchases will appear here after customers submit them.</p></div>
+          }
         } else if p.Workspace == "roles" {
           <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span><div><h2>Role Management</h2><p>Assign least-privilege access and keep every sensitive action reviewable.</p></div></div><a class="admin-button primary" href="/admin/roles?notice=Role+creation+form+opened">Add role</a></div>
           <div class="admin-table wide role-workspace-table"><div class="table-head"><span>Role</span><span>Customer data</span><span>Catalog</span><span>Orders</span><span>Finance</span><span>Security</span><span>Action</span></div><div class="table-row"><strong>Marketplace Admin</strong><span>Scoped</span><span>Manage</span><span>Manage</span><span>Read</span><span>None</span><a class="table-action" href="/admin/roles?notice=Marketplace+Admin+role+opened">Review</a></div><div class="table-row"><strong>Finance Operator</strong><span>Masked</span><span>None</span><span>Read</span><span>Manage</span><span>None</span><a class="table-action" href="/admin/roles?notice=Finance+Operator+role+opened">Review</a></div><div class="table-row"><strong>Support Agent</strong><span>Masked</span><span>Read</span><span>Scoped</span><span>None</span><span>None</span><a class="table-action" href="/admin/roles?notice=Support+Agent+role+opened">Review</a></div><div class="table-row"><strong>Super Admin</strong><span>Break-glass</span><span>All</span><span>All</span><span>All</span><span>Manage</span><a class="table-action" href="/admin/roles?notice=Super+Admin+role+opened">Review</a></div></div>

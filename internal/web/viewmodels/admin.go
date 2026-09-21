@@ -7,6 +7,7 @@ type AdminPage struct {
 	ActorID                                                             int64
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                     string
+	SettlementRoot                                                      string
 	CSRFToken                                                           string
 	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog  bool
 	Stats                                                               []AdminStat
@@ -20,6 +21,7 @@ type AdminPage struct {
 	Settlements                                                         []AdminSettlement
 	Transactions                                                        []AdminTransaction
 	SupportCases                                                        []AdminSupportCase
+	Reviews                                                             []AdminReview
 	Campaigns                                                           []AdminCampaign
 	AuditEntries                                                        []AdminAuditEntry
 	Configs                                                             []AdminConfig
@@ -75,7 +77,7 @@ type AdminReturn struct {
 }
 
 type AdminSettlement struct {
-	Seller, Orders, Gross, Commission, Amount, Status, Date, Image string
+	ID, Seller, Reference, Orders, Gross, Commission, Amount, Status, Date, Period, Image string
 }
 
 type AdminTransaction struct {
@@ -86,8 +88,15 @@ type AdminSupportCase struct {
 	Case, Customer, Subject, Priority, Date, Status string
 }
 
+type AdminReview struct {
+	ID, ProductID, Product, Seller, Customer, Title, Body, Status, Date string
+	Rating                                                              int
+	VerifiedPurchase                                                    bool
+}
+
 type AdminCampaign struct {
-	Name, Type, Start, End, Status, Channel, Reach, Revenue string
+	ID, Name, Description, Code, Type, Value, UsageLimit, UsageCount string
+	Start, End, StartsOn, EndsOn, Status, Channel, Reach, Revenue    string
 }
 
 type AdminAuditEntry struct {

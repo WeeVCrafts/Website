@@ -344,14 +344,6 @@ func seedPlatformData(ctx context.Context, tx pgx.Tx, users, products, sellers, 
 	if _, err := tx.Exec(ctx, `INSERT INTO commission_rules (name,category_slug,percentage_basis_points,active,created_by) VALUES ('Default marketplace commission',NULL,1200,TRUE,$1::bigint) ON CONFLICT (name) DO NOTHING`, admin); err != nil {
 		return err
 	}
-	for _, sellerKey := range []string{"owner-01", "owner-02", "owner-03"} {
-		if _, err := tx.Exec(ctx, `INSERT INTO seller_ledger (seller_id,entry_type,gross_cents,commission_cents,net_cents,status,note) SELECT $1::bigint,'sale',124990,14999,109991,'settled','Demo settlement entry' WHERE NOT EXISTS (SELECT 1 FROM seller_ledger WHERE seller_id=$1::bigint AND note='Demo settlement entry')`, sellers[sellerKey]); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `INSERT INTO seller_settlements (seller_id,period_start,period_end,gross_cents,commission_cents,net_cents,status,reference) VALUES ($1::bigint,CURRENT_DATE-30,CURRENT_DATE,124990,14999,109991,'paid',$2::text) ON CONFLICT (reference) DO NOTHING`, sellers[sellerKey], "DEMO-SETTLEMENT-"+sellerKey); err != nil {
-			return err
-		}
-	}
 	for _, item := range []struct{ customer, number, subject, status string }{
 		{"customer-01", "WCDEMO1001", "Where is my payment link?", "open"},
 		{"customer-03", "WCDEMO1003", "Tracking update requested", "in_progress"},

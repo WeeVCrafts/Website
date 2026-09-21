@@ -22,6 +22,7 @@ var (
 	ErrCatalogConflict      = errors.New("brand or category name conflicts with its existing slug")
 	ErrFinalActiveVariant   = errors.New("cannot archive the final active product variant")
 	ErrVariantReservedStock = errors.New("cannot archive a variant with reserved stock")
+	ErrCouponInvalid        = errors.New("coupon is invalid or unavailable")
 )
 
 type CatalogManagementRepository interface {
@@ -136,6 +137,12 @@ type OrderRepository interface {
 	ListOrders(ctx context.Context, userID int64, limit int) ([]domaincommerce.Order, error)
 	GetOrder(ctx context.Context, userID int64, orderNumber string) (domaincommerce.OrderDetail, error)
 	CancelOrder(ctx context.Context, userID int64, orderNumber string) error
+}
+
+// CouponOrderRepository is optional so existing order repository adapters can
+// keep their backward-compatible checkout implementation.
+type CouponOrderRepository interface {
+	CreateOrderWithCoupon(ctx context.Context, userID int64, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error)
 }
 
 type ReservationReaper interface {
