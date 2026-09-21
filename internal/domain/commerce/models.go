@@ -246,6 +246,7 @@ type WishlistItem struct {
 
 type AddressInput struct {
 	RecipientName string `json:"recipient_name"`
+	Phone         string `json:"phone"`
 	Line1         string `json:"line1"`
 	Line2         string `json:"line2"`
 	City          string `json:"city"`

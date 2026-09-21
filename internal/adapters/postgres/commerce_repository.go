@@ -865,13 +865,13 @@ func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int
 			return mapCommerceError(err)
 		}
 		if _, err := tx.Exec(transactionContext, `
-			INSERT INTO addresses (user_id, recipient_name, line1, line2, city, state, postal_code, country_code)
-			SELECT $1, $2, $3, $4, $5, $6, $7, $8
+			INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
+			SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
 			WHERE NOT EXISTS (
 				SELECT 1 FROM addresses
-				WHERE user_id = $1 AND recipient_name = $2 AND line1 = $3 AND line2 = $4
-				  AND city = $5 AND state = $6 AND postal_code = $7 AND country_code = $8
-			)`, userID, address.RecipientName, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode); err != nil {
+				WHERE user_id = $1 AND recipient_name = $2 AND phone = $3 AND line1 = $4 AND line2 = $5
+				  AND city = $6 AND state = $7 AND postal_code = $8 AND country_code = $9
+			)`, userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode); err != nil {
 			return err
 		}
 		var reservationID int64

@@ -90,7 +90,7 @@ func (h *LocalDemoHandler) addresses(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodGet:
-		rows, err := h.pool.Query(r.Context(), `SELECT id,recipient_name,line1,line2,city,state,postal_code,country_code FROM addresses WHERE user_id=$1 ORDER BY id DESC`, userID)
+		rows, err := h.pool.Query(r.Context(), `SELECT id,recipient_name,phone,line1,line2,city,state,postal_code,country_code FROM addresses WHERE user_id=$1 ORDER BY id DESC`, userID)
 		if err != nil {
 			writeLocalError(w, http.StatusInternalServerError, "ADDRESSES_UNAVAILABLE", "Addresses could not be loaded.")
 			return
@@ -99,9 +99,9 @@ func (h *LocalDemoHandler) addresses(w http.ResponseWriter, r *http.Request) {
 		result := make([]map[string]any, 0)
 		for rows.Next() {
 			var id int64
-			var recipient, line1, line2, city, state, postal, country string
-			if rows.Scan(&id, &recipient, &line1, &line2, &city, &state, &postal, &country) == nil {
-				result = append(result, map[string]any{"id": id, "recipient_name": recipient, "line1": line1, "line2": line2, "city": city, "state": state, "postal_code": postal, "country_code": country})
+			var recipient, phone, line1, line2, city, state, postal, country string
+			if rows.Scan(&id, &recipient, &phone, &line1, &line2, &city, &state, &postal, &country) == nil {
+				result = append(result, map[string]any{"id": id, "recipient_name": recipient, "phone": phone, "line1": line1, "line2": line2, "city": city, "state": state, "postal_code": postal, "country_code": country})
 			}
 		}
 		writeLocalJSON(w, http.StatusOK, map[string]any{"data": result, "source": "postgresql"})
@@ -111,6 +111,7 @@ func (h *LocalDemoHandler) addresses(w http.ResponseWriter, r *http.Request) {
 		}
 		var input struct {
 			RecipientName string `json:"recipient_name"`
+			Phone         string `json:"phone"`
 			Line1         string `json:"line1"`
 			Line2         string `json:"line2"`
 			City          string `json:"city"`
@@ -129,7 +130,7 @@ func (h *LocalDemoHandler) addresses(w http.ResponseWriter, r *http.Request) {
 			input.CountryCode = "IN"
 		}
 		var id int64
-		err := h.pool.QueryRow(r.Context(), `INSERT INTO addresses (user_id,recipient_name,line1,line2,city,state,postal_code,country_code) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, userID, input.RecipientName, input.Line1, input.Line2, input.City, input.State, input.PostalCode, input.CountryCode).Scan(&id)
+		err := h.pool.QueryRow(r.Context(), `INSERT INTO addresses (user_id,recipient_name,phone,line1,line2,city,state,postal_code,country_code) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, userID, input.RecipientName, input.Phone, input.Line1, input.Line2, input.City, input.State, input.PostalCode, input.CountryCode).Scan(&id)
 		if err != nil {
 			writeLocalError(w, http.StatusInternalServerError, "ADDRESS_CREATE_FAILED", "Address could not be saved.")
 			return

@@ -140,11 +140,18 @@ func TestExpiredReservationReleasesStockAndMarksPaymentFailed(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
 	repository := NewCommerceRepository(pool)
-	address := domaincommerce.AddressInput{RecipientName: "Fixture", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
+	address := domaincommerce.AddressInput{RecipientName: "Fixture", Phone: "+91 98765 43210", Line1: "1 Test Lane", City: "Pune", State: "MH", PostalCode: "411001", CountryCode: "IN"}
 	cartID := fixture.cartIDs[0]
 	order, err := repository.CreateOrder(context.Background(), fixture.userIDs[0], cartID, "expiry-checkout-key-1234", address)
 	if err != nil {
 		t.Fatalf("create expiry fixture order: %v", err)
+	}
+	var persistedPhone string
+	if err := pool.QueryRow(context.Background(), `SELECT phone FROM addresses WHERE user_id = $1 AND recipient_name = $2`, fixture.userIDs[0], address.RecipientName).Scan(&persistedPhone); err != nil {
+		t.Fatalf("load saved checkout address phone: %v", err)
+	}
+	if persistedPhone != address.Phone {
+		t.Fatalf("checkout phone was not saved: want %q, got %q", address.Phone, persistedPhone)
 	}
 	if _, err := pool.Exec(context.Background(), `UPDATE inventory_reservations SET expires_at = NOW() - INTERVAL '1 minute' WHERE order_id = $1`, order.ID); err != nil {
 		t.Fatalf("expire fixture reservation: %v", err)

@@ -273,21 +273,24 @@ func TestCatalogServiceRequiresActorForPendingProducts(t *testing.T) {
 	}
 }
 
-type orderRepository struct{}
+type orderRepository struct {
+	address domaincommerce.AddressInput
+}
 
-func (orderRepository) CreateOrder(context.Context, int64, int64, string, domaincommerce.AddressInput) (domaincommerce.Order, error) {
+func (r *orderRepository) CreateOrder(_ context.Context, _, _ int64, _ string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
+	r.address = address
 	return domaincommerce.Order{}, nil
 }
-func (orderRepository) ListOrders(context.Context, int64, int) ([]domaincommerce.Order, error) {
+func (*orderRepository) ListOrders(context.Context, int64, int) ([]domaincommerce.Order, error) {
 	return nil, nil
 }
-func (orderRepository) GetOrder(context.Context, int64, string) (domaincommerce.OrderDetail, error) {
+func (*orderRepository) GetOrder(context.Context, int64, string) (domaincommerce.OrderDetail, error) {
 	return domaincommerce.OrderDetail{}, nil
 }
-func (orderRepository) CancelOrder(context.Context, int64, string) error { return nil }
+func (*orderRepository) CancelOrder(context.Context, int64, string) error { return nil }
 
 func TestOrderServiceRequiresStrongIdempotencyKeyAndAddress(t *testing.T) {
-	service := NewOrderService(orderRepository{})
+	service := NewOrderService(&orderRepository{})
 	_, err := service.Create(context.Background(), 1, 1, "short", domaincommerce.AddressInput{RecipientName: "A", Line1: "B", City: "C", State: "D", PostalCode: "E"})
 	if !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("expected key validation, got %v", err)
@@ -295,6 +298,36 @@ func TestOrderServiceRequiresStrongIdempotencyKeyAndAddress(t *testing.T) {
 	_, err = service.Create(context.Background(), 1, 1, "idempotency-key-1234", domaincommerce.AddressInput{RecipientName: "", Line1: "B", City: "C", State: "D", PostalCode: "E"})
 	if !errors.Is(err, ErrInvalidAddress) {
 		t.Fatalf("expected address validation, got %v", err)
+	}
+}
+
+func TestOrderServiceRestrictsDeliveryToIndiaAndValidPINCodes(t *testing.T) {
+	repository := &orderRepository{}
+	service := NewOrderService(repository)
+	address := domaincommerce.AddressInput{
+		RecipientName: "Test Buyer", Phone: "+91 98765 43210", Line1: "12 Local Street", City: "Bengaluru", State: "Karnataka", PostalCode: "560034", CountryCode: "in",
+	}
+	if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-1234", address); err != nil {
+		t.Fatalf("valid Indian delivery address was rejected: %v", err)
+	}
+	if repository.address.CountryCode != "IN" {
+		t.Fatalf("country code was not canonicalized before persistence: %q", repository.address.CountryCode)
+	}
+	legacyAddress := address
+	legacyAddress.Phone = ""
+	if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-legacy", legacyAddress); err != nil {
+		t.Fatalf("legacy checkout without optional phone field was rejected: %v", err)
+	}
+
+	for _, invalid := range []domaincommerce.AddressInput{
+		{RecipientName: "Test Buyer", Phone: "9876543210", Line1: "12 Local Street", City: "Bengaluru", State: "Karnataka", PostalCode: "560034", CountryCode: "US"},
+		{RecipientName: "Test Buyer", Phone: "9876543210", Line1: "12 Local Street", City: "Bengaluru", State: "Karnataka", PostalCode: "012345", CountryCode: "IN"},
+		{RecipientName: "Test Buyer", Phone: "9876543210", Line1: "12 Local Street", City: "Bengaluru", State: "Karnataka", PostalCode: "ABCDE", CountryCode: "IN"},
+		{RecipientName: "Test Buyer", Phone: "12", Line1: "12 Local Street", City: "Bengaluru", State: "Karnataka", PostalCode: "560034", CountryCode: "IN"},
+	} {
+		if _, err := service.Create(context.Background(), 1, 1, "india-checkout-key-1234", invalid); !errors.Is(err, ErrInvalidAddress) {
+			t.Errorf("expected India delivery validation error for %+v; got %v", invalid, err)
+		}
 	}
 }
 

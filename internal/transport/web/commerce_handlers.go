@@ -286,6 +286,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 	order, err := h.orderService.Create(r.Context(), session.UserID, cart.ID, key, domaincommerce.AddressInput{
 		RecipientName: r.FormValue("recipient_name"),
+		Phone:         r.FormValue("phone"),
 		Line1:         r.FormValue("line1"),
 		Line2:         r.FormValue("line2"),
 		City:          r.FormValue("city"),

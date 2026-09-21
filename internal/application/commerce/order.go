@@ -3,6 +3,7 @@ package commerce
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
@@ -10,6 +11,9 @@ import (
 )
 
 var ErrInvalidAddress = errors.New("shipping address is invalid")
+
+var indiaPostalCode = regexp.MustCompile(`^[1-9][0-9]{5}$`)
+var phoneNumber = regexp.MustCompile(`^\+?[0-9][0-9 ()-]{5,22}$`)
 
 type OrderService struct {
 	repository ports.OrderRepository
@@ -23,11 +27,27 @@ func (s *OrderService) Create(ctx context.Context, userID, cartID int64, idempot
 	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(idempotencyKey)) < 16 || len(idempotencyKey) > 200 {
 		return domaincommerce.Order{}, ports.ErrForbidden
 	}
-	if strings.TrimSpace(address.RecipientName) == "" || strings.TrimSpace(address.Line1) == "" || strings.TrimSpace(address.City) == "" || strings.TrimSpace(address.State) == "" || strings.TrimSpace(address.PostalCode) == "" {
+	address.Phone = strings.TrimSpace(address.Phone)
+	if strings.TrimSpace(address.RecipientName) == "" || strings.TrimSpace(address.Line1) == "" || strings.TrimSpace(address.City) == "" || strings.TrimSpace(address.State) == "" {
 		return domaincommerce.Order{}, ErrInvalidAddress
 	}
+	if address.Phone != "" {
+		digits := strings.Map(func(r rune) rune {
+			if r < '0' || r > '9' {
+				return -1
+			}
+			return r
+		}, address.Phone)
+		if !phoneNumber.MatchString(address.Phone) || len(digits) < 7 || len(digits) > 15 {
+			return domaincommerce.Order{}, ErrInvalidAddress
+		}
+	}
+	address.CountryCode = strings.ToUpper(strings.TrimSpace(address.CountryCode))
 	if address.CountryCode == "" {
 		address.CountryCode = "IN"
+	}
+	if address.CountryCode != "IN" || !indiaPostalCode.MatchString(strings.TrimSpace(address.PostalCode)) {
+		return domaincommerce.Order{}, ErrInvalidAddress
 	}
 	return s.repository.CreateOrder(ctx, userID, cartID, idempotencyKey, address)
 }

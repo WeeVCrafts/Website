@@ -221,6 +221,26 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await user.goto("/seller-admin/products/new");
     await expect(user.locator("form.seller-form-grid")).toBeVisible();
 
+    const addStaffForm = owner.locator('form[action="/seller-admin/team/add"]');
+    await addStaffForm.locator('input[name="email"]').fill(updatedEmail);
+    await addStaffForm.locator('input[name="permissions"][value="PRODUCT_READ"]').check();
+    await addStaffForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
+    await addStaffForm.getByRole("button", { name: "Add seller staff" }).click();
+    await owner.goto("/seller-admin/team");
+    const staffRow = owner.locator(".seller-product-row").filter({ hasText: updatedEmail });
+    await expect(staffRow).toContainText("PRODUCT_WRITE");
+    const removeStaffResponse = owner.waitForResponse(response => response.url().includes("/seller-admin/team/remove") && response.request().method() === "POST");
+    await staffRow.locator('form[action="/seller-admin/team/remove"] button').click();
+    expect((await removeStaffResponse).status()).toBe(303);
+    await owner.goto("/seller-admin/team");
+    await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
+    const staffDenied = await userContext.request.get("/seller-admin", { maxRedirects: 0 });
+    expect(staffDenied.status()).toBe(403);
+
+    await admin.goto("/super-admin/security");
+    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
+    await submitRoleChange(userCard, "seller_staff", "grant", "Restore staff workspace after seller removal verification", sellerID);
+
     await admin.goto("/super-admin/security");
     userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
     await submitRoleChange(userCard, "seller_staff", "revoke", "Local seller staff role revocation verification", sellerID);
@@ -380,11 +400,24 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await variantForm.locator('input[name="initial_stock"]').fill("5");
     await variantForm.getByRole("button", { name: "Add variant" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
+    const productEditURL = seller.url();
+    const addedVariantForm = seller.locator("form.product-variant-edit").nth(1);
+    const addedVariantID = await addedVariantForm.locator('input[name="variant_id"]').inputValue();
+    await addedVariantForm.locator('input[name="name"]').fill("Indigo edition updated");
+    await addedVariantForm.locator('input[name="sku"]').fill(`QA-ALT-EDIT-${suffix}`);
+    await addedVariantForm.locator('input[name="price_cents"]').fill("284900");
+    await addedVariantForm.locator('input[name="compare_at_cents"]').fill("309900");
+    await addedVariantForm.getByRole("button", { name: "Save variant" }).click();
+    await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
     const mediaPanel = seller.locator("[data-product-media]");
     await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "../../web/assets/images/customer/maker-mithila.webp"));
     await mediaPanel.locator("[data-media-upload]").click();
     await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
     await expect(mediaPanel.locator(".product-media-asset img")).toHaveCount(1);
+    await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "fixtures/flower.mp4"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product video saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(1);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
@@ -411,11 +444,20 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const imageResponse = await customer.request.get(await productImage.getAttribute("src"));
     expect(imageResponse.status()).toBe(200);
     expect(imageResponse.headers()["content-type"]).toContain("image/webp");
+    const videoButton = customer.getByRole("button", { name: /Show product media/ });
+    await expect(videoButton).toBeVisible();
+    await videoButton.click();
+    const productVideo = customer.locator(".gallery-main video");
+    await expect(productVideo).toBeVisible();
+    const videoSource = await productVideo.locator("source").getAttribute("src");
+    const videoResponse = await customer.request.get(videoSource);
+    expect(videoResponse.status()).toBe(200);
+    expect(videoResponse.headers()["content-type"]).toContain("video/mp4");
     await expect(customer.locator("#detail-variant option")).toHaveCount(2);
-    const variantValue = await customer.locator("#detail-variant option").filter({ hasText: "Indigo edition" }).getAttribute("value");
+    const variantValue = await customer.locator("#detail-variant option").filter({ hasText: "Indigo edition updated" }).getAttribute("value");
     expect(variantValue).toBeTruthy();
     await customer.locator("#detail-variant").selectOption(variantValue);
-    await expect(customer.locator("[data-selected-variant-price]")).toHaveText("INR 2799");
+    await expect(customer.locator("[data-selected-variant-price]")).toHaveText("INR 2849");
     const cartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
     await customer.getByRole("button", { name: "Add to cart" }).click();
     expect((await cartResponse).ok()).toBeTruthy();
@@ -429,10 +471,17 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.getByLabel("City").fill("Bengaluru");
     await customer.getByLabel("State / region").fill("Karnataka");
     await customer.getByLabel("Postal code").fill("560034");
+    const country = customer.locator('#checkout-address-form input[name="country_code"]');
+    await expect(country).toHaveValue("IN");
+    await expect(customer.getByLabel("Delivery country")).toBeDisabled();
     await customer.getByRole("button", { name: /Continue to delivery/ }).click();
     await customer.getByRole("button", { name: /Continue to payment/ }).click();
     await customer.getByRole("button", { name: /Continue to review/ }).click();
+    const checkoutRequest = customer.waitForRequest(request => request.url().includes("/api/v1/checkout") && request.method() === "POST");
     await customer.getByRole("button", { name: /Place order/ }).click();
+    const checkoutPayload = JSON.parse((await checkoutRequest).postData());
+    expect(checkoutPayload.address.phone).toBe("9876543210");
+    expect(checkoutPayload.address.country_code).toBe("IN");
     const capture = customer.getByRole("button", { name: "Simulate successful payment" });
     await expect(capture).toBeVisible();
     const orderNumber = await capture.getAttribute("data-order-number");
@@ -476,6 +525,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.goto("/returns");
     await expect(customer.locator("body")).toContainText("Item received");
     await expect(customer.locator("body")).toContainText(orderNumber);
+
+    await seller.goto(productEditURL);
+    const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator("video source[type='video/mp4']") });
+    await expect(uploadedVideo).toHaveCount(1);
+    const deleteVideo = uploadedVideo.locator("[data-media-delete]");
+    seller.once("dialog", dialog => dialog.accept());
+    await deleteVideo.click();
+    await expect(seller.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(0);
+
+    const archiveVariant = seller.locator(`form[action="/seller-admin/products/variants/archive"]:has(input[name="variant_id"][value="${addedVariantID}"])`);
+    await archiveVariant.locator('input[name="reason"]').fill("Local variant archive verification after checkout");
+    seller.once("dialog", dialog => dialog.accept());
+    await archiveVariant.getByRole("button", { name: "Archive variant" }).click();
+    await seller.goto(productEditURL);
+    await expect(seller.locator(".variant-stock-summary").filter({ hasText: "archived" })).toHaveCount(1);
   } finally {
     await Promise.all([sellerContext.close(), marketplaceContext.close(), customerContext.close(), operationsContext.close()]);
   }

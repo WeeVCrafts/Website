@@ -133,7 +133,7 @@ func (r *SellerStaffRepository) RemoveStaff(ctx context.Context, ownerUserID, st
 		if _, err := tx.Exec(transactionContext, `DELETE FROM user_roles WHERE user_id = $1 AND role_slug = $2 AND NOT EXISTS (SELECT 1 FROM seller_users WHERE user_id = $1 AND status = 'active')`, staffUserID, string(domainidentity.RoleSellerStaff)); err != nil {
 			return err
 		}
-		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'seller.staff_removed', 'seller_user', $2, $3, jsonb_build_object('seller_id', $4))`, fmt.Sprint(ownerUserID), fmt.Sprint(staffUserID), ports.RequestID(transactionContext), sellerID)
+		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'seller.staff_removed', 'seller_user', $2, $3, jsonb_build_object('seller_id', $4::bigint))`, fmt.Sprint(ownerUserID), fmt.Sprint(staffUserID), ports.RequestID(transactionContext), sellerID)
 		return err
 	})
 }
