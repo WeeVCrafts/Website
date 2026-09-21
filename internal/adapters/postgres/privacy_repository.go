@@ -67,8 +67,17 @@ func (r *PrivacyRepository) GetCenter(ctx context.Context, userID int64) (domain
 }
 
 func (r *PrivacyRepository) RecordConsent(ctx context.Context, userID int64, purpose, policyVersion string, granted bool, source string) error {
-	_, err := r.pool.Exec(ctx, `INSERT INTO consent_records (user_id, purpose, policy_version, granted, source) VALUES ($1, $2, $3, $4, $5)`, userID, purpose, policyVersion, granted, source)
-	return err
+	if purpose != "marketing" {
+		_, err := r.pool.Exec(ctx, `INSERT INTO consent_records (user_id, purpose, policy_version, granted, source) VALUES ($1, $2, $3, $4, $5)`, userID, purpose, policyVersion, granted, source)
+		return err
+	}
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		if _, err := tx.Exec(transactionContext, `INSERT INTO consent_records (user_id, purpose, policy_version, granted, source) VALUES ($1, $2, $3, $4, $5)`, userID, purpose, policyVersion, granted, source); err != nil {
+			return err
+		}
+		_, err := tx.Exec(transactionContext, `INSERT INTO marketing_preferences (user_id, email_marketing) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET email_marketing = EXCLUDED.email_marketing, updated_at = NOW()`, userID, granted)
+		return err
+	})
 }
 
 func (r *PrivacyRepository) SetEmailMarketing(ctx context.Context, userID int64, enabled bool) error {

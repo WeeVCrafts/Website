@@ -198,6 +198,22 @@ test("customer security and privacy controls reach their persisted workflows", a
   await expect(page.getByLabel("Request type")).toBeVisible();
   await expect(page.getByLabel("Details")).toBeVisible();
 
+  if (localMutationTarget) {
+    const marketingForm = page.locator('form[action="/privacy/consent"]').first();
+    const state = await page.locator("body").innerText();
+    const wasEnabled = /Email marketing is currently enabled/i.test(state);
+    await marketingForm.getByRole("button").click();
+    await expect(page.locator("body")).toContainText(wasEnabled ? "Email marketing is currently disabled" : "Email marketing is currently enabled");
+    await page.locator('form[action="/privacy/consent"]').first().getByRole("button").click();
+    await expect(page.locator("body")).toContainText(wasEnabled ? "Email marketing is currently enabled" : "Email marketing is currently disabled");
+
+    const requestForm = page.locator('form[action="/privacy/requests"]');
+    await requestForm.locator('select[name="request_type"]').selectOption("access");
+    await requestForm.locator('textarea[name="details"]').fill(`Local E2E privacy access request ${Date.now()}`);
+    await requestForm.getByRole("button", { name: "Submit request" }).click();
+    await expect(page.locator("body")).toContainText(/access.*open/);
+  }
+
   const unknownAccountPage = await page.goto("/account/not-a-real-setting");
   expect(unknownAccountPage.status()).toBe(404);
 });
@@ -399,6 +415,12 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await expect(user.getByRole("navigation", { name: "Seller portal navigation" })).not.toContainText("Team");
     const deniedCreate = await userContext.request.get("/seller-admin/products/new", { maxRedirects: 0 });
     expect(deniedCreate.status()).toBe(403);
+    const deniedInventory = await userContext.request.get("/seller-admin/inventory", { maxRedirects: 0 });
+    expect(deniedInventory.status()).toBe(403);
+    const allowedOrders = await userContext.request.get("/seller-admin/orders", { maxRedirects: 0 });
+    expect(allowedOrders.status()).toBe(200);
+    const deniedFulfillment = await userContext.request.post("/seller-admin/orders/fulfill", { maxRedirects: 0 });
+    expect(deniedFulfillment.status()).toBe(403);
 
     const owner = await ownerContext.newPage();
     await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
@@ -603,6 +625,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await addedVariantForm.locator('input[name="compare_at_cents"]').fill("309900");
     await addedVariantForm.getByRole("button", { name: "Save variant" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
+
+    await seller.goto("/seller-admin/inventory");
+    const inventoryRow = seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` });
+    await expect(inventoryRow).toHaveCount(1);
+    await expect(inventoryRow.locator("span").nth(3)).toHaveText("5");
+    const inventoryForm = inventoryRow.locator('form[action="/seller-admin/inventory/adjust"]');
+    await inventoryForm.locator('input[name="delta"]').fill("2");
+    await inventoryForm.locator('input[name="reason"]').fill("Local E2E inventory adjustment persistence check");
+    const inventoryResponse = seller.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/inventory/adjust");
+    await inventoryForm.getByRole("button", { name: "Save" }).click();
+    expect((await inventoryResponse).status()).toBe(303);
+    await expect(seller).toHaveURL(/\/seller-admin\/inventory/);
+    await expect(seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` }).locator("span").nth(3)).toHaveText("7");
+
+    await seller.goto(productEditURL);
     const mediaPanel = seller.locator("[data-product-media]");
     await mediaPanel.locator("[data-media-file]").setInputFiles(path.resolve(__dirname, "../../web/assets/images/customer/maker-mithila.webp"));
     await mediaPanel.locator("[data-media-upload]").click();
@@ -650,7 +687,8 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator("#product-panel-details")).toContainText("Delivery to serviceable PIN codes in India");
     const productImage = customer.locator('.gallery-main img[src^="/media/products/"]').first();
     await expect(productImage).toBeVisible();
-    const imageResponse = await customer.request.get(await productImage.getAttribute("src"));
+    const uploadedImageURL = await productImage.getAttribute("src");
+    const imageResponse = await customer.request.get(uploadedImageURL);
     expect(imageResponse.status()).toBe(200);
     expect(imageResponse.headers()["content-type"]).toContain("image/webp");
     const videoButton = customer.getByRole("button", { name: /Show product media/ });
@@ -749,9 +787,11 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator("video source[type='video/mp4']") });
     await expect(uploadedVideo).toHaveCount(1);
     const deleteVideo = uploadedVideo.locator("[data-media-delete]");
+    const uploadedVideoURL = await uploadedVideo.locator("video source[type='video/mp4']").getAttribute("src");
     seller.once("dialog", dialog => dialog.accept());
     await deleteVideo.click();
     await expect(seller.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(0);
+    expect((await customer.request.get(uploadedVideoURL)).status()).toBe(404);
 
     const uploadedImage = seller.locator(".product-media-asset").filter({ has: seller.locator("img") });
     await expect(uploadedImage).toHaveCount(1);
@@ -760,6 +800,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(seller.locator(".product-media-asset img")).toHaveCount(0);
     await customer.goto(`/products/${slug}`);
     await expect(customer.locator('.gallery-main img[src^="/media/products/"]')).toHaveCount(0);
+    expect((await customer.request.get(uploadedImageURL)).status()).toBe(404);
 
     const archiveVariant = seller.locator(`form[action="/seller-admin/products/variants/archive"]:has(input[name="variant_id"][value="${addedVariantID}"])`);
     await archiveVariant.locator('input[name="reason"]').fill("Local variant archive verification after checkout");

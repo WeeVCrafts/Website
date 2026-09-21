@@ -10,6 +10,45 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
+func TestMarketingConsentUpdatesPreferenceAndHistoryTogether(t *testing.T) {
+	pool := openIntegrationPool(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	email := fmt.Sprintf("privacy-marketing-%d@example.invalid", time.Now().UnixNano())
+	var userID int64
+	if err := pool.QueryRow(ctx, `INSERT INTO users (email, display_name, status) VALUES ($1, 'Marketing Customer', 'active') RETURNING id`, email).Scan(&userID); err != nil {
+		t.Fatalf("insert privacy user: %v", err)
+	}
+	t.Cleanup(func() {
+		cleanupContext, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		_, _ = pool.Exec(cleanupContext, `DELETE FROM users WHERE id=$1`, userID)
+	})
+
+	repository := NewPrivacyRepository(pool)
+	if err := repository.RecordConsent(ctx, userID, "marketing", "test-policy", true, "integration-test"); err != nil {
+		t.Fatalf("grant marketing consent: %v", err)
+	}
+	center, err := repository.GetCenter(ctx, userID)
+	if err != nil {
+		t.Fatalf("load privacy center: %v", err)
+	}
+	if !center.EmailMarketing || len(center.Consents) != 1 || !center.Consents[0].Granted {
+		t.Fatalf("marketing consent and saved preference diverged after grant: %+v", center)
+	}
+
+	if err := repository.RecordConsent(ctx, userID, "marketing", "test-policy", false, "integration-test"); err != nil {
+		t.Fatalf("withdraw marketing consent: %v", err)
+	}
+	center, err = repository.GetCenter(ctx, userID)
+	if err != nil {
+		t.Fatalf("reload privacy center: %v", err)
+	}
+	if center.EmailMarketing || len(center.Consents) != 2 || center.Consents[0].Granted {
+		t.Fatalf("marketing consent and saved preference diverged after withdrawal: %+v", center)
+	}
+}
+
 func TestPrivacyDeletionAnonymizesEligibleDataAndRetainsOrderHistory(t *testing.T) {
 	pool := openIntegrationPool(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
