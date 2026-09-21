@@ -113,6 +113,7 @@
 
     async recover(email) { return this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); }
     async updatePassword(password, token) { return this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); }
+    async verifyEmail(token) { return this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); }
 
     async signOut() {
       await this.call(ROOT + "/auth/logout", { method: "POST", authenticated: true, body: {} });

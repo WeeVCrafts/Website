@@ -44,14 +44,19 @@ templ Auth(p viewmodels.CustomerPage) {
         } else if p.Route == "/reset-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Choose a new password", "Use a long, unique password to keep your account safe.")
           <form class="utility-form" action="/reset-password" method="post" data-backend-auth="reset">
+            <input type="hidden" name="token" value={ authToken(p.Filters) }/>
             <label>New password<input name="password" type="password" minlength="12" required/></label>
             <label>Confirm password<input name="confirm_password" type="password" minlength="12" required/></label>
             <button class="primary-button full" type="submit">Update password <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span></button>
           </form>
         } else {
           @AuthHeading("VERIFY YOUR EMAIL", "Your account is almost ready", "Confirm your email to protect your account and receive order updates.")
-          <div class="utility-callout" data-backend-verification><span class="material-symbols-outlined" aria-hidden="true">mark_email_read</span><div><strong>Email verification</strong><p>Use the verification link sent to your email, then sign in to continue.</p></div></div>
-          <a class="primary-button full" href="/login" data-backend-verification-continue>Continue to sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+          <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">mark_email_read</span><div><strong>Email verification</strong><p>Confirm the one-time link to protect your account and receive order updates.</p></div></div>
+          <form class="utility-form" action="/verify-email" method="post" data-backend-auth="verify">
+            <input type="hidden" name="token" value={ authToken(p.Filters) }/>
+            <button class="primary-button full" type="submit">Verify email <span class="material-symbols-outlined" aria-hidden="true">verified</span></button>
+          </form>
+          <a class="auth-back-link" href="/login">Continue to sign in</a>
         }
         <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by WeeVCrafts.</p>
       </div>

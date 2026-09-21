@@ -50,7 +50,7 @@ func (h *Handler) MediaUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.ContentLength <= 0 || r.ContentLength > 25<<20 {
-		writeError(w, http.StatusRequestEntityTooLarge, "MEDIA_TOO_LARGE", "Product media must be smaller than 25 MB.")
+		writeError(w, http.StatusRequestEntityTooLarge, "MEDIA_TOO_LARGE", "Product media must be 25 MB or smaller.")
 		return
 	}
 	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -114,7 +114,7 @@ func (h *Handler) writeMediaError(w http.ResponseWriter, err error) {
 	case errors.Is(err, ports.ErrInvalidState):
 		writeError(w, http.StatusConflict, "MEDIA_NOT_READY", "The media upload is not in a finalizable state.")
 	case errors.Is(err, applicationcommerce.ErrInvalidMedia):
-		writeError(w, http.StatusUnprocessableEntity, "MEDIA_INVALID", "The stored object did not match the validated upload.")
+		writeError(w, http.StatusUnprocessableEntity, "MEDIA_INVALID", "The file contents do not match the selected image or video type.")
 	default:
 		writeError(w, http.StatusInternalServerError, "MEDIA_UNAVAILABLE", "Media lifecycle processing failed.")
 	}

@@ -5,6 +5,64 @@ const password = "WeeVCrafts-Demo-2026!";
 const target = new URL(process.env.WEEVCRAFTS_BASE_URL || "http://127.0.0.1:8080");
 const localMutationTarget = ["localhost", "127.0.0.1", "::1"].includes(target.hostname);
 
+async function canvasImageFile(page, contentType) {
+  const dataURL = await page.evaluate(async type => {
+    const image = new Image();
+    image.src = "/assets/images/customer/maker-mithila.webp";
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    canvas.getContext("2d").drawImage(image, 0, 0);
+    return canvas.toDataURL(type);
+  }, contentType);
+  return {
+    name: contentType === "image/png" ? "qa-image.png" : "qa-image.jpg",
+    mimeType: contentType,
+    buffer: Buffer.from(dataURL.split(",", 2)[1], "base64"),
+  };
+}
+
+async function canvasWebMFile(page) {
+  const base64 = await page.evaluate(() => new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext("2d");
+    const stream = canvas.captureStream(5);
+    let recorder;
+    try {
+      recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    } catch (error) {
+      stream.getTracks().forEach(track => track.stop());
+      reject(error);
+      return;
+    }
+    const chunks = [];
+    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+    recorder.onerror = event => reject(event.error || new Error("WebM recording failed"));
+    recorder.onstop = () => {
+      stream.getTracks().forEach(track => track.stop());
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error("WebM encoding failed"));
+      reader.onload = () => resolve(String(reader.result).split(",", 2)[1]);
+      reader.readAsDataURL(new Blob(chunks, { type: "video/webm" }));
+    };
+    let frame = 0;
+    const timer = setInterval(() => {
+      context.fillStyle = frame % 2 ? "#355" : "#953";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      frame += 1;
+      if (frame === 5) {
+        clearInterval(timer);
+        recorder.stop();
+      }
+    }, 100);
+    recorder.start();
+  }));
+  return { name: "qa-video.webm", mimeType: "video/webm", buffer: Buffer.from(base64, "base64") };
+}
+
 async function signIn(page, email, landing, passwordValue = password) {
   await page.goto("/login");
   await page.locator("#page input[name=\"email\"]").fill(email);
@@ -38,8 +96,9 @@ async function submitRoleChange(card, role, action, reason, sellerID = "") {
 async function deleteRoleUser(page, card, reason) {
   const form = card.locator("form.role-delete-form");
   await form.locator('input[name="reason"]').fill(reason);
-  const responsePromise = page.waitForResponse(response =>
-    response.url().includes("/super-admin/users/delete") && response.request().method() === "POST"
+  const responsePromise = page.waitForResponse(
+    response => response.url().includes("/super-admin/users/delete") && response.request().method() === "POST",
+    { timeout: 30_000 }
   );
   page.once("dialog", dialog => dialog.accept());
   await form.getByRole("button", { name: "Delete account" }).click();
@@ -61,6 +120,34 @@ async function updateRoleUser(page, card, { email, displayName, status, password
   await form.getByRole("button", { name: "Save account" }).click();
   expect((await responsePromise).status()).toBe(303);
   await page.goto("/super-admin/security");
+}
+
+async function waitForMail(request, recipient, subject, timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const response = await request.get("http://127.0.0.1:8025/api/v1/messages?limit=50");
+    expect(response.ok(), "Mailpit API should be available for local auth-flow checks").toBeTruthy();
+    const mailbox = await response.json();
+    const message = (mailbox.messages || []).find(item =>
+      item.Subject?.includes(subject) &&
+      (item.To || []).some(address => address.Address?.toLowerCase() === recipient.toLowerCase())
+    );
+    if (message) {
+      const detailResponse = await request.get(`http://127.0.0.1:8025/api/v1/message/${message.ID}`);
+      expect(detailResponse.ok()).toBeTruthy();
+      return detailResponse.json();
+    }
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  throw new Error(`Timed out waiting for ${subject} email to ${recipient}`);
+}
+
+function emailActionURL(message) {
+  const body = `${message.Text || ""}\n${message.HTML || ""}`;
+  const links = body.match(/https?:\/\/[^\s<>"']+/g) || [];
+  const action = links.find(link => /\/(verify-email|reset-password)\?token=/.test(link));
+  if (!action) throw new Error("Expected an account action URL in the email body");
+  return action.replaceAll("&amp;", "&");
 }
 
 test("multi-role login and workspace switcher expose only assigned roles", async ({ browser }) => {
@@ -111,6 +198,79 @@ test("multi-role login and workspace switcher expose only assigned roles", async
 test("unknown product URLs return not found", async ({ request }) => {
   const response = await request.get("/products/missing-qa-product-" + Date.now());
   expect(response.status()).toBe(404);
+});
+
+test("registration, email verification, password recovery and login complete end to end", async ({ browser, page, request }) => {
+  test.skip(!localMutationTarget, "Account creation and recovery tests are restricted to local deployments.");
+  test.setTimeout(120_000);
+  const suffix = Date.now();
+  const email = `qa.auth.${suffix}@weevcrafts.local`;
+  const name = `QA Auth ${suffix}`;
+  const initialPassword = "Local-Auth-Flow-2026!";
+  const recoveredPassword = "Recovered-Auth-2026!";
+  let accountCreated = false;
+  let adminContext;
+  let admin;
+
+  try {
+    adminContext = await browser.newContext();
+    admin = await adminContext.newPage();
+    await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
+    await admin.goto("/super-admin/security");
+    const staleAccounts = admin.locator(".role-assignment-card").filter({ hasText: /qa\.auth\./ });
+    for (let index = await staleAccounts.count() - 1; index >= 0; index -= 1) {
+      const staleCard = admin.locator(".role-assignment-card").filter({ hasText: /qa\.auth\./ }).nth(index);
+      const staleEmail = await staleCard.locator('input[name="email"]').inputValue();
+      if (staleEmail.startsWith("qa.auth.")) await deleteRoleUser(admin, staleCard, "Clean up interrupted local E2E auth-flow account");
+    }
+
+    await page.goto("/register");
+    await page.locator('#page input[name="name"]').fill(name);
+    await page.locator('#page input[name="email"]').fill(email);
+    await page.locator('#page input[name="password"]').fill(initialPassword);
+    await page.locator('#page input[name="consent"]').check();
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.waitForURL(/\/account\/?$/);
+    accountCreated = true;
+    await expect(page.locator("body")).toContainText(name);
+
+    await page.goto("/account/sessions");
+    await page.getByRole("button", { name: "Send verification link" }).click();
+    await expect(page).toHaveURL(/verification=sent/);
+    const verification = await waitForMail(request, email, "Verify your WeCratfs email");
+    await page.goto(emailActionURL(verification));
+    await page.getByRole("button", { name: "Verify email" }).click();
+    await expect(page.locator('[data-backend-form-message]')).toContainText("Your email has been verified");
+
+    await page.goto("/account/sessions");
+    await page.getByRole("button", { name: "Sign out all sessions" }).click();
+    await page.waitForURL(url => url.pathname === "/", { timeout: 15_000 });
+
+    await page.goto("/forgot-password");
+    await page.locator('#page input[name="email"]').fill(email);
+    await page.getByRole("button", { name: "Send recovery link" }).click();
+    await expect(page.locator('[data-backend-form-message]')).toContainText("recovery instructions have been sent");
+    const reset = await waitForMail(request, email, "Reset your WeCratfs password");
+    await page.goto(emailActionURL(reset));
+    await page.locator('#page input[name="password"]').fill(recoveredPassword);
+    await page.locator('#page input[name="confirm_password"]').fill(recoveredPassword);
+    await page.getByRole("button", { name: "Update password" }).click();
+    await expect(page.locator('[data-backend-form-message]')).toContainText("Password updated");
+
+    await page.goto("/login");
+    await page.locator('#page input[name="email"]').fill(email);
+    await page.locator('#page input[name="password"]').fill(recoveredPassword);
+    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.waitForURL(/\/account\/?$/);
+    await expect(page.locator("body")).toContainText(name);
+  } finally {
+    if (accountCreated && admin) {
+      await admin.goto("/super-admin/security");
+      const card = admin.locator(".role-assignment-card").filter({ hasText: email });
+      if (await card.count()) await deleteRoleUser(admin, card, "Remove local E2E auth-flow account");
+    }
+    if (adminContext) await adminContext.close();
+  }
 });
 
 test("customer address create, edit and delete persist with field validation", async ({ browser, page }) => {
@@ -222,6 +382,8 @@ test("customer notification choices persist and preserve consent state", async (
   test.skip(!localMutationTarget, "Account preference mutations are restricted to the local test deployment.");
   await signIn(page, "demo.customer03@weevcrafts.local", "/account");
   await page.goto("/account/notifications");
+  await expect(page.locator(".newsletter form")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Manage notification preferences/ })).toHaveAttribute("href", "/account/notifications");
 
   const fields = {
     order_updates: page.locator('input[name="order_updates"]'),
@@ -339,7 +501,8 @@ test("seller owner profile edits persist while seller staff remain blocked", asy
         await saveProfile(originalName, "Restore seller profile after interrupted local verification");
       } catch {}
     }
-    await Promise.all([ownerContext.close(), staffContext.close()]);
+    await ownerContext.close();
+    await staffContext.close();
   }
 });
 
@@ -455,6 +618,19 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await owner.goto("/seller-admin/team");
     const permissionForm = owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` });
     await expect(permissionForm).toHaveCount(1);
+    for (const width of [360, 390, 768, 1024, 1440]) {
+      await owner.setViewportSize({ width, height: 1000 });
+      const dimensions = await owner.evaluate(() => ({ document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+      expect(dimensions.document, `seller team document overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+      expect(dimensions.body, `seller team body overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+      const fieldset = permissionForm.locator("fieldset");
+      const columns = await fieldset.locator(":scope > label").evaluateAll(labels =>
+        new Set(labels.map(label => Math.round(label.getBoundingClientRect().left))).size
+      );
+      expect(columns, `seller permission grid columns at ${width}px`).toBe(width <= 480 ? 1 : width <= 820 ? 2 : 4);
+      const checkboxBox = await permissionForm.locator('input[type="checkbox"]').first().boundingBox();
+      expect(checkboxBox.width, `permission checkbox stretches at ${width}px`).toBeLessThanOrEqual(20);
+    }
     await permissionForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
     await permissionForm.getByRole("button", { name: "Save permissions" }).click();
     await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+permissions\+updated/);
@@ -502,7 +678,9 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
         await deleteRoleUser(admin, card, "Cleanup failed local browser run");
       }
     }
-    await Promise.all([adminContext.close(), userContext.close(), ownerContext.close()]);
+    await adminContext.close();
+    await userContext.close();
+    await ownerContext.close();
   }
 });
 
@@ -670,6 +848,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await seller.getByLabel("Category slug").fill("crafts");
     await seller.getByLabel("SKU").fill(sku);
     await seller.getByRole("spinbutton", { name: "Price in paise", exact: true }).fill("249900");
+    await seller.getByRole("spinbutton", { name: "Compare-at price in paise" }).fill("299900");
     await seller.getByLabel("Initial stock").fill("5");
     await seller.getByLabel("Delivery note").fill("Delivery to serviceable PIN codes in India");
     await seller.getByLabel("Description").fill("A locally created browser test listing used to verify the WeeVCrafts cross-role order flow.");
@@ -680,6 +859,17 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(sellerProduct).toHaveCount(1);
     await sellerProduct.getByRole("link", { name: "Edit product" }).click();
     const editForm = seller.locator("form.seller-form-grid").first();
+    await expect(editForm.locator('input[name="name"]')).toHaveValue(productName);
+    await expect(editForm.locator('input[name="slug"]')).toHaveValue(slug);
+    await expect(editForm.locator('input[name="brand_name"]')).toHaveValue(`QA Artisan ${suffix}`);
+    await expect(editForm.locator('input[name="brand_slug"]')).toHaveValue(`qa-artisan-${suffix}`);
+    await expect(editForm.locator('input[name="category_name"]')).toHaveValue("Crafts");
+    await expect(editForm.locator('input[name="category_slug"]')).toHaveValue("crafts");
+    await expect(editForm.locator('input[name="sku"]')).toHaveValue(sku);
+    await expect(editForm.locator('input[name="price_cents"]')).toHaveValue("249900");
+    await expect(editForm.locator('input[name="compare_at_cents"]')).toHaveValue("299900");
+    await expect(editForm.locator('input[name="delivery_label"]')).toHaveValue("Delivery to serviceable PIN codes in India");
+    await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the WeeVCrafts cross-role order flow.");
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
     await editForm.getByRole("button", { name: "Save draft" }).click();
@@ -706,7 +896,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await addedVariantForm.getByRole("button", { name: "Save variant" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
 
-    await seller.goto("/seller-admin/inventory");
+    await seller.goto(`/seller-admin/inventory?q=${encodeURIComponent(`QA-ALT-EDIT-${suffix}`)}`);
     const inventoryRow = seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` });
     await expect(inventoryRow).toHaveCount(1);
     await expect(inventoryRow.locator("span").nth(3)).toHaveText("5");
@@ -729,6 +919,48 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await mediaPanel.locator("[data-media-upload]").click();
     await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product video saved.", { timeout: 30_000 });
     await expect(mediaPanel.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(1);
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles({ name: "not-an-image.png", mimeType: "image/png", buffer: Buffer.from("%PDF-1.7 not a PNG file") });
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("file contents do not match", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset")).toHaveCount(2);
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles({ name: "unsupported.pdf", mimeType: "application/pdf", buffer: Buffer.from("not supported") });
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Choose a JPEG, PNG, WebP, MP4 or WebM file.");
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles({ name: "oversized.png", mimeType: "image/png", buffer: Buffer.alloc(25 * 1024 * 1024 + 1) });
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("25 MB or smaller");
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles(await canvasImageFile(seller, "image/png"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset")).toHaveCount(3);
+    await expect(mediaPanel.locator(".product-media-asset p").filter({ hasText: "image/png" })).toHaveCount(1);
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles(await canvasImageFile(seller, "image/jpeg"));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product image saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset")).toHaveCount(4);
+    await expect(mediaPanel.locator(".product-media-asset p").filter({ hasText: "image/jpeg" })).toHaveCount(1);
+
+    await mediaPanel.locator("[data-media-file]").setInputFiles(await canvasWebMFile(seller));
+    await mediaPanel.locator("[data-media-upload]").click();
+    await expect(mediaPanel.locator("[data-media-status]")).toContainText("Product video saved.", { timeout: 30_000 });
+    await expect(mediaPanel.locator(".product-media-asset video source[type='video/webm']")).toHaveCount(1);
+    await expect(mediaPanel.locator(".product-media-asset")).toHaveCount(5);
+
+    const savedMediaTypes = await mediaPanel.locator(".product-media-asset p").allTextContents();
+    expect(savedMediaTypes.join(" ")).toContain("image/webp");
+    expect(savedMediaTypes.join(" ")).toContain("image/png");
+    expect(savedMediaTypes.join(" ")).toContain("image/jpeg");
+    expect(savedMediaTypes.join(" ")).toContain("video/mp4");
+    expect(savedMediaTypes.join(" ")).toContain("video/webm");
+    const uploadedMedia = await mediaPanel.locator(".product-media-asset").evaluateAll(assets => assets.map(asset => {
+      const media = asset.querySelector("img, source");
+      return { url: media.src, contentType: media.tagName === "SOURCE" ? media.type : asset.querySelector("p").textContent.trim().split(/\s/)[0] };
+    }));
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
@@ -789,13 +1021,17 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const uploadedImageURL = await productImage.getAttribute("src");
     const imageResponse = await customer.request.get(uploadedImageURL);
     expect(imageResponse.status()).toBe(200);
-    expect(imageResponse.headers()["content-type"]).toContain("image/webp");
-    const videoButton = customer.getByRole("button", { name: /Show product media/ });
+    for (const media of uploadedMedia) {
+      const response = await customer.request.get(media.url);
+      expect(response.status(), media.url).toBe(200);
+      expect(response.headers()["content-type"]).toContain(media.contentType);
+    }
+    const videoButton = customer.getByRole("button", { name: "Show product media 2" });
     await expect(videoButton).toBeVisible();
     await videoButton.click();
-    const productVideo = customer.locator(".gallery-main video");
+    const productVideo = customer.locator(".gallery-main video").filter({ has: customer.locator("source[type='video/mp4']") });
     await expect(productVideo).toBeVisible();
-    const videoSource = await productVideo.locator("source").getAttribute("src");
+    const videoSource = await productVideo.locator("source[type='video/mp4']").getAttribute("src");
     const videoResponse = await customer.request.get(videoSource);
     expect(videoResponse.status()).toBe(200);
     expect(videoResponse.headers()["content-type"]).toContain("video/mp4");
@@ -935,23 +1171,27 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator(".saved-address").filter({ hasText: shippingRecipient })).toHaveCount(0);
 
     await seller.goto(productEditURL);
-    const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator("video source[type='video/mp4']") });
-    await expect(uploadedVideo).toHaveCount(1);
-    const deleteVideo = uploadedVideo.locator("[data-media-delete]");
-    const uploadedVideoURL = await uploadedVideo.locator("video source[type='video/mp4']").getAttribute("src");
-    seller.once("dialog", dialog => dialog.accept());
-    await deleteVideo.click();
-    await expect(seller.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(0);
-    expect((await customer.request.get(uploadedVideoURL)).status()).toBe(404);
+    for (const contentType of ["video/mp4", "video/webm"]) {
+      const uploadedVideo = seller.locator(".product-media-asset").filter({ has: seller.locator(`video source[type='${contentType}']`) });
+      await expect(uploadedVideo).toHaveCount(1);
+      const uploadedVideoURL = await uploadedVideo.locator(`video source[type='${contentType}']`).getAttribute("src");
+      seller.once("dialog", dialog => dialog.accept());
+      await uploadedVideo.locator("[data-media-delete]").click();
+      await expect(seller.locator(`.product-media-asset video source[type='${contentType}']`)).toHaveCount(0);
+      expect((await customer.request.get(uploadedVideoURL)).status()).toBe(404);
+    }
 
-    const uploadedImage = seller.locator(".product-media-asset").filter({ has: seller.locator("img") });
-    await expect(uploadedImage).toHaveCount(1);
-    seller.once("dialog", dialog => dialog.accept());
-    await uploadedImage.locator("[data-media-delete]").click();
-    await expect(seller.locator(".product-media-asset img")).toHaveCount(0);
+    while (await seller.locator(".product-media-asset img").count()) {
+      const uploadedImage = seller.locator(".product-media-asset").filter({ has: seller.locator("img") }).first();
+      const uploadedImageURL = await uploadedImage.locator("img").getAttribute("src");
+      const imageCount = await seller.locator(".product-media-asset img").count();
+      seller.once("dialog", dialog => dialog.accept());
+      await uploadedImage.locator("[data-media-delete]").click();
+      await expect(seller.locator(".product-media-asset img")).toHaveCount(imageCount - 1);
+      expect((await customer.request.get(uploadedImageURL)).status()).toBe(404);
+    }
     await customer.goto(`/products/${slug}`);
     await expect(customer.locator('.gallery-main img[src^="/media/products/"]')).toHaveCount(0);
-    expect((await customer.request.get(uploadedImageURL)).status()).toBe(404);
 
     const archiveVariant = seller.locator(`form[action="/seller-admin/products/variants/archive"]:has(input[name="variant_id"][value="${addedVariantID}"])`);
     await archiveVariant.locator('input[name="reason"]').fill("Local variant archive verification after checkout");
@@ -960,7 +1200,10 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await seller.goto(productEditURL);
     await expect(seller.locator(".variant-stock-summary").filter({ hasText: "archived" })).toHaveCount(1);
   } finally {
-    await Promise.all([sellerContext.close(), marketplaceContext.close(), customerContext.close(), operationsContext.close()]);
+    await sellerContext.close();
+    await marketplaceContext.close();
+    await customerContext.close();
+    await operationsContext.close();
   }
 });
 
@@ -1052,6 +1295,7 @@ test("customer and support agent share a persisted ticket conversation", async (
     await expect(customer.locator(`#ticket-${ticketID}`)).toContainText("closed");
     await expect(customer.locator(`#ticket-${ticketID} form[action="/support/customer-reply"]`)).toHaveCount(0);
   } finally {
-    await Promise.all([customerContext.close(), supportContext.close()]);
+    await customerContext.close();
+    await supportContext.close();
   }
 });

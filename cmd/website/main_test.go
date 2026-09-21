@@ -100,3 +100,36 @@ func TestAuthRateLimitUnavailableReturnsJSONServiceError(t *testing.T) {
 		t.Fatalf("expected structured outage error, got %s", recorder.Body.String())
 	}
 }
+
+func TestAuthRateLimitsUseSeparateBucketsForIndependentAccountActions(t *testing.T) {
+	limiter := &fakeRateLimiter{allowed: true}
+	handler := authRateLimit(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}), limiter)
+	for _, path := range []string{
+		"/api/v1/auth/login",
+		"/api/v1/auth/register",
+		"/api/v1/auth/password-reset/request",
+		"/api/v1/auth/email-verification/confirm",
+		"/account/verify-email",
+	} {
+		request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{}`))
+		request.RemoteAddr = "192.0.2.13:4000"
+		handler.ServeHTTP(httptest.NewRecorder(), request)
+	}
+	want := []string{
+		"auth:192.0.2.13:login",
+		"auth:192.0.2.13:register",
+		"auth:192.0.2.13:password-recovery",
+		"auth:192.0.2.13:email-verification",
+		"auth:192.0.2.13:email-verification",
+	}
+	if len(limiter.keys) != len(want) {
+		t.Fatalf("expected one limiter check per protected operation, got %v", limiter.keys)
+	}
+	for index := range want {
+		if limiter.keys[index] != want[index] {
+			t.Errorf("limiter key %d = %q, want %q", index, limiter.keys[index], want[index])
+		}
+	}
+}

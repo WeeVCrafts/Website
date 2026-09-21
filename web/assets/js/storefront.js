@@ -447,7 +447,7 @@
       } else if (action === "register") {
         const result = await api.signUp({ email: values.email, password: values.password, displayName: values.name });
         const data = unwrap(result) || result;
-        if (data && (data.access_token || result.csrf_token)) global.location.assign(authDestination(values.next));
+        if (data && (data.access_token || result.csrf_token)) global.location.assign(authDestination(values.next, data));
         else showFormMessage(form, "Check your email to verify your new account.", false);
       } else if (action === "recover") {
         await api.recover(values.email);
@@ -455,9 +455,13 @@
       } else if (action === "reset") {
         if (values.password !== values.confirm_password) throw new Error("The passwords do not match.");
         const hash = new URLSearchParams(global.location.hash.replace(/^#/, ""));
-        await api.updatePassword(values.password, hash.get("access_token") || hash.get("token") || "");
+        const query = new URLSearchParams(global.location.search);
+        await api.updatePassword(values.password, values.token || query.get("token") || hash.get("access_token") || hash.get("token") || "");
         global.history.replaceState(null, "", global.location.pathname);
         showFormMessage(form, "Password updated. You can now sign in.", false);
+      } else if (action === "verify") {
+        await api.verifyEmail(values.token || new URLSearchParams(global.location.search).get("token") || "");
+        showFormMessage(form, "Your email has been verified. You can now sign in.", false);
       }
     } catch (error) {
       showFormMessage(form, error.message, true);

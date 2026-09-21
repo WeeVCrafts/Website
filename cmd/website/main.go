@@ -366,7 +366,8 @@ func writeLocalJSON(w http.ResponseWriter, status int, value any) {
 func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isAuthenticationAttempt(r.URL.Path) && !(r.URL.Path == "/login" && r.Method == http.MethodGet) {
-			allowed, err := limiter.Allow(r.Context(), "auth:"+clientAddress(r), 20, time.Minute)
+			key := "auth:" + clientAddress(r) + ":" + authenticationAttemptBucket(r.URL.Path)
+			allowed, err := limiter.Allow(r.Context(), key, 20, time.Minute)
 			if err != nil {
 				writeRateLimitAPIError(w, r, http.StatusServiceUnavailable, "RATE_LIMIT_UNAVAILABLE", "Authentication is temporarily unavailable.")
 				return
@@ -383,13 +384,28 @@ func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 
 func isAuthenticationAttempt(path string) bool {
 	switch path {
-	case "/login", "/register", "/forgot-password", "/reset-password", "/verify-email",
+	case "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account/verify-email",
 		"/api/v1/auth/register", "/api/v1/auth/login",
 		"/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm",
 		"/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm":
 		return true
 	default:
 		return false
+	}
+}
+
+func authenticationAttemptBucket(path string) string {
+	switch path {
+	case "/login", "/api/v1/auth/login":
+		return "login"
+	case "/register", "/api/v1/auth/register":
+		return "register"
+	case "/forgot-password", "/reset-password", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm":
+		return "password-recovery"
+	case "/verify-email", "/account/verify-email", "/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm":
+		return "email-verification"
+	default:
+		return "other"
 	}
 }
 

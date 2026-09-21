@@ -79,6 +79,8 @@ func authNext(filters url.Values) string {
 	return candidate
 }
 
+func authToken(filters url.Values) string { return filters.Get("token") }
+
 func customerInitials(name string) string {
 	parts := strings.Fields(strings.TrimSpace(name))
 	if len(parts) == 0 {

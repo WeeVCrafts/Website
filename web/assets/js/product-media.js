@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       if (file.size <= 0 || file.size > 25 * 1024 * 1024) {
-        status.textContent = "Image or video must be smaller than 25 MB.";
+        status.textContent = "Image or video must be 25 MB or smaller.";
         return;
       }
       var allowedTypes = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"];
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       uploadButton.disabled = true;
       var mediaKind = file.type.startsWith("video/") ? "video" : "image";
+      var preparedMediaID = 0;
       try {
         var headers = { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken };
         status.textContent = "Preparing secure upload...";
@@ -33,13 +34,17 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         var prepareBody = await prepare.json();
         if (!prepare.ok || !prepareBody.data) throw new Error("Media upload could not be prepared.");
+        preparedMediaID = Number(prepareBody.data.id) || 0;
 
         status.textContent = "Uploading " + mediaKind + "...";
         var uploaded = await fetch(prepareBody.data.upload_url, {
           method: "PUT", credentials: "same-origin",
           headers: { "Content-Type": file.type, "X-CSRF-Token": panel.dataset.csrfToken }, body: file
         });
-        if (!uploaded.ok) throw new Error("Media could not be stored. Check the storage connection and try again.");
+        if (!uploaded.ok) {
+          var uploadFailure = await uploaded.json().catch(function () { return {}; });
+          throw new Error((uploadFailure.error && uploadFailure.error.message) || "Media could not be stored. Check the storage connection and try again.");
+        }
 
         status.textContent = "Checking and saving " + mediaKind + "...";
         var finalize = await fetch("/api/v1/seller/products/media-finalize", {
@@ -48,9 +53,17 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         var finalized = await finalize.json();
         if (!finalize.ok || !finalized.data) throw new Error("Stored media did not pass verification.");
+        preparedMediaID = 0;
         status.textContent = mediaKind === "video" ? "Product video saved." : "Product image saved.";
         window.setTimeout(function () { window.location.reload(); }, 500);
       } catch (error) {
+        if (preparedMediaID) {
+          await fetch("/api/v1/seller/products/media-delete", {
+            method: "POST", credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken },
+            body: JSON.stringify({ media_id: preparedMediaID })
+          }).catch(function () {});
+        }
         status.textContent = error && error.message ? error.message : "Media upload failed. Please try again.";
       } finally {
         uploadButton.disabled = false;

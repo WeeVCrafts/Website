@@ -1,6 +1,7 @@
 package commerce
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -67,11 +68,19 @@ func (s *MediaService) UploadObject(ctx context.Context, sellerOwnerID, mediaID 
 	if record.ContentType != contentType || record.ByteSize != byteSize {
 		return ErrInvalidMedia
 	}
+	prefixLength := int64(12)
+	if byteSize < prefixLength {
+		return ErrInvalidMedia
+	}
+	prefix := make([]byte, prefixLength)
+	if _, err := io.ReadFull(body, prefix); err != nil || !matchesMediaSignature(contentType, prefix) {
+		return ErrInvalidMedia
+	}
 	writer, ok := s.storage.(ports.ObjectStorageWriter)
 	if !ok {
 		return ErrInvalidMedia
 	}
-	return writer.PutObject(ctx, record.ObjectKey, record.ContentType, record.ByteSize, body)
+	return writer.PutObject(ctx, record.ObjectKey, record.ContentType, record.ByteSize, io.MultiReader(bytes.NewReader(prefix), body))
 }
 
 func (s *MediaService) FinalizeUpload(ctx context.Context, sellerOwnerID, mediaID int64) (domaincommerce.MediaRecord, error) {
@@ -91,6 +100,22 @@ func (s *MediaService) FinalizeUpload(ctx context.Context, sellerOwnerID, mediaI
 	}
 	info, err := reader.InspectObject(ctx, record.ObjectKey)
 	if err != nil || info.ByteSize <= 0 || info.ByteSize > 25<<20 || info.ByteSize != record.ByteSize || !allowedMediaType(info.ContentType) || info.ContentType != record.ContentType {
+		return domaincommerce.MediaRecord{}, ErrInvalidMedia
+	}
+	contentReader, ok := s.storage.(ports.ObjectStorageContentReader)
+	if !ok {
+		return domaincommerce.MediaRecord{}, ErrInvalidMedia
+	}
+	body, storedInfo, err := contentReader.OpenObject(ctx, record.ObjectKey)
+	if err != nil {
+		return domaincommerce.MediaRecord{}, ErrInvalidMedia
+	}
+	defer body.Close()
+	prefix := make([]byte, 12)
+	if storedInfo.ByteSize != record.ByteSize || storedInfo.ContentType != record.ContentType {
+		return domaincommerce.MediaRecord{}, ErrInvalidMedia
+	}
+	if _, err := io.ReadFull(body, prefix); err != nil || !matchesMediaSignature(record.ContentType, prefix) {
 		return domaincommerce.MediaRecord{}, ErrInvalidMedia
 	}
 	return lifecycle.FinalizeMedia(ctx, sellerOwnerID, mediaID, fmt.Sprintf("/media/products/%d", mediaID), info.ContentType, info.ByteSize)
@@ -208,4 +233,24 @@ func (s *MediaService) lifecycle() (ports.MediaLifecycleRepository, ports.Object
 func allowedMediaType(value string) bool {
 	value = strings.ToLower(strings.TrimSpace(value))
 	return value == "image/jpeg" || value == "image/png" || value == "image/webp" || value == "video/mp4" || value == "video/webm"
+}
+
+func matchesMediaSignature(contentType string, prefix []byte) bool {
+	if len(prefix) < 12 {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(contentType)) {
+	case "image/jpeg":
+		return prefix[0] == 0xff && prefix[1] == 0xd8 && prefix[2] == 0xff
+	case "image/png":
+		return bytes.Equal(prefix[:8], []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a})
+	case "image/webp":
+		return string(prefix[:4]) == "RIFF" && string(prefix[8:12]) == "WEBP"
+	case "video/mp4":
+		return string(prefix[4:8]) == "ftyp"
+	case "video/webm":
+		return bytes.Equal(prefix[:4], []byte{0x1a, 0x45, 0xdf, 0xa3})
+	default:
+		return false
+	}
 }

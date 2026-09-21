@@ -31,7 +31,7 @@ func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndMinIO(t *testing.T) {
 	}
 	repository := NewMediaRepository(pool)
 	service := applicationcommerce.NewMediaService(storage, repository)
-	payload := []byte("real local media bytes")
+	payload := append([]byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0}, []byte("real local media bytes")...)
 	upload, err := service.PrepareUpload(ctx, fixture.ownerID, fixture.productID, "image/png", int64(len(payload)))
 	if err != nil {
 		t.Fatalf("prepare upload: %v", err)

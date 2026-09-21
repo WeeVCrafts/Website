@@ -113,7 +113,7 @@ func (s *mediaStorage) DeleteObject(context.Context, string) error {
 
 func TestMediaFinalizeVerifiesStoredObjectBeforePublishing(t *testing.T) {
 	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 7, ObjectKey: "products/9/object", ContentType: "image/png", ByteSize: 12, Status: "pending"}}
-	storage := &mediaStorage{info: ports.ObjectInfo{ContentType: "image/png", ByteSize: 12}}
+	storage := &mediaStorage{info: ports.ObjectInfo{ContentType: "image/png", ByteSize: 12}, object: []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0}}
 	service := NewMediaService(storage, repository)
 
 	record, err := service.FinalizeUpload(context.Background(), 9, 7)
@@ -135,8 +135,22 @@ func TestMediaFinalizeVerifiesStoredObjectBeforePublishing(t *testing.T) {
 	}
 }
 
+func TestMediaFinalizeRejectsStoredContentTypeSpoofing(t *testing.T) {
+	payload := []byte("%PDF-1.7 not a PNG")
+	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 73, ObjectKey: "products/9/spoofed", ContentType: "image/png", ByteSize: int64(len(payload)), Status: "pending"}}
+	storage := &mediaStorage{info: ports.ObjectInfo{ContentType: "image/png", ByteSize: int64(len(payload))}, object: payload}
+	service := NewMediaService(storage, repository)
+
+	if _, err := service.FinalizeUpload(context.Background(), 9, 73); !errors.Is(err, ErrInvalidMedia) {
+		t.Fatalf("mislabeled stored object returned %v", err)
+	}
+	if repository.finalized {
+		t.Fatal("mislabeled object was finalized")
+	}
+}
+
 func TestMediaUploadUsesAuthenticatedPreparedRecordAndCanStreamPublicObject(t *testing.T) {
-	payload := []byte("verified image bytes")
+	payload := append([]byte{'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P'}, []byte("verified image bytes")...)
 	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 70, ProductID: 9, ObjectKey: "products/9/image", ContentType: "image/webp", ByteSize: int64(len(payload)), Visibility: "public", Status: "pending"}, ownerID: 9}
 	storage := &mediaStorage{}
 	service := NewMediaService(storage, repository)
@@ -162,6 +176,47 @@ func TestMediaUploadUsesAuthenticatedPreparedRecordAndCanStreamPublicObject(t *t
 	readBack, err := io.ReadAll(body)
 	if err != nil || !bytes.Equal(readBack, payload) || info.ContentType != "image/webp" {
 		t.Fatalf("streamed public image mismatch: bytes=%q info=%+v err=%v", readBack, info, err)
+	}
+}
+
+func TestMediaUploadAcceptsAllSupportedFileSignatures(t *testing.T) {
+	cases := []struct {
+		contentType string
+		prefix      []byte
+	}{
+		{"image/jpeg", []byte{0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0}},
+		{"image/png", []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0}},
+		{"image/webp", []byte{'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P'}},
+		{"video/mp4", []byte{0, 0, 0, 24, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm'}},
+		{"video/webm", []byte{0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81, 0x01, 0x42, 0xf7, 0x81}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.contentType, func(t *testing.T) {
+			payload := append(append([]byte(nil), testCase.prefix...), []byte("valid media payload")...)
+			repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 71, ProductID: 9, ObjectKey: "products/9/media", ContentType: testCase.contentType, ByteSize: int64(len(payload)), Status: "pending"}, ownerID: 9}
+			storage := &mediaStorage{}
+			service := NewMediaService(storage, repository)
+			if err := service.UploadObject(context.Background(), 9, 71, testCase.contentType, int64(len(payload)), bytes.NewReader(payload)); err != nil {
+				t.Fatalf("upload supported media: %v", err)
+			}
+			if !bytes.Equal(storage.object, payload) {
+				t.Fatal("uploaded media bytes changed")
+			}
+		})
+	}
+}
+
+func TestMediaUploadRejectsContentTypeSpoofing(t *testing.T) {
+	payload := []byte("%PDF-1.7 not a PNG file")
+	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 72, ProductID: 9, ObjectKey: "products/9/spoofed", ContentType: "image/png", ByteSize: int64(len(payload)), Status: "pending"}, ownerID: 9}
+	storage := &mediaStorage{}
+	service := NewMediaService(storage, repository)
+
+	if err := service.UploadObject(context.Background(), 9, 72, "image/png", int64(len(payload)), bytes.NewReader(payload)); !errors.Is(err, ErrInvalidMedia) {
+		t.Fatalf("mislabeled file returned %v", err)
+	}
+	if len(storage.object) != 0 {
+		t.Fatal("mislabeled file was stored")
 	}
 }
 

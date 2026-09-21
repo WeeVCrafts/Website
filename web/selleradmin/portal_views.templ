@@ -178,6 +178,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 
 templ PortalInventory(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		<form class="seller-toolbar" action="/seller-admin/inventory" method="get"><label class="sr-only" for="portal-inventory-query">Search inventory</label><input id="portal-inventory-query" name="q" value={ p.Query } placeholder="Search product, variant or SKU"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/inventory">Clear</a></form>
 		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Variant</span><span>Available</span><span>Reserved</span><span>Stock action</span></div>
 			for _, item := range p.Inventory {
 				<div class="seller-product-row"><span class="seller-product-cell"><b>{ item.Name }</b></span><span>{ item.SKU }</span><span>{ item.Variant }</span><span>{ item.Available }</span><span>{ item.Reserved }</span><span>

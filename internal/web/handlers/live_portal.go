@@ -1489,7 +1489,7 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
 	}
 	if sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions) {
-		page.Inventory = h.sellerInventory(r, sellerID)
+		page.Inventory = h.sellerInventory(r, sellerID, portalQuery(page.Query))
 	}
 	if sellerPortalAllowed("/seller-admin/orders", isOwner, permissions) {
 		page.Orders = h.sellerOrders(r, sellerID)
@@ -1588,8 +1588,8 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 	return result
 }
 
-func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64) []viewmodels.SellerAdminInventory {
-	rows, err := h.pool.Query(r.Context(), `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 ORDER BY p.id,v.id LIMIT 100`, sellerID)
+func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminInventory {
+	rows, err := h.pool.Query(r.Context(), `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR v.sku ILIKE '%'||$2||'%' OR COALESCE(v.name,'') ILIKE '%'||$2||'%') ORDER BY p.id DESC,v.id DESC LIMIT 100`, sellerID, query)
 	if err != nil {
 		return nil
 	}
