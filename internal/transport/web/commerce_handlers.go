@@ -587,7 +587,7 @@ func (h *Handler) sellerTeamAdd(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not add that staff account.")
 		return
 	}
-	h.redirect(w, r, "/seller/team")
+	h.redirect(w, r, "/seller-admin/team?notice=Staff+access+added")
 }
 
 func (h *Handler) sellerTeamUpdate(w http.ResponseWriter, r *http.Request) {
@@ -613,7 +613,7 @@ func (h *Handler) sellerTeamUpdate(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not update that staff member's permissions.")
 		return
 	}
-	h.redirect(w, r, "/seller/team?notice=Staff+permissions+updated")
+	h.redirect(w, r, "/seller-admin/team?notice=Staff+permissions+updated")
 }
 
 func (h *Handler) sellerTeamRemove(w http.ResponseWriter, r *http.Request) {
@@ -639,7 +639,7 @@ func (h *Handler) sellerTeamRemove(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not remove that staff account.")
 		return
 	}
-	h.redirect(w, r, "/seller/team")
+	h.redirect(w, r, "/seller-admin/team?notice=Staff+access+removed")
 }
 
 func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {

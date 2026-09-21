@@ -550,7 +550,7 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 		return nil
 	}
 	rows, err := h.pool.Query(r.Context(), `
-		SELECT p.name, pv.sku, COALESCE(stock.available_quantity, 0), COALESCE(stock.reserved_quantity, 0), pv.price_cents
+		SELECT p.name, pv.sku, COALESCE(stock.available_quantity, 0), COALESCE(stock.reserved_quantity, 0), pv.price_cents, COALESCE(NULLIF(p.image_url, ''), '')
 		FROM product_variants pv
 		JOIN products p ON p.id = pv.product_id
 		LEFT JOIN inventory_stock stock ON stock.variant_id = pv.id
@@ -563,10 +563,10 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 	defer rows.Close()
 	items := make([]viewmodels.AdminInventory, 0)
 	for rows.Next() {
-		var name, sku string
+		var name, sku, image string
 		var available, reserved int64
 		var price int64
-		if rows.Scan(&name, &sku, &available, &reserved, &price) != nil {
+		if rows.Scan(&name, &sku, &available, &reserved, &price, &image) != nil {
 			continue
 		}
 		onHand := available + reserved
@@ -574,11 +574,18 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 		if available <= 5 {
 			status = "low_stock"
 		}
+		signal := "Healthy"
+		if available <= 5 {
+			signal = "Low (≤5 available)"
+		}
+		if image == "" {
+			image = "/assets/images/customer/madhubani-tree.webp"
+		}
 		items = append(items, viewmodels.AdminInventory{
-			Name: name, SKU: sku, Stock: strconv.FormatInt(onHand, 10), Reorder: "5",
+			Name: name, SKU: sku, Stock: strconv.FormatInt(onHand, 10), Reorder: signal,
 			Reserved: strconv.FormatInt(reserved, 10), Available: strconv.FormatInt(available, 10),
 			Location: "India", Value: money(price * available), Status: status,
-			Image: "/assets/images/customer/madhubani-tree.webp",
+			Image: image,
 		})
 	}
 	return items
@@ -696,17 +703,27 @@ func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSuppor
 }
 
 func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCampaign {
-	rows, err := h.pool.Query(r.Context(), `SELECT name, status, COALESCE(starts_at,NOW()), COALESCE(ends_at,NOW()) FROM promotions ORDER BY id DESC LIMIT 20`)
+	rows, err := h.pool.Query(r.Context(), `
+		SELECT p.name, p.discount_type, p.status,
+		       COALESCE(to_char(p.starts_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'Not scheduled'),
+		       COALESCE(to_char(p.ends_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'No end date'),
+	       COUNT(pp.product_id)
+		FROM promotions p LEFT JOIN promotion_products pp ON pp.promotion_id = p.id
+		GROUP BY p.id ORDER BY p.id DESC LIMIT 20`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 	var result []viewmodels.AdminCampaign
 	for rows.Next() {
-		var name, status string
-		var start, end time.Time
-		if rows.Scan(&name, &status, &start, &end) == nil {
-			result = append(result, viewmodels.AdminCampaign{Name: name, Status: status, Start: start.Format("2 Jan 2006"), End: end.Format("2 Jan 2006"), Type: "Promotion", Channel: "Marketplace"})
+		var name, discountType, status, start, end string
+		var productCount int64
+		if rows.Scan(&name, &discountType, &status, &start, &end, &productCount) == nil {
+			appliesTo := "All eligible products"
+			if productCount > 0 {
+				appliesTo = fmt.Sprintf("%d selected products", productCount)
+			}
+			result = append(result, viewmodels.AdminCampaign{Name: name, Status: status, Start: start, End: end, Type: discountType, Channel: appliesTo})
 		}
 	}
 	return result

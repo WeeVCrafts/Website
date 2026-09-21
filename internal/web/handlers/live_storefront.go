@@ -55,6 +55,12 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// These account endpoints have their own authenticated handlers in the
+	// transport layer. Keep them out of the broad /account/* storefront route.
+	if r.URL.Path == "/account/sessions" || r.URL.Path == "/account/verify-email" {
+		h.fallback.ServeHTTP(w, r)
+		return
+	}
 	if r.URL.Path == "/account/profile" && r.Method == http.MethodPost {
 		h.updateProfile(w, r)
 		return
@@ -368,7 +374,16 @@ func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *
 }
 
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
-	return path == "/" || path == "/categories" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || path == "/account" || strings.HasPrefix(path, "/account/") || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+	return path == "/" || path == "/categories" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+}
+
+func isCustomerAccountRoute(path string) bool {
+	switch path {
+	case "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/security", "/account/privacy", "/account/reviews", "/account/support":
+		return true
+	default:
+		return false
+	}
 }
 
 func isAuthRoute(path string) bool {
@@ -381,7 +396,7 @@ func isAuthRoute(path string) bool {
 }
 
 func requiresCustomerSession(path string) bool {
-	return path == "/account" || strings.HasPrefix(path, "/account/") || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/")
+	return isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/")
 }
 
 func isInfoRoute(path string) bool {

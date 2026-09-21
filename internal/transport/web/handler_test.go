@@ -734,7 +734,7 @@ func TestSellerTeamRendersAndMutatesThroughHTMX(t *testing.T) {
 	}, session)
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller/team" {
+	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller-admin/team?notice=Staff+access+added" {
 		t.Fatalf("expected team add redirect, got %d %q: %s", recorder.Code, recorder.Header().Get("HX-Redirect"), recorder.Body.String())
 	}
 	if staffRepository.addedEmail != "new@example.com" || len(staffRepository.addedPermissions) != 2 {

@@ -182,6 +182,26 @@ test("customer address create, edit and delete persist with field validation", a
   await expect(page.locator(`.saved-address[data-address-card="${addressID}"]`)).toHaveCount(0);
 });
 
+test("customer security and privacy controls reach their persisted workflows", async ({ page }) => {
+  await signIn(page, "demo.customer03@weevcrafts.local", "/account");
+
+  await page.goto("/account/security");
+  await page.getByRole("link", { name: "Manage sessions" }).click();
+  await expect(page).toHaveURL(/\/account\/sessions/);
+  await expect(page.getByRole("heading", { name: "Your active sessions" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Active sessions" })).toBeVisible();
+
+  await page.goto("/account/privacy");
+  await page.getByRole("link", { name: "Manage privacy choices and data requests" }).click();
+  await expect(page).toHaveURL(/\/privacy\/center/);
+  await expect(page.getByRole("heading", { name: "Privacy center" })).toBeVisible();
+  await expect(page.getByLabel("Request type")).toBeVisible();
+  await expect(page.getByLabel("Details")).toBeVisible();
+
+  const unknownAccountPage = await page.goto("/account/not-a-real-setting");
+  expect(unknownAccountPage.status()).toBe(404);
+});
+
 test("customer seller follows persist and seller catalog sorting is applied", async ({ browser }) => {
   test.skip(!localMutationTarget, "Seller follow mutations are restricted to the local test deployment.");
   const context = await browser.newContext();
@@ -387,6 +407,7 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await expect(permissionForm).toHaveCount(1);
     await permissionForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
     await permissionForm.getByRole("button", { name: "Save permissions" }).click();
+    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+permissions\+updated/);
     await owner.goto("/seller-admin/team");
     await expect(owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` })).toContainText("Edit products");
     await user.goto("/seller-admin/products/new");
@@ -397,12 +418,14 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await addStaffForm.locator('input[name="permissions"][value="PRODUCT_READ"]').check();
     await addStaffForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
     await addStaffForm.getByRole("button", { name: "Add seller staff" }).click();
+    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+added/);
     await owner.goto("/seller-admin/team");
     const staffRow = owner.locator(".seller-product-row").filter({ hasText: updatedEmail });
     await expect(staffRow).toContainText("PRODUCT_WRITE");
     const removeStaffResponse = owner.waitForResponse(response => response.url().includes("/seller-admin/team/remove") && response.request().method() === "POST");
     await staffRow.locator('form[action="/seller-admin/team/remove"] button').click();
     expect((await removeStaffResponse).status()).toBe(303);
+    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+removed/);
     await owner.goto("/seller-admin/team");
     await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
     const staffDenied = await userContext.request.get("/seller-admin", { maxRedirects: 0 });
@@ -729,6 +752,14 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     seller.once("dialog", dialog => dialog.accept());
     await deleteVideo.click();
     await expect(seller.locator(".product-media-asset video source[type='video/mp4']")).toHaveCount(0);
+
+    const uploadedImage = seller.locator(".product-media-asset").filter({ has: seller.locator("img") });
+    await expect(uploadedImage).toHaveCount(1);
+    seller.once("dialog", dialog => dialog.accept());
+    await uploadedImage.locator("[data-media-delete]").click();
+    await expect(seller.locator(".product-media-asset img")).toHaveCount(0);
+    await customer.goto(`/products/${slug}`);
+    await expect(customer.locator('.gallery-main img[src^="/media/products/"]')).toHaveCount(0);
 
     const archiveVariant = seller.locator(`form[action="/seller-admin/products/variants/archive"]:has(input[name="variant_id"][value="${addedVariantID}"])`);
     await archiveVariant.locator('input[name="reason"]').fill("Local variant archive verification after checkout");

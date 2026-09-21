@@ -2338,20 +2338,20 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if p.CanTeam {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "<form class=\"seller-inline-form\" method=\"post\" action=\"/seller-admin/team/add\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "<p class=\"seller-muted\">Add an existing active account by email. Create the account and assign Seller Staff access in Super Admin first.</p><form class=\"seller-inline-form\" method=\"post\" action=\"/seller-admin/team/add\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var128 string
 				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 290, Col: 141}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 291, Col: 141}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var128)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "\"><label>Email<input type=\"email\" name=\"email\" required></label><fieldset><legend>Assign permissions</legend><label><input type=\"checkbox\" name=\"permissions\" value=\"PRODUCT_READ\">Products</label><label><input type=\"checkbox\" name=\"permissions\" value=\"PRODUCT_WRITE\">Edit products</label><label><input type=\"checkbox\" name=\"permissions\" value=\"INVENTORY_READ\">Inventory</label><label><input type=\"checkbox\" name=\"permissions\" value=\"INVENTORY_WRITE\">Adjust stock</label><label><input type=\"checkbox\" name=\"permissions\" value=\"ORDER_READ\">Orders</label><label><input type=\"checkbox\" name=\"permissions\" value=\"ORDER_FULFILL\">Fulfil orders</label><label><input type=\"checkbox\" name=\"permissions\" value=\"RETURN_READ\">Returns</label><label><input type=\"checkbox\" name=\"permissions\" value=\"REPORT_READ\">Reports</label></fieldset><button class=\"seller-button primary\" type=\"submit\">Add seller staff</button></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 190, "\"><label>Email<input type=\"email\" name=\"email\" autocomplete=\"email\" required></label><fieldset><legend>Assign permissions</legend><label><input type=\"checkbox\" name=\"permissions\" value=\"PRODUCT_READ\">Products</label><label><input type=\"checkbox\" name=\"permissions\" value=\"PRODUCT_WRITE\">Edit products</label><label><input type=\"checkbox\" name=\"permissions\" value=\"INVENTORY_READ\">Inventory</label><label><input type=\"checkbox\" name=\"permissions\" value=\"INVENTORY_WRITE\">Adjust stock</label><label><input type=\"checkbox\" name=\"permissions\" value=\"ORDER_READ\">Orders</label><label><input type=\"checkbox\" name=\"permissions\" value=\"ORDER_FULFILL\">Fulfil orders</label><label><input type=\"checkbox\" name=\"permissions\" value=\"RETURN_READ\">Returns</label><label><input type=\"checkbox\" name=\"permissions\" value=\"REPORT_READ\">Reports</label></fieldset><button class=\"seller-button primary\" type=\"submit\">Add seller staff</button></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2374,7 +2374,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var129 string
 					templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(member.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
 					if templ_7745c5c3_Err != nil {
@@ -2387,7 +2387,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var130 string
 					templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(member.Email)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 80}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 80}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
 					if templ_7745c5c3_Err != nil {
@@ -2400,7 +2400,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var131 string
 					templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(member.Status)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 110}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 110}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 					if templ_7745c5c3_Err != nil {
@@ -2413,7 +2413,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var132 string
 					templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(member.Permissions)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 145}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 145}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 					if templ_7745c5c3_Err != nil {
@@ -2426,7 +2426,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var133 string
 					templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 273}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 273}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var133)
 					if templ_7745c5c3_Err != nil {
@@ -2439,7 +2439,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 					var templ_7745c5c3_Var134 string
 					templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.ResolveAttributeValue(member.UserID)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 297, Col: 334}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 298, Col: 334}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var134)
 					if templ_7745c5c3_Err != nil {
@@ -2457,7 +2457,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 						var templ_7745c5c3_Var135 string
 						templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 299, Col: 147}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 300, Col: 147}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var135)
 						if templ_7745c5c3_Err != nil {
@@ -2470,7 +2470,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 						var templ_7745c5c3_Var136 string
 						templ_7745c5c3_Var136, templ_7745c5c3_Err = templ.ResolveAttributeValue(member.UserID)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 299, Col: 208}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 300, Col: 208}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var136)
 						if templ_7745c5c3_Err != nil {
@@ -2483,7 +2483,7 @@ func PortalTeam(p viewmodels.SellerAdminPage) templ.Component {
 						var templ_7745c5c3_Var137 string
 						templ_7745c5c3_Var137, templ_7745c5c3_Err = templ.JoinStringErrs(member.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 299, Col: 266}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 300, Col: 266}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var137))
 						if templ_7745c5c3_Err != nil {
