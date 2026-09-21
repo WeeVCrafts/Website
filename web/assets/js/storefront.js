@@ -655,7 +655,7 @@
       const target = event.detail && event.detail.target;
       const path = event.detail && event.detail.pathInfo && event.detail.pathInfo.requestPath;
       if (target && target.id === "search-suggestions") { event.preventDefault(); return; }
-      if (path && path.startsWith("/ui/")) {
+      if (path && (path.startsWith("/ui/cart/") || path.startsWith("/ui/wishlist/"))) {
         event.preventDefault();
         notice("This action could not be completed. Please try again.", true);
       }

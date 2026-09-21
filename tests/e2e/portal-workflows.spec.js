@@ -177,6 +177,55 @@ test("customer address create, edit and delete persist with field validation", a
   await expect(page.locator(`.saved-address[data-address-card="${addressID}"]`)).toHaveCount(0);
 });
 
+test("customer seller follows persist and seller catalog sorting is applied", async ({ browser }) => {
+  test.skip(!localMutationTarget, "Seller follow mutations are restricted to the local test deployment.");
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    await signIn(page, "demo.customer08@weevcrafts.local", "/account");
+    await page.goto("/makers/weavers-touch");
+    await expect(page.getByRole("heading", { name: "Weaver's Touch", level: 1 })).toBeVisible();
+    const followForm = page.locator("form[data-seller-follow]");
+    if (await followForm.getByRole("button", { name: "Unfollow seller" }).count()) {
+      const unfollowRequest = page.waitForRequest(request =>
+        request.method() === "POST" && new URL(request.url()).pathname === "/ui/seller-follow/weavers-touch"
+      );
+      await followForm.getByRole("button", { name: "Unfollow seller" }).click();
+      expect((await unfollowRequest).postData()).toContain("intent=unfollow");
+      await page.waitForLoadState("networkidle");
+      await page.reload();
+      await expect(page.locator("form[data-seller-follow]").getByRole("button", { name: "Follow seller" })).toBeVisible();
+    }
+    const followRequest = page.waitForRequest(request =>
+      request.method() === "POST" && new URL(request.url()).pathname === "/ui/seller-follow/weavers-touch"
+    );
+    await followForm.getByRole("button", { name: "Follow seller" }).click();
+    expect((await followRequest).postData()).toContain("intent=follow");
+    await page.waitForLoadState("networkidle");
+    await page.reload();
+    await expect(page.locator("form[data-seller-follow]").getByRole("button", { name: "Unfollow seller" })).toBeVisible();
+
+    await page.getByLabel("Sort by").selectOption("price-asc");
+    await page.getByRole("button", { name: "Apply" }).click();
+    await expect(page).toHaveURL(/sort=price-asc/);
+    const prices = await page.locator('[data-backend-products="listing"] .price strong').allTextContents();
+    const numericPrices = prices.map(value => Number(value.replace(/[^0-9]/g, "")));
+    expect(numericPrices).toEqual([...numericPrices].sort((left, right) => left - right));
+
+    for (const width of [360, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const dimensions = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+      expect(dimensions.document, `seller storefront overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+      expect(dimensions.body, `seller storefront body overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+    }
+
+    await page.locator("form[data-seller-follow]").getByRole("button", { name: "Unfollow seller" }).click();
+    await expect(page.locator("form[data-seller-follow]").getByRole("button", { name: "Follow seller" })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
 test("seller owner profile edits persist while seller staff remain blocked", async ({ browser }) => {
   test.skip(!localMutationTarget, "Seller profile mutations are restricted to the local test deployment.");
   const suffix = Date.now().toString();
@@ -569,6 +618,8 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     }
     await customer.goto(`/products/${slug}`);
     await expect(customer.getByRole("heading", { name: productName })).toBeVisible();
+    await expect(customer.locator("#product-panel-description")).toContainText("Updated local browser test product description.");
+    await expect(customer.locator("#product-panel-details")).toContainText("Delivery to serviceable PIN codes in India");
     const productImage = customer.locator('.gallery-main img[src^="/media/products/"]').first();
     await expect(productImage).toBeVisible();
     const imageResponse = await customer.request.get(await productImage.getAttribute("src"));
@@ -588,6 +639,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     expect(variantValue).toBeTruthy();
     await customer.locator("#detail-variant").selectOption(variantValue);
     await expect(customer.locator("[data-selected-variant-price]")).toHaveText("INR 2849");
+    await expect(customer.locator("[data-selected-variant-sku]")).toHaveText(`QA-ALT-EDIT-${suffix}`);
     const cartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
     await customer.getByRole("button", { name: "Add to cart" }).click();
     expect((await cartResponse).ok()).toBeTruthy();

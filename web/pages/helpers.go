@@ -579,89 +579,18 @@ func makerPath(name string) string {
 	}
 }
 
-func productLead(product viewmodels.Product) string {
-	switch strings.ToLower(product.Category) {
-	case "arts":
-		return "A hand-painted story with a place in every room."
-	case "crafts":
-		return "A considered object shaped slowly by an independent maker."
-	case "home & living":
-		return "Useful, enduring craft for everyday rituals at home."
-	case "fashion":
-		return "Made to move with you, with texture and story in every detail."
-	case "gifts":
-		return "A thoughtful handmade piece for a moment worth remembering."
-	default:
-		return "A timeless piece made with care and intention."
+func sellerPath(product viewmodels.Product) string {
+	if product.SellerSlug != "" {
+		return "/makers/" + url.PathEscape(product.SellerSlug)
 	}
+	return makerPath(product.Seller)
 }
 
 func productDescription(product viewmodels.Product) string {
-	switch strings.ToLower(product.Category) {
-	case "arts":
-		return "This hand-painted artwork brings an enduring Indian folk tradition into contemporary spaces, with every mark carrying the character of its maker."
-	case "crafts":
-		return "Made in a small batch by an independent Indian artisan, this durable craft piece is designed to be used, kept and passed along."
-	case "home & living":
-		return "A useful, tactile object made for everyday living. Natural materials and a thoughtful finish keep the maker's hand visible."
-	case "fashion":
-		return "A practical, beautiful everyday piece woven or printed in small batches, with the material and maker story kept close."
-	case "gifts":
-		return "A meaningful handmade gift, carefully finished and ready to bring a little more warmth to an everyday celebration."
-	default:
-		return "A beautiful handmade piece from an independent Indian maker, created slowly and meant to last."
+	if description := strings.TrimSpace(product.Description); description != "" {
+		return description
 	}
-}
-
-func productFabric(product viewmodels.Product) string {
-	switch strings.ToLower(product.Category) {
-	case "arts":
-		return "Hand-painted natural board"
-	case "crafts":
-		return "Hand-finished metal"
-	case "home & living":
-		return "Natural clay and earth pigments"
-	case "fashion":
-		return "Handwoven cotton"
-	case "gifts":
-		return "Fired terracotta"
-	default:
-		return "Natural materials"
-	}
-}
-
-func productColor(product viewmodels.Product) string {
-	if strings.Contains(strings.ToLower(product.Name), "maroon") {
-		return "Royal maroon"
-	}
-	if strings.Contains(strings.ToLower(product.Name), "blue") || strings.Contains(strings.ToLower(product.Name), "tote") {
-		return "Indigo blue"
-	}
-	if strings.Contains(strings.ToLower(product.Name), "terracotta") || strings.Contains(strings.ToLower(product.Category), "gifts") {
-		return "Terracotta"
-	}
-	return "Natural earth"
-}
-
-func productWeave(product viewmodels.Product) string {
-	if strings.EqualFold(product.Category, "Arts") {
-		return "Folk painting"
-	}
-	if strings.EqualFold(product.Category, "Fashion") || strings.Contains(strings.ToLower(product.Name), "saree") {
-		return "Handloom"
-	}
-	return "Hand-finished"
-}
-
-func productCare(product viewmodels.Product) string {
-	if strings.EqualFold(product.Category, "Fashion") || strings.Contains(strings.ToLower(product.Name), "saree") {
-		return "Gentle dry clean"
-	}
-	return "Dust with a soft cloth"
-}
-
-func productStory(product viewmodels.Product) string {
-	return product.Seller + " works with independent artisans in " + product.Location + ", keeping local material knowledge and patient making at the centre of every piece."
+	return "The seller has not provided a product description."
 }
 
 func productStockMessage(product viewmodels.Product) string {

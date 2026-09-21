@@ -6,18 +6,18 @@ import (
 )
 
 type Product struct {
-	ID, VariantID                                                                   int64
-	PriceCents, CompareAtCents                                                      int64
-	Available                                                                       int
-	Slug, Name, Seller, BrandName, Location, Category, ImageURL, ImageSrcSet, Badge string
-	SKU                                                                             string
-	CSRFToken                                                                       string
-	Price, CompareAt, Discount                                                      string
-	Rating                                                                          string
-	Reviews                                                                         int
-	InStock, HasCompareAt                                                           bool
-	Variants                                                                        []ProductVariant
-	Media                                                                           []ProductMedia
+	ID, VariantID                                                                                                           int64
+	PriceCents, CompareAtCents                                                                                              int64
+	Available                                                                                                               int
+	Slug, Name, Description, DeliveryLabel, Seller, SellerSlug, BrandName, Location, Category, ImageURL, ImageSrcSet, Badge string
+	SKU                                                                                                                     string
+	CSRFToken                                                                                                               string
+	Price, CompareAt, Discount                                                                                              string
+	Rating                                                                                                                  string
+	Reviews                                                                                                                 int
+	InStock, HasCompareAt                                                                                                   bool
+	Variants                                                                                                                []ProductVariant
+	Media                                                                                                                   []ProductMedia
 }
 
 type ProductMedia struct {
@@ -39,6 +39,9 @@ type Seller struct {
 	Slug, Name, Location, ImageURL, Description string
 	Rating                                      string
 	Products                                    int
+	ID                                          int64
+	Status                                      string
+	Following                                   bool
 }
 
 type Brand struct {
@@ -86,7 +89,7 @@ type CustomerPage struct {
 	RoleLabel, PortalLabel                          string
 	PaymentMode, PaymentPublicKey                   string
 	PaymentReady                                    bool
-	CanCreateSupport                                bool
+	CanCreateSupport, CanFollowSeller               bool
 	CSRFToken                                       string
 	Filters                                         url.Values
 	Product                                         Product

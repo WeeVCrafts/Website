@@ -43,7 +43,7 @@ func TestMockProductDetailUsesProductAndMakerData(t *testing.T) {
 		t.Fatalf("status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	for _, want := range []string{"Madhubani Painting - Tree of Life", "By Mithila Arts", "/makers/mithila-arts", "/products?category=arts", "Folk painting", "Natural earth"} {
+	for _, want := range []string{"Madhubani Painting - Tree of Life", "A Madhubani painting featuring a tree of life motif", "Dispatches in 3–5 days within India", "Product details", "By Mithila Arts", "/makers/mithila-arts", "/products?category=arts"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("product detail is missing %q", want)
 		}
@@ -216,7 +216,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/brands", want: []string{"Explore brands with a story", "Mithila Arts", "Weaver&#39;s Touch"}},
 		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Verified maker brand", "Pieces from Mithila Arts"}},
 		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "THE HANDLOOM EDIT", "Add to Cart"}},
-		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Specifications", "Maker story", "More made-for-you finds"}},
+		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More made-for-you finds"}},
 		{route: "/wishlist", want: []string{"items in your wishlist", "Move to cart", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},
 		{route: "/checkout", want: []string{"Delivery address", "Payment method", "Place order"}},

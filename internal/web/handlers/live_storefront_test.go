@@ -5,9 +5,24 @@ import (
 	"strings"
 	"testing"
 
+	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/pages"
 )
+
+func TestLiveProductPreservesSellerEnteredCustomerFields(t *testing.T) {
+	product := liveProduct(domaincatalog.Product{
+		ID: 12, Slug: "handmade-vase", Name: "Handmade Vase", Description: "Turned by hand in a small family studio.",
+		DeliveryLabel: "Dispatches in 3–5 days within India", CategoryName: "Home & Living", ImageURL: "/media/vase.webp",
+	}, "csrf")
+
+	if product.Description != "Turned by hand in a small family studio." {
+		t.Errorf("description = %q, want seller-entered text", product.Description)
+	}
+	if product.DeliveryLabel != "Dispatches in 3–5 days within India" {
+		t.Errorf("delivery label = %q, want saved label", product.DeliveryLabel)
+	}
+}
 
 func TestLiveTotalsUsesIntegerCents(t *testing.T) {
 	items, shipping, discount, total := liveTotals([]viewmodels.CartItem{{
