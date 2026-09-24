@@ -53,10 +53,23 @@ enable email verification and password recovery. Set `RAZORPAY_KEY_ID`,
 provider webhook to `https://<your-domain>/webhooks/razorpay` before accepting
 live payments.
 
-## Run locally
+## Run locally (1-Click)
 
-Requirements: Go 1.26+, Docker, and Docker Compose.
+### On RHEL 9 / 10 / Linux (Podman or Docker):
+On RHEL, Podman is the default container engine. Install requirements if needed:
+```sh
+sudo dnf install -y podman podman-compose
+```
+Then run the 1-click script:
+```sh
+chmod +x start.sh stop.sh
+./start.sh
+```
 
+### On Windows:
+Double-click `start.bat` (or run `./start.sh` inside WSL / Git Bash).
+
+### Or manually with Docker / Podman:
 ```sh
 docker compose up -d --build
 docker compose --profile demo run --rm seed-demo
