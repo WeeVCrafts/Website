@@ -118,6 +118,9 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if isAuthRoute(r.URL.Path) && authenticated {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
+		if destination == "/account" {
+			destination = "/"
+		}
 		if customerRoleAllowed(roles) {
 			destination = safeCustomerNext(r.URL.Query().Get("next"), destination)
 		}
