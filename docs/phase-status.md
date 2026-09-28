@@ -1,4 +1,4 @@
-# WeCratfs phase status
+# Weevcrafts phase status
 
 **Current status:** The local live demo runs from `cmd/website` with PostgreSQL-backed customer, seller, marketplace-admin, super-admin, and support workflows. The responsive storefront UI is retained, while local integrations remain deterministic and production integrations are opt-in.
 
@@ -107,7 +107,7 @@
 
 ## Architecture changes
 
-- The public product name and runtime wordmark are exactly `WeCratfs`.
+- The public product name and runtime wordmark are exactly `Weevcrafts`.
 - PostgreSQL is the only authoritative source for identity, catalog, stock,
   carts, orders, payments, privacy records, and media metadata. The local
   database contains only records created by smoke rehearsals, never runtime

@@ -65,15 +65,15 @@ func TestProductSearchOptionsUsesStablePriceOrdering(t *testing.T) {
 	if total != 2 || len(products) != 2 || products[0].PriceCents != 1900 || products[1].PriceCents != 900 {
 		t.Fatalf("unexpected sorted products: total=%d products=%+v", total, products)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE product_variants SET price_cents=2500 WHERE id=$1`, variantIDs[0]); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE product_variants SET price_cents=250000 WHERE id=$1`, variantIDs[0]); err != nil {
 		t.Fatalf("update variant price: %v", err)
 	}
 	products, total, err = NewProductSearchRepository(pool).SearchWithOptions(ctx, ports.ProductSearchOptions{CategorySlug: categorySlug, PriceRange: "2500-5000", Sort: "price_desc", Limit: 2})
-	if err != nil || total != 1 || len(products) != 1 || products[0].PriceCents != 2500 {
+	if err != nil || total != 1 || len(products) != 1 || products[0].PriceCents != 250000 {
 		t.Fatalf("listing price/filter did not follow its variant: total=%d products=%+v err=%v", total, products, err)
 	}
 	hydrated, err := NewProductSearchRepository(pool).SearchBySlugs(ctx, []string{"search-product-" + suffix + "-0"})
-	if err != nil || len(hydrated) != 1 || hydrated[0].PriceCents != 2500 {
+	if err != nil || len(hydrated) != 1 || hydrated[0].PriceCents != 250000 {
 		t.Fatalf("product detail price did not follow its variant: products=%+v err=%v", hydrated, err)
 	}
 	facets, err := NewProductSearchRepository(pool).SearchFacets(ctx, ports.ProductSearchOptions{Query: "Search fixture"})

@@ -47,7 +47,7 @@ func AdminDocument(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - WeeVCrafts ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -216,7 +216,7 @@ func Sidebar(p viewmodels.AdminPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("WeeVCrafts " + p.PortalLabel)
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("Weevcrafts " + p.PortalLabel)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/admin.templ`, Line: 74, Col: 91}
 		}
@@ -224,7 +224,7 @@ func Sidebar(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><span class=\"brand-mark material-symbols-outlined\" aria-hidden=\"true\">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><nav class=\"admin-nav\" aria-label=\"Admin navigation\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><img class=\"brand-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><nav class=\"admin-nav\" aria-label=\"Admin navigation\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -585,7 +585,7 @@ func AdminHeader(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><span class=\"brand-mark material-symbols-outlined\" aria-hidden=\"true\">eco</span><strong>WeeVCrafts</strong></a> <span class=\"admin-portal-pill\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><img class=\"brand-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><strong>Weevcrafts</strong></a> <span class=\"admin-portal-pill\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2488,14 +2488,14 @@ func AdminFooter(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "\"><span class=\"brand-mark material-symbols-outlined\" aria-hidden=\"true\">eco</span><span><strong>WeeVCrafts</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 216, "\"><img class=\"brand-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var147 string
 		templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.JoinStringErrs(p.PortalLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/admin.templ`, Line: 360, Col: 192}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/admin.templ`, Line: 360, Col: 200}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var147))
 		if templ_7745c5c3_Err != nil {

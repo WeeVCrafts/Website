@@ -458,7 +458,7 @@ func paymentStateHeading(state string) string {
 func paymentStateCopy(state string) string {
 	switch state {
 	case "success":
-		return "The payment gateway confirmed the transaction and WeeVCrafts has recorded it against your order."
+		return "The payment gateway confirmed the transaction and Weevcrafts has recorded it against your order."
 	case "failed":
 		return "You can retry with another method or contact support with the reference below. No duplicate order will be created."
 	default:

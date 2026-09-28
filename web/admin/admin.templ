@@ -12,7 +12,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
       <meta charset="utf-8"/>
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="robots" content="noindex,nofollow"/>
-      <title>{ p.Title } - WeeVCrafts { p.PortalLabel }</title>
+      <title>{ p.Title } - Weevcrafts { p.PortalLabel }</title>
       <link rel="preload" href="/assets/fonts/dm-sans-400.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
@@ -71,7 +71,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
 templ Sidebar(p viewmodels.AdminPage) {
   <aside id="admin-sidebar" class="admin-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="admin-sidebar-close" type="button" x-ref="adminSidebarClose" aria-label="Close admin navigation" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "WeeVCrafts " + p.PortalLabel }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
+    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "Weevcrafts " + p.PortalLabel }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
     <nav class="admin-nav" aria-label="Admin navigation">
       if p.IsFinance {
         @AdminNav("finance", "Payments & Finance", "payments", p.NavActive, p.PortalRoot)
@@ -116,7 +116,7 @@ templ AdminTableEmpty(message, hint string) {
 templ AdminHeader(p viewmodels.AdminPage) {
   <header class="admin-header">
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
-    <a class="admin-header-brand" href={ p.PortalRoot }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><strong>WeeVCrafts</strong></a>
+    <a class="admin-header-brand" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
     <span class="admin-portal-pill">{ p.PortalLabel }</span>
     <form class="admin-search" action={ adminPath(p.Active) } method="get">
       <label class="sr-only" for="admin-search">Search the admin portal</label>
@@ -357,7 +357,7 @@ templ Workspace(p viewmodels.AdminPage) {
 
 templ AdminFooter(p viewmodels.AdminPage) {
   <footer class="admin-footer admin-footer-simple">
-    <a class="admin-brand inverse" href={ p.PortalRoot }><span class="brand-mark material-symbols-outlined" aria-hidden="true">eco</span><span><strong>WeeVCrafts</strong><small>{ p.PortalLabel }</small></span></a>
+    <a class="admin-brand inverse" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
     <span>Handmade in India · Delivery to serviceable PIN codes across India</span>
     <a href="/workspaces">Switch workspace</a>
   </footer>

@@ -660,9 +660,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 func authRedirectDestination(roles []domainidentity.Role, next string) string {
 	destination := applicationauth.LoginDestination(roles)
-	if destination == "/account" {
-		destination = "/"
-	} else if destination != "/" {
+	if destination != "/" && destination != "/account" {
 		return destination
 	}
 	candidate := strings.TrimSpace(next)

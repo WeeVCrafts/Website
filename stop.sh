@@ -14,7 +14,7 @@ elif command -v podman >/dev/null 2>&1; then
 fi
 
 if [ -n "$COMPOSE_CMD" ]; then
-    echo "Stopping WeeVCrafts services..."
+    echo "Stopping Weevcrafts services..."
     $COMPOSE_CMD down
     echo "Services stopped."
 fi

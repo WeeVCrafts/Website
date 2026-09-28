@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # ==============================================================================
-# WeeVCrafts - 1-Click Startup for Linux / RHEL 9 & 10 (Docker / Podman)
+# Weevcrafts - 1-Click Startup for Linux / RHEL 9 & 10 (Docker / Podman)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "========================================================"
-echo " Starting WeeVCrafts Marketplace (RHEL / Linux)"
+echo " Starting Weevcrafts Marketplace (RHEL / Linux)"
 echo "========================================================"
 
 # 1. Ensure .env exists
@@ -51,7 +51,7 @@ echo "[+] Seeding demo marketplace accounts and products..."
 $COMPOSE_CMD --profile demo run --rm seed-demo || true
 
 echo "========================================================"
-echo " WeeVCrafts is LIVE!"
+echo " Weevcrafts is LIVE!"
 echo " -> Storefront:     http://localhost:8080"
 echo " -> Mailpit (Email):http://localhost:8025"
 echo " -> MinIO Console:  http://localhost:9001 (wecratfs / wecratfs-local-only)"

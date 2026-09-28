@@ -19,6 +19,7 @@ type fakeUserRepository struct {
 	failed      int
 	reset       int
 	seenContext context.Context
+	seenEmail   string
 }
 
 func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error) {
@@ -30,12 +31,23 @@ func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayN
 	return f.created, nil
 }
 
-func (f *fakeUserRepository) GetCredentialsByEmail(ctx context.Context, _ string) (domainidentity.Credentials, error) {
+func (f *fakeUserRepository) GetCredentialsByEmail(ctx context.Context, email string) (domainidentity.Credentials, error) {
 	f.seenContext = ctx
+	f.seenEmail = email
 	if f.getErr != nil {
 		return domainidentity.Credentials{}, f.getErr
 	}
 	return f.credentials, nil
+}
+
+func TestLoginMapsSeededRoleUsernameToEmail(t *testing.T) {
+	for _, username := range []string{"customer", "seller", "superadmin", "support", "operations", "finance"} {
+		repository := &fakeUserRepository{getErr: ports.ErrCredentialsNotFound}
+		_, _ = NewService(repository, fakeHasher{}).Login(context.Background(), strings.ToUpper(username), "wrong")
+		if want := username + "@weevcrafts.test"; repository.seenEmail != want {
+			t.Fatalf("%s looked up %s, want %s", username, repository.seenEmail, want)
+		}
+	}
 }
 
 func (f *fakeUserRepository) RecordFailedLogin(context.Context, int64) error {

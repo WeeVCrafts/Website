@@ -265,16 +265,21 @@ test("registration, email verification, password recovery and login complete end
     await page.locator('#page input[name="email"]').fill(email);
     await page.locator('#page input[name="password"]').fill(initialPassword);
     await page.locator('#page input[name="consent"]').check();
+    const registrationResponse = page.waitForResponse(response =>
+      response.request().method() === "POST" && new URL(response.url()).pathname === "/register"
+    );
     await page.getByRole("button", { name: "Create account" }).click();
+    expect((await registrationResponse).status()).toBe(303);
     await page.waitForURL(/\/account\/?$/);
     await page.unrouteAll();
     accountCreated = true;
+    await page.goto("/account");
     await expect(page.locator("body")).toContainText(name);
 
     await page.goto("/account/sessions");
     await page.getByRole("button", { name: "Send verification link" }).click();
     await expect(page).toHaveURL(/verification=sent/);
-    const verification = await waitForMail(request, email, "Verify your WeCratfs email");
+    const verification = await waitForMail(request, email, "Verify your Weevcrafts email");
     await page.goto(emailActionURL(verification));
     await page.getByRole("button", { name: "Verify email" }).click();
     await expect(page.locator('[data-backend-form-message]')).toContainText("Your email has been verified");
@@ -287,7 +292,7 @@ test("registration, email verification, password recovery and login complete end
     await page.locator('#page input[name="email"]').fill(email);
     await page.getByRole("button", { name: "Send recovery link" }).click();
     await expect(page.locator('[data-backend-form-message]')).toContainText("recovery instructions have been sent");
-    const reset = await waitForMail(request, email, "Reset your WeCratfs password");
+    const reset = await waitForMail(request, email, "Reset your Weevcrafts password");
     await page.goto(emailActionURL(reset));
     await page.locator('#page input[name="password"]').fill(recoveredPassword);
     await page.locator('#page input[name="confirm_password"]').fill(recoveredPassword);
@@ -305,6 +310,7 @@ test("registration, email verification, password recovery and login complete end
     expect(sessionCookie).toBeTruthy();
     expect(sessionCookie.expires * 1000 - Date.now()).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
     await page.unrouteAll();
+    await page.goto("/account");
     await expect(page.locator("body")).toContainText(name);
   } finally {
     if (accountCreated && admin) {
@@ -379,10 +385,26 @@ test("customer address create, edit and delete persist with field validation", a
   editForm = addressCard.locator("form[data-address-edit]");
   await expect(editForm.locator('input[name="line2"]')).toHaveValue("Opposite QA Library");
 
+  await page.goto("/cart");
+  let addedCheckoutItem = false;
+  if (await page.locator(".cart-line").count() === 0) {
+    await page.goto("/products/natural-soap");
+    const addResponse = page.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
+    await page.getByRole("button", { name: "Add to cart" }).click();
+    expect((await addResponse).ok()).toBeTruthy();
+    addedCheckoutItem = true;
+  }
   await page.goto("/checkout");
   await page.locator("#checkout-saved-address").selectOption(addressID);
   await expect(page.locator('#checkout-address-form input[name="recipient_name"]')).toHaveValue(recipient);
   await expect(page.locator('#checkout-address-form input[name="line2"]')).toHaveValue("Opposite QA Library");
+  if (addedCheckoutItem) {
+    await page.goto("/cart");
+    const cartLine = page.locator(".cart-line").first();
+    const removeResponse = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname.startsWith("/ui/cart/"));
+    await cartLine.locator("button.text-button").filter({ hasText: "Remove" }).click();
+    expect((await removeResponse).status()).toBe(200);
+  }
   await page.goto("/account/addresses");
   addressCard = page.locator(`.saved-address[data-address-card="${addressID}"]`);
 
@@ -1173,7 +1195,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await seller.getByRole("spinbutton", { name: "Compare-at price in paise" }).fill("299900");
     await seller.getByLabel("Initial stock").fill("5");
     await seller.getByLabel("Delivery note").fill("Delivery to serviceable PIN codes in India");
-    await seller.getByLabel("Description").fill("A locally created browser test listing used to verify the WeeVCrafts cross-role order flow.");
+    await seller.getByLabel("Description").fill("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
     await seller.getByRole("button", { name: "Save draft" }).click();
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
@@ -1191,7 +1213,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(editForm.locator('input[name="price_cents"]')).toHaveValue("249900");
     await expect(editForm.locator('input[name="compare_at_cents"]')).toHaveValue("299900");
     await expect(editForm.locator('input[name="delivery_label"]')).toHaveValue("Delivery to serviceable PIN codes in India");
-    await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the WeeVCrafts cross-role order flow.");
+    await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
     await editForm.getByRole("button", { name: "Save draft" }).click();

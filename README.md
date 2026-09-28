@@ -1,6 +1,6 @@
-# WeeVCrafts
+# Weevcrafts
 
-WeeVCrafts is a handmade and organic marketplace. The production app is a single
+Weevcrafts is a handmade and organic marketplace. The production app is a single
 Go service: it serves the storefront and role portals, exposes the `/api/v1`
 JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
 rate limits. Both the browser and the server-side pages use this application as

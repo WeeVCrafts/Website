@@ -71,7 +71,7 @@ Reference screens reviewed from `Weevcrafts_Screens/super admin/`:
 
 | Area | Result | Evidence |
 |---|---|---|
-| Shared WeeVCrafts utility bar, public header, seller identity and portal navigation | Pass | `seller-admin-qa-final2/*.png` |
+| Shared Weevcrafts utility bar, public header, seller identity and portal navigation | Pass | `seller-admin-qa-final2/*.png` |
 | Seller-scoped sidebar, active states, store card, seller support and logout affordances | Pass | All 9 final seller captures |
 | Seller onboarding steps, KYC/business/bank/store setup, review status and support | Pass | `seller-admin-qa-final2/onboarding.png` |
 | Dashboard KPIs, sales trend, quick actions, best sellers, recent orders and approval alerts | Pass | `seller-admin-qa-final2/dashboard.png` |
@@ -176,7 +176,7 @@ The implementation follows the Support Agent responsibilities in `Prd.md` and th
 
 | Area | Result | Evidence |
 |---|---|---|
-| Shared WeeVCrafts support shell, portal identity, search, notification and Aditi Rao profile | Pass | All final Supporter Portal captures |
+| Shared Weevcrafts support shell, portal identity, search, notification and Aditi Rao profile | Pass | All final Supporter Portal captures |
 | Role-specific sidebar and active navigation states | Pass | All four portal routes |
 | Dashboard KPI cards, case queue, live conversations, issue breakdown, SLA, escalations, workload and macros | Pass | `support-portal-qa-final/dashboard.png` |
 | Case queue, filters, customer/seller conversation, masked contact context, reply/internal-note composer and quick macros | Pass | `support-portal-qa-final/cases.png` |

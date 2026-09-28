@@ -103,7 +103,7 @@ func main() {
 	if err := seed(ctx, pool); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("WeCratfs demo data is ready. All demo accounts use password:", demoPassword)
+	fmt.Println("Weevcrafts demo data is ready. All demo accounts use password:", demoPassword)
 }
 
 func seed(ctx context.Context, pool *pgxpool.Pool) error {
@@ -316,7 +316,7 @@ func seedReviewsNotifications(ctx context.Context, tx pgx.Tx, users, products, o
 		return err
 	}
 	for i := 1; i <= 8; i++ {
-		if _, err := tx.Exec(ctx, `INSERT INTO notifications (user_id,kind,title,body) SELECT $1,'order','Your WeCratfs demo order is moving','A demo order is available to explore in your account.' WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE user_id=$1 AND kind='order' AND title='Your WeCratfs demo order is moving')`, users[fmt.Sprintf("customer-%02d", i)]); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO notifications (user_id,kind,title,body) SELECT $1,'order','Your Weevcrafts demo order is moving','A demo order is available to explore in your account.' WHERE NOT EXISTS (SELECT 1 FROM notifications WHERE user_id=$1 AND kind='order' AND title='Your Weevcrafts demo order is moving')`, users[fmt.Sprintf("customer-%02d", i)]); err != nil {
 			return err
 		}
 	}

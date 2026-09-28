@@ -53,7 +53,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 	switch active {
 	case "sellers":
 		page.Title = "Sellers"
-		page.Subtitle = "Manage seller applications, verify artisans, monitor performance and help them grow with WeeVCrafts."
+		page.Subtitle = "Manage seller applications, verify artisans, monitor performance and help them grow with Weevcrafts."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "groups", Value: "326", Label: "Total Sellers", Delta: "8%", Positive: true, Period: "vs. last month"},
 			{Icon: "assignment", Value: "28", Label: "Pending Applications", Delta: "25%", Period: "vs. last month"},
@@ -70,7 +70,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		}
 	case "products":
 		page.Title = "Products & Categories"
-		page.Subtitle = "Manage the WeeVCrafts catalog. Approve products, organize categories, define attributes, manage claims and ensure compliance."
+		page.Subtitle = "Manage the Weevcrafts catalog. Approve products, organize categories, define attributes, manage claims and ensure compliance."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "inventory_2", Value: "5,842", Label: "Total Products", Delta: "14%", Positive: true, Period: "vs. last month"},
 			{Icon: "schedule", Value: "326", Label: "Pending Approvals", Delta: "8%", Period: "vs. last month"},
@@ -87,7 +87,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		}
 	case "inventory":
 		page.Title = "Own Inventory"
-		page.Subtitle = "Products owned or directly sold by WeeVCrafts. Manage stock, warehouses, and inventory operations."
+		page.Subtitle = "Products owned or directly sold by Weevcrafts. Manage stock, warehouses, and inventory operations."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "category", Value: "INR 1,26,48,320", Label: "Total Inventory Value (GMV)", Delta: "12%", Positive: true, Period: "vs. last month"},
 			{Icon: "inventory_2", Value: "1,248", Label: "Total Units in Stock", Delta: "8%", Positive: true, Period: "vs. last month"},
@@ -123,7 +123,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		}
 	case "returns":
 		page.Title = "Returns & Refunds"
-		page.Subtitle = "Manage return requests, refund decisions, replacements and disputes across the WeeVCrafts marketplace."
+		page.Subtitle = "Manage return requests, refund decisions, replacements and disputes across the Weevcrafts marketplace."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "undo", Value: "214", Label: "Total Return Requests", Delta: "12%", Positive: true, Period: "vs. last month"},
 			{Icon: "hourglass_top", Value: "48", Label: "Pending Review", Delta: "8%", Period: "vs. last month"},
@@ -163,7 +163,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		}
 	case "support":
 		page.Title = "Customers & Support"
-		page.Subtitle = "Customers are at the heart of WeeVCrafts. Monitor satisfaction, resolve issues, and build lasting relationships."
+		page.Subtitle = "Customers are at the heart of Weevcrafts. Monitor satisfaction, resolve issues, and build lasting relationships."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "groups", Value: "1,24,860", Label: "Total Customers", Delta: "12%", Positive: true, Period: "vs. last month"},
 			{Icon: "person", Value: "28,450", Label: "Active Customers", Delta: "14%", Positive: true, Period: "vs. last month"},
@@ -231,7 +231,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 	default:
 		page.Active = "dashboard"
 		page.Title = "Admin Dashboard"
-		page.Subtitle = "Complete overview of the WeeVCrafts marketplace. Monitor, manage and grow our handcrafted ecosystem."
+		page.Subtitle = "Complete overview of the Weevcrafts marketplace. Monitor, manage and grow our handcrafted ecosystem."
 		page.Stats = []viewmodels.AdminStat{
 			{Icon: "shopping_cart", Value: "INR 48,23,650", Label: "Gross Merchandise Value (GMV)", Delta: "18%", Positive: true, Period: "vs. last month"},
 			{Icon: "receipt_long", Value: "1,842", Label: "Total Orders", Delta: "12%", Positive: true, Period: "vs. last month"},

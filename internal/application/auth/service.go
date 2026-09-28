@@ -47,7 +47,14 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (domainiden
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (domainidentity.User, error) {
-	credentials, err := s.repository.GetCredentialsByEmail(ctx, normalizeEmail(email))
+	login := normalizeEmail(email)
+	// The six seeded role accounts can use their short QA username as well as
+	// their email address. All other accounts continue to use email login.
+	switch login {
+	case "customer", "seller", "superadmin", "support", "operations", "finance":
+		login += "@weevcrafts.test"
+	}
+	credentials, err := s.repository.GetCredentialsByEmail(ctx, login)
 	if errors.Is(err, ports.ErrCredentialsNotFound) {
 		return domainidentity.User{}, ErrInvalidCredentials
 	}

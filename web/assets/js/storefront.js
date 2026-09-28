@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
 
-  const { create, normalizeProduct } = global.WeeVCraftsBackend;
+  const { create, normalizeProduct } = global.WeevcraftsBackend;
   const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
   let backend = null;
   let backendError = null;
@@ -252,7 +252,7 @@
     const data = unwrap(payload) || {};
     const items = (data.items || []).map((item) => {
       if (item.slug && item.name) return item;
-      return global.WeeVCraftsBackend.normalizeCartItem(item);
+      return global.WeevcraftsBackend.normalizeCartItem(item);
     }).filter((item) => item && item.slug);
     return { id: data.id, items: items };
   }
@@ -535,7 +535,7 @@
       key: key,
       amount: Number(intent.amount_cents),
       currency: intent.currency,
-      name: "WeeVCrafts",
+      name: "Weevcrafts",
       description: "Handmade goods from independent makers",
       order_id: intent.provider_order_id,
       theme: { color: "#1f4b3a" },

@@ -67,7 +67,7 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 	switch active {
 	case "onboarding":
 		page.Title = "Seller Onboarding"
-		page.Subtitle = "Complete your onboarding to start selling on WeeVCrafts."
+		page.Subtitle = "Complete your onboarding to start selling on Weevcrafts."
 	case "dashboard":
 		page.Title = "Dashboard"
 		page.Subtitle = "Welcome back! Here's what's happening with your store today."
@@ -100,7 +100,7 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 		page.Orders = sellerOrders()
 	case "returns":
 		page.Title = "Returns"
-		page.Subtitle = "Manage return requests from your customers. Review, respond and track progress. The final decision on all return requests is made by WeeVCrafts."
+		page.Subtitle = "Manage return requests from your customers. Review, respond and track progress. The final decision on all return requests is made by Weevcrafts."
 		page.Stats = []viewmodels.SellerAdminStat{
 			{Value: "2", Label: "New Requests"}, {Value: "1", Label: "Awaiting Response"}, {Value: "3", Label: "Under Review"}, {Value: "5", Label: "Approved"}, {Value: "1", Label: "Rejected"}, {Value: "8", Label: "Completed"},
 		}
@@ -110,7 +110,7 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 		page.Subtitle = "Track your sales, commissions, and payouts. Transparent. Simple. Secure."
 		page.Stats = []viewmodels.SellerAdminStat{
 			{Icon: "shopping_cart", Value: "INR 1,24,750", Label: "Gross Sales", Period: "From 32 orders", Tone: "red"},
-			{Icon: "percent", Value: "INR 6,238", Label: "Commission (5%)", Period: "Deducted by WeeVCrafts", Tone: "red"},
+			{Icon: "percent", Value: "INR 6,238", Label: "Commission (5%)", Period: "Deducted by Weevcrafts", Tone: "red"},
 			{Icon: "local_shipping", Value: "INR 2,450", Label: "Shipping Adjustments", Period: "Charges / reimbursements", Tone: "red"},
 			{Icon: "schedule", Value: "INR 18,990", Label: "Pending Delivery Value", Period: "In transit orders", Tone: "gold"},
 			{Icon: "account_balance_wallet", Value: "INR 28,340", Label: "Settlement Eligible", Period: "Ready for next payout", Tone: "green"},

@@ -134,7 +134,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 		page = viewmodels.CustomerPage{
-			Route: r.URL.Path, Title: "We are having a little trouble", Brand: "WeeVCrafts",
+			Route: r.URL.Path, Title: "We are having a little trouble", Brand: "Weevcrafts",
 			Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Please try again in a moment.",
 			Notice: "We could not load this page right now. Please try again in a moment.",
 		}
@@ -539,7 +539,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	page := viewmodels.CustomerPage{
 		Route: r.URL.Path, Title: liveTitle(r.URL.Path), Query: query, Category: category, Sort: sortMode,
 		CouponCode: strings.ToUpper(strings.TrimSpace(filters.Get("coupon"))),
-		Notice:     filters.Get("notice"), Filters: filters, Brand: "WeeVCrafts",
+		Notice:     filters.Get("notice"), Filters: filters, Brand: "Weevcrafts",
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
@@ -1484,7 +1484,7 @@ func (h *LiveStorefrontHandler) brands(ctx context.Context) []viewmodels.Brand {
 		var item viewmodels.Brand
 		if rows.Scan(&item.Slug, &item.Name, &item.Products, &item.ImageURL) == nil {
 			item.Tagline = "Made by independent Indian makers"
-			item.Description = "A live maker brand on WeeVCrafts."
+			item.Description = "A live maker brand on Weevcrafts."
 			item.Location = "India"
 			result = append(result, item)
 		}

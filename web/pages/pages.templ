@@ -15,7 +15,7 @@ templ Document(p viewmodels.CustomerPage) {
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="description" content={ p.Description }/>
       <meta name="robots" content="noindex,nofollow"/>
-      <title>{ p.Title } - WeeVCrafts</title>
+      <title>{ p.Title } - Weevcrafts</title>
       <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
       <link rel="preload" href="/assets/fonts/dm-sans-400.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
@@ -687,7 +687,7 @@ templ AccountSidebar(active string) {
 templ Orders(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro account-intro">
-        @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from WeeVCrafts.</p><nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav></section><section class="container account-layout">
+        @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from Weevcrafts.</p><nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav></section><section class="container account-layout">
         @AccountSidebar("orders")<div class="account-content orders-list" data-backend-orders>
           if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
             <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
@@ -723,7 +723,7 @@ templ Payments(p viewmodels.CustomerPage) {
       <div class="payment-main">
         <article class="payment-method-card">
           <header><div><span class="material-symbols-outlined" aria-hidden="true">credit_card</span><h2>Payment checkout</h2></div></header>
-          <p>Payment details are entered during checkout and are not saved to your WeeVCrafts account.</p>
+          <p>Payment details are entered during checkout and are not saved to your Weevcrafts account.</p>
           if p.PaymentMode == "local" {
             <p><mark>Mock payments active</mark> Checkout uses the local payment simulator.</p>
           } else if p.PaymentMode != "" {

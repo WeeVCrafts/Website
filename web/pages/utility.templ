@@ -14,11 +14,11 @@ templ Auth(p viewmodels.CustomerPage) {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
         if p.Route == "/login" {
-          @AuthHeading("WELCOME BACK", "Sign in to WeeVCrafts", "Keep your saved pieces, orders and maker stories close.")
+          @AuthHeading("WELCOME BACK", "Sign in to Weevcrafts", "Keep your saved pieces, orders and maker stories close.")
           <form class="utility-form" action="/login" method="post" data-backend-auth="login">
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <label>Email address<input name="email" type="email" required/></label>
+            <label>Email or role username<input name="email" type="text" autocomplete="username" required/></label>
             <label>Password<input name="password" type="password" required/></label>
             <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
             <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
@@ -60,7 +60,7 @@ templ Auth(p viewmodels.CustomerPage) {
           </form>
           <a class="auth-back-link" href="/login">Continue to sign in</a>
         }
-        <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by WeeVCrafts.</p>
+        <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by Weevcrafts.</p>
       </div>
     </section>
   }
@@ -102,7 +102,7 @@ templ FaqContent() {
     <details><summary>How long does delivery take?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Most domestic orders arrive in 4–6 days after dispatch. The estimate is shown on the product page.</p></details>
     <details><summary>Can I return an order?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Eligible items can be requested for return within the policy window.</p></details>
     <details><summary>Do you deliver in India?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>We deliver to serviceable PIN codes across India. Check delivery availability on the product page or at checkout.</p></details>
-    <details><summary>How can I sell on WeeVCrafts?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Start with the seller onboarding preview and prepare your verification documents.</p></details>
+    <details><summary>How can I sell on Weevcrafts?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Start with the seller onboarding preview and prepare your verification documents.</p></details>
   </div>
   <section class="info-contact-strip"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Still need a hand?</h2><p>Our customer care team can help with an order, return or product question.</p></div><a class="primary-button" href="/contact">Contact us</a></section>
 }
@@ -194,7 +194,7 @@ templ ProfilePanel() {
 }
 
 templ AddressPanel() {
-  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div><div class="address-list"><article><div><b>Home <mark>Default</mark></b><p>A-203, Green View Apartments<br/>Koramangala, Bengaluru<br/>Karnataka 560034<br/>+91 98765 43210</p></div><a href="/account/addresses?notice=Home+address+editor+opened">Edit</a></article><article><div><b>Studio</b><p>WeeVCrafts Studio<br/>Indiranagar, Bengaluru<br/>Karnataka 560038</p></div><a href="/account/addresses?notice=Studio+address+selected">Use this address</a></article></div><a class="outline-button" href="/account/addresses?notice=New+address+form+opened"><span class="material-symbols-outlined" aria-hidden="true">add</span>Add new address</a></section>
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div><div class="address-list"><article><div><b>Home <mark>Default</mark></b><p>A-203, Green View Apartments<br/>Koramangala, Bengaluru<br/>Karnataka 560034<br/>+91 98765 43210</p></div><a href="/account/addresses?notice=Home+address+editor+opened">Edit</a></article><article><div><b>Studio</b><p>Weevcrafts Studio<br/>Indiranagar, Bengaluru<br/>Karnataka 560038</p></div><a href="/account/addresses?notice=Studio+address+selected">Use this address</a></article></div><a class="outline-button" href="/account/addresses?notice=New+address+form+opened"><span class="material-symbols-outlined" aria-hidden="true">add</span>Add new address</a></section>
 }
 
 templ NotificationPanel() {
@@ -202,7 +202,7 @@ templ NotificationPanel() {
 }
 
 templ SecurityPanel() {
-  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Last changed 42 days ago</small></span><a href="/account/security?notice=Password+editor+opened">Change</a></div><div><span><b>Two-step verification</b><small>Recommended for account protection</small></span><a href="/account/security?notice=Two-step+verification+setup+opened">Set up</a></div><div><span><b>Active sessions</b><small>Chrome on Windows · Bengaluru · Active now</small></span><a href="/account/security?notice=All+other+sessions+signed+out">Sign out others</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div></section>
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Last changed 42 days ago</small></span><a href="/account/security?notice=Password+editor+opened">Change</a></div><div><span><b>Two-step verification</b><small>Recommended for account protection</small></span><a href="/account/security?notice=Two-step+verification+setup+opened">Set up</a></div><div><span><b>Active sessions</b><small>Chrome on Windows · Bengaluru · Active now</small></span><a href="/account/security?notice=All+other+sessions+signed+out">Sign out others</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div></section>
 }
 
 templ PrivacyPanel() {
@@ -263,7 +263,7 @@ templ LiveAccount(p viewmodels.CustomerPage) {
             }
           </section>
           <section><h2>Returns &amp; refunds</h2><a href="/returns">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>View return requests linked to your orders.</p></section>
-          <section id="payments"><h2>Payment methods</h2><a href="/payments">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Payment options are shown securely during checkout. Card details are not stored in WeeVCrafts.</p></section>
+          <section id="payments"><h2>Payment methods</h2><a href="/payments">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Payment options are shown securely during checkout. Card details are not stored in Weevcrafts.</p></section>
           <section id="preferences"><h2>Notification updates</h2><a href="/account/notifications">View updates <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Order and delivery updates appear in your order history.</p></section>
           <section id="privacy"><h2>Privacy preferences</h2><a href="/account/privacy">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Review your privacy choices and data requests.</p></section>
           <section id="security"><h2>Security &amp; sessions</h2><a href="/account/security">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Change your password and protect your account.</p></section>
@@ -277,7 +277,7 @@ templ LiveAccount(p viewmodels.CustomerPage) {
 templ LiveOrders(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro account-intro">
-      @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from WeeVCrafts.</p>
+      @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from Weevcrafts.</p>
       <nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav>
     </section>
     <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders>
@@ -343,7 +343,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
           </form>
         </section>
       } else if p.Route == "/account/security" {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>WeeVCrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div>
           <p>Choose the updates you want. Your choices are saved to your account; order status also remains available in your order history.</p>
@@ -400,7 +400,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
           }
         </section>
       } else {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><p>Payment options are offered securely during checkout. Payment details are never stored in your WeeVCrafts account.</p><a class="outline-button" href="/cart">Go to your cart</a></section>
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><p>Payment options are offered securely during checkout. Payment details are never stored in your Weevcrafts account.</p><a class="outline-button" href="/cart">Go to your cart</a></section>
       }
     </div></section>
   }

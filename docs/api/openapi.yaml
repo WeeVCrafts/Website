@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: WeCratfs API
+  title: Weevcrafts API
   version: 1.0.0
-  description: JSON-only v1 contract for the WeCratfs marketplace.
+  description: JSON-only v1 contract for the Weevcrafts marketplace.
 servers:
   - url: /
 paths:

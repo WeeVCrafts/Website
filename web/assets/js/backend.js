@@ -1,4 +1,4 @@
-/* First-party frontend adapter for the WeeVCrafts Go API. */
+/* First-party frontend adapter for the Weevcrafts Go API. */
 (function (global) {
   "use strict";
   const ROOT = "/api/v1";
@@ -260,5 +260,5 @@
     return new CustomBackend();
   }
 
-  global.WeeVCraftsBackend = { create: create, normalizeProduct: normalizeProduct, normalizeCartItem: normalizeCartItem };
+  global.WeevcraftsBackend = { create: create, normalizeProduct: normalizeProduct, normalizeCartItem: normalizeCartItem };
 })(window);

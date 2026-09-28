@@ -98,7 +98,7 @@ func main() {
 		var sellerID int64
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO sellers (owner_user_id, display_name, status)
-			VALUES ($1, 'WeeVCrafts QA Seller', 'active')
+			VALUES ($1, 'Weevcrafts QA Seller', 'active')
 			RETURNING id`, ids["seller_owner"]).Scan(&sellerID); err != nil {
 			return fmt.Errorf("create QA seller: %w", err)
 		}

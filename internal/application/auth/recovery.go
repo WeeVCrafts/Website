@@ -20,8 +20,8 @@ var (
 const (
 	PasswordResetTTL         = 30 * time.Minute
 	EmailVerificationTTL     = 24 * time.Hour
-	PasswordResetSubject     = "Reset your WeCratfs password"
-	EmailVerificationSubject = "Verify your WeCratfs email"
+	PasswordResetSubject     = "Reset your Weevcrafts password"
+	EmailVerificationSubject = "Verify your Weevcrafts email"
 )
 
 // RecoveryService owns one-time account actions. Raw tokens exist only long

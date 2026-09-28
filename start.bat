@@ -2,7 +2,7 @@
 setlocal
 
 echo ========================================================
-echo  Starting WeeVCrafts Marketplace (Windows)
+echo  Starting Weevcrafts Marketplace (Windows)
 echo ========================================================
 
 cd /d "%~dp0"
@@ -30,7 +30,7 @@ docker compose --profile demo run --rm seed-demo
 
 echo.
 echo ========================================================
-echo  WeeVCrafts is LIVE!
+echo  Weevcrafts is LIVE!
 echo  Opening http://localhost:8080 in your browser...
 echo ========================================================
 start http://localhost:8080

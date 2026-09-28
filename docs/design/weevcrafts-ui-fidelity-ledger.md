@@ -1,4 +1,4 @@
-# WeeVCrafts customer UI fidelity ledger
+# Weevcrafts customer UI fidelity ledger
 
 The customer reference screens in `Weevcrafts_Screens/customer/` are the visual
 source of truth for this UI-first milestone. The approved mobile continuation
@@ -8,7 +8,7 @@ responsive and keyboard reachable.
 
 | Area | Implemented direction |
 | --- | --- |
-| Copy and identity | WeeVCrafts wordmark, “Crafted by India. Cherished Everywhere.”, artisan-first copy, and mock-only preview notice. |
+| Copy and identity | Weevcrafts wordmark, “Crafted by India. Cherished Everywhere.”, artisan-first copy, and mock-only preview notice. |
 | Palette | Ivory paper, forest green, terracotta accents, warm tan surfaces, and muted ink text. |
 | Typography | Serif display headings with compact uppercase sans labels and readable body copy. |
 | Layout | Shared shipping strip/header/search/nav, responsive cards/grids, trust strip, and dark footer. |

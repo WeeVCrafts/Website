@@ -9,7 +9,7 @@ templ Document(p viewmodels.WorkspacePage) {
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<meta name="robots" content="noindex,nofollow"/>
-			<title>Choose workspace · WeeVCrafts</title>
+			<title>Choose workspace · Weevcrafts</title>
 			<link rel="stylesheet" href="/assets/css/fonts.min.css"/>
 			<style>
 				:root{font-family:"DM Sans",sans-serif;color:#222244;background:#f7f7f4;font-synthesis:none;text-rendering:optimizeLegibility}
@@ -20,14 +20,14 @@ templ Document(p viewmodels.WorkspacePage) {
 		</head>
 		<body>
 			<header class="bar">
-				<a class="brand" href="/"><span class="brand-mark" aria-hidden="true">✿</span><span>WeeVCrafts</span></a>
+				<a class="brand" href="/"><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span>Weevcrafts</span></a>
 				<div class="bar-actions">
 					<span>{ p.DisplayName }</span>
 					<form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit">Sign out</button></form>
 				</div>
 			</header>
 			<main class="wrap">
-				<section class="intro"><p class="eyebrow">Your WeeVCrafts workspace</p><h1>Where would you like to go?</h1><p>Choose a workspace for this session. Each space only shows the tools your account is allowed to use.</p></section>
+				<section class="intro"><p class="eyebrow">Your Weevcrafts workspace</p><h1>Where would you like to go?</h1><p>Choose a workspace for this session. Each space only shows the tools your account is allowed to use.</p></section>
 				if len(p.Workspaces) == 0 {
 					<div class="empty" role="status"><strong>No workspace is assigned to this account.</strong><p>Ask an administrator to restore the access you need.</p></div>
 				} else {

@@ -1,6 +1,6 @@
-# WeCratfs architecture boundary
+# Weevcrafts architecture boundary
 
-WeCratfs is a Go modular monolith. PostgreSQL owns authoritative business
+Weevcrafts is a Go modular monolith. PostgreSQL owns authoritative business
 state; Redis, Meilisearch, S3-compatible storage, and payment providers are
 replaceable infrastructure behind ports.
 
