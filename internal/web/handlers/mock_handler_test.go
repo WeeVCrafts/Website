@@ -84,11 +84,16 @@ func TestMockCustomerInteractionAffordances(t *testing.T) {
 		if strings.Contains(body, `href="#"`) {
 			t.Fatalf("route %s contains a dead hash link", route)
 		}
-		if !strings.Contains(body, `aria-expanded`) || !strings.Contains(body, `mobile-menu-backdrop`) {
-			t.Fatalf("route %s is missing mobile navigation affordances", route)
+		if !strings.Contains(body, `aria-expanded`) || !strings.Contains(body, `mobile-menu-backdrop`) || !strings.Contains(body, `aria-modal="true"`) {
+			t.Fatalf("route %s is missing accessible drawer navigation affordances", route)
 		}
 		if !strings.Contains(body, `href="/our-story">Our Story`) {
 			t.Fatalf("route %s has an incorrect Our Story destination", route)
+		}
+		for _, destination := range []string{`href="/categories"`, `href="/products?category=offers"`, `href="/makers/mithila-arts"`, `href="/account"`, `href="/wishlist"`, `href="/cart"`} {
+			if !strings.Contains(body, destination) {
+				t.Errorf("route %s navigation drawer is missing %s", route, destination)
+			}
 		}
 	}
 	res := httptest.NewRecorder()

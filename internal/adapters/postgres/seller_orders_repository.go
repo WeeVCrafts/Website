@@ -56,6 +56,12 @@ func (r *CommerceRepository) ListSellerOrders(ctx context.Context, userID int64)
 	return orders, rows.Err()
 }
 
+func (r *CommerceRepository) LookupSellerDispatchContact(ctx context.Context, sellerID int64, orderNumber string) (ports.SellerDispatchContact, error) {
+	var contact ports.SellerDispatchContact
+	err := r.pool.QueryRow(ctx, `SELECT u.email,u.display_name FROM orders o JOIN users u ON u.id=o.user_id WHERE o.order_number=$1 AND EXISTS(SELECT 1 FROM order_items oi JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id WHERE oi.order_id=o.id AND p.seller_id=$2)`, orderNumber, sellerID).Scan(&contact.Email, &contact.DisplayName)
+	return contact, err
+}
+
 func (r *CommerceRepository) UpdateSellerFulfillment(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var orderID int64
@@ -108,6 +114,13 @@ func (r *CommerceRepository) UpdateSellerFulfillment(ctx context.Context, userID
 		}
 		payload, _ := json.Marshal(map[string]any{"seller_id": sellerID, "order_id": orderID, "order_number": orderNumber, "status": status})
 		_, err = tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type, aggregate_type, aggregate_id, payload) VALUES ('SellerFulfillmentUpdated', 'SellerFulfillment', $1, $2)`, fmt.Sprintf("%d:%d", sellerID, orderID), payload)
+		if err != nil {
+			return err
+		}
+		if currentStatus != "shipped" && status == "shipped" {
+			dispatchPayload, _ := json.Marshal(map[string]any{"seller_id": sellerID, "order_id": orderID, "order_number": orderNumber, "carrier": carrier, "tracking_number": trackingNumber})
+			_, err = tx.Exec(transactionContext, `INSERT INTO outbox_events(event_type,aggregate_type,aggregate_id,payload) VALUES('SellerOrderShipped','SellerFulfillment',$1,$2)`, fmt.Sprintf("%d:%d", sellerID, orderID), dispatchPayload)
+		}
 		return err
 	})
 }

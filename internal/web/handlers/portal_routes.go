@@ -46,10 +46,13 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 	}
 	if isOwner {
 		switch relative {
-		case "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "team", "settings", "onboarding", "support":
+		case "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "team", "settings", "onboarding", "support", "terms":
 			return true
 		}
 		if isSellerProductEditPath(relative) {
+			return true
+		}
+		if sellerOrderDetailPath(relative) {
 			return true
 		}
 		return false
@@ -57,11 +60,15 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 
 	permission := ""
 	switch {
+	case relative == "terms":
+		return true
 	case relative == "products":
 		permission = domaincommerce.SellerPermissionProductRead
 	case relative == "inventory":
 		permission = domaincommerce.SellerPermissionInventoryRead
 	case relative == "orders":
+		permission = domaincommerce.SellerPermissionOrderRead
+	case sellerOrderDetailPath(relative):
 		permission = domaincommerce.SellerPermissionOrderRead
 	case relative == "returns":
 		permission = domaincommerce.SellerPermissionReturnRead
@@ -84,6 +91,14 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 		}
 	}
 	return false
+}
+
+func sellerOrderDetailPath(relative string) bool {
+	if !strings.HasPrefix(relative, "orders/") {
+		return false
+	}
+	number := strings.TrimPrefix(relative, "orders/")
+	return number != "" && !strings.Contains(number, "/") && number != "fulfill"
 }
 
 func isSellerProductEditPath(relative string) bool {

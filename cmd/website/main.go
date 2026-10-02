@@ -168,6 +168,7 @@ func main() {
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
+	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
@@ -176,6 +177,15 @@ func main() {
 			logger.Warn("product index processing failed", "error", indexErr)
 		}
 		return indexErr
+	})
+	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_, dispatchErr := sellerDispatchProcessor.Process(processContext, 20)
+		if dispatchErr != nil {
+			logger.Warn("seller dispatch notifications failed", "error", dispatchErr)
+		}
+		return dispatchErr
 	})
 	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 5*time.Second)

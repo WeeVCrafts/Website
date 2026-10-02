@@ -694,6 +694,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{
 		Email:         r.FormValue("email"),
 		DisplayName:   r.FormValue("display_name"),
+		Phone:         r.FormValue("phone"),
 		Password:      r.FormValue("password"),
 		AcceptedTerms: r.FormValue("consent") == "on",
 	})

@@ -51,6 +51,11 @@ type OutboxStore interface {
 	Fail(ctx context.Context, id int64, retryAfter time.Duration, message string) error
 }
 
+type SellerDispatchContact struct{ Email, DisplayName string }
+type SellerDispatchContactSource interface {
+	LookupSellerDispatchContact(ctx context.Context, sellerID int64, orderNumber string) (SellerDispatchContact, error)
+}
+
 type AuditRecord struct {
 	ActorID      string
 	Action       string

@@ -155,13 +155,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email         string `json:"email"`
 		DisplayName   string `json:"display_name"`
+		Phone         string `json:"phone"`
 		Password      string `json:"password"`
 		AcceptedTerms bool   `json:"accepted_terms"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Email: input.Email, DisplayName: input.DisplayName, Password: input.Password, AcceptedTerms: input.AcceptedTerms})
+	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Email: input.Email, DisplayName: input.DisplayName, Phone: input.Phone, Password: input.Password, AcceptedTerms: input.AcceptedTerms})
 	if err != nil {
 		writeError(w, http.StatusUnprocessableEntity, "REGISTRATION_INVALID", "Registration details and required privacy notice agreement are invalid.")
 		return

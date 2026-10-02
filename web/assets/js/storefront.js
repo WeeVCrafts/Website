@@ -471,7 +471,7 @@
         const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on" });
         global.location.assign(authDestination(values.next, unwrap(result) || result));
       } else if (action === "register") {
-        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, acceptedTerms: values.consent === "on" });
+        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, phone: values.phone, acceptedTerms: values.consent === "on" });
         const data = unwrap(result) || result;
         if (data && (data.access_token || result.csrf_token)) global.location.assign(authDestination(values.next, data));
         else showFormMessage(form, "Check your email to verify your new account.", false);
@@ -572,6 +572,15 @@
     button.disabled = true;
     let orderNumber = "";
     try {
+      const addressFormData = new FormData(form);
+      const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
+      if (savedAddressSelect && savedAddressSelect.value) addressFormData.set("address_id", savedAddressSelect.value);
+      const addressResponse = await fetch("/account/addresses", {
+        method: "POST",
+        credentials: "same-origin",
+        body: addressFormData
+      });
+      if (!addressResponse.ok) throw new Error("Your delivery address could not be saved. Please review it and try again.");
       let key = global.sessionStorage.getItem(CHECKOUT_KEY);
       if (!key) {
         key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
@@ -602,6 +611,12 @@
   function bindActions() {
     const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
     if (savedAddressSelect) {
+      const addressForm = document.getElementById("checkout-address-form");
+      if (addressForm) {
+        addressForm.addEventListener("input", function (event) {
+          if (event.target !== savedAddressSelect) savedAddressSelect.value = "";
+        });
+      }
       savedAddressSelect.addEventListener("change", function () {
         const option = savedAddressSelect.selectedOptions[0];
         if (!option || !option.value) return;

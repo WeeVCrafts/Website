@@ -101,7 +101,11 @@ func formatMessage(from, recipient *mail.Address, message ports.EmailMessage) []
 	if message.DisplayName != "" {
 		recipientHeader = (&mail.Address{Name: message.DisplayName, Address: recipient.Address}).String()
 	}
-	return []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\nWeevcrafts account action\r\n\r\nOpen this link to continue:\r\n%s\r\n\r\nIf you did not request this, you can ignore this email.\r\n", fromHeader, recipientHeader, mime.QEncoding.Encode("UTF-8", message.Subject), message.ActionURL))
+	body := message.Body
+	if body == "" {
+		body = fmt.Sprintf("Weevcrafts account action\r\n\r\nOpen this link to continue:\r\n%s\r\n\r\nIf you did not request this, you can ignore this email.\r\n", message.ActionURL)
+	}
+	return []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s\r\n", fromHeader, recipientHeader, mime.QEncoding.Encode("UTF-8", message.Subject), body))
 }
 
 func validHeader(value string) bool {

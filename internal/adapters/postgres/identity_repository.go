@@ -37,7 +37,7 @@ func (r *UserRepository) IsSessionActive(ctx context.Context, userID int64, crea
 	return active, err
 }
 
-func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error) {
+func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error) {
 	var user generated.InsertUserRow
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		queries := generated.New(tx)
@@ -48,6 +48,9 @@ func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName,
 			Status:      "active",
 		})
 		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET phone = $1 WHERE id = $2`, phone, user.ID); err != nil {
 			return err
 		}
 		if err := queries.InsertCredential(transactionContext, generated.InsertCredentialParams{

@@ -91,6 +91,7 @@ type ProductDraftInput struct {
 	Name           string
 	Description    string
 	PriceCents     int64
+	CostPriceCents *int64
 	CompareAtCents *int64
 	SKU            string
 	InitialStock   int
@@ -104,6 +105,7 @@ type ProductVariantInput struct {
 	Name           string
 	SKU            string
 	PriceCents     int64
+	CostPriceCents *int64
 	CompareAtCents *int64
 	InitialStock   int
 }
@@ -114,6 +116,7 @@ type ProductVariant struct {
 	Name           string
 	SKU            string
 	PriceCents     int64
+	CostPriceCents *int64
 	CompareAtCents int64
 	HasCompareAt   bool
 	Available      int

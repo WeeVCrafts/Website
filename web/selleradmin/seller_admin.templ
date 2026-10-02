@@ -38,8 +38,16 @@ templ Document(p viewmodels.SellerAdminPage) {
           </main>
         </div>
       </div>
+      @SellerLegalBottom()
     </body>
   </html>
+}
+
+templ SellerLegalBottom() {
+  <footer class="seller-legal-bottom" aria-label="Seller legal links">
+    <span>© 2026 Weevcrafts</span>
+    <nav aria-label="Policies"><a href="/seller-admin/terms">Seller Terms &amp; Conditions</a><a href="/privacy">Privacy Policy</a></nav>
+  </footer>
 }
 
 templ SellerHeader(p viewmodels.SellerAdminPage) {
@@ -65,7 +73,7 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
 templ SellerSidebar(p viewmodels.SellerAdminPage) {
   <aside id="seller-sidebar" class="seller-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="seller-sidebar-close" type="button" x-ref="sellerSidebarClose" aria-label="Close seller navigation" @click="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="seller-profile-mini"><span class="seller-profile-avatar">{ p.Initials }</span><span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/brands">Browse makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></span></div>
+    <div class="seller-profile-mini"><span class="seller-profile-avatar">{ p.Initials }</span><span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/seller-admin/onboarding">Seller application status</a></span></div>
     <nav class="seller-nav" aria-label="Seller portal navigation">
       @SellerNav("dashboard", "Dashboard", "dashboard", p.Active, "/seller-admin")
       if p.CanProducts {
@@ -77,15 +85,12 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
       if p.CanOrders {
         @SellerNav("orders", "Orders & Fulfilment", "inventory_2", p.Active, "/seller-admin/orders")
       }
-      if p.CanReturns {
-        @SellerNav("returns", "Returns", "undo", p.Active, "/seller-admin/returns")
-      }
       if p.CanReports {
-        @SellerNav("earnings", "Earnings & Settlements", "account_balance_wallet", p.Active, "/seller-admin/earnings")
-        @SellerNav("analytics", "Reports", "bar_chart", p.Active, "/seller-admin/analytics")
+        @SellerNav("earnings", "Earnings", "account_balance_wallet", p.Active, "/seller-admin/earnings")
+        @SellerNav("analytics", "Analytics", "bar_chart", p.Active, "/seller-admin/analytics")
       }
       if p.CanTeam {
-        @SellerNav("team", "Team & Permissions", "manage_accounts", p.Active, "/seller-admin/team")
+        <a class="seller-nav-link" href="/seller-admin/settings"><span class="material-symbols-outlined" aria-hidden="true">store</span><span>Store profile</span></a>
       }
       <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
       <a class="seller-nav-link" href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Switch workspace</span></a>

@@ -352,6 +352,9 @@ func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.Prod
 	if input.CompareAtCents != nil && *input.CompareAtCents < input.PriceCents {
 		return domaincommerce.ProductDraftInput{}, ErrInvalidProduct
 	}
+	if input.CostPriceCents != nil && *input.CostPriceCents < 0 {
+		return domaincommerce.ProductDraftInput{}, ErrInvalidProduct
+	}
 	return input, nil
 }
 
@@ -367,6 +370,9 @@ func normalizeVariant(input domaincommerce.ProductVariantInput, includeInitialSt
 		return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
 	}
 	if input.CompareAtCents != nil && *input.CompareAtCents < input.PriceCents {
+		return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
+	}
+	if input.CostPriceCents != nil && *input.CostPriceCents < 0 {
 		return domaincommerce.ProductVariantInput{}, ErrInvalidProductVariant
 	}
 	if includeInitialStock {

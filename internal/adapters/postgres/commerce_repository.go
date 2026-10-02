@@ -121,9 +121,9 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 			return mapCommerceError(err)
 		}
 		if err := tx.QueryRow(transactionContext, `
-			INSERT INTO product_variants (product_id, sku, price_cents, compare_at_cents)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id`, productID, input.SKU, input.PriceCents, input.CompareAtCents).Scan(&product.VariantID); err != nil {
+			INSERT INTO product_variants (product_id, sku, price_cents, compare_at_cents, cost_price_cents)
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id`, productID, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents).Scan(&product.VariantID); err != nil {
 			return mapCommerceError(err)
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_stock (variant_id, available_quantity) VALUES ($1, $2)`, product.VariantID, input.InitialStock); err != nil {
@@ -187,7 +187,7 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $9 AND seller_id = $10 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID, current.SellerID); err != nil {
 			return mapCommerceError(err)
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku = $1, price_cents = $2, compare_at_cents = $3, updated_at = NOW() WHERE id = $4 AND product_id = $5 AND status = 'active'`, input.SKU, input.PriceCents, input.CompareAtCents, current.VariantID, productID); err != nil {
+		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku = $1, price_cents = $2, compare_at_cents = $3, cost_price_cents = $4, updated_at = NOW() WHERE id = $5 AND product_id = $6 AND status = 'active'`, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, current.VariantID, productID); err != nil {
 			return mapCommerceError(err)
 		}
 		metadata, _ := json.Marshal(map[string]string{"source": "seller", "previous_status": current.Status})
@@ -251,7 +251,7 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 		if err := tx.QueryRow(transactionContext, `INSERT INTO products (slug,brand_slug,category_slug,name,description,price_cents,compare_at_cents,delivery_label,seller_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft') RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, sellerID).Scan(&product.ID); err != nil {
 			return mapCommerceError(err)
 		}
-		if err := tx.QueryRow(transactionContext, `INSERT INTO product_variants (product_id,sku,price_cents,compare_at_cents) VALUES ($1,$2,$3,$4) RETURNING id`, product.ID, input.SKU, input.PriceCents, input.CompareAtCents).Scan(&product.VariantID); err != nil {
+		if err := tx.QueryRow(transactionContext, `INSERT INTO product_variants (product_id,sku,price_cents,compare_at_cents,cost_price_cents) VALUES ($1,$2,$3,$4,$5) RETURNING id`, product.ID, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents).Scan(&product.VariantID); err != nil {
 			return mapCommerceError(err)
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_stock (variant_id,available_quantity) VALUES ($1,$2)`, product.VariantID, input.InitialStock); err != nil {
@@ -330,7 +330,7 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,updated_at=NOW() WHERE id=$9 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID); err != nil {
 			return mapCommerceError(err)
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku=$1,price_cents=$2,compare_at_cents=$3,updated_at=NOW() WHERE id=$4 AND product_id=$5 AND status='active'`, input.SKU, input.PriceCents, input.CompareAtCents, current.VariantID, productID); err != nil {
+		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku=$1,price_cents=$2,compare_at_cents=$3,cost_price_cents=$4,updated_at=NOW() WHERE id=$5 AND product_id=$6 AND status='active'`, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, current.VariantID, productID); err != nil {
 			return mapCommerceError(err)
 		}
 		metadata, _ := json.Marshal(map[string]any{"source": "super_admin", "previous_status": current.Status})

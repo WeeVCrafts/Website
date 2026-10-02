@@ -29,6 +29,7 @@ func NewService(repository ports.UserRepository, hasher ports.PasswordHasher) *S
 type RegisterInput struct {
 	Email         string
 	DisplayName   string
+	Phone         string
 	Password      string
 	AcceptedTerms bool
 }
@@ -36,14 +37,32 @@ type RegisterInput struct {
 func (s *Service) Register(ctx context.Context, input RegisterInput) (domainidentity.User, error) {
 	email := normalizeEmail(input.Email)
 	displayName := strings.TrimSpace(input.DisplayName)
-	if !validEmail(email) || len([]rune(displayName)) < 2 || len([]rune(displayName)) > 120 || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
+	phone := strings.TrimSpace(input.Phone)
+	if !validEmail(email) || len([]rune(displayName)) < 2 || len([]rune(displayName)) > 120 || !validPhone(phone) || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
 		return domainidentity.User{}, ErrInvalidRegistration
 	}
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return domainidentity.User{}, err
 	}
-	return s.repository.CreateCustomer(ctx, email, displayName, passwordHash)
+	return s.repository.CreateCustomer(ctx, email, displayName, phone, passwordHash)
+}
+
+func validPhone(phone string) bool {
+	digits := 0
+	for index, char := range phone {
+		if char >= '0' && char <= '9' {
+			digits++
+			continue
+		}
+		if char == '+' && index == 0 {
+			continue
+		}
+		if char != ' ' && char != '(' && char != ')' && char != '-' {
+			return false
+		}
+	}
+	return len(phone) <= 24 && digits >= 7 && digits <= 15
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (domainidentity.User, error) {

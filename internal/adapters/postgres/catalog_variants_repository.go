@@ -51,7 +51,7 @@ func (r *CommerceRepository) ListAdminProductVariants(ctx context.Context, actor
 func listProductVariants(ctx context.Context, q interface {
 	Query(context.Context, string, ...any) (pgx.Rows, error)
 }, productID int64) ([]commerce.ProductVariant, error) {
-	rows, err := q.Query(ctx, `SELECT pv.id,pv.product_id,pv.name,pv.sku,pv.price_cents,
+	rows, err := q.Query(ctx, `SELECT pv.id,pv.product_id,pv.name,pv.sku,pv.price_cents,pv.cost_price_cents,
 		COALESCE(pv.compare_at_cents,0),pv.compare_at_cents IS NOT NULL,
 		COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
@@ -63,7 +63,7 @@ func listProductVariants(ctx context.Context, q interface {
 	variants := make([]commerce.ProductVariant, 0)
 	for rows.Next() {
 		var v commerce.ProductVariant
-		if err := rows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.PriceCents, &v.CompareAtCents, &v.HasCompareAt, &v.Available, &v.Reserved, &v.Status); err != nil {
+		if err := rows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.PriceCents, &v.CostPriceCents, &v.CompareAtCents, &v.HasCompareAt, &v.Available, &v.Reserved, &v.Status); err != nil {
 			return nil, err
 		}
 		variants = append(variants, v)
@@ -92,15 +92,15 @@ func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, 
 		} else if err := lockSellerVariantProduct(txctx, tx, actorID, productID); err != nil {
 			return err
 		}
-		if err := tx.QueryRow(txctx, `INSERT INTO product_variants(product_id,name,sku,price_cents,compare_at_cents)
-			VALUES($1,$2,$3,$4,$5) RETURNING id`, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents).Scan(&variant.ID); err != nil {
+		if err := tx.QueryRow(txctx, `INSERT INTO product_variants(product_id,name,sku,price_cents,compare_at_cents,cost_price_cents)
+			VALUES($1,$2,$3,$4,$5,$6) RETURNING id`, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents).Scan(&variant.ID); err != nil {
 			return mapCommerceError(err)
 		}
 		if _, err := tx.Exec(txctx, `INSERT INTO inventory_stock(variant_id,available_quantity) VALUES($1,$2)`, variant.ID, input.InitialStock); err != nil {
 			return err
 		}
 		variant.ProductID, variant.Name, variant.SKU = productID, input.Name, input.SKU
-		variant.PriceCents, variant.Available, variant.Status = input.PriceCents, input.InitialStock, "active"
+		variant.PriceCents, variant.CostPriceCents, variant.Available, variant.Status = input.PriceCents, input.CostPriceCents, input.InitialStock, "active"
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents
@@ -134,15 +134,15 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 		} else if err := lockSellerVariantProduct(txctx, tx, actorID, productID); err != nil {
 			return err
 		}
-		result, err := tx.Exec(txctx, `UPDATE product_variants SET name=$3,sku=$4,price_cents=$5,compare_at_cents=$6,updated_at=NOW()
-			WHERE id=$1 AND product_id=$2 AND status='active'`, variantID, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents)
+		result, err := tx.Exec(txctx, `UPDATE product_variants SET name=$3,sku=$4,price_cents=$5,compare_at_cents=$6,cost_price_cents=$7,updated_at=NOW()
+			WHERE id=$1 AND product_id=$2 AND status='active'`, variantID, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents)
 		if err != nil {
 			return mapCommerceError(err)
 		}
 		if result.RowsAffected() != 1 {
 			return ports.ErrInvalidState
 		}
-		variant = commerce.ProductVariant{ID: variantID, ProductID: productID, Name: input.Name, SKU: input.SKU, PriceCents: input.PriceCents, Status: "active"}
+		variant = commerce.ProductVariant{ID: variantID, ProductID: productID, Name: input.Name, SKU: input.SKU, PriceCents: input.PriceCents, CostPriceCents: input.CostPriceCents, Status: "active"}
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents

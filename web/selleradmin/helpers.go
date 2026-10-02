@@ -2,10 +2,78 @@ package selleradmin
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
+
+func sellerInt(value int) string      { return strconv.Itoa(value) }
+func sellerQuery(value string) string { return url.QueryEscape(value) }
+func sellerOptional(value string, present bool) string {
+	if present {
+		return value
+	}
+	return "Not set"
+}
+
+func sellerOrdersByStage(orders []viewmodels.SellerAdminOrder, stage string) []viewmodels.SellerAdminOrder {
+	var result []viewmodels.SellerAdminOrder
+	for _, order := range orders {
+		current := "new"
+		switch order.Status {
+		case "processing":
+			current = "processing"
+		case "shipped":
+			current = "shipped"
+		case "delivered":
+			current = "delivered"
+		}
+		if current == stage {
+			result = append(result, order)
+		}
+	}
+	return result
+}
+
+func sellerCarriers(current string) []string {
+	options := []string{"India Post", "Delhivery", "Blue Dart", "DTDC", "Xpressbees", "Other"}
+	current = strings.TrimSpace(current)
+	if current != "" {
+		for _, option := range options {
+			if strings.EqualFold(option, current) {
+				return options
+			}
+		}
+		options = append(options[:len(options)-1], current, "Other")
+	}
+	return options
+}
+
+func sellerNextFulfillmentStatus(current string) string {
+	switch current {
+	case "pending":
+		return "processing"
+	case "processing":
+		return "shipped"
+	case "shipped":
+		return "delivered"
+	default:
+		return ""
+	}
+}
+func sellerFulfillmentLabel(status string) string {
+	switch status {
+	case "processing":
+		return "Processing / Packing"
+	case "shipped":
+		return "Shipped"
+	case "delivered":
+		return "Delivered / Completed"
+	default:
+		return status
+	}
+}
 
 func firstSellerReturn(returns []viewmodels.SellerAdminReturn) viewmodels.SellerAdminReturn {
 	if len(returns) == 0 {

@@ -724,15 +724,49 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		}
 		compareAt = &value
 	}
+	var costPrice *int64
+	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
+		value, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil || value < 0 {
+			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Cost price must be a non-negative amount in paise.")
+			return
+		}
+		costPrice = &value
+	}
+	name := strings.TrimSpace(r.FormValue("name"))
+	brandName := strings.TrimSpace(r.FormValue("brand_name"))
+	brandSlug := strings.TrimSpace(r.FormValue("brand_slug"))
+	if brandSlug == "" {
+		brandSlug = productSlug(brandName)
+	}
+	productSlugValue := strings.TrimSpace(r.FormValue("slug"))
+	if productSlugValue == "" {
+		productSlugValue = productSlug(name) + "-" + strconv.FormatInt(time.Now().UnixNano()%1000000000, 10)
+	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
-		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"), CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"), Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"),
+		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India",
 	})
 	if err != nil {
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
 		return
 	}
-	h.redirect(w, r, "/seller-admin/products?notice=Product+draft+created")
-	_ = product
+	http.Redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?notice=Product+draft+created", http.StatusSeeOther)
+}
+
+func productSlug(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var b strings.Builder
+	hyphen := false
+	for _, r := range value {
+		if r >= 'a' && r <= 'z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+			hyphen = false
+		} else if !hyphen && b.Len() > 0 {
+			b.WriteByte('-')
+			hyphen = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
 }
 
 func (h *Handler) sellerSubmitProduct(w http.ResponseWriter, r *http.Request) {
@@ -918,7 +952,15 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 		}
 		compareAt = &value
 	}
-	return domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, InitialStock: stock}, nil
+	var costPrice *int64
+	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
+		value, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil || value < 0 {
+			return domaincommerce.ProductVariantInput{}, errors.New("invalid cost price")
+		}
+		costPrice = &value
+	}
+	return domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, InitialStock: stock}, nil
 }
 
 func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
@@ -1011,10 +1053,18 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 		}
 		compareAt = &value
 	}
+	var costPrice *int64
+	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
+		value, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil || value < 0 {
+			return domaincommerce.ProductDraftInput{}, errors.New("invalid cost price")
+		}
+		costPrice = &value
+	}
 	return domaincommerce.ProductDraftInput{
 		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"),
 		CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"),
-		Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, SKU: r.FormValue("sku"),
+		Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"),
 		InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"),
 	}, nil
 }

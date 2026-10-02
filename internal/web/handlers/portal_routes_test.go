@@ -79,6 +79,7 @@ func TestSellerPortalRoutesUseAssignedPermissions(t *testing.T) {
 		want    bool
 	}{
 		{path: "/seller-admin", want: true},
+		{path: "/seller-admin/terms", want: true},
 		{path: "/seller-admin/products", want: true},
 		{path: "/seller-admin/inventory", want: true},
 		{path: "/seller-admin/orders", want: false},

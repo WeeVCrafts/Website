@@ -22,7 +22,7 @@ type fakeUserRepository struct {
 	seenEmail   string
 }
 
-func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error) {
+func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error) {
 	f.seenContext = ctx
 	if f.createErr != nil {
 		return domainidentity.User{}, f.createErr
@@ -74,6 +74,7 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	user, err := service.Register(ctx, RegisterInput{
 		Email:         "  PERSON@Example.COM ",
 		DisplayName:   " A maker ",
+		Phone:         "+91 98765 43210",
 		Password:      "correct-password",
 		AcceptedTerms: true,
 	})
@@ -93,7 +94,7 @@ func TestRegisterRequiresDisplayNameBetweenTwoAnd120Runes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			repository := &fakeUserRepository{}
 			service := NewService(repository, fakeHasher{})
-			_, err := service.Register(context.Background(), RegisterInput{Email: "person@example.test", DisplayName: displayName, Password: "correct-password", AcceptedTerms: true})
+			_, err := service.Register(context.Background(), RegisterInput{Email: "person@example.test", DisplayName: displayName, Phone: "9876543210", Password: "correct-password", AcceptedTerms: true})
 			if !errors.Is(err, ErrInvalidRegistration) {
 				t.Fatalf("expected invalid display name rejection, got %v", err)
 			}
@@ -108,7 +109,7 @@ func TestRegisterRequiresTermsAcceptance(t *testing.T) {
 	repository := &fakeUserRepository{}
 	service := NewService(repository, fakeHasher{})
 	if _, err := service.Register(context.Background(), RegisterInput{
-		Email: "person@example.com", DisplayName: "A maker", Password: "correct-password",
+		Email: "person@example.com", DisplayName: "A maker", Phone: "9876543210", Password: "correct-password",
 	}); !errors.Is(err, ErrInvalidRegistration) {
 		t.Fatalf("registration without consent should fail, got %v", err)
 	}

@@ -17,7 +17,7 @@ var (
 )
 
 type UserRepository interface {
-	CreateCustomer(ctx context.Context, email, displayName, passwordHash string) (domainidentity.User, error)
+	CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error)
 	GetCredentialsByEmail(ctx context.Context, email string) (domainidentity.Credentials, error)
 	RecordFailedLogin(ctx context.Context, userID int64) error
 	ResetFailedLogin(ctx context.Context, userID int64) error
@@ -70,6 +70,7 @@ type EmailMessage struct {
 	DisplayName string
 	Subject     string
 	ActionURL   string
+	Body        string
 }
 
 // RoleChecker is the application authorization boundary. Implementations may

@@ -4,28 +4,28 @@ import domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
-	ActorID                                                             int64
+	ActorID                                                                          int64
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
-	PortalRoot, PortalLabel, RoleLabel, DisplayName                     string
-	SettlementRoot                                                      string
-	CSRFToken                                                           string
-	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog  bool
-	Stats                                                               []AdminStat
-	Bars                                                                []AdminBar
-	Donut                                                               []AdminDonut
-	Sellers                                                             []AdminSeller
-	Products                                                            []AdminProduct
-	Inventory                                                           []AdminInventory
-	Orders                                                              []AdminOrder
-	Returns                                                             []AdminReturn
-	Settlements                                                         []AdminSettlement
-	Transactions                                                        []AdminTransaction
-	SupportCases                                                        []AdminSupportCase
-	Reviews                                                             []AdminReview
-	Campaigns                                                           []AdminCampaign
-	AuditEntries                                                        []AdminAuditEntry
-	Configs                                                             []AdminConfig
-	RoleAssignments                                                     []domainidentity.RoleAssignment
+	PortalRoot, PortalLabel, RoleLabel, DisplayName                                  string
+	SettlementRoot                                                                   string
+	CSRFToken                                                                        string
+	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog               bool
+	Stats                                                                            []AdminStat
+	Bars                                                                             []AdminBar
+	Donut                                                                            []AdminDonut
+	Sellers                                                                          []AdminSeller
+	Products                                                                         []AdminProduct
+	Inventory                                                                        []AdminInventory
+	Orders                                                                           []AdminOrder
+	Returns                                                                          []AdminReturn
+	Settlements                                                                      []AdminSettlement
+	Transactions                                                                     []AdminTransaction
+	SupportCases                                                                     []AdminSupportCase
+	Reviews                                                                          []AdminReview
+	Campaigns                                                                        []AdminCampaign
+	AuditEntries                                                                     []AdminAuditEntry
+	Configs                                                                          []AdminConfig
+	RoleAssignments                                                                  []domainidentity.RoleAssignment
 }
 
 type AdminStat struct {
@@ -110,14 +110,19 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
-	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning        string
+	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning       string
 	DisplayName, UserEmail, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
+	RangeLabel                                                                       string
+	LowStockThreshold                                                                int
 	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite                    bool
 	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam                           bool
 	Stats                                                                            []SellerAdminStat
+	TopProducts                                                                      []SellerAdminTopProduct
+	LowStock                                                                         []SellerAdminInventory
 	Products                                                                         []SellerAdminProduct
 	Inventory                                                                        []SellerAdminInventory
 	Orders                                                                           []SellerAdminOrder
+	OrderDetail                                                                      *SellerAdminOrderDetail
 	Returns                                                                          []SellerAdminReturn
 	Ledger                                                                           []SellerAdminLedger
 	Settlements                                                                      []SellerAdminSettlement
@@ -137,14 +142,37 @@ type SellerAdminBar struct {
 type SellerAdminProduct struct {
 	ID, Name, SKU, Category, Price, Variants, Stock, Status, Availability, Image string
 	SearchSKUs                                                                   string
+	UnitCost, UnitProfit, Margin                                                 string
+	HasCost                                                                      bool
 }
 
 type SellerAdminInventory struct {
 	VariantID, Name, SKU, Variant, Location, Available, Reserved, Reorder, Status, Image string
+	IsLowStock                                                                           bool
 }
 
 type SellerAdminOrder struct {
 	SellerID, Number, Date, Customer, Items, Value, Type, Payment, Status, Destination, Image, NextStatus string
+}
+
+type SellerAdminOrderDetail struct {
+	SellerID, Number, Date, Customer, Status, Payment, Carrier, TrackingNumber, Note string
+	SellerName, RecipientName, Line1, Line2, City, State, PostalCode, CountryCode    string
+	Subtotal, Currency                                                               string
+	Items                                                                            []SellerAdminOrderItem
+}
+
+type SellerAdminOrderItem struct {
+	Name, SKU, Quantity, UnitPrice, LineTotal string
+}
+
+type SellerAdminTopProduct struct {
+	Name, SKU, Units, Revenue, UnitCost, UnitProfit, Margin, Image string
+	HasCost                                                        bool
+}
+
+type SellerCategoryChoice struct {
+	Slug, Name string
 }
 
 type SellerAdminReturn struct {
@@ -192,10 +220,11 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
-	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                         string
-	Description, PriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action, Image string
-	Variants                                                                                 []ProductVariant
-	Media                                                                                    []ProductMedia
+	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                                         string
+	Description, PriceCents, CostPriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action, Image string
+	Categories                                                                                               []SellerCategoryChoice
+	Variants                                                                                                 []ProductVariant
+	Media                                                                                                    []ProductMedia
 }
 
 type SupportPortalStat struct {

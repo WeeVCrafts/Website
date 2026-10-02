@@ -74,6 +74,18 @@ test.describe("role-specific portals", () => {
       if (account.id === "seller-staff") {
         await expect(page.getByRole("navigation", { name: "Seller portal navigation" })).not.toContainText("Team");
       }
+      if (account.id === "seller-owner") {
+        await page.goto("/seller-admin");
+        const policies = page.getByRole("navigation", { name: "Policies" });
+        await expect(policies.getByRole("link", { name: "Seller Terms & Conditions" })).toBeVisible();
+        await expect(policies.getByRole("link", { name: "Privacy Policy" })).toBeVisible();
+        await policies.getByRole("link", { name: "Seller Terms & Conditions" }).click();
+        await expect(page).toHaveURL(/\/seller-admin\/terms$/);
+        await expect(page.getByRole("heading", { name: "6. Code of conduct & account termination" })).toBeVisible();
+        await page.getByRole("navigation", { name: "Policies" }).getByRole("link", { name: "Privacy Policy" }).click();
+        await expect(page).toHaveURL(/\/privacy$/);
+        await expect(page.locator("body")).toContainText("Privacy policy");
+      }
       if (account.id === "super-admin") {
         await expect(page.getByRole("navigation", { name: "Admin navigation" })).toContainText("Security & Roles");
       }

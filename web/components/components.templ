@@ -6,43 +6,35 @@ templ Header(p viewmodels.CustomerPage) {
   <div class="utility-bar">
     <div class="container utility-inner"><span>Handmade Today. A Kinder Tomorrow.</span><span class="utility-links">Delivery to serviceable PIN codes in India <i></i> Support</span></div>
   </div>
-  <header class="site-header" x-data="{menu:false}" @keydown.escape.window="if (menu) { menu=false; $nextTick(() => $refs.menuButton.focus()) }" @keydown.tab.window="if (menu) { const focusables = $refs.mobileMenu.querySelectorAll('a,button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
+  <header class="site-header" x-data="{menu:false}" @keydown.escape.window="if (menu) { menu=false; $nextTick(() => $refs.menuButton.focus()) }" @keydown.tab.window="if (menu) { const focusables = $refs.mobileMenu.querySelectorAll('a,button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if (first && last && $event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (first && last && !$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
     <a class="skip-link" href="#page">Skip to content</a>
     <div class="header-main container">
-      <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open menu" aria-controls="mobile-menu" :aria-expanded="menu" @click="menu=!menu; menu ? $nextTick(() => $refs.mobileMenuFirst.focus()) : $nextTick(() => $refs.menuButton.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
+      <div class="header-left">
+        <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" :aria-label="menu ? 'Close navigation menu' : 'Open navigation menu'" aria-controls="mobile-menu" :aria-expanded="menu" @click="menu=!menu; menu ? $nextTick(() => $refs.mobileMenuFirst.focus()) : $nextTick(() => $refs.menuButton.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
+        <a class="location" href="/account/addresses?notice=Delivery+location+opened" aria-label="Delivery location"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><small>Deliver to<br/><b>Bengaluru, Karnataka</b></small></a>
+      </div>
       <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
-      <a class="location" href="/account/addresses?notice=Delivery+location+opened" aria-label="Delivery location"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><small>Deliver to<br/><b>Bengaluru, Karnataka</b></small></a>
-      <div class="search-shell"><form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-push-url="true" hx-trigger="submit" hx-sync="this:replace" hx-indicator="#global-search-indicator"><label class="sr-only" for="global-search">Search products</label><input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-disinherit="hx-select hx-push-url" hx-push-url="false"/><button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button></form><div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div></div>
-      <nav class="header-actions" aria-label="Account actions"><a href="/account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account</span></a>@WishlistAction(p)<a href="/cart" id="cart-count" data-backend-counter><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a></nav>
-    </div>
-    <div class="nav-row container">
-      <button class="mobile-menu-button" type="button" aria-label="Open categories menu" aria-controls="mobile-menu" :aria-expanded="menu" @click="menu=!menu; menu ? $nextTick(() => $refs.mobileMenuFirst.focus()) : $nextTick(() => $refs.menuButton.focus())"><span class="material-symbols-outlined" aria-hidden="true">grid_view</span> Categories</button>
-      <nav class="primary-nav" aria-label="Primary">
-        <a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a>
-        <a href="/products?category=offers">Offers</a>
-        <a href="/makers/mithila-arts">Makers</a>
-        if !p.Authenticated {
-          <a href="/seller">Sell on Weevcrafts</a>
-        }
-      </nav>
-      <nav class="secondary-nav" aria-label="Secondary">
-        <a href="/our-story">Our Story</a>
-        <a href="/orders">Track Order</a>
-        <a href="/returns">Help</a>
-      </nav>
+      <div class="header-tools">
+        <div class="search-shell"><form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-push-url="true" hx-trigger="submit" hx-sync="this:replace" hx-indicator="#global-search-indicator"><label class="sr-only" for="global-search">Search products</label><input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-disinherit="hx-select hx-push-url" hx-push-url="false"/><button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button></form><div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div></div>
+        <nav class="header-actions" aria-label="Account actions"><a href="/account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account</span></a>@WishlistAction(p)<a href="/cart" id="cart-count" data-backend-counter><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a></nav>
+      </div>
     </div>
     <button class="mobile-menu-backdrop" type="button" aria-label="Close mobile navigation" x-show="menu" x-cloak @click="menu=false; $nextTick(() => $refs.menuButton.focus())"></button>
-    <div id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" role="menu" aria-label="Mobile navigation" x-show="menu" x-cloak @click.outside="menu=false">
-      <a x-ref="mobileMenuFirst" role="menuitem" href="/categories">Categories</a>
-      <a role="menuitem" href="/products?category=offers">Offers</a>
-      <a role="menuitem" href="/makers/mithila-arts">Makers</a>
+    <nav id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" role="dialog" aria-modal="true" aria-label="Site navigation" x-show="menu" x-cloak>
+      <button class="mobile-menu-close" type="button" aria-label="Close navigation" @click="menu=false; $nextTick(() => $refs.menuButton.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      <a x-ref="mobileMenuFirst" href="/categories" @click="menu=false">Categories</a>
+      <a href="/products?category=offers" @click="menu=false">Offers</a>
+      <a href="/makers/mithila-arts" @click="menu=false">Makers</a>
       if !p.Authenticated {
-        <a role="menuitem" href="/seller">Sell on Weevcrafts</a>
+        <a href="/seller" @click="menu=false">Sell on Weevcrafts</a>
       }
-      <a role="menuitem" href="/account">Account</a>
-      <a role="menuitem" href="/orders">Track Order</a>
-      <a role="menuitem" href="/returns">Help</a>
-    </div>
+      <a href="/our-story" @click="menu=false">Our Story</a>
+      <a href="/orders" @click="menu=false">Track Order</a>
+      <a href="/returns" @click="menu=false">Help</a>
+      <a href="/account" @click="menu=false">Account</a>
+      <a href="/wishlist" @click="menu=false">Wishlist</a>
+      <a href="/cart" @click="menu=false">Cart</a>
+    </nav>
   </header>
 }
 

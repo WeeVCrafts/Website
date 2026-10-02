@@ -105,7 +105,7 @@
 
     async signUp(input) {
       const result = await this.call(ROOT + "/auth/register", {
-        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", accepted_terms: input.acceptedTerms === true }
+        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true }
       });
       this.csrf = result.csrf_token || "";
       return result;

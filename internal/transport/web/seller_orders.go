@@ -56,7 +56,11 @@ func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusUnprocessableEntity, "Fulfilment request invalid", "Choose a valid seller order.")
 		return
 	}
-	err = h.sellerOrderService.UpdateFulfillment(r.Context(), session.UserID, sellerID, r.FormValue("order_number"), r.FormValue("status"), r.FormValue("carrier"), r.FormValue("tracking_number"), r.FormValue("note"))
+	carrier := strings.TrimSpace(r.FormValue("carrier"))
+	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) != "" {
+		carrier = strings.TrimSpace(r.FormValue("custom_carrier"))
+	}
+	err = h.sellerOrderService.UpdateFulfillment(r.Context(), session.UserID, sellerID, r.FormValue("order_number"), r.FormValue("status"), carrier, r.FormValue("tracking_number"), r.FormValue("note"))
 	if err != nil {
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidSellerFulfillment):

@@ -4,6 +4,13 @@ import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ PortalDashboard(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		if len(p.LowStock) > 0 {
+			<section class="seller-panel low-stock-alert" role="status"><div class="seller-panel-heading"><div><h2>Low stock alerts</h2><p>{ sellerInt(len(p.LowStock)) } items are below the { sellerInt(p.LowStockThreshold) } unit threshold.</p></div><a class="seller-panel-link" href="/seller-admin/inventory">Manage stock</a></div><ul>
+				for _, item := range p.LowStock {
+					<li><span><strong>{ item.Name }</strong> · SKU { item.SKU }</span><b>{ item.Available } available</b></li>
+				}
+			</ul></section>
+		}
 		@SellerStatGrid(p)
 		<section class="seller-two-grid">
 			<article class="seller-panel">
@@ -51,11 +58,23 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 				if p.CanFulfill {
 					<a href="/seller-admin/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Fulfil customer orders</b><small>Record processing and shipment details.</small></a>
 				}
-				if p.CanTeam {
-					<a href="/seller-admin/team"><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><b>Manage seller staff</b><small>Assign permissions for this seller only.</small></a>
-				}
 			</div>
 		</section>
+	}
+}
+
+templ PortalTerms(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		<article class="seller-panel seller-terms-panel">
+			<p>These requirements apply to sellers using the Weevcrafts marketplace. Review the</p>
+			<p>Privacy information is available from the Privacy Policy link below.</p>
+			<section><h2>1. Account eligibility &amp; registration</h2><ul><li>Provide accurate business information, applicable tax registration details, bank account credentials, and valid identity verification.</li><li>Keep dashboard credentials confidential. Sellers are responsible for activity carried out using their account credentials.</li></ul></section>
+			<section><h2>2. Product listings &amp; compliance</h2><ul><li>Do not list counterfeit, illegal, stolen, dangerous, or third-party rights-infringing items.</li><li>Keep product titles, descriptions, categories, images, stock quantities, and specifications accurate. Misleading information is prohibited.</li><li>Only upload images, text, brand names, and logos that you own or are authorized to use.</li></ul></section>
+			<section><h2>3. Order processing &amp; fulfillment</h2><ul><li>Pack and dispatch orders within the applicable processing timelines shown for your seller account or order.</li><li>Keep inventory accurate and update stock promptly to prevent orders being cancelled because an item is unavailable.</li><li>Use the applicable logistics providers and attach valid tracking details when dispatching an order.</li></ul></section>
+			<section><h2>4. Commission, fees &amp; payouts</h2><ul><li>Applicable commissions, platform fees, subscription charges, and payment processing charges are disclosed through the relevant seller and settlement records.</li><li>Payout timing follows the schedule shown in your seller account and applicable settlement terms.</li><li>Funds may be held or adjusted for returns, refunds, customer disputes, or active chargebacks.</li></ul></section>
+			<section><h2>5. Returns, refunds &amp; customer service</h2><ul><li>Follow the marketplace return and refund policy that applies to each order.</li><li>Respond to customer complaints, refund requests, and platform support inquiries within the applicable response window shown in the seller workflow.</li></ul></section>
+			<section><h2>6. Code of conduct &amp; account termination</h2><ul><li>Do not move marketplace transactions off-platform to avoid fees, create fake customer reviews, or manipulate reviews.</li><li>Weevcrafts may suspend or terminate seller accounts for policy breaches, counterfeit sales, high order cancellation rates, or persistently low performance ratings.</li></ul></section>
+		</article>
 	}
 }
 
@@ -93,37 +112,40 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 
 templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductForm) {
 	@Document(p) {
-		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post">
+		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post" data-product-builder>
 			<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-			<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
-			<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
-			<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
-			<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
-			<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
-			<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+			<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
+			<label>Title<input name="name" value={ form.Name } required maxlength="180"/></label>
+			<label>Category<select name="category_slug" required><option value="">Choose a category</option>
+				for _, category := range form.Categories {
+					<option value={ category.Slug } selected?={ form.CategorySlug == category.Slug }>{ category.Name }</option>
+				}
+			</select><input type="hidden" name="category_name" value={ form.CategoryName } data-category-name/></label>
 			<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
-			<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
-			<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
+			<label>Price (paise)<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
+			<label>Unit cost (paise, optional)<input name="cost_price_cents" type="number" min="0" value={ form.CostPriceCents }/></label>
 			if form.ID == "" {
 				if p.CanInventoryWrite {
-					<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+					<label>Stock quantity<input name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
 				} else {
 					<input type="hidden" name="initial_stock" value="0"/>
 				}
 			} else {
 				<div class="seller-form-wide seller-form-note">Stock is managed separately in Inventory. Editing this listing will not change available units.</div>
 			}
-			<label>Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
 			<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
-			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save draft</button></div>
+			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save product draft</button></div>
 		</form>
+		if form.ID == "" {
+			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id="" data-csrf-token={ p.CSRFToken }><legend>Product images</legend><p>Drop images here or browse. We show a square preview and keep the original upload.</p><label class="product-media-dropzone" data-media-drop>Drop images here or choose files<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-media-file/></label><div data-media-selection></div><p role="status" aria-live="polite" data-media-status></p></fieldset>
+		}
 		if form.ID != "" {
 			if form.Image != "" {
-				<img class="product-media-preview" src={ form.Image } alt={ "Current image for " + form.Name }/>
+				<img class="product-media-preview product-media-square" src={ form.Image } alt={ "Current image for " + form.Name }/>
 			}
 			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
-				<legend>Product images and videos</legend><p>Upload JPEG, PNG, WebP, MP4 or WebM files up to 25 MB. Images update the main product photo; videos appear in the customer product gallery.</p>
-				<label>Choose an image or video<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button><p role="status" aria-live="polite" data-media-status></p>
+				<legend>Product images</legend><p>Images update the main product photo and appear in the customer product gallery.</p>
+				<label class="product-media-dropzone" data-media-drop>Drop images here or choose files<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload images</button><p role="status" aria-live="polite" data-media-status></p>
 				<div class="product-media-assets">
 					if len(form.Media) == 0 {
 						<p>No uploaded media yet.</p>
@@ -133,7 +155,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 							if media.IsVideo {
 								<video controls preload="metadata" aria-label={ "Product video " + media.ID }><source src={ media.URL } type={ media.ContentType }/></video>
 							} else {
-								<img src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
+							<img class="product-media-square" src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
 							}
 							<p>{ media.ContentType } · { media.Size } bytes</p><button class="seller-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
 						</article>
@@ -185,6 +207,14 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 
 templ PortalInventory(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		<form class="seller-toolbar low-stock-setting" method="post" action="/seller-admin/inventory/threshold"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Alert when available stock falls below<input type="number" name="low_stock_threshold" min="1" max="100000" value={ sellerInt(p.LowStockThreshold) } required/> units</label><button class="seller-button primary" type="submit">Save threshold</button></form>
+		if len(p.LowStock) > 0 {
+			<section class="seller-panel low-stock-alert" role="status"><h2>Needs restocking</h2><ul>
+				for _, item := range p.LowStock {
+					<li><strong>{ item.Name }</strong><span>SKU { item.SKU } · { item.Available } available</span></li>
+				}
+			</ul></section>
+		}
 		<form class="seller-toolbar" action="/seller-admin/inventory" method="get"><label class="sr-only" for="portal-inventory-query">Search inventory</label><input id="portal-inventory-query" name="q" value={ p.Query } placeholder="Search product, variant or SKU"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/inventory">Clear</a></form>
 		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Product</span><span>SKU</span><span>Variant</span><span>Available</span><span>Reserved</span><span>Stock action</span></div>
 			for _, item := range p.Inventory {
@@ -205,20 +235,65 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 
 templ PortalOrders(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Order</span><span>Placed</span><span>Customer</span><span>Items</span><span>Order value</span><span>Payment</span><span>Fulfilment</span></div>
-			for _, order := range p.Orders {
-				<div class="seller-product-row"><span><b>{ order.Number }</b></span><span>{ order.Date }</span><span>{ order.Customer }</span><span>{ order.Items }</span><span>{ order.Value }</span><span>{ order.Payment }</span><span>
-					<strong>{ order.Status }</strong>
-					if p.CanFulfill && order.NextStatus != "" {
-						<form class="seller-inline-form" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ order.SellerID }/><input type="hidden" name="order_number" value={ order.Number }/><label class="sr-only" for={ "fulfil-status-" + order.Number }>Next fulfilment status for { order.Number }</label><select id={ "fulfil-status-" + order.Number } name="status"><option value={ order.NextStatus }>{ order.NextStatus }</option></select><input name="carrier" maxlength="80" placeholder="Carrier"/><input name="tracking_number" maxlength="120" placeholder="Tracking number needed to ship"/><input name="note" maxlength="500" placeholder="Fulfilment note"/><button class="seller-button primary" type="submit">Update fulfilment</button></form>
-					}
-				</span></div>
-			}
-			if len(p.Orders) == 0 {
-				@SellerTableEmpty("No orders to fulfil", "Paid orders containing your products will appear here.")
-			}
-		</div></div></section>
+		@SellerOrderStage(p, "new", "New")
+		@SellerOrderStage(p, "processing", "Processing / Packing")
+		@SellerOrderStage(p, "shipped", "Shipped")
+		@SellerOrderStage(p, "delivered", "Delivered / Completed")
 	}
+}
+
+templ SellerOrderStage(p viewmodels.SellerAdminPage, key, label string) {
+	<section class="seller-panel order-stage"><div class="seller-panel-heading"><div><h2>{ label }</h2><p>{ sellerInt(len(sellerOrdersByStage(p.Orders, key))) } orders</p></div></div>
+		if len(sellerOrdersByStage(p.Orders, key)) == 0 {
+			@SellerTableEmpty("No orders in this stage", "Orders move here as you fulfil them.")
+		} else {
+			<div class="seller-order-cards">
+				for _, order := range sellerOrdersByStage(p.Orders, key) {
+					<article class="seller-order-card"><div><a href={ "/seller-admin/orders/" + order.Number }><strong>{ order.Number }</strong></a><span>{ order.Date } · { order.Customer }</span></div><div><b>{ order.Items } items</b><strong>{ order.Value }</strong></div><a class="seller-button outline" href={ "/seller-admin/orders/" + order.Number }>Open order</a></article>
+				}
+			</div>
+		}
+	</section>
+}
+
+templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		if p.OrderDetail != nil {
+			<div class="seller-order-actions"><a class="seller-button outline" href="/seller-admin/orders">Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
+			<section class="seller-two-grid"><article class="seller-panel"><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ p.OrderDetail.Status }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Qty</span><span>Unit price</span><span>Total</span></div>
+				for _, item := range p.OrderDetail.Items {
+					<div class="seller-table-row"><b>{ item.Name }</b><span>{ item.SKU }</span><span>{ item.Quantity }</span><span>{ item.UnitPrice }</span><strong>{ item.LineTotal }</strong></div>
+				}
+				</div><p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p></article>
+				@SellerOrderFulfillment(p)
+			</section>
+			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>WeevCrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
+			<div class="seller-print-document" data-print-document="packing-slip"><h1>Packing slip · { p.OrderDetail.Number }</h1>
+				for _, item := range p.OrderDetail.Items {
+					<p>{ item.Quantity } × { item.Name } · SKU { item.SKU }</p>
+				}
+			</div>
+			<div class="seller-print-document" data-print-document="invoice"><h1>Order invoice · { p.OrderDetail.Number }</h1><p>Seller: { p.SellerName } · Customer: { p.OrderDetail.RecipientName }</p>
+				for _, item := range p.OrderDetail.Items {
+					<p>{ item.Name } · { item.Quantity } × { item.UnitPrice } · { item.LineTotal }</p>
+				}
+				<strong>Seller item subtotal: { p.OrderDetail.Subtotal }</strong><p>Basic order document based on stored order data.</p></div>
+		}
+	}
+}
+
+templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
+	<article class="seller-panel"><h2>Fulfilment &amp; tracking</h2>
+		if p.CanFulfill && p.OrderDetail.Status != "delivered" {
+			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><label>Status<select name="status"><option value={ sellerNextFulfillmentStatus(p.OrderDetail.Status) }>{ sellerFulfillmentLabel(sellerNextFulfillmentStatus(p.OrderDetail.Status)) }</option></select></label><label>Carrier<select name="carrier" required>
+				for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
+					<option value={ carrier } selected?={ p.OrderDetail.Carrier == carrier }>{ carrier }</option>
+				}
+			</select></label><label>Other carrier name<input name="custom_carrier" maxlength="80" placeholder="Used when carrier is Other"/></label><label>Tracking number<input name="tracking_number" maxlength="120" value={ p.OrderDetail.TrackingNumber } placeholder="Required when shipping"/></label><label>Note<input name="note" maxlength="500" value={ p.OrderDetail.Note } placeholder="Optional fulfilment note"/></label><button class="seller-button primary" type="submit">Save fulfilment</button></form>
+		} else {
+			<p>{ p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p>
+		}
+	</article>
 }
 
 templ PortalReturns(p viewmodels.SellerAdminPage) {
@@ -236,6 +311,8 @@ templ PortalReturns(p viewmodels.SellerAdminPage) {
 
 templ PortalEarnings(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		<form class="seller-toolbar" action="/seller-admin/earnings" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
+		@SellerStatGrid(p)
 		<section class="seller-two-grid"><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
 			if len(p.Ledger) == 0 {
 				@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
@@ -254,8 +331,19 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 
 templ PortalAnalytics(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		<form class="seller-toolbar" action="/seller-admin/analytics" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
 		@SellerStatGrid(p)
-		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller activity</h2><p>Live order, catalogue and stock totals from PostgreSQL.</p></div></div><p>Detailed trend reporting will appear after this seller has completed orders.</p></section>
+		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Top-selling products</h2><p>{ p.RangeLabel } · ranked by units sold</p></div></div>
+		if len(p.TopProducts) == 0 {
+			@SellerTableEmpty("No sales in this period", "Paid orders will appear here as customers buy your products.")
+		} else {
+			<div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Units</span><span>Revenue</span><span>Unit cost</span><span>Unit profit</span><span>Margin</span></div>
+				for _, item := range p.TopProducts {
+					<div class="seller-table-row"><b>{ item.Name }</b><span>{ item.SKU }</span><span>{ item.Units }</span><strong>{ item.Revenue }</strong><span>{ sellerOptional(item.UnitCost,item.HasCost) }</span><span>{ sellerOptional(item.UnitProfit,item.HasCost) }</span><span>{ sellerOptional(item.Margin,item.HasCost) }</span></div>
+				}
+			</div>
+		}
+		</section>
 	}
 }
 

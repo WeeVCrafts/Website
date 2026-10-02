@@ -899,6 +899,7 @@ templ Checkout(p viewmodels.CustomerPage) {
         <section class="checkout-card" x-show="checkoutStep === 1">
           <header><h2><span>1</span> Delivery address</h2></header>
           <form id="checkout-address-form" class="utility-form" data-backend-address>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             if len(p.Addresses) > 0 {
               <label>Use a saved address<select id="checkout-saved-address" data-checkout-address-select><option value="">Enter a different address</option>
                 for _, address := range p.Addresses {
@@ -914,7 +915,7 @@ templ Checkout(p viewmodels.CustomerPage) {
             <label>State / region<input name="region" value={ p.Address.State } autocomplete="address-level1" required/></label>
             <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
-            <button class="primary-button full" type="button" @click="checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="primary-button full" type="button" @click="if ($el.form.reportValidity()) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
         </section>
         <section class="checkout-card" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ p.CartCount } items from { len(p.Cart) } sellers</span></header>

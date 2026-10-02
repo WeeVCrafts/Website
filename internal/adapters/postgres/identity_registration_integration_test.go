@@ -12,7 +12,7 @@ func TestCreateCustomerRecordsRequiredRegistrationConsents(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	email := fmt.Sprintf("registration-consent-%d@example.invalid", time.Now().UnixNano())
-	user, err := NewUserRepository(pool).CreateCustomer(ctx, email, "Consent Fixture", "fixture-hash")
+	user, err := NewUserRepository(pool).CreateCustomer(ctx, email, "Consent Fixture", "9876543210", "fixture-hash")
 	if err != nil {
 		t.Fatalf("create customer: %v", err)
 	}

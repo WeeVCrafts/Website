@@ -19,7 +19,7 @@ type portalLoginRepository struct {
 	user domainidentity.User
 }
 
-func (r portalLoginRepository) CreateCustomer(context.Context, string, string, string) (domainidentity.User, error) {
+func (r portalLoginRepository) CreateCustomer(context.Context, string, string, string, string) (domainidentity.User, error) {
 	return domainidentity.User{}, nil
 }
 func (r portalLoginRepository) GetCredentialsByEmail(context.Context, string) (domainidentity.Credentials, error) {

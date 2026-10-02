@@ -14,6 +14,7 @@
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <label class="grid gap-2 text-sm font-semibold" for="display_name">Name<input class="field" id="display_name" name="display_name" autocomplete="name" required value="{{.FormName}}"></label>
         <label class="grid gap-2 text-sm font-semibold" for="email">Email<input class="field" id="email" name="email" type="email" autocomplete="email" required value="{{.FormEmail}}"></label>
+        <label class="grid gap-2 text-sm font-semibold" for="phone">Phone number<input class="field" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required></label>
         <label class="grid gap-2 text-sm font-semibold" for="password">Password<input class="field" id="password" name="password" type="password" autocomplete="new-password" minlength="12" required><span class="text-xs font-normal text-ink/55">Use at least 12 characters.</span></label>
         <button class="button-primary w-full" type="submit">Create account</button>
       </form>
