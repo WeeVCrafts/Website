@@ -23,7 +23,8 @@ type account struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`
 	Role     string `json:"role"`
-	Password string `json:"password"`
+	Password string `json:"password,omitempty"`
+	Created  bool   `json:"created"`
 }
 
 var roleAccounts = []account{
@@ -59,19 +60,6 @@ func main() {
 
 	accounts := make([]account, len(roleAccounts))
 	copy(accounts, roleAccounts)
-	hasher := auth.NewArgon2idHasher()
-	hashes := make([]string, len(accounts))
-	for i := range accounts {
-		accounts[i].Password, err = newPassword()
-		if err != nil {
-			log.Fatal(err)
-		}
-		hashes[i], err = hasher.Hash(accounts[i].Password)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	if err := postgres.WithinTransaction(ctx, pool, func(ctx context.Context, tx pgx.Tx) error {
 		ids := make(map[string]int64, len(accounts))
 		for i, item := range accounts {
@@ -79,33 +67,53 @@ func main() {
 			err := tx.QueryRow(ctx, `
 				INSERT INTO users (email, display_name, status, email_verified_at)
 				VALUES ($1, $2, 'active', NOW())
+				ON CONFLICT (email) DO NOTHING
 				RETURNING id`, item.Email, item.Name).Scan(&id)
-			if err != nil {
-				if errors.Is(err, pgx.ErrNoRows) {
-					return fmt.Errorf("create %s: no user id returned", item.Email)
+			created := err == nil
+			if errors.Is(err, pgx.ErrNoRows) {
+				if err := tx.QueryRow(ctx, `SELECT id FROM users WHERE email=$1`, item.Email).Scan(&id); err != nil {
+					return fmt.Errorf("load %s: %w", item.Email, err)
 				}
-				return fmt.Errorf("create %s (existing QA emails are not overwritten): %w", item.Email, err)
+			} else if err != nil {
+				return fmt.Errorf("create %s: %w", item.Email, err)
 			}
-			if _, err := tx.Exec(ctx, `INSERT INTO credentials (user_id, password_hash) VALUES ($1, $2)`, id, hashes[i]); err != nil {
-				return fmt.Errorf("create credentials for %s: %w", item.Email, err)
+			if created {
+				password, err := newPassword()
+				if err != nil {
+					return err
+				}
+				hash, err := auth.NewArgon2idHasher().Hash(password)
+				if err != nil {
+					return err
+				}
+				if _, err := tx.Exec(ctx, `INSERT INTO credentials (user_id, password_hash) VALUES ($1, $2)`, id, hash); err != nil {
+					return fmt.Errorf("create credentials for %s: %w", item.Email, err)
+				}
+				accounts[i].Password = password
+				accounts[i].Created = true
 			}
-			if _, err := tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2)`, id, item.Role); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2) ON CONFLICT DO NOTHING`, id, item.Role); err != nil {
 				return fmt.Errorf("assign role %s to %s: %w", item.Role, item.Email, err)
 			}
 			ids[item.Role] = id
 		}
 
 		var sellerID int64
-		if err := tx.QueryRow(ctx, `
+		err := tx.QueryRow(ctx, `
 			INSERT INTO sellers (owner_user_id, display_name, status)
 			VALUES ($1, 'Weevcrafts QA Seller', 'active')
-			RETURNING id`, ids["seller_owner"]).Scan(&sellerID); err != nil {
+			ON CONFLICT (owner_user_id) DO NOTHING
+			RETURNING id`, ids["seller_owner"]).Scan(&sellerID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE owner_user_id=$1`, ids["seller_owner"]).Scan(&sellerID)
+		}
+		if err != nil {
 			return fmt.Errorf("create QA seller: %w", err)
 		}
 		permissions := []string{"PRODUCT_READ", "PRODUCT_WRITE", "INVENTORY_READ", "INVENTORY_WRITE", "ORDER_READ", "ORDER_FULFILL", "RETURN_READ", "REPORT_READ"}
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO seller_users (seller_id, user_id, status, permissions, added_by)
-			VALUES ($1, $2, 'active', $3, $4)`, sellerID, ids["seller_staff"], permissions, ids["seller_owner"]); err != nil {
+			VALUES ($1, $2, 'active', $3, $4) ON CONFLICT (seller_id, user_id) DO NOTHING`, sellerID, ids["seller_staff"], permissions, ids["seller_owner"]); err != nil {
 			return fmt.Errorf("associate QA seller staff: %w", err)
 		}
 		return nil
@@ -118,7 +126,7 @@ func main() {
 	if err := encoder.Encode(struct {
 		Accounts []account `json:"accounts"`
 		Note     string    `json:"note"`
-	}{accounts, "Save these one-time passwords securely. This command never prints or stores them again."}); err != nil {
+	}{accounts, "Passwords appear only for newly created accounts. Existing accounts keep their current credentials."}); err != nil {
 		log.Fatal(err)
 	}
 }

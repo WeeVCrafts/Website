@@ -67,10 +67,10 @@ func validPhone(phone string) bool {
 
 func (s *Service) Login(ctx context.Context, email, password string) (domainidentity.User, error) {
 	login := normalizeEmail(email)
-	// The six seeded role accounts can use their short QA username as well as
+	// Seeded role accounts can use their short QA username as well as
 	// their email address. All other accounts continue to use email login.
 	switch login {
-	case "customer", "seller", "superadmin", "support", "operations", "finance":
+	case "customer", "seller", "sellerstaff", "marketplaceadmin", "superadmin", "support", "operations", "finance":
 		login += "@weevcrafts.test"
 	}
 	credentials, err := s.repository.GetCredentialsByEmail(ctx, login)

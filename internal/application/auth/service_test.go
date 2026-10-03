@@ -41,7 +41,7 @@ func (f *fakeUserRepository) GetCredentialsByEmail(ctx context.Context, email st
 }
 
 func TestLoginMapsSeededRoleUsernameToEmail(t *testing.T) {
-	for _, username := range []string{"customer", "seller", "superadmin", "support", "operations", "finance"} {
+	for _, username := range []string{"customer", "seller", "sellerstaff", "marketplaceadmin", "superadmin", "support", "operations", "finance"} {
 		repository := &fakeUserRepository{getErr: ports.ErrCredentialsNotFound}
 		_, _ = NewService(repository, fakeHasher{}).Login(context.Background(), strings.ToUpper(username), "wrong")
 		if want := username + "@weevcrafts.test"; repository.seenEmail != want {

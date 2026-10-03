@@ -23,6 +23,8 @@ type account struct{ key, name, role string }
 var accounts = []account{
 	{"customer", "QA Customer", "customer"},
 	{"seller", "QA Seller", "seller_owner"},
+	{"sellerstaff", "QA Seller Staff", "seller_staff"},
+	{"marketplaceadmin", "QA Marketplace Admin", "marketplace_admin"},
 	{"superadmin", "QA Super Admin", "super_admin"},
 	{"support", "QA Support", "support_agent"},
 	{"operations", "QA Operations", "operations_returns"},
@@ -96,6 +98,7 @@ func main() {
 	}
 	if err := postgres.WithinTransaction(ctx, pool, func(ctx context.Context, tx pgx.Tx) error {
 		var sellerID int64
+		accountIDs := make(map[string]int64, len(accounts))
 		for _, item := range accounts {
 			email := item.key + "@weevcrafts.test"
 			var id int64
@@ -108,6 +111,7 @@ func main() {
 			if _, err := tx.Exec(ctx, `INSERT INTO user_roles (user_id,role_slug) VALUES ($1,$2) ON CONFLICT DO NOTHING`, id, item.role); err != nil {
 				return fmt.Errorf("role %s: %w", email, err)
 			}
+			accountIDs[item.key] = id
 			if item.key == "seller" {
 				if err := tx.QueryRow(ctx, `INSERT INTO sellers (owner_user_id,display_name,status) VALUES ($1,'Weevcrafts Seller','active') ON CONFLICT (owner_user_id) DO UPDATE SET status='active' RETURNING id`, id).Scan(&sellerID); err != nil {
 					return fmt.Errorf("seller: %w", err)
@@ -116,6 +120,9 @@ func main() {
 		}
 		if sellerID == 0 {
 			return fmt.Errorf("seller account missing")
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO seller_users (seller_id,user_id,status,permissions,added_by) VALUES ($1,$2,'active',$3,$4) ON CONFLICT (seller_id,user_id) DO UPDATE SET status='active',permissions=EXCLUDED.permissions`, sellerID, accountIDs["sellerstaff"], []string{"PRODUCT_READ", "PRODUCT_WRITE", "INVENTORY_READ", "INVENTORY_WRITE", "ORDER_READ", "ORDER_FULFILL", "RETURN_READ", "REPORT_READ"}, accountIDs["seller"]); err != nil {
+			return fmt.Errorf("seller staff: %w", err)
 		}
 		for _, item := range products {
 			if _, err := tx.Exec(ctx, `INSERT INTO categories (slug,name) VALUES ($1,initcap($1)) ON CONFLICT DO NOTHING`, item.category); err != nil {
