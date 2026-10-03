@@ -2,9 +2,10 @@ const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const password = "WeeVCrafts-Demo-2026!";
+const password = process.env.WEEVCRAFTS_ROLE_TEST_PASSWORD || "WeeVCrafts-Demo-2026!";
+const accountSet = process.env.WEEVCRAFTS_ROLE_TEST_ACCOUNT_SET || "demo";
 const viewportWidths = [360, 390, 768, 1024, 1440];
-const accounts = [
+const demoAccounts = [
   { id: "customer", email: "demo.customer01@weevcrafts.local", name: "Priya Sharma", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
   { id: "seller-owner", email: "demo.owner01@weevcrafts.local", name: "Aditi Rao", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
   { id: "seller-staff", email: "demo.staff01@weevcrafts.local", name: "Arjun Nair Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
@@ -14,6 +15,19 @@ const accounts = [
   { id: "operations", email: "demo.operations01@weevcrafts.local", name: "Returns Operator", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
   { id: "support", email: "demo.support01@weevcrafts.local", name: "Aditi Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
 ];
+
+const launchAccounts = [
+  { id: "customer", email: "customer@weevcrafts.test", name: "QA Customer", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
+  { id: "seller-owner", email: "seller@weevcrafts.test", name: "QA Seller", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
+  { id: "seller-staff", email: "sellerstaff@weevcrafts.test", name: "QA Seller Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
+  { id: "marketplace-admin", email: "marketplaceadmin@weevcrafts.test", name: "QA Marketplace Admin", landing: "/marketplace-admin", page: "/marketplace-admin/products", roleText: "Marketplace Admin", forbidden: "/super-admin" },
+  { id: "super-admin", email: "superadmin@weevcrafts.test", name: "QA Super Admin", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/support-portal" },
+  { id: "finance", email: "finance@weevcrafts.test", name: "QA Finance", landing: "/finance-portal", page: "/finance-portal/refunds", roleText: "Finance Operator", forbidden: "/operations-portal" },
+  { id: "operations", email: "operations@weevcrafts.test", name: "QA Operations", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
+  { id: "support", email: "support@weevcrafts.test", name: "QA Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
+];
+
+const accounts = accountSet === "launch" ? launchAccounts : demoAccounts;
 
 async function signIn(page, email, landing) {
   await page.goto("/login");
