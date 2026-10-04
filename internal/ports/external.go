@@ -52,17 +52,18 @@ type SearchEngine interface {
 }
 
 type SearchDocument struct {
-	ID             int64  `json:"id"`
-	Slug           string `json:"slug"`
-	Name           string `json:"name"`
-	Description    string `json:"description"`
-	Brand          string `json:"brand"`
-	BrandSlug      string `json:"brand_slug"`
-	CategorySlug   string `json:"category_slug"`
-	PriceCents     int64  `json:"price_cents"`
-	CompareAtCents int64  `json:"compare_at_cents"`
-	HasOffer       bool   `json:"has_offer"`
-	Available      int    `json:"available"`
+	ID             int64    `json:"id"`
+	Slug           string   `json:"slug"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	Brand          string   `json:"brand"`
+	BrandSlug      string   `json:"brand_slug"`
+	CategorySlug   string   `json:"category_slug"`
+	PriceCents     int64    `json:"price_cents"`
+	CompareAtCents int64    `json:"compare_at_cents"`
+	HasOffer       bool     `json:"has_offer"`
+	Available      int      `json:"available"`
+	SKUs           []string `json:"skus"`
 }
 
 type SearchIndexer interface {

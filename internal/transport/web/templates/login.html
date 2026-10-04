@@ -13,7 +13,7 @@
       <form class="mt-8 grid gap-5" method="post" action="/login">
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <label class="grid gap-2 text-sm font-semibold" for="email">Email or role username<input class="field" id="email" name="email" type="text" autocomplete="username" required value="{{.FormEmail}}"></label>
-        <label class="grid gap-2 text-sm font-semibold" for="password">Password<input class="field" id="password" name="password" type="password" autocomplete="current-password" required></label>
+        <label class="grid gap-2 text-sm font-semibold" for="password">Password<div class="password-field"><input class="field" id="password" name="password" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
         <a class="-mt-2 text-sm font-semibold text-indigo underline" href="/forgot-password">Forgot your password?</a>
         <button class="button-primary w-full" type="submit">Sign in</button>
       </form>

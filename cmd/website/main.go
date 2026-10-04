@@ -140,6 +140,7 @@ func main() {
 		logger.Warn("S3 media bucket unavailable", "error", err)
 	}
 	mediaService := applicationcommerce.NewMediaService(mediaStorage, postgres.NewMediaRepository(pool), roleAuthorizer)
+	supportAttachmentService := applicationcommerce.NewSupportAttachmentService(mediaStorage, commerceRepository, roleAuthorizer)
 	paymentOrderService := applicationpayment.NewOrderService(paymentGateway, paymentRepository)
 	webHandler, err := webTransport.NewFullHandlerWithPaymentConfigMediaRefundAndRecovery(catalogService, authService, sessionService, commerceCatalog, cartService, orderService, paymentOrderService, searchService, privacyService, mediaService, refundService, recoveryService, cfg.SecureCookies, cfg.RazorpayKeyID)
 	if err != nil {
@@ -158,8 +159,9 @@ func main() {
 	webHandler.SetCustomerDirectoryService(customerDirectoryService)
 	webHandler.SetFinanceService(financeService)
 	webHandler.SetSupportService(supportService)
+	webHandler.SetSupportAttachmentService(supportAttachmentService)
 	webHandler.SetReturnService(returnService)
-	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService)
+	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService).WithNoPaymentDemo(cfg.NoPaymentDemo)
 	backgroundWorker, err := worker.New(1, 16)
 	if err != nil {
 		logger.Error("configure background worker", "error", err)
@@ -232,6 +234,7 @@ func main() {
 	mux.HandleFunc("/api/v1/wishlist/add", apiHandler.WishlistAdd)
 	mux.HandleFunc("/api/v1/wishlist/", apiHandler.WishlistRemove)
 	mux.HandleFunc("/api/v1/checkout", apiHandler.Checkout)
+	mux.HandleFunc("/api/v1/checkout/no-payment", apiHandler.NoPaymentCheckout)
 	mux.HandleFunc("/api/v1/orders", apiHandler.Orders)
 	mux.HandleFunc("/api/v1/orders/", apiHandler.Order)
 	mux.HandleFunc("/api/v1/privacy", apiHandler.PrivacyCenter)
@@ -251,7 +254,16 @@ func main() {
 	}
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.SetRoleAdminService(roleAdminService)
-	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler)
+	portalHandler.SetSupportAttachmentService(supportAttachmentService)
+	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, supportAttachmentService)
+	// Keep customer support mutations and protected attachment reads ahead of
+	// the broad /support/ portal route. The portal still owns support-agent GET
+	// pages and delegates its mutation endpoints to webHandler.
+	mux.Handle("/support/create", webHandler)
+	mux.Handle("/support/customer-reply", webHandler)
+	mux.Handle("/support/reply", webHandler)
+	mux.Handle("/support/status", webHandler)
+	mux.Handle("/support/attachments/", webHandler)
 	mux.Handle("/workspaces", portalHandler)
 	mux.Handle("/admin", portalHandler)
 	mux.Handle("/admin/", portalHandler)

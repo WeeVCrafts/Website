@@ -17,6 +17,15 @@ func TestRebuildCreatesClearsAndPopulatesIndex(t *testing.T) {
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/indexes":
 			w.WriteHeader(http.StatusCreated)
+		case r.Method == http.MethodPut && r.URL.Path == "/indexes/products/settings/searchable-attributes":
+			var attributes []string
+			if err := json.NewDecoder(r.Body).Decode(&attributes); err != nil {
+				t.Fatalf("decode searchable attributes: %v", err)
+			}
+			if len(attributes) == 0 || attributes[len(attributes)-1] != "skus" {
+				t.Fatalf("SKU is not searchable: %v", attributes)
+			}
+			w.WriteHeader(http.StatusAccepted)
 		case r.Method == http.MethodPut && r.URL.Path == "/indexes/products/settings/filterable-attributes":
 			w.WriteHeader(http.StatusAccepted)
 		case r.Method == http.MethodPut && r.URL.Path == "/indexes/products/settings/sortable-attributes":
@@ -42,7 +51,7 @@ func TestRebuildCreatesClearsAndPopulatesIndex(t *testing.T) {
 	if err != nil {
 		t.Fatalf("rebuild index: %v", err)
 	}
-	if len(calls) != 5 || calls[0] != "POST /indexes" || calls[1] != "PUT /indexes/products/settings/filterable-attributes" || calls[2] != "PUT /indexes/products/settings/sortable-attributes" || calls[3] != "DELETE /indexes/products/documents" || calls[4] != "POST /indexes/products/documents" {
+	if len(calls) != 6 || calls[0] != "POST /indexes" || calls[1] != "PUT /indexes/products/settings/searchable-attributes" || calls[2] != "PUT /indexes/products/settings/filterable-attributes" || calls[3] != "PUT /indexes/products/settings/sortable-attributes" || calls[4] != "DELETE /indexes/products/documents" || calls[5] != "POST /indexes/products/documents" {
 		t.Fatalf("unexpected rebuild calls: %v", calls)
 	}
 }

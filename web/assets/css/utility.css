@@ -7,6 +7,11 @@
 .utility-notice { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; padding: 11px 13px; color: var(--forest); background: #e9f0e8; border: 1px solid #c8dac8; font-size: 11px; }
 .utility-notice .material-symbols-outlined { font-size: 18px; }
 .utility-form { display: grid; gap: 15px; }
+.password-field { position: relative; display: flex; align-items: center; }
+.password-field input { padding-right: 42px; }
+.password-toggle { position: absolute; right: 7px; display: grid; width: 31px; height: 31px; place-items: center; padding: 0; border: 0; color: var(--muted); background: transparent; }
+.password-toggle:hover, .password-toggle:focus-visible { color: var(--terracotta); }
+.password-toggle .material-symbols-outlined { font-size: 18px; }
 .utility-form label { display: grid; gap: 6px; color: var(--ink); font-size: 11px; font-weight: 700; }
 .utility-form input, .utility-form select, .utility-form textarea { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--line); outline: 0; color: var(--ink); background: #fffdf8; font: 12px/1.4 var(--sans); }
 .utility-form textarea { min-height: 112px; resize: vertical; }

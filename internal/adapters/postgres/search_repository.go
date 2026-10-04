@@ -52,7 +52,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN LATERAL (
-			SELECT candidate.id, candidate.price_cents, candidate.compare_at_cents
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
 			FROM product_variants candidate
 			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
 			WHERE candidate.product_id = p.id AND candidate.status = 'active'
@@ -61,7 +61,8 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%')
+		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
+		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -77,13 +78,13 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
 		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url), p.swatches,
-		       pv.id, COALESCE(i.available_quantity, 0)
+		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN categories c ON c.slug = p.category_slug
 		JOIN brands b ON b.slug = p.brand_slug
 		JOIN LATERAL (
-			SELECT candidate.id, candidate.price_cents, candidate.compare_at_cents FROM product_variants candidate
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents FROM product_variants candidate
 			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
 			WHERE candidate.product_id = p.id AND candidate.status = 'active'
 			ORDER BY (COALESCE(candidate_stock.available_quantity, 0) > 0) DESC, candidate.id
@@ -91,7 +92,8 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%')
+		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
+		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -109,7 +111,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 	products := make([]domaincatalog.Product, 0)
 	for rows.Next() {
 		var product domaincatalog.Product
-		if err := rows.Scan(&product.ID, &product.Slug, &product.Brand, &product.Name, &product.Description, &product.CategorySlug, &product.CategoryName, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Rating, &product.ReviewCount, &product.DeliveryLabel, &product.ImageURL, &product.Swatches, &product.VariantID, &product.Available); err != nil {
+		if err := rows.Scan(&product.ID, &product.Slug, &product.Brand, &product.Name, &product.Description, &product.CategorySlug, &product.CategoryName, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Rating, &product.ReviewCount, &product.DeliveryLabel, &product.ImageURL, &product.Swatches, &product.VariantID, &product.SKU, &product.Available); err != nil {
 			return nil, 0, fmt.Errorf("scan product search: %w", err)
 		}
 		products = append(products, product)
@@ -132,7 +134,7 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN categories c ON c.slug = p.category_slug
 		JOIN LATERAL (
-			SELECT candidate.id, candidate.price_cents, candidate.compare_at_cents
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
 			FROM product_variants candidate
 			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
 			WHERE candidate.product_id = p.id AND candidate.status = 'active'
@@ -141,7 +143,8 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%')
+		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
+		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -176,7 +179,7 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
 		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url), p.swatches,
-		       pv.id, COALESCE(i.available_quantity, 0)
+		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN categories c ON c.slug = p.category_slug
@@ -198,7 +201,7 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 	products := make([]domaincatalog.Product, 0, len(slugs))
 	for rows.Next() {
 		var product domaincatalog.Product
-		if err := rows.Scan(&product.ID, &product.Slug, &product.Brand, &product.Name, &product.Description, &product.CategorySlug, &product.CategoryName, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Rating, &product.ReviewCount, &product.DeliveryLabel, &product.ImageURL, &product.Swatches, &product.VariantID, &product.Available); err != nil {
+		if err := rows.Scan(&product.ID, &product.Slug, &product.Brand, &product.Name, &product.Description, &product.CategorySlug, &product.CategoryName, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Rating, &product.ReviewCount, &product.DeliveryLabel, &product.ImageURL, &product.Swatches, &product.VariantID, &product.SKU, &product.Available); err != nil {
 			return nil, fmt.Errorf("scan hydrated search product: %w", err)
 		}
 		products = append(products, product)
@@ -212,12 +215,13 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 func (r *ProductSearchRepository) ListApprovedForIndex(ctx context.Context) ([]ports.SearchDocument, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.slug, p.name, p.description, b.name, p.brand_slug, p.category_slug,
+		       (SELECT ARRAY_AGG(search_variant.sku) FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active'),
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), COALESCE(pv.compare_at_cents > pv.price_cents, false), COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN brands b ON b.slug = p.brand_slug
 		LEFT JOIN LATERAL (
-			SELECT candidate.id, candidate.price_cents, candidate.compare_at_cents
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
 			FROM product_variants candidate
 			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
 			WHERE candidate.product_id = p.id AND candidate.status = 'active'
@@ -234,7 +238,7 @@ func (r *ProductSearchRepository) ListApprovedForIndex(ctx context.Context) ([]p
 	documents := make([]ports.SearchDocument, 0)
 	for rows.Next() {
 		var document ports.SearchDocument
-		if err := rows.Scan(&document.ID, &document.Slug, &document.Name, &document.Description, &document.Brand, &document.BrandSlug, &document.CategorySlug, &document.PriceCents, &document.CompareAtCents, &document.HasOffer, &document.Available); err != nil {
+		if err := rows.Scan(&document.ID, &document.Slug, &document.Name, &document.Description, &document.Brand, &document.BrandSlug, &document.CategorySlug, &document.SKUs, &document.PriceCents, &document.CompareAtCents, &document.HasOffer, &document.Available); err != nil {
 			return nil, err
 		}
 		documents = append(documents, document)

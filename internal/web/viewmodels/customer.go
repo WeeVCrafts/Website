@@ -15,7 +15,7 @@ type Product struct {
 	Price, CompareAt, Discount                                                                                              string
 	Rating                                                                                                                  string
 	Reviews                                                                                                                 int
-	InStock, HasCompareAt                                                                                                   bool
+	InStock, HasCompareAt, Saved                                                                                            bool
 	Variants                                                                                                                []ProductVariant
 	Media                                                                                                                   []ProductMedia
 }
@@ -29,10 +29,16 @@ type CustomerSupportTicket struct {
 	ID                                                                      int64
 	Number, Subject, InitialMessage, Status, Priority, Created, OrderNumber string
 	Messages                                                                []CustomerSupportMessage
+	Attachments                                                             []CustomerSupportAttachment
 }
 
 type CustomerSupportMessage struct {
 	Author, Role, Body, Created string
+	Attachments                 []CustomerSupportAttachment
+}
+
+type CustomerSupportAttachment struct {
+	ID, FileName, ContentType, Size, URL string
 }
 
 type NotificationPreferences struct {
@@ -102,6 +108,7 @@ type CustomerPage struct {
 	RoleLabel, PortalLabel                          string
 	PaymentMode, PaymentPublicKey                   string
 	PaymentReady                                    bool
+	NoPaymentDemo                                   bool
 	CanCreateSupport, CanFollowSeller               bool
 	CSRFToken                                       string
 	RefundKey                                       string

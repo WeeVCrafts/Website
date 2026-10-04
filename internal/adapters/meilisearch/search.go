@@ -89,6 +89,9 @@ func (s *SearchEngine) Rebuild(ctx context.Context, documents []ports.SearchDocu
 	if err := s.ensureIndex(ctx); err != nil {
 		return err
 	}
+	if err := s.request(ctx, http.MethodPut, "/indexes/products/settings/searchable-attributes", []byte(`["name","description","brand","brand_slug","category_slug","skus"]`), nil); err != nil {
+		return err
+	}
 	if err := s.request(ctx, http.MethodPut, "/indexes/products/settings/filterable-attributes", []byte(`["category_slug","brand_slug","price_cents","available","compare_at_cents","has_offer"]`), nil); err != nil {
 		return err
 	}

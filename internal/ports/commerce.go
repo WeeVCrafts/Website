@@ -112,6 +112,20 @@ type CustomerSupportReplyRepository interface {
 	ReplyCustomerSupportTicket(ctx context.Context, userID, ticketID int64, reply string) error
 }
 
+type SupportReplyMessageRepository interface {
+	ReplySupportTicketWithID(ctx context.Context, actorID, ticketID int64, reply string) (int64, error)
+}
+
+type CustomerSupportReplyMessageRepository interface {
+	ReplyCustomerSupportTicketWithID(ctx context.Context, userID, ticketID int64, reply string) (int64, error)
+}
+
+type SupportAttachmentRepository interface {
+	CreateSupportAttachment(ctx context.Context, ticketID, messageID, userID int64, fileName, contentType string, byteSize int64, objectKey string) (domaincommerce.SupportAttachment, error)
+	ListSupportAttachments(ctx context.Context, ticketID int64) ([]domaincommerce.SupportAttachment, error)
+	GetSupportAttachment(ctx context.Context, attachmentID int64) (domaincommerce.SupportAttachment, error)
+}
+
 type ReturnRepository interface {
 	CreateReturnRequest(ctx context.Context, userID int64, orderNumber, reason string) (domaincommerce.ReturnRequest, error)
 	GetReturnRequest(ctx context.Context, userID int64, orderNumber string) (domaincommerce.ReturnRequest, error)

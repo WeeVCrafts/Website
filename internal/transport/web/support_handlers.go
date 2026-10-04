@@ -2,8 +2,10 @@ package web
 
 import (
 	"errors"
+	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
@@ -46,6 +48,15 @@ func (h *Handler) supportPage(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not load the live support requests.")
 		return
 	}
+	if h.supportAttachments != nil {
+		for index := range tickets {
+			tickets[index].Attachments, err = h.supportAttachments.List(r.Context(), tickets[index].ID)
+			if err != nil {
+				h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not load support attachments.")
+				return
+			}
+		}
+	}
 	h.render(w, http.StatusOK, "support", pageData{
 		Brand: identity.Name, Tagline: identity.Tagline, Description: identity.Description,
 		Title: "Support · " + identity.Name, Authenticated: true, AccountUserID: session.UserID,
@@ -67,12 +78,22 @@ func (h *Handler) supportCreate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if err := parseSupportMultipart(r); err != nil {
+		h.renderError(w, http.StatusRequestEntityTooLarge, "Support upload too large", "Please keep support attachments within the allowed file limits.")
+		return
+	}
+	files := supportAttachmentFiles(r)
+	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Validate(files) != nil) {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support upload invalid", "Use up to three JPG, PNG, or WebP images, with each file no larger than 10 MB.")
+		return
+	}
 	seller := r.URL.Path == "/seller/support/create"
 	var createErr error
+	var ticket domaincommerce.SupportTicket
 	if seller {
-		_, createErr = h.supportService.CreateSeller(r.Context(), session.UserID, r.FormValue("order_number"), r.FormValue("subject"), r.FormValue("message"))
+		ticket, createErr = h.supportService.CreateSeller(r.Context(), session.UserID, r.FormValue("order_number"), r.FormValue("subject"), r.FormValue("message"))
 	} else {
-		_, createErr = h.supportService.Create(r.Context(), session.UserID, r.FormValue("order_number"), r.FormValue("subject"), r.FormValue("message"))
+		ticket, createErr = h.supportService.Create(r.Context(), session.UserID, r.FormValue("order_number"), r.FormValue("subject"), r.FormValue("message"))
 	}
 	if createErr != nil {
 		switch {
@@ -86,6 +107,12 @@ func (h *Handler) supportCreate(w http.ResponseWriter, r *http.Request) {
 			h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not create the support request.")
 		}
 		return
+	}
+	if len(files) > 0 {
+		if h.supportAttachments == nil || h.supportAttachments.Store(r.Context(), session.UserID, ticket.ID, 0, files) != nil {
+			h.renderError(w, http.StatusUnprocessableEntity, "Support upload failed", "The request was created, but the attachments could not be stored. Please try again without files or submit them again.")
+			return
+		}
 	}
 	if seller {
 		h.redirect(w, r, "/seller/support")
@@ -145,12 +172,22 @@ func (h *Handler) supportReply(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if err := parseSupportMultipart(r); err != nil {
+		h.renderError(w, http.StatusRequestEntityTooLarge, "Support upload too large", "Please keep support attachments within the allowed file limits.")
+		return
+	}
+	files := supportAttachmentFiles(r)
+	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Validate(files) != nil) {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support upload invalid", "Use up to three JPG, PNG, or WebP images, with each file no larger than 10 MB.")
+		return
+	}
 	ticketID, err := strconv.ParseInt(r.FormValue("ticket_id"), 10, 64)
 	if err != nil || ticketID <= 0 {
 		h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Choose a valid support ticket.")
 		return
 	}
-	if err := h.supportService.Reply(r.Context(), session.UserID, ticketID, r.FormValue("message")); err != nil {
+	messageID, err := h.supportService.ReplyWithMessageID(r.Context(), session.UserID, ticketID, r.FormValue("message"))
+	if err != nil {
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidSupportTicket):
 			h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Enter a response of 1 to 4,000 characters.")
@@ -161,6 +198,10 @@ func (h *Handler) supportReply(w http.ResponseWriter, r *http.Request) {
 		default:
 			h.renderError(w, http.StatusServiceUnavailable, "Support unavailable", "We could not send that response.")
 		}
+		return
+	}
+	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Store(r.Context(), session.UserID, ticketID, messageID, files) != nil) {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support upload failed", "Your reply was sent, but the attachments could not be stored. Please try again without files.")
 		return
 	}
 	h.redirect(w, r, "/support/cases?ticket_id="+strconv.FormatInt(ticketID, 10))
@@ -180,12 +221,22 @@ func (h *Handler) supportCustomerReply(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if err := parseSupportMultipart(r); err != nil {
+		h.renderError(w, http.StatusRequestEntityTooLarge, "Support upload too large", "Please keep support attachments within the allowed file limits.")
+		return
+	}
+	files := supportAttachmentFiles(r)
+	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Validate(files) != nil) {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support upload invalid", "Use up to three JPG, PNG, or WebP images, with each file no larger than 10 MB.")
+		return
+	}
 	ticketID, err := strconv.ParseInt(r.FormValue("ticket_id"), 10, 64)
 	if err != nil || ticketID <= 0 {
 		h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Choose a valid support ticket.")
 		return
 	}
-	if err := h.supportService.ReplyCustomer(r.Context(), session.UserID, ticketID, r.FormValue("message")); err != nil {
+	messageID, err := h.supportService.ReplyCustomerWithMessageID(r.Context(), session.UserID, ticketID, r.FormValue("message"))
+	if err != nil {
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidSupportTicket):
 			h.renderError(w, http.StatusUnprocessableEntity, "Support reply invalid", "Enter a response of 1 to 4,000 characters.")
@@ -200,5 +251,27 @@ func (h *Handler) supportCustomerReply(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Store(r.Context(), session.UserID, ticketID, messageID, files) != nil) {
+		h.renderError(w, http.StatusUnprocessableEntity, "Support upload failed", "Your reply was sent, but the attachments could not be stored. Please try again without files.")
+		return
+	}
 	h.redirect(w, r, "/account/support?ticket_id="+strconv.FormatInt(ticketID, 10)+"&notice=Reply+sent")
+}
+
+func supportAttachmentFiles(r *http.Request) []*multipart.FileHeader {
+	if r.MultipartForm == nil {
+		return nil
+	}
+	files := r.MultipartForm.File["attachments[]"]
+	if len(files) == 0 {
+		files = r.MultipartForm.File["attachments"]
+	}
+	return files
+}
+
+func parseSupportMultipart(r *http.Request) error {
+	if !strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "multipart/form-data") {
+		return nil
+	}
+	return r.ParseMultipartForm(32 << 20)
 }

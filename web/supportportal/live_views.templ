@@ -31,6 +31,13 @@ templ LiveCases(p viewmodels.SupportPortalPage) {
 			<section class="support-panel live-case-detail" aria-labelledby="live-case-heading">
 				<div class="support-panel-heading"><div><h2 id="live-case-heading">{ p.SelectedCase.ID } · { p.SelectedCase.Subject }</h2><p>{ p.SelectedCase.Customer } · { p.SelectedCase.Status } · Created { p.SelectedCase.Created }</p></div></div>
 				<div class="support-thread live-support-thread">
+					if len(p.SelectedCase.Attachments) > 0 {
+						<div class="support-attachments" aria-label="Case attachments">
+							for _, attachment := range p.SelectedCase.Attachments {
+								<a href={ attachment.URL } target="_blank" rel="noreferrer"><span class="material-symbols-outlined" aria-hidden="true">attach_file</span>{ attachment.FileName }</a>
+							}
+						</div>
+					}
 					if p.SelectedCase.InitialMessage != "" {
 						<article class="support-message customer">
 							<span class="support-message-avatar">{ p.SelectedCase.CustomerInitials }</span>
@@ -47,9 +54,10 @@ templ LiveCases(p viewmodels.SupportPortalPage) {
 				if p.SelectedCase.AgentNote != "" {
 					<aside class="internal-note live-internal-note"><b>Latest internal status note</b><p>{ p.SelectedCase.AgentNote }</p></aside>
 				}
-				<form class="support-reply live-support-reply" method="post" action="/support-portal/cases/reply">
+				<form class="support-reply live-support-reply" method="post" action="/support-portal/cases/reply" enctype="multipart/form-data">
 					<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.SelectedCase.DatabaseID) }/>
 					<label for="support-agent-reply">Reply to customer</label><textarea id="support-agent-reply" name="message" maxlength="4000" required placeholder="Write a response. It will be saved to this case conversation."></textarea>
+					<label for="support-agent-attachments">Attachments <span>(up to 3 images, 10 MB each)</span></label><input id="support-agent-attachments" type="file" name="attachments[]" accept="image/jpeg,image/png,image/webp" multiple/>
 					<button type="submit" class="support-button primary"><span class="material-symbols-outlined" aria-hidden="true">send</span>Send Reply</button>
 				</form>
 			</section>

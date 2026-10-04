@@ -217,13 +217,19 @@
     }
 
     async checkout(address, idempotencyKey, couponCode) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode);
+	}
+    async checkoutNoPayment(address, idempotencyKey, couponCode) {
+		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode);
+	}
+    async checkoutAt(path, address, idempotencyKey, couponCode) {
       const cart = await this.call(ROOT + "/cart");
-      return this.call(ROOT + "/checkout", {
+	  return this.call(ROOT + path, {
         method: "POST", authenticated: true,
         headers: { "Idempotency-Key": idempotencyKey },
         body: { cart_id: unwrap(cart).id, idempotency_key: idempotencyKey, address: {
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
-          line2: address.line2 || "", city: address.city, state: address.region,
+          line2: address.line2 || "", city: address.city, state: address.state || address.region,
           postal_code: address.postal_code, country_code: address.country_code || "IN"
         }, coupon_code: couponCode || "" }
       });

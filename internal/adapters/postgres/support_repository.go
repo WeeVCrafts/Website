@@ -119,14 +119,19 @@ func (r *CommerceRepository) UpdateSupportTicket(ctx context.Context, actorID, t
 }
 
 func (r *CommerceRepository) ReplySupportTicket(ctx context.Context, actorID, ticketID int64, reply string) error {
-	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+	_, err := r.ReplySupportTicketWithID(ctx, actorID, ticketID, reply)
+	return err
+}
+
+func (r *CommerceRepository) ReplySupportTicketWithID(ctx context.Context, actorID, ticketID int64, reply string) (int64, error) {
+	var messageID int64
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var lockedTicketID int64
 		if err := tx.QueryRow(transactionContext, `SELECT id FROM support_tickets WHERE id = $1 FOR UPDATE`, ticketID).Scan(&lockedTicketID); errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrSupportNotFound
 		} else if err != nil {
 			return err
 		}
-		var messageID int64
 		if err := tx.QueryRow(transactionContext, `
 			INSERT INTO support_ticket_messages (ticket_id, author_id, author_role, body)
 			VALUES ($1, $2, 'support_agent', $3)
@@ -140,10 +145,17 @@ func (r *CommerceRepository) ReplySupportTicket(ctx context.Context, actorID, ti
 		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'support.ticket_replied', 'support_ticket', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(ticketID), ports.RequestID(transactionContext), metadata)
 		return err
 	})
+	return messageID, err
 }
 
 func (r *CommerceRepository) ReplyCustomerSupportTicket(ctx context.Context, userID, ticketID int64, reply string) error {
-	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+	_, err := r.ReplyCustomerSupportTicketWithID(ctx, userID, ticketID, reply)
+	return err
+}
+
+func (r *CommerceRepository) ReplyCustomerSupportTicketWithID(ctx context.Context, userID, ticketID int64, reply string) (int64, error) {
+	var messageID int64
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var ownerID int64
 		var status string
 		if err := tx.QueryRow(transactionContext, `SELECT user_id,status FROM support_tickets WHERE id=$1 FOR UPDATE`, ticketID).Scan(&ownerID, &status); errors.Is(err, pgx.ErrNoRows) {
@@ -157,7 +169,6 @@ func (r *CommerceRepository) ReplyCustomerSupportTicket(ctx context.Context, use
 		if status == "closed" {
 			return ports.ErrSupportState
 		}
-		var messageID int64
 		if err := tx.QueryRow(transactionContext, `INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) VALUES($1,$2,'customer',$3) RETURNING id`, ticketID, userID, reply).Scan(&messageID); err != nil {
 			return err
 		}
@@ -168,4 +179,43 @@ func (r *CommerceRepository) ReplyCustomerSupportTicket(ctx context.Context, use
 		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'support.ticket_customer_replied','support_ticket',$2,$3,$4)`, fmt.Sprint(userID), fmt.Sprint(ticketID), ports.RequestID(transactionContext), metadata)
 		return err
 	})
+	return messageID, err
+}
+
+func (r *CommerceRepository) CreateSupportAttachment(ctx context.Context, ticketID, messageID, userID int64, fileName, contentType string, byteSize int64, objectKey string) (domaincommerce.SupportAttachment, error) {
+	var attachment domaincommerce.SupportAttachment
+	err := r.pool.QueryRow(ctx, `
+		INSERT INTO support_attachments(ticket_id,message_id,user_id,file_name,content_type,byte_size,object_key)
+		VALUES($1,NULLIF($2,0),$3,$4,$5,$6,$7)
+		RETURNING id,ticket_id,COALESCE(message_id,0),user_id,file_name,content_type,byte_size,object_key,created_at`,
+		ticketID, messageID, userID, fileName, contentType, byteSize, objectKey).Scan(
+		&attachment.ID, &attachment.TicketID, &attachment.MessageID, &attachment.UserID, &attachment.FileName, &attachment.ContentType, &attachment.ByteSize, &attachment.ObjectKey, &attachment.CreatedAt)
+	return attachment, err
+}
+
+func (r *CommerceRepository) ListSupportAttachments(ctx context.Context, ticketID int64) ([]domaincommerce.SupportAttachment, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id,ticket_id,COALESCE(message_id,0),user_id,file_name,content_type,byte_size,object_key,created_at FROM support_attachments WHERE ticket_id=$1 ORDER BY created_at,id`, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	attachments := make([]domaincommerce.SupportAttachment, 0)
+	for rows.Next() {
+		var attachment domaincommerce.SupportAttachment
+		if err := rows.Scan(&attachment.ID, &attachment.TicketID, &attachment.MessageID, &attachment.UserID, &attachment.FileName, &attachment.ContentType, &attachment.ByteSize, &attachment.ObjectKey, &attachment.CreatedAt); err != nil {
+			return nil, err
+		}
+		attachments = append(attachments, attachment)
+	}
+	return attachments, rows.Err()
+}
+
+func (r *CommerceRepository) GetSupportAttachment(ctx context.Context, attachmentID int64) (domaincommerce.SupportAttachment, error) {
+	var attachment domaincommerce.SupportAttachment
+	err := r.pool.QueryRow(ctx, `SELECT id,ticket_id,COALESCE(message_id,0),user_id,file_name,content_type,byte_size,object_key,created_at FROM support_attachments WHERE id=$1`, attachmentID).Scan(
+		&attachment.ID, &attachment.TicketID, &attachment.MessageID, &attachment.UserID, &attachment.FileName, &attachment.ContentType, &attachment.ByteSize, &attachment.ObjectKey, &attachment.CreatedAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domaincommerce.SupportAttachment{}, ports.ErrSupportNotFound
+	}
+	return attachment, err
 }

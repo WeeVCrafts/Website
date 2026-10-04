@@ -32,24 +32,36 @@ import (
 // visual system while sourcing their state from the live application services.
 // The transport/web handler remains responsible for mutations and API routes.
 type LiveStorefrontHandler struct {
-	catalog          *applicationcatalog.Service
-	search           *applicationcatalog.SearchService
-	cart             *applicationcommerce.CartService
-	orders           *applicationcommerce.OrderService
-	sessions         *applicationauth.SessionService
-	pool             *pgxpool.Pool
-	paymentMode      string
-	paymentPublicKey string
-	paymentReady     bool
-	fallback         http.Handler
+	catalog            *applicationcatalog.Service
+	search             *applicationcatalog.SearchService
+	cart               *applicationcommerce.CartService
+	orders             *applicationcommerce.OrderService
+	sessions           *applicationauth.SessionService
+	pool               *pgxpool.Pool
+	paymentMode        string
+	paymentPublicKey   string
+	paymentReady       bool
+	noPaymentDemo      bool
+	supportAttachments *applicationcommerce.SupportAttachmentService
+	fallback           http.Handler
 }
 
-func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *applicationcatalog.SearchService, cart *applicationcommerce.CartService, orders *applicationcommerce.OrderService, sessions *applicationauth.SessionService, pool *pgxpool.Pool, paymentMode, paymentPublicKey string, paymentConfigured bool, fallback http.Handler) *LiveStorefrontHandler {
+func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *applicationcatalog.SearchService, cart *applicationcommerce.CartService, orders *applicationcommerce.OrderService, sessions *applicationauth.SessionService, pool *pgxpool.Pool, paymentMode, paymentPublicKey string, paymentConfigured bool, fallback http.Handler, noPaymentDemo ...interface{}) *LiveStorefrontHandler {
 	mode := strings.ToLower(strings.TrimSpace(paymentMode))
 	ready := paymentReady(mode, paymentConfigured)
+	demo := false
+	var supportAttachments *applicationcommerce.SupportAttachmentService
+	for _, option := range noPaymentDemo {
+		switch value := option.(type) {
+		case bool:
+			demo = value
+		case *applicationcommerce.SupportAttachmentService:
+			supportAttachments = value
+		}
+	}
 	return &LiveStorefrontHandler{
 		catalog: catalog, search: search, cart: cart, orders: orders, sessions: sessions, pool: pool,
-		paymentMode: mode, paymentPublicKey: paymentPublicKey, paymentReady: ready, fallback: fallback,
+		paymentMode: mode, paymentPublicKey: paymentPublicKey, paymentReady: ready, noPaymentDemo: demo, supportAttachments: supportAttachments, fallback: fallback,
 	}
 }
 
@@ -327,7 +339,7 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 	address, err := applicationcommerce.NormalizeAddressInput(domaincommerce.AddressInput{
 		RecipientName: r.Form.Get("recipient_name"), Phone: r.Form.Get("phone"),
 		Line1: r.Form.Get("line1"), Line2: r.Form.Get("line2"), City: r.Form.Get("city"),
-		State: r.Form.Get("state"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
+		State: firstFormValue(r.Form, "state", "region"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
 	})
 	if err != nil {
 		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {
@@ -462,6 +474,15 @@ func safeCustomerNext(candidate, fallback string) string {
 	return candidate
 }
 
+func firstFormValue(values url.Values, names ...string) string {
+	for _, name := range names {
+		if value := strings.TrimSpace(values.Get(name)); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
 func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, error) {
 	userID, csrf, authenticated := h.session(r)
 	filters := r.URL.Query()
@@ -541,7 +562,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		CouponCode: strings.ToUpper(strings.TrimSpace(filters.Get("coupon"))),
 		Notice:     filters.Get("notice"), Filters: filters, Brand: "Weevcrafts",
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
-		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady,
+		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
@@ -562,6 +583,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	if authenticated && h.cart != nil {
 		page.Cart, page.CartCount = h.liveCart(r.Context(), userID, csrf)
 		page.SavedProducts, page.WishlistCount = h.liveWishlist(r.Context(), userID, csrf)
+		markSavedProducts(&page)
 		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotals(page.Cart)
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
@@ -912,6 +934,14 @@ func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, user
 		}
 		item.Created = created.Format("2 Jan 2006, 15:04")
 		item.Messages = append(item.Messages, viewmodels.CustomerSupportMessage{Author: customerName, Role: "You", Body: item.InitialMessage, Created: item.Created})
+		if h.supportAttachments != nil {
+			attachments, attachmentErr := h.supportAttachments.List(ctx, item.ID)
+			if attachmentErr != nil {
+				return nil, attachmentErr
+			}
+			item.Attachments = supportAttachmentViews(attachments)
+			item.Messages[0].Attachments = supportAttachmentViews(filterSupportMessageAttachments(attachments, 0))
+		}
 		tickets = append(tickets, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -920,14 +950,15 @@ func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, user
 	}
 	rows.Close()
 	for index := range tickets {
-		messages, err := h.pool.Query(ctx, `SELECT u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, tickets[index].ID)
+		messages, err := h.pool.Query(ctx, `SELECT m.id,u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, tickets[index].ID)
 		if err != nil {
 			return nil, err
 		}
 		for messages.Next() {
+			var messageID int64
 			var author, authorRole, body string
 			var created time.Time
-			if err := messages.Scan(&author, &authorRole, &body, &created); err != nil {
+			if err := messages.Scan(&messageID, &author, &authorRole, &body, &created); err != nil {
 				messages.Close()
 				return nil, err
 			}
@@ -935,7 +966,16 @@ func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, user
 			if authorRole == "support_agent" {
 				role = "Support agent"
 			}
-			tickets[index].Messages = append(tickets[index].Messages, viewmodels.CustomerSupportMessage{Author: author, Role: role, Body: body, Created: created.Format("2 Jan 2006, 15:04")})
+			message := viewmodels.CustomerSupportMessage{Author: author, Role: role, Body: body, Created: created.Format("2 Jan 2006, 15:04")}
+			if h.supportAttachments != nil {
+				attachments, attachmentErr := h.supportAttachments.List(ctx, tickets[index].ID)
+				if attachmentErr != nil {
+					messages.Close()
+					return nil, attachmentErr
+				}
+				message.Attachments = supportAttachmentViews(filterSupportMessageAttachments(attachments, messageID))
+			}
+			tickets[index].Messages = append(tickets[index].Messages, message)
 		}
 		if err := messages.Err(); err != nil {
 			messages.Close()
@@ -944,6 +984,24 @@ func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, user
 		messages.Close()
 	}
 	return tickets, nil
+}
+
+func supportAttachmentViews(attachments []domaincommerce.SupportAttachment) []viewmodels.CustomerSupportAttachment {
+	views := make([]viewmodels.CustomerSupportAttachment, 0, len(attachments))
+	for _, attachment := range attachments {
+		views = append(views, viewmodels.CustomerSupportAttachment{ID: strconv.FormatInt(attachment.ID, 10), FileName: attachment.FileName, ContentType: attachment.ContentType, Size: strconv.FormatInt(attachment.ByteSize, 10), URL: "/support/attachments/" + strconv.FormatInt(attachment.ID, 10)})
+	}
+	return views
+}
+
+func filterSupportMessageAttachments(attachments []domaincommerce.SupportAttachment, messageID int64) []domaincommerce.SupportAttachment {
+	filtered := make([]domaincommerce.SupportAttachment, 0)
+	for _, attachment := range attachments {
+		if attachment.MessageID == messageID {
+			filtered = append(filtered, attachment)
+		}
+	}
+	return filtered
 }
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
@@ -1298,6 +1356,13 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 				return
 			}
 			page, _ := h.page(r)
+			if r.FormValue("context") == "product-card" {
+				product, _ := h.catalog.Get(r.Context(), slug)
+				productView := liveProduct(product, csrf)
+				productView.Saved = false
+				h.render(w, r, components.WishlistMutation(page, productView, false))
+				return
+			}
 			h.render(w, r, pages.WishlistGridMutation(page))
 			return
 		}
@@ -1307,7 +1372,9 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		}
 		page, _ := h.page(r)
 		product, _ := h.catalog.Get(r.Context(), slug)
-		h.render(w, r, components.WishlistMutation(page, liveProduct(product, csrf), false))
+		productView := liveProduct(product, csrf)
+		productView.Saved = true
+		h.render(w, r, components.WishlistMutation(page, productView, false))
 		return
 	}
 	quantity := int64(1)
@@ -1389,6 +1456,19 @@ func (h *LiveStorefrontHandler) liveWishlist(ctx context.Context, userID int64, 
 		}
 	}
 	return result, len(result)
+}
+
+func markSavedProducts(page *viewmodels.CustomerPage) {
+	saved := make(map[string]struct{}, len(page.SavedProducts))
+	for _, product := range page.SavedProducts {
+		saved[product.Slug] = struct{}{}
+	}
+	for index := range page.Products {
+		_, page.Products[index].Saved = saved[page.Products[index].Slug]
+	}
+	if page.Product.Slug != "" {
+		_, page.Product.Saved = saved[page.Product.Slug]
+	}
 }
 
 func (h *LiveStorefrontHandler) session(r *http.Request) (int64, string, bool) {
@@ -1614,7 +1694,7 @@ func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product 
 	if product.Rating > 0 {
 		rating = strconv.FormatFloat(product.Rating, 'f', 1, 64)
 	}
-	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: product.Brand, BrandName: product.Brand, Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
+	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, SKU: product.SKU, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: product.Brand, BrandName: product.Brand, Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
 }
 
 func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug string) ([]viewmodels.ProductVariant, error) {

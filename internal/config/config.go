@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -21,6 +22,7 @@ type Config struct {
 	RazorpayWebhookSecret string
 	RazorpayBaseURL       string
 	PaymentMode           string
+	NoPaymentDemo         bool
 	LocalPaymentSecret    string
 	LocalMode             bool
 	SMTPAddress           string
@@ -60,6 +62,7 @@ func FromEnv() Config {
 		RazorpayWebhookSecret: env("RAZORPAY_WEBHOOK_SECRET", ""),
 		RazorpayBaseURL:       env("RAZORPAY_BASE_URL", "https://api.razorpay.com"),
 		PaymentMode:           env("WECRATFS_PAYMENT_MODE", "razorpay"),
+		NoPaymentDemo:         boolEnv("WECRATFS_NO_PAYMENT_DEMO", false) && !strings.EqualFold(environment, "production"),
 		LocalPaymentSecret:    env("WECRATFS_LOCAL_PAYMENT_SECRET", "wecratfs-local-payment"),
 		LocalMode:             boolEnv("WECRATFS_LOCAL_MODE", false),
 		SMTPAddress:           env("WECRATFS_SMTP_ADDR", ""),

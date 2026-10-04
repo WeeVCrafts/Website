@@ -32,6 +32,7 @@ type Handler struct {
 	media           *applicationcommerce.MediaService
 	payment         *applicationpayment.OrderService
 	checkoutPayment *applicationpayment.CheckoutVerificationService
+	noPaymentDemo   bool
 	refunds         *applicationpayment.RefundService
 	recovery        *applicationauth.RecoveryService
 	secureCookies   bool
@@ -85,6 +86,11 @@ func NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService *applica
 
 func (h *Handler) WithCheckoutPaymentVerification(service *applicationpayment.CheckoutVerificationService) *Handler {
 	h.checkoutPayment = service
+	return h
+}
+
+func (h *Handler) WithNoPaymentDemo(enabled bool) *Handler {
+	h.noPaymentDemo = enabled
 	return h
 }
 
@@ -256,9 +262,21 @@ func (h *Handler) CartAdd(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Checkout(w http.ResponseWriter, r *http.Request) {
+	h.checkout(w, r, false)
+}
+
+func (h *Handler) NoPaymentCheckout(w http.ResponseWriter, r *http.Request) {
+	h.checkout(w, r, true)
+}
+
+func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment bool) {
 	session, ok := h.session(r)
 	if r.Method != http.MethodPost || !ok || h.cart == nil || h.orders == nil || !h.validCSRF(r, session) {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "Authentication and CSRF validation are required.")
+		return
+	}
+	if noPayment && !h.noPaymentDemo {
+		writeError(w, http.StatusNotFound, "NOT_FOUND", "The demo checkout is not enabled.")
 		return
 	}
 	var input struct {

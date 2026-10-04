@@ -238,11 +238,19 @@ type SupportPortalCase struct {
 	ID, Subject, Customer, CustomerInitials, Category, Priority, Created, Status, Age, Seller, Order, Avatar, Assignee, Channel string
 	OrderStatus, OrderValue, PaymentStatus                                                                                      string
 	LatestReply, InitialMessage, AgentNote                                                                                      string
+	Attachments                                                                                                                 []SupportPortalAttachment
 }
 
 type SupportPortalConversation struct {
 	Author, Initials, Role, Message, Time, Tone, Image, TicketNumber string
 	TicketID                                                         int64
+	Attachments                                                      []SupportPortalAttachment
+}
+
+type SupportPortalAttachment struct {
+	ID                         int64
+	FileName, ContentType, URL string
+	Size                       int64
 }
 
 type SupportPortalDirectoryEntry struct {

@@ -556,7 +556,8 @@
   }
 
   async function checkout() {
-    const button = document.querySelector('[data-backend-action="checkout"]');
+    const button = document.querySelector('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
+    const noPaymentDemo = button && button.dataset.backendAction === "checkout-no-payment";
     const form = document.getElementById("checkout-address-form");
     if (!button || !form || !form.reportValidity()) return;
     await requireUser();
@@ -564,11 +565,11 @@
     const address = {
       recipient_name: values.recipient_name, phone: values.phone,
       line1: values.line1, line2: values.line2 || "", city: values.city,
-      region: values.region, postal_code: values.postal_code,
+      state: values.state || values.region, postal_code: values.postal_code,
       country_code: (values.country_code || "IN").toUpperCase()
     };
     const summary = document.querySelector("[data-checkout-address-summary]");
-    if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.region, address.postal_code].join(" · ");
+    if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.state, address.postal_code].join(" · ");
     button.disabled = true;
     let orderNumber = "";
     try {
@@ -580,23 +581,30 @@
         credentials: "same-origin",
         body: addressFormData
       });
-      if (!addressResponse.ok) throw new Error("Your delivery address could not be saved. Please review it and try again.");
+      if (!addressResponse.ok) {
+        const detail = (await addressResponse.text()).trim();
+        throw new Error(detail || "Your delivery address could not be saved. Please review it and try again.");
+      }
       let key = global.sessionStorage.getItem(CHECKOUT_KEY);
       if (!key) {
         key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
         global.sessionStorage.setItem(CHECKOUT_KEY, key);
       }
       const couponCode = (document.getElementById("checkout-coupon-code") || {}).value || "";
-      const result = unwrap(await ensureBackend().checkout(address, key, couponCode.trim())) || {};
+      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim()))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
       if (cartBadge) { cartBadge.textContent = "0"; markReady(document.getElementById("cart-count")); }
-      try {
-        await beginPayment(orderNumber);
-      } catch (paymentError) {
-        paymentReceipt(orderNumber, paymentError.message + " Your order is saved; check its current status before trying again.", false);
+      if (noPaymentDemo) {
+        paymentReceipt(orderNumber, "Demo order saved as pending payment. No payment or shipping request was sent.", false);
+      } else {
+        try {
+          await beginPayment(orderNumber);
+        } catch (paymentError) {
+          paymentReceipt(orderNumber, paymentError.message + " Your order is saved; check its current status before trying again.", false);
+        }
       }
     } catch (error) {
       if (orderNumber) {
@@ -639,6 +647,20 @@
       });
     }
     document.addEventListener("click", async function (event) {
+      const passwordToggle = event.target.closest("[data-password-toggle]");
+      if (passwordToggle) {
+        event.preventDefault();
+        const input = passwordToggle.parentElement && passwordToggle.parentElement.querySelector("input");
+        if (!input) return;
+        const visible = input.type === "password";
+        input.type = visible ? "text" : "password";
+        passwordToggle.setAttribute("aria-pressed", String(visible));
+        passwordToggle.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+        const icon = passwordToggle.querySelector(".material-symbols-outlined");
+        if (icon) icon.textContent = visible ? "visibility_off" : "visibility";
+        input.focus({ preventScroll: true });
+        return;
+      }
       const localPaymentButton = event.target.closest("[data-local-payment]");
       if (localPaymentButton) {
         event.preventDefault();
@@ -652,7 +674,7 @@
         }
         return;
       }
-      const checkoutButton = event.target.closest('[data-backend-action="checkout"]');
+      const checkoutButton = event.target.closest('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
       if (checkoutButton) {
         event.preventDefault();
         try { await checkout(); } catch (error) { notice(error.message, true); }

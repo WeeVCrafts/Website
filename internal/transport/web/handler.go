@@ -49,6 +49,7 @@ type Handler struct {
 	customerDirectory   *applicationauth.CustomerDirectoryService
 	financeService      *applicationcommerce.FinanceService
 	supportService      *applicationcommerce.SupportService
+	supportAttachments  *applicationcommerce.SupportAttachmentService
 	returnService       *applicationcommerce.ReturnService
 	cartService         *applicationcommerce.CartService
 	orderService        *applicationcommerce.OrderService
@@ -398,6 +399,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.supportReply(w, r)
 	case r.URL.Path == "/support/customer-reply":
 		h.supportCustomerReply(w, r)
+	case strings.HasPrefix(r.URL.Path, "/support/attachments/"):
+		h.supportAttachment(w, r, strings.TrimPrefix(r.URL.Path, "/support/attachments/"))
 	case r.URL.Path == "/seller/support":
 		h.supportPage(w, r)
 	case r.URL.Path == "/seller/support/create":
@@ -526,6 +529,10 @@ func (h *Handler) SetFinanceService(service *applicationcommerce.FinanceService)
 // changing the existing handler constructors used by isolated web tests.
 func (h *Handler) SetSupportService(service *applicationcommerce.SupportService) {
 	h.supportService = service
+}
+
+func (h *Handler) SetSupportAttachmentService(service *applicationcommerce.SupportAttachmentService) {
+	h.supportAttachments = service
 }
 
 // SetReturnService attaches customer return requests and the operations

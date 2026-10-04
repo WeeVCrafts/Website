@@ -19,7 +19,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Email or role username<input name="email" type="text" autocomplete="username" required/></label>
-            <label>Password<input name="password" type="password" required/></label>
+            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="current-password" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
             <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
             <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
@@ -32,7 +32,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <label>Full name<input name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></label>
             <label>Email address<input name="email" type="email" required/></label>
             <label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
-            <label>Password<input name="password" type="password" minlength="12" required/></label>
+            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
             <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>
             <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
@@ -48,8 +48,8 @@ templ Auth(p viewmodels.CustomerPage) {
           @AuthHeading("ACCOUNT RECOVERY", "Choose a new password", "Use a long, unique password to keep your account safe.")
           <form class="utility-form" action="/reset-password" method="post" data-backend-auth="reset">
             <input type="hidden" name="token" value={ authToken(p.Filters) }/>
-            <label>New password<input name="password" type="password" minlength="12" required/></label>
-            <label>Confirm password<input name="confirm_password" type="password" minlength="12" required/></label>
+            <label>New password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            <label>Confirm password<div class="password-field"><input name="confirm_password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
             <button class="primary-button full" type="submit">Update password <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span></button>
           </form>
         } else {
@@ -112,11 +112,12 @@ templ ContactContent(p viewmodels.CustomerPage) {
   <div class="contact-grid">
     <section class="utility-card"><h2>Send us a note</h2><p>Share a little context so the right team can respond.</p>
       if p.CanCreateSupport {
-        <form class="utility-form" action="/support/create" method="post" data-customer-support-create>
+        <form class="utility-form" action="/support/create" method="post" enctype="multipart/form-data" data-customer-support-create>
           <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
           <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
           <label>Order number (optional)<input name="order_number" autocomplete="off"/></label>
           <label>Message<textarea name="message" rows="5" minlength="10" maxlength="4000" required></textarea></label>
+          <label>Photos (optional)<input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Up to 3 images, 10 MB each.</small></label>
           <button class="primary-button" type="submit">Send support request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
         </form>
       } else if p.Authenticated {
@@ -447,10 +448,18 @@ templ CustomerSupportPanel(p viewmodels.CustomerPage) {
                 </article>
               }
             </div>
+            if len(ticket.Attachments) > 0 {
+              <div class="support-attachments" aria-label="Attachments">
+                for _, attachment := range ticket.Attachments {
+                  <a href={ attachment.URL }><span class="material-symbols-outlined" aria-hidden="true">image</span>{ attachment.FileName }</a>
+                }
+              </div>
+            }
             if ticket.Status != "closed" {
-              <form class="utility-form customer-support-reply" action="/support/customer-reply" method="post">
+              <form class="utility-form customer-support-reply" action="/support/customer-reply" method="post" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID, 10) }/>
                 <label>Reply<textarea name="message" rows="3" minlength="1" maxlength="4000" required></textarea></label>
+                <label>Photos (optional)<input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Up to 3 images, 10 MB each.</small></label>
                 <button class="primary-button" type="submit">Send reply</button>
               </form>
             } else {

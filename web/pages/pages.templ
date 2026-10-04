@@ -912,7 +912,7 @@ templ Checkout(p viewmodels.CustomerPage) {
             <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
             <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
             <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
-            <label>State / region<input name="region" value={ p.Address.State } autocomplete="address-level1" required/></label>
+            <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" required/></label>
             <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
             <button class="primary-button full" type="button" @click="if ($el.form.reportValidity()) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
@@ -921,7 +921,10 @@ templ Checkout(p viewmodels.CustomerPage) {
         <section class="checkout-card" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ p.CartCount } items from { len(p.Cart) } sellers</span></header>
         @CheckoutItems(p.Cart)<button class="primary-button full" type="button" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
         <section class="checkout-card" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
-          if p.PaymentReady {
+          if p.NoPaymentDemo {
+            <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div>
+            <button class="primary-button full" type="button" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          } else if p.PaymentReady {
             if p.PaymentMode == "local" {
               <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. After placing the order, choose whether to simulate a successful or failed payment.</p></div>
             } else {
@@ -933,8 +936,22 @@ templ Checkout(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="button" disabled>Payment unavailable</button>
           }
         </section>
-        <section class="checkout-card" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2><span class="muted">Payment is completed securely next</span></header><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Payment</strong><span>{ paymentMethodLabel(p.PaymentMode) }</span></p><p><strong>Total payable</strong><span>{ p.Total }</span></p></div>
-          if p.PaymentReady {
+        <section class="checkout-card" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2>
+            if p.NoPaymentDemo {
+              <span class="muted">Demo order · no payment</span>
+            } else {
+              <span class="muted">Payment is completed securely next</span>
+            }
+          </header><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Payment</strong><span>
+            if p.NoPaymentDemo {
+              No payment · demo mode
+            } else {
+              { paymentMethodLabel(p.PaymentMode) }
+            }
+          </span></p><p><strong>Total payable</strong><span>{ p.Total }</span></p></div>
+          if p.NoPaymentDemo {
+            <button class="primary-button full" type="button" data-backend-action="checkout-no-payment">Place demo order <span class="material-symbols-outlined" aria-hidden="true">science</span></button>
+          } else if p.PaymentReady {
             <button class="primary-button full" type="button" data-backend-action="checkout">Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>
           } else {
             <button class="primary-button full" type="button" data-backend-action="checkout" disabled>Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>

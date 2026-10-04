@@ -3,6 +3,7 @@ package catalog
 type Product struct {
 	ID             int64    `json:"id"`
 	VariantID      int64    `json:"variant_id"`
+	SKU            string   `json:"sku"`
 	Slug           string   `json:"slug"`
 	Brand          string   `json:"brand"`
 	Name           string   `json:"name"`

@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
+	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
@@ -31,15 +32,20 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
-	pool      *pgxpool.Pool
-	sessions  *applicationauth.SessionService
-	roleAdmin *applicationauth.RoleAdminService
-	fallback  http.Handler
-	assets    http.Handler
+	pool               *pgxpool.Pool
+	sessions           *applicationauth.SessionService
+	roleAdmin          *applicationauth.RoleAdminService
+	supportAttachments *applicationcommerce.SupportAttachmentService
+	fallback           http.Handler
+	assets             http.Handler
 }
 
 func (h *LivePortalHandler) SetRoleAdminService(service *applicationauth.RoleAdminService) {
 	h.roleAdmin = service
+}
+
+func (h *LivePortalHandler) SetSupportAttachmentService(service *applicationcommerce.SupportAttachmentService) {
+	h.supportAttachments = service
 }
 
 func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, fallback http.Handler) *LivePortalHandler {
@@ -2050,6 +2056,7 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 			}
 		}
 		if page.SelectedCase.DatabaseID > 0 {
+			page.SelectedCase.Attachments = h.supportAttachmentViews(r, page.SelectedCase.DatabaseID)
 			page.Messages = append(page.Messages, h.supportTicketMessages(r, page.SelectedCase.DatabaseID)...)
 		}
 	}
@@ -2086,6 +2093,24 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 		page.Title = "Orders linked to cases"
 	}
 	return page
+}
+
+func (h *LivePortalHandler) supportAttachmentViews(r *http.Request, ticketID int64) []viewmodels.SupportPortalAttachment {
+	if h.supportAttachments == nil || ticketID <= 0 {
+		return nil
+	}
+	attachments, err := h.supportAttachments.List(r.Context(), ticketID)
+	if err != nil {
+		return nil
+	}
+	result := make([]viewmodels.SupportPortalAttachment, 0, len(attachments))
+	for _, attachment := range attachments {
+		result = append(result, viewmodels.SupportPortalAttachment{
+			ID: attachment.ID, FileName: attachment.FileName, ContentType: attachment.ContentType,
+			Size: attachment.ByteSize, URL: "/support/attachments/" + strconv.FormatInt(attachment.ID, 10),
+		})
+	}
+	return result
 }
 
 func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPortalCase {

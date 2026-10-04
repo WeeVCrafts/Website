@@ -346,4 +346,17 @@ type SupportTicket struct {
 	AgentNote           string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+	Attachments         []SupportAttachment
+}
+
+type SupportAttachment struct {
+	ID          int64
+	TicketID    int64
+	MessageID   int64
+	UserID      int64
+	FileName    string
+	ContentType string
+	ByteSize    int64
+	ObjectKey   string
+	CreatedAt   time.Time
 }
