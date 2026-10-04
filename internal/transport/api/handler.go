@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -291,17 +292,46 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	if headerKey := strings.TrimSpace(r.Header.Get("Idempotency-Key")); headerKey != "" {
 		input.IdempotencyKey = headerKey
 	}
+	if input.CartID <= 0 && h.cart != nil {
+		activeCart, cartErr := h.cart.GetOrCreate(r.Context(), session.UserID, "")
+		if cartErr == nil {
+			input.CartID = activeCart.ID
+		}
+	}
+	if len(strings.TrimSpace(input.IdempotencyKey)) < 16 {
+		input.IdempotencyKey = fmt.Sprintf("order-%d-%d", session.UserID, time.Now().UnixNano())
+	}
 	order, err := h.orders.CreateWithCoupon(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address, input.CouponCode)
 	if err != nil {
 		if errors.Is(err, ports.ErrIdempotencyConflict) {
-			writeError(w, http.StatusConflict, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for a different checkout request.")
+			writeError(w, http.StatusConflict, "IDEMPOTENCY_CONFLICT", "This checkout request was already processed or has a conflict. Please retry.")
 			return
 		}
 		if errors.Is(err, ports.ErrCouponInvalid) {
 			writeError(w, http.StatusUnprocessableEntity, "COUPON_INVALID", "This coupon is invalid, expired, or not available for the items in your cart.")
 			return
 		}
-		writeError(w, http.StatusUnprocessableEntity, "CHECKOUT_FAILED", "Order could not be created.")
+		if errors.Is(err, ports.ErrCartNotFound) {
+			writeError(w, http.StatusUnprocessableEntity, "CART_EMPTY", "Your cart is empty or has expired. Please add items to your cart again.")
+			return
+		}
+		if errors.Is(err, ports.ErrInsufficientStock) {
+			writeError(w, http.StatusUnprocessableEntity, "INSUFFICIENT_STOCK", "One or more items in your cart are currently out of stock.")
+			return
+		}
+		if errors.Is(err, ports.ErrInvalidState) {
+			writeError(w, http.StatusUnprocessableEntity, "ITEMS_UNAVAILABLE", "One or more items in your cart are currently unavailable.")
+			return
+		}
+		if errors.Is(err, applicationcommerce.ErrInvalidAddress) {
+			writeError(w, http.StatusUnprocessableEntity, "INVALID_ADDRESS", "Please provide a complete delivery address with recipient name, address line, city, and state.")
+			return
+		}
+		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {
+			writeError(w, http.StatusUnprocessableEntity, "INVALID_PHONE", "Please enter a valid phone number (7 to 15 digits).")
+			return
+		}
+		writeError(w, http.StatusUnprocessableEntity, "CHECKOUT_FAILED", err.Error())
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"data": order})

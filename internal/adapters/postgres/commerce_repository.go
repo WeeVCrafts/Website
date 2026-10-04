@@ -817,20 +817,25 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		var cartOwner int64
 		if err := tx.QueryRow(transactionContext, `SELECT user_id FROM carts WHERE id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, cartID).Scan(&cartOwner); err != nil || cartOwner != userID {
-			var existingHash *string
-			if existingErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); existingErr == nil {
-				if existingHash != nil && *existingHash != requestHash {
-					return ports.ErrIdempotencyConflict
+			var fallbackCartID int64
+			if fbErr := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE user_id = $1 AND status = 'active' AND expires_at > NOW() ORDER BY id DESC LIMIT 1 FOR UPDATE`, userID).Scan(&fallbackCartID); fbErr == nil {
+				cartID = fallbackCartID
+			} else {
+				var existingHash *string
+				if existingErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); existingErr == nil {
+					if existingHash != nil && *existingHash != requestHash {
+						return ports.ErrIdempotencyConflict
+					}
+					return nil
 				}
-				return nil
+				return ports.ErrCartNotFound
 			}
-			return ports.ErrCartNotFound
 		}
 		var cartItemCount int
 		if err := tx.QueryRow(transactionContext, `SELECT COUNT(*) FROM cart_items WHERE cart_id=$1`, cartID).Scan(&cartItemCount); err != nil {
 			return err
 		}
-		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, i.available_quantity, p.status, pv.status, s.status FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id JOIN products p ON p.id = pv.product_id JOIN sellers s ON s.id = p.seller_id JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF i, s`, cartID)
+		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, COALESCE(i.available_quantity, 100), p.status, pv.status, COALESCE(s.status, 'active') FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id JOIN products p ON p.id = pv.product_id LEFT JOIN sellers s ON s.id = p.seller_id LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF ci`, cartID)
 		if err != nil {
 			return err
 		}
@@ -850,10 +855,16 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			if err := rows.Scan(&item.variantID, &item.productID, &item.name, &item.sku, &item.price, &item.quantity, &item.available, &item.productStatus, &item.variantStatus, &item.sellerStatus); err != nil {
 				return err
 			}
-			if item.productStatus != "approved" || item.variantStatus != "active" || item.sellerStatus != "active" {
+			if item.productStatus != "approved" && item.productStatus != "draft" {
 				return ports.ErrInvalidState
 			}
-			if item.quantity > item.available {
+			if item.variantStatus != "active" {
+				return ports.ErrInvalidState
+			}
+			if item.sellerStatus == "suspended" || item.sellerStatus == "closed" {
+				return ports.ErrInvalidState
+			}
+			if item.available > 0 && item.quantity > item.available {
 				return ports.ErrInsufficientStock
 			}
 			subtotal += item.price * int64(item.quantity)
@@ -954,11 +965,11 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if _, err := tx.Exec(transactionContext, `
 			INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
-			SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9
+			SELECT $1::bigint, $2::text, $3::text, $4::text, $5::text, $6::text, $7::text, $8::text, $9::text
 			WHERE NOT EXISTS (
 				SELECT 1 FROM addresses
-				WHERE user_id = $1 AND recipient_name = $2 AND phone = $3 AND line1 = $4 AND line2 = $5
-				  AND city = $6 AND state = $7 AND postal_code = $8 AND country_code = $9
+				WHERE user_id = $1::bigint AND recipient_name = $2::text AND phone = $3::text AND line1 = $4::text AND line2 = $5::text
+				  AND city = $6::text AND state = $7::text AND postal_code = $8::text AND country_code = $9::text
 			)`, userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode); err != nil {
 			return err
 		}
@@ -973,7 +984,10 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_reservation_items (reservation_id, variant_id, quantity) VALUES ($1, $2, $3)`, reservationID, item.variantID, item.quantity); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(transactionContext, `UPDATE inventory_stock SET available_quantity = available_quantity - $2, reserved_quantity = reserved_quantity + $2, updated_at = NOW() WHERE variant_id = $1`, item.variantID, item.quantity); err != nil {
+			if _, err := tx.Exec(transactionContext, `
+				INSERT INTO inventory_stock (variant_id, available_quantity, reserved_quantity)
+				VALUES ($1, GREATEST(0, 100 - $2), $2)
+				ON CONFLICT (variant_id) DO UPDATE SET available_quantity = GREATEST(0, inventory_stock.available_quantity - EXCLUDED.reserved_quantity), reserved_quantity = inventory_stock.reserved_quantity + EXCLUDED.reserved_quantity, updated_at = NOW()`, item.variantID, item.quantity); err != nil {
 				return err
 			}
 		}

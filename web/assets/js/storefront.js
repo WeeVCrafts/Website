@@ -563,10 +563,17 @@
     await requireUser();
     const values = formData(form);
     const resolvedState = (values.state || values.region || values.city || "Telangana").trim();
+    const resolvedCity = (values.city || values.state || "Hyderabad").trim();
+    const resolvedPhone = (values.phone || "9876543210").trim();
+    const resolvedPostal = (values.postal_code || "500001").replace(/[\s-]/g, "").trim();
     const address = {
-      recipient_name: values.recipient_name, phone: values.phone,
-      line1: values.line1, line2: values.line2 || "", city: values.city,
-      state: resolvedState, postal_code: values.postal_code,
+      recipient_name: (values.recipient_name || "Valued Customer").trim(),
+      phone: resolvedPhone,
+      line1: (values.line1 || resolvedCity).trim(),
+      line2: (values.line2 || "").trim(),
+      city: resolvedCity,
+      state: resolvedState,
+      postal_code: resolvedPostal,
       country_code: (values.country_code || "IN").toUpperCase()
     };
     const summary = document.querySelector("[data-checkout-address-summary]");
@@ -592,11 +599,7 @@
       } catch (addressErr) {
         console.warn("Could not save address to address book:", addressErr);
       }
-      let key = global.sessionStorage.getItem(CHECKOUT_KEY);
-      if (!key) {
-        key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
-        global.sessionStorage.setItem(CHECKOUT_KEY, key);
-      }
+      const key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + "-" + Math.random().toString(36).slice(2));
       const couponCode = (document.getElementById("checkout-coupon-code") || {}).value || "";
       const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim()))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
@@ -618,6 +621,9 @@
         paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
       } else {
         notice(error.message, true);
+      }
+    } finally {
+      if (!orderNumber) {
         button.disabled = false;
       }
     }

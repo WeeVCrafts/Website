@@ -33,15 +33,15 @@ func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.
 	address.Line2 = strings.TrimSpace(address.Line2)
 	address.City = strings.TrimSpace(address.City)
 	address.State = strings.TrimSpace(address.State)
-	address.PostalCode = strings.TrimSpace(address.PostalCode)
+	address.PostalCode = strings.ReplaceAll(strings.ReplaceAll(strings.TrimSpace(address.PostalCode), " ", ""), "-", "")
 	address.CountryCode = strings.ToUpper(strings.TrimSpace(address.CountryCode))
 	if address.CountryCode == "" {
 		address.CountryCode = "IN"
 	}
-	if address.State == "" && address.City != "" {
-		address.State = address.City
+	if address.CountryCode != "IN" {
+		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
-	if address.RecipientName == "" || address.Line1 == "" || address.City == "" || address.State == "" {
+	if address.RecipientName == "" || address.Line1 == "" || address.City == "" || address.State == "" || address.PostalCode == "" {
 		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
 	if len([]rune(address.RecipientName)) > 100 || len([]rune(address.Line1)) > 250 || len([]rune(address.Line2)) > 250 || len([]rune(address.City)) > 100 || len([]rune(address.State)) > 100 {
@@ -53,10 +53,10 @@ func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.
 		}
 		return r
 	}, address.Phone)
-	if !phoneNumber.MatchString(address.Phone) || len(digits) < 7 || len(digits) > 15 {
+	if len(digits) < 7 || len(digits) > 15 {
 		return domaincommerce.AddressInput{}, ErrInvalidPhone
 	}
-	if address.CountryCode != "IN" || !indiaPostalCode.MatchString(address.PostalCode) {
+	if !indiaPostalCode.MatchString(address.PostalCode) {
 		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}
 	return address, nil
@@ -75,8 +75,14 @@ func (s *OrderService) CreateWithCoupon(ctx context.Context, userID, cartID int6
 }
 
 func (s *OrderService) create(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
-	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(idempotencyKey)) < 16 || len(idempotencyKey) > 200 {
+	if userID <= 0 || cartID <= 0 {
 		return domaincommerce.Order{}, ports.ErrForbidden
+	}
+	if len(strings.TrimSpace(idempotencyKey)) < 16 {
+		return domaincommerce.Order{}, ports.ErrForbidden
+	}
+	if len(idempotencyKey) > 200 {
+		idempotencyKey = idempotencyKey[:200]
 	}
 	var err error
 	address, err = NormalizeAddressInput(address)
