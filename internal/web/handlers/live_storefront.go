@@ -369,8 +369,10 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 			address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode, addressID, userID)
 		err = updateErr
 		if err == nil && result.RowsAffected() == 0 {
-			http.NotFound(w, r)
-			return
+			_, err = h.pool.Exec(r.Context(), `
+				INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+				userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode)
 		}
 	}
 	if err != nil {

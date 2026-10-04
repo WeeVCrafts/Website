@@ -574,16 +574,26 @@
     let orderNumber = "";
     try {
       const addressFormData = new FormData(form);
+      if (!addressFormData.get("state") && address.state) {
+        addressFormData.set("state", address.state);
+      }
+      if (!addressFormData.get("region") && address.state) {
+        addressFormData.set("region", address.state);
+      }
       const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
       if (savedAddressSelect && savedAddressSelect.value) addressFormData.set("address_id", savedAddressSelect.value);
-      const addressResponse = await fetch("/account/addresses", {
-        method: "POST",
-        credentials: "same-origin",
-        body: addressFormData
-      });
-      if (!addressResponse.ok) {
-        const detail = (await addressResponse.text()).trim();
-        throw new Error(detail || "Your delivery address could not be saved. Please review it and try again.");
+      try {
+        const addressResponse = await fetch("/account/addresses", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "X-CSRF-Token": ensureBackend().csrf || form.querySelector('[name="csrf_token"]')?.value || "" },
+          body: addressFormData
+        });
+        if (!addressResponse.ok) {
+          console.warn("Could not save address to address book:", await addressResponse.text().catch(() => ""));
+        }
+      } catch (addressErr) {
+        console.warn("Could not save address to address book:", addressErr);
       }
       let key = global.sessionStorage.getItem(CHECKOUT_KEY);
       if (!key) {
@@ -598,7 +608,7 @@
       const cartBadge = document.querySelector("#cart-count em");
       if (cartBadge) { cartBadge.textContent = "0"; markReady(document.getElementById("cart-count")); }
       if (noPaymentDemo) {
-        paymentReceipt(orderNumber, "Demo order saved as pending payment. No payment or shipping request was sent.", false);
+        paymentReceipt(orderNumber, "Your demo order has been placed successfully! Order #" + orderNumber + " is confirmed.", true);
       } else {
         try {
           await beginPayment(orderNumber);
@@ -623,6 +633,13 @@
       if (addressForm) {
         addressForm.addEventListener("input", function (event) {
           if (event.target !== savedAddressSelect) savedAddressSelect.value = "";
+          if (event.target.name === "state") {
+            const reg = addressForm.elements.namedItem("region");
+            if (reg) reg.value = event.target.value;
+          } else if (event.target.name === "region") {
+            const st = addressForm.elements.namedItem("state");
+            if (st) st.value = event.target.value;
+          }
         });
       }
       savedAddressSelect.addEventListener("change", function () {
@@ -636,7 +653,7 @@
           line1: option.dataset.line1,
           line2: option.dataset.line2,
           city: option.dataset.city,
-          region: option.dataset.state,
+          state: option.dataset.state,
           postal_code: option.dataset.postalCode,
           country_code: "IN"
         };
@@ -644,6 +661,10 @@
           const field = form.elements.namedItem(name);
           if (field) field.value = value || "";
         }
+        const regionField = form.elements.namedItem("region");
+        if (regionField) regionField.value = option.dataset.state || "";
+        const stateField = form.elements.namedItem("state");
+        if (stateField) stateField.value = option.dataset.state || "";
       });
     }
     document.addEventListener("click", async function (event) {

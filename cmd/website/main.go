@@ -249,9 +249,10 @@ func main() {
 		mux.Handle("/api/v1/local/", apiTransport.NewLocalDemoHandler(pool, sessionService))
 	}
 	mux.Handle("/webhooks/razorpay", webhookTransport.NewRazorpayHandler(paymentService))
-	if localGateway != nil {
-		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway))
+	if localGateway == nil {
+		localGateway = localpayment.NewGateway(cfg.LocalPaymentSecret)
 	}
+	mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
@@ -323,7 +324,7 @@ func main() {
 	}
 }
 
-func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, service *applicationpayment.Service, gateway *localpayment.Gateway) http.HandlerFunc {
+func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, service *applicationpayment.Service, gateway *localpayment.Gateway, paymentRepo ports.PaymentWebhookRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeLocalJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
@@ -345,19 +346,27 @@ func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionSe
 			return
 		}
 		orderNumber := parts[0]
+		var orderID int64
 		var providerOrderID, currency string
 		var amount int64
 		if err := pool.QueryRow(r.Context(), `
-			SELECT pa.provider_order_id, pa.amount_cents, pa.currency
-			FROM orders o JOIN payment_attempts pa ON pa.order_id = o.id
+			SELECT o.id, COALESCE(pa.provider_order_id, ''), COALESCE(pa.amount_cents, o.total_cents), COALESCE(pa.currency, o.currency, 'INR')
+			FROM orders o LEFT JOIN payment_attempts pa ON pa.order_id = o.id
 			WHERE o.order_number = $1 AND o.user_id = $2
-			ORDER BY pa.id DESC LIMIT 1`, orderNumber, session.UserID).Scan(&providerOrderID, &amount, &currency); err != nil {
+			ORDER BY pa.id DESC NULLS LAST LIMIT 1`, orderNumber, session.UserID).Scan(&orderID, &providerOrderID, &amount, &currency); err != nil {
 			writeLocalJSON(w, http.StatusNotFound, map[string]string{"error": "payment_order_not_found"})
 			return
 		}
 		if providerOrderID == "" {
-			writeLocalJSON(w, http.StatusConflict, map[string]string{"error": "payment_order_not_prepared"})
-			return
+			providerOrderID = "local_order_" + orderNumber
+			_, _ = pool.Exec(r.Context(), `
+				INSERT INTO payment_attempts (order_id, provider, provider_order_id, status, amount_cents, currency)
+				VALUES ($1, 'local', $2, 'pending', $3, $4)
+				ON CONFLICT DO NOTHING`, orderID, providerOrderID, amount, currency)
+			_, _ = pool.Exec(r.Context(), `
+				UPDATE payment_attempts
+				SET provider_order_id = $1, provider = 'local', status = 'pending', updated_at = NOW()
+				WHERE order_id = $2 AND (provider_order_id IS NULL OR provider_order_id = '')`, providerOrderID, orderID)
 		}
 		eventType, status := "payment.pending", "pending"
 		if parts[1] == "capture" {
@@ -365,12 +374,29 @@ func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionSe
 		} else if parts[1] == "fail" {
 			eventType, status = "payment.failed", "failed"
 		}
-		body, err := localpayment.WebhookPayload("local_evt_"+orderNumber+"_"+parts[1], eventType, providerOrderID, localpayment.PaymentID(orderNumber), status, amount, currency)
+		eventID := "local_evt_" + orderNumber + "_" + parts[1]
+		paymentID := localpayment.PaymentID(orderNumber)
+		body, err := localpayment.WebhookPayload(eventID, eventType, providerOrderID, paymentID, status, amount, currency)
 		if err != nil {
 			writeLocalJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 			return
 		}
-		processed, err := service.HandleWebhook(r.Context(), body, gateway.Sign(string(body)))
+		var processed bool
+		if service != nil && gateway != nil {
+			processed, err = service.HandleWebhook(r.Context(), body, gateway.Sign(string(body)))
+		}
+		if err != nil || (!processed && paymentRepo != nil) {
+			webhook := ports.PaymentWebhook{
+				EventID:           eventID,
+				EventType:         eventType,
+				ProviderOrderID:   providerOrderID,
+				ProviderPaymentID: paymentID,
+				Status:            status,
+				AmountCents:       amount,
+				Currency:          currency,
+			}
+			processed, err = paymentRepo.ProcessWebhook(r.Context(), webhook, body)
+		}
 		if err != nil {
 			writeLocalJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return

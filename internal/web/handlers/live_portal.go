@@ -1862,7 +1862,7 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []viewmodels.SellerAdminOrder {
 	rows, err := h.pool.Query(r.Context(), `
 		SELECT o.order_number, o.created_at, u.display_name, COALESCE(SUM(oi.line_total_cents),0),
-		       COALESCE(sf.status,'pending'), COALESCE(pa.status,'created'), COALESCE(SUM(oi.quantity),0)
+		       COALESCE(sf.status,'pending'), COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0)
 		FROM orders o
 		JOIN users u ON u.id=o.user_id
 		JOIN order_items oi ON oi.order_id=o.id
@@ -1870,7 +1870,7 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		JOIN products p ON p.id=pv.product_id AND p.seller_id=$1
 		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
 		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
-		WHERE o.status IN ('paid','processing','shipped','delivered')
+		WHERE o.status IN ('paid','processing','shipped','delivered','pending_payment')
 		GROUP BY o.id, u.display_name, sf.status, pa.status
 		ORDER BY o.created_at DESC, o.id DESC
 		LIMIT 50`, sellerID)
