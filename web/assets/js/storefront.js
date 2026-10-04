@@ -562,24 +562,21 @@
     if (!button || !form || !form.reportValidity()) return;
     await requireUser();
     const values = formData(form);
+    const resolvedState = (values.state || values.region || values.city || "Telangana").trim();
     const address = {
       recipient_name: values.recipient_name, phone: values.phone,
       line1: values.line1, line2: values.line2 || "", city: values.city,
-      state: values.state || values.region, postal_code: values.postal_code,
+      state: resolvedState, postal_code: values.postal_code,
       country_code: (values.country_code || "IN").toUpperCase()
     };
     const summary = document.querySelector("[data-checkout-address-summary]");
-    if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.state, address.postal_code].join(" · ");
+    if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.state, address.postal_code].filter(Boolean).join(" · ");
     button.disabled = true;
     let orderNumber = "";
     try {
       const addressFormData = new FormData(form);
-      if (!addressFormData.get("state") && address.state) {
-        addressFormData.set("state", address.state);
-      }
-      if (!addressFormData.get("region") && address.state) {
-        addressFormData.set("region", address.state);
-      }
+      addressFormData.set("state", address.state);
+      addressFormData.set("region", address.state);
       const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
       if (savedAddressSelect && savedAddressSelect.value) addressFormData.set("address_id", savedAddressSelect.value);
       try {

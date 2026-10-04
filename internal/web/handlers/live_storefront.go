@@ -339,7 +339,7 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 	address, err := applicationcommerce.NormalizeAddressInput(domaincommerce.AddressInput{
 		RecipientName: r.Form.Get("recipient_name"), Phone: r.Form.Get("phone"),
 		Line1: r.Form.Get("line1"), Line2: r.Form.Get("line2"), City: r.Form.Get("city"),
-		State: firstFormValue(r.Form, "state", "region"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
+		State: firstFormValue(r.Form, "state", "region", "city"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
 	})
 	if err != nil {
 		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {

@@ -38,6 +38,9 @@ func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.
 	if address.CountryCode == "" {
 		address.CountryCode = "IN"
 	}
+	if address.State == "" && address.City != "" {
+		address.State = address.City
+	}
 	if address.RecipientName == "" || address.Line1 == "" || address.City == "" || address.State == "" {
 		return domaincommerce.AddressInput{}, ErrInvalidAddress
 	}

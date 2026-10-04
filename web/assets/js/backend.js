@@ -229,7 +229,7 @@
         headers: { "Idempotency-Key": idempotencyKey },
         body: { cart_id: unwrap(cart).id, idempotency_key: idempotencyKey, address: {
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
-          line2: address.line2 || "", city: address.city, state: address.state || address.region,
+          line2: address.line2 || "", city: address.city, state: address.state || address.region || address.city || "Telangana",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
         }, coupon_code: couponCode || "" }
       });

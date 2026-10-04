@@ -57,7 +57,11 @@ func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionS
 
 func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		if strings.HasPrefix(r.URL.Path, "/assets/js/") {
+			w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		}
 		h.assets.ServeHTTP(w, r)
 		return
 	}

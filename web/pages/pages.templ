@@ -25,8 +25,8 @@ templ Document(p viewmodels.CustomerPage) {
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/htmx.min.js"></script>
       <script defer src="/assets/js/alpine.min.js"></script>
-      <script defer src="/assets/js/backend.js"></script>
-      <script defer src="/assets/js/storefront.js"></script>
+      <script defer src="/assets/js/backend.js?v=20261004e"></script>
+      <script defer src="/assets/js/storefront.js?v=20261004e"></script>
       <script>
         function initDetailInteractions() {
           document.querySelectorAll('[role="tablist"]').forEach(function (tablist) {
@@ -913,6 +913,7 @@ templ Checkout(p viewmodels.CustomerPage) {
             <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
             <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
             <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" required/></label>
+            <input name="region" type="hidden" value={ p.Address.State }/>
             <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
             <button class="primary-button full" type="button" @click="if ($el.form.reportValidity()) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
