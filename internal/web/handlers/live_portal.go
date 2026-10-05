@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -57,6 +59,9 @@ func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionS
 
 func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
+		if serveUploadedAsset(w, r) {
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/assets/js/") {
 			w.Header().Set("Cache-Control", "no-cache, must-revalidate")
 		} else {
@@ -234,6 +239,30 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		h.delegate(w, r)
 	}
+}
+
+// serveUploadedAsset serves product images saved by the legacy admin form.
+// The embedded asset filesystem cannot see files written after compilation,
+// so this path is handled explicitly and restricted to a single directory.
+func serveUploadedAsset(w http.ResponseWriter, r *http.Request) bool {
+	const prefix = "/assets/images/uploads/"
+	if !strings.HasPrefix(r.URL.Path, prefix) {
+		return false
+	}
+	name := strings.TrimPrefix(r.URL.Path, prefix)
+	if name == "" || name != filepath.Base(name) || strings.ContainsAny(name, `/\\`) {
+		http.NotFound(w, r)
+		return true
+	}
+	path := filepath.Join("web", "assets", "images", "uploads", name)
+	info, err := os.Stat(path)
+	if err != nil || info.IsDir() {
+		http.NotFound(w, r)
+		return true
+	}
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	http.ServeFile(w, r, path)
+	return true
 }
 
 func (h *LivePortalHandler) renderSellerTerms(w http.ResponseWriter, r *http.Request, userID int64, displayName string, isOwner bool, permissions []string, csrfToken string) {
@@ -756,7 +785,7 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 	if h.pool == nil {
 		return nil
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT id, display_name, status, created_at FROM sellers ORDER BY id DESC LIMIT 50`)
+	rows, err := h.pool.Query(r.Context(), `SELECT id, display_name, status, created_at FROM sellers WHERE status <> 'closed' ORDER BY id DESC`)
 	if err != nil {
 		return nil
 	}
@@ -853,7 +882,7 @@ func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.Admi
 }
 
 func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSupportCase {
-	rows, err := h.pool.Query(r.Context(), `SELECT ticket_number, u.display_name, subject, priority, status, created_at FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 50`)
+	rows, err := h.pool.Query(r.Context(), `SELECT ticket_number, u.display_name, subject, priority, status, created_at FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC`)
 	if err != nil {
 		return nil
 	}

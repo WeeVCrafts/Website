@@ -11,6 +11,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -243,6 +245,9 @@ func newHandler(catalogService *applicationcatalog.Service, authService *applica
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
+		if serveUploadedAsset(w, r) {
+			return
+		}
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		h.previewStatic.ServeHTTP(w, r)
 		return
@@ -456,6 +461,30 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		h.notFound(w, r)
 	}
+}
+
+// serveUploadedAsset serves the legacy admin product uploads that are stored
+// outside the embedded preview filesystem. Only the dedicated upload
+// directory is exposed, and the basename check prevents path traversal.
+func serveUploadedAsset(w http.ResponseWriter, r *http.Request) bool {
+	const prefix = "/assets/images/uploads/"
+	if !strings.HasPrefix(r.URL.Path, prefix) {
+		return false
+	}
+	name := strings.TrimPrefix(r.URL.Path, prefix)
+	if name == "" || name != filepath.Base(name) || strings.ContainsAny(name, `/\\`) {
+		http.NotFound(w, r)
+		return true
+	}
+	path := filepath.Join("web", "assets", "images", "uploads", name)
+	info, err := os.Stat(path)
+	if err != nil || info.IsDir() {
+		http.NotFound(w, r)
+		return true
+	}
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	http.ServeFile(w, r, path)
+	return true
 }
 
 // SetSellerStaffService attaches the seller-owner team-management workflow
