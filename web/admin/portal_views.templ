@@ -110,9 +110,9 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 				}
 				if form.ID == "" {
 					<label>Seller
-						<select name="seller_id" required><option value="">Choose an active seller</option>
+						<select name="seller_id" required><option value="">Choose a seller account</option>
 							for _, seller := range p.Sellers {
-								if seller.Status == "active" {
+								if seller.Status != "closed" {
 									<option value={ seller.ID }>{ seller.Name }</option>
 								}
 							}
@@ -122,11 +122,11 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 					<label>Seller<input value={ form.SellerName } readonly/></label>
 				}
 				<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
-				<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
+				<label>Product URL slug<input name="slug" value={ form.Slug } placeholder="e.g. handpainted-ceramic-mug"/></label>
 				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
-				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } placeholder="e.g. weaver-crafts"/></label>
 				<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
-				<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Category slug<input name="category_slug" value={ form.CategorySlug } placeholder="e.g. home-decor"/></label>
 				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
 				<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
 				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>

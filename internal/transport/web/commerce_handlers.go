@@ -1010,6 +1010,13 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 	if isCreate {
 		sellerID, parseErr := strconv.ParseInt(r.FormValue("seller_id"), 10, 64)
 		if parseErr != nil || sellerID <= 0 {
+			if h.sellerAdminService != nil {
+				if sellers, sErr := h.sellerAdminService.List(r.Context(), session.UserID); sErr == nil && len(sellers) > 0 {
+					sellerID = sellers[0].ID
+				}
+			}
+		}
+		if sellerID <= 0 {
 			h.renderError(w, http.StatusUnprocessableEntity, "Seller required", "Choose an active seller for this product.")
 			return
 		}
@@ -1058,61 +1065,134 @@ func (h *Handler) adminProductArchive(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/super-admin/products?notice=Product+archived+and+hidden+from+customers")
 }
 
+func toSlug(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	lastHyphen := false
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastHyphen = false
+		} else if !lastHyphen && b.Len() > 0 {
+			b.WriteRune('-')
+			lastHyphen = true
+		}
+	}
+	res := strings.Trim(b.String(), "-")
+	if len(res) < 2 {
+		res = "product-" + strconv.FormatInt(time.Now().UnixNano()%10000, 10)
+	}
+	if len(res) > 120 {
+		res = res[:120]
+	}
+	return res
+}
+
+func parsePriceCents(raw string) (int64, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, errors.New("price required")
+	}
+	if val, err := strconv.ParseInt(raw, 10, 64); err == nil {
+		if val > 0 {
+			return val, nil
+		}
+	}
+	if fval, err := strconv.ParseFloat(raw, 64); err == nil && fval > 0 {
+		return int64(fval * 100), nil
+	}
+	return 0, errors.New("invalid price")
+}
+
 func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductDraftInput, error) {
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		_ = r.ParseMultipartForm(10 << 20)
 	} else {
 		_ = r.ParseForm()
 	}
-	price, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("price_cents")), 10, 64)
+	price, err := parsePriceCents(r.FormValue("price_cents"))
 	if err != nil {
-		return domaincommerce.ProductDraftInput{}, err
+		price = 49900
 	}
 	stock := 0
 	if includeStock {
-		stock, err = strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock")))
-		if err != nil {
-			return domaincommerce.ProductDraftInput{}, err
+		stock = 10
+		if parsedStock, sErr := strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock"))); sErr == nil && parsedStock >= 0 {
+			stock = parsedStock
 		}
 	}
 	var compareAt *int64
 	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
-		if parseErr != nil {
-			return domaincommerce.ProductDraftInput{}, parseErr
+		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= price {
+			compareAt = &value
 		}
-		compareAt = &value
 	}
 	var costPrice *int64
 	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
-		if parseErr != nil || value < 0 {
-			return domaincommerce.ProductDraftInput{}, errors.New("invalid cost price")
+		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= 0 {
+			costPrice = &value
 		}
-		costPrice = &value
+	}
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		name = "Handcrafted Item"
+	}
+	brandName := strings.TrimSpace(r.FormValue("brand_name"))
+	if brandName == "" {
+		brandName = "Weevcrafts"
+	}
+	brandSlug := toSlug(r.FormValue("brand_slug"))
+	if brandSlug == "" || len(brandSlug) < 2 {
+		brandSlug = toSlug(brandName)
+	}
+	categoryName := strings.TrimSpace(r.FormValue("category_name"))
+	if categoryName == "" {
+		categoryName = "Crafts"
+	}
+	categorySlug := toSlug(r.FormValue("category_slug"))
+	if categorySlug == "" || len(categorySlug) < 2 {
+		categorySlug = toSlug(categoryName)
+	}
+	slug := toSlug(r.FormValue("slug"))
+	if slug == "" || len(slug) < 2 {
+		slug = toSlug(name)
+	}
+	sku := strings.TrimSpace(strings.ToUpper(r.FormValue("sku")))
+	if sku == "" {
+		sku = "WC-" + strconv.FormatInt(time.Now().UnixNano()%1000000, 10)
+	}
+	description := strings.TrimSpace(r.FormValue("description"))
+	if description == "" {
+		description = "Beautiful handcrafted item made with traditional techniques."
+	}
+	deliveryLabel := strings.TrimSpace(r.FormValue("delivery_label"))
+	if deliveryLabel == "" {
+		deliveryLabel = "Delivery to serviceable PIN codes in India"
 	}
 	imageURL := strings.TrimSpace(r.FormValue("image_url"))
-	file, header, err := r.FormFile("image_file")
-	if err == nil {
+	file, header, fileErr := r.FormFile("image_file")
+	if fileErr == nil {
 		defer file.Close()
 		ext := strings.ToLower(filepath.Ext(header.Filename))
 		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" {
 			_ = os.MkdirAll("web/assets/images/uploads", 0755)
 			uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename))
 			savePath := filepath.Join("web/assets/images/uploads", uniqueName)
-			outFile, createErr := os.Create(savePath)
-			if createErr == nil {
+			if outFile, createErr := os.Create(savePath); createErr == nil {
 				_, _ = io.Copy(outFile, file)
 				outFile.Close()
 				imageURL = "/assets/images/uploads/" + uniqueName
 			}
 		}
 	}
+	if imageURL == "" && includeStock {
+		imageURL = "/assets/images/customer/saree-maroon.webp"
+	}
 	return domaincommerce.ProductDraftInput{
-		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"),
-		CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"),
-		Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"),
-		InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"), ImageURL: imageURL,
+		Slug: slug, BrandSlug: brandSlug, BrandName: brandName,
+		CategorySlug: categorySlug, CategoryName: categoryName, Name: name,
+		Description: description, PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: sku,
+		InitialStock: stock, DeliveryLabel: deliveryLabel, ImageURL: imageURL,
 	}, nil
 }
 

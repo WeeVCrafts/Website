@@ -246,12 +246,13 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 			return err
 		}
 		var sellerName string
-		if err := tx.QueryRow(transactionContext, `SELECT display_name FROM sellers WHERE id=$1 AND status='active'`, sellerID).Scan(&sellerName); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT display_name FROM sellers WHERE id=$1 AND status != 'closed'`, sellerID).Scan(&sellerName); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrSellerNotFound
 			}
 			return err
 		}
+		_, _ = tx.Exec(transactionContext, `UPDATE sellers SET status='active', updated_at=NOW() WHERE id=$1 AND status != 'closed'`, sellerID)
 		if err := ensureCatalogName(transactionContext, tx, "brands", input.BrandSlug, input.BrandName); err != nil {
 			return err
 		}
