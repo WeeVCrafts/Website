@@ -753,18 +753,70 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		productSlugValue = productSlug(name) + "-" + strconv.FormatInt(time.Now().UnixNano()%1000000000, 10)
 	}
 	imageURL := strings.TrimSpace(r.FormValue("image_url"))
-	if file, header, err := r.FormFile("image_file"); err == nil {
-		defer file.Close()
-		ext := strings.ToLower(filepath.Ext(header.Filename))
-		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" {
-			_ = os.MkdirAll("web/assets/images/uploads", 0755)
-			uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename))
-			savePath := filepath.Join("web/assets/images/uploads", uniqueName)
-			if outFile, createErr := os.Create(savePath); createErr == nil {
-				_, _ = io.Copy(outFile, file)
-				outFile.Close()
-				imageURL = "/assets/images/uploads/" + uniqueName
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		for _, fileHeaders := range r.MultipartForm.File {
+			for _, fileHeader := range fileHeaders {
+				if fileHeader != nil && fileHeader.Size > 0 {
+					f, err := fileHeader.Open()
+					if err == nil {
+						ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+						if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+							_ = os.MkdirAll("web/assets/images/uploads", 0755)
+							cleanBase := filepath.Base(fileHeader.Filename)
+							if cleanBase == "" || cleanBase == "." {
+								cleanBase = "upload.png"
+							}
+							uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+							savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+							if outFile, createErr := os.Create(savePath); createErr == nil {
+								_, _ = io.Copy(outFile, f)
+								outFile.Close()
+								imageURL = "/assets/images/uploads/" + uniqueName
+							}
+						}
+						f.Close()
+						if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+							break
+						}
+					}
+				}
 			}
+			if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+				break
+			}
+		}
+	}
+	if imageURL == "" || !strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+		if file, header, err := r.FormFile("image_file"); err == nil && header != nil && header.Size > 0 {
+			defer file.Close()
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+				_ = os.MkdirAll("web/assets/images/uploads", 0755)
+				uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename))
+				savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+				if outFile, createErr := os.Create(savePath); createErr == nil {
+					_, _ = io.Copy(outFile, file)
+					outFile.Close()
+					imageURL = "/assets/images/uploads/" + uniqueName
+				}
+			}
+		}
+	}
+	if imageURL == "" {
+		lower := strings.ToLower(name)
+		switch {
+		case strings.Contains(lower, "mug"), strings.Contains(lower, "cup"), strings.Contains(lower, "ceramic"), strings.Contains(lower, "coffee"), strings.Contains(lower, "cofee"):
+			imageURL = "/assets/images/customer/ceramic-mugs.webp"
+		case strings.Contains(lower, "cushion"), strings.Contains(lower, "pillow"):
+			imageURL = "/assets/images/customer/black-cushion.webp"
+		case strings.Contains(lower, "art"), strings.Contains(lower, "painting"), strings.Contains(lower, "tree"), strings.Contains(lower, "madhubani"):
+			imageURL = "/assets/images/customer/madhubani-tree.webp"
+		case strings.Contains(lower, "box"), strings.Contains(lower, "jewel"), strings.Contains(lower, "wood"):
+			imageURL = "/assets/images/customer/wooden-box.webp"
+		case strings.Contains(lower, "tote"), strings.Contains(lower, "bag"):
+			imageURL = "/assets/images/customer/blue-tote.webp"
+		default:
+			imageURL = "/assets/images/customer/saree-maroon.webp"
 		}
 	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
@@ -1170,23 +1222,75 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 		deliveryLabel = "Delivery to serviceable PIN codes in India"
 	}
 	imageURL := strings.TrimSpace(r.FormValue("image_url"))
-	file, header, fileErr := r.FormFile("image_file")
-	if fileErr == nil {
-		defer file.Close()
-		ext := strings.ToLower(filepath.Ext(header.Filename))
-		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" {
-			_ = os.MkdirAll("web/assets/images/uploads", 0755)
-			uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename))
-			savePath := filepath.Join("web/assets/images/uploads", uniqueName)
-			if outFile, createErr := os.Create(savePath); createErr == nil {
-				_, _ = io.Copy(outFile, file)
-				outFile.Close()
-				imageURL = "/assets/images/uploads/" + uniqueName
+
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		for _, fileHeaders := range r.MultipartForm.File {
+			for _, fileHeader := range fileHeaders {
+				if fileHeader != nil && fileHeader.Size > 0 {
+					f, err := fileHeader.Open()
+					if err == nil {
+						ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+						if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+							_ = os.MkdirAll("web/assets/images/uploads", 0755)
+							cleanBase := filepath.Base(fileHeader.Filename)
+							if cleanBase == "" || cleanBase == "." {
+								cleanBase = "upload.png"
+							}
+							uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+							savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+							if outFile, createErr := os.Create(savePath); createErr == nil {
+								_, _ = io.Copy(outFile, f)
+								outFile.Close()
+								imageURL = "/assets/images/uploads/" + uniqueName
+							}
+						}
+						f.Close()
+						if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+							break
+						}
+					}
+				}
+			}
+			if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+				break
 			}
 		}
 	}
+
+	if imageURL == "" || !strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+		if file, header, fileErr := r.FormFile("image_file"); fileErr == nil && header != nil && header.Size > 0 {
+			defer file.Close()
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+				_ = os.MkdirAll("web/assets/images/uploads", 0755)
+				cleanBase := filepath.Base(header.Filename)
+				uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+				savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+				if outFile, createErr := os.Create(savePath); createErr == nil {
+					_, _ = io.Copy(outFile, file)
+					outFile.Close()
+					imageURL = "/assets/images/uploads/" + uniqueName
+				}
+			}
+		}
+	}
+
 	if imageURL == "" && includeStock {
-		imageURL = "/assets/images/customer/saree-maroon.webp"
+		lower := strings.ToLower(name + " " + categoryName)
+		switch {
+		case strings.Contains(lower, "mug"), strings.Contains(lower, "cup"), strings.Contains(lower, "ceramic"), strings.Contains(lower, "coffee"), strings.Contains(lower, "cofee"):
+			imageURL = "/assets/images/customer/ceramic-mugs.webp"
+		case strings.Contains(lower, "cushion"), strings.Contains(lower, "pillow"):
+			imageURL = "/assets/images/customer/black-cushion.webp"
+		case strings.Contains(lower, "art"), strings.Contains(lower, "painting"), strings.Contains(lower, "tree"), strings.Contains(lower, "madhubani"):
+			imageURL = "/assets/images/customer/madhubani-tree.webp"
+		case strings.Contains(lower, "box"), strings.Contains(lower, "jewel"), strings.Contains(lower, "wood"):
+			imageURL = "/assets/images/customer/wooden-box.webp"
+		case strings.Contains(lower, "tote"), strings.Contains(lower, "bag"):
+			imageURL = "/assets/images/customer/blue-tote.webp"
+		default:
+			imageURL = "/assets/images/customer/saree-maroon.webp"
+		}
 	}
 	return domaincommerce.ProductDraftInput{
 		Slug: slug, BrandSlug: brandSlug, BrandName: brandName,
