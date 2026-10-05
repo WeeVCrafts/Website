@@ -13,7 +13,7 @@ SELECT
     p.rating::float8 AS rating,
     p.review_count,
     p.delivery_label,
-    COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url) AS image_url,
+    COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1)) AS image_url,
     p.swatches
     ,pv.id AS variant_id
     ,COALESCE(i.available_quantity, 0) AS available_quantity
@@ -50,7 +50,7 @@ SELECT
     p.rating::float8 AS rating,
     p.review_count,
     p.delivery_label,
-    COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url) AS image_url,
+    COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1)) AS image_url,
     p.swatches
     ,pv.id AS variant_id
     ,COALESCE(i.available_quantity, 0) AS available_quantity

@@ -346,6 +346,7 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,image_url=$9,updated_at=NOW() WHERE id=$10 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, input.ImageURL, productID); err != nil {
 				return mapCommerceError(err)
 			}
+			_, _ = tx.Exec(transactionContext, `UPDATE product_media SET public_url=$1 WHERE product_id=$2 AND status='ready'`, input.ImageURL, productID)
 		} else {
 			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,updated_at=NOW() WHERE id=$9 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID); err != nil {
 				return mapCommerceError(err)
