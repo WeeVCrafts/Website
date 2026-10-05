@@ -34,6 +34,7 @@ SELECT u.id, u.email, u.display_name, u.status, u.created_at,
 FROM users u
 JOIN credentials c ON c.user_id = u.id
 WHERE LOWER(u.email) = LOWER($1)
+   OR LOWER(SPLIT_PART(u.email, '@', 1)) = LOWER($1)
 `
 
 type GetCredentialsByEmailRow struct {
