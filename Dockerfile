@@ -9,6 +9,8 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/wecratfs ./cmd/web
 FROM alpine:3.22
 RUN apk add --no-cache ca-certificates
 RUN addgroup -S app && adduser -S -D -H -G app app
+WORKDIR /app
+RUN mkdir -p /app/web/assets/images/uploads && chown -R app:app /app
 COPY --from=build /out/wecratfs /usr/local/bin/wecratfs
 EXPOSE 8080
 USER app
