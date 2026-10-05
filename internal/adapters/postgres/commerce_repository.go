@@ -302,7 +302,7 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 
 func (r *CommerceRepository) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
 		return domaincommerce.ManagedProduct{}, err
 	}
 	if !allowed {
@@ -531,7 +531,7 @@ func (r *CommerceRepository) RestoreAdminProduct(ctx context.Context, actorID, p
 
 func requireActiveSuperAdmin(ctx context.Context, tx pgx.Tx, actorID int64) error {
 	var allowed bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {

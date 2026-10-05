@@ -31,7 +31,7 @@ func (r *CommerceRepository) ListSellerProductVariants(ctx context.Context, owne
 
 func (r *CommerceRepository) ListAdminProductVariants(ctx context.Context, actorID, productID int64) ([]commerce.ProductVariant, error) {
 	var allowed bool
-	err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='super_admin')`, actorID).Scan(&allowed)
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed)
 	if err != nil {
 		return nil, err
 	}
