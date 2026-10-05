@@ -368,6 +368,9 @@ func requestWithPath(r *http.Request, path string) *http.Request {
 	urlCopy := *r.URL
 	urlCopy.Path = path
 	cloned.URL = &urlCopy
+	cloned.MultipartForm = r.MultipartForm
+	cloned.Form = r.Form
+	cloned.PostForm = r.PostForm
 	return cloned
 }
 

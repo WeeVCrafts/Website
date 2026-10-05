@@ -66,6 +66,9 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method != http.MethodGet {
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			_ = r.ParseMultipartForm(32 << 20)
+		}
 		if r.URL.Path == "/seller-admin/inventory/threshold" {
 			h.updateSellerLowStockThreshold(w, r)
 			return
