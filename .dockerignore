@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+tmp
+bin
+docs
+Phases
+*.png
+*.exe
+node_modules

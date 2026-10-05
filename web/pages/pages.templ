@@ -1,0 +1,981 @@
+package pages
+
+import (
+	"fmt"
+	"net/url"
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+  "github.com/wecratfs/commerce/web/components"
+)
+
+templ Document(p viewmodels.CustomerPage) {
+  <!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <meta name="description" content={ p.Description }/>
+      <meta name="robots" content="noindex,nofollow"/>
+      <title>{ p.Title } - Weevcrafts</title>
+      <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
+      <link rel="preload" href="/assets/fonts/dm-sans-400.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
+      <link rel="stylesheet" href="/assets/css/theme.css"/>
+      <link rel="stylesheet" href="/assets/css/utility.css"/>
+      <style>[x-cloak]{display:none!important}</style>
+      <script defer src="/assets/js/htmx.min.js"></script>
+      <script defer src="/assets/js/alpine.min.js"></script>
+      <script defer src="/assets/js/backend.js?v=20261004e"></script>
+      <script defer src="/assets/js/storefront.js?v=20261004e"></script>
+      <script>
+        function initDetailInteractions() {
+          document.querySelectorAll('[role="tablist"]').forEach(function (tablist) {
+            if (tablist.dataset.keyboardBound === "true") return;
+            var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+            tabs.forEach(function (tab, index) {
+              tab.addEventListener("keydown", function (event) {
+                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                event.preventDefault();
+                var next = event.key === "ArrowRight" ? (index + 1) % tabs.length : (index - 1 + tabs.length) % tabs.length;
+                tabs[next].focus();
+                tabs[next].click();
+              });
+            });
+            tablist.dataset.keyboardBound = "true";
+          });
+          document.querySelectorAll("[data-product-variant-select]").forEach(function (select) {
+            if (select.dataset.variantBound === "true") return;
+            var updateVariant = function () {
+              var option = select.options[select.selectedIndex];
+              var root = select.closest(".detail-copy");
+              if (!option || !root) return;
+              var price = root.querySelector("[data-selected-variant-price]");
+              var compare = root.querySelector("[data-selected-variant-compare]");
+              var discount = root.querySelector("[data-selected-variant-discount]");
+              var stock = root.querySelector("[data-selected-variant-stock]");
+              var badge = root.querySelector("[data-selected-variant-badge]");
+              var sku = document.querySelector("[data-selected-variant-sku]");
+              if (price) price.textContent = option.dataset.price || "";
+              if (compare) {
+                compare.textContent = option.dataset.compareAt || "";
+                compare.hidden = !option.dataset.compareAt;
+              }
+              if (discount) {
+                discount.textContent = option.dataset.discount || "";
+                discount.hidden = !option.dataset.discount;
+              }
+              var available = option.dataset.inStock === "true";
+              if (stock) stock.textContent = option.dataset.stockMessage || "Currently unavailable";
+              if (badge) badge.textContent = available ? "In stock" : "Sold out";
+              if (sku) sku.textContent = option.dataset.sku || "";
+              document.querySelectorAll(".detail-actions button, .mobile-buy-bar button").forEach(function (button) {
+                button.disabled = !available;
+              });
+            };
+            select.addEventListener("change", updateVariant);
+            select.dataset.variantBound = "true";
+            updateVariant();
+          });
+        }
+        function initSearchSuggestions() {
+          var input = document.getElementById("global-search");
+          if (!input) return;
+          var list = function () { return document.getElementById("search-suggestions"); };
+          var options = function () {
+            var popup = list();
+            return popup ? Array.prototype.slice.call(popup.querySelectorAll('[role="option"]')) : [];
+          };
+          var clearActive = function () {
+            options().forEach(function (option) { option.setAttribute("aria-selected", "false"); });
+            input.removeAttribute("aria-activedescendant");
+          };
+          var syncExpanded = function () {
+            var popup = list();
+            if (popup) {
+              if (input.value.trim() === "") {
+                popup.hidden = true;
+              } else if (popup.innerHTML.trim() !== "" && popup.dataset.dismissed !== "true") {
+                popup.hidden = false;
+              }
+            }
+            input.setAttribute("aria-expanded", popup && !popup.hidden ? "true" : "false");
+          };
+          var setActive = function (index) {
+            var available = options();
+            if (!available.length) return;
+            available.forEach(function (option) { option.setAttribute("aria-selected", "false"); });
+            var active = available[(index + available.length) % available.length];
+            active.setAttribute("aria-selected", "true");
+            input.setAttribute("aria-activedescendant", active.id);
+          };
+          if (input.dataset.searchKeyboardBound !== "true") {
+            input.addEventListener("input", function () {
+              var popup = list();
+              if (popup) delete popup.dataset.dismissed;
+              clearActive();
+            });
+            input.addEventListener("keydown", function (event) {
+              var available = options();
+              var activeID = input.getAttribute("aria-activedescendant");
+              var activeIndex = available.findIndex(function (option) { return option.id === activeID; });
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                if (!available.length) return;
+                event.preventDefault();
+                setActive(event.key === "ArrowDown" ? activeIndex + 1 : activeIndex - 1);
+              } else if (event.key === "Enter" && activeIndex >= 0) {
+                event.preventDefault();
+                window.location.assign(available[activeIndex].getAttribute("href"));
+              } else if (event.key === "Escape") {
+                var popup = list();
+                if (popup && !popup.hidden) {
+                  event.preventDefault();
+                  popup.dataset.dismissed = "true";
+                  popup.hidden = true;
+                  clearActive();
+                  syncExpanded();
+                }
+              }
+            });
+            input.dataset.searchKeyboardBound = "true";
+          }
+          syncExpanded();
+        }
+        document.addEventListener("DOMContentLoaded", initDetailInteractions);
+        document.addEventListener("DOMContentLoaded", initSearchSuggestions);
+        document.addEventListener("htmx:afterSettle", function () {
+          initDetailInteractions();
+          initSearchSuggestions();
+        });
+      </script>
+    </head>
+    <body hx-boost="true" hx-indicator="#ui-loading" hx-headers={ "{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}" }>
+      <div id="ui-loading" class="htmx-indicator" role="status" aria-live="polite">Updating…</div>
+      <div id="ui-toast" role="status" aria-live="polite"></div>
+      @components.Header(p)
+      <main id="page" x-data="{checkoutStep:1,payment:'upi',detailQuantity:1}">
+        if p.Route == "/payments" {
+          <nav class="payment-state-links container" aria-label="Payment status views"><span>Reconciliation views</span><a href="/payments/success">Success</a><a href="/payments/pending">Pending</a><a href="/payments/failed">Failed</a></nav>
+        }
+        { children... }
+      </main>
+      @components.Footer(p)
+    </body>
+  </html>
+}
+
+templ Breadcrumb(items ...string) {
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    for i, item := range items {
+      if i > 0 {
+        <span aria-hidden="true">/</span>
+      }
+      if i == len(items)-1 {
+        <span aria-current="page">{ item }</span>
+      } else {
+        <a href={ breadcrumbHref(item) }>{ item }</a>
+      }
+    }
+  </nav>
+}
+
+templ SectionHeading(kicker, title, copy string) {
+  <div class="section-head"><div><p class="eyebrow">{ kicker }</p><h2>{ title }</h2><p>{ copy }</p></div><a class="text-link" href="/products">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+}
+
+templ ProductRating(product viewmodels.Product) {
+  <div class="stars" aria-label={ product.Rating + " out of 5 stars" }>@components.RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews } reviews)</span></div>
+}
+
+templ DetailPrice(product viewmodels.Product) {
+  <div class="detail-price">
+    { product.Price }
+    if product.CompareAt != "" {
+      <del>{ product.CompareAt }</del>
+    }
+    if product.Discount != "" {
+      <mark>{ product.Discount }</mark>
+    }
+  </div>
+}
+
+templ VariantDetailPrice(product viewmodels.Product) {
+	<div class="detail-price">
+		<span data-selected-variant-price>{ firstProductVariant(product).Price }</span>
+		<del data-selected-variant-compare hidden?={ firstProductVariant(product).CompareAt == "" }>{ firstProductVariant(product).CompareAt }</del>
+		<mark data-selected-variant-discount hidden?={ firstProductVariant(product).Discount == "" }>{ firstProductVariant(product).Discount }</mark>
+	</div>
+}
+
+templ ProductCards(products []viewmodels.Product, showAction bool) {
+  for _, product := range products {
+    @components.ProductCard(product, showAction)
+  }
+}
+
+templ ListingProducts(products []viewmodels.Product) {
+  if len(products) == 0 {
+    <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">search_off</span><h2>No treasures found</h2><p>Try another search or clear your filters.</p></div>
+  } else {
+    @ProductCards(products, false)
+  }
+}
+
+templ SearchSuggestions(products []viewmodels.Product, query string) {
+  if query == "" {
+  } else if len(products) == 0 {
+    <p class="search-suggestion-empty">No products match “{ query }”.</p>
+  } else {
+    for _, product := range productSlice(products, 0, 5) {
+      <a class="search-suggestion" role="option" id={ "search-suggestion-" + product.Slug } aria-selected="false" href={ "/products/" + product.Slug }><img src={ product.ImageURL } alt="" width="40" height="44"/><span><strong>{ product.Name }</strong><small>By { product.Seller } · { product.Price }</small></span></a>
+    }
+    if query != "" {
+      <a class="search-suggestion-all" href={ "/search?q=" + url.QueryEscape(query) }>View all results</a>
+    }
+  }
+}
+
+templ SavedProducts(products []viewmodels.Product) {
+  for _, product := range products {
+    @SavedProduct(product)
+  }
+}
+
+templ CategoryCards(categories []viewmodels.Category) {
+  for _, category := range categories {
+    @components.CategoryCard(category)
+  }
+}
+
+templ CategorySidebarLinks(categories []viewmodels.Category) {
+  for _, category := range categories {
+    <a href={ "/products?category=" + category.Slug }>{ category.Name } <span>{ category.Products }</span></a>
+  }
+}
+
+templ SellerCards(sellers []viewmodels.Seller) {
+  for _, seller := range sellers {
+    <a class="seller-card" href={ "/makers/" + seller.Slug }><img src={ seller.ImageURL } alt={ seller.Name } loading="lazy" width="320" height="320"/><span class="seller-card-copy"><b>{ seller.Name }</b><small>{ seller.Location }</small><em>{ seller.Description }</em><strong>Explore store <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></strong></span></a>
+  }
+}
+
+templ OrderRows(items []viewmodels.CartItem) {
+  for _, item := range items {
+    <div class="order-item"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ item.Product.ImageSrcSet } sizes="160px"/><div><b>{ item.Product.Name }</b><small>Qty: { item.Quantity } | { item.Product.Location }</small><strong>{ item.Product.Price }</strong></div><a class="outline-button" href={ "/products/" + item.Product.Slug }>View item</a></div>
+  }
+}
+
+templ OrderDetailRows(items []viewmodels.CartItem) {
+  for _, item := range items {
+    <article class="order-line"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ item.Product.ImageSrcSet } sizes="160px"/><span><b>{ item.Product.Name }</b><small>Qty: { item.Quantity } | Sold by { item.Product.Seller }</small></span><strong>{ item.Product.Price }</strong></article>
+  }
+}
+
+templ HistoryRows(orders []viewmodels.Order) {
+  for _, order := range orders {
+    <article class="order-card compact-order"><header><div><p class="eyebrow">{ order.Status }</p><h2>{ order.Number }</h2><small>Placed on { order.Date } | { order.Payment }</small></div><div><strong>{ order.Total }</strong><span class="status">{ order.Status }</span></div></header><div class="compact-order-item">
+      if len(order.Items) > 0 {
+        <img src={ firstCartItemValue(order.Items).Product.ImageURL } alt={ firstCartItemValue(order.Items).Product.Name } width="160" height="173" srcset={ firstCartItemValue(order.Items).Product.ImageSrcSet } sizes="160px"/><span>{ firstCartItemValue(order.Items).Product.Name }<small>{ len(order.Items) } item</small></span>
+      }
+      <a href={ orderPath(order.Number) }>View details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></article>
+  }
+}
+
+templ CartRows(items []viewmodels.CartItem) {
+  if len(items) == 0 {
+    <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><h2>Your cart is waiting for something special</h2><p>Browse handmade treasures and bring a little India home.</p><a class="primary-button" href="/products">Continue shopping</a></div>
+  } else {
+    for _, item := range items {
+      <article class="cart-seller"><div class="cart-seller-head"><div><span class="material-symbols-outlined" aria-hidden="true">storefront</span><b>{ item.Product.Seller }</b><small>{ item.Product.Location }</small></div><span class="delivery"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span> Delivery in { item.Delivery }</span></div><div class="cart-line"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ item.Product.ImageSrcSet } sizes="160px"/><div class="cart-line-copy"><span class="badge">{ item.Product.Badge }</span><h2>{ item.Product.Name }</h2><p>Handmade in { item.Product.Location }</p>
+        if item.VariantName != "" {
+          <p class="cart-variant">Option: <b>{ item.VariantName }</b> · SKU { item.Product.SKU }</p>
+        }
+        <div class="price"><strong>{ item.Product.Price }</strong><del>{ item.Product.CompareAt }</del></div><div class="cart-line-actions"><span class="quantity-control"><button type="button" aria-label={ "Decrease " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, -1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">-</button><output aria-live="polite">{ item.Quantity }</output><button type="button" aria-label={ "Increase " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, 1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">+</button></span><button class="text-button" type="button" hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartRemoveValues(item.Product.VariantID) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Remove</button><button class="text-button" type="button" hx-post={ "/ui/wishlist/" + item.Product.Slug } hx-vals='{"source":"cart"}' hx-target="#cart-layout" hx-select="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Move to wishlist</button></div></div></div></article>
+    }
+  }
+  <div class="cart-note"><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><div><b>You are supporting independent makers</b><small>Every order helps preserve a living craft tradition.</small></div></div>
+}
+
+templ CheckoutItems(items []viewmodels.CartItem) {
+  for _, item := range items {
+    <div class="checkout-item"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ item.Product.ImageSrcSet } sizes="160px"/><div><b>{ item.Product.Seller }</b><p>{ item.Product.Name } | Qty: { item.Quantity } | { item.Product.Price }</p><small><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span> Standard delivery: { item.Delivery }</small></div></div>
+  }
+}
+
+templ CheckoutSummaryItems(items []viewmodels.CartItem) {
+  for _, item := range items {
+    <p><span>{ item.Product.Name } <small>x { item.Quantity }</small></span><b>{ item.Product.Price }</b></p>
+  }
+}
+
+templ Home(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="hero container"><div class="hero-copy"><p class="eyebrow">HANDCRAFTED. ROOTED IN INDIA.</p><h1>Indian arts, crafts<br/>and textiles for a<br/><em>more beautiful tomorrow</em></h1><p>Discover authentic handmade creations from Indian artisans. Timeless traditions. Modern homes. A kinder world.</p><a class="primary-button" href="/products">Shop our collections <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><div class="hero-proof"><span><b>01</b> Handmade with love</span><span><b>02</b> Made in India</span><span><b>03</b> Supports independent makers</span></div></div><div class="hero-image"><img src="/assets/images/customer/hero-studio.webp" alt="Indian artisan working in a craft studio" width="1536" height="1024" fetchpriority="high"/><span class="hero-note">Traditions<br/>live on<br/><b>here</b> <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></span></div><aside class="hero-aside"><span>More than products.<br/><b>Brighter futures.</b></span><i>+</i></aside></section>
+    <section class="container category-rail home-rail"><a class="category-card" href="/products?category=arts"><img src="/assets/images/customer/madhubani-tree.webp" alt="Madhubani painting" loading="lazy" width="1254" height="1254"/><span><strong>Arts</strong><small>Paintings, sculptures, traditional art &amp; more</small><b>Explore Arts <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="category-card" href="/products?category=crafts"><img src="/assets/images/customer/wooden-box.webp" alt="Carved wooden jewellery box" loading="lazy" width="1254" height="1254"/><span><strong>Crafts</strong><small>Home decor, handicrafts, lifestyle &amp; gifts</small><b>Explore Crafts <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="category-card" href="/products?category=textiles"><img src="/assets/images/customer/saree-maroon.webp" alt="Handwoven maroon saree" loading="lazy" width="1254" height="1254"/><span><strong>Textiles</strong><small>Handloom, heritage &amp; contemporary</small><b>Explore Textiles <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a></section>
+    <section class="container offers-rail"><div><span class="offer-icon">%</span><b>Maker offers<br/><strong>Thoughtful value</strong></b><small>Celebrate handmade every day</small></div><div><span class="offer-icon"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span></span><b>Delivery charges<br/><strong>Shown at checkout</strong></b><small>Clear before you place an order</small></div><div><span class="offer-icon"><span class="material-symbols-outlined" aria-hidden="true">favorite</span></span><b>Made with love<br/><strong>From our makers</strong></b><small>Every purchase makes a difference</small></div></section>
+    <section class="container section">
+        @SectionHeading("THE GOOD STUFF", "Trending now", "Beautiful things, made slowly and thoughtfully.")<div class="product-grid product-grid--six" data-backend-products="featured">
+        @ProductCards(productSlice(p.Products, 0, 6), true)</div></section>
+    <section class="container section">
+        @SectionHeading("MEET THE MAKERS", "Stories behind the craft", "The hands, homes and heritage behind every piece.")<div class="seller-grid" data-backend-makers>@SellerCards(p.Sellers)</div></section>
+    <section class="maker-banner container"><div><p class="eyebrow">A LITTLE MORE HUMAN</p><h2>When you buy handmade,<br/><em>you help a story continue.</em></h2><p>Every order supports an independent maker, keeps a living tradition in motion and makes room for the next generation to create.</p><a class="outline-button" href="/products">Explore live products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><img src="/assets/images/customer/maker-mithila.webp" alt="Indian artisan in her studio" loading="lazy" width="1254" height="1254"/></section>
+    <section class="container section collection-section">
+        @SectionHeading("CURATED FOR YOU", "Find your kind of beautiful", "Collections with a little more meaning.")<div class="collection-grid"><a class="collection-card collection-card--large" href="/products?category=textiles"><img src="/assets/images/customer/saree-blue.webp" alt="Handloom textile" loading="lazy" width="1254" height="1254"/><span><small>For every occasion</small><strong>The textile edit</strong><b>Shop handlooms <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card" href="/products?category=home"><img src="/assets/images/customer/terracotta-planter.webp" alt="Terracotta planter" loading="lazy" width="1254" height="1254"/><span><small>For your home</small><strong>Earth &amp; object</strong><b>Explore <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card" href="/products?category=crafts"><img src="/assets/images/customer/terracotta-lamp.webp" alt="Terracotta diyas" loading="lazy" width="1254" height="1254"/><span><small>For giving</small><strong>Thoughtful gifts</strong><b>Find a gift <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a></div></section>
+    <section class="world-strip container"><div><span class="material-symbols-outlined" aria-hidden="true">public</span><h2>Made in India, for your home</h2><p>Authentic craft, carefully packed for delivery within India.</p><a href="/products">Explore handmade favourites <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><img src="/assets/images/customer/blue-tote.webp" alt="Ikat tote bag" loading="lazy" width="1254" height="1254"/><img src="/assets/images/customer/madhubani-tree.webp" alt="Madhubani painting" loading="lazy" width="1254" height="1254"/></section>
+  }
+}
+
+templ Categories(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro categories-intro">
+        @Breadcrumb("Home", "Products")<p class="eyebrow">TAKE YOUR TIME</p><h1>Explore all products</h1><p>From heirloom weaves to objects for everyday living, find something made with intention.</p></section>
+    <section class="container category-layout"><aside class="category-sidebar"><h2>Browse by craft</h2><a class="active" aria-current="page" href="/categories">All products <span>{ len(p.Categories) }</span></a>@CategorySidebarLinks(p.Categories)<div class="sidebar-note"><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Every purchase supports an artisan</b><small>Shop with purpose, keep traditions alive.</small></div></aside><div class="category-content"><div class="category-feature"><img src="/assets/images/customer/maker-mithila.webp" alt="Madhubani artisan painting" loading="lazy" width="1254" height="1254"/><div><p class="eyebrow">THE WEEVCRAFTS DIFFERENCE</p><h2>Beautiful by nature.<br/><em>Meaningful by design.</em></h2><p>Small-batch pieces from verified makers across India, with the story always kept close.</p><a class="primary-button" href="/makers/mithila-arts">Meet the makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></div><div class="category-card-grid">@CategoryCards(p.Categories)</div><section class="subcategories"><div class="subcat-panel"><p class="eyebrow">START HERE</p><h2>Shop by craft</h2><div class="subcat-links"><a href="/products?category=arts"><b>Madhubani painting</b><small>Folk art with a story</small></a><a href="/products?category=crafts"><b>Brass &amp; metalwork</b><small>Objects that last</small></a><a href="/products?category=sarees"><b>Handloom sarees</b><small>Woven with patience</small></a><a href="/products?category=home-living"><b>Pottery &amp; ceramics</b><small>Earthy everyday pieces</small></a></div></div><div class="subcat-panel subcat-panel--dark"><p class="eyebrow">OCCASION EDIT</p><h2>Gifts that feel personal</h2><p>For new homes, new beginnings and every little celebration in between.</p><a class="text-link inverse-link" href="/products?category=gifts">Shop gifting <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></section></div></section>
+    <section class="container section category-collections">
+        @SectionHeading("CURATED EDITS", "A considered collection", "Thoughtful picks for the people and spaces you love.")<div class="collection-grid"><a class="collection-card" href="/products?category=home-living"><img src="/assets/images/customer/wooden-box.webp" alt="Wooden jewellery box" loading="lazy" width="1254" height="1254"/><span><small>Slow living</small><strong>Little luxuries</strong><b>Explore <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card collection-card--large" href="/products?category=fashion"><img src="/assets/images/customer/blue-tote.webp" alt="Ikat tote bag" loading="lazy" width="1254" height="1254"/><span><small>Made to move with you</small><strong>Everyday craft</strong><b>Shop the edit <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card" href="/products?category=gifts"><img src="/assets/images/customer/terracotta-lamp.webp" alt="Terracotta lamps" loading="lazy" width="1254" height="1254"/><span><small>Festive favourites</small><strong>Gifts with a soul</strong><b>Find a gift <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a></div></section>
+  }
+}
+
+templ Brands(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro brands-intro">
+      @Breadcrumb("Home", "Brands")
+      <p class="eyebrow">THE PEOPLE BEHIND THE PIECES</p>
+      <h1>Explore brands with a story</h1>
+      <p>Meet the independent studios and maker-led brands shaping a more thoughtful marketplace.</p>
+    </section>
+    <section class="container brand-directory">
+      for _, brand := range p.Brands {
+        <a class="brand-directory-card" href={ "/brands/" + brand.Slug }>
+          <img src={ brand.ImageURL } alt={ brand.Name } loading="lazy" width="520" height="320"/>
+          <div><span class="badge">{ brand.Location }</span><h2>{ brand.Name }</h2><p>{ brand.Tagline }</p><small>{ brand.Description }</small><strong>View brand story <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></strong></div>
+        </a>
+      }
+    </section>
+  }
+}
+
+templ BrandDetail(p viewmodels.CustomerPage, brand viewmodels.Brand) {
+  @Document(p) {
+    <section class="container page-intro brand-detail-intro">
+      @Breadcrumb("Home", "Brands", brand.Name)
+      <p class="eyebrow">WEEVCRAFTS BRAND PROFILE</p>
+      <h1>{ brand.Name }</h1>
+      <p>{ brand.Tagline } · { brand.Location }</p>
+    </section>
+    <section class="container brand-detail-layout">
+      <article class="brand-story-card"><img src={ brand.ImageURL } alt={ brand.Name } width="760" height="480"/><div><span class="badge">Verified maker brand</span><h2>Made slowly, made with meaning.</h2><p>{ brand.Description }</p><dl><div><dt>Based in</dt><dd>{ brand.Location }</dd></div><div><dt>Available pieces</dt><dd>{ brand.Products }</dd></div></dl><a class="outline-button" href={ "/products?brand=" + brand.Slug }>Shop this brand <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></article>
+      <aside class="summary brand-detail-aside"><span class="material-symbols-outlined" aria-hidden="true">verified</span><h2>Shop with confidence</h2><p>Every brand is reviewed for craft quality, clear maker information and thoughtful fulfilment.</p><a class="primary-button full" href={ "/products?brand=" + brand.Name }>Shop this brand</a><a class="text-link" href="/contact">Ask about a brand <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside>
+    </section>
+    <section class="container section brand-products"><div class="section-head"><div><p class="eyebrow">FROM THIS BRAND</p><h2>Pieces from { brand.Name }</h2><p>Explore the current collection from the studio.</p></div><a class="text-link" href={ "/products?brand=" + brand.Slug }>View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div><div class="product-grid product-grid--four" data-backend-products="listing" data-backend-brand={ brand.Slug }>@ProductCards(brandProducts(p.Products, brand.Name), true)</div></section>
+  }
+}
+
+templ Deals(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro deals-intro">
+      @Breadcrumb("Home", "Deals")
+      <p class="eyebrow">A LITTLE MORE REASON TO BRING IT HOME</p>
+      <h1>Handmade deals</h1>
+      <p>Thoughtful pieces, seasonal offers and maker-first value. The craft stays special; the price feels a little easier.</p>
+    </section>
+    <section class="container deals-layout"><div><div class="deals-banner"><div><span class="badge">Limited-time edit</span><h2>Beautiful things, better together.</h2><p>Save on selected handmade pieces while supporting the people who made them.</p><a class="primary-button" href="#deal-grid">Shop offers <span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></a></div><span class="deals-banner-mark">%</span></div><div id="deal-grid" class="product-grid product-grid--four deals-grid" data-backend-products="listing" data-backend-category="offers">@ProductCards(p.Products, true)</div></div><aside class="summary deals-aside"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span><h2>Offers with a purpose</h2><p>Discounts are shown from each maker's listed price. Shipping and availability stay clear at checkout.</p><a class="outline-button full" href="/products">Browse all products</a><a class="text-link" href="/brands">Meet the brands <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside></section>
+  }
+}
+
+templ FilterControl(filters url.Values, counts map[string]int, inputType, key, value, label string) {
+  if hasFilter(filters, key, value) {
+    <label><input type={ inputType } name={ key } value={ value } checked/> { label } @FilterSuffix(filterCount(counts, key, value))</label>
+  } else {
+    <label><input type={ inputType } name={ key } value={ value }/> { label } @FilterSuffix(filterCount(counts, key, value))</label>
+  }
+}
+
+templ FilterSuffix(suffix string) {
+  if suffix != "" {
+    <span>{ suffix }</span>
+  }
+}
+
+templ SortOption(value, label, current string) {
+  if value == current {
+    <option value={ value } selected>{ label }</option>
+  } else {
+    <option value={ value }>{ label }</option>
+  }
+}
+
+templ Listing(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro listing-intro">
+      @Breadcrumb("Home", "Search results")
+      <p class="eyebrow">TAKE A CLOSER LOOK</p>
+      <h1>{ listingTitle(p) }</h1>
+      <p>{ listingDescription(p) }</p>
+    </section>
+    <section class="container category-pills-bar">
+      <div class="category-pills-head">
+        <h2><span class="material-symbols-outlined" aria-hidden="true">category</span> Categories</h2>
+        <span>Browse products by craft &amp; category</span>
+      </div>
+      <div class="category-pills-list">
+        <a class={ categoryPillClass(p.Filters, "") } href="/products">All Products</a>
+        for _, category := range p.Categories {
+          <a class={ categoryPillClass(p.Filters, category.Slug) } href={ "/products?category=" + category.Slug }>{ category.Name }</a>
+        }
+      </div>
+    </section>
+    <form id="listing-filters" class="container listing-filter-form" method="get" action="/products" hx-get="/products" hx-select="#listing-results" hx-target="#listing-results" hx-push-url="true" hx-trigger="change" hx-indicator="#ui-loading" x-data="{filters:false}" @keydown.escape.window="if (filters) { filters=false; $nextTick(() => $refs.filterToggle.focus()) }" @keydown.tab.window="if (filters) { const focusables = $refs.filterPanel.querySelectorAll('button,a,input,summary,select,textarea'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
+      <input type="hidden" name="q" value={ p.Query }/><div class="mobile-filter-toolbar"><button class="mobile-filter-toggle" type="button" x-ref="filterToggle" aria-label="Open product filters" aria-controls="listing-filter-sidebar" :aria-expanded="filters" @click="filters=true; $nextTick(() => $refs.filterClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">tune</span> Filters</button></div>
+      <section class="listing-layout">
+        <aside id="listing-filter-sidebar" x-ref="filterPanel" class="filter-sidebar" aria-label="Product filters" :class="{ 'is-open': filters }"><button class="mobile-filter-close" type="button" x-ref="filterClose" @click="filters=false; $nextTick(() => $refs.filterToggle.focus())">Close filters</button>
+          <div class="filter-head"><h2>Filter by</h2><a href="/products">Clear all</a></div>
+          <details open>
+            <summary>Categories <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
+            for _, category := range p.Categories {
+              @FilterControl(p.Filters, p.FilterCounts, "checkbox", "category", category.Slug, category.Name)
+            }
+          </details>
+          <details open>
+            <summary>Makers <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
+            for _, brand := range p.Brands {
+              @FilterControl(p.Filters, p.FilterCounts, "checkbox", "brand", brand.Slug, brand.Name)
+            }
+          </details>
+          <details open>
+            <summary>Price <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
+            @FilterControl(p.Filters, p.FilterCounts, "radio", "price", "under-1000", "Under INR 1,000")
+            @FilterControl(p.Filters, p.FilterCounts, "radio", "price", "1000-2500", "INR 1,000 - 2,500")
+            @FilterControl(p.Filters, p.FilterCounts, "radio", "price", "2500-5000", "INR 2,500 - 5,000")
+            @FilterControl(p.Filters, p.FilterCounts, "radio", "price", "over-5000", "Above INR 5,000")
+          </details>
+          <details open>
+            <summary>Availability <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
+            @FilterControl(p.Filters, p.FilterCounts, "checkbox", "availability", "in-stock", "In stock")
+          </details>
+        </aside><button class="filter-backdrop" type="button" aria-label="Close filters" @click="filters=false; $nextTick(() => $refs.filterToggle.focus())"></button>
+        <div id="listing-results" class="listing-results">
+          <div class="results-toolbar">
+            <div><b data-backend-result-count>{ listingResultCount(p) } results</b><span class="filter-chips"><span class="filter-chip-clear">Filtered view</span></span></div>
+            <label for="listing-sort">Sort by
+              <select id="listing-sort" name="sort">
+                @SortOption("relevance", "Relevance", normalizedSort(p.Sort))
+                @SortOption("price-asc", "Price: Low to High", normalizedSort(p.Sort))
+                @SortOption("price-desc", "Price: High to Low", normalizedSort(p.Sort))
+                @SortOption("newest", "Newest", normalizedSort(p.Sort))
+              </select>
+            </label>
+          </div>
+          <div class="listing-banner">
+            <div><p class="eyebrow">THE HANDLOOM EDIT</p><h2>Woven slowly.<br/><em>Worn forever.</em></h2><p>Meet the weavers keeping India's most beautiful textiles in motion.</p><a href="/makers/mithila-arts">Explore the stories <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+            <img src="/assets/images/customer/saree-blue.webp" alt="Blue handloom saree" width="360" height="300"/>
+          </div>
+          <div class="product-grid product-grid--four" data-backend-products="listing">@ListingProducts(p.Products)</div>
+          <nav class="pagination" aria-label="Pagination">
+            if p.Page > 1 {
+              <a href={ listingURL(p, p.Page-1) } aria-label="Previous page"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></a>
+            } else {
+              <span aria-hidden="true"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></span>
+            }
+            for page := 1; page <= p.Pages; page++ {
+              <a href={ listingURL(p, page) } class={ paginationClass(page, p.Page) } aria-current={ paginationCurrent(page, p.Page) }>{ pageLabel(page) }</a>
+            }
+            if p.Page < p.Pages {
+              <a href={ listingURL(p, p.Page+1) } aria-label="Next page"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></a>
+            } else {
+              <span aria-hidden="true"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></span>
+            }
+          </nav>
+        </div>
+      </section>
+    </form>
+    <section class="container domestic-delivery-banner"><div><span class="material-symbols-outlined" aria-hidden="true">public</span><div><p class="eyebrow">INDIAN CRAFT, DELIVERED WITH CARE</p><h2>Delivery across India</h2><p>Carefully packed and delivered to serviceable PIN codes across India.</p></div></div><a class="outline-button" href="/products">Shop handmade in India <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
+  }
+}
+
+
+templ ProductDetail(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container product-detail" data-backend-product={ p.Product.Slug }>
+      @Breadcrumb("Home", p.Product.Category, p.Product.Name)
+      <div class="detail-grid">
+        <div class="gallery" x-data="{active:0}">
+          <div class="thumbs">
+            <button type="button" aria-label={ "Show " + p.Product.Name + " primary image" } @click="active=0"><img src={ p.Product.ImageURL } alt={ p.Product.Name } width="180" height="198"/></button>
+            for i, media := range p.Product.Media {
+              if media.URL != p.Product.ImageURL {
+                <button type="button" aria-label={ "Show product media " + fmt.Sprint(i+1) } @click={ fmt.Sprintf("active=%d", i+1) }>
+                  if media.IsVideo {
+                    <span class="gallery-video-thumb"><span class="material-symbols-outlined" aria-hidden="true">play_circle</span>Video</span>
+                  } else {
+                    <img src={ media.URL } alt={ "Product image " + fmt.Sprint(i+1) } loading="lazy" width="180" height="180"/>
+                  }
+                </button>
+              }
+            }
+          </div>
+          <div class="gallery-main">
+            <img x-show="active===0" src={ p.Product.ImageURL } alt={ p.Product.Name } width="800" height="896" srcset={ p.Product.ImageSrcSet } sizes="(max-width: 720px) 100vw, 55vw"/>
+            for i, media := range p.Product.Media {
+              if media.URL != p.Product.ImageURL {
+                if media.IsVideo {
+                  <video x-show={ fmt.Sprintf("active===%d", i+1) } x-cloak controls playsinline preload="metadata" aria-label={ "Product video " + fmt.Sprint(i+1) }><source src={ media.URL } type={ media.ContentType }/>Your browser cannot play this product video.</video>
+                } else {
+                  <img x-show={ fmt.Sprintf("active===%d", i+1) } x-cloak src={ media.URL } alt={ "Product image " + fmt.Sprint(i+1) } width="800" height="800" loading="lazy"/>
+                }
+              }
+            }
+            <button class="gallery-heart" type="button" data-product-slug={ p.Product.Slug } aria-label={ "Save " + p.Product.Name } hx-post={ "/ui/wishlist/" + p.Product.Slug } hx-vals='{"source":"detail"}' hx-target="#wishlist-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">favorite</span></button>
+          </div>
+          <small class="gallery-caption">Made in { p.Product.Location }</small>
+        </div>
+        <div class="detail-copy">
+          <span class="badge" data-selected-variant-badge>{ p.Product.Badge }</span><h1>{ p.Product.Name }</h1>@ProductRating(p.Product)
+          <a class="seller-line" href={ sellerPath(p.Product) }><img src={ p.Product.ImageURL } alt={ p.Product.Seller } loading="lazy" width="64" height="64"/><span>By { p.Product.Seller }<small><span class="material-symbols-outlined" aria-hidden="true">location_on</span> { p.Product.Location }</small></span><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></a>
+          if len(p.Product.Variants) > 0 {
+            @VariantDetailPrice(p.Product)
+          } else {
+            @DetailPrice(p.Product)
+          }
+          <p class="tax-note">Inclusive of all taxes</p>
+          if len(p.Product.Variants) > 0 {
+            <fieldset class="product-variant-select"><label for="detail-variant">Choose an option</label><select id="detail-variant" name="variant_id" data-product-variant-select>
+              for _, variant := range p.Product.Variants {
+                <option value={ variant.ID } data-price={ variant.Price } data-compare-at={ variant.CompareAt } data-discount={ variant.Discount } data-sku={ variant.SKU } data-stock-message={ variant.StockMessage } data-in-stock={ fmt.Sprint(variant.InStock) } selected?={ selectedProductVariant(variant, p.Product) }>{ variant.Name } · { variant.SKU } · { variant.Price }</option>
+              }
+            </select></fieldset>
+          }
+          <div class="quantity-row"><label>Quantity <span class="quantity-control"><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } @click="detailQuantity=Math.max(1, detailQuantity-1)">-</button><output aria-live="polite" x-text="detailQuantity">1</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } @click="detailQuantity=Math.min(99, detailQuantity+1)">+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
+          <input id="detail-quantity" type="hidden" name="quantity" :value="detailQuantity"/>
+          <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
+          <div class="benefits"><span><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Delivery</b><small>{ p.Product.DeliveryLabel }</small></span><span><span class="material-symbols-outlined" aria-hidden="true">public</span><b>Shipping region</b><small>India only</small></span></div>
+        </div>
+      </div>
+      <section class="detail-tabs" x-data="{tab:'description'}">
+        <nav role="tablist" aria-label="Product information">
+          <button id="product-tab-description" type="button" role="tab" aria-controls="product-panel-description" :tabindex="tab === 'description' ? 0 : -1" :class="tab === 'description' ? 'active' : ''" :aria-selected="tab === 'description'" @keydown.right.prevent="tab='details'" @keydown.left.prevent="tab='reviews'" @click="tab='description'">Product description</button>
+          <button id="product-tab-details" type="button" role="tab" aria-controls="product-panel-details" :tabindex="tab === 'details' ? 0 : -1" :class="tab === 'details' ? 'active' : ''" :aria-selected="tab === 'details'" @keydown.right.prevent="tab='reviews'" @keydown.left.prevent="tab='description'" @click="tab='details'">Product details</button>
+          <button id="product-tab-reviews" type="button" role="tab" aria-controls="product-panel-reviews" :tabindex="tab === 'reviews' ? 0 : -1" :class="tab === 'reviews' ? 'active' : ''" :aria-selected="tab === 'reviews'" @keydown.right.prevent="tab='description'" @keydown.left.prevent="tab='details'" @click="tab='reviews'">Reviews ({ p.Product.Reviews })</button>
+        </nav>
+        <div id="product-panel-description" role="tabpanel" aria-labelledby="product-tab-description" x-show="tab==='description'"><p>{ productDescription(p.Product) }</p></div>
+        <div id="product-panel-details" role="tabpanel" aria-labelledby="product-tab-details" x-show="tab==='details'" x-cloak>
+          <dl class="spec-grid"><div><dt>Category</dt><dd>{ p.Product.Category }</dd></div><div><dt>Seller</dt><dd>{ p.Product.Seller }</dd></div><div><dt>SKU</dt><dd data-selected-variant-sku>{ firstProductVariant(p.Product).SKU }</dd></div><div><dt>Delivery</dt><dd>{ p.Product.DeliveryLabel }</dd></div></dl>
+        </div>
+        <div id="product-panel-reviews" role="tabpanel" aria-labelledby="product-tab-reviews" x-show="tab==='reviews'" x-cloak><div class="review-highlight"><strong>{ p.Product.Rating }</strong><span>Published customer reviews<br/>{ p.Product.Reviews } reviews</span></div>
+          if len(p.ProductReviews) > 0 {
+            <div class="grid gap-4">
+              for _, review := range p.ProductReviews {
+                <article class="rounded-2xl border border-line bg-white p-5"><div class="flex flex-wrap justify-between gap-2"><h3 class="font-semibold text-indigo">{ review.Title }</h3><span aria-label={ fmt.Sprintf("%d out of 5 stars", review.Rating) }>{ fmt.Sprintf("%d/5", review.Rating) }</span></div><p class="mt-3 text-sm leading-6 text-ink/70">{ review.Body }</p><p class="mt-3 text-xs text-ink/50">{ review.Author } · { review.Created }
+                  if review.VerifiedPurchase {
+                    <span> · Verified purchase</span>
+                  }
+                </p></article>
+              }
+            </div>
+          } else {
+            <p>No published reviews yet. Reviews from delivered purchases appear here after moderation.</p>
+          }
+        </div>
+      </section>
+    </section>
+    <section class="container section">@SectionHeading("YOU MAY ALSO LIKE", "More made-for-you finds", "Keep exploring the beautiful things our makers make.")<div class="product-grid product-grid--four" data-backend-products="listing">@ProductCards(productSlice(p.Products, 3, 7), true)</div></section>
+    <div class="mobile-buy-bar"><button class="outline-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this">Add to cart</button><button class="primary-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this">Buy now</button></div>
+    <section class="container seller-callout"><img src={ p.Product.ImageURL } alt={ p.Product.Seller } width="520" height="360"/><div><p class="eyebrow">SELLER</p><h2>{ p.Product.Seller }</h2><p>This product is listed by { p.Product.Seller }.</p><a class="text-link" href={ sellerPath(p.Product) }>Visit the seller&apos;s storefront <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></section>
+  }
+}
+
+templ SellerStore(p viewmodels.CustomerPage, seller viewmodels.Seller) {
+  @Document(p) {
+    <section class="seller-hero"><div class="container"><p class="eyebrow">SELLER STOREFRONT</p><h1>{ seller.Name }</h1><p>{ seller.Products } approved products currently listed.</p></div></section>
+    <section class="container seller-profile">
+      if seller.ImageURL != "" {
+        <div class="seller-avatar"><img src={ seller.ImageURL } alt={ "Product sold by " + seller.Name } width="128" height="128"/></div>
+      }
+      <div><h2>{ seller.Name }
+        if seller.Status == "active" {
+          <span class="verified"><span class="material-symbols-outlined" aria-hidden="true">verified</span>Active seller</span>
+        }
+      </h2>
+      if seller.Description != "" {
+        <p class="seller-description">{ seller.Description }</p>
+      }
+      if seller.Rating != "" {
+        <div class="stars" aria-label={ seller.Rating + " out of 5 stars" }>@components.RatingStars(seller.Rating) <span>{ seller.Rating } <small>from published product reviews</small></span></div>
+      }
+      </div>
+      <div class="seller-actions">
+        if p.CanFollowSeller {
+          <form method="post" action={ "/ui/seller-follow/" + seller.Slug } data-seller-follow>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            if seller.Following {
+              <input type="hidden" name="intent" value="unfollow"/>
+              <button class="primary-button" type="submit">Unfollow seller</button>
+            } else {
+              <input type="hidden" name="intent" value="follow"/>
+              <button class="primary-button" type="submit">Follow seller</button>
+            }
+          </form>
+        } else if !p.Authenticated {
+          <a class="primary-button" href={ "/login?next=" + url.QueryEscape("/makers/" + seller.Slug) }>Sign in to follow</a>
+        }
+        <button class="outline-button" type="button" x-data="{shared:false}" @click="navigator.clipboard?.writeText(window.location.href); shared=true"><span class="material-symbols-outlined" aria-hidden="true">share</span><span x-text="shared ? 'Link copied' : 'Share store'">Share store</span></button>
+      </div>
+    </section>
+    <section class="container seller-stats"><span><b>{ seller.Products }</b><small>Approved products</small></span>
+      if seller.Rating != "" {
+        <span><b>{ seller.Rating } / 5</b><small>Published product reviews</small></span>
+      }
+      <span><b>India</b><small>Shipping region</small></span>
+    </section>
+    <section class="container seller-tabs" id="products">
+      <div class="section-head"><div><p class="eyebrow">LIVE CATALOG</p><h2>Products by { seller.Name }</h2></div>
+        <form method="get" action={ "/makers/" + seller.Slug } class="seller-sort-form"><label for="seller-product-sort">Sort by</label><select id="seller-product-sort" name="sort"><option value="featured" selected?={ p.Sort == "" || p.Sort == "featured" }>Featured</option><option value="newest" selected?={ p.Sort == "newest" }>Newest</option><option value="price-asc" selected?={ p.Sort == "price-asc" }>Price: low to high</option><option value="price-desc" selected?={ p.Sort == "price-desc" }>Price: high to low</option></select><button class="outline-button" type="submit">Apply</button></form>
+      </div>
+      if len(p.Products) == 0 {
+        <div class="empty-state"><h2>No approved products yet</h2><p>Products will appear here after marketplace approval.</p></div>
+      } else {
+        <div class="product-grid product-grid--five" data-backend-products="listing" data-backend-seller={ seller.Slug }>@ProductCards(p.Products, false)</div>
+      }
+    </section>
+    if seller.Description != "" {
+      <section class="container maker-about" id="about"><div><p class="eyebrow">SELLER DETAILS</p><h2>{ seller.Name }</h2><p>{ seller.Description }</p></div></section>
+    }
+  }
+}
+
+templ SavedProduct(product viewmodels.Product) {
+  <article class="saved-card">
+    <div class="saved-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ product.ImageURL } alt={ product.Name } width="320" height="346" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 100vw, 320px"/></a><button class="heart" type="button" hx-post={ "/ui/wishlist/" + product.Slug } hx-vals='{"source":"wishlist"}' hx-target="#wishlist-grid" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this" aria-label="Remove from wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span></button></div>
+    <div class="saved-copy"><span class="badge">{ product.Badge }</span><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p><div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@components.RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div><div class="price"><strong>{ product.Price }</strong><del>{ product.CompareAt }</del>
+      if product.Discount != "" {
+        <mark>{ product.Discount }</mark>
+      }
+    </div><small class="availability"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span> In stock</small><div><button class="primary-button" type="button" hx-post={ "/ui/cart/" + product.Slug } hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Move to cart</button><button class="text-button" type="button" hx-post={ "/ui/wishlist/" + product.Slug } hx-vals='{"source":"wishlist"}' hx-target="#wishlist-grid" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this">Remove</button></div></div>
+  </article>
+}
+
+templ WishlistGrid(p viewmodels.CustomerPage) {
+  <div id="wishlist-grid" class="saved-grid">
+    if len(p.SavedProducts) == 0 {
+      <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">favorite_border</span><h2>Your wishlist is empty</h2><p>Save pieces you love and they will appear here.</p><a class="primary-button" href="/products">Discover handmade finds</a></div>
+    } else {
+      @SavedProducts(productSlice(p.SavedProducts, 0, 6))
+    }
+  </div>
+}
+
+templ WishlistGridMutation(p viewmodels.CustomerPage) {
+  @WishlistGrid(p)
+  @components.WishlistCountMutation(p)
+  <div id="ui-toast" hx-swap-oob="innerHTML" role="status">Wishlist updated</div>
+}
+
+
+templ Wishlist(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro wishlist-intro">
+        @Breadcrumb("Home", "My Wishlist")<p class="eyebrow">SAVED WITH LOVE</p><h1>My wishlist</h1><p>Handpicked with love, for a more beautiful tomorrow.</p><p>Your saved treasures from India's finest artisans. Keep them close, move to cart when you are ready.</p></section><section class="container section"><div class="section-head"><div><h2 data-backend-wishlist-count>{ p.WishlistCount } items in your wishlist</h2><p>These are the pieces you chose to keep an eye on.</p></div><a class="outline-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@WishlistGrid(p)</section><section class="container section wishlist-recommendations">
+        @SectionHeading("KEEP DISCOVERING", "You may also love", "More beautiful finds from independent makers.")<div class="product-grid product-grid--six" data-backend-products="listing">
+        @ProductCards(productSlice(p.Products, 6, len(p.Products)), true)</div></section>
+  }
+}
+
+templ AccountSidebar(active string) {
+  <aside class="account-sidebar">
+    <div class="profile-mini"><div class="avatar">AS</div><b>Ananya Sharma</b><small>ananya.sharma@gmail.com</small></div>
+    if active == "account" {
+      <a class="active" aria-current="page" href="/account"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
+    } else {
+      <a href="/account"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
+    }
+    <a href="/account/profile"><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a><a href="/account/addresses"><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
+    if active == "orders" {
+      <a class="active" aria-current="page" href="/orders"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
+    } else {
+      <a href="/orders"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
+    }
+    <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a><a href="/account/notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a><a href="/account/privacy"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a><a href="/account/security"><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a><a href="/contact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
+  </aside>
+}
+
+templ Orders(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro account-intro">
+        @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from Weevcrafts.</p><nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav></section><section class="container account-layout">
+        @AccountSidebar("orders")<div class="account-content orders-list" data-backend-orders>
+          if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
+            <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+          } else {
+        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))), p.CSRFToken)
+            <h2 class="order-history-title">Past orders</h2>
+            @HistoryRows(orderSlice(orderSubset(p.Orders, p.Filters.Get("status")), 1))
+          }
+        </div></section>
+  }
+}
+
+templ PrimaryOrder(order viewmodels.Order, csrfToken string) {
+  <article class="order-card"><header><div><p class="eyebrow">ORDER PLACED</p><h2>{ order.Number } <mark>{ order.Status }</mark></h2><small>{ order.Date } | { order.Payment }</small></div><div><b>{ len(order.Items) } items</b><strong>{ order.Total }</strong></div></header><div class="order-progress"><span class="done"><i>1</i><b>Order placed</b><small>{ order.Date }</small></span><span class="done"><i>2</i><b>Packed</b><small>Maker update</small></span><span><i>3</i><b>Shipped</b><small>Awaiting update</small></span><span><i>4</i><b>Delivered</b><small>Awaiting update</small></span></div><div class="seller-order"><div class="seller-order-head"><b><span class="material-symbols-outlined" aria-hidden="true">storefront</span> { orderSeller(order) }</b><span>{ orderDeliveryCopy(order) }</span></div>
+  @OrderRows(order.Items)</div><footer><a class="primary-button" href={ orderPath(order.Number) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+    if order.CanCancel {
+      <form method="post" action={ orderPath(order.Number) + "/cancel" }><input type="hidden" name="csrf_token" value={ csrfToken }/><button class="outline-button" type="submit">Cancel order</button></form>
+    }
+    <a class="outline-button" href="/contact">Need help?</a></footer></article>
+}
+
+templ Tracking(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Track order")<p class="eyebrow">EVERY STEP, KEPT CLEAR</p><h1>Track your order</h1><p>Follow your handmade order from maker dispatch to your doorstep.</p></section>
+    <section class="container tracking-layout"><div class="tracking-main"><form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value="#WC2504267819"/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form><article class="tracking-card-main"><header><div><span class="badge">In transit</span><h2>Order #WC2504267819</h2><p>Chanderi Silk Cotton Saree · Weaver's Touch</p></div><strong>Expected 30 Apr – 02 May</strong></header><div class="tracking-progress" aria-label="Shipment progress"><span class="done"><i class="material-symbols-outlined" aria-hidden="true">check</i><b>Order placed</b><small>26 Apr</small></span><span class="done"><i class="material-symbols-outlined" aria-hidden="true">check</i><b>Packed by maker</b><small>27 Apr</small></span><span class="current"><i class="material-symbols-outlined" aria-hidden="true">local_shipping</i><b>In transit</b><small>28 Apr</small></span><span><i class="material-symbols-outlined" aria-hidden="true">home</i><b>Delivered</b><small>Expected soon</small></span></div><div class="tracking-events"><div><time>28 Apr<br/>10:30 AM</time><span><b>Shipment in transit</b><small>Package reached Bengaluru sorting centre · Delhivery</small></span></div><div><time>27 Apr<br/>04:15 PM</time><span><b>Picked up from Weaver's Touch</b><small>Tracking ID: 149730248756</small></span></div><div><time>26 Apr<br/>05:20 PM</time><span><b>Order packed</b><small>Your maker has prepared the parcel with care.</small></span></div></div></article></div><aside class="summary tracking-aside"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our support team can help with courier updates, delivery windows and returns.</p><a class="outline-button full" href="/contact">Contact support</a><a class="text-link" href="/orders/WC2504267819">View order details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside></section>
+  }
+}
+
+templ Payments(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Account", "Payments")<p class="eyebrow">CLEAR, SECURE, TRACEABLE</p><h1>Payments</h1><p>Review the real payment activity attached to your orders.</p></section>
+    <section class="container payment-workspace">
+      <div class="payment-main">
+        <article class="payment-method-card">
+          <header><div><span class="material-symbols-outlined" aria-hidden="true">credit_card</span><h2>Payment checkout</h2></div></header>
+          <p>Payment details are entered during checkout and are not saved to your Weevcrafts account.</p>
+          if p.PaymentMode == "local" {
+            <p><mark>Mock payments active</mark> Checkout uses the local payment simulator.</p>
+          } else if p.PaymentMode != "" {
+            <p>Checkout provider: <b>{ p.PaymentMode }</b></p>
+          }
+          <a class="outline-button" href="/cart">Continue to checkout</a>
+        </article>
+        <article class="payment-method-card"><header><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Recent payment activity</h2></div></header><div class="payment-activity">@PaymentActivityRows(p.PaymentActivity)</div></article>
+      </div>
+      <aside class="summary payment-aside"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><h2>Payment support</h2><p>A pending or failed payment does not create a duplicate order. Keep the reference number ready when contacting support.</p><a class="primary-button full" href="/contact">Get help with a payment</a><a class="text-link" href="/orders">View related orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></aside>
+    </section>
+  }
+}
+templ PaymentActivityRows(activities []viewmodels.PaymentActivity) {
+  if len(activities) == 0 {
+    <p class="empty-state">No recent payment activity.</p>
+  } else {
+    for _, payment := range activities {
+      <div><span class={ "status-dot " + paymentActivityClass(payment.Status) }></span><p><strong>{ payment.Reference } · { payment.Amount }</strong><small>{ payment.Date } · { payment.Method } · Order { payment.OrderNumber }</small></p><mark class={ "status " + paymentActivityClass(payment.Status) }>{ payment.Status }</mark></div>
+    }
+  }
+}
+
+templ PaymentStatus(p viewmodels.CustomerPage, state string) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Payments", paymentStateLabel(state))<p class="eyebrow">PAYMENT RECONCILIATION</p><h1>{ paymentStateTitle(state) }</h1><p>{ paymentStateDescription(state) }</p></section>
+    <section class="container payment-state-layout"><article class={ "payment-state-card state-" + state }><span class="payment-state-icon material-symbols-outlined" aria-hidden="true">{ paymentStateIcon(state) }</span><h2>{ paymentStateHeading(state) }</h2><p>{ paymentStateCopy(state) }</p><dl><div><dt>Payment reference</dt><dd>{ paymentStateReference(state) }</dd></div><div><dt>Related order</dt><dd>#WC2504267819</dd></div><div><dt>Next step</dt><dd>{ paymentStateNextStep(state) }</dd></div></dl><div class="payment-state-actions"><a class="primary-button" href="/orders">View related order</a><a class="outline-button" href="/payments">Back to payments</a></div></article><aside class="summary"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Keep the payment reference ready. Our support team can check reconciliation without creating a duplicate order.</p><a class="outline-button full" href="/contact?notice=Payment+reconciliation+support+opened">Contact payment support</a></aside></section>
+  }
+}
+
+templ Returns(p viewmodels.CustomerPage) {
+  @ReturnsFiltered(p, "active")
+}
+
+templ ReturnsFiltered(p viewmodels.CustomerPage, tab string) {
+  @Document(p) {
+    <section class="container page-intro returns-intro">
+      @Breadcrumb("Home", "My Account", "Returns and refunds")
+      <p class="eyebrow">ORDER SUPPORT</p>
+      <h1>Returns &amp; refunds</h1>
+      <p>Review requests you have made and follow each update from our operations team.</p>
+    </section>
+    <section class="container returns-layout">
+      <div class="returns-main">
+        <nav class="tabs" role="tablist" aria-label="Return status">
+          <a class={ returnTabClass(p.Filters, "") } role="tab" aria-current={ returnTabCurrent(p.Filters, "") } aria-selected={ tabSelected(returnTabClass(p.Filters, "") == "active") } href="/returns">Current ({ returnCount(p.Returns, "") })</a>
+          <a class={ returnTabClass(p.Filters, "refunds") } role="tab" aria-current={ returnTabCurrent(p.Filters, "refunds") } aria-selected={ tabSelected(returnTabClass(p.Filters, "refunds") == "active") } href="/returns?tab=refunds">Refunded ({ returnCount(p.Returns, "refunds") })</a>
+          <a class={ returnTabClass(p.Filters, "closed") } role="tab" aria-current={ returnTabCurrent(p.Filters, "closed") } aria-selected={ tabSelected(returnTabClass(p.Filters, "closed") == "active") } href="/returns?tab=closed">Closed ({ returnCount(p.Returns, "closed") })</a>
+        </nav>
+        if len(returnSubset(p.Returns, tab)) == 0 {
+          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><h2>No return requests here</h2><p>Return requests and their latest status will appear here. To request a return, open an eligible order.</p><a class="primary-button" href="/orders">View your orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+        } else {
+          for _, item := range returnSubset(p.Returns, tab) {
+            @ReturnCompact(item)
+          }
+        }
+      </div>
+      <aside class="returns-aside">
+        <div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><h2>Request a return</h2><p>Open an eligible order and describe the issue. Our operations team will review your request.</p><a href="/orders">View orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+        <div id="support"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Contact our support team if you need help with an order or return.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+      </aside>
+    </section>
+  }
+}
+
+templ ReturnCompact(item viewmodels.Return) {
+  <article class="return-card compact-return">
+    <header><div><mark>{ item.Status }</mark><h2>{ item.ProductName }</h2></div><strong>{ item.Amount }</strong></header>
+    <p><b>Request { item.ID }</b> · { item.Requested } · Order { item.OrderNumber }</p>
+    <p>{ item.Reason }</p>
+    <a class="text-link" href={ "/orders/" + item.OrderNumber }>View order details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+  </article>
+}
+templ Account(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="account-welcome"><div class="container"><p class="eyebrow">YOUR WEEVCRAFTS HOME</p><h1>Welcome back,<br/><em>Ananya!</em></h1><p>Glad to have you here. Together, we support artisans and keep traditions alive.</p></div><img src="/assets/images/customer/maker-mithila.webp" alt="Artisan at work" width="1254" height="1254"/></section><section class="container account-layout">
+        @AccountSidebar("account")<div class="account-content"><div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>12</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>8</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>4</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div><div class="account-cards"><section id="profile"><h2>Profile information</h2><a href="/account/profile">Edit <span class="material-symbols-outlined" aria-hidden="true">edit</span></a><p><b>Ananya Sharma</b><br/>ananya.sharma@gmail.com<br/>+91 98765 43210<br/><small>Member since 12 Mar 2023</small></p></section><section id="addresses"><h2>Saved addresses</h2><a href="/account/addresses">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p><b>Home <mark>Default</mark></b><br/>A-203, Green View Apartments<br/>Koramangala, Bengaluru<br/>Karnataka 560034</p></section><section><h2>Recent orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><div class="mini-item"><img width="1254" height="1254" src={ productAt(p.Products, 2).ImageURL } alt={ productAt(p.Products, 2).Name }/><span>{ productAt(p.Products, 2).Name }<small>Order #WC789456</small><b>{ productAt(p.Products, 2).Price }</b></span></div></section><section><h2>Returns &amp; refunds</h2><a href="/returns">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><div class="mini-item"><img width="1254" height="1254" src={ productAt(p.Products, 4).ImageURL } alt={ productAt(p.Products, 4).Name }/><span>{ productAt(p.Products, 4).Name }<small>Return requested</small><b>View status</b></span></div></section><section id="payments"><h2>Payment methods</h2><a href="/payments">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Card ending in 4586 <mark>Default</mark><br/><small>Expires 08/2027</small></p></section><section id="preferences"><h2>Notification preferences</h2><a href="/account/notifications">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Order updates <b class="green">On</b><br/>Offers &amp; promotions <b class="green">On</b><br/>New arrivals <b class="green">On</b></p></section><section id="privacy"><h2>Privacy preferences</h2><a href="/account/privacy">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Personal data<br/>Communications<br/>Data &amp; privacy</p></section><section id="security"><h2>Security &amp; sessions</h2><a href="/account/security">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Password<br/>Two-factor authentication<br/>Active sessions</p></section><section class="account-wide"><h2>Reviews &amp; maker love</h2><p>You have helped independent makers grow. Leave a note on your recent purchases and make their day.</p><a class="text-link" href="/account/reviews">Review your saved pieces <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section><section class="account-wide account-help"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Need a hand?</h2><p>Our customer care team is here for order, return and product questions.</p></div><a class="outline-button" href="/contact">Contact support</a></section></div></div></section>
+  }
+}
+
+templ OrderDetail(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/account">My Account</a><span aria-hidden="true">/</span><a href="/orders">My Orders</a><span aria-hidden="true">/</span><span aria-current="page">Order details</span></nav>
+      <p class="eyebrow">ORDER DETAILS</p>
+      <h1>{ p.SelectedOrder.Number }</h1>
+      <p>Placed on { p.SelectedOrder.Date }</p>
+    </section>
+    <section class="container order-detail-layout">
+      <div class="order-detail-main">
+        <div class="order-detail-status"><mark>{ p.SelectedOrder.Status }</mark><h2>{ orderStatusTitle(p.SelectedOrder) }</h2><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>
+        @OrderDetailRows(p.SelectedOrder.Items)
+        if p.SelectedOrder.CanCancel {
+          <form class="order-cancel-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/cancel" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Cancel order</button></form>
+        }
+        if p.SelectedOrder.ReturnStatus != "" {
+          <section class="order-return-card"><h2>Return request</h2><p>Status: <mark>{ returnStatusLabel(p.SelectedOrder.ReturnStatus) }</mark></p><a class="text-link" href="/returns">View return history <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
+        } else if p.SelectedOrder.CanRequestReturn {
+          <form class="order-return-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/return" }>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <h2>Request a return</h2>
+            <p>Tell our operations team what went wrong. You can follow the request from Returns &amp; refunds.</p>
+            <label for="return-reason">Reason for return</label>
+            <textarea id="return-reason" name="reason" minlength="10" maxlength="1000" required></textarea>
+            <button class="primary-button" type="submit">Submit return request</button>
+          </form>
+        }
+        if p.SelectedOrder.RefundStatus != "" {
+          <section class="order-return-card" role="status"><h2>Refund status</h2><p>Payment refund: <mark>{ p.SelectedOrder.RefundStatus }</mark></p></section>
+        } else if p.SelectedOrder.CanRequestRefund {
+          <form class="order-return-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/refund" }>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <input type="hidden" name="idempotency_key" value={ p.RefundKey }/>
+            <h2>Request your refund</h2>
+            <p>Operations has marked your returned order as received. You can now request a full refund to the original payment method.</p>
+            <label for="refund-reason">Refund reason</label>
+            <textarea id="refund-reason" name="reason" minlength="10" maxlength="500" required></textarea>
+            <button class="primary-button" type="submit">Request full refund</button>
+          </form>
+        }
+      </div>
+      <aside class="summary"><h2>Order summary</h2><p>Items ({ len(p.SelectedOrder.Items) }) <b>{ p.SelectedOrder.Total }</b></p><p>Shipping <b>Included</b></p><hr/><h3>Total amount <strong>{ p.SelectedOrder.Total }</strong></h3><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/invoice" }>View/print receipt</a><a class="outline-button full" href="/contact">Need help?</a></aside>
+    </section>
+  }
+}
+
+templ OrderReceipt(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container order-receipt">
+      <header class="page-intro compact-intro"><p class="eyebrow">WEEVCRAFTS PURCHASE</p><h1>Order receipt</h1><p>Order { p.SelectedOrder.Number } Â· placed { p.SelectedOrder.Date }</p><a class="outline-button" href={ "/orders/" + p.SelectedOrder.Number }>Back to order</a></header>
+      <article class="order-card"><header><div><h2>Payment and order summary</h2><p>Payment status: { p.SelectedOrder.Payment }</p></div><strong>{ p.SelectedOrder.Total }</strong></header>@OrderDetailRows(p.SelectedOrder.Items)<footer><strong>Total paid / payable</strong><strong>{ p.SelectedOrder.Total }</strong></footer></article>
+      <p class="utility-muted">This receipt summarizes the order recorded in your account. It is not a GST tax invoice.</p>
+    </section>
+  }
+}
+
+templ Empty(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container empty-page"><span class="material-symbols-outlined" aria-hidden="true">favorite</span><h1>{ p.Title }</h1><p>{ p.Notice }</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
+  }
+}
+
+templ Cart(p viewmodels.CustomerPage) {
+  @Document(p) {
+    @CartContent(p)
+  }
+}
+
+templ CartContent(p viewmodels.CustomerPage) {
+  <section class="container page-intro compact-intro">
+    @Breadcrumb("Home", "Your Cart")<p class="eyebrow">ALMOST YOURS</p><h1>Your cart</h1><p data-backend-cart-count>{ p.CartCount } items from independent Indian makers</p>
+  </section>
+  <section id="cart-layout" class="container cart-layout" data-backend-cart><div class="cart-items">
+    @CartRows(p.Cart)</div><aside class="summary cart-summary"><h2>Order summary</h2><p>Items ({ p.CartCount }) <b>{ p.ItemsTotal }</b></p><p>Delivery charges <b>{ p.ShippingTotal }</b></p><p class="discount">You saved <b>{ p.DiscountTotal }</b></p><hr/><h3>Total amount <strong>{ p.Total }</strong></h3><p>Coupons can be entered and checked at checkout.</p><a class="primary-button full" href="/checkout">Proceed to checkout <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><small class="secure-note"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Safe and secure checkout</small></aside></section><section class="container section">
+    @SectionHeading("BEAUTIFUL EXTRAS", "You might also like", "Complete your cart with something made with care.")<div class="product-grid product-grid--four" data-backend-products="listing">
+    @ProductCards(productSlice(p.Products, 6, 10), true)</div></section>
+}
+
+templ CartUpdate(p viewmodels.CustomerPage) {
+  @components.CartMutationMessage(p, "Cart updated")
+  @CartContent(p)
+}
+
+templ Checkout(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro checkout-intro">
+      @Breadcrumb("Home", "Checkout")
+      <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>Checkout</h1><p>One step closer to bringing home something beautiful.</p>
+      <div class="steps" role="list" aria-label="Checkout progress"><span :class="checkoutStep >= 1 ? 'active' : ''" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Delivery</b></span><i></i><span :class="checkoutStep >= 3 ? 'active' : ''" role="listitem"><i>3</i><b>Payment</b></span><i></i><span :class="checkoutStep >= 4 ? 'active' : ''" role="listitem"><i>4</i><b>Review</b></span></div>
+    </section>
+    <section class="container checkout-layout">
+      <div class="checkout-main">
+        <section class="checkout-card" x-show="checkoutStep === 1">
+          <header><h2><span>1</span> Delivery address</h2></header>
+          <form id="checkout-address-form" class="utility-form" data-backend-address>
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            if len(p.Addresses) > 0 {
+              <label>Use a saved address<select id="checkout-saved-address" data-checkout-address-select><option value="">Enter a different address</option>
+                for _, address := range p.Addresses {
+                  <option value={ address.ID } data-name={ address.Name } data-phone={ address.Phone } data-line1={ address.Line1 } data-line2={ address.Line2 } data-city={ address.City } data-state={ address.State } data-postal-code={ address.PostalCode }>{ address.Name } · { address.Lines }</option>
+                }
+              </select></label>
+            }
+            <label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
+            <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" inputmode="tel" autocomplete="tel" required maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed"/></label>
+            <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
+            <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
+            <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
+            <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" required/></label>
+            <input name="region" type="hidden" value={ p.Address.State }/>
+            <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
+            <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
+            <button class="primary-button full" type="button" @click="if ($el.form.reportValidity()) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          </form>
+        </section>
+        <section class="checkout-card" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ p.CartCount } items from { len(p.Cart) } sellers</span></header>
+        @CheckoutItems(p.Cart)<button class="primary-button full" type="button" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
+        <section class="checkout-card" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
+          if p.NoPaymentDemo {
+            <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div>
+            <button class="primary-button full" type="button" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          } else if p.PaymentReady {
+            if p.PaymentMode == "local" {
+              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. After placing the order, choose whether to simulate a successful or failed payment.</p></div>
+            } else {
+              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Pay securely through Razorpay. Available payment options appear in its checkout window.</p></div>
+            }
+            <button class="primary-button full" type="button" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          } else {
+            <div class="utility-callout is-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><p>Online payments are not configured for this deployment. Checkout will be available once the payment provider credentials are set.</p></div>
+            <button class="primary-button full" type="button" disabled>Payment unavailable</button>
+          }
+        </section>
+        <section class="checkout-card" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2>
+            if p.NoPaymentDemo {
+              <span class="muted">Demo order · no payment</span>
+            } else {
+              <span class="muted">Payment is completed securely next</span>
+            }
+          </header><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Payment</strong><span>
+            if p.NoPaymentDemo {
+              No payment · demo mode
+            } else {
+              { paymentMethodLabel(p.PaymentMode) }
+            }
+          </span></p><p><strong>Total payable</strong><span>{ p.Total }</span></p></div>
+          if p.NoPaymentDemo {
+            <button class="primary-button full" type="button" data-backend-action="checkout-no-payment">Place demo order <span class="material-symbols-outlined" aria-hidden="true">science</span></button>
+          } else if p.PaymentReady {
+            <button class="primary-button full" type="button" data-backend-action="checkout">Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>
+          } else {
+            <button class="primary-button full" type="button" data-backend-action="checkout" disabled>Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>
+          }
+          <p data-backend-message role="status"></p></section>
+      </div>
+      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b>{ p.ItemsTotal }</b></p><p>Shipping <b>{ p.ShippingTotal }</b></p><p class="discount">Product savings <b>- { p.DiscountTotal }</b></p><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><small>Eligible coupons are checked when you place the order. The final discounted total is charged.</small><hr/><h3>Total payable <strong>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+    </section>
+  }
+}
+
+templ CheckoutComplete(p viewmodels.CustomerPage) {
+  <section class="container checkout-complete" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><h1>Preview order placed</h1><p>This is a UI-only order preview. No payment or shipping request was sent.</p><a class="primary-button" href="/orders">View your orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
+}

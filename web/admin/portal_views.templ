@@ -1,0 +1,454 @@
+package admin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalDashboard(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<section class="admin-portal-welcome admin-panel">
+			<p class="admin-eyebrow">{ p.RoleLabel } workspace</p>
+			<h2>Welcome back, { p.DisplayName }</h2>
+			<p>Live work queues and account activity for your assigned Weevcrafts role.</p>
+		</section>
+		@StatGrid(p)
+		if p.IsFinance {
+			<section class="admin-two-grid">
+				@PortalTransactionTable(p)
+				@PortalSettlementTable(p)
+			</section>
+		} else if p.IsOperations {
+			<section class="admin-two-grid">
+				@PortalReturnList(p)
+				@PortalOrderList(p)
+			</section>
+		} else if p.CanSecurity {
+			<section class="admin-two-grid">
+				@PortalProductQueue(p)
+				@PortalAuditList(p)
+			</section>
+			<section class="admin-two-grid">
+				@PortalSellerList(p)
+				<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Review user roles and audited access changes.</p></div></div></div><a class="admin-button primary" href={ p.PortalRoot + "/security" }>Manage roles and security</a></article>
+			</section>
+		} else {
+			<section class="admin-two-grid">
+				@PortalProductQueue(p)
+				@PortalSellerList(p)
+			</section>
+			<section class="admin-two-grid">
+				@PortalReturnList(p)
+				@PortalOrderList(p)
+			</section>
+		}
+	}
+}
+
+templ PortalSellers(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel">
+			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><div><h2>Seller accounts</h2><p>Application status from the seller records in PostgreSQL.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Seller</span><span>Created</span><span>Status</span><span>Review</span></div>
+				for _, seller := range p.Sellers {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ seller.Image } alt=""/>{ seller.Name }</span><span>{ seller.Applied }</span><span class={ "status " + statusClass(seller.Status) }>{ seller.Status }</span><span>
+						<form class="seller-status-form" method="post" action={ p.PortalRoot + "/sellers/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ seller.ID }/><select name="status" aria-label={ "Set status for " + seller.Name }><option value="active">Approve / activate</option><option value="suspended">Suspend</option><option value="closed">Close</option></select><input name="reason" minlength="4" maxlength="1000" placeholder="Reason for audit log" required/><button class="admin-button secondary" type="submit">Save</button></form>
+					</span></div>
+				}
+				if len(p.Sellers) == 0 {
+					@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here when an account starts onboarding.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalProducts(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel">
+			<div class="panel-heading">
+				<div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><div><h2>Product catalog</h2><p>Seller submissions and review decisions from the live catalog.</p></div></div>
+				if p.CanManageCatalog {
+					<a class="admin-button primary" href={ p.PortalRoot + "/products/new" }>Add product</a>
+				}
+			</div>
+			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>Seller</span><span>Category</span><span>Price</span><span>Status</span><span>Submitted</span><span>Review</span></div>
+				for _, product := range p.Products {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions">
+						if p.CanManageCatalog && product.Status == "archived" {
+							<form method="post" action={ p.PortalRoot + "/products/restore" } onsubmit="return confirm('Restore this product as a private draft? You will need to submit it for review before customers can see it.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason" required/><button class="admin-button secondary" type="submit">Restore draft</button></form>
+						} else if p.CanManageCatalog && product.Status != "archived" {
+							<a class="admin-button secondary" href={ p.PortalRoot + "/products/" + product.ID + "/edit" }>Edit</a>
+							<form method="post" action={ p.PortalRoot + "/products/archive" } onsubmit="return confirm('Archive this product? It will be hidden from customers while past orders remain available.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason" required/><button class="admin-button danger" type="submit">Archive</button></form>
+							if product.Status == "draft" || product.Status == "rejected" {
+								<form method="post" action={ p.PortalRoot + "/products/submit" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="admin-button primary" type="submit">Submit for review</button></form>
+							}
+						}
+						if product.Status == "pending_review" {
+							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
+							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="reject"/><input name="reason" minlength="4" maxlength="1000" placeholder="Rejection reason" required/><button class="admin-button danger" type="submit">Reject</button></form>
+						} else {
+							<span>—</span>
+						}
+					</span></div>
+				}
+				if len(p.Products) == 0 {
+					@AdminTableEmpty("No products are available.", "Seller product submissions will appear here for review.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) {
+	@AdminDocument(p) {
+		<section class="admin-panel admin-product-editor-panel">
+			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">edit_square</span><div><h2>{ p.Title }</h2><p>Manage product content, India delivery details and paise pricing. Stock is managed separately in Inventory.</p></div></div></div>
+			<form class="admin-product-editor-form" method="post" action={ form.Action } enctype="multipart/form-data">
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				if form.ID != "" {
+					<input type="hidden" name="product_id" value={ form.ID }/>
+				}
+				if form.ID == "" {
+					<label>Seller
+						<select name="seller_id" required><option value="">Choose an active seller</option>
+							for _, seller := range p.Sellers {
+								if seller.Status == "active" {
+									<option value={ seller.ID }>{ seller.Name }</option>
+								}
+							}
+						</select>
+					</label>
+				} else {
+					<label>Seller<input value={ form.SellerName } readonly/></label>
+				}
+				<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
+				<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
+				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
+				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
+				<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
+				<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
+				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
+				if form.ID == "" {
+					<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
+				}
+				<label class="admin-product-editor-wide">Upload product image (PNG or JPEG)<input type="file" name="image_file" accept="image/png, image/jpeg, image/jpg, image/webp"/></label>
+				<label class="admin-product-editor-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label>
+				<label class="admin-product-editor-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
+				<label class="admin-product-editor-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
+				<div class="admin-product-editor-wide admin-product-editor-actions"><a class="admin-button secondary" href="/super-admin/products">Cancel</a><button class="admin-button primary" type="submit">Save product</button></div>
+			</form>
+			if form.ID != "" {
+				if form.Image != "" {
+					<img class="product-media-preview" src={ form.Image } alt={ "Current image for " + form.Name }/>
+				}
+				<fieldset class="admin-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
+					<legend>Product images and videos</legend><p>Upload JPEG, PNG, WebP, MP4 or WebM files up to 25 MB. Images update the main product photo; videos appear in the customer product gallery.</p>
+					<label>Choose an image or video<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" data-media-file/></label>
+					<button class="admin-button secondary" type="button" data-media-upload>Upload media</button><p role="status" aria-live="polite" data-media-status></p>
+					<div class="product-media-assets">
+						if len(form.Media) == 0 {
+							<p>No uploaded media yet.</p>
+						}
+						for _, media := range form.Media {
+							<article class="product-media-asset">
+								if media.IsVideo {
+									<video controls preload="metadata" aria-label={ "Product video " + media.ID }><source src={ media.URL } type={ media.ContentType }/></video>
+								} else {
+									<img src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
+								}
+								<p>{ media.ContentType } · { media.Size } bytes</p><button class="admin-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
+							</article>
+						}
+					</div>
+				</fieldset>
+			}
+			if form.ID != "" {
+				<section class="admin-panel product-variant-manager">
+					<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><div><h2>Product variants</h2><p>Prices use paise. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></div></div></div>
+					for _, variant := range form.Variants {
+						<div class="product-variant-row">
+							<form class="admin-product-editor-form product-variant-edit" method="post" action={ p.PortalRoot + "/products/variants/update" }>
+								<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+							<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+							<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+							<label>Price in paise<input name="price_cents" type="number" min="1" value={ variant.PriceCents } required disabled?={ variant.Status != "active" }/></label>
+							<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ variant.CompareAtCents } disabled?={ variant.Status != "active" }/></label>
+								<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
+								if variant.Status == "active" {
+									<button class="admin-button primary" type="submit">Save variant</button>
+								}
+							</form>
+							if variant.Status == "active" {
+								<form method="post" action={ p.PortalRoot + "/products/variants/archive" } onsubmit="return confirm('Archive this variant? Existing orders will remain intact.');">
+									<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+									<label>Archive reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Why this option is being removed"/></label><button class="admin-button danger" type="submit">Archive variant</button>
+								</form>
+							}
+						</div>
+					}
+					<form class="admin-product-editor-form product-variant-create" method="post" action={ p.PortalRoot + "/products/variants/create" }>
+						<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/>
+						<h3>Add variant</h3>
+						<label>Variant name<input name="name" required maxlength="120" placeholder="Color, size or option"/></label>
+						<label>SKU<input name="sku" required maxlength="120"/></label>
+						<label>Price in paise<input name="price_cents" type="number" min="1" required/></label>
+						<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1"/></label>
+						<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
+						<button class="admin-button primary" type="submit">Add variant</button>
+					</form>
+				</section>
+			}
+		</section>
+	}
+}
+
+templ PortalInventory(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warehouse</span><div><h2>Marketplace inventory</h2><p>Current variant stock and reservations across Indian sellers.</p></div></div></div>
+			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Seller owners manage stock adjustments in their inventory workspace.</p>
+			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>On hand</span><span>Reserved</span><span>Available</span><span>Stock signal</span><span>Inventory value</span></div>
+				for _, item := range p.Inventory {
+					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span><span>{ item.SKU }</span><span>{ item.Stock }</span><span>{ item.Reserved }</span><span>{ item.Available }</span><span class={ "status " + statusClass(item.Status) }>{ item.Reorder }</span><strong>{ item.Value }</strong></div>
+				}
+				if len(p.Inventory) == 0 {
+					@AdminTableEmpty("No active product variants are available.", "Inventory will appear after sellers create products and variants.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalOrders(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@PortalOrderList(p)
+	}
+}
+
+templ PortalReturns(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@PortalReturnList(p)
+	}
+}
+
+templ PortalFinance(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		if p.Workspace == "failed-payments" {
+			<p class="admin-page-note">Showing failed payment attempts from the live payment ledger.</p>
+		} else if p.Workspace == "refunds" {
+			<p class="admin-page-note">Showing payment attempts recorded as refunded.</p>
+		} else if p.Workspace == "settlements" {
+			<p class="admin-page-note">Settlement batches use captured order ledger entries. Payout actions simulate status changes and do not transfer money.</p>
+		}
+		<section class="admin-two-grid">
+			@PortalSettlementTable(p)
+			if p.Workspace != "settlements" {
+				@PortalTransactionTable(p)
+			}
+		</section>
+	}
+}
+
+templ PortalSupport(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Support cases</h2><p>Customer support queue from live PostgreSQL records.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Case</span><span>Customer</span><span>Subject</span><span>Priority</span><span>Created</span><span>Status</span></div>
+				for _, item := range p.SupportCases {
+					<div class="table-row"><strong>{ item.Case }</strong><span>{ item.Customer }</span><span>{ item.Subject }</span><span class={ "status " + priorityClass(item.Priority) }>{ item.Priority }</span><span>{ item.Date }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+				}
+				if len(p.SupportCases) == 0 {
+					@AdminTableEmpty("No support cases are open.", "New customer requests will appear in the support queue.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalMarketing(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">campaign</span><div><h2>Create promotion</h2><p>Campaigns start as drafts. Activate a code to make it available at checkout. Fixed discounts are entered in rupees.</p></div></div></div>
+			<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/create" } x-data="{ discountType: 'percentage' }">
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				<label>Campaign name<input name="name" required minlength="3" maxlength="100"/></label>
+				<label>Description<textarea name="description" maxlength="2000"></textarea></label>
+				<label>Coupon code<input name="code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+				<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage">Percent off</option><option value="fixed">Amount off</option><option value="free_shipping">Free shipping</option></select></label>
+				<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'" value="10"/></label>
+				<label>Starts on<input name="starts_on" type="date"/></label><label>Ends on<input name="ends_on" type="date"/></label>
+				<label>Maximum redemptions<input name="usage_limit" type="number" min="1" step="1"/></label>
+				<button class="admin-button primary" type="submit">Create draft</button>
+			</form>
+		</article>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">list_alt</span><div><h2>Marketplace promotions</h2><p>Manage campaign details, coupon codes, eligibility dates and redemption limits. A customer can redeem each code once.</p></div></div></div>
+			<div class="admin-campaign-list">
+				for _, item := range p.Campaigns {
+					<details class="admin-campaign-item"><summary><strong>{ item.Name }</strong><code>{ item.Code }</code><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Type }</span><span>{ item.UsageCount } used</span></summary>
+						<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/update" } x-data="{ discountType: $el.querySelector('[name=discount_type]').value }">
+							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/>
+							<label>Campaign name<input name="name" value={ item.Name } required minlength="3" maxlength="100"/></label>
+							<label>Description<textarea name="description" maxlength="2000">{ item.Description }</textarea></label>
+							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+							<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage" selected={ item.Type == "percentage" }>Percent off</option><option value="fixed" selected={ item.Type == "fixed" }>Amount off</option><option value="free_shipping" selected={ item.Type == "free_shipping" }>Free shipping</option></select></label>
+							<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" value={ item.Value } type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'"/></label>
+							<label>Starts on<input name="starts_on" value={ item.StartsOn } type="date"/></label><label>Ends on<input name="ends_on" value={ item.EndsOn } type="date"/></label>
+							<label>Maximum redemptions<input name="usage_limit" value={ item.UsageLimit } type="number" min="1" step="1"/></label>
+							<p>Current schedule: { item.Start } – { item.End }. Applies to: { item.Channel }.</p>
+							<button class="admin-button primary" type="submit">Save changes</button>
+						</form>
+						<div class="row-actions">
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "active" }/><button class="admin-button secondary" type="submit">Activate</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "draft" }/><button class="admin-button secondary" type="submit">Pause</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><input type="hidden" name="status" value={ "archived" }/><button class="admin-button secondary" type="submit">Archive</button></form>
+							<form method="post" action={ p.PortalRoot + "/marketing/delete" } onsubmit="return confirm('Permanently delete this unused promotion? Used promotions must be archived.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/><button class="admin-button danger" type="submit">Delete unused campaign</button></form>
+						</div>
+					</details>
+				}
+				if len(p.Campaigns) == 0 {
+					@AdminTableEmpty("No promotions are configured.", "Create a draft above to set up a coupon campaign.")
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalAnalytics(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div></div>@StatGrid(p)</article>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span><div><h2>Service configuration</h2><p>Runtime integrations configured for this deployment.</p></div></div></div>
+			<div class="admin-table wide"><div class="table-head"><span>Service</span><span>Value</span><span>Purpose</span></div>
+				for _, config := range p.Configs {
+					<div class="table-row"><strong>{ config.Name }</strong><span>{ config.Value }</span><span>{ config.Detail }</span></div>
+				}
+			</div>
+		</article>
+	}
+}
+
+templ PortalSecurity(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		@StatGrid(p)
+		@RoleUserCreateForm(p)
+		@RoleAssignmentList(p)
+		@PortalAuditList(p)
+	}
+}
+
+templ PortalProductQueue(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">fact_check</span><div><h2>Products awaiting review</h2><p>Seller submissions requiring an approval decision.</p></div></div><a class="panel-link" href={ p.PortalRoot + "/products" }>Open catalog</a></div>
+		<div class="admin-table compact"><div class="table-head"><span>Product</span><span>Seller</span><span>Status</span></div>
+			for _, product := range p.Products {
+				if product.Status == "pending_review" {
+					<div class="table-row"><strong>{ product.Name }</strong><span>{ product.Seller }</span><span class="status pending">{ product.Status }</span></div>
+				}
+			}
+			if !hasPendingProducts(p.Products) {
+				@AdminTableEmpty("No products are waiting for review.", "New submissions from sellers will appear here.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalSellerList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><div><h2>Seller applications</h2><p>Current application state in the seller directory.</p></div></div><a class="panel-link" href={ p.PortalRoot + "/sellers" }>Review sellers</a></div>
+		<div class="admin-table compact"><div class="table-head"><span>Seller</span><span>Submitted</span><span>Status</span></div>
+			for _, seller := range p.Sellers {
+				<div class="table-row"><strong>{ seller.Name }</strong><span>{ seller.Applied }</span><span class={ "status " + statusClass(seller.Status) }>{ seller.Status }</span></div>
+			}
+			if len(p.Sellers) == 0 {
+				@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here after onboarding.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalOrderList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><div><h2>Recent orders</h2><p>Marketplace order status and customer totals.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Order</span><span>Customer</span><span>Total</span><span>Status</span></div>
+			for _, order := range p.Orders {
+				<div class="table-row"><strong>{ order.Number }</strong><span>{ order.Customer }</span><span>{ order.Value }</span><span class={ "status " + statusClass(order.Fulfillment) }>{ order.Fulfillment }</span></div>
+			}
+			if len(p.Orders) == 0 {
+				@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalReturnList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Return requests</h2><p>Update return decisions in the persistent operations queue.</p></div></div></div>
+		<div class="portal-return-list">
+			for _, item := range p.Returns {
+				<section class="portal-return-item"><div><strong>{ item.Number } · { item.Customer }</strong><p>Order { item.Product } · { item.Reason }</p><small>Requested { item.Date } · { item.Amount }</small><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+					if item.Status == "pending" {
+						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
+					} else if item.Status == "approved" {
+						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark returned order received</button></form>
+					} else {
+						<p class="admin-page-note">This return request is closed for operations updates.</p>
+					}
+				</section>
+			}
+			if len(p.Returns) == 0 {
+				@AdminTableEmpty("No return requests are open.", "Customer return requests will appear in this queue.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalSettlementTable(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Payable amounts reconciled from captured orders and commission rules.</p></div></div>
+		if p.CanFinance {
+			<form method="post" action={ p.SettlementRoot + "/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Create settlement batches</button></form>
+		}
+	</div>
+		<div class="admin-table wide"><div class="table-head"><span>Seller</span><span>Reference</span><span>Orders</span><span>Gross</span><span>Commission</span><span>Payable</span><span>Status</span><span>Period</span><span>Actions</span></div>
+			for _, item := range p.Settlements {
+				<div class="table-row"><strong>{ item.Seller }</strong><span>{ item.Reference }</span><span>{ item.Orders }</span><span>{ item.Gross }</span><span>{ item.Commission }</span><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><span>{ item.Period }</span><span class="row-actions">
+					if p.CanFinance && item.Status == "pending" {
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="approved"/><button class="admin-button secondary" type="submit">Approve</button></form>
+					} else if p.CanFinance && item.Status == "approved" {
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" } onsubmit="return confirm('Record this mock payout as paid? No bank transfer will be made.');"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="paid"/><button class="admin-button primary" type="submit">Record mock payout</button></form>
+						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="failed"/><button class="admin-button danger" type="submit">Mark failed</button></form>
+					} else {
+						<span>—</span>
+					}
+				</span></div>
+			}
+			if len(p.Settlements) == 0 {
+				@AdminTableEmpty("No settlement records yet.", "Create a batch after captured seller orders appear in the ledger.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalTransactionTable(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><h2>Payment attempts</h2><p>Transactions from the configured mock or payment provider.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Date</span><span>Order</span><span>Amount</span><span>Status</span></div>
+			for _, item := range p.Transactions {
+				<div class="table-row"><span>{ item.Date }</span><strong>{ item.Reference }</strong><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
+			}
+			if len(p.Transactions) == 0 {
+				@AdminTableEmpty("No payment attempts yet.", "Payment records will appear here after a customer starts checkout.")
+			}
+		</div>
+	</article>
+}
+
+templ PortalAuditList(p viewmodels.AdminPage) {
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">history</span><div><h2>Recent audit events</h2><p>Recorded administrative and operational changes.</p></div></div></div>
+		<div class="admin-table compact"><div class="table-head"><span>Time</span><span>Actor</span><span>Action</span><span>Record</span></div>
+			for _, item := range p.AuditEntries {
+				<div class="table-row"><span>{ item.Date }</span><span>{ item.User }</span><strong>{ item.Action }</strong><span>{ item.Entity } #{ item.Details }</span></div>
+			}
+			if len(p.AuditEntries) == 0 {
+				@AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.")
+			}
+		</div>
+	</article>
+}

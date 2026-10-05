@@ -1,0 +1,473 @@
+package pages
+
+import (
+  "strconv"
+
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ Auth(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container utility-shell auth-shell">
+      <div class="utility-card auth-card">
+        if p.Notice != "" {
+          <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+        }
+        if p.Route == "/login" {
+          @AuthHeading("WELCOME BACK", "Sign in to Weevcrafts", "Keep your saved pieces, orders and maker stories close.")
+          <form class="utility-form" action="/login" method="post" data-backend-auth="login">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <input type="hidden" name="next" value={ authNext(p.Filters) }/>
+            <label>Email or role username<input name="email" type="text" autocomplete="username" required/></label>
+            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="current-password" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
+            <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          </form>
+          <div class="auth-links"><a href="/forgot-password">Forgot your password?</a><span>New here? <a href="/register">Create an account</a></span></div>
+        } else if p.Route == "/register" {
+          @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
+          <form class="utility-form" action="/register" method="post" data-backend-auth="register">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <input type="hidden" name="next" value={ authNext(p.Filters) }/>
+            <label>Full name<input name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></label>
+            <label>Email address<input name="email" type="email" required/></label>
+            <label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
+            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>
+            <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+          </form>
+          <div class="auth-links"><span>Already have an account? <a href="/login">Sign in</a></span></div>
+        } else if p.Route == "/forgot-password" {
+          @AuthHeading("ACCOUNT RECOVERY", "Reset your password", "Enter your email and we will guide you through the next step.")
+          <form class="utility-form" action="/forgot-password" method="post" data-backend-auth="recover">
+            <label>Email address<input name="email" type="email" required/></label>
+            <button class="primary-button full" type="submit">Send recovery link <span class="material-symbols-outlined" aria-hidden="true">mail</span></button>
+          </form>
+          <div class="auth-links"><a href="/login">Return to sign in</a></div>
+        } else if p.Route == "/reset-password" {
+          @AuthHeading("ACCOUNT RECOVERY", "Choose a new password", "Use a long, unique password to keep your account safe.")
+          <form class="utility-form" action="/reset-password" method="post" data-backend-auth="reset">
+            <input type="hidden" name="token" value={ authToken(p.Filters) }/>
+            <label>New password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            <label>Confirm password<div class="password-field"><input name="confirm_password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            <button class="primary-button full" type="submit">Update password <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span></button>
+          </form>
+        } else {
+          @AuthHeading("VERIFY YOUR EMAIL", "Your account is almost ready", "Confirm your email to protect your account and receive order updates.")
+          <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">mark_email_read</span><div><strong>Email verification</strong><p>Confirm the one-time link to protect your account and receive order updates.</p></div></div>
+          <form class="utility-form" action="/verify-email" method="post" data-backend-auth="verify">
+            <input type="hidden" name="token" value={ authToken(p.Filters) }/>
+            <button class="primary-button full" type="submit">Verify email <span class="material-symbols-outlined" aria-hidden="true">verified</span></button>
+          </form>
+          <a class="auth-back-link" href="/login">Continue to sign in</a>
+        }
+        <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by Weevcrafts.</p>
+      </div>
+    </section>
+  }
+}
+
+templ AuthHeading(kicker, title, copy string) {
+  <p class="eyebrow">{ kicker }</p>
+  <h1>{ title }</h1>
+  <p class="utility-lead">{ copy }</p>
+}
+
+templ InfoPage(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container utility-shell info-shell">
+      @Breadcrumb("Home", p.Title)
+      if p.Notice != "" {
+        <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+      }
+      <div class="info-hero">
+        <div><p class="eyebrow">WEEVCRAFTS GUIDE</p><h1>{ p.Title }</h1><p>Clear, helpful information for choosing, receiving and caring for something handmade.</p></div>
+        <img src="/assets/images/customer/maker-mithila.webp" alt="Indian craft studio" width="1254" height="1254"/>
+      </div>
+      if p.Route == "/faq" {
+        @FaqContent()
+      } else if p.Route == "/contact" {
+        @ContactContent(p)
+      } else if p.Route == "/our-story" || p.Route == "/about" || p.Route == "/sustainability" || p.Route == "/press" || p.Route == "/careers" {
+        @StoryContent()
+      } else {
+        @PolicyContent(p)
+      }
+    </section>
+  }
+}
+
+templ FaqContent() {
+  <div class="faq-list">
+    <details open><summary>How do I know a product is handmade?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Each maker profile shares their location, process and product story.</p></details>
+    <details><summary>How long does delivery take?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Most domestic orders arrive in 4–6 days after dispatch. The estimate is shown on the product page.</p></details>
+    <details><summary>Can I return an order?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Eligible items can be requested for return within the policy window.</p></details>
+    <details><summary>Do you deliver in India?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>We deliver to serviceable PIN codes across India. Check delivery availability on the product page or at checkout.</p></details>
+    <details><summary>How can I sell on Weevcrafts?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Start with the seller onboarding preview and prepare your verification documents.</p></details>
+  </div>
+  <section class="info-contact-strip"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Still need a hand?</h2><p>Our customer care team can help with an order, return or product question.</p></div><a class="primary-button" href="/contact">Contact us</a></section>
+}
+
+templ ContactContent(p viewmodels.CustomerPage) {
+  <div class="contact-grid">
+    <section class="utility-card"><h2>Send us a note</h2><p>Share a little context so the right team can respond.</p>
+      if p.CanCreateSupport {
+        <form class="utility-form" action="/support/create" method="post" enctype="multipart/form-data" data-customer-support-create>
+          <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+          <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
+          <label>Order number (optional)<input name="order_number" autocomplete="off"/></label>
+          <label>Message<textarea name="message" rows="5" minlength="10" maxlength="4000" required></textarea></label>
+          <label>Photos (optional)<input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Up to 3 images, 10 MB each.</small></label>
+          <button class="primary-button" type="submit">Send support request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+        </form>
+      } else if p.Authenticated {
+        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Support requests are available from customer accounts. Choose your customer workspace from <a href="/workspaces">the workspace switcher</a>.</p></div>
+      } else {
+        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Sign in to a customer account to create and track support requests.</p></div>
+        <a class="primary-button" href="/login?next=%2Fcontact">Sign in to contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+      }
+    </section>
+    <aside class="info-side-list"><div><span class="material-symbols-outlined" aria-hidden="true">schedule</span><h3>Customer care hours</h3><p>Monday–Saturday<br/>9:00 AM–7:00 PM IST</p></div><div><span class="material-symbols-outlined" aria-hidden="true">mail</span><h3>Email</h3><p>hello@weevcrafts.com<br/>Usually answered within 24 hours.</p></div><div><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>Quick answers</h3><p>Browse the <a href="/faq">FAQs</a> first.</p></div></aside>
+  </div>
+}
+
+templ StoryContent() {
+  <div class="story-content utility-card"><p class="utility-lead">A marketplace that makes more room for Indian craft, independent makers and the people who choose to live with meaning.</p><div class="story-columns"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><h2>People before products</h2><p>We keep the maker's name, place and process close to every piece.</p></div><div><span class="material-symbols-outlined" aria-hidden="true">eco</span><h2>Made to last</h2><p>We celebrate useful objects, careful materials and traditions that deserve a future.</p></div><div><span class="material-symbols-outlined" aria-hidden="true">public</span><h2>Indian craft, close to home</h2><p>We help local craft find thoughtful homes across India.</p></div></div><a class="primary-button" href="/makers/mithila-arts">Meet the makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+}
+
+templ PolicyContent(p viewmodels.CustomerPage) {
+  <article class="utility-card policy-copy">
+    if p.Route == "/shipping" {
+      @PolicySection("Domestic delivery", "Standard delivery is usually 4–6 days after dispatch. The order page shows the latest estimate and tracking milestones.")
+      @PolicySection("Delivery coverage", "Orders are delivered only to serviceable PIN codes within India.")
+      @PolicySection("Careful packing", "Fragile objects receive protective packing, while textiles are folded and wrapped to help them arrive ready to enjoy.")
+    } else if p.Route == "/size-guide" {
+      @PolicySection("Sarees and textiles", "Product pages list the fabric, length, width and care instructions. Handmade pieces may carry small variations.")
+      @PolicySection("Home and decor", "Check the listed dimensions against the space where the piece will live.")
+      @PolicySection("Need help choosing?", "Contact us with the product name and what you are looking for.")
+    } else if p.Route == "/terms" {
+      @PolicySection("Using the marketplace", "Customers provide accurate account details and use the marketplace lawfully. Makers provide honest product information and fulfilment updates.")
+      @PolicySection("Craft and product claims", "Listings should describe materials, origin, dimensions and care accurately.")
+      @PolicySection("Questions and disputes", "Start with customer care so we can understand the situation and help the relevant parties.")
+    } else if p.Route == "/privacy" {
+      @PolicySection("What we use", "Account, delivery, order and preference information helps us provide the service. Support teams only receive the context they need.")
+      @PolicySection("Your choices", "Visit privacy preferences to review communication choices or request access, correction or deletion.")
+      @PolicySection("Questions or grievances", "Contact our team with a privacy question and we will route it correctly.")
+    } else {
+      @PolicySection("Start with a story", "Explore categories, browse maker storefronts and choose pieces that feel right for your home or wardrobe.")
+      @PolicySection("Shop with confidence", "Every preview includes maker information, product details, delivery expectations and care guidance.")
+      @PolicySection("Need anything else?", "Read the FAQs or contact our team.")
+    }
+  </article>
+}
+
+templ PolicySection(title, copy string) {
+  <section><h2>{ title }</h2><p>{ copy }</p></section>
+}
+
+templ AccountDetail(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro"><p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>{ p.Title }</h1><p>Manage the details that make your account yours.</p></section>
+    <section class="container account-layout utility-account-layout">@AccountSidebar("account")<div class="account-content utility-account-content">
+      if p.Notice != "" {
+        <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+      }
+      if p.Route == "/account/profile" {
+        @ProfilePanel()
+      } else if p.Route == "/account/addresses" {
+        @AddressPanel()
+      } else if p.Route == "/account/notifications" {
+        @NotificationPanel()
+      } else if p.Route == "/account/security" {
+        @SecurityPanel()
+      } else if p.Route == "/account/privacy" {
+        @PrivacyPanel()
+      } else if p.Route == "/payments" {
+        @PaymentPanel()
+      } else {
+        @ReviewPanel()
+      }
+    </div></section>
+  }
+}
+
+templ ProfilePanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR DETAILS</p><h2>Profile information</h2></div><span class="material-symbols-outlined" aria-hidden="true">person</span></div><form class="utility-form two-column" action="/account/profile?notice=Profile+changes+saved+in+preview" method="get"><label>Full name<input name="name" value="Ananya Sharma"/></label><label>Email address<input name="email" type="email" value="ananya.sharma@gmail.com"/></label><label>Phone number<input name="phone" value="+91 98765 43210"/></label><label>Member since<input value="12 Mar 2023" disabled/></label><button class="primary-button" type="submit">Save changes</button></form></section>
+}
+
+templ AddressPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div><div class="address-list"><article><div><b>Home <mark>Default</mark></b><p>A-203, Green View Apartments<br/>Koramangala, Bengaluru<br/>Karnataka 560034<br/>+91 98765 43210</p></div><a href="/account/addresses?notice=Home+address+editor+opened">Edit</a></article><article><div><b>Studio</b><p>Weevcrafts Studio<br/>Indiranagar, Bengaluru<br/>Karnataka 560038</p></div><a href="/account/addresses?notice=Studio+address+selected">Use this address</a></article></div><a class="outline-button" href="/account/addresses?notice=New+address+form+opened"><span class="material-symbols-outlined" aria-hidden="true">add</span>Add new address</a></section>
+}
+
+templ NotificationPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div><form class="preference-list" action="/account/notifications?notice=Notification+preferences+saved+in+preview" method="get"><label><span><b>Order updates</b><small>Dispatch, delivery and return changes</small></span><input type="checkbox" checked/></label><label><span><b>Maker messages</b><small>Replies from stores you follow</small></span><input type="checkbox" checked/></label><label><span><b>Offers and promotions</b><small>Thoughtful deals and new collections</small></span><input type="checkbox" checked/></label><label><span><b>Maker stories</b><small>New work from the studios you love</small></span><input type="checkbox"/></label><button class="primary-button" type="submit">Save preferences</button></form></section>
+}
+
+templ SecurityPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Last changed 42 days ago</small></span><a href="/account/security?notice=Password+editor+opened">Change</a></div><div><span><b>Two-step verification</b><small>Recommended for account protection</small></span><a href="/account/security?notice=Two-step+verification+setup+opened">Set up</a></div><div><span><b>Active sessions</b><small>Chrome on Windows · Bengaluru · Active now</small></span><a href="/account/security?notice=All+other+sessions+signed+out">Sign out others</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div></section>
+}
+
+templ PrivacyPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><div class="consent-history"><div><span><b>Service communications</b><small>Required for orders, returns and account security</small></span><mark class="success-mark">Always on</mark></div><div><span><b>Marketing communications</b><small>Offers, new arrivals and maker stories</small></span><a href="/account/privacy?notice=Marketing+consent+withdrawn">Withdraw</a></div><div><span><b>Data access request</b><small>Requested 12 Mar 2024 · Completed</small></span><a href="/account/privacy?notice=Data+download+preview+prepared">Download summary</a></div></div><div class="privacy-actions"><a class="outline-button" href="/account/privacy?notice=Correction+request+preview+submitted">Request a correction</a><a class="outline-button" href="/account/privacy?notice=Deletion+request+preview+submitted">Request account deletion</a></div></section>
+}
+
+templ PaymentPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><div class="payment-method-list"><article><span class="material-symbols-outlined" aria-hidden="true">credit_card</span><div><b>Visa ending in 4586 <mark>Default</mark></b><small>Expires 08/2027 · Verified for secure checkout</small></div><a href="/payments?notice=Default+payment+method+updated">Use by default</a></article><article><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><b>UPI · ananya@upi</b><small>Ready for one-tap payments</small></div><a href="/payments?notice=UPI+payment+method+selected">Select</a></article></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Payment details are encrypted and never shared with sellers. Add or remove a method before checkout.</p></div><a class="outline-button" href="/payments?notice=Payment+method+form+opened"><span class="material-symbols-outlined" aria-hidden="true">add</span>Add payment method</a></section>
+}
+
+templ ReviewPanel() {
+  <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews to write</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div><div class="review-list"><article><img src="/assets/images/customer/saree-maroon.webp" alt="Chanderi saree" loading="lazy" width="320" height="320"/><div><b>Chanderi Silk Cotton Saree</b><small>Delivered 21 Apr 2024 · Weaver's Touch</small><form action="/account/reviews?notice=Review+saved+in+preview" method="get"><label class="stars-input">★★★★★<input class="sr-only" name="rating" value="5"/></label><textarea name="review" rows="3" placeholder="What did you love about it?"></textarea><button class="primary-button" type="submit">Publish review</button></form></div></article><article><img src="/assets/images/customer/ceramic-mugs.webp" alt="Ceramic mugs" loading="lazy" width="320" height="320"/><div><b>Handpainted Ceramic Mugs</b><small>Delivered 14 Apr 2024 · Clay &amp; Co.</small><a class="outline-button" href="/account/reviews?notice=Review+editor+opened">Write a review</a></div></article></div></section>
+}
+
+templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
+  <aside class="account-sidebar">
+    <div class="profile-mini"><div class="avatar">{ customerInitials(p.UserName) }</div><b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
+    <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
+    <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
+    <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
+    <a href="/account/reviews" class={ liveAccountLinkClass(active, "/account/reviews") } aria-current={ liveAccountCurrent(active, "/account/reviews") }><span class="material-symbols-outlined" aria-hidden="true">reviews</span> Reviews</a>
+    <a href="/orders" class={ liveAccountLinkClass(active, "orders") } aria-current={ liveAccountCurrent(active, "orders") }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Orders</a>
+    <a href="/returns" class={ liveAccountLinkClass(active, "/returns") } aria-current={ liveAccountCurrent(active, "/returns") }><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Returns &amp; refunds</a>
+    <a href="/payments" class={ liveAccountLinkClass(active, "/payments") } aria-current={ liveAccountCurrent(active, "/payments") }><span class="material-symbols-outlined" aria-hidden="true">payments</span> Payments</a>
+    <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a>
+    <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
+    <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
+    <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
+    <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
+    <a href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span> Switch workspace</a>
+  </aside>
+}
+
+templ LiveAccount(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="account-welcome"><div class="container"><p class="eyebrow">YOUR WEEVCRAFTS HOME</p><h1>Welcome back,<br/><em>{ p.UserName }</em></h1><p>Glad to have you here. Together, we support artisans and keep traditions alive.</p></div><img src="/assets/images/customer/maker-mithila.webp" alt="Artisan at work" width="1254" height="1254"/></section>
+    <section class="container account-layout">
+      @LiveAccountSidebar(p, "account")
+      <div class="account-content">
+        if p.Notice != "" {
+          <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+        }
+        <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>{ p.ReviewCount }</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
+        <div class="account-cards">
+          <section id="profile"><h2>Profile information</h2><a href="/account/profile">Edit <span class="material-symbols-outlined" aria-hidden="true">edit</span></a><p><b>{ p.UserName }</b><br/>{ p.UserEmail }<br/><small>Member since { p.MemberSince }</small></p></section>
+          <section id="addresses"><h2>Saved addresses</h2><a href="/account/addresses">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+            if p.Address.Lines != "" {
+              <p><b>{ p.Address.Name }</b><br/>{ p.Address.Lines }</p>
+            } else {
+              <p>No saved addresses yet.<br/><a href="/checkout">Add one during checkout</a></p>
+            }
+          </section>
+          <section><h2>Recent orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+            if len(p.Orders) > 0 {
+              @HistoryRows(firstOrderList(p.Orders))
+            } else {
+              <p>Your orders will appear here after checkout.</p>
+            }
+          </section>
+          <section><h2>Returns &amp; refunds</h2><a href="/returns">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>View return requests linked to your orders.</p></section>
+          <section id="payments"><h2>Payment methods</h2><a href="/payments">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Payment options are shown securely during checkout. Card details are not stored in Weevcrafts.</p></section>
+          <section id="preferences"><h2>Notification updates</h2><a href="/account/notifications">View updates <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Order and delivery updates appear in your order history.</p></section>
+          <section id="privacy"><h2>Privacy preferences</h2><a href="/account/privacy">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Review your privacy choices and data requests.</p></section>
+          <section id="security"><h2>Security &amp; sessions</h2><a href="/account/security">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Change your password and protect your account.</p></section>
+          <section class="account-wide account-help"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Need a hand?</h2><p>Our customer care team is here for order, return and product questions.</p></div><a class="outline-button" href="/contact">Contact support</a></section>
+        </div>
+      </div>
+    </section>
+  }
+}
+
+templ LiveOrders(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro account-intro">
+      @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from Weevcrafts.</p>
+      <nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav>
+    </section>
+    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders>
+      if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+      } else {
+        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))), p.CSRFToken)
+        <h2 class="order-history-title">Past orders</h2>
+        @HistoryRows(orderSlice(orderSubset(p.Orders, p.Filters.Get("status")), 1))
+      }
+    </div></section>
+  }
+}
+
+templ LiveTracking(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">@Breadcrumb("Home", "Track order")<p class="eyebrow">EVERY STEP, KEPT CLEAR</p><h1>Track your order</h1><p>See the latest status recorded for your order.</p></section>
+    <section class="container tracking-layout"><div class="tracking-main">
+      <form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value={ p.SelectedOrder.Number } placeholder="Enter your order number" required/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form>
+      if p.SelectedOrder.Number != "" {
+        <article class="tracking-card-main"><header><div><span class="badge">{ p.SelectedOrder.Status }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
+      } else {
+        <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
+      }
+    </div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our customer care team can help with an order update.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
+  }
+}
+
+templ LiveAccountDetail(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro"><p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>{ p.Title }</h1><p>Manage the details that make your account yours.</p></section>
+    <section class="container account-layout utility-account-layout">@LiveAccountSidebar(p, p.Route)<div class="account-content utility-account-content">
+        if p.Notice != "" {
+          <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
+        }
+      if p.Route == "/account/profile" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR DETAILS</p><h2>Profile information</h2></div><span class="material-symbols-outlined" aria-hidden="true">person</span></div><form class="utility-form two-column" action="/account/profile" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Full name<input name="name" value={ p.UserName } minlength="2" maxlength="100" required/></label><label>Email address<input name="email" type="email" value={ p.UserEmail } disabled/></label><label>Member since<input value={ p.MemberSince } disabled/></label><button class="primary-button" type="submit">Save changes</button></form><p class="muted">Email changes require verification. Contact support if you need to update your email address.</p></section>
+      } else if p.Route == "/account/addresses" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div>
+          if len(p.Addresses) > 0 {
+            <div class="saved-address-list">
+              for _, address := range p.Addresses {
+                <article class="saved-address" data-address-card={ address.ID }>
+                  <h3>{ address.Name }</h3>
+                  <form class="utility-form two-column" action="/account/addresses" method="post" data-address-edit={ address.ID }>
+                    @AddressFormFields(address, p.CSRFToken)
+                    <button class="primary-button" type="submit">Save address</button>
+                  </form>
+                  <form action="/account/addresses/delete" method="post" data-address-delete={ address.ID } onsubmit="return confirm('Delete this saved address?');">
+                    <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="address_id" value={ address.ID }/>
+                    <button class="outline-button" type="submit">Delete address</button>
+                  </form>
+                </article>
+              }
+            </div>
+          } else {
+            <p>No saved addresses yet. Add an address here or during checkout.</p>
+          }
+          <h3>Add an address</h3>
+          <form class="utility-form two-column" action="/account/addresses" method="post" data-address-create>
+            @AddressFormFields(viewmodels.Address{}, p.CSRFToken)
+            <button class="primary-button" type="submit">Add address</button>
+          </form>
+        </section>
+      } else if p.Route == "/account/security" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
+      } else if p.Route == "/account/notifications" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div>
+          <p>Choose the updates you want. Your choices are saved to your account; order status also remains available in your order history.</p>
+          <form class="preference-list" action="/account/notifications" method="post">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <label><span><b>Order updates</b><small>Dispatch, delivery and return changes</small></span><input type="checkbox" name="order_updates" value="1" checked?={ p.NotificationPreferences.OrderUpdates }/></label>
+            <label><span><b>Maker messages</b><small>Replies about products and orders</small></span><input type="checkbox" name="maker_messages" value="1" checked?={ p.NotificationPreferences.MakerMessages }/></label>
+            <label><span><b>Offers and promotions</b><small>Marketing email consent; your choice is recorded in privacy history</small></span><input type="checkbox" name="offers" value="1" checked?={ p.NotificationPreferences.Offers }/></label>
+            <label><span><b>Maker stories</b><small>New collections and studio updates</small></span><input type="checkbox" name="maker_stories" value="1" checked?={ p.NotificationPreferences.MakerStories }/></label>
+            <button class="primary-button" type="submit">Save preferences</button>
+          </form>
+          <p class="muted">Account preference storage is active. Email delivery depends on the store email service configuration.</p>
+          <a class="outline-button" href="/orders">View order updates</a>
+        </section>
+      } else if p.Route == "/account/support" {
+        @CustomerSupportPanel(p)
+      } else if p.Route == "/account/privacy" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><p>Review or change saved consent, manage email marketing, and submit data access, correction, grievance, or account deletion requests.</p><a class="outline-button" href="/privacy/center">Manage privacy choices and data requests</a><a class="outline-button" href="/privacy">Read the privacy policy</a></section>
+      } else if p.Route == "/account/reviews" {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div>
+          <p>Review products from delivered orders. Reviews are marked verified and appear publicly after marketplace moderation.</p>
+          if len(p.PendingReviews) > 0 {
+            <h3>Purchases ready for review</h3>
+            <div class="review-list">
+              for _, review := range p.PendingReviews {
+                <article data-review-product={ strconv.FormatInt(review.ProductID, 10) }>
+                  if review.ImageURL != "" {
+                    <img src={ review.ImageURL } alt={ review.ProductName } loading="lazy" width="320" height="320"/>
+                  }
+                  <div><b>{ review.ProductName }</b><small>Delivered purchase · { review.SellerName }</small>
+                    <form action="/account/reviews" method="post" class="utility-form">
+                      <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ strconv.FormatInt(review.ProductID, 10) }/><input type="hidden" name="order_id" value={ strconv.FormatInt(review.OrderID, 10) }/>
+                      <label>Rating<select name="rating" required><option value="">Choose a rating</option><option value="5">5 — Loved it</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Needs improvement</option><option value="1">1 — Not satisfied</option></select></label>
+                      <label>Review title<input name="title" minlength="2" maxlength="120" required/></label>
+                      <label>Your review<textarea name="body" rows="4" minlength="10" maxlength="2000" required></textarea></label>
+                      <button class="primary-button" type="submit">Submit verified review</button>
+                    </form>
+                  </div>
+                </article>
+              }
+            </div>
+          } else {
+            <div class="empty-state"><h3>No delivered purchases waiting for a review</h3><p>Once an order is delivered, you can leave one verified review for each product.</p></div>
+          }
+          <h3>Your reviews</h3>
+          if len(p.WrittenReviews) > 0 {
+            <div class="review-list">
+              for _, review := range p.WrittenReviews {
+                <article><div><b>{ review.ProductName }</b><small>{ review.Created } · { review.Rating }/5 · { review.Status }</small><p><strong>{ review.Title }</strong></p><p>{ review.Body }</p></div></article>
+              }
+            </div>
+          } else {
+            <p>You have not submitted any reviews.</p>
+          }
+        </section>
+      } else {
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SAFE AND SIMPLE</p><h2>Payment methods</h2></div><span class="material-symbols-outlined" aria-hidden="true">payments</span></div><p>Payment options are offered securely during checkout. Payment details are never stored in your Weevcrafts account.</p><a class="outline-button" href="/cart">Go to your cart</a></section>
+      }
+    </div></section>
+  }
+}
+
+templ AddressFormFields(address viewmodels.Address, csrfToken string) {
+  <input type="hidden" name="csrf_token" value={ csrfToken }/>
+  if address.ID != "" {
+    <input type="hidden" name="address_id" value={ address.ID }/>
+  }
+  <label>Recipient name<input name="recipient_name" value={ address.Name } autocomplete="name" maxlength="100" required/></label>
+  <label>Phone number<input name="phone" value={ address.Phone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
+  <label>Address line<input name="line1" value={ address.Line1 } autocomplete="address-line1" maxlength="250" required/></label>
+  <label>Apartment / landmark<input name="line2" value={ address.Line2 } autocomplete="address-line2" maxlength="250"/></label>
+  <label>City<input name="city" value={ address.City } autocomplete="address-level2" maxlength="100" required/></label>
+  <label>State / region<input name="state" value={ address.State } autocomplete="address-level1" maxlength="100" required/></label>
+  <label>Postal code<input name="postal_code" value={ address.PostalCode } autocomplete="postal-code" inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" required/></label>
+  <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
+}
+
+templ CustomerSupportPanel(p viewmodels.CustomerPage) {
+  <section class="utility-card account-panel" data-customer-support>
+    <div class="utility-panel-heading"><div><p class="eyebrow">WE ARE HERE TO HELP</p><h2>Your support requests</h2></div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span></div>
+    <p>Replies from our customer care team and your follow-up messages stay together here.</p>
+    <a class="outline-button" href="/contact"><span class="material-symbols-outlined" aria-hidden="true">add</span>Start a new request</a>
+    if len(p.SupportTickets) == 0 {
+      <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>No support requests yet</h3><p>Your requests and replies will appear here.</p></div>
+    } else {
+      <div class="customer-support-tickets">
+        for _, ticket := range p.SupportTickets {
+          <article class="customer-support-ticket" id={ "ticket-" + strconv.FormatInt(ticket.ID, 10) }>
+            <header><div><p class="eyebrow">{ ticket.Number }</p><h3>{ ticket.Subject }</h3></div><span class="badge">{ ticket.Status }</span></header>
+            if ticket.OrderNumber != "" {
+              <p class="muted">Opened { ticket.Created } · Priority { ticket.Priority } · Order { ticket.OrderNumber }</p>
+            } else {
+              <p class="muted">Opened { ticket.Created } · Priority { ticket.Priority }</p>
+            }
+            <div class="customer-support-messages" aria-label="Conversation">
+              for _, message := range ticket.Messages {
+                <article class={ customerSupportMessageClass(message.Role) }>
+                  <header><b>{ message.Author }</b><span>{ message.Role } · { message.Created }</span></header>
+                  <p>{ message.Body }</p>
+                </article>
+              }
+            </div>
+            if len(ticket.Attachments) > 0 {
+              <div class="support-attachments" aria-label="Attachments">
+                for _, attachment := range ticket.Attachments {
+                  <a href={ attachment.URL }><span class="material-symbols-outlined" aria-hidden="true">image</span>{ attachment.FileName }</a>
+                }
+              </div>
+            }
+            if ticket.Status != "closed" {
+              <form class="utility-form customer-support-reply" action="/support/customer-reply" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID, 10) }/>
+                <label>Reply<textarea name="message" rows="3" minlength="1" maxlength="4000" required></textarea></label>
+                <label>Photos (optional)<input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Up to 3 images, 10 MB each.</small></label>
+                <button class="primary-button" type="submit">Send reply</button>
+              </form>
+            } else {
+              <p class="muted">This request is closed. Start a new request if you still need help.</p>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+}

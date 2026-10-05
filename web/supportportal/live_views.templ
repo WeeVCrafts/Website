@@ -1,0 +1,129 @@
+package supportportal
+
+import (
+	"fmt"
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ LiveDashboard(p viewmodels.SupportPortalPage) {
+	@SupportDocument(p) {
+		@SupportStatGrid(p)
+		<section class="support-panel">
+			<div class="support-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><span><h2>Live case queue</h2><p>Customer names and order details are masked for support.</p></span></div><a href="/support-portal/cases">Open queue</a></div>
+			@LiveSupportCaseTable(p)
+		</section>
+		<section class="support-panel live-latest-replies">
+			<div class="support-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">forum</span><span><h2>Latest replies</h2><p>Recent support responses loaded from PostgreSQL.</p></span></div><a href="/support-portal/cases">Open a case</a></div>
+			if len(p.Conversations) == 0 {
+				<div class="support-empty-state" role="status"><h2>No replies yet</h2><p>Replies sent to customers will appear here.</p></div>
+			} else {
+				@SupportConversationRows(p.Conversations)
+			}
+		</section>
+	}
+}
+
+templ LiveCases(p viewmodels.SupportPortalPage) {
+	@SupportDocument(p) {
+		<form class="support-directory-toolbar" method="get" action="/support-portal/cases"><label class="sr-only" for="support-live-search">Search cases</label><input id="support-live-search" name="q" value={ p.Query } placeholder="Search case ID, subject, status or order"/><button class="support-button primary" type="submit">Search</button><a class="support-button outline" href="/support-portal/cases">Clear</a></form>
+		<section class="support-panel"><div class="support-panel-heading"><div><h2>Cases</h2><p>Open a case to read its conversation and reply. Status changes and internal status notes remain available in the queue.</p></div></div>@LiveSupportCaseTable(p)</section>
+		if p.SelectedCase.DatabaseID > 0 {
+			<section class="support-panel live-case-detail" aria-labelledby="live-case-heading">
+				<div class="support-panel-heading"><div><h2 id="live-case-heading">{ p.SelectedCase.ID } · { p.SelectedCase.Subject }</h2><p>{ p.SelectedCase.Customer } · { p.SelectedCase.Status } · Created { p.SelectedCase.Created }</p></div></div>
+				<div class="support-thread live-support-thread">
+					if len(p.SelectedCase.Attachments) > 0 {
+						<div class="support-attachments" aria-label="Case attachments">
+							for _, attachment := range p.SelectedCase.Attachments {
+								<a href={ attachment.URL } target="_blank" rel="noreferrer"><span class="material-symbols-outlined" aria-hidden="true">attach_file</span>{ attachment.FileName }</a>
+							}
+						</div>
+					}
+					if p.SelectedCase.InitialMessage != "" {
+						<article class="support-message customer">
+							<span class="support-message-avatar">{ p.SelectedCase.CustomerInitials }</span>
+							<div><header><b>{ p.SelectedCase.Customer }</b><mark>Customer</mark><time>{ p.SelectedCase.Created }</time></header><p class="support-message-body">{ p.SelectedCase.InitialMessage }</p></div>
+						</article>
+					}
+					for _, message := range p.Messages {
+						<article class={ "support-message " + message.Tone }>
+							<span class="support-message-avatar">{ message.Initials }</span>
+							<div><header><b>{ message.Author }</b><mark>{ message.Role }</mark><time>{ message.Time }</time></header><p class="support-message-body">{ message.Message }</p></div>
+						</article>
+					}
+				</div>
+				if p.SelectedCase.AgentNote != "" {
+					<aside class="internal-note live-internal-note"><b>Latest internal status note</b><p>{ p.SelectedCase.AgentNote }</p></aside>
+				}
+				<form class="support-reply live-support-reply" method="post" action="/support-portal/cases/reply" enctype="multipart/form-data">
+					<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.SelectedCase.DatabaseID) }/>
+					<label for="support-agent-reply">Reply to customer</label><textarea id="support-agent-reply" name="message" maxlength="4000" required placeholder="Write a response. It will be saved to this case conversation."></textarea>
+					<label for="support-agent-attachments">Attachments <span>(up to 3 images, 10 MB each)</span></label><input id="support-agent-attachments" type="file" name="attachments[]" accept="image/jpeg,image/png,image/webp" multiple/>
+					<button type="submit" class="support-button primary"><span class="material-symbols-outlined" aria-hidden="true">send</span>Send Reply</button>
+				</form>
+			</section>
+		}
+	}
+}
+
+templ LiveSupportCaseTable(p viewmodels.SupportPortalPage) {
+	if len(p.Cases) == 0 {
+		<div class="support-empty-state" role="status"><h2>No support cases</h2><p>No tickets match the current search. New customer support requests will appear here.</p></div>
+	} else {
+		<div class="support-table case-table live-support-table" tabindex="0" role="region" aria-label="Live support case queue">
+			<div class="support-table-head"><span>Case</span><span>Subject</span><span>Customer</span><span>Priority</span><span>Order</span><span>Status</span><span>Latest reply</span><span>Created</span><span>Update</span></div>
+			for _, item := range p.Cases {
+				<div class="support-table-row live-support-row"><strong><a href={ "/support-portal/cases?ticket_id=" + fmt.Sprint(item.DatabaseID) }>{ item.ID }</a></strong><span>{ item.Subject }</span><span>{ item.Customer }</span><span>{ item.Priority }</span><span>{ item.Order }</span><span>{ item.Status }</span><span>{ item.LatestReply }</span><span>{ item.Created }</span>
+					<form method="post" action="/support-portal/cases/status" class="support-case-update"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(item.DatabaseID) }/><label class="sr-only" for={ "ticket-status-" + fmt.Sprint(item.DatabaseID) }>Status for { item.ID }</label><select id={ "ticket-status-" + fmt.Sprint(item.DatabaseID) } name="status">
+						if supportStatusTransitionAllowed(item.Status, "open") {
+							<option value="open" selected={ item.Status == "open" }>Open</option>
+						}
+						if supportStatusTransitionAllowed(item.Status, "in_progress") {
+							<option value="in_progress" selected={ item.Status == "in_progress" }>In progress</option>
+						}
+						if supportStatusTransitionAllowed(item.Status, "waiting_customer") {
+							<option value="waiting_customer" selected={ item.Status == "waiting_customer" }>Waiting for customer</option>
+						}
+						if supportStatusTransitionAllowed(item.Status, "resolved") {
+							<option value="resolved" selected={ item.Status == "resolved" }>Resolved</option>
+						}
+						if supportStatusTransitionAllowed(item.Status, "closed") {
+							<option value="closed" selected={ item.Status == "closed" }>Closed</option>
+						}
+					</select><label class="sr-only" for={ "ticket-note-" + fmt.Sprint(item.DatabaseID) }>Internal note for { item.ID }</label><input id={ "ticket-note-" + fmt.Sprint(item.DatabaseID) } name="note" maxlength="1000" placeholder="Internal note"/><button class="support-button primary" type="submit">Save</button></form>
+				</div>
+			}
+		</div>
+	}
+}
+
+templ LiveCustomers(p viewmodels.SupportPortalPage) {
+	@SupportDocument(p) {
+		<section class="support-panel"><div class="support-panel-heading"><div><h2>Customers in active support cases</h2><p>Contact details remain masked. Records come from live support tickets.</p></div></div>
+			if len(p.Directory) == 0 {
+				<div class="support-empty-state" role="status"><h2>No customer context</h2><p>Customers appear here when a support ticket is created.</p></div>
+			} else {
+				<div class="support-directory-table live-customer-table"><div class="directory-head"><span>Customer</span><span>Type</span><span>Contact</span><span>Cases</span><span>Open ticket</span></div>
+					for _, item := range p.Directory {
+						<div class="directory-row"><strong>{ item.Name }</strong><span>{ item.Type }</span><span>{ item.EmailPhone }</span><span>{ item.Cases }</span><a href="/support-portal/cases">View cases</a></div>
+					}
+				</div>
+			}
+		</section>
+	}
+}
+
+templ LiveOrders(p viewmodels.SupportPortalPage) {
+	@SupportDocument(p) {
+		<section class="support-panel"><div class="support-panel-heading"><div><h2>Orders linked to support cases</h2><p>Order data comes from PostgreSQL and remains read only in this support workspace.</p></div></div>
+			if len(p.Cases) == 0 {
+				<div class="support-empty-state" role="status"><h2>No linked orders</h2><p>Orders attached to support tickets will appear here.</p></div>
+			} else {
+				<div class="support-table case-table live-orders-table"><div class="support-table-head"><span>Case</span><span>Order</span><span>Customer</span><span>Order state</span><span>Payment</span><span>Value</span><span>Ticket status</span></div>
+					for _, item := range p.Cases {
+						<div class="support-table-row live-orders-row"><strong>{ item.ID }</strong><span>{ item.Order }</span><span>{ item.Customer }</span><span>{ item.OrderStatus }</span><span>{ item.PaymentStatus }</span><span>{ item.OrderValue }</span><span>{ item.Status }</span></div>
+					}
+				</div>
+			}
+		</section>
+	}
+}

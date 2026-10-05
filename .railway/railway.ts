@@ -1,0 +1,31 @@
+import { defineRailway, github, project, service } from "railway/iac";
+
+// This repository manages only its own resources in the environment. Other
+// repositories export their own partial name.
+// See https://docs.railway.com/infrastructure-as-code#multi-repo-projects
+export const partial = "Website";
+
+export default defineRailway(() => {
+  const Website = service("Website", {
+    source: github("WeeVCrafts/Website", { branch: "main" }),
+    healthcheck: "/health/ready",
+    healthcheckTimeout: 300,
+    variables: {
+      DATABASE_URL: "${{Postgres.DATABASE_URL}}",
+      REDIS_URL: "${{Redis.REDIS_URL}}",
+      S3_ADDR: "${{weevcrafts-media.ENDPOINT}}",
+      S3_ACCESS_KEY: "${{weevcrafts-media.ACCESS_KEY_ID}}",
+      S3_SECRET_KEY: "${{weevcrafts-media.SECRET_ACCESS_KEY}}",
+      S3_BUCKET: "${{weevcrafts-media.BUCKET}}",
+      S3_SECURE: "true",
+      WECRATFS_ENV: "production",
+      WECRATFS_SECURE_COOKIES: "true",
+      WECRATFS_PUBLIC_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+      WECRATFS_LOCAL_MODE: "false",
+      WECRATFS_PAYMENT_MODE: "local",
+    },
+  });
+  return project("attractive-warmth", {
+    resources: [Website],
+  });
+});
