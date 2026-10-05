@@ -1001,12 +1001,13 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-	input, err := productDraftFromForm(r, r.URL.Path == "/admin/products/new")
+	isCreate := r.URL.Path == "/admin/products/new" || r.URL.Path == "/super-admin/products/new"
+	input, err := productDraftFromForm(r, isCreate)
 	if err != nil {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the price and optional compare-at price.")
 		return
 	}
-	if r.URL.Path == "/admin/products/new" {
+	if isCreate {
 		sellerID, parseErr := strconv.ParseInt(r.FormValue("seller_id"), 10, 64)
 		if parseErr != nil || sellerID <= 0 {
 			h.renderError(w, http.StatusUnprocessableEntity, "Seller required", "Choose an active seller for this product.")
@@ -1116,7 +1117,9 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 }
 
 func adminProductID(path string) (int64, error) {
-	trimmed := strings.TrimSuffix(strings.TrimPrefix(path, "/admin/products/"), "/edit")
+	trimmed := strings.TrimPrefix(path, "/super-admin/products/")
+	trimmed = strings.TrimPrefix(trimmed, "/admin/products/")
+	trimmed = strings.TrimSuffix(trimmed, "/edit")
 	return strconv.ParseInt(strings.Trim(trimmed, "/"), 10, 64)
 }
 
