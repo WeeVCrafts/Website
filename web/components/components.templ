@@ -3,9 +3,6 @@ package components
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ Header(p viewmodels.CustomerPage) {
-  <div class="utility-bar">
-    <div class="container utility-inner"><span>Handmade Today. A Kinder Tomorrow.</span><span class="utility-links">Delivery to serviceable PIN codes in India <i></i> Support</span></div>
-  </div>
   <header class="site-header" x-data="{menu:false}" @keydown.escape.window="if (menu) { menu=false; $nextTick(() => $refs.menuButton.focus()) }" @keydown.tab.window="if (menu) { const focusables = $refs.mobileMenu.querySelectorAll('a,button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if (first && last && $event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (first && last && !$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
     <a class="skip-link" href="#page">Skip to content</a>
     <div class="header-main container">
@@ -16,9 +13,9 @@ templ Header(p viewmodels.CustomerPage) {
       <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
       <div class="header-tools">
         <div class="search-shell"><form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-push-url="true" hx-trigger="submit" hx-sync="this:replace" hx-indicator="#global-search-indicator"><label class="sr-only" for="global-search">Search products</label><input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-disinherit="hx-select hx-push-url" hx-push-url="false"/><button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button></form><div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div></div>
-        <nav class="header-actions" aria-label="Account actions"><a href="/account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account</span></a>@WishlistAction(p)<a href="/cart" id="cart-count" data-backend-counter><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+        <nav class="header-actions" aria-label="Account actions"><a href="/account" title="Account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account</span></a>@WishlistAction(p)<a href="/cart" id="cart-count" data-backend-counter title="Cart"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
           if p.Authenticated {
-            <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Sign out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
+            <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Sign out" title="Sign out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
           }
         </nav>
       </div>
@@ -46,7 +43,7 @@ templ Header(p viewmodels.CustomerPage) {
 }
 
 templ WishlistAction(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter title="Wishlist"><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
 }
 
 templ CartMutation(p viewmodels.CustomerPage) {
@@ -54,13 +51,13 @@ templ CartMutation(p viewmodels.CustomerPage) {
 }
 
 templ CartMutationMessage(p viewmodels.CustomerPage, message string) {
-  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML" title="Cart"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
   @WishlistCountMutation(p)
   <div id="ui-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
 }
 
 templ WishlistCountMutation(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML"><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML" title="Wishlist"><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
 }
 
 templ RatingStars(rating string) {
@@ -84,7 +81,7 @@ templ Footer(p viewmodels.CustomerPage) {
 
 templ ProductCard(product viewmodels.Product, showAction bool) {
   <article class="product-card" data-product={ product.Slug } data-action={ showAction }>
-    <div class="product-media"><img src={ product.ImageURL } alt={ product.Name } loading="lazy" width="640" height="691" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 50vw, 320px"/><button class={ productHeartClass(product.Saved) } type="button" aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button><span class="badge">{ product.Badge }</span></div>
+    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ product.ImageURL } alt={ product.Name } loading="lazy" width="640" height="691" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 50vw, 320px"/></a><button class={ productHeartClass(product.Saved) } type="button" aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button><span class="badge">{ product.Badge }</span></div>
     <div class="product-copy"><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p><div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div><div class="price"><strong>{ product.Price }</strong><del>{ product.CompareAt }</del>
       if product.Discount != "" {
         <mark>{ product.Discount }</mark>

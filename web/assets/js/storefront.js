@@ -48,12 +48,12 @@
 
   function cardMarkup(product) {
     const slug = esc(product.slug);
-    return "<article class=\"product-card\" data-product=\"" + slug + "\"><div class=\"product-media\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" loading=\"lazy\" width=\"640\" height=\"691\"/><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-add\" data-product-slug=\"" + slug + "\" aria-label=\"Save " + esc(product.name) + "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span></div><div class=\"product-copy\"><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p><div class=\"rating\"><span>" + (product.rating ? product.rating.toFixed(1) : "New") + " (" + Number(product.reviews || 0) + ")</span></div>" + priceMarkup(product) + "<button class=\"outline-button add-button\" type=\"button\" data-backend-action=\"cart-add\" data-product-slug=\"" + slug + "\" " + (product.available > 0 ? "" : "disabled") + "><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span> Add to Cart</button></div></article>";
+    return "<article class=\"product-card\" data-product=\"" + slug + "\"><div class=\"product-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" loading=\"lazy\" width=\"640\" height=\"691\"/></a><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-add\" data-product-slug=\"" + slug + "\" aria-label=\"Save " + esc(product.name) + "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span></div><div class=\"product-copy\"><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p><div class=\"rating\"><span>" + (product.rating ? product.rating.toFixed(1) : "New") + " (" + Number(product.reviews || 0) + ")</span></div>" + priceMarkup(product) + "<button class=\"outline-button add-button\" type=\"button\" data-backend-action=\"cart-add\" data-product-slug=\"" + slug + "\" " + (product.available > 0 ? "" : "disabled") + "><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span> Add to Cart</button></div></article>";
   }
 
   function savedMarkup(product) {
     const slug = esc(product.slug);
-    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><button class=\"primary-button\" type=\"button\" data-backend-action=\"wishlist-to-cart\" data-product-slug=\"" + slug + "\">Move to cart</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\">Remove</button></div></div></article>";
+    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><button class=\"primary-button\" type=\"button\" data-backend-action=\"wishlist-to-cart\" data-product-slug=\"" + slug + "\">Move to cart</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
   }
 
   async function hydrateCatalog() {
@@ -359,7 +359,7 @@
     return user;
   }
 
-  async function runAction(action, slug, delta, selectedVariantId) {
+  async function runAction(action, slug, delta, selectedVariantId, triggerElement) {
     const api = ensureBackend();
     if (action === "cart-add") {
       await requireUser();
@@ -395,14 +395,42 @@
     }
     if (action === "wishlist-add") {
       await requireUser();
-      await api.addWishlist(slug);
-      await refreshCounts();
+      const heartBtn = triggerElement ? (triggerElement.closest(".heart, .gallery-heart") || triggerElement) : null;
+      const optimisticallyGlowed = Boolean(heartBtn) && !heartBtn.classList.contains("is-active");
+      if (optimisticallyGlowed) heartBtn.classList.add("is-active");
+      try {
+        await api.addWishlist(slug);
+        await refreshCounts();
+      } catch (error) {
+        if (optimisticallyGlowed) heartBtn.classList.remove("is-active");
+        throw error;
+      }
+      if (heartBtn) {
+        heartBtn.classList.add("is-active");
+        heartBtn.setAttribute("aria-pressed", "true");
+        const icon = heartBtn.querySelector(".material-symbols-outlined");
+        if (icon) icon.textContent = "favorite";
+        heartBtn.dataset.backendAction = "wishlist-remove";
+      }
       notice("Saved to your wishlist.", false);
       return;
     }
     if (action === "wishlist-remove") {
       await requireUser();
       await api.removeWishlist(slug);
+      if (triggerElement) {
+        const heartBtn = triggerElement.closest(".heart, .gallery-heart") || triggerElement;
+        const isOnProductCard = heartBtn.closest(".product-card, .gallery-main");
+        if (isOnProductCard) {
+          heartBtn.classList.remove("is-active");
+          heartBtn.setAttribute("aria-pressed", "false");
+          const icon = heartBtn.querySelector(".material-symbols-outlined");
+          if (icon) icon.textContent = "favorite_border";
+          heartBtn.dataset.backendAction = "wishlist-add";
+          await refreshCounts();
+          return;
+        }
+      }
       await hydrateCart();
       return;
     }
@@ -737,7 +765,7 @@
       event.stopImmediatePropagation();
       const detailActions = element.closest(".detail-actions, .mobile-buy-bar");
       selectedVariantId = selectedVariantId || (detailActions ? document.querySelector("#detail-variant")?.value : undefined);
-      try { await runAction(action, slug, delta, selectedVariantId); }
+      try { await runAction(action, slug, delta, selectedVariantId, element); }
       catch (error) { notice(error.message, true); }
     }, true);
 

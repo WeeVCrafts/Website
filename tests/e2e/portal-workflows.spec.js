@@ -1256,9 +1256,9 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(preservedAlternateVariant.locator('input[name="compare_at_cents"]')).toHaveValue("309900");
 
     await seller.goto(`/seller-admin/inventory?q=${encodeURIComponent(`QA-ALT-EDIT-${suffix}`)}`);
-    const inventoryRow = seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` });
+    const inventoryRow = seller.locator(".portal-inventory-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` });
     await expect(inventoryRow).toHaveCount(1);
-    await expect(inventoryRow.locator("span").nth(3)).toHaveText("5");
+    await expect(inventoryRow.locator('[data-label="Available"]')).toHaveText("5");
     const inventoryForm = inventoryRow.locator('form[action="/seller-admin/inventory/adjust"]');
     await inventoryForm.locator('input[name="delta"]').fill("2");
     await inventoryForm.locator('input[name="reason"]').fill("Local E2E inventory adjustment persistence check");

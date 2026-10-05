@@ -51,7 +51,6 @@ templ SellerLegalBottom() {
 }
 
 templ SellerHeader(p viewmodels.SellerAdminPage) {
-  <div class="seller-utility"><div><span>Handmade Today. A Kinder Tomorrow. <i class="material-symbols-outlined" aria-hidden="true">eco</i></span><span class="seller-utility-links">Delivery to serviceable PIN codes in India <b></b> Support</span></div></div>
   <header class="seller-header">
     <div class="seller-header-main">
       <button class="seller-menu-button" type="button" x-ref="sellerMenu" aria-label="Open seller navigation" aria-controls="seller-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.sellerSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>

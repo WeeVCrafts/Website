@@ -631,7 +631,7 @@ templ SellerStore(p viewmodels.CustomerPage, seller viewmodels.Seller) {
 
 templ SavedProduct(product viewmodels.Product) {
   <article class="saved-card">
-    <div class="saved-media"><img src={ product.ImageURL } alt={ product.Name } width="320" height="346" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 100vw, 320px"/><button class="heart" type="button" hx-post={ "/ui/wishlist/" + product.Slug } hx-vals='{"source":"wishlist"}' hx-target="#wishlist-grid" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this" aria-label="Remove from wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span></button></div>
+    <div class="saved-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ product.ImageURL } alt={ product.Name } width="320" height="346" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 100vw, 320px"/></a><button class="heart" type="button" hx-post={ "/ui/wishlist/" + product.Slug } hx-vals='{"source":"wishlist"}' hx-target="#wishlist-grid" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this" aria-label="Remove from wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span></button></div>
     <div class="saved-copy"><span class="badge">{ product.Badge }</span><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p><div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@components.RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div><div class="price"><strong>{ product.Price }</strong><del>{ product.CompareAt }</del>
       if product.Discount != "" {
         <mark>{ product.Discount }</mark>
