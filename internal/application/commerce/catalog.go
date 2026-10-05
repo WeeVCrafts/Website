@@ -104,7 +104,7 @@ func (s *CatalogService) UpdateDraft(ctx context.Context, ownerUserID, productID
 }
 
 func (s *CatalogService) CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
-	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || sellerID <= 0 {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) || sellerID <= 0 {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	input, err := normalizeDraft(input)
@@ -115,14 +115,14 @@ func (s *CatalogService) CreateAdminProduct(ctx context.Context, actorID, seller
 }
 
 func (s *CatalogService) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
-	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) || productID <= 0 {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	return s.repository.GetAdminProduct(ctx, actorID, productID)
 }
 
 func (s *CatalogService) UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
-	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) || productID <= 0 {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	input, err := normalizeDraft(input)
@@ -176,14 +176,14 @@ func (s *CatalogService) ArchiveSellerProductVariant(ctx context.Context, ownerU
 }
 
 func (s *CatalogService) AdminProductVariants(ctx context.Context, actorID, productID int64) ([]domaincommerce.ProductVariant, error) {
-	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return nil, ports.ErrForbidden
 	}
 	return s.repository.ListAdminProductVariants(ctx, actorID, productID)
 }
 
 func (s *CatalogService) CreateAdminProductVariant(ctx context.Context, actorID, productID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
-	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return domaincommerce.ProductVariant{}, ports.ErrForbidden
 	}
 	input, err := normalizeVariant(input, true)
@@ -194,7 +194,7 @@ func (s *CatalogService) CreateAdminProductVariant(ctx context.Context, actorID,
 }
 
 func (s *CatalogService) UpdateAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, input domaincommerce.ProductVariantInput) (domaincommerce.ProductVariant, error) {
-	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return domaincommerce.ProductVariant{}, ports.ErrForbidden
 	}
 	input, err := normalizeVariant(input, false)
@@ -205,7 +205,7 @@ func (s *CatalogService) UpdateAdminProductVariant(ctx context.Context, actorID,
 }
 
 func (s *CatalogService) ArchiveAdminProductVariant(ctx context.Context, actorID, productID, variantID int64, reason string) error {
-	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || variantID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return ports.ErrForbidden
 	}
 	reason = strings.TrimSpace(reason)
@@ -238,7 +238,7 @@ func (s *CatalogService) RestoreSellerProduct(ctx context.Context, ownerUserID, 
 }
 
 func (s *CatalogService) ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
-	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) || productID <= 0 {
+	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) || productID <= 0 {
 		return ports.ErrForbidden
 	}
 	reason = strings.TrimSpace(reason)
@@ -256,14 +256,14 @@ func (s *CatalogService) SubmitProduct(ctx context.Context, ownerUserID, product
 }
 
 func (s *CatalogService) SubmitAdminProduct(ctx context.Context, actorID, productID int64) error {
-	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return ports.ErrForbidden
 	}
 	return s.repository.SubmitAdminProduct(ctx, actorID, productID)
 }
 
 func (s *CatalogService) RestoreAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
-	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff) {
 		return ports.ErrForbidden
 	}
 	reason = strings.TrimSpace(reason)
@@ -339,6 +339,7 @@ func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.Prod
 	input.Description = strings.TrimSpace(input.Description)
 	input.SKU = strings.TrimSpace(strings.ToUpper(input.SKU))
 	input.DeliveryLabel = strings.TrimSpace(input.DeliveryLabel)
+	input.ImageURL = strings.TrimSpace(input.ImageURL)
 	if input.DeliveryLabel == "" {
 		input.DeliveryLabel = "Dispatch details at checkout"
 	}

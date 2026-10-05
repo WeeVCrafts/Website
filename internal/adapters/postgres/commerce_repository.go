@@ -113,11 +113,15 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
+		imgURL := input.ImageURL
+		if imgURL == "" {
+			imgURL = "/assets/images/customer/saree-maroon.webp"
+		}
 		var productID int64
 		if err := tx.QueryRow(transactionContext, `
-			INSERT INTO products (slug, brand_slug, category_slug, name, description, price_cents, compare_at_cents, delivery_label, seller_id, status)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
-			RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, sellerID).Scan(&productID); err != nil {
+			INSERT INTO products (slug, brand_slug, category_slug, name, description, price_cents, compare_at_cents, delivery_label, image_url, seller_id, status)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft')
+			RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, imgURL, sellerID).Scan(&productID); err != nil {
 			return mapCommerceError(err)
 		}
 		if err := tx.QueryRow(transactionContext, `
@@ -184,8 +188,14 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $9 AND seller_id = $10 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID, current.SellerID); err != nil {
-			return mapCommerceError(err)
+		if input.ImageURL != "" {
+			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, image_url = $9, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $10 AND seller_id = $11 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, input.ImageURL, productID, current.SellerID); err != nil {
+				return mapCommerceError(err)
+			}
+		} else {
+			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $9 AND seller_id = $10 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID, current.SellerID); err != nil {
+				return mapCommerceError(err)
+			}
 		}
 		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku = $1, price_cents = $2, compare_at_cents = $3, cost_price_cents = $4, updated_at = NOW() WHERE id = $5 AND product_id = $6 AND status = 'active'`, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, current.VariantID, productID); err != nil {
 			return mapCommerceError(err)
@@ -236,19 +246,24 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 			return err
 		}
 		var sellerName string
-		if err := tx.QueryRow(transactionContext, `SELECT display_name FROM sellers WHERE id=$1 AND status='active'`, sellerID).Scan(&sellerName); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT display_name FROM sellers WHERE id=$1 AND status != 'closed'`, sellerID).Scan(&sellerName); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrSellerNotFound
 			}
 			return err
 		}
+		_, _ = tx.Exec(transactionContext, `UPDATE sellers SET status='active', updated_at=NOW() WHERE id=$1 AND status != 'closed'`, sellerID)
 		if err := ensureCatalogName(transactionContext, tx, "brands", input.BrandSlug, input.BrandName); err != nil {
 			return err
 		}
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		if err := tx.QueryRow(transactionContext, `INSERT INTO products (slug,brand_slug,category_slug,name,description,price_cents,compare_at_cents,delivery_label,seller_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft') RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, sellerID).Scan(&product.ID); err != nil {
+		imgURL := input.ImageURL
+		if imgURL == "" {
+			imgURL = "/assets/images/customer/saree-maroon.webp"
+		}
+		if err := tx.QueryRow(transactionContext, `INSERT INTO products (slug,brand_slug,category_slug,name,description,price_cents,compare_at_cents,delivery_label,image_url,seller_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'draft') RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, imgURL, sellerID).Scan(&product.ID); err != nil {
 			return mapCommerceError(err)
 		}
 		if err := tx.QueryRow(transactionContext, `INSERT INTO product_variants (product_id,sku,price_cents,compare_at_cents,cost_price_cents) VALUES ($1,$2,$3,$4,$5) RETURNING id`, product.ID, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents).Scan(&product.VariantID); err != nil {
@@ -288,7 +303,7 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 
 func (r *CommerceRepository) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
 		return domaincommerce.ManagedProduct{}, err
 	}
 	if !allowed {
@@ -327,8 +342,15 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,updated_at=NOW() WHERE id=$9 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID); err != nil {
-			return mapCommerceError(err)
+		if input.ImageURL != "" {
+			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,image_url=$9,updated_at=NOW() WHERE id=$10 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, input.ImageURL, productID); err != nil {
+				return mapCommerceError(err)
+			}
+			_, _ = tx.Exec(transactionContext, `UPDATE product_media SET public_url=$1 WHERE product_id=$2 AND status='ready'`, input.ImageURL, productID)
+		} else {
+			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,updated_at=NOW() WHERE id=$9 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, productID); err != nil {
+				return mapCommerceError(err)
+			}
 		}
 		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku=$1,price_cents=$2,compare_at_cents=$3,cost_price_cents=$4,updated_at=NOW() WHERE id=$5 AND product_id=$6 AND status='active'`, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, current.VariantID, productID); err != nil {
 			return mapCommerceError(err)
@@ -511,7 +533,7 @@ func (r *CommerceRepository) RestoreAdminProduct(ctx context.Context, actorID, p
 
 func requireActiveSuperAdmin(ctx context.Context, tx pgx.Tx, actorID int64) error {
 	var allowed bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {

@@ -407,23 +407,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.supportCreate(w, r)
 	case strings.HasPrefix(r.URL.Path, "/seller/products/") && strings.HasSuffix(r.URL.Path, "/edit"):
 		h.sellerEditProduct(w, r)
-	case r.URL.Path == "/admin/products":
+	case r.URL.Path == "/admin/products" || r.URL.Path == "/super-admin/products":
 		h.adminProducts(w, r)
-	case r.URL.Path == "/admin/products/variants/create":
+	case r.URL.Path == "/admin/products/variants/create" || r.URL.Path == "/super-admin/products/variants/create":
 		h.adminProductVariantCreate(w, r)
-	case r.URL.Path == "/admin/products/variants/update":
+	case r.URL.Path == "/admin/products/variants/update" || r.URL.Path == "/super-admin/products/variants/update":
 		h.adminProductVariantUpdate(w, r)
-	case r.URL.Path == "/admin/products/variants/archive":
+	case r.URL.Path == "/admin/products/variants/archive" || r.URL.Path == "/super-admin/products/variants/archive":
 		h.adminProductVariantArchive(w, r)
-	case r.URL.Path == "/admin/products/new" || strings.HasPrefix(r.URL.Path, "/admin/products/") && strings.HasSuffix(r.URL.Path, "/edit"):
+	case r.URL.Path == "/admin/products/new" || r.URL.Path == "/super-admin/products/new" || (strings.HasPrefix(r.URL.Path, "/admin/products/") || strings.HasPrefix(r.URL.Path, "/super-admin/products/")) && strings.HasSuffix(r.URL.Path, "/edit"):
 		h.adminProductSave(w, r)
-	case r.URL.Path == "/admin/products/submit":
+	case r.URL.Path == "/admin/products/submit" || r.URL.Path == "/super-admin/products/submit":
 		h.adminProductSubmit(w, r)
-	case r.URL.Path == "/admin/products/restore":
+	case r.URL.Path == "/admin/products/restore" || r.URL.Path == "/super-admin/products/restore":
 		h.adminProductRestore(w, r)
-	case r.URL.Path == "/admin/products/archive":
+	case r.URL.Path == "/admin/products/archive" || r.URL.Path == "/super-admin/products/archive":
 		h.adminProductArchive(w, r)
-	case r.URL.Path == "/admin/products/review":
+	case r.URL.Path == "/admin/products/review" || r.URL.Path == "/super-admin/products/review":
 		h.adminReviewProduct(w, r)
 	case r.URL.Path == "/admin/returns":
 		h.adminReturns(w, r)

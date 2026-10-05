@@ -112,7 +112,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 
 templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductForm) {
 	@Document(p) {
-		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post" data-product-builder>
+		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder>
 			<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 			<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
 			<label>Title<input name="name" value={ form.Name } required maxlength="180"/></label>
@@ -133,6 +133,8 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			} else {
 				<div class="seller-form-wide seller-form-note">Stock is managed separately in Inventory. Editing this listing will not change available units.</div>
 			}
+			<label class="seller-form-wide">Upload product image (PNG or JPEG)<input type="file" name="image_file" accept="image/png, image/jpeg, image/jpg, image/webp"/></label>
+			<label class="seller-form-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label>
 			<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
 			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save product draft</button></div>
 		</form>

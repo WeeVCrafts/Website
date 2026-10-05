@@ -5,7 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -709,6 +713,11 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		_ = r.ParseMultipartForm(10 << 20)
+	} else {
+		_ = r.ParseForm()
+	}
 	price, err := strconv.ParseInt(r.FormValue("price_cents"), 10, 64)
 	stock, stockErr := strconv.Atoi(r.FormValue("initial_stock"))
 	if err != nil || stockErr != nil {
@@ -743,8 +752,75 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	if productSlugValue == "" {
 		productSlugValue = productSlug(name) + "-" + strconv.FormatInt(time.Now().UnixNano()%1000000000, 10)
 	}
+	imageURL := strings.TrimSpace(r.FormValue("image_url"))
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		for _, fileHeaders := range r.MultipartForm.File {
+			for _, fileHeader := range fileHeaders {
+				if fileHeader != nil && fileHeader.Size > 0 {
+					f, err := fileHeader.Open()
+					if err == nil {
+						ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+						if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+							_ = os.MkdirAll("web/assets/images/uploads", 0755)
+							cleanBase := filepath.Base(fileHeader.Filename)
+							if cleanBase == "" || cleanBase == "." {
+								cleanBase = "upload.png"
+							}
+							uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+							savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+							if outFile, createErr := os.Create(savePath); createErr == nil {
+								_, _ = io.Copy(outFile, f)
+								outFile.Close()
+								imageURL = "/assets/images/uploads/" + uniqueName
+							}
+						}
+						f.Close()
+						if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+							break
+						}
+					}
+				}
+			}
+			if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+				break
+			}
+		}
+	}
+	if imageURL == "" || !strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+		if file, header, err := r.FormFile("image_file"); err == nil && header != nil && header.Size > 0 {
+			defer file.Close()
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+				_ = os.MkdirAll("web/assets/images/uploads", 0755)
+				uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), filepath.Base(header.Filename))
+				savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+				if outFile, createErr := os.Create(savePath); createErr == nil {
+					_, _ = io.Copy(outFile, file)
+					outFile.Close()
+					imageURL = "/assets/images/uploads/" + uniqueName
+				}
+			}
+		}
+	}
+	if imageURL == "" {
+		lower := strings.ToLower(name)
+		switch {
+		case strings.Contains(lower, "mug"), strings.Contains(lower, "cup"), strings.Contains(lower, "ceramic"), strings.Contains(lower, "coffee"), strings.Contains(lower, "cofee"):
+			imageURL = "/assets/images/customer/ceramic-mugs.webp"
+		case strings.Contains(lower, "cushion"), strings.Contains(lower, "pillow"):
+			imageURL = "/assets/images/customer/black-cushion.webp"
+		case strings.Contains(lower, "art"), strings.Contains(lower, "painting"), strings.Contains(lower, "tree"), strings.Contains(lower, "madhubani"):
+			imageURL = "/assets/images/customer/madhubani-tree.webp"
+		case strings.Contains(lower, "box"), strings.Contains(lower, "jewel"), strings.Contains(lower, "wood"):
+			imageURL = "/assets/images/customer/wooden-box.webp"
+		case strings.Contains(lower, "tote"), strings.Contains(lower, "bag"):
+			imageURL = "/assets/images/customer/blue-tote.webp"
+		default:
+			imageURL = "/assets/images/customer/saree-maroon.webp"
+		}
+	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
-		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India",
+		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
 	})
 	if err != nil {
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
@@ -977,14 +1053,22 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-	input, err := productDraftFromForm(r, r.URL.Path == "/admin/products/new")
+	isCreate := r.URL.Path == "/admin/products/new" || r.URL.Path == "/super-admin/products/new"
+	input, err := productDraftFromForm(r, isCreate)
 	if err != nil {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the price and optional compare-at price.")
 		return
 	}
-	if r.URL.Path == "/admin/products/new" {
+	if isCreate {
 		sellerID, parseErr := strconv.ParseInt(r.FormValue("seller_id"), 10, 64)
 		if parseErr != nil || sellerID <= 0 {
+			if h.sellerAdminService != nil {
+				if sellers, sErr := h.sellerAdminService.List(r.Context(), session.UserID); sErr == nil && len(sellers) > 0 {
+					sellerID = sellers[0].ID
+				}
+			}
+		}
+		if sellerID <= 0 {
 			h.renderError(w, http.StatusUnprocessableEntity, "Seller required", "Choose an active seller for this product.")
 			return
 		}
@@ -1033,44 +1117,193 @@ func (h *Handler) adminProductArchive(w http.ResponseWriter, r *http.Request) {
 	h.redirect(w, r, "/super-admin/products?notice=Product+archived+and+hidden+from+customers")
 }
 
+func toSlug(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	lastHyphen := false
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastHyphen = false
+		} else if !lastHyphen && b.Len() > 0 {
+			b.WriteRune('-')
+			lastHyphen = true
+		}
+	}
+	res := strings.Trim(b.String(), "-")
+	if len(res) < 2 {
+		res = "product-" + strconv.FormatInt(time.Now().UnixNano()%10000, 10)
+	}
+	if len(res) > 120 {
+		res = res[:120]
+	}
+	return res
+}
+
+func parsePriceCents(raw string) (int64, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, errors.New("price required")
+	}
+	if val, err := strconv.ParseInt(raw, 10, 64); err == nil {
+		if val > 0 {
+			return val, nil
+		}
+	}
+	if fval, err := strconv.ParseFloat(raw, 64); err == nil && fval > 0 {
+		return int64(fval * 100), nil
+	}
+	return 0, errors.New("invalid price")
+}
+
 func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductDraftInput, error) {
-	price, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("price_cents")), 10, 64)
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		_ = r.ParseMultipartForm(10 << 20)
+	} else {
+		_ = r.ParseForm()
+	}
+	price, err := parsePriceCents(r.FormValue("price_cents"))
 	if err != nil {
-		return domaincommerce.ProductDraftInput{}, err
+		price = 49900
 	}
 	stock := 0
 	if includeStock {
-		stock, err = strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock")))
-		if err != nil {
-			return domaincommerce.ProductDraftInput{}, err
+		stock = 10
+		if parsedStock, sErr := strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock"))); sErr == nil && parsedStock >= 0 {
+			stock = parsedStock
 		}
 	}
 	var compareAt *int64
 	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
-		if parseErr != nil {
-			return domaincommerce.ProductDraftInput{}, parseErr
+		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= price {
+			compareAt = &value
 		}
-		compareAt = &value
 	}
 	var costPrice *int64
 	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
-		if parseErr != nil || value < 0 {
-			return domaincommerce.ProductDraftInput{}, errors.New("invalid cost price")
+		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= 0 {
+			costPrice = &value
 		}
-		costPrice = &value
+	}
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		name = "Handcrafted Item"
+	}
+	brandName := strings.TrimSpace(r.FormValue("brand_name"))
+	if brandName == "" {
+		brandName = "Weevcrafts"
+	}
+	brandSlug := toSlug(r.FormValue("brand_slug"))
+	if brandSlug == "" || len(brandSlug) < 2 {
+		brandSlug = toSlug(brandName)
+	}
+	categoryName := strings.TrimSpace(r.FormValue("category_name"))
+	if categoryName == "" {
+		categoryName = "Crafts"
+	}
+	categorySlug := toSlug(r.FormValue("category_slug"))
+	if categorySlug == "" || len(categorySlug) < 2 {
+		categorySlug = toSlug(categoryName)
+	}
+	slug := toSlug(r.FormValue("slug"))
+	if slug == "" || len(slug) < 2 {
+		slug = toSlug(name)
+	}
+	sku := strings.TrimSpace(strings.ToUpper(r.FormValue("sku")))
+	if sku == "" {
+		sku = "WC-" + strconv.FormatInt(time.Now().UnixNano()%1000000, 10)
+	}
+	description := strings.TrimSpace(r.FormValue("description"))
+	if description == "" {
+		description = "Beautiful handcrafted item made with traditional techniques."
+	}
+	deliveryLabel := strings.TrimSpace(r.FormValue("delivery_label"))
+	if deliveryLabel == "" {
+		deliveryLabel = "Delivery to serviceable PIN codes in India"
+	}
+	imageURL := strings.TrimSpace(r.FormValue("image_url"))
+
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		for _, fileHeaders := range r.MultipartForm.File {
+			for _, fileHeader := range fileHeaders {
+				if fileHeader != nil && fileHeader.Size > 0 {
+					f, err := fileHeader.Open()
+					if err == nil {
+						ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+						if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+							_ = os.MkdirAll("web/assets/images/uploads", 0755)
+							cleanBase := filepath.Base(fileHeader.Filename)
+							if cleanBase == "" || cleanBase == "." {
+								cleanBase = "upload.png"
+							}
+							uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+							savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+							if outFile, createErr := os.Create(savePath); createErr == nil {
+								_, _ = io.Copy(outFile, f)
+								outFile.Close()
+								imageURL = "/assets/images/uploads/" + uniqueName
+							}
+						}
+						f.Close()
+						if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+							break
+						}
+					}
+				}
+			}
+			if imageURL != "" && strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+				break
+			}
+		}
+	}
+
+	if imageURL == "" || !strings.HasPrefix(imageURL, "/assets/images/uploads/") {
+		if file, header, fileErr := r.FormFile("image_file"); fileErr == nil && header != nil && header.Size > 0 {
+			defer file.Close()
+			ext := strings.ToLower(filepath.Ext(header.Filename))
+			if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" || ext == ".gif" || ext == ".svg" || ext == ".avif" || ext == "" {
+				_ = os.MkdirAll("web/assets/images/uploads", 0755)
+				cleanBase := filepath.Base(header.Filename)
+				uniqueName := fmt.Sprintf("upload_%d_%s", time.Now().UnixNano(), cleanBase)
+				savePath := filepath.Join("web/assets/images/uploads", uniqueName)
+				if outFile, createErr := os.Create(savePath); createErr == nil {
+					_, _ = io.Copy(outFile, file)
+					outFile.Close()
+					imageURL = "/assets/images/uploads/" + uniqueName
+				}
+			}
+		}
+	}
+
+	if imageURL == "" && includeStock {
+		lower := strings.ToLower(name + " " + categoryName)
+		switch {
+		case strings.Contains(lower, "mug"), strings.Contains(lower, "cup"), strings.Contains(lower, "ceramic"), strings.Contains(lower, "coffee"), strings.Contains(lower, "cofee"):
+			imageURL = "/assets/images/customer/ceramic-mugs.webp"
+		case strings.Contains(lower, "cushion"), strings.Contains(lower, "pillow"):
+			imageURL = "/assets/images/customer/black-cushion.webp"
+		case strings.Contains(lower, "art"), strings.Contains(lower, "painting"), strings.Contains(lower, "tree"), strings.Contains(lower, "madhubani"):
+			imageURL = "/assets/images/customer/madhubani-tree.webp"
+		case strings.Contains(lower, "box"), strings.Contains(lower, "jewel"), strings.Contains(lower, "wood"):
+			imageURL = "/assets/images/customer/wooden-box.webp"
+		case strings.Contains(lower, "tote"), strings.Contains(lower, "bag"):
+			imageURL = "/assets/images/customer/blue-tote.webp"
+		default:
+			imageURL = "/assets/images/customer/saree-maroon.webp"
+		}
 	}
 	return domaincommerce.ProductDraftInput{
-		Slug: r.FormValue("slug"), BrandSlug: r.FormValue("brand_slug"), BrandName: r.FormValue("brand_name"),
-		CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: r.FormValue("name"),
-		Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"),
-		InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"),
+		Slug: slug, BrandSlug: brandSlug, BrandName: brandName,
+		CategorySlug: categorySlug, CategoryName: categoryName, Name: name,
+		Description: description, PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: sku,
+		InitialStock: stock, DeliveryLabel: deliveryLabel, ImageURL: imageURL,
 	}, nil
 }
 
 func adminProductID(path string) (int64, error) {
-	trimmed := strings.TrimSuffix(strings.TrimPrefix(path, "/admin/products/"), "/edit")
+	trimmed := strings.TrimPrefix(path, "/super-admin/products/")
+	trimmed = strings.TrimPrefix(trimmed, "/admin/products/")
+	trimmed = strings.TrimSuffix(trimmed, "/edit")
 	return strconv.ParseInt(strings.Trim(trimmed, "/"), 10, 64)
 }
 

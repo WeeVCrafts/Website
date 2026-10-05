@@ -77,7 +77,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
-		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url), p.swatches,
+		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '/assets/images/customer/saree-maroon.webp'), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
@@ -178,7 +178,7 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
-		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF((SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.image_url), p.swatches,
+		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '/assets/images/customer/saree-maroon.webp'), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'

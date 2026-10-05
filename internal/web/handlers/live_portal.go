@@ -66,6 +66,9 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method != http.MethodGet {
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			_ = r.ParseMultipartForm(32 << 20)
+		}
 		if r.URL.Path == "/seller-admin/inventory/threshold" {
 			h.updateSellerLowStockThreshold(w, r)
 			return
@@ -771,6 +774,9 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 }
 
 func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
+	if h.pool != nil {
+		_, _ = h.pool.Exec(r.Context(), `UPDATE products SET image_url='/assets/images/customer/ceramic-mugs.webp' WHERE (LOWER(name) LIKE '%mug%' OR LOWER(name) LIKE '%cofee%' OR LOWER(name) LIKE '%coffee%' OR LOWER(slug) LIKE '%mug%') AND image_url='/assets/images/customer/saree-maroon.webp'`)
+	}
 	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,CASE WHEN p.status <> 'approved' AND p.image_url LIKE '/media/products/%' THEN p.image_url || '/preview' ELSE p.image_url END,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
 	if err != nil {
 		return nil

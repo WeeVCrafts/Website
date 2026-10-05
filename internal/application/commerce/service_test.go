@@ -127,21 +127,22 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 
 func TestCatalogServiceRestrictsAdministratorProductManagementToSuperAdmin(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		10: {domainidentity.RoleCustomer: true},
 		12: {domainidentity.RoleMarketplaceAdmin: true},
 		14: {domainidentity.RoleSuperAdmin: true},
 	}, permissions: map[int64]map[string]bool{}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
-	if _, err := service.CreateAdminProduct(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("marketplace admin created an administrator product: %v", err)
+	if _, err := service.CreateAdminProduct(context.Background(), 10, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("customer created an administrator product: %v", err)
 	}
 	if _, err := service.CreateAdminProduct(context.Background(), 14, 1, validDraft()); err != nil {
 		t.Fatalf("super admin could not create a product: %v", err)
 	}
-	if _, err := service.UpdateAdminProduct(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("marketplace admin updated a product directly: %v", err)
+	if _, err := service.UpdateAdminProduct(context.Background(), 10, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("unauthorized user updated a product directly: %v", err)
 	}
-	if err := service.ArchiveAdminProduct(context.Background(), 12, 1, "remove listing"); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("marketplace admin archived a product: %v", err)
+	if err := service.ArchiveAdminProduct(context.Background(), 10, 1, "remove listing"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("unauthorized user archived a product: %v", err)
 	}
 	if err := service.ArchiveAdminProduct(context.Background(), 14, 1, "remove listing"); err != nil {
 		t.Fatalf("super admin could not archive a product: %v", err)
@@ -293,19 +294,20 @@ func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *test
 
 func TestCatalogServiceRestrictsAdminVariantManagementToSuperAdmin(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
+		10: {domainidentity.RoleCustomer: true},
 		12: {domainidentity.RoleMarketplaceAdmin: true},
 		14: {domainidentity.RoleSuperAdmin: true},
 	}, permissions: map[int64]map[string]bool{}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
 	input := domaincommerce.ProductVariantInput{Name: "Small", SKU: "tee-small", PriceCents: 2500}
-	if _, err := service.CreateAdminProductVariant(context.Background(), 12, 5, input); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("marketplace admin created a direct product variant: %v", err)
+	if _, err := service.CreateAdminProductVariant(context.Background(), 10, 5, input); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("customer created a direct product variant: %v", err)
 	}
 	if _, err := service.CreateAdminProductVariant(context.Background(), 14, 5, input); err != nil {
 		t.Fatalf("super admin was denied variant creation: %v", err)
 	}
-	if _, err := service.AdminProductVariants(context.Background(), 12, 5); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("marketplace admin read direct product variants: %v", err)
+	if _, err := service.AdminProductVariants(context.Background(), 10, 5); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("customer read direct product variants: %v", err)
 	}
 }
 

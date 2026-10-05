@@ -69,7 +69,7 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 			return ports.ErrRoleState
 		}
 		if role == domainidentity.RoleSellerOwner && grant {
-			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'pending' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO NOTHING`, userID); err != nil {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'active' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO UPDATE SET status='active',updated_at=NOW()`, userID); err != nil {
 				return err
 			}
 		}
@@ -186,7 +186,7 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 			}
 		}
 		if role == domainidentity.RoleSellerOwner {
-			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'pending')`, userID, displayName); err != nil {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'active')`, userID, displayName); err != nil {
 				return err
 			}
 		}

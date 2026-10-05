@@ -9,7 +9,8 @@ SELECT u.id, u.email, u.display_name, u.status, u.created_at,
        c.password_hash, c.failed_attempts, c.locked_until
 FROM users u
 JOIN credentials c ON c.user_id = u.id
-WHERE LOWER(u.email) = LOWER(@email);
+WHERE LOWER(u.email) = LOWER(@email)
+   OR LOWER(SPLIT_PART(u.email, '@', 1)) = LOWER(@email);
 
 -- name: GetUserRoles :many
 SELECT role_slug

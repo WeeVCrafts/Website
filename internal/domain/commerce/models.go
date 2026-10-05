@@ -96,6 +96,7 @@ type ProductDraftInput struct {
 	SKU            string
 	InitialStock   int
 	DeliveryLabel  string
+	ImageURL       string
 }
 
 // ProductVariantInput contains catalogue fields managed by product writers.

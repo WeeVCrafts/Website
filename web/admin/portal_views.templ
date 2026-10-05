@@ -103,16 +103,16 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 	@AdminDocument(p) {
 		<section class="admin-panel admin-product-editor-panel">
 			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">edit_square</span><div><h2>{ p.Title }</h2><p>Manage product content, India delivery details and paise pricing. Stock is managed separately in Inventory.</p></div></div></div>
-			<form class="admin-product-editor-form" method="post" action={ form.Action }>
+			<form class="admin-product-editor-form" method="post" action={ form.Action } enctype="multipart/form-data">
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				if form.ID != "" {
 					<input type="hidden" name="product_id" value={ form.ID }/>
 				}
 				if form.ID == "" {
 					<label>Seller
-						<select name="seller_id" required><option value="">Choose an active seller</option>
+						<select name="seller_id" required><option value="">Choose a seller account</option>
 							for _, seller := range p.Sellers {
-								if seller.Status == "active" {
+								if seller.Status != "closed" {
 									<option value={ seller.ID }>{ seller.Name }</option>
 								}
 							}
@@ -122,17 +122,19 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 					<label>Seller<input value={ form.SellerName } readonly/></label>
 				}
 				<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
-				<label>Product URL slug<input name="slug" value={ form.Slug } required pattern="[-a-z0-9]+"/></label>
+				<label>Product URL slug<input name="slug" value={ form.Slug } placeholder="e.g. handpainted-ceramic-mug"/></label>
 				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
-				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } placeholder="e.g. weaver-crafts"/></label>
 				<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
-				<label>Category slug<input name="category_slug" value={ form.CategorySlug } required pattern="[-a-z0-9]+"/></label>
+				<label>Category slug<input name="category_slug" value={ form.CategorySlug } placeholder="e.g. home-decor"/></label>
 				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
 				<label>Price in paise<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
 				<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="1" value={ form.CompareAtCents }/></label>
 				if form.ID == "" {
 					<label>Initial stock<input name="initial_stock" type="number" min="0" value={ form.InitialStock } required/></label>
 				}
+				<label class="admin-product-editor-wide">Upload product image (PNG or JPEG)<input type="file" name="image_file" accept="image/png, image/jpeg, image/jpg, image/webp"/></label>
+				<label class="admin-product-editor-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label>
 				<label class="admin-product-editor-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
 				<label class="admin-product-editor-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
 				<div class="admin-product-editor-wide admin-product-editor-actions"><a class="admin-button secondary" href="/super-admin/products">Cancel</a><button class="admin-button primary" type="submit">Save product</button></div>
