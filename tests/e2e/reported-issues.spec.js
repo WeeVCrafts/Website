@@ -35,6 +35,8 @@ test("reported product image and seller dropdown workflows work live", async ({ 
   admin.on("response", response => {
     if (response.status() >= 500) browserErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
   });
+  const staffEmail = `qa.reported.staff.${suffix}@weevcrafts.local`;
+  let staffCreated = false;
   let sellerCreated = false;
   let productCreated = false;
 
@@ -81,13 +83,32 @@ test("reported product image and seller dropdown workflows work live", async ({ 
     await row.getByRole("link", { name: "Edit" }).click();
     const preview = admin.locator("img.product-media-preview");
     await expect(preview).toHaveAttribute("src", /\/assets\/images\/uploads\//);
-    expect((await admin.request.get(await preview.getAttribute("src"))).status()).toBe(200);
+    const imageResponse = await admin.request.get(await preview.getAttribute("src"));
+    expect(imageResponse.status()).toBe(200);
+    expect(await imageResponse.body()).toEqual(tinyPNG());
+    await admin.reload();
+    expect(await (await admin.request.get(await admin.locator("img.product-media-preview").getAttribute("src"))).body()).toEqual(tinyPNG());
 
     await admin.goto("/super-admin/security");
     const staffCreate = admin.locator("form.role-user-create-form");
     await staffCreate.locator('select[name="role"]').selectOption("seller_staff");
     const staffSellerSelect = staffCreate.locator('select[name="seller_id"]');
     await expect(staffSellerSelect.locator("option", { hasText: sellerName })).toHaveCount(1);
+    await staffSellerSelect.selectOption(await staffSellerSelect.locator("option", { hasText: sellerName }).getAttribute("value"));
+    await staffCreate.locator('input[name="display_name"]').fill(`QA Staff ${suffix}`);
+    await staffCreate.locator('input[name="email"]').fill(staffEmail);
+    await staffCreate.locator('input[name="password"]').fill(sellerPassword);
+    await staffCreate.locator('input[name="reason"]').fill("Verify persisted staff assignment to newly created seller");
+    await staffCreate.getByRole("button", { name: "Create account" }).click();
+    staffCreated = true;
+    await expect(admin.locator(".role-assignment-card").filter({ hasText: staffEmail })).toContainText("seller_staff");
+    const staffContext = await browser.newContext();
+    try {
+      const staff = await staffContext.newPage();
+      await signIn(staff, staffEmail, "/seller-admin", sellerPassword);
+      await staff.goto("/seller-admin/products");
+      await expect(staff.locator("body")).toContainText(productName);
+    } finally { await staffContext.close(); }
     expect(browserErrors).toEqual([]);
   } finally {
     if (productCreated) {
@@ -101,6 +122,13 @@ test("reported product image and seller dropdown workflows work live", async ({ 
           await row.getByRole("button", { name: "Archive" }).click();
         }
       }
+    }
+    if (staffCreated) {
+      await admin.goto("/super-admin/security");
+      const card = admin.locator(".role-assignment-card").filter({ hasText: staffEmail });
+      await card.locator('form.role-delete-form input[name="reason"]').fill("Clean up live staff assignment verification account");
+      admin.once("dialog", dialog => dialog.accept());
+      await card.locator('form.role-delete-form button').click();
     }
     if (sellerCreated) {
       await admin.goto("/super-admin/security");

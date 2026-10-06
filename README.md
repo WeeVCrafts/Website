@@ -79,6 +79,15 @@ Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
 Meilisearch, MinIO, and Mailpit. Demo accounts and local payment scenarios are
 documented in [`docs/demo-accounts.md`](docs/demo-accounts.md).
 
+Product cover uploads are stored in the `product_uploads` Docker volume, so
+rebuilding or recreating the app preserves the original files. Back up this
+volume together with PostgreSQL. When upgrading an older container without
+this volume, copy `/app/web/assets/images/uploads` out before recreating it,
+then restore those files into the volume with ownership assigned to `app`.
+The product editor accepts PNG, JPEG and WebP covers up to 25 MB and reports
+upload failures instead of substituting a stock image. Additional product
+media continues to use MinIO/S3.
+
 Useful endpoints:
 
 ```sh

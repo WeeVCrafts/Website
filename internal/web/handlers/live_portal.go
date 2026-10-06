@@ -665,6 +665,9 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Returns = h.adminReturns(r)
 	page.Transactions = h.adminTransactions(r)
 	page.SupportCases = h.adminCases(r)
+	if page.SupportCases == nil {
+		page.DataWarning = joinPortalWarning(page.DataWarning, "The support queue could not be loaded. Refresh the page to try again.")
+	}
 	page.Reviews = h.adminReviews(r)
 	page.Campaigns = h.adminCampaigns(r)
 	page.Settlements = h.adminSettlements(r)
@@ -803,9 +806,6 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 }
 
 func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
-	if h.pool != nil {
-		_, _ = h.pool.Exec(r.Context(), `UPDATE products SET image_url='/assets/images/customer/ceramic-mugs.webp' WHERE (LOWER(name) LIKE '%mug%' OR LOWER(name) LIKE '%cofee%' OR LOWER(name) LIKE '%coffee%' OR LOWER(slug) LIKE '%mug%') AND image_url='/assets/images/customer/saree-maroon.webp'`)
-	}
 	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,CASE WHEN p.status <> 'approved' AND p.image_url LIKE '/media/products/%' THEN p.image_url || '/preview' ELSE p.image_url END,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
 	if err != nil {
 		return nil
@@ -882,18 +882,22 @@ func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.Admi
 }
 
 func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSupportCase {
-	rows, err := h.pool.Query(r.Context(), `SELECT ticket_number, u.display_name, subject, priority, status, created_at FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC`)
+	rows, err := h.pool.Query(r.Context(), `SELECT t.ticket_number, u.display_name, t.subject, t.priority, t.status, t.created_at FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC,t.id DESC`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminSupportCase
+	result := make([]viewmodels.AdminSupportCase, 0)
 	for rows.Next() {
 		var number, customer, subject, priority, status string
 		var created time.Time
-		if rows.Scan(&number, &customer, &subject, &priority, &status, &created) == nil {
-			result = append(result, viewmodels.AdminSupportCase{Case: number, Customer: customer, Subject: subject, Priority: priority, Status: status, Date: created.Format("2 Jan 2006")})
+		if err := rows.Scan(&number, &customer, &subject, &priority, &status, &created); err != nil {
+			return nil
 		}
+		result = append(result, viewmodels.AdminSupportCase{Case: number, Customer: customer, Subject: subject, Priority: priority, Status: status, Date: created.Format("2 Jan 2006")})
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return result
 }

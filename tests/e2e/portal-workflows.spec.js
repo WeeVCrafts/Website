@@ -1720,6 +1720,8 @@ test("customer and support agent share a persisted ticket conversation", async (
   const subject = `QA support request ${suffix}`;
   const customerContext = await browser.newContext();
   const supportContext = await browser.newContext();
+  const adminContext = await browser.newContext();
+  const admin = await adminContext.newPage();
   const customer = await customerContext.newPage();
   const support = await supportContext.newPage();
 
@@ -1737,6 +1739,12 @@ test("customer and support agent share a persisted ticket conversation", async (
     await expect(ticket).toBeVisible();
     const ticketID = (await ticket.getAttribute("id")).replace("ticket-", "");
     await expect(ticket).toContainText("Please help me check a question about this handmade order.");
+
+    await customer.reload();
+    await expect(customer.locator(`#ticket-${ticketID}`)).toContainText(subject);
+    await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
+    await admin.goto("/super-admin/support");
+    await expect(admin.locator("body")).toContainText(subject);
 
     await signIn(support, "demo.support01@weevcrafts.local", "/support-portal");
     await support.goto(`/support-portal/cases?ticket_id=${ticketID}`);
@@ -1773,6 +1781,7 @@ test("customer and support agent share a persisted ticket conversation", async (
     await expect(customer.locator(`#ticket-${ticketID}`)).toContainText("closed");
     await expect(customer.locator(`#ticket-${ticketID} form[action="/support/customer-reply"]`)).toHaveCount(0);
   } finally {
+    await adminContext.close();
     await customerContext.close();
     await supportContext.close();
   }
