@@ -19,7 +19,7 @@ func (r *CommerceRepository) CreateReturnRequest(ctx context.Context, userID int
 		if err := tx.QueryRow(transactionContext, `
 			SELECT id, total_cents, currency
 			FROM orders
-			WHERE user_id = $1 AND order_number = $2 AND status IN ('paid', 'processing', 'shipped', 'delivered')
+			WHERE user_id = $1 AND order_number = $2 AND status = 'delivered'
 			FOR UPDATE`, userID, orderNumber).Scan(&orderID, &request.AmountCents, &request.Currency); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrReturnNotFound

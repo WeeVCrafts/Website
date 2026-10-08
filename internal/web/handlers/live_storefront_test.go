@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -33,6 +34,20 @@ func TestLiveTotalsUsesIntegerCents(t *testing.T) {
 	}
 }
 
+func TestStorefrontMoneyPreservesMinorUnits(t *testing.T) {
+	if got := storefrontMoney(24950); got != "INR 249.50" {
+		t.Fatalf("storefrontMoney() = %q, want INR 249.50", got)
+	}
+}
+
+func TestGuestCartHashUsesOpaqueCookieValue(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/cart", nil)
+	request.AddCookie(&http.Cookie{Name: guestCartCookieName, Value: "opaque-guest-token"})
+	if got := guestCartHash(request); got == "" || got == "opaque-guest-token" {
+		t.Fatalf("guestCartHash() = %q, want a non-empty digest", got)
+	}
+}
+
 func TestLiveSlugNormalizesSellerNames(t *testing.T) {
 	if got := liveSlug("Weaver's Touch"); got != "weavers-touch" {
 		t.Fatalf("liveSlug() = %q, want weavers-touch", got)
@@ -61,12 +76,12 @@ func TestCustomerPagesUseTheSharedStorefront(t *testing.T) {
 }
 
 func TestCustomerPagesRequireAuthentication(t *testing.T) {
-	for _, path := range []string{"/account", "/account/profile", "/cart", "/wishlist", "/checkout", "/orders", "/returns", "/payments"} {
+	for _, path := range []string{"/account", "/account/profile", "/wishlist", "/checkout", "/orders", "/returns", "/payments"} {
 		if !requiresCustomerSession(path) {
 			t.Errorf("requiresCustomerSession(%q) = false", path)
 		}
 	}
-	for _, path := range []string{"/", "/login", "/register", "/products", "/faq"} {
+	for _, path := range []string{"/", "/login", "/register", "/products", "/faq", "/cart"} {
 		if requiresCustomerSession(path) {
 			t.Errorf("requiresCustomerSession(%q) = true", path)
 		}

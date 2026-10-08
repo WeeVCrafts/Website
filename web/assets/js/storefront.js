@@ -5,6 +5,7 @@
   const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
   let backend = null;
   let backendError = null;
+  let authenticated = false;
   let razorpayLoader = null;
 
   const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
@@ -14,7 +15,8 @@
   const unwrap = (value) => value && Object.prototype.hasOwnProperty.call(value, "data") ? value.data : value;
 
   function notice(message, error) {
-    let target = document.querySelector("[data-backend-message]") || document.getElementById("ui-toast");
+    let target = document.querySelector("[data-backend-message]");
+    if (!target || target.getClientRects().length === 0) target = document.getElementById("ui-toast");
     if (!target) {
       target = document.createElement("div");
       target.id = "ui-toast";
@@ -127,7 +129,7 @@
       const specifications = root.querySelector("#product-panel-specs");
       if (specifications) specifications.innerHTML = "<div class=\"spec-grid\"><span>Category <b>" + esc(product.category || "—") + "</b></span><span>Maker <b>" + esc(product.seller) + "</b></span><span>Brand <b>" + esc(product.brand || "—") + "</b></span><span>Available units <b>" + Number(product.available) + "</b></span></div>";
       const makerStory = root.querySelector("#product-panel-story");
-      if (makerStory) makerStory.innerHTML = "<p>Maker profile stories are not connected to the live catalog yet.</p>";
+      if (makerStory) makerStory.innerHTML = "<p>The maker story is not available for this product yet.</p>";
       const sellerLine = root.querySelector(".seller-line");
       if (sellerLine) {
         sellerLine.href = product.brandSlug ? "/products?brand=" + encodeURIComponent(product.brandSlug) : "/products";
@@ -150,9 +152,9 @@
         if (makerCopy) makerCopy.textContent = "Explore more live catalog items from this brand.";
       }
       const rating = root.querySelector(".stars");
-      if (rating) rating.textContent = "Verified review data is not enabled in this MVP.";
+      if (rating) rating.textContent = "No verified reviews yet.";
       const reviewPanel = root.querySelector("#product-panel-reviews");
-      if (reviewPanel) reviewPanel.innerHTML = "<p>Verified customer reviews are not connected in this MVP. No review count or rating is being shown.</p>";
+      if (reviewPanel) reviewPanel.innerHTML = "<p>Verified reviews from delivered purchases will appear here after moderation.</p>";
       const detailActions = root.querySelectorAll(".detail-actions button");
       detailActions.forEach((button, index) => {
         button.dataset.backendAction = index === 1 ? "cart-buy" : "cart-add";
@@ -173,7 +175,7 @@
       });
       const stock = root.querySelector(".stock");
       if (stock) stock.textContent = product.available > 0 ? product.available + " available" : "Currently unavailable";
-      const benefitCopy = [["Delivery", "Shown before order placement"], ["Returns", "Return requests are not enabled yet"], ["Payment", "No payment is taken in this MVP"], ["Shipping", "Availability is confirmed later"]];
+      const benefitCopy = [["Delivery", "Shown before order placement"], ["Returns", "See the current returns policy"], ["Payment", "Payment is handled at checkout"], ["Shipping", "Availability is confirmed at checkout"]];
       root.querySelectorAll(".benefits > span").forEach((benefit, index) => {
         const title = benefit.querySelector("b");
         const detail = benefit.querySelector("small");
@@ -210,13 +212,16 @@
   function orderMarkup(order, compact) {
     const items = order.items || [];
     const status = String(order.status || "pending_payment").replaceAll("_", " ");
+    const orderNumber = order.order_number || order.orderNumber || "Order";
+    const paymentStatus = order.payment_status || order.paymentStatus || (String(order.status || "").toLowerCase() === "paid" ? "captured" : "pending");
     const first = items[0];
-    return "<article class=\"order-card compact-order\"><header><div><p class=\"eyebrow\">" + esc(status) + "</p><h2>" + esc(order.order_number || order.orderNumber || "Order") + "</h2><small>Placed on " + esc(orderDate(order.created_at || order.createdAt)) + " | Payment " + esc(order.payment_status || order.paymentStatus || "pending") + "</small></div><div><strong>" + money(order.total_cents || order.totalCents) + "</strong><span class=\"status\">" + esc(status) + "</span></div></header><div class=\"compact-order-item\">" + (first ? "<img src=\"" + esc(first.image || first.image_url || "/assets/images/customer/maker-mithila.webp") + "\" alt=\"" + esc(first.name || first.product_name || "Handmade product") + "\" width=\"160\" height=\"173\"/><span>" + esc(first.name || first.product_name || "Handmade product") + "<small>" + items.length + " item" + (items.length === 1 ? "" : "s") + "</small></span>" : "<span>Order items</span>") + "<span class=\"mvp-unavailable\">Order detail view is not connected yet</span></div></article>";
+    return "<article class=\"order-card compact-order\"><header><div><p class=\"eyebrow\">" + esc(status) + "</p><h2><a href=\"/orders/" + encodeURIComponent(orderNumber) + "\">" + esc(orderNumber) + "</a></h2><small>Placed on " + esc(orderDate(order.created_at || order.createdAt)) + " | Payment " + esc(paymentStatus) + "</small></div><div><strong>" + money(order.total_cents || order.totalCents) + "</strong><span class=\"status\">" + esc(status) + "</span></div></header><div class=\"compact-order-item\">" + (first ? "<img src=\"" + esc(first.image || first.image_url || "/assets/images/customer/maker-mithila.webp") + "\" alt=\"" + esc(first.name || first.product_name || "Handmade product") + "\" width=\"160\" height=\"173\"/><span>" + esc(first.name || first.product_name || "Handmade product") + "<small>" + items.length + " item" + (items.length === 1 ? "" : "s") + "</small></span>" : "<span>Order items</span>") + "</div></article>";
   }
 
   async function hydrateOrders() {
     const host = document.querySelector("[data-backend-orders]");
     if (!host) return;
+    if (host.hasAttribute("data-server-orders")) { markReady(host); return; }
     const tabs = document.querySelector(".account-intro nav.tabs");
     if (tabs) tabs.style.visibility = "hidden";
     try {
@@ -347,7 +352,8 @@
 
   async function refreshCounts() {
     const user = await ensureBackend().currentUser();
-    if (!user) { updateBadges({ items: [] }, []); return; }
+    authenticated = Boolean(user);
+    if (!user) return;
     const cart = normalizeCart(await backend.cart());
     const wishlist = await backend.wishlist();
     updateBadges(cart, wishlist);
@@ -444,7 +450,7 @@
     }
     if (action === "wishlist-to-cart") {
       await requireUser();
-      await api.changeCart(slug, 1);
+      await api.addCart(slug, 1);
       await api.removeWishlist(slug);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await hydrateCart();
@@ -583,21 +589,38 @@
     checkout.open();
   }
 
+  async function previewCheckoutQuote() {
+    const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
+    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code), { credentials: "same-origin", cache: "no-store" });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error?.message || "Could not preview checkout. Please try again.");
+    const quote = unwrap(body);
+    for (const field of ["subtotal", "shipping", "discount", "total"]) {
+      const elements = document.querySelectorAll("[data-quote-" + field + "]");
+      elements.forEach((element) => { element.textContent = money(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
+    }
+    return quote;
+  }
+
   async function checkout() {
     const button = document.querySelector('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
     const noPaymentDemo = button && button.dataset.backendAction === "checkout-no-payment";
     const form = document.getElementById("checkout-address-form");
     if (!button || !form || !form.reportValidity()) return;
     await requireUser();
+    const couponInput = document.getElementById("checkout-coupon-code");
+    const acceptedCoupon = couponInput ? couponInput.value.trim() : "";
+    const totalElement = document.querySelector("[data-quote-total]");
+    const previousTotal = totalElement?.dataset.cents || (totalElement ? String(Math.round(Number(totalElement.textContent.replace(/[^0-9.]/g, "")) * 100)) : undefined);
     const values = formData(form);
-    const resolvedState = (values.state || values.region || values.city || "Telangana").trim();
-    const resolvedCity = (values.city || values.state || "Hyderabad").trim();
-    const resolvedPhone = (values.phone || "9876543210").trim();
-    const resolvedPostal = (values.postal_code || "500001").replace(/[\s-]/g, "").trim();
+    const resolvedState = (values.state || values.region || "").trim();
+    const resolvedCity = (values.city || "").trim();
+    const resolvedPhone = (values.phone || "").trim();
+    const resolvedPostal = (values.postal_code || "").replace(/[\s-]/g, "").trim();
     const address = {
-      recipient_name: (values.recipient_name || "Valued Customer").trim(),
+      recipient_name: (values.recipient_name || "").trim(),
       phone: resolvedPhone,
-      line1: (values.line1 || resolvedCity).trim(),
+      line1: (values.line1 || "").trim(),
       line2: (values.line2 || "").trim(),
       city: resolvedCity,
       state: resolvedState,
@@ -606,12 +629,23 @@
     };
     const summary = document.querySelector("[data-checkout-address-summary]");
     if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.state, address.postal_code].filter(Boolean).join(" · ");
+    const fingerprint = JSON.stringify({ address, couponCode: acceptedCoupon });
+    let pending = null;
+    try { pending = JSON.parse(global.sessionStorage.getItem(CHECKOUT_KEY)); } catch (_) { /* Invalid stored draft. */ }
+    const retry = pending && pending.fingerprint === fingerprint && pending.key && pending.quote;
+    const currentQuote = retry ? pending.quote : await previewCheckoutQuote();
+    if (!retry && previousTotal !== undefined && previousTotal !== String(currentQuote.total_cents)) {
+      notice("Your total has changed. Review the updated amount, then place your order again.", true);
+      return;
+    }
+    if (!retry) {
+      pending = { fingerprint, key: global.crypto.randomUUID(), cartID: currentQuote.cart_id, quote: currentQuote };
+      global.sessionStorage.setItem(CHECKOUT_KEY, JSON.stringify(pending));
+    }
     button.disabled = true;
     let orderNumber = "";
     try {
-      const addressFormData = new FormData(form);
-      addressFormData.set("state", address.state);
-      addressFormData.set("region", address.state);
+      const addressFormData = new URLSearchParams(address);
       const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
       if (savedAddressSelect && savedAddressSelect.value) addressFormData.set("address_id", savedAddressSelect.value);
       try {
@@ -627,16 +661,16 @@
       } catch (addressErr) {
         console.warn("Could not save address to address book:", addressErr);
       }
-      const key = global.crypto && global.crypto.randomUUID ? global.crypto.randomUUID() : (Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + "-" + Math.random().toString(36).slice(2));
-      const couponCode = (document.getElementById("checkout-coupon-code") || {}).value || "";
-      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim()))) || {};
+      const couponCode = acceptedCoupon;
+      const key = pending.key;
+      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
       if (cartBadge) { cartBadge.textContent = "0"; markReady(document.getElementById("cart-count")); }
       if (noPaymentDemo) {
-        paymentReceipt(orderNumber, "Your demo order has been placed successfully! Order #" + orderNumber + " is confirmed.", true);
+        paymentReceipt(orderNumber, "Your order is saved with payment pending. No payment was collected.", false);
       } else {
         try {
           await beginPayment(orderNumber);
@@ -645,6 +679,7 @@
         }
       }
     } catch (error) {
+      if (error.code === "QUOTE_CHANGED" || error.code === "COUPON_INVALID" || error.code === "INSUFFICIENT_STOCK") global.sessionStorage.removeItem(CHECKOUT_KEY);
       if (orderNumber) {
         paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
       } else {
@@ -658,6 +693,24 @@
   }
 
   function bindActions() {
+    const quoteButton = document.querySelector("[data-preview-quote]");
+    if (quoteButton) quoteButton.addEventListener("click", async function () {
+      quoteButton.disabled = true;
+      try { await previewCheckoutQuote(); notice("Checkout total updated.", false); }
+      catch (error) { notice(error.message, true); }
+      finally { quoteButton.disabled = false; }
+    });
+    const checkoutAddressForm = document.getElementById("checkout-address-form");
+    if (checkoutAddressForm) {
+      const updateSummary = function () {
+        const values = formData(checkoutAddressForm);
+        const summary = document.querySelector("[data-checkout-address-summary]");
+        if (summary) summary.textContent = [values.recipient_name, values.line1, values.city, values.state || values.region, values.postal_code].filter(Boolean).join(" · ") || "Enter your delivery address";
+      };
+      checkoutAddressForm.addEventListener("input", updateSummary);
+      checkoutAddressForm.addEventListener("change", function () { queueMicrotask(updateSummary); });
+      updateSummary();
+    }
     const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
     if (savedAddressSelect) {
       const addressForm = document.getElementById("checkout-address-form");
@@ -754,6 +807,10 @@
           action = extras.source === "cart" ? "wishlist-move" : extras.source === "wishlist" ? "wishlist-remove" : "wishlist-add";
         }
       }
+      // The server-rendered storefront owns guest cart mutations. Let HTMX
+      // submit them with the anonymous CSRF token instead of requiring the
+      // account-only JSON API.
+      if (!authenticated && (action === "cart-add" || action === "cart-buy" || action === "cart-change" || action === "cart-remove")) return;
       if (backendError) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -796,7 +853,7 @@
       global.location.assign(target.href);
     }, true);
     document.addEventListener("htmx:beforeRequest", function (event) {
-      if (!backend) return;
+      if (!backend || !authenticated) return;
       const target = event.detail && event.detail.target;
       const path = event.detail && event.detail.pathInfo && event.detail.pathInfo.requestPath;
       if (target && target.id === "search-suggestions") { event.preventDefault(); return; }
@@ -828,6 +885,7 @@
     try {
       backend = await create();
       global.weevcraftsBackend = backend;
+      authenticated = Boolean(await backend.currentUser());
       if (global.location.pathname === "/deals") {
         const offerBadge = document.querySelector(".deals-banner .badge");
         if (offerBadge) offerBadge.textContent = "Current catalog offers";
@@ -843,7 +901,7 @@
       // Catalog and product markup is rendered from the Go services before
       // this script runs. Keep that response authoritative; only mutations
       // and account state go through the JSON API.
-      if (["/cart", "/wishlist"].includes(global.location.pathname)) await hydrateCart();
+      if (authenticated && ["/cart", "/wishlist"].includes(global.location.pathname)) await hydrateCart();
       if (global.location.pathname === "/orders") await hydrateOrders();
       await refreshCounts();
     } catch (error) {
@@ -855,5 +913,6 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", start);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
+  else start();
 })(window);

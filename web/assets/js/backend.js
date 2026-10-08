@@ -16,7 +16,11 @@
     if (text) {
       try { body = JSON.parse(text); } catch (_) { body = { message: text }; }
     }
-    if (!response.ok) throw new Error(messageFrom(response, body.error || body));
+    if (!response.ok) {
+      const error = new Error(messageFrom(response, body.error || body));
+      error.code = (body.error || body).code;
+      throw error;
+    }
     return body;
   }
 
@@ -216,22 +220,22 @@
       return this.wishlist();
     }
 
-    async checkout(address, idempotencyKey, couponCode) {
-		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode);
+    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID);
 	}
     async checkoutNoPayment(address, idempotencyKey, couponCode) {
 		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode);
 	}
-    async checkoutAt(path, address, idempotencyKey, couponCode) {
-      const cart = await this.call(ROOT + "/cart");
+    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID) {
+      if (!cartID) cartID = unwrap(await this.call(ROOT + "/cart")).id;
 	  return this.call(ROOT + path, {
         method: "POST", authenticated: true,
         headers: { "Idempotency-Key": idempotencyKey },
-        body: { cart_id: unwrap(cart).id, idempotency_key: idempotencyKey, address: {
+        body: { cart_id: cartID, idempotency_key: idempotencyKey, address: {
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
-          line2: address.line2 || "", city: address.city, state: address.state || address.region || address.city || "Telangana",
+          line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        }, coupon_code: couponCode || "" }
+        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal }
       });
     }
 

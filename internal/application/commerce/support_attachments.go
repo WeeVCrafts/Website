@@ -70,6 +70,9 @@ func (s *SupportAttachmentService) Store(ctx context.Context, actorID, ticketID,
 	if !ok || s.repository == nil || actorID <= 0 || ticketID <= 0 {
 		return ErrInvalidSupportAttachment
 	}
+	if err := s.authorizeTicket(ctx, actorID, ticketID); err != nil {
+		return err
+	}
 	for _, header := range headers {
 		file, err := header.Open()
 		if err != nil {
@@ -112,12 +115,8 @@ func (s *SupportAttachmentService) Open(ctx context.Context, actorID, attachment
 	if err != nil {
 		return nil, ports.ObjectInfo{}, err
 	}
-	allowed := attachment.UserID == actorID
-	if !allowed && s.roles != nil {
-		allowed, _ = s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleSupportAgent, domainidentity.RoleSuperAdmin)
-	}
-	if !allowed {
-		return nil, ports.ObjectInfo{}, ports.ErrForbidden
+	if err := s.authorizeTicket(ctx, actorID, attachment.TicketID); err != nil {
+		return nil, ports.ObjectInfo{}, err
 	}
 	reader, ok := s.storage.(ports.ObjectStorageContentReader)
 	if !ok {
@@ -128,6 +127,26 @@ func (s *SupportAttachmentService) Open(ctx context.Context, actorID, attachment
 		return nil, ports.ObjectInfo{}, err
 	}
 	return body, info, nil
+}
+
+func (s *SupportAttachmentService) authorizeTicket(ctx context.Context, actorID, ticketID int64) error {
+	owned, err := s.repository.OwnsSupportTicket(ctx, actorID, ticketID)
+	if err != nil {
+		return err
+	}
+	if owned {
+		return nil
+	}
+	if s.roles != nil {
+		allowed, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleSupportAgent, domainidentity.RoleSuperAdmin)
+		if err != nil {
+			return err
+		}
+		if allowed {
+			return nil
+		}
+	}
+	return ports.ErrForbidden
 }
 
 func readSupportAttachment(file multipart.File, declaredSize int64) ([]byte, string, error) {

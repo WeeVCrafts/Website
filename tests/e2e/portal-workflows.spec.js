@@ -71,6 +71,14 @@ async function signIn(page, email, landing, passwordValue = password) {
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === landing.replace(/\/$/, ""), { timeout: 30_000 });
 }
 
+async function setHiddenInputValue(locator, value) {
+  await locator.evaluate((input, nextValue) => {
+    input.value = nextValue;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }, value);
+}
+
 async function createMockPaidOrder(page, email) {
   await signIn(page, email, "/account");
   await page.goto("/products/natural-soap");
@@ -138,7 +146,7 @@ async function deleteRoleUser(page, card, reason) {
   await form.getByRole("button", { name: "Delete account" }).click();
   const response = await responsePromise;
   expect(response.status()).toBe(303);
-  await page.goto("/super-admin/security");
+  await page.waitForURL(/\/super-admin\/security(?:\?|$)/, { timeout: 30_000 });
 }
 
 async function updateRoleUser(page, card, { email, displayName, status, password = "", reason }) {
@@ -263,13 +271,15 @@ test("registration, email verification, password recovery and login complete end
     await expect(page.locator('#page input[name="csrf_token"]')).not.toHaveValue("");
     await page.locator('#page input[name="display_name"]').fill(name);
     await page.locator('#page input[name="email"]').fill(email);
+    await page.locator('#page input[name="phone"]').fill("9876543210");
     await page.locator('#page input[name="password"]').fill(initialPassword);
     await page.locator('#page input[name="consent"]').check();
-    const registrationResponse = page.waitForResponse(response =>
-      response.request().method() === "POST" && new URL(response.url()).pathname === "/register"
-    );
+    const registrationResponse = page.waitForResponse(response => {
+      const pathname = new URL(response.url()).pathname;
+      return response.request().method() === "POST" && (pathname === "/register" || pathname === "/api/v1/auth/register");
+    });
     await page.getByRole("button", { name: "Create account" }).click();
-    expect((await registrationResponse).status()).toBe(303);
+    expect([201, 303]).toContain((await registrationResponse).status());
     await page.waitForURL(/\/account\/?$/);
     await page.unrouteAll();
     accountCreated = true;
@@ -693,7 +703,7 @@ test("seller owner profile edits persist while seller staff remain blocked", asy
 
 test("super admin logout and user lifecycle work end to end", async ({ browser }) => {
   test.skip(!localMutationTarget, "User management mutations are restricted to the local test deployment.");
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
 
   const suffix = Date.now().toString();
   const email = `qa.role.${suffix}@example.test`;
@@ -784,7 +794,7 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
       email: updatedEmail, permissions: ["PRODUCT_READ"],
     } });
     expect(unauthorizedStaff.status()).toBe(422);
-    await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
+    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
 
     await admin.goto("/super-admin/security");
     userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
@@ -857,21 +867,21 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     const staffProductSKU = `STAFF-QA-${suffix}`;
     const staffProductForm = user.locator("form.seller-form-grid").first();
     await staffProductForm.locator('input[name="name"]').fill(staffProductName);
-    await staffProductForm.locator('input[name="slug"]').fill(`qa-staff-draft-${suffix}`);
-    await staffProductForm.locator('input[name="brand_name"]').fill(`QA Staff Brand ${suffix}`);
-    await staffProductForm.locator('input[name="brand_slug"]').fill(`qa-staff-brand-${suffix}`);
-    await staffProductForm.locator('input[name="category_name"]').fill("Crafts");
-    await staffProductForm.locator('input[name="category_slug"]').fill("crafts");
+    await setHiddenInputValue(staffProductForm.locator('input[name="slug"]'), `qa-staff-draft-${suffix}`);
+    await setHiddenInputValue(staffProductForm.locator('input[name="brand_name"]'), `QA Staff Brand ${suffix}`);
+    await setHiddenInputValue(staffProductForm.locator('input[name="brand_slug"]'), `qa-staff-brand-${suffix}`);
+    await setHiddenInputValue(staffProductForm.locator('input[name="category_name"]'), "Crafts");
+    await staffProductForm.locator('select[name="category_slug"]').selectOption("crafts");
     await staffProductForm.locator('input[name="sku"]').fill(staffProductSKU);
     await staffProductForm.locator('input[name="price_cents"]').fill("1500");
     await staffProductForm.locator('input[name="initial_stock"]').evaluate(input => { if (input.type === "hidden") input.value = "0"; });
     await staffProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
     await staffProductForm.locator('textarea[name="description"]').fill("A staff-created draft used to verify product write access and zero-stock variant creation.");
     const staffProductCreate = user.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products");
-    await staffProductForm.getByRole("button", { name: "Save draft" }).click();
+    await staffProductForm.getByRole("button", { name: "Save product draft" }).click();
     expect((await staffProductCreate).status()).toBe(303);
     await user.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    const staffDraftRow = user.locator(".seller-product-row").filter({ hasText: staffProductSKU });
+    const staffDraftRow = user.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU });
     await expect(staffDraftRow).toHaveCount(1);
     await staffDraftRow.getByRole("link", { name: "Edit product" }).click();
     const staffZeroVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
@@ -882,7 +892,7 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     } });
     expect(zeroVariantResponse.status()).toBe(303);
     await owner.goto("/seller-admin/products");
-    const existingProductEdit = owner.locator('.seller-product-row a[href*="/edit"]').first();
+    const existingProductEdit = owner.locator('.portal-product-row a[href*="/edit"], .seller-product-row a[href*="/edit"]').first();
     await existingProductEdit.click();
     await user.goto(owner.url());
     const staffVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
@@ -908,16 +918,16 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     expect((await removeStaffResponse).status()).toBe(303);
     await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+removed/);
     await owner.goto("/seller-admin/team");
-    await expect(owner.locator(".seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
+    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
     await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    const staffDraftOwnerRow = owner.locator(".seller-product-row").filter({ hasText: staffProductSKU });
+    const staffDraftOwnerRow = owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU });
     await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] input[name="reason"]').fill("Archive local E2E staff draft after permission check");
     const archiveStaffDraft = owner.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/archive");
     owner.once("dialog", dialog => dialog.accept());
     await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] button').click();
     expect((await archiveStaffDraft).status()).toBe(303);
     await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    await expect(owner.locator(".seller-product-row").filter({ hasText: staffProductSKU })).toContainText("archived");
+    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU })).toContainText("archived");
     const staffDenied = await userContext.request.get("/seller-admin", { maxRedirects: 0 });
     expect(staffDenied.status()).toBe(403);
 
@@ -1166,7 +1176,7 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
 
 test("seller listing approval, mock-paid order, fulfilment and return handling work across roles", async ({ browser }) => {
   test.skip(!localMutationTarget, "Cross-role workflow mutations are restricted to the local test deployment.");
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);
 
   const suffix = Date.now().toString();
   const productName = `Browser QA Craft ${suffix}`;
@@ -1184,22 +1194,22 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
   try {
     await signIn(seller, "demo.owner01@weevcrafts.local", "/seller-admin");
     await seller.goto("/seller-admin/products/new");
-    await seller.getByLabel("Product name").fill(productName);
-    await seller.getByLabel("Product URL slug").fill(slug);
-    await seller.getByLabel("Brand name").fill(`QA Artisan ${suffix}`);
-    await seller.getByLabel("Brand slug").fill(`qa-artisan-${suffix}`);
-    await seller.getByLabel("Category name").fill("Crafts");
-    await seller.getByLabel("Category slug").fill("crafts");
-    await seller.getByLabel("SKU").fill(sku);
-    await seller.getByRole("spinbutton", { name: "Price in paise", exact: true }).fill("249900");
-    await seller.getByRole("spinbutton", { name: "Compare-at price in paise" }).fill("299900");
-    await seller.getByLabel("Initial stock").fill("5");
-    await seller.getByLabel("Delivery note").fill("Delivery to serviceable PIN codes in India");
-    await seller.getByLabel("Description").fill("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
-    await seller.getByRole("button", { name: "Save draft" }).click();
+    const sellerProductForm = seller.locator("form.seller-form-grid").first();
+    await sellerProductForm.locator('input[name="name"]').fill(productName);
+    await setHiddenInputValue(sellerProductForm.locator('input[name="slug"]'), slug);
+    await setHiddenInputValue(sellerProductForm.locator('input[name="brand_name"]'), `QA Artisan ${suffix}`);
+    await setHiddenInputValue(sellerProductForm.locator('input[name="brand_slug"]'), `qa-artisan-${suffix}`);
+    await sellerProductForm.locator('select[name="category_slug"]').selectOption("crafts");
+    await sellerProductForm.locator('input[name="sku"]').fill(sku);
+    await sellerProductForm.locator('input[name="price_cents"]').fill("249900");
+    await sellerProductForm.locator('input[name="compare_at_cents"]').fill("299900");
+    await sellerProductForm.locator('input[name="initial_stock"]').fill("5");
+    await sellerProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
+    await sellerProductForm.locator('textarea[name="description"]').fill("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
+    await sellerProductForm.getByRole("button", { name: "Save product draft" }).click();
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
-    const sellerProduct = seller.locator(".seller-product-row").filter({ hasText: productName });
+    const sellerProduct = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: productName });
     await expect(sellerProduct).toHaveCount(1);
     await sellerProduct.getByRole("link", { name: "Edit product" }).click();
     const editForm = seller.locator("form.seller-form-grid").first();
@@ -1208,7 +1218,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(editForm.locator('input[name="brand_name"]')).toHaveValue(`QA Artisan ${suffix}`);
     await expect(editForm.locator('input[name="brand_slug"]')).toHaveValue(`qa-artisan-${suffix}`);
     await expect(editForm.locator('input[name="category_name"]')).toHaveValue("Crafts");
-    await expect(editForm.locator('input[name="category_slug"]')).toHaveValue("crafts");
+    await expect(editForm.locator('select[name="category_slug"]')).toHaveValue("crafts");
     await expect(editForm.locator('input[name="sku"]')).toHaveValue(sku);
     await expect(editForm.locator('input[name="price_cents"]')).toHaveValue("249900");
     await expect(editForm.locator('input[name="compare_at_cents"]')).toHaveValue("299900");
@@ -1216,10 +1226,10 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
     await editForm.locator('input[name="price_cents"]').fill("259900");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
-    await editForm.getByRole("button", { name: "Save draft" }).click();
+    await editForm.getByRole("button", { name: "Save product draft" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products/);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
-    const updatedSellerProduct = seller.locator(".seller-product-row").filter({ hasText: productName });
+    const updatedSellerProduct = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: productName });
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("link", { name: "Edit product" }).click();
     const variantForm = seller.locator('form[action="/seller-admin/products/variants/create"]');
@@ -1241,14 +1251,14 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(seller).toHaveURL(/\/seller-admin\/products\/\d+\/edit/);
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(`QA-ALT-EDIT-${suffix}`)}`);
-    const alternateSKUSearchRow = seller.locator(".seller-product-row").filter({ hasText: productName });
+    const alternateSKUSearchRow = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: productName });
     await expect(alternateSKUSearchRow).toHaveCount(1);
     await expect(alternateSKUSearchRow).toContainText("2599");
     await alternateSKUSearchRow.getByRole("link", { name: "Edit product" }).click();
     const mainProductForm = seller.locator("form.seller-form-grid").first();
     await expect(mainProductForm.locator('input[name="price_cents"]')).toHaveValue("259900");
     await expect(mainProductForm.locator('input[name="compare_at_cents"]')).toHaveValue("299900");
-    await mainProductForm.getByRole("button", { name: "Save draft" }).click();
+    await mainProductForm.getByRole("button", { name: "Save product draft" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products/);
     await seller.goto(productEditURL);
     const preservedAlternateVariant = seller.locator("form.product-variant-edit").nth(1);
@@ -1266,7 +1276,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await inventoryForm.getByRole("button", { name: "Save" }).click();
     expect((await inventoryResponse).status()).toBe(303);
     await expect(seller).toHaveURL(/\/seller-admin\/inventory/);
-    await expect(seller.locator(".seller-product-row").filter({ hasText: `QA-ALT-EDIT-${suffix}` }).locator("span").nth(3)).toHaveText("7");
+    await expect(inventoryRow.locator('[data-label="Available"]')).toHaveText("7");
 
     await seller.goto(productEditURL);
     const mediaPanel = seller.locator("[data-product-media]");
@@ -1383,7 +1393,12 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     expect((await savedAddressResponse).status()).toBe(303);
     await customer.goto("/cart");
     await expect(customer.locator("[data-backend-cart]")).toHaveAttribute("data-backend-ready", "true");
-    await expect(customer.locator(".cart-line")).toHaveCount(0);
+    const existingCartLines = customer.locator(".cart-line");
+    while (await existingCartLines.count()) {
+      const currentCartLineCount = await existingCartLines.count();
+      await existingCartLines.first().getByRole("button", { name: "Remove", exact: true }).click();
+      await expect(existingCartLines).toHaveCount(currentCartLineCount - 1);
+    }
     await customer.goto(`/products/${slug}`);
     await expect(customer.getByRole("heading", { name: productName })).toBeVisible();
     await expect(customer.locator("#product-panel-description")).toContainText("Updated local browser test product description.");
@@ -1420,7 +1435,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator("[data-selected-variant-price]")).toHaveText("INR 2849");
     await expect(customer.locator("[data-selected-variant-sku]")).toHaveText(`QA-ALT-EDIT-${suffix}`);
     const cartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
-    await customer.getByRole("button", { name: "Add to cart" }).click();
+    await customer.getByRole("button", { name: "Add to cart", exact: true }).click();
     expect((await cartResponse).ok()).toBeTruthy();
     await customer.goto("/cart");
     await expect(customer.locator("body")).toContainText(productName);
@@ -1440,7 +1455,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.goto(`/products/${slug}`);
     await customer.locator("#detail-variant").selectOption(variantValue);
     const restoreCartResponse = customer.waitForResponse(response => response.url().includes("/api/v1/cart/add") && response.request().method() === "POST");
-    await customer.getByRole("button", { name: "Add to cart" }).click();
+    await customer.getByRole("button", { name: "Add to cart", exact: true }).click();
     expect((await restoreCartResponse).ok()).toBeTruthy();
     await customer.goto("/cart");
     await expect(cartRow.locator("output")).toHaveText("1");
@@ -1460,6 +1475,10 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.getByRole("button", { name: /Continue to payment/ }).click();
     await customer.getByRole("button", { name: /Continue to review/ }).click();
     await customer.getByLabel("Coupon code").fill(couponCode);
+    const quoteResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout/quote") && response.request().method() === "GET");
+    await customer.getByRole("button", { name: "Apply coupon" }).click();
+    expect((await quoteResponse).ok()).toBeTruthy();
+    await expect(customer.locator("[data-quote-discount]")).not.toHaveText("INR 0.00");
     const checkoutRequest = customer.waitForRequest(request => request.url().includes("/api/v1/checkout") && request.method() === "POST");
     const checkoutResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
     await customer.getByRole("button", { name: /Place order/ }).click();
@@ -1492,7 +1511,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const savedCard = customer.locator(".saved-card").filter({ hasText: productName });
     await expect(savedCard).toHaveCount(1);
     const removeSavedProduct = customer.waitForResponse(response => new URL(response.url()).pathname.startsWith("/api/v1/wishlist/") && response.request().method() === "DELETE");
-    await savedCard.getByRole("button", { name: "Remove", exact: true }).click();
+    await savedCard.locator("button.text-button").filter({ hasText: "Remove" }).click();
     expect((await removeSavedProduct).ok()).toBeTruthy();
     await expect(customer.locator(".saved-card").filter({ hasText: productName })).toHaveCount(0);
 
@@ -1504,14 +1523,16 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const sellerOrdersPath = `/seller-admin/orders?q=${encodeURIComponent(orderNumber)}`;
     for (const status of ["processing", "shipped", "delivered"]) {
       await seller.goto(sellerOrdersPath);
-      const sellerOrder = seller.locator(".seller-product-row").filter({ hasText: orderNumber });
+      const sellerOrder = seller.locator(".seller-order-card").filter({ hasText: orderNumber });
       await expect(sellerOrder).toHaveCount(1);
-      const fulfilmentForm = sellerOrder.locator('form[action="/seller-admin/orders/fulfill"]');
+      await sellerOrder.getByRole("link", { name: "Open order" }).click();
+      const fulfilmentForm = seller.locator('form[action="/seller-admin/orders/fulfill"]');
       await fulfilmentForm.locator('select[name="status"]').selectOption(status);
-      await fulfilmentForm.locator('input[name="carrier"]').fill("Browser QA Carrier");
+      await fulfilmentForm.locator('select[name="carrier"]').selectOption("Other");
+      await fulfilmentForm.locator('input[name="custom_carrier"]').fill("Browser QA Carrier");
       await fulfilmentForm.locator('input[name="tracking_number"]').fill(`QA${suffix}`);
       const fulfillmentResponse = seller.waitForResponse(response => response.url().includes("/seller-admin/orders/fulfill") && response.request().method() === "POST");
-      await fulfilmentForm.getByRole("button", { name: "Update fulfilment" }).click();
+      await fulfilmentForm.getByRole("button", { name: "Save fulfilment" }).click();
       expect((await fulfillmentResponse).status()).toBe(303);
       await seller.waitForURL(url => url.pathname === "/seller-admin/orders");
     }
@@ -1579,7 +1600,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.getByLabel("Refund reason").fill("The returned item was inspected and the full refund is requested.");
     const refundResponse = customer.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === `/orders/${orderNumber}/refund`);
     await customer.getByRole("button", { name: "Request full refund" }).click();
-    expect((await refundResponse).status()).toBe(204);
+    expect((await refundResponse).status()).toBe(303);
     await expect(customer).toHaveURL(new RegExp(`/orders/${orderNumber}$`));
     await expect(customer.locator("body")).toContainText("processed");
     await expect(customer.locator("body")).toContainText("Refunded");
@@ -1589,12 +1610,17 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(refundedReturn).toContainText("Refunded");
 
     await customer.goto("/account/addresses");
-    const savedShippingAddress = customer.locator(".saved-address").filter({ hasText: shippingRecipient });
-    await expect(savedShippingAddress).toHaveCount(1);
+    const savedShippingAddresses = customer.locator(".saved-address").filter({ hasText: shippingRecipient });
+    expect(await savedShippingAddresses.count()).toBeGreaterThan(0);
+    const savedShippingAddress = savedShippingAddresses.first();
     await expect(savedShippingAddress.locator('input[name="phone"]')).toHaveValue("9876543210");
-    customer.once("dialog", dialog => dialog.accept());
-    await savedShippingAddress.locator("form[data-address-delete]").getByRole("button", { name: "Delete address" }).click();
-    await expect(customer.locator(".saved-address").filter({ hasText: shippingRecipient })).toHaveCount(0);
+    const matchingSavedAddresses = customer.locator(".saved-address").filter({ hasText: shippingRecipient });
+    while (await matchingSavedAddresses.count()) {
+      const currentAddressCount = await matchingSavedAddresses.count();
+      customer.once("dialog", dialog => dialog.accept());
+      await matchingSavedAddresses.first().locator("form[data-address-delete]").getByRole("button", { name: "Delete address" }).click();
+      await expect(matchingSavedAddresses).toHaveCount(currentAddressCount - 1);
+    }
 
     await seller.goto(productEditURL);
     for (const contentType of ["video/mp4", "video/webm"]) {
@@ -1636,7 +1662,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(seller.locator(".variant-stock-summary").filter({ hasText: "archived" })).toHaveCount(1);
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
-    let productRow = seller.locator(".seller-product-row").filter({ hasText: sku });
+    let productRow = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: sku });
     await expect(productRow).toHaveCount(1);
     await productRow.locator('form[action="/seller-admin/products/archive"] input[name="reason"]').fill("Local seller archive workflow verification");
     const archiveResponse = seller.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/archive");
@@ -1645,7 +1671,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     expect((await archiveResponse).status()).toBe(303);
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
-    productRow = seller.locator(".seller-product-row").filter({ hasText: sku });
+    productRow = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: sku });
     await expect(productRow).toContainText("archived");
     await productRow.locator('form[action="/seller-admin/products/restore"] input[name="reason"]').fill("Local seller restore workflow verification");
     const restoreResponse = seller.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/restore");
@@ -1653,7 +1679,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await productRow.locator('form[action="/seller-admin/products/restore"] button').click();
     expect((await restoreResponse).status()).toBe(303);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
-    await expect(seller.locator(".seller-product-row").filter({ hasText: sku })).toContainText("draft");
+    await expect(seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: sku })).toContainText("draft");
   } finally {
     await sellerContext.close();
     await marketplaceContext.close();

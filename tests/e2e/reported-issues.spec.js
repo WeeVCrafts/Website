@@ -33,7 +33,7 @@ test("reported product image and seller dropdown workflows work live", async ({ 
     if (message.type() === "error") browserErrors.push(message.text());
   });
   admin.on("response", response => {
-    if (response.status() >= 500) browserErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
+    if (response.status() >= 400) browserErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
   });
   const staffEmail = `qa.reported.staff.${suffix}@weevcrafts.local`;
   let staffCreated = false;

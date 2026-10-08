@@ -354,15 +354,11 @@ func TestLivePageUsesLocalHTMXAndFragmentSafeShell(t *testing.T) {
 	}
 	body := recorder.Body.String()
 	for _, expected := range []string{
-		`src="/static/vendor/htmx.min.js?v=2.0.4"`,
-		`code: "[45]..", swap: true, error: true`,
-		`hx-boost="true"`,
-		`hx-target="#page"`,
 		`hx-select="#page"`,
-		`hx-swap="outerHTML"`,
-		`hx-indicator="#page-loading"`,
-		`<a class="skip-link" href="#page" hx-boost="false">Skip to content</a>`,
-		`<main id="page">`,
+		`hx-target="#page"`,
+		`hx-indicator="#global-search-indicator"`,
+		`<a class="skip-link" href="#page">Skip to content</a>`,
+		`<main id="page"`,
 	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("expected %q in live page response", expected)
@@ -399,29 +395,34 @@ func TestLiveProductImagesExposeIntrinsicSizing(t *testing.T) {
 }
 
 func TestFullPageTemplatesDeclareFragmentShell(t *testing.T) {
-	entries, err := fs.ReadDir(assets, "templates")
+	entries, err := fs.ReadDir(assets, "static")
 	if err != nil {
-		t.Fatalf("read embedded templates: %v", err)
+		t.Fatalf("read embedded static assets: %v", err)
 	}
-	for _, entry := range entries {
-		if entry.IsDir() || entry.Name() == "layout.html" || entry.Name() == "fragments.html" || !strings.HasSuffix(entry.Name(), ".html") {
-			continue
+	if len(entries) == 0 {
+		t.Fatal("expected embedded static assets")
+	}
+
+	product := domain.Product{Slug: "templ-shell", Name: "Templ shell"}
+	handler, err := NewHandler(applicationcatalog.NewService(repository{products: []domain.Product{product}}))
+	if err != nil {
+		t.Fatalf("create handler: %v", err)
+	}
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	body := recorder.Body.String()
+	for _, expected := range []string{
+		`hx-select="#page"`,
+		`hx-target="#page"`,
+		`hx-indicator="#global-search-indicator"`,
+		`<main id="page"`,
+	} {
+		if !strings.Contains(body, expected) {
+			t.Errorf("generated Templ page is missing %q", expected)
 		}
-		path := "templates/" + entry.Name()
-		content, readErr := fs.ReadFile(assets, path)
-		if readErr != nil {
-			t.Fatalf("read embedded template %s: %v", path, readErr)
-		}
-		body := string(content)
-		if !strings.Contains(body, `hx-boost="true" hx-target="#page" hx-select="#page" hx-swap="outerHTML" hx-indicator="#page-loading"`) {
-			t.Errorf("%s does not declare the shared HTMX shell", path)
-		}
-		if !strings.Contains(body, `<main id="page"`) {
-			t.Errorf("%s does not declare a selectable page target", path)
-		}
-		if strings.Contains(body, `hx-target="body"`) {
-			t.Errorf("%s overrides the shared fragment target with the document body", path)
-		}
+	}
+	if strings.Contains(body, `hx-target="body"`) {
+		t.Error("generated Templ page overrides the shared fragment target with the document body")
 	}
 }
 
@@ -453,7 +454,7 @@ func TestSearchPreservesFilterSortAndPageStateInHTML(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/search?q=soap&category=natural-care&sort=price_desc&page=2", nil))
 	body := recorder.Body.String()
-	for _, expected := range []string{`name="q" value="soap"`, `name="category" value="natural-care"`, `value="price_desc" selected`, `hx-push-url="true"`, `aria-current="page"`, "Page 2", "Previous"} {
+	for _, expected := range []string{`name="q" value="soap"`, `name="category" value="natural-care"`, `value="price_desc" selected`, `hx-push-url="true"`, `aria-current="page"`, `>2<`, "Previous"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("expected search state %q in response: %s", expected, body)
 		}
@@ -765,7 +766,7 @@ func TestCartMutationReturnsBackendFragmentAndOOBState(t *testing.T) {
 		t.Fatalf("expected fragment status 200, got %d: %s", recorder.Code, recorder.Body.String())
 	}
 	body := recorder.Body.String()
-	for _, expected := range []string{`id="cart-content"`, `value="3"`, `hx-swap-oob="outerHTML"`, "Cart (3)", "Cart quantity updated.", `hx-target="#cart-content"`} {
+	for _, expected := range []string{`id="cart-content"`, `value="3"`, `hx-swap-oob="outerHTML"`, "Cart (3)", "Cart quantity updated.", `hx-target="#cart-layout"`} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("expected cart fragment to contain %q: %s", expected, body)
 		}
@@ -888,7 +889,7 @@ func TestProductCardAndDetailUseFragmentSafeCartContract(t *testing.T) {
 			t.Fatalf("expected %s status 200, got %d", target, recorder.Code)
 		}
 		body := recorder.Body.String()
-		for _, expected := range []string{`hx-target="#live-toast"`, `hx-select="#cart-feedback"`, `hx-indicator="#page-loading"`} {
+		for _, expected := range []string{`hx-target="#cart-count"`, `hx-swap="none"`, `hx-indicator="#ui-loading"`} {
 			if !strings.Contains(body, expected) {
 				t.Fatalf("%s is missing %q: %s", target, expected, body)
 			}

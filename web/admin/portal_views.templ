@@ -277,7 +277,7 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				<label>Campaign name<input name="name" required minlength="3" maxlength="100"/></label>
 				<label>Description<textarea name="description" maxlength="2000"></textarea></label>
-				<label>Coupon code<input name="code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+				<label>Coupon code<input name="code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/></label>
 				<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage">Percent off</option><option value="fixed">Amount off</option><option value="free_shipping">Free shipping</option></select></label>
 				<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'" value="10"/></label>
 				<label>Starts on<input name="starts_on" type="date"/></label><label>Ends on<input name="ends_on" type="date"/></label>
@@ -293,7 +293,7 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/>
 							<label>Campaign name<input name="name" value={ item.Name } required minlength="3" maxlength="100"/></label>
 							<label>Description<textarea name="description" maxlength="2000">{ item.Description }</textarea></label>
-							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{2,39}"/></label>
+							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/></label>
 							<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage" selected={ item.Type == "percentage" }>Percent off</option><option value="fixed" selected={ item.Type == "fixed" }>Amount off</option><option value="free_shipping" selected={ item.Type == "free_shipping" }>Free shipping</option></select></label>
 							<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" value={ item.Value } type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'"/></label>
 							<label>Starts on<input name="starts_on" value={ item.StartsOn } type="date"/></label><label>Ends on<input name="ends_on" value={ item.EndsOn } type="date"/></label>

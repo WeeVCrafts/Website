@@ -185,7 +185,7 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 		JOIN categories c ON c.slug = p.category_slug
 		JOIN brands b ON b.slug = p.brand_slug
 		JOIN LATERAL (
-			SELECT candidate.id, candidate.price_cents, candidate.compare_at_cents FROM product_variants candidate
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents FROM product_variants candidate
 			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
 			WHERE candidate.product_id = p.id AND candidate.status = 'active'
 			ORDER BY (COALESCE(candidate_stock.available_quantity, 0) > 0) DESC, candidate.id

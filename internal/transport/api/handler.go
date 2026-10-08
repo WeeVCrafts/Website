@@ -284,6 +284,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		CartID         int64                       `json:"cart_id"`
 		IdempotencyKey string                      `json:"idempotency_key"`
 		CouponCode     string                      `json:"coupon_code"`
+		ExpectedTotal  *int64                      `json:"expected_total_cents"`
 		Address        domaincommerce.AddressInput `json:"address"`
 	}
 	if !decodeJSON(w, r, &input) {
@@ -301,8 +302,18 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	if len(strings.TrimSpace(input.IdempotencyKey)) < 16 {
 		input.IdempotencyKey = fmt.Sprintf("order-%d-%d", session.UserID, time.Now().UnixNano())
 	}
-	order, err := h.orders.CreateWithCoupon(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address, input.CouponCode)
+	var order domaincommerce.Order
+	var err error
+	if input.ExpectedTotal != nil {
+		order, err = h.orders.CreateQuoted(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address, input.CouponCode, *input.ExpectedTotal)
+	} else {
+		order, err = h.orders.CreateWithCoupon(r.Context(), session.UserID, input.CartID, input.IdempotencyKey, input.Address, input.CouponCode)
+	}
 	if err != nil {
+		if errors.Is(err, ports.ErrQuoteChanged) {
+			writeError(w, http.StatusConflict, "QUOTE_CHANGED", "Prices changed. Refresh the quote and confirm the new total.")
+			return
+		}
 		if errors.Is(err, ports.ErrIdempotencyConflict) {
 			writeError(w, http.StatusConflict, "IDEMPOTENCY_CONFLICT", "This checkout request was already processed or has a conflict. Please retry.")
 			return

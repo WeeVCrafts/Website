@@ -123,6 +123,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			</select><input type="hidden" name="category_name" value={ form.CategoryName } data-category-name/></label>
 			<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
 			<label>Price (paise)<input name="price_cents" type="number" min="1" value={ form.PriceCents } required/></label>
+			<label>Compare-at price in paise<input name="compare_at_cents" type="number" min="0" value={ form.CompareAtCents }/></label>
 			<label>Unit cost (paise, optional)<input name="cost_price_cents" type="number" min="0" value={ form.CostPriceCents }/></label>
 			if form.ID == "" {
 				if p.CanInventoryWrite {
@@ -135,11 +136,12 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			}
 			<label class="seller-form-wide">Upload product image (PNG or JPEG)<input type="file" name="image_file" accept="image/png, image/jpeg, image/jpg, image/webp"/></label>
 			<label class="seller-form-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label>
+			<label class="seller-form-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
 			<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
 			<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save product draft</button></div>
 		</form>
 		if form.ID == "" {
-			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id="" data-csrf-token={ p.CSRFToken }><legend>Product images</legend><p>Drop images here or browse. We show a square preview and keep the original upload.</p><label class="product-media-dropzone" data-media-drop>Drop images here or choose files<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-media-file/></label><div data-media-selection></div><p role="status" aria-live="polite" data-media-status></p></fieldset>
+			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id="" data-csrf-token={ p.CSRFToken }><legend>Product images and videos</legend><p>Drop images or videos here or browse. We show a square preview and keep the original upload.</p><label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><div data-media-selection></div><p role="status" aria-live="polite" data-media-status></p></fieldset>
 		}
 		if form.ID != "" {
 			if form.Image != "" {
@@ -147,7 +149,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			}
 			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
 				<legend>Product images</legend><p>Images update the main product photo and appear in the customer product gallery.</p>
-				<label class="product-media-dropzone" data-media-drop>Drop images here or choose files<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload images</button><p role="status" aria-live="polite" data-media-status></p>
+				<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button><p role="status" aria-live="polite" data-media-status></p>
 				<div class="product-media-assets">
 					if len(form.Media) == 0 {
 						<p>No uploaded media yet.</p>

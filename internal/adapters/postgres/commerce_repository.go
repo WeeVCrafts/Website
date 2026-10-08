@@ -623,11 +623,20 @@ func (r *CommerceRepository) getAdminProduct(ctx context.Context, querier catalo
 }
 
 func (r *CommerceRepository) GetOrCreateCart(ctx context.Context, userID int64, guestTokenHash string) (domaincommerce.Cart, error) {
+	if userID > 0 {
+		guestTokenHash = ""
+	}
+	if _, err := r.pool.Exec(ctx, `UPDATE carts SET status='expired',updated_at=NOW() WHERE status='active' AND expires_at<=NOW() AND (($1>0 AND user_id=$1) OR ($2<>'' AND guest_token_hash=$2))`, userID, guestTokenHash); err != nil {
+		return domaincommerce.Cart{}, err
+	}
 	var cartID int64
 	query := `SELECT id FROM carts WHERE status = 'active' AND expires_at > NOW() AND (($1 > 0 AND user_id = $1) OR ($2 <> '' AND guest_token_hash = $2)) LIMIT 1`
 	err := r.pool.QueryRow(ctx, query, userID, guestTokenHash).Scan(&cartID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		err = r.pool.QueryRow(ctx, `INSERT INTO carts (user_id, guest_token_hash, expires_at) VALUES (NULLIF($1, 0), NULLIF($2, ''), NOW() + INTERVAL '30 days') RETURNING id`, userID, guestTokenHash).Scan(&cartID)
+		err = r.pool.QueryRow(ctx, `INSERT INTO carts (user_id, guest_token_hash, expires_at) VALUES (NULLIF($1, 0), NULLIF($2, ''), NOW() + INTERVAL '30 days') ON CONFLICT DO NOTHING RETURNING id`, userID, guestTokenHash).Scan(&cartID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = r.pool.QueryRow(ctx, query, userID, guestTokenHash).Scan(&cartID)
+		}
 	}
 	if err != nil {
 		return domaincommerce.Cart{}, mapCommerceError(err)
@@ -813,14 +822,18 @@ func (r *CommerceRepository) ListWishlist(ctx context.Context, userID int64) ([]
 }
 
 func (r *CommerceRepository) CreateOrder(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput) (domaincommerce.Order, error) {
-	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, "")
+	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, "", nil)
 }
 
 func (r *CommerceRepository) CreateOrderWithCoupon(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
-	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, strings.ToUpper(strings.TrimSpace(couponCode)))
+	return r.createOrder(ctx, userID, cartID, idempotencyKey, address, strings.ToUpper(strings.TrimSpace(couponCode)), nil)
 }
 
-func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string) (domaincommerce.Order, error) {
+func (r *CommerceRepository) CreateQuotedOrder(ctx context.Context, userID, cartID int64, key string, address domaincommerce.AddressInput, coupon string, expected int64) (domaincommerce.Order, error) {
+	return r.createOrder(ctx, userID, cartID, key, address, strings.ToUpper(strings.TrimSpace(coupon)), &expected)
+}
+
+func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int64, idempotencyKey string, address domaincommerce.AddressInput, couponCode string, expected *int64) (domaincommerce.Order, error) {
 	var order domaincommerce.Order
 	addressJSON, err := json.Marshal(address)
 	if err != nil {
@@ -838,26 +851,29 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return err
 		}
 		var cartOwner int64
-		if err := tx.QueryRow(transactionContext, `SELECT user_id FROM carts WHERE id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, cartID).Scan(&cartOwner); err != nil || cartOwner != userID {
-			var fallbackCartID int64
-			if fbErr := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE user_id = $1 AND status = 'active' AND expires_at > NOW() ORDER BY id DESC LIMIT 1 FOR UPDATE`, userID).Scan(&fallbackCartID); fbErr == nil {
-				cartID = fallbackCartID
-			} else {
-				var existingHash *string
-				if existingErr := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); existingErr == nil {
-					if existingHash != nil && *existingHash != requestHash {
-						return ports.ErrIdempotencyConflict
-					}
-					return nil
+		cartErr := tx.QueryRow(transactionContext, `SELECT COALESCE(user_id,0) FROM carts WHERE id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, cartID).Scan(&cartOwner)
+		if cartErr != nil && !errors.Is(cartErr, pgx.ErrNoRows) {
+			return cartErr
+		}
+		if cartErr != nil || cartOwner != userID {
+			// A concurrent identical checkout may have completed while this
+			// request waited on the cart lock. Return its durable result only.
+			var existingHash *string
+			if err := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); err == nil {
+				if existingHash != nil && *existingHash != requestHash {
+					return ports.ErrIdempotencyConflict
 				}
-				return ports.ErrCartNotFound
+				return nil
+			} else if !errors.Is(err, pgx.ErrNoRows) {
+				return err
 			}
+			return ports.ErrCartNotFound
 		}
 		var cartItemCount int
 		if err := tx.QueryRow(transactionContext, `SELECT COUNT(*) FROM cart_items WHERE cart_id=$1`, cartID).Scan(&cartItemCount); err != nil {
 			return err
 		}
-		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, COALESCE(i.available_quantity, 100), p.status, pv.status, COALESCE(s.status, 'active') FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id JOIN products p ON p.id = pv.product_id LEFT JOIN sellers s ON s.id = p.seller_id LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 FOR UPDATE OF ci`, cartID)
+		rows, err := tx.Query(transactionContext, `SELECT ci.variant_id, p.id, p.name, pv.sku, pv.price_cents, ci.quantity, COALESCE(i.available_quantity, 0), p.status, pv.status, COALESCE(s.status, 'unavailable') FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id JOIN products p ON p.id = pv.product_id LEFT JOIN sellers s ON s.id = p.seller_id LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 ORDER BY ci.variant_id FOR UPDATE OF ci`, cartID)
 		if err != nil {
 			return err
 		}
@@ -877,16 +893,16 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			if err := rows.Scan(&item.variantID, &item.productID, &item.name, &item.sku, &item.price, &item.quantity, &item.available, &item.productStatus, &item.variantStatus, &item.sellerStatus); err != nil {
 				return err
 			}
-			if item.productStatus != "approved" && item.productStatus != "draft" {
+			if item.productStatus != "approved" {
 				return ports.ErrInvalidState
 			}
 			if item.variantStatus != "active" {
 				return ports.ErrInvalidState
 			}
-			if item.sellerStatus == "suspended" || item.sellerStatus == "closed" {
+			if item.sellerStatus != "active" {
 				return ports.ErrInvalidState
 			}
-			if item.available > 0 && item.quantity > item.available {
+			if item.quantity > item.available {
 				return ports.ErrInsufficientStock
 			}
 			subtotal += item.price * int64(item.quantity)
@@ -902,64 +918,15 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return ports.ErrInvalidState
 		}
 		orderNumber := newOrderNumber(userID)
-		shipping := int64(0)
-		if subtotal < 150000 {
-			shipping = 9900
-		}
-		var couponID, promotionID int64
-		var discount int64
-		if couponCode != "" {
-			var discountType string
-			var discountValue int64
-			var hasProductRules bool
-			err = tx.QueryRow(transactionContext, `
-				SELECT c.id, p.id, p.discount_type, p.discount_value,
-				       EXISTS (SELECT 1 FROM promotion_products pp WHERE pp.promotion_id=p.id)
-				FROM coupons c JOIN promotions p ON p.id=c.promotion_id
-				WHERE UPPER(c.code)=UPPER($1) AND c.active AND p.status='active'
-				  AND (p.starts_at IS NULL OR p.starts_at<=NOW()) AND (p.ends_at IS NULL OR p.ends_at>NOW())
-				  AND (c.usage_limit IS NULL OR c.usage_count<c.usage_limit)
-				  AND (p.usage_limit IS NULL OR p.usage_count<p.usage_limit)
-				  AND NOT EXISTS (SELECT 1 FROM promotion_usages pu WHERE pu.coupon_id=c.id AND pu.user_id=$2)
-				FOR UPDATE OF c,p`, couponCode, userID).Scan(&couponID, &promotionID, &discountType, &discountValue, &hasProductRules)
-			if errors.Is(err, pgx.ErrNoRows) {
-				return ports.ErrCouponInvalid
-			}
-			if err != nil {
-				return err
-			}
-			var eligibleSubtotal int64
-			for _, item := range lines {
-				if !hasProductRules {
-					eligibleSubtotal += item.price * int64(item.quantity)
-					continue
-				}
-				var eligible bool
-				if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM promotion_products WHERE promotion_id=$1 AND product_id=$2)`, promotionID, item.productID).Scan(&eligible); err != nil {
-					return err
-				}
-				if eligible {
-					eligibleSubtotal += item.price * int64(item.quantity)
-				}
-			}
-			if eligibleSubtotal == 0 {
-				return ports.ErrCouponInvalid
-			}
-			switch discountType {
-			case "percentage":
-				if discountValue <= 0 || discountValue > 100 {
-					return ports.ErrCouponInvalid
-				}
-				discount = eligibleSubtotal * discountValue / 100
-			case "fixed":
-				discount = min(discountValue, eligibleSubtotal)
-			case "free_shipping":
-				discount = shipping
-			default:
-				return ports.ErrCouponInvalid
-			}
+		shipping := domaincommerce.CheckoutShipping(subtotal)
+		couponID, promotionID, discount, err := checkoutDiscount(transactionContext, tx, userID, cartID, shipping, couponCode, true)
+		if err != nil {
+			return err
 		}
 		total := subtotal + shipping - discount
+		if expected != nil && *expected != total {
+			return ports.ErrQuoteChanged
+		}
 
 		err = tx.QueryRow(transactionContext, `INSERT INTO orders (order_number, user_id, status, subtotal_cents, shipping_cents, discount_cents, total_cents, address_snapshot, idempotency_scope, idempotency_key, idempotency_request_hash) VALUES ($1, $2, 'pending_payment', $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (idempotency_scope, idempotency_key) DO NOTHING RETURNING id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at`, orderNumber, userID, subtotal, shipping, discount, total, addressJSON, fmt.Sprintf("checkout:%d", userID), idempotencyKey, requestHash).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -1006,11 +973,15 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_reservation_items (reservation_id, variant_id, quantity) VALUES ($1, $2, $3)`, reservationID, item.variantID, item.quantity); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(transactionContext, `
-				INSERT INTO inventory_stock (variant_id, available_quantity, reserved_quantity)
-				VALUES ($1, GREATEST(0, 100 - $2), $2)
-				ON CONFLICT (variant_id) DO UPDATE SET available_quantity = GREATEST(0, inventory_stock.available_quantity - EXCLUDED.reserved_quantity), reserved_quantity = inventory_stock.reserved_quantity + EXCLUDED.reserved_quantity, updated_at = NOW()`, item.variantID, item.quantity); err != nil {
+			result, err := tx.Exec(transactionContext, `UPDATE inventory_stock
+				SET available_quantity = available_quantity - $2,
+				reserved_quantity = reserved_quantity + $2, updated_at = NOW()
+				WHERE variant_id = $1 AND available_quantity >= $2`, item.variantID, item.quantity)
+			if err != nil {
 				return err
+			}
+			if result.RowsAffected() != 1 {
+				return ports.ErrInsufficientStock
 			}
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO payment_attempts (order_id, provider, status, amount_cents) VALUES ($1, 'razorpay', 'created', $2)`, order.ID, order.TotalCents); err != nil {

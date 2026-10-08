@@ -1,11 +1,17 @@
 package postgres
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"testing"
 	"time"
+
+	storageadapter "github.com/wecratfs/commerce/internal/adapters/storage"
+	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 
 	"github.com/wecratfs/commerce/internal/ports"
 )
@@ -46,6 +52,38 @@ func TestSupportAgentReplyPersistsWithoutChangingStatusOrInternalStatusNote(t *t
 	}
 
 	repository := NewCommerceRepository(pool)
+	if os.Getenv("S3_INTEGRATION") == "1" {
+		storage, err := storageadapter.NewS3(os.Getenv("S3_ADDR"), "wecratfs", "wecratfs-local-only", os.Getenv("S3_BUCKET"), false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		key := fmt.Sprintf("support/%d/%032x", agentID, time.Now().UnixNano())
+		payload := []byte{137, 80, 78, 71, 13, 10, 26, 10}
+		if err := storage.PutObject(ctx, key, "image/png", int64(len(payload)), bytes.NewReader(payload)); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = storage.DeleteObject(context.Background(), key) })
+		attachment, err := repository.CreateSupportAttachment(ctx, ticketID, 0, agentID, "proof.png", "image/png", int64(len(payload)), key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		service := applicationcommerce.NewSupportAttachmentService(storage, repository, nil)
+		body, _, err := service.Open(ctx, customerID, attachment.ID)
+		if err != nil {
+			t.Fatalf("ticket owner cannot read agent attachment: %v", err)
+		}
+		got, err := io.ReadAll(body)
+		_ = body.Close()
+		if err != nil || !bytes.Equal(got, payload) {
+			t.Fatalf("attachment content mismatch: %v", err)
+		}
+		if body, _, err := service.Open(ctx, otherCustomerID, attachment.ID); !errors.Is(err, ports.ErrForbidden) {
+			if body != nil {
+				_ = body.Close()
+			}
+			t.Fatalf("unrelated customer attachment read returned %v", err)
+		}
+	}
 	if err := repository.ReplyCustomerSupportTicket(ctx, customerID, ticketID, "I have added the requested details."); err != nil {
 		t.Fatalf("persist customer follow-up: %v", err)
 	}

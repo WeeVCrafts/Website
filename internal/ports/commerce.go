@@ -23,6 +23,7 @@ var (
 	ErrFinalActiveVariant   = errors.New("cannot archive the final active product variant")
 	ErrVariantReservedStock = errors.New("cannot archive a variant with reserved stock")
 	ErrCouponInvalid        = errors.New("coupon is invalid or unavailable")
+	ErrQuoteChanged         = errors.New("checkout total changed; review a fresh quote")
 )
 
 type CatalogManagementRepository interface {
@@ -121,6 +122,7 @@ type CustomerSupportReplyMessageRepository interface {
 }
 
 type SupportAttachmentRepository interface {
+	OwnsSupportTicket(ctx context.Context, userID, ticketID int64) (bool, error)
 	CreateSupportAttachment(ctx context.Context, ticketID, messageID, userID int64, fileName, contentType string, byteSize int64, objectKey string) (domaincommerce.SupportAttachment, error)
 	ListSupportAttachments(ctx context.Context, ticketID int64) ([]domaincommerce.SupportAttachment, error)
 	GetSupportAttachment(ctx context.Context, attachmentID int64) (domaincommerce.SupportAttachment, error)

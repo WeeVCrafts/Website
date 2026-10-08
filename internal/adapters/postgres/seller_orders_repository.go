@@ -104,6 +104,45 @@ func (r *CommerceRepository) UpdateSellerFulfillment(ctx context.Context, userID
 			ON CONFLICT (seller_id, order_id) DO UPDATE SET status = EXCLUDED.status, carrier = EXCLUDED.carrier, tracking_number = EXCLUDED.tracking_number, last_note = EXCLUDED.last_note, updated_by = EXCLUDED.updated_by, updated_at = NOW()`, sellerID, orderID, status, carrier, trackingNumber, note, userID); err != nil {
 			return err
 		}
+		// Keep the customer-facing order lifecycle in sync with seller fulfilment.
+		// An order may contain products from multiple sellers, so only promote it
+		// to shipped or delivered when every seller's fulfilment has reached that
+		// stage.
+		if _, err := tx.Exec(transactionContext, `
+			UPDATE orders o
+			SET status = CASE
+				WHEN NOT EXISTS (
+					SELECT 1
+					FROM order_items oi
+					JOIN product_variants pv ON pv.id = oi.variant_id
+					JOIN products p ON p.id = pv.product_id
+					WHERE oi.order_id = o.id
+					  AND NOT EXISTS (
+						SELECT 1 FROM seller_fulfillments sf
+						WHERE sf.order_id = o.id AND sf.seller_id = p.seller_id AND sf.status = 'delivered'
+					  )
+				) THEN 'delivered'
+				WHEN NOT EXISTS (
+					SELECT 1
+					FROM order_items oi
+					JOIN product_variants pv ON pv.id = oi.variant_id
+					JOIN products p ON p.id = pv.product_id
+					WHERE oi.order_id = o.id
+					  AND NOT EXISTS (
+						SELECT 1 FROM seller_fulfillments sf
+						WHERE sf.order_id = o.id AND sf.seller_id = p.seller_id AND sf.status IN ('shipped', 'delivered')
+					  )
+				) THEN 'shipped'
+				WHEN EXISTS (
+					SELECT 1
+					FROM seller_fulfillments sf
+					WHERE sf.order_id = o.id AND sf.status IN ('processing', 'shipped', 'delivered')
+				) THEN 'processing'
+				ELSE o.status
+			END
+			WHERE o.id = $1`, orderID); err != nil {
+			return err
+		}
 		metadata, _ := json.Marshal(map[string]any{
 			"seller_id": sellerID, "order_id": orderID, "order_number": orderNumber,
 			"from_status": currentStatus, "to_status": status, "carrier": carrier,

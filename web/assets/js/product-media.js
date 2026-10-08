@@ -25,13 +25,14 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!selection) return;
       selection.replaceChildren();
       Array.from(input.files || []).forEach(function (file) {
-        if (!file.type.startsWith("image/")) return;
-        var image = document.createElement("img");
-        image.className = "product-media-square";
-        image.alt = "Selected product image preview";
-        image.src = URL.createObjectURL(file);
-        image.onload = function () { URL.revokeObjectURL(image.src); };
-        selection.appendChild(image);
+        if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+        var preview = document.createElement(file.type.startsWith("video/") ? "video" : "img");
+        preview.className = "product-media-square";
+        if (preview.tagName === "VIDEO") preview.controls = true;
+        else preview.alt = "Selected product image preview";
+        preview.src = URL.createObjectURL(file);
+        preview.onload = preview.onloadeddata = function () { URL.revokeObjectURL(preview.src); };
+        selection.appendChild(preview);
       });
     }
     input.addEventListener("change", previewFiles);
@@ -43,20 +44,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function uploadFile(file, productID) {
+      async function responseError(response, fallback) {
+        try {
+          var payload = await response.json();
+          return payload.error?.message || payload.message || fallback;
+        } catch (error) {
+          return fallback;
+        }
+      }
       var headers = { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken };
-      status.textContent = "Preparing secure image upload...";
+      status.textContent = "Preparing secure media upload...";
       var prepare = await fetch("/api/v1/seller/products/media-url", { method: "POST", credentials: "same-origin", headers: headers, body: JSON.stringify({ product_id: Number(productID), content_type: file.type, byte_size: file.size }) });
       var prepared = await prepare.json();
-      if (!prepare.ok || !prepared.data) throw new Error("Image upload could not be prepared.");
+      if (!prepare.ok || !prepared.data) throw new Error("Media upload could not be prepared.");
       var mediaID = Number(prepared.data.id);
       try {
         status.textContent = "Uploading " + file.name + "...";
         var stored = await fetch(prepared.data.upload_url, { method: "PUT", credentials: "same-origin", headers: { "Content-Type": file.type, "X-CSRF-Token": panel.dataset.csrfToken }, body: file });
-        if (!stored.ok) throw new Error("Image could not be stored. Check the storage connection and try again.");
+        if (!stored.ok) throw new Error(await responseError(stored, "Media could not be stored. Check the storage connection and try again."));
         status.textContent = "Verifying " + file.name + "...";
         var done = await fetch("/api/v1/seller/products/media-finalize", { method: "POST", credentials: "same-origin", headers: headers, body: JSON.stringify({ media_id: mediaID }) });
         var finalized = await done.json();
-        if (!done.ok || !finalized.data) throw new Error("Uploaded image did not pass verification.");
+        if (!done.ok || !finalized.data) throw new Error(await responseError(done, "Uploaded media did not pass verification."));
       } catch (error) {
         await fetch("/api/v1/seller/products/media-delete", { method: "POST", credentials: "same-origin", headers: headers, body: JSON.stringify({ media_id: mediaID }) }).catch(function () {});
         throw error;
@@ -79,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
           for (var index = 0; index < files.length; index++) await uploadFile(files[index], match[1]);
           window.location.assign(response.url);
         } catch (error) {
-          status.textContent = error.message || "Image upload failed. Please try again.";
+        status.textContent = error.message || "Media upload failed. Please try again.";
           submit.disabled = false;
         }
       });
@@ -88,10 +97,11 @@ document.addEventListener("DOMContentLoaded", function () {
       var files = Array.from(input.files || []);
       var productID = panel.dataset.productId;
       if (!files.length || !productID) { status.textContent = "Save this product draft before uploading images."; input.focus(); return; }
-      if (files.some(function (file) { return !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size <= 0 || file.size > 25 * 1024 * 1024; })) { status.textContent = "Choose JPEG, PNG or WebP images up to 25 MB each."; return; }
+      if (files.some(function (file) { return !["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"].includes(file.type); })) { status.textContent = "Choose a JPEG, PNG, WebP, MP4 or WebM file."; return; }
+      if (files.some(function (file) { return file.size <= 0 || file.size > 25 * 1024 * 1024; })) { status.textContent = "Product media must be 25 MB or smaller."; return; }
       uploadButton.disabled = true;
-      try { for (var index = 0; index < files.length; index++) await uploadFile(files[index], productID); status.textContent = "Product images saved."; window.setTimeout(function () { window.location.reload(); }, 1000); }
-      catch (error) { status.textContent = error.message || "Image upload failed. Please try again."; }
+      try { for (var index = 0; index < files.length; index++) await uploadFile(files[index], productID); status.textContent = files.length === 1 && files[0].type.startsWith("video/") ? "Product video saved." : files.length === 1 ? "Product image saved." : "Product media saved."; window.setTimeout(function () { window.location.reload(); }, 1000); }
+      catch (error) { status.textContent = error.message || "Media upload failed. Please try again."; }
       finally { uploadButton.disabled = false; }
     });
     panel.querySelectorAll("[data-media-delete]").forEach(function (button) {
@@ -102,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
           var result = await fetch("/api/v1/seller/products/media-delete", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken }, body: JSON.stringify({ media_id: Number(button.dataset.mediaId) }) }).then(function (response) { return response.json(); });
           if (!result.data) throw new Error("Image could not be removed.");
           window.location.reload();
-        } catch (error) { status.textContent = error.message || "Image removal failed."; button.disabled = false; }
+        } catch (error) { status.textContent = error.message || "Media removal failed."; button.disabled = false; }
       });
     });
   });

@@ -1,0 +1,95 @@
+package legacy
+
+import (
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+	"github.com/wecratfs/commerce/web/assets"
+	"github.com/wecratfs/commerce/web/pages"
+)
+
+templ Document(p viewmodels.LegacyPage) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="robots" content="noindex,nofollow"/>
+			<meta name="description" content={ p.Description }/>
+			<title>{ p.Title } - Weevcrafts</title>
+			<link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
+			<link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
+			<link rel="stylesheet" href={ assets.URL("css/theme.css") }/>
+			<link rel="stylesheet" href={ assets.URL("css/utility.css") }/>
+		</head>
+		<body>
+			<header class="site-header"><div class="container"><a class="wordmark" href="/"><strong>Weevcrafts</strong></a></div></header>
+			<main id="page" class="container utility-shell">
+				<section class="utility-card">
+					<h1>{ p.Title }</h1>
+					if p.Error != "" {
+						<p role="alert">{ p.Error }</p>
+					}
+					if p.Notice != "" {
+						<p role="status">{ p.Notice }</p>
+					}
+					if p.FormEmail != "" {
+						<p>{ p.FormEmail }</p>
+					}
+					for _, line := range p.Lines {
+						<p>{ line }</p>
+					}
+					if p.Product.Name != "" {
+						<article class="product-card"><h2>{ p.Product.Name }</h2><p>{ p.Product.Description }</p><strong>{ p.Product.Price }</strong></article>
+					}
+					for _, product := range p.Products {
+						<article class="product-card"><h2>{ product.Name }</h2><p>{ product.Description }</p><strong>{ product.Price }</strong></article>
+					}
+					if p.ManagedProduct.Name != "" {
+						<h2>Edit product draft</h2>
+						<form method="post" action={ "/seller/products/" + legacyID(p.ManagedProduct.ID) + "/edit" } hx-target="#page">
+							<label>Name <input name="name" value={ p.ManagedProduct.Name }/></label>
+							<label>Description <textarea name="description">{ p.ManagedProduct.Description }</textarea></label>
+							<label>SKU <input name="sku" value={ p.ManagedProduct.SKU }/></label>
+							<label>Price <input name="price_cents" value={ legacyCents(p.ManagedProduct.PriceCents) }/></label>
+							<label>Compare at <input name="compare_at_cents" value={ legacyCents(p.ManagedProduct.CompareAtCents) }/></label>
+							<label>Delivery <input name="delivery_label" value={ p.ManagedProduct.DeliveryLabel }/></label>
+							<button type="submit">Save draft</button>
+						</form>
+					}
+					if len(p.Staff) > 0 {
+						<h2>Seller team</h2>
+						for _, member := range p.Staff {
+							<article><b>{ member.DisplayName }</b><span>{ member.Email }</span><small>{ member.Status }</small><p>{ legacyPermissions(member.Permissions) }</p></article>
+						}
+						<form method="post" action="/seller/team/add" hx-target="#page"><label>Email <input name="email"/></label><label>Permissions <input name="permissions"/></label><button type="submit">Add staff</button></form>
+					}
+				</section>
+			</main>
+		</body>
+	</html>
+}
+
+templ CartAddResponse(p viewmodels.CustomerPage, message string) {
+	<div id="cart-feedback" role="status">{ message }</div>
+	<a id="cart-count" hx-swap-oob="outerHTML" href="/cart">Cart ({ p.CartCount })</a>
+	<div id="live-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
+}
+
+templ WishlistAddResponse(p viewmodels.CustomerPage, message string) {
+	<span>{ message }</span>
+}
+
+templ CartMutation(p viewmodels.CustomerPage, message string) {
+	<div id="cart-content">
+		@pages.CartContent(p)
+	</div>
+	<a id="cart-count" hx-swap-oob="outerHTML" href="/cart">Cart ({ p.CartCount })</a>
+	<div id="live-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
+}
+
+templ WishlistMutation(p viewmodels.CustomerPage, message string) {
+	<div id="wishlist-content">
+		@pages.WishlistGrid(p)
+	</div>
+	<a id="wishlist-count" hx-swap-oob="outerHTML" href="/wishlist">Wishlist ({ p.WishlistCount })</a>
+	<div id="live-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
+}

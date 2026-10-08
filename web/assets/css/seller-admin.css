@@ -11,7 +11,7 @@
 .product-media-square { width: min(100%, 260px); aspect-ratio: 1 / 1; object-fit: cover; border-radius: 8px; background: #f5f1ea; }
 .product-media-dropzone { display: grid; place-items: center; min-height: 130px; padding: 18px; border: 2px dashed #c9bcae; border-radius: 10px; background: #fcfaf7; color: var(--seller-ink); text-align: center; cursor: pointer; }
 .product-media-dropzone.is-dragging { border-color: var(--seller-green); background: #eef7f2; }
-.product-media-dropzone input { margin-top: 10px; }
+.product-media-dropzone input { width: 100%; max-width: 100%; min-width: 0; margin-top: 10px; }
 .low-stock-alert { margin-bottom: 14px; border-left: 4px solid #b54e37; }
 .low-stock-alert ul { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
 .low-stock-alert li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 8px 0; border-top: 1px solid var(--seller-line); }
@@ -71,7 +71,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body.seller-body { margin: 0; color: var(--seller-ink); background: var(--seller-paper); font: 12px/1.45 var(--seller-sans); }
+body.seller-body { margin: 0; overflow-x: hidden; color: var(--seller-ink); background: var(--seller-paper); font: 12px/1.45 var(--seller-sans); }
 .seller-skip-link { position: fixed; z-index: 100; top: 8px; left: 8px; padding: 10px 14px; color: #fff; background: #14523f; transform: translateY(-150%); }
 .seller-skip-link:focus { transform: translateY(0); }
 body.seller-body a { color: inherit; text-decoration: none; }
@@ -110,7 +110,7 @@ body.seller-body img { display: block; max-width: 100%; }
 .seller-menu-button { display: none; border: 0; color: var(--seller-red); background: transparent; }
 
 .seller-app { display: flex; align-items: stretch; min-height: calc(100vh - 99px); }
-.seller-sidebar { width: 202px; min-width: 202px; padding: 22px 10px 17px; border-right: 1px solid var(--seller-line); background: rgba(255,253,249,.78); }
+.seller-sidebar { width: 202px; min-width: 202px; padding: 22px 10px 17px; overflow-x: hidden; overflow-y: auto; border-right: 1px solid var(--seller-line); background: rgba(255,253,249,.78); }
 .seller-main { display: flex; flex: 1; min-width: 0; flex-direction: column; }
 .seller-content { flex: 1; min-width: 0; padding: 0 15px 26px; }
 .seller-content > *, .seller-panel, .seller-footer-main > * { min-width: 0; }
@@ -537,3 +537,12 @@ body.seller-body { overflow-x: hidden; }
 .seller-terms-panel li + li { margin-top: 6px; }
 .seller-terms-panel a { color: var(--seller-green); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 480px) { .seller-legal-bottom { align-items: flex-start; flex-direction: column; padding: 10px 12px; } }
+
+/* Readability floor for seller operations and fulfilment workflows. */
+body.seller-body { font-size: 14px; line-height: 1.5; }
+.seller-body :where(p, li, label, input, select, textarea, button, a, small, time, dt, dd, td, th, summary) {
+  font-size: max(13px, 1em) !important;
+  line-height: 1.45;
+}
+.seller-body :where(small, .seller-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
+.seller-body :where(input, select, textarea) { min-height: 40px; }

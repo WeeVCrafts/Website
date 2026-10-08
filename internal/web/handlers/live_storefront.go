@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -42,6 +44,7 @@ type LiveStorefrontHandler struct {
 	paymentPublicKey   string
 	paymentReady       bool
 	noPaymentDemo      bool
+	publicURL          string
 	supportAttachments *applicationcommerce.SupportAttachmentService
 	fallback           http.Handler
 }
@@ -50,6 +53,7 @@ func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *appli
 	mode := strings.ToLower(strings.TrimSpace(paymentMode))
 	ready := paymentReady(mode, paymentConfigured)
 	demo := false
+	publicURL := ""
 	var supportAttachments *applicationcommerce.SupportAttachmentService
 	for _, option := range noPaymentDemo {
 		switch value := option.(type) {
@@ -57,11 +61,13 @@ func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *appli
 			demo = value
 		case *applicationcommerce.SupportAttachmentService:
 			supportAttachments = value
+		case string:
+			publicURL = strings.TrimRight(strings.TrimSpace(value), "/")
 		}
 	}
 	return &LiveStorefrontHandler{
 		catalog: catalog, search: search, cart: cart, orders: orders, sessions: sessions, pool: pool,
-		paymentMode: mode, paymentPublicKey: paymentPublicKey, paymentReady: ready, noPaymentDemo: demo, supportAttachments: supportAttachments, fallback: fallback,
+		paymentMode: mode, paymentPublicKey: paymentPublicKey, paymentReady: ready, noPaymentDemo: demo, publicURL: publicURL, supportAttachments: supportAttachments, fallback: fallback,
 	}
 }
 
@@ -72,7 +78,7 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// These account endpoints have their own authenticated handlers in the
 	// transport layer. Keep them out of the broad /account/* storefront route.
-	if r.URL.Path == "/account/sessions" || r.URL.Path == "/account/verify-email" {
+	if r.URL.Path == "/account/sessions" && r.Method != http.MethodGet || r.URL.Path == "/account/verify-email" {
 		h.fallback.ServeHTTP(w, r)
 		return
 	}
@@ -113,10 +119,32 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 	userID, _, authenticated := h.session(r)
+	// Customer account data remains protected, while carts and checkout can be
+	// used by guests. Anonymous pages still receive a real CSRF token so cart
+	// mutations are protected before sign-in.
+	csrf := ""
+	if !authenticated {
+		var csrfErr error
+		csrf, csrfErr = h.ensureAnonymousCSRF(w, r)
+		if csrfErr != nil {
+			http.Error(w, "Customer page could not be secured", http.StatusInternalServerError)
+			return
+		}
+	}
 	if requiresCustomerSession(r.URL.Path) && !authenticated {
 		next := r.URL.RequestURI()
 		http.Redirect(w, r, "/login?next="+url.QueryEscape(next), http.StatusSeeOther)
 		return
+	}
+	if !authenticated && r.URL.Path == "/cart" {
+		guestToken := ensureGuestCartCookie(w, r)
+		if guestToken == "" {
+			http.Error(w, "Guest cart could not be secured", http.StatusInternalServerError)
+			return
+		}
+		if _, err := r.Cookie(guestCartCookieName); err != nil {
+			r.AddCookie(&http.Cookie{Name: guestCartCookieName, Value: guestToken})
+		}
 	}
 	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) {
 		roles := h.userRoles(r, userID)
@@ -154,12 +182,10 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		h.render(w, r, pages.Empty(page))
 		return
 	}
+	if !authenticated {
+		page.CSRFToken = csrf
+	}
 	if isAuthRoute(r.URL.Path) && !page.Authenticated {
-		csrf, csrfErr := h.ensureAnonymousCSRF(w, r)
-		if csrfErr != nil {
-			http.Error(w, "Authentication form could not be secured", http.StatusInternalServerError)
-			return
-		}
 		page.CSRFToken = csrf
 	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
@@ -243,6 +269,10 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 		if strings.HasSuffix(r.URL.Path, "/invoice") {
+			if r.URL.Query().Get("format") == "pdf" {
+				serveReceiptPDF(w, page.SelectedOrder)
+				return
+			}
 			component = pages.OrderReceipt(page)
 		} else {
 			component = pages.OrderDetail(page)
@@ -291,6 +321,31 @@ func (h *LiveStorefrontHandler) ensureAnonymousCSRF(w http.ResponseWriter, r *ht
 	secure := r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 	http.SetCookie(w, &http.Cookie{Name: "wecratfs_csrf", Value: token, Path: "/", Secure: secure, SameSite: http.SameSiteLaxMode, MaxAge: 3600})
 	return token, nil
+}
+
+const guestCartCookieName = "wecratfs_guest_cart"
+
+func guestCartHash(r *http.Request) string {
+	cookie, err := r.Cookie(guestCartCookieName)
+	if err != nil || strings.TrimSpace(cookie.Value) == "" {
+		return ""
+	}
+	digest := sha256.Sum256([]byte(cookie.Value))
+	return hex.EncodeToString(digest[:])
+}
+
+func ensureGuestCartCookie(w http.ResponseWriter, r *http.Request) string {
+	if cookie, err := r.Cookie(guestCartCookieName); err == nil && strings.TrimSpace(cookie.Value) != "" {
+		return cookie.Value
+	}
+	buffer := make([]byte, 32)
+	if _, err := rand.Read(buffer); err != nil {
+		return ""
+	}
+	token := base64.RawURLEncoding.EncodeToString(buffer)
+	secure := r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+	http.SetCookie(w, &http.Cookie{Name: guestCartCookieName, Value: token, Path: "/", HttpOnly: true, Secure: secure, SameSite: http.SameSiteLaxMode, MaxAge: int((30 * 24 * time.Hour).Seconds())})
+	return token
 }
 
 func (h *LiveStorefrontHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
@@ -369,10 +424,8 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 			address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode, addressID, userID)
 		err = updateErr
 		if err == nil && result.RowsAffected() == 0 {
-			_, err = h.pool.Exec(r.Context(), `
-				INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-				userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode)
+			http.Error(w, "address is unavailable; reload your saved addresses", http.StatusNotFound)
+			return
 		}
 	}
 	if err != nil {
@@ -439,7 +492,7 @@ func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
 
 func isCustomerAccountRoute(path string) bool {
 	switch path {
-	case "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/security", "/account/privacy", "/account/reviews", "/account/support":
+	case "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/security", "/account/sessions", "/account/privacy", "/account/reviews", "/account/support":
 		return true
 	default:
 		return false
@@ -456,7 +509,7 @@ func isAuthRoute(path string) bool {
 }
 
 func requiresCustomerSession(path string) bool {
-	return isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/")
+	return isCustomerAccountRoute(path) || path == "/wishlist" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/")
 }
 
 func isInfoRoute(path string) bool {
@@ -564,7 +617,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		CouponCode: strings.ToUpper(strings.TrimSpace(filters.Get("coupon"))),
 		Notice:     filters.Get("notice"), Filters: filters, Brand: "Weevcrafts",
 		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
-		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo,
+		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
@@ -577,20 +630,61 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		page.Product.Seller = h.sellerName(r.Context(), product.Slug)
 		page.Product.SellerSlug = liveSlug(page.Product.Seller)
 		page.Products = []viewmodels.Product{page.Product}
+		if h.search != nil && strings.TrimSpace(product.CategorySlug) != "" {
+			related, _, _, relatedErr := h.search.SearchWithFilters(r.Context(), ports.ProductSearchOptions{
+				CategorySlug: product.CategorySlug, Limit: 8, DatabaseOnly: true,
+			})
+			if relatedErr != nil {
+				return viewmodels.CustomerPage{}, relatedErr
+			}
+			for _, candidate := range related {
+				if candidate.Slug == product.Slug {
+					continue
+				}
+				page.Products = append(page.Products, liveProduct(candidate, csrf))
+			}
+		}
 		page.ProductReviews, err = h.publishedProductReviews(r.Context(), product.ID)
 		if err != nil {
 			return viewmodels.CustomerPage{}, err
 		}
 	}
-	if authenticated && h.cart != nil {
-		page.Cart, page.CartCount = h.liveCart(r.Context(), userID, csrf)
-		page.SavedProducts, page.WishlistCount = h.liveWishlist(r.Context(), userID, csrf)
-		markSavedProducts(&page)
+	if h.cart != nil && (authenticated || guestCartHash(r) != "") {
+		cart, cartErr := h.liveCart(r.Context(), userID, guestCartHash(r), csrf)
+		if cartErr != nil {
+			return viewmodels.CustomerPage{}, cartErr
+		}
+		page.Cart, page.CartCount = cart, liveCartCount(cart)
+		if authenticated {
+			wishlist, wishlistErr := h.liveWishlist(r.Context(), userID, csrf)
+			if wishlistErr != nil {
+				return viewmodels.CustomerPage{}, wishlistErr
+			}
+			page.SavedProducts, page.WishlistCount = wishlist, len(wishlist)
+			markSavedProducts(&page)
+		}
 		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotals(page.Cart)
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
 		if err := h.loadCustomerData(r.Context(), userID, &page); err != nil {
 			return viewmodels.CustomerPage{}, err
+		}
+	}
+	if r.URL.Path == "/account/sessions" {
+		sessions, err := h.sessions.List(r.Context(), userID)
+		if err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
+		cookie, _ := r.Cookie("wecratfs_session")
+		for _, session := range sessions {
+			page.Sessions = append(page.Sessions, viewmodels.CustomerSession{
+				ID: session.ID, Browser: session.UserAgent, IPAddress: session.IPAddress,
+				LastSeen: session.LastSeenAt.Format("2 Jan 2006, 15:04 MST"), Expires: session.ExpiresAt.Format("2 Jan 2006, 15:04 MST"),
+				Current: cookie != nil && cookie.Value == session.ID,
+			})
+		}
+		if r.URL.Query().Get("verification") == "sent" {
+			page.Notice = "Verification email requested. Check your inbox for the link."
 		}
 	}
 	return page, nil
@@ -712,6 +806,23 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	}
 	if page.Route == "/account/notifications" {
 		if err := h.loadNotificationPreferences(ctx, userID, page); err != nil {
+			return err
+		}
+		rows, err := h.pool.Query(ctx, `SELECT title,body,created_at FROM notifications WHERE user_id=$1 ORDER BY created_at DESC,id DESC LIMIT 50`, userID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var notice viewmodels.CustomerNotification
+			var created time.Time
+			if err := rows.Scan(&notice.Title, &notice.Body, &created); err != nil {
+				return err
+			}
+			notice.Date = created.Format("2 Jan 2006, 15:04")
+			page.Notifications = append(page.Notifications, notice)
+		}
+		if err := rows.Err(); err != nil {
 			return err
 		}
 	}
@@ -1012,8 +1123,9 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	view := viewmodels.Order{
 		Number: order.OrderNumber, Status: status, State: order.Status, Payment: payment,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
+		Subtotal: storefrontMoney(order.SubtotalCents), Shipping: storefrontMoney(order.ShippingCents), Discount: storefrontMoney(order.DiscountCents),
 		CanCancel:        order.Status == "pending_payment",
-		CanRequestReturn: order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered",
+		CanRequestReturn: order.Status == "delivered",
 	}
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
 		return viewmodels.Order{}, err
@@ -1050,7 +1162,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 			image = "/assets/images/customer/maker-mithila.webp"
 		}
 		product := viewmodels.Product{Slug: slug, Name: name, Seller: seller, ImageURL: image, PriceCents: cents, Price: storefrontMoney(cents)}
-		view.Items = append(view.Items, viewmodels.CartItem{Product: product, Quantity: quantity, Delivery: "4 - 6 days"})
+		view.Items = append(view.Items, viewmodels.CartItem{Product: product, Quantity: quantity, Delivery: "See order tracking for delivery updates"})
 	}
 	return view, rows.Err()
 }
@@ -1308,12 +1420,29 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	userID, csrf, ok := h.session(r)
-	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
+	userID, csrf, authenticated := h.session(r)
+	guestHash := ""
+	if !authenticated {
+		if !strings.HasPrefix(r.URL.Path, "/ui/cart/") {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		guestToken := ensureGuestCartCookie(w, r)
+		if guestToken == "" {
+			http.Error(w, "Guest cart could not be secured", http.StatusInternalServerError)
+			return
+		}
+		if _, err := r.Cookie(guestCartCookieName); err != nil {
+			r.AddCookie(&http.Cookie{Name: guestCartCookieName, Value: guestToken})
+		}
+		guestHash = guestCartHash(r)
+		csrf, _ = h.ensureAnonymousCSRF(w, r)
 	}
-	if subtle.ConstantTimeCompare([]byte(csrf), []byte(r.Header.Get("X-CSRF-Token"))) != 1 {
+	providedCSRF := r.Header.Get("X-CSRF-Token")
+	if providedCSRF == "" {
+		providedCSRF = r.FormValue("csrf_token")
+	}
+	if subtle.ConstantTimeCompare([]byte(csrf), []byte(providedCSRF)) != 1 {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}
@@ -1385,7 +1514,7 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 	}
 	if raw := r.FormValue("delta"); raw != "" {
 		delta, _ := strconv.ParseInt(raw, 10, 64)
-		cart, cartErr := h.cart.GetOrCreate(r.Context(), userID, "")
+		cart, cartErr := h.cart.GetOrCreate(r.Context(), userID, guestHash)
 		if cartErr == nil {
 			quantity = 1 + delta
 			for _, item := range cart.Items {
@@ -1400,11 +1529,11 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 	}
 	var err error
 	if quantity <= 0 {
-		_, err = h.cart.Remove(r.Context(), userID, "", variantID)
+		_, err = h.cart.Remove(r.Context(), userID, guestHash, variantID)
 	} else if r.FormValue("delta") != "" {
-		_, err = h.cart.Update(r.Context(), userID, "", variantID, quantity)
+		_, err = h.cart.Update(r.Context(), userID, guestHash, variantID, quantity)
 	} else {
-		_, err = h.cart.Add(r.Context(), userID, "", variantID, quantity)
+		_, err = h.cart.Add(r.Context(), userID, guestHash, variantID, quantity)
 	}
 	if err != nil {
 		http.Error(w, "cart update failed", http.StatusUnprocessableEntity)
@@ -1418,16 +1547,16 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 	h.render(w, r, components.CartMutation(page))
 }
 
-func (h *LiveStorefrontHandler) liveCart(ctx context.Context, userID int64, csrf string) ([]viewmodels.CartItem, int) {
-	cart, err := h.cart.GetOrCreate(ctx, userID, "")
+func (h *LiveStorefrontHandler) liveCart(ctx context.Context, userID int64, guestHash, csrf string) ([]viewmodels.CartItem, error) {
+	cart, err := h.cart.GetOrCreate(ctx, userID, guestHash)
 	if err != nil {
-		return nil, 0
+		return nil, err
 	}
 	items := make([]viewmodels.CartItem, 0, len(cart.Items))
 	for _, item := range cart.Items {
 		product, err := h.catalog.Get(ctx, item.ProductSlug)
 		if err != nil {
-			continue
+			return nil, err
 		}
 		productView := liveProduct(product, csrf)
 		productView.Seller = h.sellerName(ctx, product.Slug)
@@ -1438,15 +1567,27 @@ func (h *LiveStorefrontHandler) liveCart(ctx context.Context, userID int64, csrf
 		productView.Available = item.Available
 		productView.InStock = item.Available > 0
 		productView.Badge = map[bool]string{true: "In stock", false: "Sold out"}[productView.InStock]
-		items = append(items, viewmodels.CartItem{Product: productView, VariantName: item.VariantName, Quantity: item.Quantity, Delivery: "4 - 6 days"})
+		delivery := productView.DeliveryLabel
+		if strings.TrimSpace(delivery) == "" {
+			delivery = "Delivery estimate unavailable"
+		}
+		items = append(items, viewmodels.CartItem{Product: productView, VariantName: item.VariantName, Quantity: item.Quantity, Delivery: delivery})
 	}
-	return items, cart.ItemCount
+	return items, nil
 }
 
-func (h *LiveStorefrontHandler) liveWishlist(ctx context.Context, userID int64, csrf string) ([]viewmodels.Product, int) {
+func liveCartCount(items []viewmodels.CartItem) int {
+	count := 0
+	for _, item := range items {
+		count += item.Quantity
+	}
+	return count
+}
+
+func (h *LiveStorefrontHandler) liveWishlist(ctx context.Context, userID int64, csrf string) ([]viewmodels.Product, error) {
 	items, err := h.cart.ListWishlist(ctx, userID)
 	if err != nil {
-		return nil, 0
+		return nil, err
 	}
 	result := make([]viewmodels.Product, 0, len(items))
 	for _, item := range items {
@@ -1455,9 +1596,11 @@ func (h *LiveStorefrontHandler) liveWishlist(ctx context.Context, userID int64, 
 			productView := liveProduct(product, csrf)
 			productView.Seller = h.sellerName(ctx, product.Slug)
 			result = append(result, productView)
+		} else {
+			return nil, err
 		}
 	}
-	return result, len(result)
+	return result, nil
 }
 
 func markSavedProducts(page *viewmodels.CustomerPage) {
@@ -1739,10 +1882,7 @@ func liveTotals(items []viewmodels.CartItem) (string, string, string, string) {
 	for _, item := range items {
 		subtotal += item.Product.PriceCents * int64(item.Quantity)
 	}
-	shipping := int64(0)
-	if subtotal > 0 && subtotal < 99900 {
-		shipping = 9900
-	}
+	shipping := domaincommerce.CheckoutShipping(subtotal)
 	return storefrontMoney(subtotal), storefrontMoney(shipping), storefrontMoney(0), storefrontMoney(subtotal + shipping)
 }
 
@@ -1752,7 +1892,12 @@ func cents(value string) int64 {
 	return int64(parsed * 100)
 }
 
-func storefrontMoney(value int64) string { return fmt.Sprintf("INR %d", value/100) }
+func storefrontMoney(value int64) string {
+	if value%100 == 0 {
+		return fmt.Sprintf("INR %d", value/100)
+	}
+	return fmt.Sprintf("INR %d.%02d", value/100, value%100)
+}
 
 func imageSrcSet(value string) string {
 	if !strings.HasSuffix(value, ".webp") {
@@ -1797,10 +1942,14 @@ func liveTitle(path string) string {
 		return "Notification preferences"
 	case path == "/account/security":
 		return "Security and sessions"
+	case path == "/account/sessions":
+		return "Signed-in devices"
 	case path == "/account/privacy":
 		return "Privacy preferences"
 	case path == "/account/reviews":
 		return "Reviews"
+	case path == "/account/support":
+		return "Support"
 	case path == "/faq":
 		return "FAQs"
 	case path == "/contact":

@@ -79,6 +79,7 @@ WITH candidates AS (
     SELECT outbox_events.id
     FROM outbox_events
     WHERE outbox_events.event_type = $1
+      AND (outbox_events.event_type <> 'OrderCreated' OR outbox_events.attempts < 8)
       AND outbox_events.processed_at IS NULL
       AND outbox_events.available_at <= NOW()
       AND (outbox_events.claimed_at IS NULL OR outbox_events.claimed_at < NOW() - INTERVAL '5 minutes')

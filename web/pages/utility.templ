@@ -31,7 +31,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Full name<input name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></label>
             <label>Email address<input name="email" type="email" required/></label>
-            <label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
+            <label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
             <label>Password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
             <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>
             <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
@@ -178,6 +178,8 @@ templ AccountDetail(p viewmodels.CustomerPage) {
         @AddressPanel()
       } else if p.Route == "/account/notifications" {
         @NotificationPanel()
+      } else if p.Route == "/account/sessions" {
+        @LiveSessions(p)
       } else if p.Route == "/account/security" {
         @SecurityPanel()
       } else if p.Route == "/account/privacy" {
@@ -209,6 +211,72 @@ templ SecurityPanel() {
 
 templ PrivacyPanel() {
   <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><div class="consent-history"><div><span><b>Service communications</b><small>Required for orders, returns and account security</small></span><mark class="success-mark">Always on</mark></div><div><span><b>Marketing communications</b><small>Offers, new arrivals and maker stories</small></span><a href="/account/privacy?notice=Marketing+consent+withdrawn">Withdraw</a></div><div><span><b>Data access request</b><small>Requested 12 Mar 2024 · Completed</small></span><a href="/account/privacy?notice=Data+download+preview+prepared">Download summary</a></div></div><div class="privacy-actions"><a class="outline-button" href="/account/privacy?notice=Correction+request+preview+submitted">Request a correction</a><a class="outline-button" href="/account/privacy?notice=Deletion+request+preview+submitted">Request account deletion</a></div></section>
+}
+
+templ PrivacyCenter(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container utility-shell privacy-center-shell">
+      <p class="eyebrow">YOUR CONTROLS</p>
+      <h1>Privacy center</h1>
+      <p>Account { strconv.FormatInt(p.AccountUserID, 10) } · choices are recorded with a policy version and source.</p>
+      <div class="account-cards">
+        <section class="utility-card account-panel">
+          <div class="utility-panel-heading"><div><p class="eyebrow">OPTIONAL CHOICES</p><h2>Privacy choices</h2></div><span class="material-symbols-outlined" aria-hidden="true">tune</span></div>
+          <form class="utility-form" method="post" action="/privacy/consent">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <input type="hidden" name="purpose" value="marketing"/>
+            <input type="hidden" name="granted" value={ privacyGrantedValue(p.PrivacyCenter.EmailMarketing) }/>
+            <p>Email marketing is currently <strong>{ privacyEnabledLabel(p.PrivacyCenter.EmailMarketing) }</strong>.</p>
+            <button class="outline-button" type="submit">{ privacyConsentAction(p.PrivacyCenter.EmailMarketing, "marketing") }</button>
+          </form>
+          <form class="utility-form" method="post" action="/privacy/consent">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <input type="hidden" name="purpose" value="analytics"/>
+            <input type="hidden" name="granted" value={ privacyGrantedValue(p.PrivacyCenter.AnalyticsAllowed) }/>
+            <p>Optional analytics are currently <strong>{ privacyEnabledLabel(p.PrivacyCenter.AnalyticsAllowed) }</strong>.</p>
+            <button class="text-button" type="submit">{ privacyConsentAction(p.PrivacyCenter.AnalyticsAllowed, "analytics") }</button>
+          </form>
+        </section>
+        <section class="utility-card account-panel">
+          <div class="utility-panel-heading"><div><p class="eyebrow">MAKE A REQUEST</p><h2>Data request</h2></div><span class="material-symbols-outlined" aria-hidden="true">description</span></div>
+          <form class="utility-form" method="post" action="/privacy/requests">
+            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+            <label for="request_type">Request type<select id="request_type" name="request_type"><option value="access">Access my data</option><option value="correction">Correct my data</option><option value="deletion">Request deletion</option><option value="grievance">Raise a grievance</option></select></label>
+            <label for="details">Details<textarea id="details" name="details" maxlength="2000" required></textarea></label>
+            <button class="primary-button" type="submit">Submit request</button>
+          </form>
+        </section>
+      </div>
+      <section class="utility-card account-panel">
+        <div class="utility-panel-heading"><div><p class="eyebrow">HISTORY</p><h2>Consent history</h2></div></div>
+        if len(p.PrivacyCenter.Consents) == 0 {
+          <p>No optional consent records yet.</p>
+        } else {
+          <div class="saved-address-list">
+            for _, consent := range p.PrivacyCenter.Consents {
+              <div class="saved-address"><span>{ consent.Purpose } · { privacyConsentStatus(consent.Granted) }</span><small>{ consent.PolicyVersion } · { privacyDate(consent.CreatedAt) }</small></div>
+            }
+          </div>
+        }
+      </section>
+      <section class="utility-card account-panel">
+        <div class="utility-panel-heading"><div><p class="eyebrow">REQUESTS</p><h2>Privacy requests</h2></div></div>
+        if len(p.PrivacyCenter.Requests) == 0 {
+          <p>No privacy requests yet.</p>
+        } else {
+          <div class="saved-address-list">
+            for _, request := range p.PrivacyCenter.Requests {
+              <div class="saved-address"><span>{ request.Type } · { request.Status }<small>Due { privacyDate(request.DueAt) }</small></span>
+                if request.Type == "deletion" && request.Status == "open" {
+                  <form method="post" action="/privacy/delete"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ privacyRequestID(request.ID) }/><button class="outline-button" type="submit">Delete eligible data</button></form>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </section>
+  }
 }
 
 templ PaymentPanel() {
@@ -282,7 +350,7 @@ templ LiveOrders(p viewmodels.CustomerPage) {
       @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from Weevcrafts.</p>
       <nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav>
     </section>
-    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders>
+    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders data-server-orders>
       if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
       } else {
@@ -306,6 +374,40 @@ templ LiveTracking(p viewmodels.CustomerPage) {
       }
     </div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our customer care team can help with an order update.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
   }
+}
+
+templ LiveSessions(p viewmodels.CustomerPage) {
+  <section class="utility-card account-panel" aria-label="Active sessions">
+    <div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Your active sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div>
+    <p>Review your active sessions. Times below include their time zone.</p>
+    <div class="saved-address-list">
+      for _, session := range p.Sessions {
+        <article class="saved-address" data-session-id={ session.ID }>
+          if session.Current {
+<span class="badge">This is your current session</span>
+}
+          if session.Browser != "" {
+<h3>{ session.Browser }</h3>
+} else {
+<h3>Unknown browser</h3>
+}
+          <p>Last seen: { session.LastSeen }</p><p>Expires: { session.Expires }</p>
+          if session.IPAddress != "" {
+<p>Network address: { session.IPAddress }</p>
+}
+          if !session.Current {
+            <form action="/account/sessions/revoke" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="session_id" value={ session.ID }/><button class="outline-button" type="submit">Sign out this session</button></form>
+          }
+        </article>
+      }
+    </div>
+    if len(p.Sessions) == 0 {
+<p>No active sessions found. Sign in again to create a session.</p>
+}
+    <form action="/account/sessions" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out all sessions</button></form>
+    <h3>Email verification</h3><p>Request a verification link for your account email.</p>
+    <form action="/account/verify-email" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Send verification link</button></form>
+  </section>
 }
 
 templ LiveAccountDetail(p viewmodels.CustomerPage) {
@@ -344,9 +446,19 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
             <button class="primary-button" type="submit">Add address</button>
           </form>
         </section>
+      } else if p.Route == "/account/sessions" {
+        @LiveSessions(p)
       } else if p.Route == "/account/security" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
+        <section class="utility-card account-panel"><h2>Your updates</h2>
+          if len(p.Notifications) == 0 {
+            <p>No notifications yet.</p>
+          }
+          for _, notification := range p.Notifications {
+            <article><h3>{ notification.Title }</h3><p>{ notification.Body }</p><small>{ notification.Date }</small></article>
+          }
+        </section>
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Notification preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">notifications</span></div>
           <p>Choose the updates you want. Your choices are saved to your account; order status also remains available in your order history.</p>
           <form class="preference-list" action="/account/notifications" method="post">
@@ -414,7 +526,7 @@ templ AddressFormFields(address viewmodels.Address, csrfToken string) {
     <input type="hidden" name="address_id" value={ address.ID }/>
   }
   <label>Recipient name<input name="recipient_name" value={ address.Name } autocomplete="name" maxlength="100" required/></label>
-  <label>Phone number<input name="phone" value={ address.Phone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()-]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
+  <label>Phone number<input name="phone" value={ address.Phone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
   <label>Address line<input name="line1" value={ address.Line1 } autocomplete="address-line1" maxlength="250" required/></label>
   <label>Apartment / landmark<input name="line2" value={ address.Line2 } autocomplete="address-line2" maxlength="250"/></label>
   <label>City<input name="city" value={ address.City } autocomplete="address-level2" maxlength="100" required/></label>

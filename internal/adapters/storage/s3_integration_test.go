@@ -61,6 +61,24 @@ func TestS3MediaLifecycleAgainstMinIO(t *testing.T) {
 		t.Fatal("deleted object remained readable")
 	}
 
+	supportKey := fmt.Sprintf("support/340/%032x", time.Now().UnixNano())
+	t.Cleanup(func() { _ = storage.DeleteObject(context.Background(), supportKey) })
+	if err := storage.PutObject(ctx, supportKey, "image/png", int64(len(payload)), bytes.NewReader(payload)); err != nil {
+		t.Fatalf("put private support attachment: %v", err)
+	}
+	privateBody, privateInfo, err := storage.OpenObject(ctx, supportKey)
+	if err != nil {
+		t.Fatalf("open private support attachment: %v", err)
+	}
+	privateBytes, err := io.ReadAll(privateBody)
+	_ = privateBody.Close()
+	if err != nil || !bytes.Equal(privateBytes, payload) || privateInfo.ByteSize != int64(len(payload)) {
+		t.Fatalf("private attachment round trip: info=%+v err=%v", privateInfo, err)
+	}
+	if _, err := storage.CreateDownloadURL(ctx, supportKey, time.Minute); err == nil {
+		t.Fatal("private support attachment must not use product presigned endpoints")
+	}
+
 }
 
 func envOrDefault(name, fallback string) string {

@@ -22,8 +22,42 @@ type OrderService struct {
 	repository ports.OrderRepository
 }
 
+func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon string) (domaincommerce.CheckoutQuote, error) {
+	if userID <= 0 || cartID <= 0 {
+		return domaincommerce.CheckoutQuote{}, ports.ErrForbidden
+	}
+	repo, ok := s.repository.(interface {
+		QuoteOrder(context.Context, int64, int64, string) (domaincommerce.CheckoutQuote, error)
+	})
+	if !ok {
+		return domaincommerce.CheckoutQuote{}, errors.New("checkout quote unavailable")
+	}
+	return repo.QuoteOrder(ctx, userID, cartID, coupon)
+}
+
 func NewOrderService(repository ports.OrderRepository) *OrderService {
 	return &OrderService{repository: repository}
+}
+
+func (s *OrderService) CreateQuoted(ctx context.Context, userID, cartID int64, key string, address domaincommerce.AddressInput, coupon string, expected int64) (domaincommerce.Order, error) {
+	if userID <= 0 || cartID <= 0 || len(strings.TrimSpace(key)) < 16 || len(key) > 200 || expected < 0 {
+		return domaincommerce.Order{}, ports.ErrForbidden
+	}
+	address, err := NormalizeAddressInput(address)
+	if err != nil {
+		return domaincommerce.Order{}, err
+	}
+	coupon = strings.ToUpper(strings.TrimSpace(coupon))
+	if coupon != "" && !couponCodePattern.MatchString(coupon) {
+		return domaincommerce.Order{}, ports.ErrCouponInvalid
+	}
+	repo, ok := s.repository.(interface {
+		CreateQuotedOrder(context.Context, int64, int64, string, domaincommerce.AddressInput, string, int64) (domaincommerce.Order, error)
+	})
+	if !ok {
+		return domaincommerce.Order{}, errors.New("quoted checkout unavailable")
+	}
+	return repo.CreateQuotedOrder(ctx, userID, cartID, key, address, coupon, expected)
 }
 
 func NormalizeAddressInput(address domaincommerce.AddressInput) (domaincommerce.AddressInput, error) {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -51,7 +52,7 @@ func (s *S3) InspectObject(ctx context.Context, objectKey string) (ports.ObjectI
 }
 
 func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteSize int64, body io.Reader) error {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) || !allowedStoredMediaType(contentType) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
+	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) || !allowedStoredMediaType(contentType) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
 		return errors.New("invalid object upload")
 	}
 	_, err := s.client.PutObject(ctx, s.bucket, objectKey, body, byteSize, minio.PutObjectOptions{ContentType: contentType})
@@ -59,7 +60,7 @@ func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteS
 }
 
 func (s *S3) OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, ports.ObjectInfo, error) {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) {
+	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
 		return nil, ports.ObjectInfo{}, errors.New("invalid object read")
 	}
 	object, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
@@ -91,7 +92,7 @@ func (s *S3) CreateDownloadURL(ctx context.Context, objectKey string, lifetime t
 }
 
 func (s *S3) DeleteObject(ctx context.Context, objectKey string) error {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) {
+	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
 		return errors.New("invalid object key")
 	}
 	return s.client.RemoveObject(ctx, s.bucket, objectKey, minio.RemoveObjectOptions{})
@@ -121,4 +122,12 @@ func validProductObjectKey(value string) bool {
 		!strings.Contains(value, "..") &&
 		!strings.HasPrefix(value, "/") &&
 		!strings.ContainsAny(value, "\\\n\r\t")
+}
+
+var supportObjectKeyPattern = regexp.MustCompile(`^support/[1-9][0-9]*/[a-f0-9]{32}$`)
+
+// Private support files are streamed through an ownership-checked application
+// endpoint. Product presigned upload/download endpoints remain product-only.
+func validStoredObjectKey(value string) bool {
+	return validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value)
 }

@@ -186,7 +186,7 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 			}
 		}
 		if role == domainidentity.RoleSellerOwner {
-			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'active')`, userID, displayName); err != nil {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'pending')`, userID, displayName); err != nil {
 				return err
 			}
 		}

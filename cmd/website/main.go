@@ -171,6 +171,16 @@ func main() {
 	backgroundWorker.Start(workerContext)
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
+	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
+	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_, err := orderConfirmationProcessor.Process(processContext, 20)
+		if err != nil {
+			logger.Warn("order confirmations failed", "error", err)
+		}
+		return err
+	})
 	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
@@ -234,6 +244,7 @@ func main() {
 	mux.HandleFunc("/api/v1/wishlist/add", apiHandler.WishlistAdd)
 	mux.HandleFunc("/api/v1/wishlist/", apiHandler.WishlistRemove)
 	mux.HandleFunc("/api/v1/checkout", apiHandler.Checkout)
+	mux.HandleFunc("/api/v1/checkout/quote", apiHandler.CheckoutQuote)
 	mux.HandleFunc("/api/v1/checkout/no-payment", apiHandler.NoPaymentCheckout)
 	mux.HandleFunc("/api/v1/orders", apiHandler.Orders)
 	mux.HandleFunc("/api/v1/orders/", apiHandler.Order)
@@ -256,7 +267,7 @@ func main() {
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
-	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, supportAttachmentService)
+	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
 	// Keep customer support mutations and protected attachment reads ahead of
 	// the broad /support/ portal route. The portal still owns support-agent GET
 	// pages and delegates its mutation endpoints to webHandler.

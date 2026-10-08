@@ -1,17 +1,175 @@
 package pages
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
+func privacyDate(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.Format("02 Jan 2006")
+}
+
+func privacyGrantedValue(enabled bool) string {
+	if enabled {
+		return "false"
+	}
+	return "true"
+}
+
+func privacyEnabledLabel(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
+}
+
+func privacyConsentStatus(granted bool) string {
+	if granted {
+		return "granted"
+	}
+	return "withdrawn"
+}
+
+func privacyConsentAction(enabled bool, purpose string) string {
+	if enabled {
+		if purpose == "marketing" {
+			return "Withdraw marketing consent"
+		}
+		return "Withdraw analytics consent"
+	}
+	if purpose == "marketing" {
+		return "Allow marketing email"
+	}
+	return "Allow optional analytics"
+}
+
+func privacyRequestID(value int64) string { return strconv.FormatInt(value, 10) }
+
+func pageIsIndexable(p viewmodels.CustomerPage) bool {
+	switch {
+	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products":
+		return true
+	case strings.HasPrefix(p.Route, "/products/"), strings.HasPrefix(p.Route, "/brands/"), strings.HasPrefix(p.Route, "/makers/"):
+		return true
+	default:
+		return false
+	}
+}
+
+func pageRobots(p viewmodels.CustomerPage) string {
+	if pageIsIndexable(p) {
+		return "index,follow"
+	}
+	return "noindex,nofollow"
+}
+
+func pageCanonicalURL(p viewmodels.CustomerPage) string {
+	base := strings.TrimRight(strings.TrimSpace(p.PublicURL), "/")
+	if base == "" {
+		base = "http://localhost:8080"
+	}
+	path := p.Route
+	if path == "" {
+		path = "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return base + path
+}
+
+func pageOGTitle(p viewmodels.CustomerPage) string {
+	if strings.TrimSpace(p.Title) != "" {
+		return p.Title
+	}
+	return "Weevcrafts"
+}
+
+func pageOGDescription(p viewmodels.CustomerPage) string {
+	if strings.TrimSpace(p.Product.Description) != "" && strings.HasPrefix(p.Route, "/products/") {
+		return p.Product.Description
+	}
+	return p.Description
+}
+
+func pageOGType(p viewmodels.CustomerPage) string {
+	if strings.HasPrefix(p.Route, "/products/") {
+		return "product"
+	}
+	return "website"
+}
+
+func pageOGImage(p viewmodels.CustomerPage) string {
+	if strings.TrimSpace(p.Product.ImageURL) != "" && strings.HasPrefix(p.Route, "/products/") {
+		return absolutePageURL(p, p.Product.ImageURL)
+	}
+	return ""
+}
+
+func absolutePageURL(p viewmodels.CustomerPage, value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
+		return value
+	}
+	base := strings.TrimRight(strings.TrimSpace(p.PublicURL), "/")
+	if base == "" {
+		base = "http://localhost:8080"
+	}
+	return base + "/" + strings.TrimLeft(value, "/")
+}
+
+func productStructuredData(p viewmodels.CustomerPage) string {
+	if !strings.HasPrefix(p.Route, "/products/") || strings.TrimSpace(p.Product.Name) == "" {
+		return ""
+	}
+	availability := "https://schema.org/OutOfStock"
+	if p.Product.InStock || p.Product.Available > 0 {
+		availability = "https://schema.org/InStock"
+	}
+	data := map[string]any{
+		"@context": "https://schema.org",
+		"@type": "Product",
+		"name": p.Product.Name,
+		"description": pageOGDescription(p),
+		"image": []string{absolutePageURL(p, p.Product.ImageURL)},
+		"sku": p.Product.SKU,
+		"offers": map[string]any{
+			"@type": "Offer",
+			"url": pageCanonicalURL(p),
+			"priceCurrency": "INR",
+			"price": fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100),
+			"availability": availability,
+		},
+	}
+	if strings.TrimSpace(p.Product.Seller) != "" {
+		data["brand"] = map[string]any{"@type": "Brand", "name": p.Product.Seller}
+	}
+	if rating, err := strconv.ParseFloat(strings.TrimSpace(p.Product.Rating), 64); err == nil && rating > 0 && p.Product.Reviews > 0 {
+		data["aggregateRating"] = map[string]any{
+			"@type": "AggregateRating", "ratingValue": rating, "reviewCount": p.Product.Reviews,
+		}
+	}
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(encoded)
+}
+
 func cartDeltaValues(variantID int64, delta int) string {
 	return fmt.Sprintf(`{"variant_id":"%d","delta":"%d"}`, variantID, delta)
 }
+
+func cartQuantityValue(quantity int) string { return strconv.Itoa(quantity) }
 
 func cartRemoveValues(variantID int64) string {
 	return fmt.Sprintf(`{"variant_id":"%d","remove":"true"}`, variantID)
@@ -163,7 +321,7 @@ func orderSubset(orders []viewmodels.Order, status string) []viewmodels.Order {
 		if orderStatus == "" {
 			orderStatus = strings.ToLower(strings.TrimSpace(order.Status))
 		}
-		matches := (status == "active" && orderStatus != "delivered" && orderStatus != "cancelled") ||
+		matches := (status == "active" && (orderStatus == "pending_payment" || orderStatus == "paid" || orderStatus == "confirmed" || orderStatus == "processing" || orderStatus == "packed" || orderStatus == "shipped")) ||
 			(status == "delivered" && orderStatus == "delivered") ||
 			(status == "cancelled" && orderStatus == "cancelled")
 		if matches {
@@ -177,6 +335,14 @@ func orderCount(orders []viewmodels.Order, status string) int {
 	return len(orderSubset(orders, status))
 }
 
+func orderItemCount(order viewmodels.Order) int {
+	count := 0
+	for _, item := range order.Items {
+		count += item.Quantity
+	}
+	return count
+}
+
 func orderSeller(order viewmodels.Order) string {
 	item, ok := firstCartItem(order.Items)
 	if !ok || strings.TrimSpace(item.Product.Seller) == "" {
@@ -187,6 +353,14 @@ func orderSeller(order viewmodels.Order) string {
 
 func orderDeliveryCopy(order viewmodels.Order) string {
 	switch orderState(order) {
+	case "pending_payment":
+		return "Your order is awaiting payment."
+	case "payment_failed":
+		return "Payment was not completed."
+	case "shipped":
+		return "Your order has been shipped."
+	case "refunded":
+		return "Your order has been refunded."
 	case "delivered":
 		return "Delivered"
 	case "cancelled":
@@ -271,6 +445,14 @@ func firstOrder(orders []viewmodels.Order) viewmodels.Order {
 
 func orderStatusTitle(order viewmodels.Order) string {
 	switch orderState(order) {
+	case "pending_payment":
+		return "Your order is awaiting payment."
+	case "payment_failed":
+		return "Payment was not completed."
+	case "shipped":
+		return "Your order has been shipped."
+	case "refunded":
+		return "Your order has been refunded."
 	case "delivered":
 		return "Your order has arrived safely."
 	case "cancelled":
@@ -282,6 +464,14 @@ func orderStatusTitle(order viewmodels.Order) string {
 
 func orderStatusCopy(order viewmodels.Order) string {
 	switch orderState(order) {
+	case "pending_payment":
+		return "Your order is saved. Check payment status before placing another order."
+	case "payment_failed":
+		return "This order remains in your history. No shipment is confirmed; contact support if you need help."
+	case "shipped":
+		return "See the maker's shipment updates in order tracking."
+	case "refunded":
+		return "Check your payment history for the recorded refund status."
 	case "delivered":
 		return "We hope it brings something beautiful into your everyday."
 	case "cancelled":

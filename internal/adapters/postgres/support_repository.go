@@ -193,6 +193,12 @@ func (r *CommerceRepository) CreateSupportAttachment(ctx context.Context, ticket
 	return attachment, err
 }
 
+func (r *CommerceRepository) OwnsSupportTicket(ctx context.Context, userID, ticketID int64) (bool, error) {
+	var owned bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM support_tickets WHERE id=$1 AND user_id=$2)`, ticketID, userID).Scan(&owned)
+	return owned, err
+}
+
 func (r *CommerceRepository) ListSupportAttachments(ctx context.Context, ticketID int64) ([]domaincommerce.SupportAttachment, error) {
 	rows, err := r.pool.Query(ctx, `SELECT id,ticket_id,COALESCE(message_id,0),user_id,file_name,content_type,byte_size,object_key,created_at FROM support_attachments WHERE ticket_id=$1 ORDER BY created_at,id`, ticketID)
 	if err != nil {

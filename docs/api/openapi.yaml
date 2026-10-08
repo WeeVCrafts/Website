@@ -95,6 +95,16 @@ paths:
       parameters:
         - {name: productId, in: path, required: true, schema: {type: integer, format: int64}}
       responses: {'200': {description: Removed}, '422': {description: Invalid product}}
+  /api/v1/checkout/quote:
+    get:
+      summary: Preview current stock, prices, shipping and eligible coupon discount
+      security: [{cookieSession: []}]
+      parameters:
+        - {name: coupon_code, in: query, schema: {type: string, maxLength: 40}}
+      responses:
+        '200': {description: Integer minor-unit subtotal_cents, shipping_cents, discount_cents and total_cents with cart_id}
+        '403': {description: Authentication required}
+        '422': {description: Coupon or cart unavailable}
   /api/v1/checkout:
     post:
       summary: Create one pending-payment order idempotently
@@ -102,7 +112,7 @@ paths:
       parameters:
         - {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 16}}
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CheckoutRequest'}}}}
-      responses: {'201': {description: Pending order}, '409': {description: Idempotency key conflict}, '422': {description: Checkout rejected}}
+      responses: {'201': {description: Pending order}, '409': {description: Idempotency key conflict or quote changed}, '422': {description: Checkout rejected}}
   /api/v1/orders:
     get:
       summary: List the current customer's orders
@@ -213,6 +223,8 @@ components:
       type: object
       required: [cart_id, address]
       properties:
+          coupon_code: {type: string, maxLength: 40}
+          expected_total_cents: {type: integer, format: int64, minimum: 0, description: Reviewed quote total; changed totals reject placement without reserving inventory}
         cart_id: {type: integer, format: int64, minimum: 1}
         idempotency_key: {type: string, minLength: 16, description: Used only when the Idempotency-Key header is absent}
         address:

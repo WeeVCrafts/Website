@@ -6,14 +6,11 @@ import (
 	"embed"
 	"encoding/base64"
 	"errors"
-	"html/template"
 	"io/fs"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +28,7 @@ import (
 	previewassets "github.com/wecratfs/commerce/web/assets"
 )
 
-//go:embed templates/*.html templates/partials/*.html static/*
+//go:embed static/*
 var assets embed.FS
 
 type Handler struct {
@@ -63,7 +60,6 @@ type Handler struct {
 	privacyService      *applicationprivacy.Service
 	mediaService        *applicationcommerce.MediaService
 	secureCookies       bool
-	templates           *template.Template
 	static              http.Handler
 	previewStatic       http.Handler
 }
@@ -196,32 +192,6 @@ func NewFullHandlerWithPaymentConfigMediaRefundAndRecovery(catalogService *appli
 }
 
 func newHandler(catalogService *applicationcatalog.Service, authService *applicationauth.Service, sessionService *applicationauth.SessionService, commerceCatalog *applicationcommerce.CatalogService, cartService *applicationcommerce.CartService, orderService *applicationcommerce.OrderService, paymentService *applicationpayment.OrderService, searchService *applicationcatalog.SearchService, privacyService *applicationprivacy.Service, secureCookies bool) (*Handler, error) {
-	templates, err := template.New("pages").Funcs(template.FuncMap{
-		"money": func(cents int64) string {
-			return "₹" + strconv.FormatFloat(float64(cents)/100, 'f', 2, 64)
-		},
-		"rating": func(value float64) string {
-			return strconv.FormatFloat(value, 'f', 1, 64)
-		},
-		"date": func(value time.Time) string {
-			return value.Local().Format("2 Jan 2006, 15:04")
-		},
-		"urlquery": url.QueryEscape,
-		"productCard": func(product domain.Product, csrfToken string) productCardData {
-			return productCardData{Product: product, CSRFToken: csrfToken}
-		},
-		"hasPermission": func(permissions []string, wanted string) bool {
-			for _, permission := range permissions {
-				if permission == wanted {
-					return true
-				}
-			}
-			return false
-		},
-	}).ParseFS(assets, "templates/*.html", "templates/partials/*.html")
-	if err != nil {
-		return nil, err
-	}
 	staticFS, err := fs.Sub(assets, "static")
 	if err != nil {
 		return nil, err
@@ -237,7 +207,6 @@ func newHandler(catalogService *applicationcatalog.Service, authService *applica
 		searchService:   searchService,
 		privacyService:  privacyService,
 		secureCookies:   secureCookies,
-		templates:       templates,
 		static:          http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))),
 		previewStatic:   http.StripPrefix("/assets/", http.FileServer(http.FS(previewassets.FS))),
 	}, nil
@@ -646,11 +615,8 @@ func (h *Handler) policy(w http.ResponseWriter, title, message string) {
 }
 
 func (h *Handler) render(w http.ResponseWriter, status int, name string, data pageData) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(status)
-	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
-		return
-	}
+	request := &http.Request{Method: http.MethodGet}
+	h.renderTempl(w, request, status, name, data)
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {

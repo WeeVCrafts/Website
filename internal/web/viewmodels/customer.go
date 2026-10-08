@@ -3,6 +3,8 @@ package viewmodels
 import (
 	"net/url"
 	"time"
+
+	domainprivacy "github.com/wecratfs/commerce/internal/domain/privacy"
 )
 
 type Product struct {
@@ -83,6 +85,7 @@ type Order struct {
 	Number, Status, State, Payment, Date          string
 	ReturnStatus, RefundStatus                    string
 	Total                                         string
+	Subtotal, Shipping, Discount                  string
 	Items                                         []CartItem
 	CanCancel, CanRequestReturn, CanRequestRefund bool
 }
@@ -101,12 +104,16 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	Sessions                                        []CustomerSession
+	Notifications                                   []CustomerNotification
 	Route, Title, Query, Category, Sort, Notice     string
 	CouponCode                                      string
 	Brand, Tagline, Description                     string
 	UserName, UserEmail, MemberSince                string
 	RoleLabel, PortalLabel                          string
+	PublicURL                                       string
 	PaymentMode, PaymentPublicKey                   string
+	AccountUserID                                   int64
 	PaymentReady                                    bool
 	NoPaymentDemo                                   bool
 	CanCreateSupport, CanFollowSeller               bool
@@ -129,6 +136,7 @@ type CustomerPage struct {
 	Returns                                         []Return
 	SupportTickets                                  []CustomerSupportTicket
 	NotificationPreferences                         NotificationPreferences
+	PrivacyCenter                                   domainprivacy.Center
 	PendingReviews, WrittenReviews, ProductReviews  []ProductReview
 	ReviewCount                                     int
 	Address                                         Address
@@ -138,4 +146,13 @@ type CustomerPage struct {
 	CheckoutStep                                    int
 	Authenticated, Mock                             bool
 	Now                                             time.Time
+}
+
+type CustomerSession struct {
+	ID, Browser, IPAddress, LastSeen, Expires string
+	Current                                   bool
+}
+
+type CustomerNotification struct {
+	Title, Body, Date string
 }

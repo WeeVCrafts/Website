@@ -20,6 +20,30 @@ templ Header(p viewmodels.CustomerPage) {
         </nav>
       </div>
     </div>
+    if p.Category != "" {
+      <nav class="category-nav container" aria-label="Category navigation">
+        if p.Category == "natural-care" {
+          <a href="/category/natural-care" aria-current="page">Natural care</a>
+        } else {
+          <a href="/category/natural-care">Natural care</a>
+        }
+        if p.Category == "slow-living" {
+          <a href="/category/slow-living" aria-current="page">Slow living</a>
+        } else {
+          <a href="/category/slow-living">Slow living</a>
+        }
+        if p.Category == "home-wellbeing" {
+          <a href="/category/home-wellbeing" aria-current="page">Home wellbeing</a>
+        } else {
+          <a href="/category/home-wellbeing">Home wellbeing</a>
+        }
+        if p.Category == "deals" {
+          <a href="/deals" aria-current="page">Deals</a>
+        } else {
+          <a href="/deals">Deals</a>
+        }
+      </nav>
+    }
     <button class="mobile-menu-backdrop" type="button" aria-label="Close mobile navigation" x-show="menu" x-cloak @click="menu=false; $nextTick(() => $refs.menuButton.focus())"></button>
     <nav id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" role="dialog" aria-modal="true" aria-label="Site navigation" x-show="menu" x-cloak>
       <button class="mobile-menu-close" type="button" aria-label="Close navigation" @click="menu=false; $nextTick(() => $refs.menuButton.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
@@ -75,13 +99,13 @@ templ WishlistMutation(p viewmodels.CustomerPage, product viewmodels.Product, re
 }
 
 templ Footer(p viewmodels.CustomerPage) {
-  <section class="trust-strip"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Trusted by <strong>1 Lakh+</strong></b><small>happy customers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">star</span><b>4.8/5</b><small>Average rating</small></div><div><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>10,000+</b><small>Artisans supported</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>100% safe and trusted</small></div><div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><b>Easy Returns</b><small>Hassle-free shopping</small></div><div><span class="material-symbols-outlined" aria-hidden="true">public</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div></section>
+  <section class="trust-strip"><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Crafted in India</b><small>Discover independent makers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">star</span><b>Customer reviews</b><small>Read published product reviews</small></div><div><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Artisan craft</b><small>Explore maker collections</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>Status shown in your orders</small></div><div><span class="material-symbols-outlined" aria-hidden="true">autorenew</span><b>Easy Returns</b><small>See the returns policy</small></div><div><span class="material-symbols-outlined" aria-hidden="true">public</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div></section>
   <footer class="site-footer"><div class="container footer-grid"><div class="footer-brand"><a class="wordmark inverse" href="/"><img class="wordmark-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for Indian arts, crafts and sarees.<br/>Supporting artisans. Preserving traditions.<br/>Building a brighter, more inclusive tomorrow.</p><div class="socials"><span class="material-symbols-outlined" aria-hidden="true">photo_camera</span><span class="material-symbols-outlined" aria-hidden="true">play_circle</span><span class="material-symbols-outlined" aria-hidden="true">alternate_email</span><span class="material-symbols-outlined" aria-hidden="true">language</span></div></div><div><h3>Shop</h3><a href="/categories">All Categories</a><a href="/products?category=arts">Arts</a><a href="/products?category=crafts">Crafts</a><a href="/products?category=sarees">Sarees</a><a href="/products?category=offers">Offers</a><a href="/products">New Arrivals</a></div><div><h3>Help</h3><a href="/orders">Track Order</a><a href="/returns">Returns &amp; Refunds</a><a href="/shipping">Shipping Info</a><a href="/size-guide">Size Guide</a><a href="/faq">FAQs</a><a href="/contact">Contact Us</a></div><div><h3>About</h3><a href="/our-story">Our Story</a><a href="/makers/mithila-arts">Makers</a><a href="/sustainability">Sustainability</a><a href="/press">Press</a><a href="/careers">Careers</a><a href="/seller">Sell on Weevcrafts</a></div><div class="newsletter"><h3>Email preferences</h3><p>Choose whether you want offers, new arrivals and maker stories.</p><a class="newsletter-preferences" href="/account/notifications">Manage notification preferences <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><small>Sign in to save your choices. Email delivery depends on store email settings.</small><small>Made with care in India | A more handmade tomorrow</small></div></div><div class="container footer-bottom"><span>Copyright 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions | Privacy Policy | Cookie Policy</span></div></footer>
 }
 
 templ ProductCard(product viewmodels.Product, showAction bool) {
   <article class="product-card" data-product={ product.Slug } data-action={ showAction }>
-    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ product.ImageURL } alt={ product.Name } loading="lazy" width="640" height="691" srcset={ product.ImageSrcSet } sizes="(max-width: 720px) 50vw, 320px"/></a><button class={ productHeartClass(product.Saved) } type="button" aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button><span class="badge">{ product.Badge }</span></div>
+    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ product.ImageURL } alt={ product.Name } loading="lazy" width="640" height="800" srcset={ product.ImageSrcSet } sizes="(min-width: 1280px) 25vw, 50vw"/></a><button class={ productHeartClass(product.Saved) } type="button" aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button><span class="badge">{ product.Badge }</span></div>
     <div class="product-copy"><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p><div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div><div class="price"><strong>{ product.Price }</strong><del>{ product.CompareAt }</del>
       if product.Discount != "" {
         <mark>{ product.Discount }</mark>
