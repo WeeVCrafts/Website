@@ -182,7 +182,17 @@ func operationsLegacyPath(path string) bool {
 }
 
 func superAdminLegacyPath(path string) bool {
-	return true
+	return knownAdminPage(path)
+}
+
+func knownAdminPage(path string) bool {
+	switch strings.Trim(path, "/") {
+	case "", "dashboard", "sellers", "products", "inventory", "orders", "returns", "finance", "support", "marketing", "analytics", "security",
+		"brands", "customers", "category-management", "commission-rules", "settings", "reviews", "payments", "failed-payments", "refunds", "settlements", "finance-reconciliation",
+		"roles", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health", "seller-approvals", "seller-suspensions":
+		return true
+	}
+	return false
 }
 
 func canonicalAdminPortal(path string) (domainidentity.Role, string, bool) {

@@ -2,6 +2,7 @@ package admin
 
 import (
 "github.com/wecratfs/commerce/web/assets"
+"github.com/wecratfs/commerce/web/components"
   "fmt"
   "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
@@ -61,6 +62,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
               <div class="admin-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>{ p.DataWarning }</div>
             }
             { children... }
+            @components.PortalPagination(p.Pagination)
           </main>
           @AdminFooter(p)
         </div>
@@ -81,25 +83,32 @@ templ Sidebar(p viewmodels.AdminPage) {
         @AdminNav("refunds", "Refunds", "undo", p.NavActive, p.PortalRoot + "/refunds")
         @AdminNav("finance-reconciliation", "Reconciliation", "fact_check", p.NavActive, p.PortalRoot + "/finance-reconciliation")
         @AdminNav("settlements", "Settlements", "account_balance", p.NavActive, p.PortalRoot + "/settlements")
+        @AdminNav("commission-rules", "Commission rules", "percent", p.NavActive, p.PortalRoot + "/commission-rules")
       } else if p.IsOperations {
         @AdminNav("orders", "Orders", "local_shipping", p.NavActive, p.PortalRoot + "/orders")
         @AdminNav("returns", "Returns", "undo", p.NavActive, p.PortalRoot + "/returns")
       } else {
         @AdminNav("dashboard", "Dashboard", "space_dashboard", p.NavActive, p.PortalRoot)
         @AdminNav("sellers", "Sellers", "groups", p.NavActive, p.PortalRoot + "/sellers")
-        @AdminNav("products", "Products & Categories", "inventory_2", p.NavActive, p.PortalRoot + "/products")
+        @AdminNav("products", "Products", "inventory_2", p.NavActive, p.PortalRoot + "/products")
+        @AdminNav("brands", "Brands", "store", p.NavActive, p.PortalRoot + "/brands")
+        @AdminNav("category-management", "Categories", "category", p.NavActive, p.PortalRoot + "/category-management")
         @AdminNav("inventory", "Inventory", "warehouse", p.NavActive, p.PortalRoot + "/inventory")
         @AdminNav("orders", "Orders", "local_shipping", p.NavActive, p.PortalRoot + "/orders")
         @AdminNav("returns", "Returns", "undo", p.NavActive, p.PortalRoot + "/returns")
-        @AdminNav("support", "Customers & Support", "support_agent", p.NavActive, p.PortalRoot + "/support")
+        @AdminNav("customers", "Customers", "people", p.NavActive, p.PortalRoot + "/customers")
+        @AdminNav("support", "Support", "support_agent", p.NavActive, p.PortalRoot + "/support")
+        @AdminNav("reviews", "Reviews", "reviews", p.NavActive, p.PortalRoot + "/reviews")
         @AdminNav("marketing", "Marketing & Content", "campaign", p.NavActive, p.PortalRoot + "/marketing")
         if p.CanFinance {
           @AdminNav("finance", "Finance", "payments", p.NavActive, p.PortalRoot + "/finance")
+          @AdminNav("commission-rules", "Commission rules", "percent", p.NavActive, p.PortalRoot + "/commission-rules")
         }
         if p.CanSecurity {
           @AdminNav("security", "Security & Roles", "admin_panel_settings", p.NavActive, p.PortalRoot + "/security")
         }
-        @AdminNav("analytics", "Analytics & Settings", "settings", p.NavActive, p.PortalRoot + "/analytics")
+        @AdminNav("analytics", "Analytics & Health", "monitoring", p.NavActive, p.PortalRoot + "/analytics")
+        @AdminNav("settings", "Settings", "settings", p.NavActive, p.PortalRoot + "/settings")
       }
     </nav>
     <div class="admin-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><h2>Empowering<br/>Indian Crafts<br/>Across India</h2><p>More artisans.<br/>Brighter futures.</p><a href={ p.PortalRoot + "/analytics" }>View marketplace <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
@@ -119,7 +128,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
     <a class="admin-header-brand" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
     <span class="admin-portal-pill">{ p.PortalLabel }</span>
-    <form class="admin-search" action={ adminPath(p.Active) } method="get">
+    <form class="admin-search" action={ p.PortalRoot + "/" + p.NavActive } method="get">
       <label class="sr-only" for="admin-search">Search the admin portal</label>
       <span class="material-symbols-outlined" aria-hidden="true">search</span>
       <input id="admin-search" name="q" value={ p.Query } placeholder="Search orders, sellers, products, customers or tickets..."/>

@@ -92,8 +92,8 @@ func legacyPage(name string, data pageData) viewmodels.LegacyPage {
 		Title: title, Error: data.Error, Notice: data.Notice, FormEmail: data.FormEmail,
 		CSRFToken: data.CSRFToken, Customer: legacyCustomerPage(name, data),
 		Products: legacyProducts(data.Products), Product: legacyProduct(data.Product),
-		Lines: legacyLines(name, data),
-		CartCount: data.Cart.ItemCount,
+		Lines:          legacyLines(name, data),
+		CartCount:      data.Cart.ItemCount,
 		ManagedProduct: legacyManagedProduct(data.ManagedProduct), Staff: legacyStaff(data.StaffMembers),
 	}
 }
@@ -132,12 +132,17 @@ func legacyCustomerPage(name string, data pageData) viewmodels.CustomerPage {
 		Sort: data.SearchSort, Page: data.SearchPage, Pages: pages, Brand: data.Brand, Tagline: data.Tagline, Description: data.Description,
 		CSRFToken: data.CSRFToken, Authenticated: data.Authenticated, Notice: data.Notice,
 		AccountUserID: data.AccountUserID,
-		Products: products, Product: legacyProduct(data.Product), Cart: legacyCartItems(data.Cart),
+		Products:      products, Product: legacyProduct(data.Product), Cart: legacyCartItems(data.Cart),
 		CartCount: data.Cart.ItemCount, SavedProducts: legacyWishlist(data.Wishlist),
 		WishlistCount: len(data.Wishlist), Orders: legacyOrders(data.Orders),
 		PrivacyCenter: data.PrivacyCenter,
-		Brands: legacyBrands(data.Brands),
-		Filters: url.Values{"q": {data.SearchQuery}, "category": {data.SearchCategory}, "sort": {data.SearchSort}},
+		Brands:        legacyBrands(data.Brands),
+		Filters:       url.Values{"q": {data.SearchQuery}, "category": {data.SearchCategory}, "sort": {data.SearchSort}},
+	}
+	// This transport receives a selected filter but no category directory.
+	// Keep it as a removable checkbox; the live storefront provides the full directory.
+	if category != "" && category != "offers" {
+		page.Categories = []viewmodels.Category{{Slug: category, Name: category}}
 	}
 	if page.CartCount == 0 {
 		for _, item := range page.Cart {
@@ -280,19 +285,19 @@ func legacyLines(name string, data pageData) []string {
 		return []string{"Seller support"}
 	}
 	labels := map[string]string{
-		"admin-sellers": "Seller applications",
-		"admin-audit": "Audit log",
-		"seller-audit": "Seller activity",
-		"roles": "Role management",
-		"admin-orders": "Marketplace orders",
-		"admin-brands": "Brands and categories",
-		"admin-customers": "Customer directory",
-		"finance": "Payments and refunds",
-		"seller-orders": "Seller orders",
+		"admin-sellers":    "Seller applications",
+		"admin-audit":      "Audit log",
+		"seller-audit":     "Seller activity",
+		"roles":            "Role management",
+		"admin-orders":     "Marketplace orders",
+		"admin-brands":     "Brands and categories",
+		"admin-customers":  "Customer directory",
+		"finance":          "Payments and refunds",
+		"seller-orders":    "Seller orders",
 		"seller-analytics": "Seller analytics",
-		"support": "Support queue",
-		"seller-support": "Seller support",
-		"shipping": "Shipping details",
+		"support":          "Support queue",
+		"seller-support":   "Seller support",
+		"shipping":         "Shipping details",
 	}
 	if label := labels[name]; label != "" {
 		return []string{label}
@@ -329,4 +334,3 @@ func legacyPaymentState(data pageData) string {
 	}
 	return "pending"
 }
-

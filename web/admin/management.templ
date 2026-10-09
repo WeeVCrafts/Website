@@ -1,0 +1,113 @@
+package admin
+
+import (
+ "fmt"
+ "strconv"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+ "github.com/wecratfs/commerce/internal/ports"
+)
+
+templ Management(m viewmodels.ManagementPage) {
+ @AdminDocument(m.Admin) {
+  <section class="admin-panel">
+   <div class="panel-heading"><h2>{ m.Admin.Title }</h2></div>
+   if m.Section == "settings" {
+    <p>These details appear on customer contact and shipping pages. Saved changes apply immediately.</p>
+    <form method="post" action={ m.Action + "/save" } class="admin-product-editor-form">
+     @ManagementToken(m.Admin.CSRFToken)
+     <label>Support email<input type="email" name="support_email" value={ m.Settings.SupportEmail } maxlength="254" required/></label>
+     <label>Shipping information<textarea name="shipping_information" minlength="10" maxlength="3000" required>{ m.Settings.ShippingInformation }</textarea></label>
+     @ManagementReason()
+     <button class="admin-button primary" type="submit">Save customer details</button>
+    </form>
+   } else {
+    <form method="get" action={ m.Action }><label>Search all records<input name="q" value={ m.Query } placeholder="Name, email or slug"/></label><button class="admin-button secondary" type="submit">Search</button><a href={ m.Action }>Clear</a></form>
+    <p>{ strconv.Itoa(m.Total) } matching records. Page { strconv.Itoa(m.Page) }.</p>
+    if m.Section == "customers" {
+     <div class="admin-table wide"><div class="table-head"><span>Customer</span><span>Email</span><span>Status</span><span>Orders</span></div>
+      for _,record := range m.Records {
+       <div class="table-row"><span>{ record.Name }</span><span>{ record.Email }</span><span>{ record.Status }</span><span>{ strconv.FormatInt(record.Orders,10) }</span></div>
+      }
+     </div>
+    } else {
+     if m.Section == "commission-rules" {
+      <p>100 basis points = 1%. Active category rules override active marketplace rules. Within each scope, newest rule wins. Changes apply to future payment captures; existing ledger entries retain their captured commission.</p>
+     } else {
+      <p>URL slugs stay fixed during edits. Records in use cannot be deleted.</p>
+     }
+     <details><summary>Create record</summary>
+      <form class="admin-product-editor-form" method="post" action={ m.Action + "/create" }>
+       @ManagementToken(m.Admin.CSRFToken)
+       @ManagementFields(m.Section,ports.ManagementRecord{},true)
+       @ManagementReason()
+       <button class="admin-button primary" type="submit">Create</button>
+      </form>
+     </details>
+     for _,record := range m.Records {
+      <article class="admin-panel"><h3>{ record.Name }</h3>
+       if m.Section == "commission-rules" {
+        <p>{ fmt.Sprintf("%.2f%%",float64(record.BasisPoints)/100) }
+          if record.Category == "" {
+           <span> · All categories</span>
+          } else {
+           <span> · { record.Category }</span>
+          }
+          if record.Active {
+           <span> · Active</span>
+          } else {
+           <span> · Inactive</span>
+          }
+        </p>
+        } else {
+         <p>{ record.ID } · { strconv.FormatInt(record.Products,10) } products</p>
+        }
+       <form class="admin-product-editor-form" method="post" action={ m.Action + "/update" }>
+        @ManagementToken(m.Admin.CSRFToken)
+        <input type="hidden" name="id" value={ record.ID }/>
+        @ManagementFields(m.Section,record,false)
+        @ManagementReason()
+        <button class="admin-button secondary" type="submit">Save record</button>
+       </form>
+       <details><summary>Delete record</summary>
+        <form method="post" action={ m.Action + "/delete" }>
+         @ManagementToken(m.Admin.CSRFToken)
+         <input type="hidden" name="id" value={ record.ID }/>
+         @ManagementReason()
+         <button class="admin-button danger" type="submit">Delete</button>
+        </form>
+       </details>
+      </article>
+     }
+    }
+     if len(m.Records) == 0 {
+      <p>No matching records.</p>
+     }
+    <nav aria-label="Directory pages">
+      if m.PreviousURL != "" {
+       <a class="admin-button secondary" href={ m.PreviousURL }>Previous page</a>
+      }
+      if m.NextURL != "" {
+       <a class="admin-button secondary" href={ m.NextURL }>Next page</a>
+      }
+    </nav>
+   }
+  </section>
+ }
+}
+
+templ ManagementToken(token string) {
+ <input type="hidden" name="csrf_token" value={ token }/>
+}
+templ ManagementReason() {
+ <label>Audit reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Reason for this change"/></label>
+}
+templ ManagementFields(section string,record ports.ManagementRecord,create bool) {
+ <label>Name<input name="name" value={ record.Name } maxlength="120" required/></label>
+ if section == "commission-rules" {
+  <label>Category slug<input name="category" value={ record.Category } placeholder="Leave blank for all categories"/></label>
+  <label>Commission in basis points<input type="number" name="basis_points" min="0" max="10000" step="1" value={ strconv.Itoa(record.BasisPoints) } required/></label>
+  <label><input type="checkbox" name="active" value="true" checked?={ record.Active || create }/>Active</label>
+  } else if create {
+   <label>URL slug<input name="id" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="120" required placeholder="e.g. home-decor"/></label>
+  }
+}

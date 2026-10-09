@@ -100,10 +100,10 @@ templ InfoPage(p viewmodels.CustomerPage) {
 templ FaqContent() {
   <div class="faq-list">
     <details open><summary>How do I know a product is handmade?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Each maker profile shares their location, process and product story.</p></details>
-    <details><summary>How long does delivery take?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Most domestic orders arrive in 4–6 days after dispatch. The estimate is shown on the product page.</p></details>
+    <details><summary>How long does delivery take?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Check the product delivery estimate and your saved order tracking updates. Current marketplace instructions appear in <a href="/shipping">shipping information</a>.</p></details>
     <details><summary>Can I return an order?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Eligible items can be requested for return within the policy window.</p></details>
     <details><summary>Do you deliver in India?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>We deliver to serviceable PIN codes across India. Check delivery availability on the product page or at checkout.</p></details>
-    <details><summary>How can I sell on Weevcrafts?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Start with the seller onboarding preview and prepare your verification documents.</p></details>
+    <details><summary>How can I sell on Weevcrafts?<span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary><p>Start your seller application and prepare your verification documents.</p></details>
   </div>
   <section class="info-contact-strip"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Still need a hand?</h2><p>Our customer care team can help with an order, return or product question.</p></div><a class="primary-button" href="/contact">Contact us</a></section>
 }
@@ -127,7 +127,7 @@ templ ContactContent(p viewmodels.CustomerPage) {
         <a class="primary-button" href="/login?next=%2Fcontact">Sign in to contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
       }
     </section>
-    <aside class="info-side-list"><div><span class="material-symbols-outlined" aria-hidden="true">schedule</span><h3>Customer care hours</h3><p>Monday–Saturday<br/>9:00 AM–7:00 PM IST</p></div><div><span class="material-symbols-outlined" aria-hidden="true">mail</span><h3>Email</h3><p>hello@weevcrafts.com<br/>Usually answered within 24 hours.</p></div><div><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>Quick answers</h3><p>Browse the <a href="/faq">FAQs</a> first.</p></div></aside>
+    <aside class="info-side-list"><div><span class="material-symbols-outlined" aria-hidden="true">schedule</span><h3>Customer care hours</h3><p>Monday–Saturday<br/>9:00 AM–7:00 PM IST</p></div><div><span class="material-symbols-outlined" aria-hidden="true">mail</span><h3>Email</h3><p>{ p.SupportEmail }</p></div><div><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>Quick answers</h3><p>Browse the <a href="/faq">FAQs</a> first.</p></div></aside>
   </div>
 }
 
@@ -138,7 +138,7 @@ templ StoryContent() {
 templ PolicyContent(p viewmodels.CustomerPage) {
   <article class="utility-card policy-copy">
     if p.Route == "/shipping" {
-      @PolicySection("Domestic delivery", "Standard delivery is usually 4–6 days after dispatch. The order page shows the latest estimate and tracking milestones.")
+      @PolicySection("Domestic delivery", p.ShippingInformation)
       @PolicySection("Delivery coverage", "Orders are delivered only to serviceable PIN codes within India.")
       @PolicySection("Careful packing", "Fragile objects receive protective packing, while textiles are folded and wrapped to help them arrive ready to enjoy.")
     } else if p.Route == "/size-guide" {
@@ -155,7 +155,7 @@ templ PolicyContent(p viewmodels.CustomerPage) {
       @PolicySection("Questions or grievances", "Contact our team with a privacy question and we will route it correctly.")
     } else {
       @PolicySection("Start with a story", "Explore categories, browse maker storefronts and choose pieces that feel right for your home or wardrobe.")
-      @PolicySection("Shop with confidence", "Every preview includes maker information, product details, delivery expectations and care guidance.")
+      @PolicySection("Shop with confidence", "Product listings include maker information, product details, delivery expectations and care guidance.")
       @PolicySection("Need anything else?", "Read the FAQs or contact our team.")
     }
   </article>

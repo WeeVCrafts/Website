@@ -3,6 +3,7 @@ package pages
 import (
 	"bytes"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -65,6 +66,17 @@ func TestDocumentRendersEscapedSEOMetadata(t *testing.T) {
 		t.Fatalf("render document: %v", err)
 	}
 	output := body.String()
+	script := regexp.MustCompile(`<script[^>]*type="application/ld\+json"[^>]*>([\s\S]*?)</script>`).FindStringSubmatch(output)
+	if len(script) != 2 {
+		t.Fatal("rendered product schema is missing")
+	}
+	var schema map[string]any
+	if err := json.Unmarshal([]byte(script[1]), &schema); err != nil {
+		t.Fatalf("rendered product schema must contain JSON: %v", err)
+	}
+	if schema["name"] != "A & B" || schema["@type"] != "Product" {
+		t.Fatalf("rendered product schema = %#v", schema)
+	}
 	for _, want := range []string{`name="robots" content="index,follow"`, `rel="canonical"`, `property="og:type" content="product"`, `application/ld+json`, `&amp;`, `&lt;`} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("document missing %q: %s", want, output)

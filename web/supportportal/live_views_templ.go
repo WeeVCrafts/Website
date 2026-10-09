@@ -62,7 +62,7 @@ func LiveDashboard(p viewmodels.SupportPortalPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(p.Conversations) == 0 {
+			if len(p.Conversations) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"support-empty-state\" role=\"status\"><h2>No replies yet</h2><p>Replies sent to customers will appear here.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -489,7 +489,7 @@ func LiveSupportCaseTable(p viewmodels.SupportPortalPage) templ.Component {
 			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if len(p.Cases) == 0 {
+		if len(p.Cases) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"support-empty-state\" role=\"status\"><h2>No support cases</h2><p>No tickets match the current search. New customer support requests will appear here.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -871,7 +871,7 @@ func LiveCustomers(p viewmodels.SupportPortalPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(p.Directory) == 0 {
+			if len(p.Directory) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div class=\"support-empty-state\" role=\"status\"><h2>No customer context</h2><p>Customers appear here when a support ticket is created.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -995,7 +995,7 @@ func LiveOrders(p viewmodels.SupportPortalPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(p.Cases) == 0 {
+			if len(p.Cases) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<div class=\"support-empty-state\" role=\"status\"><h2>No linked orders</h2><p>Orders attached to support tickets will appear here.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

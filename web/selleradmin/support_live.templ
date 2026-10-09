@@ -1,0 +1,72 @@
+package selleradmin
+
+import "strconv"
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ SupportLive(p viewmodels.SellerSupportPage) {
+ @Document(p.Portal) {
+  <section class="seller-panel">
+   <h2>Create a support request</h2>
+   <form action="/seller-admin/support/create" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/>
+    <label>Seller order number (optional)<input name="order_number" maxlength="120" placeholder="Order containing your products"/></label>
+    <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
+    <label>Message<textarea name="message" minlength="10" maxlength="4000" rows="5" required></textarea></label>
+    <label>Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple/></label>
+    <p>Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
+    <button class="seller-button primary" type="submit">Send request</button>
+   </form>
+  </section>
+  <section class="seller-panel">
+   <h2>{ strconv.Itoa(p.Total) } support requests</h2>
+   <form action="/seller-admin/support" method="get">
+    <label>Search requests<input name="q" value={ p.Portal.Query }/></label>
+    <label>Status<select name="status">
+     <option value="" selected?={ p.Status == "" }>All statuses</option>
+     <option value="open" selected?={ p.Status == "open" }>Open</option>
+     <option value="in_progress" selected?={ p.Status == "in_progress" }>In progress</option>
+     <option value="waiting_customer" selected?={ p.Status == "waiting_customer" }>Waiting for your reply</option>
+     <option value="resolved" selected?={ p.Status == "resolved" }>Resolved</option>
+     <option value="closed" selected?={ p.Status == "closed" }>Closed</option>
+    </select></label>
+    <button type="submit" class="seller-button">Apply filters</button>
+   </form>
+   if len(p.Tickets) == 0 {
+    <p>No support requests match these filters.</p>
+   }
+   for _, ticket := range p.Tickets {
+    <article id={ "ticket-" + strconv.FormatInt(ticket.ID,10) } class="seller-panel">
+     <h3>{ ticket.Subject }</h3><p>{ ticket.Number } · { ticket.Status } · { ticket.Created }</p>
+     if ticket.OrderNumber != "" {
+      <p>Order: { ticket.OrderNumber }</p>
+     }
+     for _, message := range ticket.Messages {
+      <section><h4>{ message.Author } · { message.Role }</h4><time>{ message.Created }</time><p style="white-space:pre-wrap">{ message.Body }</p>
+       for _, attachment := range message.Attachments {
+        <a href={ templ.SafeURL(attachment.URL) }>{ attachment.FileName }</a>
+       }
+      </section>
+     }
+     if ticket.Status != "closed" {
+      <form action="/seller-admin/support/reply" method="post" enctype="multipart/form-data">
+       <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID,10) }/>
+       <label>Reply<textarea name="message" rows="4" maxlength="4000" required></textarea></label>
+       <label>Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple/></label>
+       <button type="submit" class="seller-button primary">Send reply</button>
+      </form>
+     } else {
+      <p>This request is closed. Create a new request for further help.</p>
+     }
+    </article>
+   }
+   <nav aria-label="Support pagination">
+    if p.PreviousURL != "" {
+     <a href={ templ.SafeURL(p.PreviousURL) }>Previous</a>
+    }
+    if p.NextURL != "" {
+     <a href={ templ.SafeURL(p.NextURL) }>Next</a>
+    }
+   </nav>
+  </section>
+ }
+}

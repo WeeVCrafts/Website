@@ -723,7 +723,7 @@ test("super admin logout and user lifecycle work end to end", async ({ browser }
     await admin.goto("/super-admin/security");
     await expect(admin.getByRole("button", { name: "Log out" })).toBeVisible();
     await admin.getByRole("button", { name: "Log out" }).click();
-    await expect(admin).toHaveURL("http://127.0.0.1:8080/");
+    await expect(admin).toHaveURL(new URL("/", target).href);
     await admin.goto("/super-admin/security");
     await expect(admin).toHaveURL(/\/login\?/);
     await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
@@ -1563,7 +1563,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     expect(duplicateReview.status()).toBe(409);
 
     await marketplace.goto("/marketplace-admin/reviews");
-    const reviewCard = marketplace.locator("article.rounded-2xl").filter({ hasText: reviewTitle });
+    const reviewCard = marketplace.getByRole("article").filter({ hasText: reviewTitle });
     await expect(reviewCard).toBeVisible();
     await expect(reviewCard).toContainText("Verified purchase");
     const approveReview = marketplace.waitForResponse(response => response.url().includes("/marketplace-admin/reviews/status") && response.request().method() === "POST");
@@ -1593,6 +1593,12 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await operations.goto(`/operations-portal/returns?q=${encodeURIComponent(orderNumber)}`);
     const approvedReturn = operations.locator(".portal-return-item").filter({ hasText: orderNumber });
     await expect(approvedReturn).toContainText("approved");
+    await customer.goto("/returns");
+    const customerReturn = customer.locator("article.return-card").filter({ hasText: orderNumber });
+    await customerReturn.getByRole("link", { name: "Print return authorization" }).click();
+    await expect(customer.getByRole("heading", { name: "Return authorization slip" })).toBeVisible();
+    await expect(customer.locator(".return-slip")).toContainText(orderNumber);
+    await expect(customer.locator(".return-slip")).toContainText(shippingRecipient);
     await approvedReturn.getByRole("button", { name: "Mark returned order received" }).click();
 
     await customer.goto(`/orders/${orderNumber}`);

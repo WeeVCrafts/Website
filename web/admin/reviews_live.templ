@@ -1,0 +1,43 @@
+package admin
+
+import "fmt"
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalReviews(p viewmodels.AdminPage) {
+  @AdminDocument(p) {
+    <section class="admin-panel">
+      <div class="panel-heading"><div><h2>Review moderation</h2><p>Customer feedback from delivered purchases. Decisions are saved and audited.</p></div></div>
+      if len(p.Reviews) == 0 {
+        @AdminTableEmpty("No customer reviews to moderate", "Reviews appear after customers submit feedback for delivered purchases.")
+      }
+      for _, item := range p.Reviews {
+        <article class="admin-panel">
+          <p>Review #{ item.ID } · { item.Date }</p>
+          <h3>{ item.Title } ({ fmt.Sprintf("%d/5", item.Rating) })</h3>
+          <p>{ item.Body }</p><p>{ item.Customer } · { item.Product } · { item.Seller }</p>
+          if item.VerifiedPurchase {
+            <p>Verified purchase</p>
+          }
+          <mark class={ "status " + item.Status }>{ item.Status }</mark>
+          if item.Status == "pending" {
+            <div class="action-row">
+              <form method="post" action={ p.PortalRoot + "/reviews/status" }>
+                <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                <input type="hidden" name="review_id" value={ item.ID }/>
+                <input type="hidden" name="decision" value="published"/>
+                <button class="admin-button primary" type="submit">Approve and publish</button>
+              </form>
+              <form method="post" action={ p.PortalRoot + "/reviews/status" }>
+                <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+                <input type="hidden" name="review_id" value={ item.ID }/>
+                <input type="hidden" name="decision" value="rejected"/>
+                <label>Reason<input name="reason" minlength="4" maxlength="1000" required/></label>
+                <button class="admin-button secondary" type="submit">Reject</button>
+              </form>
+            </div>
+          }
+        </article>
+      }
+    </section>
+  }
+}

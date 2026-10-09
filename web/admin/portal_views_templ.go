@@ -366,7 +366,7 @@ func PortalSellers(p viewmodels.AdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if len(p.Sellers) == 0 {
+			if len(p.Sellers) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here when an account starts onboarding.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -822,7 +822,7 @@ func PortalProducts(p viewmodels.AdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if len(p.Products) == 0 {
+			if len(p.Products) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = AdminTableEmpty("No products are available.", "Seller product submissions will appear here for review.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1878,7 +1878,7 @@ func PortalInventory(p viewmodels.AdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if len(p.Inventory) == 0 {
+			if len(p.Inventory) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = AdminTableEmpty("No active product variants are available.", "Inventory will appear after sellers create products and variants.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -2262,7 +2262,7 @@ func PortalSupport(p viewmodels.AdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if len(p.SupportCases) == 0 {
+			if len(p.SupportCases) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = AdminTableEmpty("No support cases are open.", "New customer requests will appear in the support queue.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -2841,7 +2841,7 @@ func PortalMarketing(p viewmodels.AdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if len(p.Campaigns) == 0 {
+			if len(p.Campaigns) == 0 && p.DataWarning == "" {
 				templ_7745c5c3_Err = AdminTableEmpty("No promotions are configured.", "Create a draft above to set up a coupon campaign.").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -3121,7 +3121,7 @@ func PortalProductQueue(p viewmodels.AdminPage) templ.Component {
 				}
 			}
 		}
-		if !hasPendingProducts(p.Products) {
+		if !hasPendingProducts(p.Products) && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No products are waiting for review.", "New submissions from sellers will appear here.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -3240,7 +3240,7 @@ func PortalSellerList(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.Sellers) == 0 {
+		if len(p.Sellers) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here after onboarding.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -3359,7 +3359,7 @@ func PortalOrderList(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.Orders) == 0 {
+		if len(p.Orders) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -3615,7 +3615,7 @@ func PortalReturnList(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.Returns) == 0 {
+		if len(p.Returns) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No return requests are open.", "Customer return requests will appear in this queue.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -3959,7 +3959,7 @@ func PortalSettlementTable(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.Settlements) == 0 {
+		if len(p.Settlements) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No settlement records yet.", "Create a batch after captured seller orders appear in the ledger.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -4078,7 +4078,7 @@ func PortalTransactionTable(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.Transactions) == 0 {
+		if len(p.Transactions) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No payment attempts yet.", "Payment records will appear here after a customer starts checkout.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -4188,7 +4188,7 @@ func PortalAuditList(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if len(p.AuditEntries) == 0 {
+		if len(p.AuditEntries) == 0 && p.DataWarning == "" {
 			templ_7745c5c3_Err = AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

@@ -95,6 +95,7 @@ type PaymentActivity struct {
 }
 
 type Return struct {
+	CanPrintLabel                                                     bool
 	ID, Status, Reason, Requested, ProductName, ImageURL, OrderNumber string
 	Amount                                                            string
 }
@@ -104,6 +105,7 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	SupportEmail, ShippingInformation               string
 	Sessions                                        []CustomerSession
 	Notifications                                   []CustomerNotification
 	Route, Title, Query, Category, Sort, Notice     string

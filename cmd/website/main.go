@@ -265,6 +265,12 @@ func main() {
 	}
 	mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
+		"database": pool.Ping,
+		"redis":    func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },
+		"search":   searchHealthProbe(cfg.MeiliAddress),
+		"storage":  mediaStorage.CheckHealth,
+	})
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)

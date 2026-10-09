@@ -1,0 +1,18 @@
+package components
+
+import "fmt"
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalPagination(p viewmodels.PortalPagination) {
+  if p.Pages > 1 {
+    <nav class="action-row" aria-label="Record pagination" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:1.5rem 0">
+      if p.PreviousURL != "" {
+        <a href={ p.PreviousURL } rel="prev">Previous page</a>
+      }
+      <span>{ fmt.Sprintf("Page %d of %d · %d records", p.Page, p.Pages, p.Total) }</span>
+      if p.NextURL != "" {
+        <a href={ p.NextURL } rel="next">Next page</a>
+      }
+    </nav>
+  }
+}

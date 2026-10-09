@@ -1,6 +1,7 @@
 package selleradmin
 
 import "github.com/wecratfs/commerce/web/assets"
+import "github.com/wecratfs/commerce/web/components"
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
@@ -37,6 +38,7 @@ templ Document(p viewmodels.SellerAdminPage) {
               <div class="seller-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>{ p.DataWarning }</div>
             }
             { children... }
+            @components.PortalPagination(p.Pagination)
           </main>
         </div>
       </div>
@@ -91,6 +93,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
         @SellerNav("analytics", "Analytics", "bar_chart", p.Active, "/seller-admin/analytics")
       }
       if p.CanTeam {
+        @SellerNav("support", "Support", "support_agent", p.Active, "/seller-admin/support")
         <a class="seller-nav-link" href="/seller-admin/settings"><span class="material-symbols-outlined" aria-hidden="true">store</span><span>Store profile</span></a>
       }
       <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>

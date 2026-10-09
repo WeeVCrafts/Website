@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
@@ -40,6 +42,256 @@ type LivePortalHandler struct {
 	supportAttachments *applicationcommerce.SupportAttachmentService
 	fallback           http.Handler
 	assets             http.Handler
+	paymentMode        string
+	runtimeProbes      map[string]func(context.Context) error
+}
+
+// SetRuntimeProbes connects the runtime status page to the configured adapters.
+func (h *LivePortalHandler) SetRuntimeProbes(paymentMode string, probes map[string]func(context.Context) error) {
+	h.paymentMode, h.runtimeProbes = paymentMode, probes
+}
+
+type projectionContextKey struct{}
+type projectionState struct {
+	failed bool
+	pages  map[string]viewmodels.PortalPagination
+}
+
+func projectionRequest(r *http.Request) *http.Request {
+	if _, ok := r.Context().Value(projectionContextKey{}).(*projectionState); ok {
+		return r
+	}
+	return r.WithContext(context.WithValue(r.Context(), projectionContextKey{}, &projectionState{pages: make(map[string]viewmodels.PortalPagination)}))
+}
+
+func recordProjectionError(r *http.Request, err error) {
+	if err == nil || errors.Is(err, pgx.ErrNoRows) {
+		return
+	}
+	if state, ok := r.Context().Value(projectionContextKey{}).(*projectionState); ok {
+		state.failed = true
+	}
+}
+
+type projectionRow struct {
+	pgx.Row
+	request *http.Request
+}
+
+func (row projectionRow) Scan(dest ...any) error {
+	err := row.Row.Scan(dest...)
+	recordProjectionError(row.request, err)
+	return err
+}
+
+type projectionResult struct {
+	pgx.Rows
+	request *http.Request
+}
+
+func (rows projectionResult) Scan(dest ...any) error {
+	err := rows.Rows.Scan(dest...)
+	recordProjectionError(rows.request, err)
+	return err
+}
+func (rows projectionResult) Next() bool {
+	next := rows.Rows.Next()
+	if !next {
+		recordProjectionError(rows.request, rows.Rows.Err())
+	}
+	return next
+}
+func (h *LivePortalHandler) query(r *http.Request, sql string, args ...any) (pgx.Rows, error) {
+	if h.pool == nil {
+		err := errors.New("PostgreSQL unavailable")
+		recordProjectionError(r, err)
+		return nil, err
+	}
+	rows, err := h.pool.Query(r.Context(), sql, args...)
+	recordProjectionError(r, err)
+	if err != nil {
+		return nil, err
+	}
+	return projectionResult{Rows: rows, request: r}, nil
+}
+func (h *LivePortalHandler) queryRow(r *http.Request, sql string, args ...any) pgx.Row {
+	if h.pool == nil {
+		return failedProjectionRow{request: r}
+	}
+	return projectionRow{Row: h.pool.QueryRow(r.Context(), sql, args...), request: r}
+}
+
+type failedProjectionRow struct{ request *http.Request }
+
+func (row failedProjectionRow) Scan(...any) error {
+	err := errors.New("PostgreSQL unavailable")
+	recordProjectionError(row.request, err)
+	return err
+}
+
+func (h *LivePortalHandler) projectionRows(r *http.Request, key, sql string, args ...any) (pgx.Rows, error) {
+	pageParameter := "page"
+	if key == "seller-ledger" {
+		pageParameter = "ledger_page"
+	}
+	if key == "seller-settlements" {
+		pageParameter = "settlement_page"
+	}
+	page, err := strconv.Atoi(r.URL.Query().Get(pageParameter))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	if page > 1000000 {
+		page = 1000000
+	}
+	const size = 50
+	var total int64
+	if err := h.queryRow(r, "SELECT COUNT(*) FROM ("+sql+") projection_count", args...).Scan(&total); err != nil {
+		return nil, err
+	}
+	pages := int((total + size - 1) / size)
+	if pages < 1 {
+		pages = 1
+	}
+	if page > pages {
+		page = pages
+	}
+	pagination := viewmodels.PortalPagination{Page: page, PageSize: size, Total: total, Pages: pages}
+	link := func(target int) string {
+		u := *r.URL
+		q := u.Query()
+		q.Set(pageParameter, strconv.Itoa(target))
+		u.RawQuery = q.Encode()
+		return u.String()
+	}
+	if page > 1 {
+		pagination.PreviousURL = link(page - 1)
+	}
+	if page < pages {
+		pagination.NextURL = link(page + 1)
+	}
+	if state, ok := r.Context().Value(projectionContextKey{}).(*projectionState); ok {
+		state.pages[key] = pagination
+	}
+	args = append(args, size, (page-1)*size)
+	return h.query(r, sql+fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)-1, len(args)), args...)
+}
+func projectionPagination(r *http.Request, key string) viewmodels.PortalPagination {
+	if state, ok := r.Context().Value(projectionContextKey{}).(*projectionState); ok {
+		return state.pages[key]
+	}
+	return viewmodels.PortalPagination{}
+}
+func projectionWarning(r *http.Request, current string) string {
+	if state, ok := r.Context().Value(projectionContextKey{}).(*projectionState); ok && state.failed {
+		return joinPortalWarning(current, "Live data could not be loaded from PostgreSQL. Refresh the page to try again.")
+	}
+	return current
+}
+
+// denyPortalAccess distinguishes unavailable authorization data from a real
+// permission denial while keeping the request closed to unauthorized access.
+func denyPortalAccess(w http.ResponseWriter, r *http.Request) {
+	if projectionWarning(r, "") != "" {
+		http.Error(w, "Live data could not be loaded from PostgreSQL. Refresh the page to try again.", http.StatusServiceUnavailable)
+		return
+	}
+	http.Error(w, "forbidden", http.StatusForbidden)
+}
+func adminProjectionKey(active, workspace string) string {
+	if workspace == "settlements" {
+		return "admin-settlements"
+	}
+	if workspace == "reviews" {
+		return "admin-reviews"
+	}
+	switch active {
+	case "products":
+		return "admin-products"
+	case "inventory":
+		return "admin-inventory"
+	case "sellers":
+		return "admin-sellers"
+	case "marketing":
+		return "admin-campaigns"
+	case "security":
+		return "admin-audit"
+	case "orders":
+		return "admin-orders"
+	case "returns":
+		return "admin-returns"
+	case "finance":
+		return "admin-transactions"
+	case "support":
+		return "admin-cases"
+	}
+	return ""
+}
+func sellerProjectionKey(active, tab string) string {
+	switch active {
+	case "products":
+		return "seller-products"
+	case "inventory":
+		return "seller-inventory"
+	case "orders":
+		return "seller-orders"
+	case "returns":
+		return "seller-returns"
+	case "earnings":
+		if tab == "settlements" || tab == "payouts" {
+			return "seller-settlements"
+		}
+		return "seller-ledger"
+	}
+	return ""
+}
+func transactionProjectionStatus(r *http.Request) string {
+	if strings.Contains(r.URL.Path, "failed-payments") || r.URL.Query().Get("workspace") == "failed-payments" {
+		return "failed"
+	}
+	if strings.Contains(r.URL.Path, "refunds") || r.URL.Query().Get("workspace") == "refunds" {
+		return "refunded"
+	}
+	return ""
+}
+func sellerOrderProjectionStatus(r *http.Request) string {
+	switch r.URL.Query().Get("tab") {
+	case "new":
+		return "pending"
+	case "ready":
+		return "processing"
+	case "rto":
+		return "rto"
+	case "pending", "processing", "shipped", "delivered":
+		return r.URL.Query().Get("tab")
+	}
+	return ""
+}
+func (h *LivePortalHandler) runtimeConfigs(r *http.Request) []viewmodels.AdminConfig {
+	mode := h.paymentMode
+	if mode == "" {
+		mode = "Not configured"
+	}
+	result := []viewmodels.AdminConfig{{Icon: "payments", Name: "Payment mode", Value: mode, Detail: "Configured payment adapter"}}
+	for _, name := range []string{"database", "redis", "search", "storage"} {
+		item := viewmodels.AdminConfig{Icon: name, Name: strings.ToUpper(name[:1]) + name[1:], Value: "Not inspected", Detail: "No readiness probe configured"}
+		if probe := h.runtimeProbes[name]; probe != nil {
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+			err := probe(ctx)
+			cancel()
+			item.Value = "Ready"
+			item.Detail = "Adapter readiness probe succeeded"
+			if err != nil {
+				item.Value = "Unavailable"
+				item.Detail = "Adapter readiness probe failed"
+				if name == "search" {
+					item.Detail = "Search unavailable; PostgreSQL fallback is used"
+				}
+			}
+		}
+		result = append(result, item)
+	}
+	return result
 }
 
 func (h *LivePortalHandler) SetRoleAdminService(service *applicationauth.RoleAdminService) {
@@ -58,6 +310,10 @@ func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionS
 }
 
 func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = projectionRequest(r)
+	if h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
+		return
+	}
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
 		if serveUploadedAsset(w, r) {
 			return
@@ -105,7 +361,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			isOwner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
 			permissions, assigned := h.sellerPermissions(r, session.UserID)
 			if !assigned || !sellerMutationAllowed(r.URL.Path, isOwner, permissions) {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				denyPortalAccess(w, r)
 				return
 			}
 			h.delegateWithPortalRedirect(w, requestWithPath(r, legacyPath), "/seller-admin")
@@ -118,7 +374,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if !h.hasRole(r, session.UserID, "support_agent") {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				denyPortalAccess(w, r)
 				return
 			}
 			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/status"), "/support-portal")
@@ -131,7 +387,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if !h.hasRole(r, session.UserID, "support_agent") {
-				http.Error(w, "forbidden", http.StatusForbidden)
+				denyPortalAccess(w, r)
 				return
 			}
 			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/reply"), "/support-portal")
@@ -161,7 +417,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		isStaff := hasIdentityRole(roles, domainidentity.RoleSellerStaff)
 		permissions, assigned := h.sellerPermissions(r, session.UserID)
 		if destination == "" || (!isOwner && !isStaff) || !assigned || !sellerPortalAllowed(destination, isOwner, permissions) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		redirectPortalDestination(w, r, destination)
@@ -170,7 +426,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pathUnder(r.URL.Path, "/support") {
 		destination := legacySupportPortalDestination(r.URL.Path)
 		if destination == "" || !h.hasRole(r, session.UserID, "support_agent") {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		redirectPortalDestination(w, r, destination)
@@ -180,7 +436,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		roles := h.userRoles(r, session.UserID)
 		destination := legacyAdminDestination(r.URL.Path, roles)
 		if destination == "" {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		if r.URL.RawQuery != "" {
@@ -192,8 +448,12 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case isCanonicalAdminPortal(r.URL.Path):
 		role, root, _ := canonicalAdminPortal(r.URL.Path)
+		if !knownAdminPage(strings.TrimPrefix(r.URL.Path, root)) && !isSuperAdminProductEditorPath(r.URL.Path) {
+			http.NotFound(w, r)
+			return
+		}
 		if !roleAllowsPortalPath(role, r.URL.Path) || !h.hasRole(r, session.UserID, roleString(role)) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		if role == domainidentity.RoleSuperAdmin && isSuperAdminProductEditorPath(r.URL.Path) {
@@ -208,12 +468,12 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		roles := h.userRoles(r, session.UserID)
 		isOwner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
 		if !isOwner && !hasIdentityRole(roles, domainidentity.RoleSellerStaff) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		permissions, assigned := h.sellerPermissions(r, session.UserID)
 		if !assigned || !sellerPortalAllowed(r.URL.Path, isOwner, permissions) {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		name := h.userDisplayName(r, session.UserID)
@@ -232,7 +492,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.renderSeller(w, r, session.UserID, name, isOwner, permissions, session.CSRFToken)
 	case r.URL.Path == "/support-portal" || strings.HasPrefix(r.URL.Path, "/support-portal/"):
 		if !h.hasRole(r, session.UserID, "support_agent") {
-			http.Error(w, "forbidden", http.StatusForbidden)
+			denyPortalAccess(w, r)
 			return
 		}
 		h.renderSupport(w, r, session.UserID, session.CSRFToken)
@@ -272,6 +532,7 @@ func (h *LivePortalHandler) renderSellerTerms(w http.ResponseWriter, r *http.Req
 	page.Subtitle = "Review the marketplace requirements for your seller account."
 	page.DisplayName = displayName
 	page.UserEmail = h.userEmail(r, userID)
+	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
 	page.RoleLabel = "Seller Staff"
@@ -301,14 +562,18 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	detail := &viewmodels.SellerAdminOrderDetail{}
 	var created time.Time
 	var subtotal int64
-	err := h.pool.QueryRow(r.Context(), `SELECT s.id::text,o.order_number,o.created_at,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss LEFT JOIN seller_users assigned ON assigned.seller_id=ss.id AND assigned.user_id=$2 AND assigned.status='active' WHERE ss.owner_user_id=$2 OR assigned.user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active')) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
+	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss LEFT JOIN seller_users assigned ON assigned.seller_id=ss.id AND assigned.user_id=$2 AND assigned.status='active' WHERE ss.owner_user_id=$2 OR assigned.user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active')) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
 	if err != nil {
-		http.NotFound(w, r)
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.NotFound(w, r)
+		} else {
+			http.Error(w, "order details unavailable", http.StatusServiceUnavailable)
+		}
 		return
 	}
 	detail.Date = created.Format("2 Jan 2006")
 	detail.Subtotal = money(subtotal)
-	rows, err := h.pool.Query(r.Context(), `SELECT oi.product_name,oi.sku,oi.quantity,oi.unit_price_cents,oi.line_total_cents FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id WHERE o.order_number=$1 AND s.id=$2 AND (s.owner_user_id=$3 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$3 AND su.status='active')) ORDER BY oi.id`, number, detail.SellerID, userID)
+	rows, err := h.query(r, `SELECT oi.product_name,oi.sku,oi.quantity,oi.unit_price_cents,oi.line_total_cents FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id WHERE o.order_number=$1 AND s.id=$2 AND (s.owner_user_id=$3 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$3 AND su.status='active')) ORDER BY oi.id`, number, detail.SellerID, userID)
 	if err != nil {
 		http.Error(w, "order details unavailable", http.StatusServiceUnavailable)
 		return
@@ -336,14 +601,14 @@ func (h *LivePortalHandler) updateSellerLowStockThreshold(w http.ResponseWriter,
 		return
 	}
 	if token := r.FormValue("csrf_token"); token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(session.CSRFToken)) != 1 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	roles := h.userRoles(r, session.UserID)
 	owner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
 	permissions, assigned := h.sellerPermissions(r, session.UserID)
 	if !assigned || (!owner && !containsString(permissions, "INVENTORY_WRITE")) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	threshold, err := strconv.Atoi(strings.TrimSpace(r.FormValue("low_stock_threshold")))
@@ -385,21 +650,21 @@ func (h *LivePortalHandler) session(r *http.Request) (struct {
 }
 
 func (h *LivePortalHandler) hasRole(r *http.Request, userID int64, roles ...string) bool {
-	if h.pool == nil || userID <= 0 || len(roles) == 0 {
+	if userID <= 0 || len(roles) == 0 {
 		return false
 	}
 	var allowed bool
-	if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug = ANY($2::text[]))`, userID, roles).Scan(&allowed); err != nil {
+	if err := h.queryRow(r, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug = ANY($2::text[]))`, userID, roles).Scan(&allowed); err != nil {
 		return false
 	}
 	return allowed
 }
 
 func (h *LivePortalHandler) userRoles(r *http.Request, userID int64) []domainidentity.Role {
-	if h.pool == nil || userID <= 0 {
+	if userID <= 0 {
 		return nil
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT role_slug FROM user_roles WHERE user_id=$1 ORDER BY role_slug`, userID)
+	rows, err := h.query(r, `SELECT role_slug FROM user_roles WHERE user_id=$1 ORDER BY role_slug`, userID)
 	if err != nil {
 		return nil
 	}
@@ -419,7 +684,7 @@ func (h *LivePortalHandler) userDisplayName(r *http.Request, userID int64) strin
 		return "Weevcrafts account"
 	}
 	var name string
-	if err := h.pool.QueryRow(r.Context(), `SELECT display_name FROM users WHERE id=$1`, userID).Scan(&name); err != nil || strings.TrimSpace(name) == "" {
+	if err := h.queryRow(r, `SELECT display_name FROM users WHERE id=$1`, userID).Scan(&name); err != nil || strings.TrimSpace(name) == "" {
 		return "Weevcrafts account"
 	}
 	return name
@@ -430,17 +695,17 @@ func (h *LivePortalHandler) userEmail(r *http.Request, userID int64) string {
 		return ""
 	}
 	var email string
-	_ = h.pool.QueryRow(r.Context(), `SELECT email FROM users WHERE id=$1`, userID).Scan(&email)
+	_ = h.queryRow(r, `SELECT email FROM users WHERE id=$1`, userID).Scan(&email)
 	return email
 }
 
 func (h *LivePortalHandler) sellerPermissions(r *http.Request, userID int64) ([]string, bool) {
-	if h.pool == nil || userID <= 0 {
+	if userID <= 0 {
 		return nil, false
 	}
 	var permissions []string
 	var assigned bool
-	err := h.pool.QueryRow(r.Context(), `
+	err := h.queryRow(r, `
 		SELECT COALESCE(su.permissions, ARRAY[]::text[]), (s.owner_user_id=$1 OR su.user_id=$1)
 		FROM sellers s
 		LEFT JOIN seller_users su ON su.seller_id=s.id AND su.user_id=$1 AND su.status='active'
@@ -468,6 +733,7 @@ func (h *LivePortalHandler) renderWorkspaces(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, actorID int64, role domainidentity.Role, root, displayName, csrfToken string) {
+	r = projectionRequest(r)
 	page := h.adminPage(r, actorID, role)
 	page.PortalRoot = root
 	page.SettlementRoot = root
@@ -488,6 +754,10 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		page.NavActive = page.Workspace
 	}
 	page.Stats = h.portalStats(r, role)
+	page.DataWarning = projectionWarning(r, page.DataWarning)
+	if page.DataWarning != "" {
+		page.Stats = nil
+	}
 	if role == domainidentity.RoleFinanceOperator {
 		switch page.Workspace {
 		case "failed-payments":
@@ -508,8 +778,10 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		component = adminpages.PortalProducts(page)
 	case "inventory":
 		page.Inventory = h.adminInventory(r)
+		page.Pagination = projectionPagination(r, "admin-inventory")
 		if page.Inventory == nil {
 			page.DataWarning = joinPortalWarning(page.DataWarning, "The inventory list could not be loaded. Refresh the page to try again.")
+			page.Stats = nil
 		}
 		component = adminpages.PortalInventory(page)
 	case "orders":
@@ -520,7 +792,7 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		component = adminpages.PortalFinance(page)
 	case "support":
 		if page.Workspace == "reviews" {
-			component = adminpages.Workspace(page)
+			component = adminpages.PortalReviews(page)
 		} else {
 			component = adminpages.PortalSupport(page)
 		}
@@ -531,7 +803,8 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	case "security":
 		component = adminpages.PortalSecurity(page)
 	default:
-		component = adminpages.Workspace(page)
+		http.NotFound(w, r)
+		return
 	}
 	h.renderAdminComponent(w, r, component, page)
 }
@@ -574,7 +847,7 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		var id, sellerID, price, compareAt, stock int64
 		var status string
 		var hasCompareAt bool
-		err = h.pool.QueryRow(r.Context(), `
+		err = h.queryRow(r, `
 			SELECT p.id,p.seller_id,COALESCE(s.display_name,''),p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,
 			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,
 			       COALESCE(i.available_quantity,0),p.delivery_label,p.status,p.image_url
@@ -582,7 +855,11 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 			JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.id=$1`, productID).Scan(&id, &sellerID, &form.SellerName, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &form.SKU, &price, &compareAt, &hasCompareAt, &stock, &form.DeliveryLabel, &status, &form.Image)
-		if err != nil || status == "archived" {
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "product details unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		if errors.Is(err, pgx.ErrNoRows) || status == "archived" {
 			http.NotFound(w, r)
 			return
 		}
@@ -646,6 +923,7 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 }
 
 func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, workspace, notice, query string) viewmodels.AdminPage {
+	r = projectionRequest(r)
 	page := viewmodels.AdminPage{ActorID: actorID, Active: active, Workspace: workspace, Title: title(active), Subtitle: "Live marketplace operations backed by PostgreSQL.", Notice: notice, Query: query, Range: "Last 30 Days"}
 	if workspace == "" {
 		page.Title = "Marketplace dashboard"
@@ -655,7 +933,7 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 		page.Subtitle = "Moderate verified customer reviews and publish approved feedback."
 	}
 	page.Stats = h.adminStats(r)
-	page.Bars = []viewmodels.AdminBar{{Label: "Week 1", Value: "Live order value", Height: "35", Color: "red"}, {Label: "Week 2", Value: "Live order value", Height: "50", Color: "green"}, {Label: "Week 3", Value: "Live order value", Height: "65", Color: "peach"}, {Label: "Week 4", Value: "Live order value", Height: "80", Color: "red"}}
+
 	page.Sellers = h.adminSellers(r)
 	page.Products = h.adminProducts(r, portalQuery(query))
 	if page.Products == nil {
@@ -672,12 +950,18 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Campaigns = h.adminCampaigns(r)
 	page.Settlements = h.adminSettlements(r)
 	page.AuditEntries = h.adminAudit(r)
-	page.Configs = []viewmodels.AdminConfig{{Icon: "database", Name: "Authoritative store", Value: "PostgreSQL", Detail: "Business state source"}, {Icon: "search", Name: "Search index", Value: "Meilisearch", Detail: "Disposable read model"}, {Icon: "payments", Name: "Payment mode", Value: "Local demo", Detail: "Deterministic provider"}}
-	filterAdminPage(&page, query)
+
+	page.Configs = h.runtimeConfigs(r)
+	page.Pagination = projectionPagination(r, adminProjectionKey(active, workspace))
+	page.DataWarning = projectionWarning(r, page.DataWarning)
+	if page.DataWarning != "" {
+		page.Stats = nil
+	}
 	if active == "security" && h.roleAdmin != nil {
 		assignments, err := h.roleAdmin.List(r.Context(), actorID, query)
 		if err != nil {
-			page.Notice = "Role assignments could not be loaded."
+			page.DataWarning = joinPortalWarning(page.DataWarning, "Role assignments could not be loaded.")
+			page.Stats = nil
 		} else {
 			page.RoleAssignments = assignments
 		}
@@ -687,11 +971,11 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 
 func (h *LivePortalHandler) adminStats(r *http.Request) []viewmodels.AdminStat {
 	var sellers, products, orders, returns, tickets int64
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM sellers`).Scan(&sellers)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM products`).Scan(&products)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM orders`).Scan(&orders)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM return_requests WHERE status='pending'`).Scan(&returns)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress','waiting_customer')`).Scan(&tickets)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM sellers`).Scan(&sellers)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM products`).Scan(&products)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM orders`).Scan(&orders)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM return_requests WHERE status='pending'`).Scan(&returns)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress','waiting_customer')`).Scan(&tickets)
 	return []viewmodels.AdminStat{{Icon: "groups", Value: strconv.FormatInt(sellers, 10), Label: "Sellers", Delta: "Live", Positive: true, Period: "database"}, {Icon: "inventory_2", Value: strconv.FormatInt(products, 10), Label: "Products", Delta: "Live", Positive: true, Period: "database"}, {Icon: "shopping_bag", Value: strconv.FormatInt(orders, 10), Label: "Orders", Delta: "Live", Positive: true, Period: "database"}, {Icon: "undo", Value: strconv.FormatInt(returns, 10), Label: "Pending returns", Delta: "Live", Period: "database"}, {Icon: "support_agent", Value: strconv.FormatInt(tickets, 10), Label: "Open support cases", Delta: "Live", Period: "database"}}
 }
 
@@ -699,7 +983,7 @@ func (h *LivePortalHandler) portalStats(r *http.Request, role domainidentity.Rol
 	count := func(query string, label, icon string) viewmodels.AdminStat {
 		var value int64
 		if h.pool != nil {
-			_ = h.pool.QueryRow(r.Context(), query).Scan(&value)
+			_ = h.queryRow(r, query).Scan(&value)
 		}
 		return viewmodels.AdminStat{Icon: icon, Value: strconv.FormatInt(value, 10), Label: label, Delta: "Live", Positive: value == 0, Period: "current"}
 	}
@@ -739,14 +1023,13 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 	if h.pool == nil {
 		return nil
 	}
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "admin-inventory", `
 		SELECT p.name, pv.sku, COALESCE(stock.available_quantity, 0), COALESCE(stock.reserved_quantity, 0), pv.price_cents, COALESCE(NULLIF(p.image_url, ''), '')
 		FROM product_variants pv
 		JOIN products p ON p.id = pv.product_id
 		LEFT JOIN inventory_stock stock ON stock.variant_id = pv.id
-		WHERE pv.status = 'active'
-		ORDER BY p.name, pv.id
-		LIMIT 100`)
+		WHERE pv.status = 'active' AND ($1='' OR concat_ws(' ',p.name,pv.sku,CASE WHEN COALESCE(stock.available_quantity,0)<=5 THEN 'low_stock' ELSE 'in_stock' END) ILIKE '%'||$1||'%')
+		ORDER BY p.name, pv.id`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
@@ -788,12 +1071,12 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 	if h.pool == nil {
 		return nil
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT id, display_name, status, created_at FROM sellers WHERE status <> 'closed' ORDER BY id DESC`)
+	rows, err := h.projectionRows(r, "admin-sellers", `SELECT id, display_name, status, created_at FROM sellers WHERE status <> 'closed' AND ($1='' OR concat_ws(' ',display_name,status) ILIKE '%'||$1||'%') ORDER BY id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminSeller
+	result := make([]viewmodels.AdminSeller, 0)
 	for rows.Next() {
 		var id int64
 		var name, status string
@@ -806,7 +1089,7 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 }
 
 func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,p.image_url,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, query)
+	rows, err := h.projectionRows(r, "admin-products", `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,p.image_url,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC`, query)
 	if err != nil {
 		return nil
 	}
@@ -831,12 +1114,12 @@ func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewm
 }
 
 func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder {
-	rows, err := h.pool.Query(r.Context(), `SELECT o.order_number, o.created_at, u.display_name, o.total_cents, o.status FROM orders o JOIN users u ON u.id=o.user_id ORDER BY o.created_at DESC LIMIT 50`)
+	rows, err := h.projectionRows(r, "admin-orders", `SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status FROM orders o JOIN users u ON u.id=o.user_id WHERE ($1='' OR concat_ws(' ',o.order_number,u.display_name,o.status) ILIKE '%'||$1||'%') ORDER BY o.created_at DESC,o.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminOrder
+	result := make([]viewmodels.AdminOrder, 0)
 	for rows.Next() {
 		var number, customer, status string
 		var created time.Time
@@ -849,12 +1132,12 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 }
 
 func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminReturn {
-	rows, err := h.pool.Query(r.Context(), `SELECT rr.id, o.order_number, u.display_name, rr.reason, rr.status, o.total_cents FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id ORDER BY rr.created_at DESC LIMIT 50`)
+	rows, err := h.projectionRows(r, "admin-returns", `SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.status,o.total_cents FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') ORDER BY rr.created_at DESC,rr.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminReturn
+	result := make([]viewmodels.AdminReturn, 0)
 	for rows.Next() {
 		var id int64
 		var number, customer, reason, status string
@@ -867,12 +1150,12 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 }
 
 func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.AdminTransaction {
-	rows, err := h.pool.Query(r.Context(), `SELECT pa.created_at, pa.status, o.order_number, pa.amount_cents, pa.provider FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id ORDER BY pa.created_at DESC LIMIT 50`)
+	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminTransaction
+	result := make([]viewmodels.AdminTransaction, 0)
 	for rows.Next() {
 		var created time.Time
 		var status, reference, provider string
@@ -885,7 +1168,7 @@ func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.Admi
 }
 
 func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSupportCase {
-	rows, err := h.pool.Query(r.Context(), `SELECT t.ticket_number, u.display_name, t.subject, t.priority, t.status, t.created_at FROM support_tickets t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC,t.id DESC`)
+	rows, err := h.projectionRows(r, "admin-cases", `SELECT t.ticket_number,u.display_name,t.subject,t.priority,t.status,t.created_at FROM support_tickets t JOIN users u ON u.id=t.user_id WHERE ($1='' OR concat_ws(' ',t.ticket_number,u.display_name,t.subject,t.priority,t.status) ILIKE '%'||$1||'%') ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
@@ -906,15 +1189,15 @@ func (h *LivePortalHandler) adminCases(r *http.Request) []viewmodels.AdminSuppor
 }
 
 func (h *LivePortalHandler) adminReviews(r *http.Request) []viewmodels.AdminReview {
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "admin-reviews", `
 		SELECT pr.id, pr.product_id, p.name, COALESCE(s.display_name,''), u.display_name,
 		       pr.title, pr.body, pr.status, pr.rating, pr.verified_purchase, pr.created_at
 		FROM product_reviews pr
 		JOIN products p ON p.id=pr.product_id
 		JOIN users u ON u.id=pr.user_id
 		LEFT JOIN sellers s ON s.id=p.seller_id
-		ORDER BY CASE pr.status WHEN 'pending' THEN 0 ELSE 1 END, pr.created_at DESC, pr.id DESC
-		LIMIT 100`)
+		WHERE ($1='' OR concat_ws(' ',p.name,s.display_name,u.display_name,pr.title,pr.body,pr.status) ILIKE '%'||$1||'%')
+		ORDER BY CASE pr.status WHEN 'pending' THEN 0 ELSE 1 END, pr.created_at DESC, pr.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
@@ -953,7 +1236,7 @@ func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *htt
 		return
 	}
 	if r.Method != http.MethodPost || !h.hasRole(r, session.UserID, requiredRole) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -961,7 +1244,7 @@ func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *htt
 		return
 	}
 	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Form.Get("csrf_token"))) != 1 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	action := strings.TrimPrefix(r.URL.Path, root+"/marketing/")
@@ -1202,7 +1485,7 @@ func (h *LivePortalHandler) adminReviewStatus(w http.ResponseWriter, r *http.Req
 		root = "/super-admin"
 	}
 	if !h.hasRole(r, session.UserID, "marketplace_admin", "super_admin") {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -1211,7 +1494,7 @@ func (h *LivePortalHandler) adminReviewStatus(w http.ResponseWriter, r *http.Req
 	}
 	token := r.Form.Get("csrf_token")
 	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(token)) != 1 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	reviewID, err := strconv.ParseInt(strings.TrimSpace(r.Form.Get("review_id")), 10, 64)
@@ -1255,7 +1538,7 @@ func (h *LivePortalHandler) adminReviewStatus(w http.ResponseWriter, r *http.Req
 }
 
 func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCampaign {
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "admin-campaigns", `
 		SELECT p.id,p.name,p.description,COALESCE(c.code,''),p.discount_type,p.discount_value,p.status,
 		       COALESCE(to_char(p.starts_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'Not scheduled'),
 		       COALESCE(to_char(p.ends_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'No end date'),
@@ -1264,12 +1547,13 @@ func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCa
 	       COUNT(pp.product_id),COALESCE(c.usage_limit,p.usage_limit,0),COALESCE(c.usage_count,0)
 		FROM promotions p LEFT JOIN promotion_products pp ON pp.promotion_id = p.id
 		LEFT JOIN LATERAL (SELECT code,usage_limit,usage_count FROM coupons WHERE promotion_id=p.id ORDER BY id LIMIT 1) c ON TRUE
-		GROUP BY p.id,c.code,c.usage_limit,c.usage_count ORDER BY p.id DESC LIMIT 50`)
+		WHERE ($1='' OR concat_ws(' ',p.name,p.description,c.code,p.status) ILIKE '%'||$1||'%')
+		GROUP BY p.id,c.code,c.usage_limit,c.usage_count ORDER BY p.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminCampaign
+	result := make([]viewmodels.AdminCampaign, 0)
 	for rows.Next() {
 		var item viewmodels.AdminCampaign
 		var value int64
@@ -1296,18 +1580,19 @@ func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCa
 }
 
 func (h *LivePortalHandler) adminSettlements(r *http.Request) []viewmodels.AdminSettlement {
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "admin-settlements", `
 		SELECT ss.id,s.display_name,ss.reference,ss.gross_cents,ss.commission_cents,ss.net_cents,ss.status,
 		       ss.period_start,ss.period_end,
 	       COUNT(DISTINCT sl.order_id) FILTER (WHERE sl.entry_type='sale')
 		FROM seller_settlements ss JOIN sellers s ON s.id=ss.seller_id
 		LEFT JOIN seller_ledger sl ON sl.settlement_id=ss.id
-		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC LIMIT 50`)
+ WHERE ($1='' OR concat_ws(' ',s.display_name,ss.reference,ss.status) ILIKE '%'||$1||'%')
+		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminSettlement
+	result := make([]viewmodels.AdminSettlement, 0)
 	for rows.Next() {
 		var item viewmodels.AdminSettlement
 		var id, gross, commission, amount, orderCount int64
@@ -1340,7 +1625,7 @@ func (h *LivePortalHandler) adminSettlementMutation(w http.ResponseWriter, r *ht
 		return
 	}
 	if r.Method != http.MethodPost || !h.hasRole(r, session.UserID, role) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -1348,7 +1633,7 @@ func (h *LivePortalHandler) adminSettlementMutation(w http.ResponseWriter, r *ht
 		return
 	}
 	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Form.Get("csrf_token"))) != 1 {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		denyPortalAccess(w, r)
 		return
 	}
 	action := strings.TrimPrefix(r.URL.Path, root+"/settlements/")
@@ -1463,12 +1748,12 @@ func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, st
 }
 
 func (h *LivePortalHandler) adminAudit(r *http.Request) []viewmodels.AdminAuditEntry {
-	rows, err := h.pool.Query(r.Context(), `SELECT created_at, COALESCE(actor_id::text,''), action, resource_type, resource_id FROM audit_logs ORDER BY id DESC LIMIT 50`)
+	rows, err := h.projectionRows(r, "admin-audit", `SELECT created_at, COALESCE(actor_id::text,''), action, resource_type, resource_id FROM audit_logs WHERE ($1='' OR concat_ws(' ',actor_id::text,action,resource_type,resource_id) ILIKE '%'||$1||'%') ORDER BY id DESC`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.AdminAuditEntry
+	result := make([]viewmodels.AdminAuditEntry, 0)
 	for rows.Next() {
 		var created time.Time
 		var actor, action, kind, resource string
@@ -1480,9 +1765,11 @@ func (h *LivePortalHandler) adminAudit(r *http.Request) []viewmodels.AdminAuditE
 }
 
 func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request, userID int64, displayName string, isOwner bool, permissions []string, csrfToken string) {
+	r = projectionRequest(r)
 	page := h.sellerPage(r, userID, isOwner, permissions)
 	page.DisplayName = displayName
 	page.UserEmail = h.userEmail(r, userID)
+	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
 	page.RoleLabel = "Seller Staff"
@@ -1538,6 +1825,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	page := h.sellerPage(pageRequest, userID, isOwner, permissions)
 	page.DisplayName = displayName
 	page.UserEmail = h.userEmail(r, userID)
+	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
 	page.RoleLabel = roleLabel(domainidentity.RoleSellerStaff)
@@ -1559,7 +1847,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	page.CanTeam = isOwner
 
 	form := viewmodels.SellerProductForm{Action: "/seller-admin/products", InitialStock: "0", DeliveryLabel: "Delivery to serviceable PIN codes in India", BrandName: page.SellerName, BrandSlug: productSlugForPortal(page.SellerName)}
-	if categoryRows, categoryErr := h.pool.Query(r.Context(), `SELECT slug,name FROM categories ORDER BY name`); categoryErr == nil {
+	if categoryRows, categoryErr := h.query(r, `SELECT slug,name FROM categories ORDER BY name`); categoryErr == nil {
 		for categoryRows.Next() {
 			var category viewmodels.SellerCategoryChoice
 			if categoryRows.Scan(&category.Slug, &category.Name) == nil {
@@ -1579,7 +1867,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		var price, compareAt, stock int64
 		var cost *int64
 		var hasCompareAt bool
-		err = h.pool.QueryRow(r.Context(), `
+		err = h.queryRow(r, `
 			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,v.cost_price_cents,p.image_url,
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
@@ -1589,7 +1877,11 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 OR EXISTS (
 					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &cost, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
 		if err != nil {
-			http.NotFound(w, r)
+			if errors.Is(err, pgx.ErrNoRows) {
+				http.NotFound(w, r)
+			} else {
+				http.Error(w, "product details unavailable", http.StatusServiceUnavailable)
+			}
 			return
 		}
 		form.PriceCents = strconv.FormatInt(price, 10)
@@ -1669,7 +1961,7 @@ func productImagePreviewURL(image string) string {
 }
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
-	rows, err := h.pool.Query(r.Context(), `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
+	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
 		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
@@ -1696,6 +1988,7 @@ func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64
 }
 
 func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bool, permissions []string) viewmodels.SellerAdminPage {
+	r = projectionRequest(r)
 	path := strings.TrimPrefix(r.URL.Path, "/seller-admin")
 	active := strings.Trim(path, "/")
 	if active == "" {
@@ -1704,8 +1997,8 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	var sellerID int64
 	var name, sellerStatus string
 	var lowStockThreshold int
-	if err := h.pool.QueryRow(r.Context(), `SELECT s.id,s.display_name,s.status,s.low_stock_threshold FROM sellers s WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$1 AND su.status='active') ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold); err != nil {
-		return viewmodels.SellerAdminPage{Active: active, Title: "Seller workspace", Subtitle: "No seller profile is assigned to this account."}
+	if err := h.queryRow(r, `SELECT s.id,s.display_name,s.status,s.low_stock_threshold FROM sellers s WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$1 AND su.status='active') ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold); err != nil {
+		return viewmodels.SellerAdminPage{Active: active, Title: "Seller workspace", Subtitle: "No seller profile is assigned to this account.", DataWarning: projectionWarning(r, "")}
 	}
 	period := r.URL.Query().Get("range")
 	if period != "day" && period != "week" && period != "month" {
@@ -1742,7 +2035,16 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	if isOwner {
 		page.Team = h.sellerTeam(r, sellerID)
 	}
-	filterSellerLivePage(&page)
+	page.Pagination = projectionPagination(r, sellerProjectionKey(active, page.Tab))
+	page.LedgerPagination = projectionPagination(r, "seller-ledger")
+	page.SettlementPagination = projectionPagination(r, "seller-settlements")
+	if active == "earnings" {
+		page.Pagination = viewmodels.PortalPagination{}
+	}
+	page.DataWarning = projectionWarning(r, page.DataWarning)
+	if page.DataWarning != "" {
+		page.Stats = nil
+	}
 	for _, item := range page.Inventory {
 		if item.IsLowStock {
 			page.LowStock = append(page.LowStock, item)
@@ -1752,12 +2054,12 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 }
 
 func (h *LivePortalHandler) sellerTopProducts(r *http.Request, sellerID int64, period string) []viewmodels.SellerAdminTopProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT oi.product_name,oi.sku,SUM(oi.quantity),SUM(oi.line_total_cents),MAX(p.image_url),MAX(v.cost_price_cents),SUM(oi.quantity * COALESCE(v.cost_price_cents,0)) FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id WHERE p.seller_id=$1 AND o.status IN ('paid','processing','shipped','delivered') AND o.created_at >= date_trunc($2,NOW()) GROUP BY oi.product_name,oi.sku ORDER BY SUM(oi.quantity) DESC,SUM(oi.line_total_cents) DESC LIMIT 10`, sellerID, period)
+	rows, err := h.query(r, `SELECT oi.product_name,oi.sku,SUM(oi.quantity),SUM(oi.line_total_cents),MAX(p.image_url),MAX(v.cost_price_cents),SUM(oi.quantity * COALESCE(v.cost_price_cents,0)) FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id WHERE p.seller_id=$1 AND o.status IN ('paid','processing','shipped','delivered') AND o.created_at >= date_trunc($2,NOW()) GROUP BY oi.product_name,oi.sku ORDER BY SUM(oi.quantity) DESC,SUM(oi.line_total_cents) DESC LIMIT 10`, sellerID, period)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminTopProduct
+	result := make([]viewmodels.SellerAdminTopProduct, 0)
 	for rows.Next() {
 		var item viewmodels.SellerAdminTopProduct
 		var units, revenue, costs int64
@@ -1833,11 +2135,11 @@ func filterSellerLivePage(page *viewmodels.SellerAdminPage) {
 
 func (h *LivePortalHandler) sellerStats(r *http.Request, sellerID int64, period string) []viewmodels.SellerAdminStat {
 	var products, orders, revenue, pendingPayout int64
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM products WHERE seller_id=$1 AND status<>'archived'`, sellerID).Scan(&products)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COUNT(DISTINCT o.id),COALESCE(SUM(oi.line_total_cents),0)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM products WHERE seller_id=$1 AND status<>'archived'`, sellerID).Scan(&products)
+	_ = h.queryRow(r, `SELECT COUNT(DISTINCT o.id),COALESCE(SUM(oi.line_total_cents),0)
 		FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id
 		WHERE p.seller_id=$1 AND o.status IN ('paid','processing','shipped','delivered') AND o.created_at >= date_trunc($2,NOW())`, sellerID, period).Scan(&orders, &revenue)
-	_ = h.pool.QueryRow(r.Context(), `SELECT COALESCE(SUM(net_cents),0) FROM seller_ledger WHERE seller_id=$1 AND status='open' AND entry_type IN ('sale','refund')`, sellerID).Scan(&pendingPayout)
+	_ = h.queryRow(r, `SELECT COALESCE(SUM(net_cents),0) FROM seller_ledger WHERE seller_id=$1 AND status='open' AND entry_type IN ('sale','refund')`, sellerID).Scan(&pendingPayout)
 	label := map[string]string{"day": "Today", "week": "This week", "month": "This month"}[period]
 	return []viewmodels.SellerAdminStat{
 		{Icon: "shopping_bag", Value: strconv.FormatInt(orders, 10), Label: "Orders · " + label, Delta: "Paid orders", Positive: true, Period: label, Tone: "blue"},
@@ -1855,7 +2157,7 @@ func joinPortalWarning(current, warning string) string {
 }
 
 func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
-	rows, err := h.pool.Query(r.Context(), `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') ORDER BY p.created_at DESC,p.id DESC LIMIT 100`, sellerID, query)
+	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(i.available_quantity,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
 	if err != nil {
 		return nil
 	}
@@ -1878,7 +2180,7 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 }
 
 func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, query string, threshold int) []viewmodels.SellerAdminInventory {
-	rows, err := h.pool.Query(r.Context(), `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR v.sku ILIKE '%'||$2||'%' OR COALESCE(v.name,'') ILIKE '%'||$2||'%') ORDER BY p.id DESC,v.id DESC LIMIT 100`, sellerID, query)
+	rows, err := h.projectionRows(r, "seller-inventory", `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR v.sku ILIKE '%'||$2||'%' OR COALESCE(v.name,'') ILIKE '%'||$2||'%') ORDER BY p.id DESC,v.id DESC`, sellerID, query)
 	if err != nil {
 		return nil
 	}
@@ -1906,7 +2208,7 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 }
 
 func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []viewmodels.SellerAdminOrder {
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "seller-orders", `
 		SELECT o.order_number, o.created_at, u.display_name, COALESCE(SUM(oi.line_total_cents),0),
 		       COALESCE(sf.status,'pending'), COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0)
 		FROM orders o
@@ -1916,15 +2218,14 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		JOIN products p ON p.id=pv.product_id AND p.seller_id=$1
 		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
 		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
-		WHERE o.status IN ('paid','processing','shipped','delivered','pending_payment')
+		WHERE o.status IN ('paid','processing','shipped','delivered','pending_payment') AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item JOIN product_variants search_variant ON search_variant.id=search_item.variant_id JOIN products search_product ON search_product.id=search_variant.product_id WHERE search_item.order_id=o.id AND search_product.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR COALESCE(sf.status,'pending')=$3)
 		GROUP BY o.id, u.display_name, sf.status, pa.status
-		ORDER BY o.created_at DESC, o.id DESC
-		LIMIT 50`, sellerID)
+		ORDER BY o.created_at DESC, o.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerOrderProjectionStatus(r))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminOrder
+	result := make([]viewmodels.SellerAdminOrder, 0)
 	for rows.Next() {
 		var number, customer, status, payment string
 		var created time.Time
@@ -1950,7 +2251,7 @@ func nextFulfillmentStatus(status string) string {
 }
 
 func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []viewmodels.SellerAdminReturn {
-	rows, err := h.pool.Query(r.Context(), `
+	rows, err := h.projectionRows(r, "seller-returns", `
 		SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.created_at,rr.status,o.total_cents,
 		       COALESCE(string_agg(DISTINCT p.name, ', '),'')
 		FROM return_requests rr
@@ -1959,13 +2260,14 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 		JOIN order_items oi ON oi.order_id=o.id
 		JOIN product_variants v ON v.id=oi.variant_id
 		JOIN products p ON p.id=v.product_id AND p.seller_id=$1
+ WHERE ($2='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status,p.name) ILIKE '%'||$2||'%')
 		GROUP BY rr.id,o.order_number,u.display_name,rr.reason,rr.created_at,rr.status,o.total_cents
-		ORDER BY rr.created_at DESC LIMIT 50`, sellerID)
+		ORDER BY rr.created_at DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminReturn
+	result := make([]viewmodels.SellerAdminReturn, 0)
 	for rows.Next() {
 		var id int64
 		var order, customer, reason, status, product string
@@ -1979,12 +2281,12 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 }
 
 func (h *LivePortalHandler) sellerLedger(r *http.Request, sellerID int64) []viewmodels.SellerAdminLedger {
-	rows, err := h.pool.Query(r.Context(), `SELECT sl.id,sl.created_at,sl.gross_cents,sl.commission_cents,sl.net_cents,sl.status,sl.entry_type,COALESCE(o.order_number,'') FROM seller_ledger sl LEFT JOIN orders o ON o.id=sl.order_id WHERE sl.seller_id=$1 ORDER BY sl.id DESC LIMIT 50`, sellerID)
+	rows, err := h.projectionRows(r, "seller-ledger", `SELECT sl.id,sl.created_at,sl.gross_cents,sl.commission_cents,sl.net_cents,sl.status,sl.entry_type,COALESCE(o.order_number,'') FROM seller_ledger sl LEFT JOIN orders o ON o.id=sl.order_id WHERE sl.seller_id=$1 AND ($2='' OR concat_ws(' ',COALESCE(o.order_number,'LEDGER-'||sl.id::text),sl.status,sl.entry_type) ILIKE '%'||$2||'%') ORDER BY sl.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminLedger
+	result := make([]viewmodels.SellerAdminLedger, 0)
 	for rows.Next() {
 		var id int64
 		var created time.Time
@@ -2011,12 +2313,12 @@ func (h *LivePortalHandler) sellerLedger(r *http.Request, sellerID int64) []view
 }
 
 func (h *LivePortalHandler) sellerSettlements(r *http.Request, sellerID int64) []viewmodels.SellerAdminSettlement {
-	rows, err := h.pool.Query(r.Context(), `SELECT reference,net_cents,status,period_end FROM seller_settlements WHERE seller_id=$1 ORDER BY id DESC LIMIT 20`, sellerID)
+	rows, err := h.projectionRows(r, "seller-settlements", `SELECT reference,net_cents,status,period_end FROM seller_settlements WHERE seller_id=$1 AND ($2='' OR concat_ws(' ',reference,status) ILIKE '%'||$2||'%') ORDER BY id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerAdminSettlement
+	result := make([]viewmodels.SellerAdminSettlement, 0)
 	for rows.Next() {
 		var ref, status string
 		var amount int64
@@ -2029,12 +2331,12 @@ func (h *LivePortalHandler) sellerSettlements(r *http.Request, sellerID int64) [
 }
 
 func (h *LivePortalHandler) sellerTeam(r *http.Request, sellerID int64) []viewmodels.SellerTeamMember {
-	rows, err := h.pool.Query(r.Context(), `SELECT u.id,u.display_name,u.email,su.status,su.permissions FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=$1 AND su.status='active' ORDER BY u.id`, sellerID)
+	rows, err := h.query(r, `SELECT u.id,u.display_name,u.email,su.status,su.permissions FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=$1 AND su.status='active' ORDER BY u.id`, sellerID)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SellerTeamMember
+	result := make([]viewmodels.SellerTeamMember, 0)
 	for rows.Next() {
 		var userID int64
 		var name, email, status string
@@ -2065,6 +2367,7 @@ func sellerHasPermission(permissions []string, wanted string) bool {
 }
 
 func (h *LivePortalHandler) renderSupport(w http.ResponseWriter, r *http.Request, actorID int64, csrfToken string) {
+	r = projectionRequest(r)
 	page := h.supportPage(r, actorID, csrfToken)
 	var component templ.Component
 	switch {
@@ -2081,6 +2384,7 @@ func (h *LivePortalHandler) renderSupport(w http.ResponseWriter, r *http.Request
 }
 
 func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToken string) viewmodels.SupportPortalPage {
+	r = projectionRequest(r)
 	active := "dashboard"
 	trimmed := strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/")
 	if trimmed != "" {
@@ -2089,11 +2393,9 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 	page := viewmodels.SupportPortalPage{Active: active, Title: title(active), Subtitle: "Support cases backed by live PostgreSQL records.", Query: r.URL.Query().Get("q"), Notice: r.URL.Query().Get("notice"), Tab: r.URL.Query().Get("tab"), DisplayName: h.userDisplayName(r, actorID), RoleLabel: roleLabel(domainidentity.RoleSupportAgent), CSRFToken: csrfToken}
 	page.Initials = initials(page.DisplayName)
 	page.Cases = h.supportCases(r)
-	if query := strings.ToLower(strings.TrimSpace(page.Query)); query != "" {
-		page.Cases = filterSupportCases(page.Cases, query)
-	}
+
 	page.Conversations = h.latestSupportConversations(r)
-	if strings.EqualFold(active, "cases") && len(page.Cases) > 0 {
+	if strings.EqualFold(active, "cases") && (len(page.Cases) > 0 || r.URL.Query().Get("ticket_id") != "") {
 		selectedID, _ := strconv.ParseInt(r.URL.Query().Get("ticket_id"), 10, 64)
 		for _, item := range page.Cases {
 			if selectedID == 0 || item.DatabaseID == selectedID {
@@ -2101,33 +2403,40 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 				break
 			}
 		}
+		if selectedID > 0 && page.SelectedCase.DatabaseID == 0 {
+			selectedRequest := r.Clone(r.Context())
+			selectedURL := *r.URL
+			selectedRequest.URL = &selectedURL
+			values := selectedURL.Query()
+			values.Set("q", "")
+			values.Set("selected_case_id", strconv.FormatInt(selectedID, 10))
+			values.Del("page")
+			selectedRequest.URL.RawQuery = values.Encode()
+			if cases := h.supportCases(selectedRequest); len(cases) > 0 {
+				page.SelectedCase = cases[0]
+			}
+		}
 		if page.SelectedCase.DatabaseID > 0 {
 			page.SelectedCase.Attachments = h.supportAttachmentViews(r, page.SelectedCase.DatabaseID)
 			page.Messages = append(page.Messages, h.supportTicketMessages(r, page.SelectedCase.DatabaseID)...)
 		}
 	}
-	if strings.EqualFold(active, "orders") {
-		linked := make([]viewmodels.SupportPortalCase, 0, len(page.Cases))
-		for _, item := range page.Cases {
-			if item.Order != "" {
-				linked = append(linked, item)
-			}
-		}
-		page.Cases = linked
-	}
+
 	if strings.EqualFold(page.Active, "customers") {
-		page.Directory = supportDirectoryFromCases(page.Cases)
+		page.Directory = h.supportDirectory(r)
 	}
-	open, urgent := 0, 0
-	for _, item := range page.Cases {
-		if item.Status != "resolved" && item.Status != "closed" {
-			open++
-		}
-		if item.Priority == "urgent" {
-			urgent++
-		}
+	var open, urgent, closed int64
+	_ = h.queryRow(r, `SELECT COUNT(*) FILTER (WHERE status NOT IN ('resolved','closed')),COUNT(*) FILTER (WHERE priority='urgent'),COUNT(*) FILTER (WHERE status IN ('resolved','closed')) FROM support_tickets`).Scan(&open, &urgent, &closed)
+	page.Stats = []viewmodels.SupportPortalStat{{Icon: "support_agent", Value: strconv.FormatInt(open, 10), Label: "Open tickets", Period: "PostgreSQL"}, {Icon: "warning", Value: strconv.FormatInt(urgent, 10), Label: "Urgent tickets", Period: "PostgreSQL"}, {Icon: "task_alt", Value: strconv.FormatInt(closed, 10), Label: "Resolved or closed", Period: "PostgreSQL"}}
+	page.Pagination = projectionPagination(r, "support-cases")
+	if active == "customers" {
+		page.Pagination = projectionPagination(r, "support-directory")
 	}
-	page.Stats = []viewmodels.SupportPortalStat{{Icon: "support_agent", Value: strconv.Itoa(open), Label: "Open tickets", Delta: "Live", Positive: true, Period: "PostgreSQL", Tone: "green"}, {Icon: "warning", Value: strconv.Itoa(urgent), Label: "Urgent tickets", Delta: "Live", Period: "PostgreSQL", Tone: "red"}, {Icon: "task_alt", Value: strconv.Itoa(len(page.Cases) - open), Label: "Resolved or closed", Delta: "Live", Period: "PostgreSQL", Tone: "blue"}}
+	page.DataWarning = projectionWarning(r, page.DataWarning)
+	if page.DataWarning != "" {
+		page.Stats = nil
+	}
+
 	switch active {
 	case "dashboard":
 		page.Title = "Support dashboard"
@@ -2160,12 +2469,17 @@ func (h *LivePortalHandler) supportAttachmentViews(r *http.Request, ticketID int
 }
 
 func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPortalCase {
-	rows, err := h.pool.Query(r.Context(), `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role='support_agent' ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE ORDER BY t.created_at DESC LIMIT 200`)
+	projectionKey := "support-cases"
+	selectedID, _ := strconv.ParseInt(r.URL.Query().Get("selected_case_id"), 10, 64)
+	if selectedID > 0 {
+		projectionKey = "support-selected"
+	}
+	rows, err := h.projectionRows(r, projectionKey, `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role='support_agent' ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE WHERE ($1='' OR concat_ws(' ',t.ticket_number,t.subject,u.display_name,COALESCE(o.order_number,''),t.status,t.priority) ILIKE '%'||$1||'%') AND ($2<>'orders' OR t.order_id IS NOT NULL) AND ($3=0 OR t.id=$3) ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")), strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/"), selectedID)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var result []viewmodels.SupportPortalCase
+	result := make([]viewmodels.SupportPortalCase, 0)
 	for rows.Next() {
 		var id, customerID int64
 		var number, subject, customer, priority, status, initialMessage, agentNote, orderNumber, orderStatus, paymentStatus, latestReply string
@@ -2179,12 +2493,12 @@ func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPo
 }
 
 func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int64) []viewmodels.SupportPortalConversation {
-	rows, err := h.pool.Query(r.Context(), `SELECT m.author_id,u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, ticketID)
+	rows, err := h.query(r, `SELECT m.author_id,u.display_name,m.author_role,m.body,m.created_at FROM support_ticket_messages m JOIN users u ON u.id=m.author_id WHERE m.ticket_id=$1 ORDER BY m.created_at,m.id`, ticketID)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var messages []viewmodels.SupportPortalConversation
+	messages := make([]viewmodels.SupportPortalConversation, 0)
 	for rows.Next() {
 		var authorID int64
 		var author, authorRole, body string
@@ -2193,6 +2507,11 @@ func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int6
 			role, tone := "Customer", "customer"
 			if authorRole == "support_agent" {
 				role, tone = "Support Agent", "agent"
+			} else {
+				author = maskName(author)
+				if authorRole == "seller_owner" {
+					role = "Seller"
+				}
 			}
 			messages = append(messages, viewmodels.SupportPortalConversation{TicketID: ticketID, Author: author, Initials: initials(author), Role: role, Message: body, Time: created.Format("2 Jan 2006 15:04"), Tone: tone})
 		}
@@ -2201,12 +2520,12 @@ func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int6
 }
 
 func (h *LivePortalHandler) latestSupportConversations(r *http.Request) []viewmodels.SupportPortalConversation {
-	rows, err := h.pool.Query(r.Context(), `SELECT m.ticket_id,t.ticket_number,u.display_name,m.body,m.created_at FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id JOIN users u ON u.id=m.author_id WHERE m.author_role='support_agent' ORDER BY m.created_at DESC,m.id DESC LIMIT 12`)
+	rows, err := h.query(r, `SELECT m.ticket_id,t.ticket_number,u.display_name,m.body,m.created_at FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id JOIN users u ON u.id=m.author_id WHERE m.author_role='support_agent' ORDER BY m.created_at DESC,m.id DESC LIMIT 12`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	var messages []viewmodels.SupportPortalConversation
+	messages := make([]viewmodels.SupportPortalConversation, 0)
 	for rows.Next() {
 		var item viewmodels.SupportPortalConversation
 		var created time.Time
@@ -2259,6 +2578,9 @@ func supportDirectoryFromCases(cases []viewmodels.SupportPortalCase) []viewmodel
 
 func (h *LivePortalHandler) render(w http.ResponseWriter, r *http.Request, component templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if projectionWarning(r, "") != "" {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
 	if err := component.Render(r.Context(), w); err != nil {
 		http.Error(w, "portal rendering failed", http.StatusInternalServerError)
 	}
@@ -2286,6 +2608,9 @@ func (h *LivePortalHandler) renderAdminComponent(w http.ResponseWriter, r *http.
 	bodyHTML = strings.ReplaceAll(bodyHTML, `href="__CANONICAL_FINANCE_LINK__`, `href="/finance-portal`)
 	bodyHTML = strings.ReplaceAll(bodyHTML, `action="__CANONICAL_FINANCE_ACTION__`, `action="/finance-portal`)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if page.DataWarning != "" {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
 	_, _ = w.Write([]byte(bodyHTML))
 }
 
@@ -2432,6 +2757,37 @@ func initials(value string) string {
 	result := string(parts[0][0])
 	if len(parts) > 1 {
 		result += string(parts[len(parts)-1][0])
+	}
+	return result
+}
+
+func sellerProductProjectionStatus(r *http.Request) string {
+	switch r.URL.Query().Get("tab") {
+	case "review", "approval":
+		return "pending_review"
+	case "draft", "approved", "rejected", "archived", "stock":
+		return r.URL.Query().Get("tab")
+	case "changes":
+		return "changes_required"
+	}
+	return ""
+}
+
+func (h *LivePortalHandler) supportDirectory(r *http.Request) []viewmodels.SupportPortalDirectoryEntry {
+	rows, err := h.projectionRows(r, "support-directory", `SELECT u.id,u.display_name,COUNT(DISTINCT t.id),COUNT(DISTINCT o.id),MAX(t.created_at) FROM users u JOIN support_tickets t ON t.user_id=u.id LEFT JOIN orders o ON o.user_id=u.id WHERE ($1='' OR concat_ws(' ',u.display_name,t.ticket_number,t.subject,t.status) ILIKE '%'||$1||'%') GROUP BY u.id ORDER BY MAX(t.created_at) DESC,u.id DESC`, portalQuery(r.URL.Query().Get("q")))
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+	result := make([]viewmodels.SupportPortalDirectoryEntry, 0)
+	for rows.Next() {
+		var id, cases, orders int64
+		var name string
+		var latest time.Time
+		if rows.Scan(&id, &name, &cases, &orders, &latest) != nil {
+			return nil
+		}
+		result = append(result, viewmodels.SupportPortalDirectoryEntry{Name: maskName(name), EmailPhone: "Contact details masked", Type: "Customer", Orders: strconv.FormatInt(orders, 10), Cases: strconv.FormatInt(cases, 10), Status: "Has support ticket", LastActive: latest.Format("2 Jan 2006 15:04")})
 	}
 	return result
 }

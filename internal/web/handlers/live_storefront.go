@@ -17,6 +17,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/wecratfs/commerce/internal/adapters/postgres"
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	applicationcatalog "github.com/wecratfs/commerce/internal/application/catalog"
@@ -76,6 +77,9 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.serveReturnLabel(w, r) {
+		return
+	}
 	// These account endpoints have their own authenticated handlers in the
 	// transport layer. Keep them out of the broad /account/* storefront route.
 	if r.URL.Path == "/account/sessions" && r.Method != http.MethodGet || r.URL.Path == "/account/verify-email" {
@@ -155,7 +159,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
 	}
-	if isAuthRoute(r.URL.Path) && authenticated {
+	if (r.URL.Path == "/login" || r.URL.Path == "/register") && authenticated {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
 		if destination == "/account" {
@@ -286,9 +290,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			component = pages.Returns(page)
 		}
 	case strings.HasPrefix(r.URL.Path, "/returns/"):
-		page.Title = "Return label"
-		page.Notice = "A return label is available after your return request is approved."
-		component = pages.Empty(page)
+		http.NotFound(w, r)
+		return
 	case r.URL.Path == "/payments":
 		component = pages.Payments(page)
 	case strings.HasPrefix(r.URL.Path, "/payments/"):
@@ -620,6 +623,14 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
+	}
+	if r.URL.Path == "/contact" || r.URL.Path == "/shipping" {
+		settings, settingsErr := postgres.ReadStorefrontSettings(r.Context(), h.pool)
+		if settingsErr != nil {
+			return viewmodels.CustomerPage{}, settingsErr
+		}
+		page.SupportEmail = settings.SupportEmail
+		page.ShippingInformation = settings.ShippingInformation
 	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
 		product, productErr := h.catalog.Get(r.Context(), strings.TrimPrefix(r.URL.Path, "/products/"))
@@ -1179,7 +1190,7 @@ func (h *LiveStorefrontHandler) customerReturns(ctx context.Context, userID int6
 		       rr.reason, TO_CHAR(rr.created_at, 'DD Mon YYYY'),
 		       COALESCE((SELECT oi.product_name FROM order_items oi WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), 'Order return'),
 		       COALESCE((SELECT p.image_url FROM order_items oi JOIN product_variants v ON v.id = oi.variant_id JOIN products p ON p.id = v.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), '/assets/images/customer/maker-mithila.webp'),
-		       o.order_number, o.total_cents
+		       o.order_number, o.total_cents, rr.status
 		FROM return_requests rr
 		JOIN orders o ON o.id = rr.order_id
 		LEFT JOIN payment_refunds pr ON pr.order_id = o.id
@@ -1192,11 +1203,13 @@ func (h *LiveStorefrontHandler) customerReturns(ctx context.Context, userID int6
 	returns := make([]viewmodels.Return, 0)
 	for rows.Next() {
 		var item viewmodels.Return
+		var state string
 		var cents int64
-		if err := rows.Scan(&item.ID, &item.Status, &item.Reason, &item.Requested, &item.ProductName, &item.ImageURL, &item.OrderNumber, &cents); err != nil {
+		if err := rows.Scan(&item.ID, &item.Status, &item.Reason, &item.Requested, &item.ProductName, &item.ImageURL, &item.OrderNumber, &cents, &state); err != nil {
 			return nil, err
 		}
 		item.Amount = storefrontMoney(cents)
+		item.CanPrintLabel = state == "approved" || state == "received"
 		returns = append(returns, item)
 	}
 	return returns, rows.Err()

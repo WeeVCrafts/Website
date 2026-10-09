@@ -53,7 +53,7 @@ templ PortalSellers(p viewmodels.AdminPage) {
 						<form class="seller-status-form" method="post" action={ p.PortalRoot + "/sellers/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ seller.ID }/><select name="status" aria-label={ "Set status for " + seller.Name }><option value="active">Approve / activate</option><option value="suspended">Suspend</option><option value="closed">Close</option></select><input name="reason" minlength="4" maxlength="1000" placeholder="Reason for audit log" required/><button class="admin-button secondary" type="submit">Save</button></form>
 					</span></div>
 				}
-				if len(p.Sellers) == 0 {
+				if len(p.Sellers) == 0 && p.DataWarning == "" {
 					@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here when an account starts onboarding.")
 				}
 			</div>
@@ -91,7 +91,7 @@ templ PortalProducts(p viewmodels.AdminPage) {
 						}
 					</span></div>
 				}
-				if len(p.Products) == 0 {
+				if len(p.Products) == 0 && p.DataWarning == "" {
 					@AdminTableEmpty("No products are available.", "Seller product submissions will appear here for review.")
 				}
 			</div>
@@ -213,7 +213,7 @@ templ PortalInventory(p viewmodels.AdminPage) {
 				for _, item := range p.Inventory {
 					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span><span>{ item.SKU }</span><span>{ item.Stock }</span><span>{ item.Reserved }</span><span>{ item.Available }</span><span class={ "status " + statusClass(item.Status) }>{ item.Reorder }</span><strong>{ item.Value }</strong></div>
 				}
-				if len(p.Inventory) == 0 {
+				if len(p.Inventory) == 0 && p.DataWarning == "" {
 					@AdminTableEmpty("No active product variants are available.", "Inventory will appear after sellers create products and variants.")
 				}
 			</div>
@@ -262,7 +262,7 @@ templ PortalSupport(p viewmodels.AdminPage) {
 				for _, item := range p.SupportCases {
 					<div class="table-row"><strong>{ item.Case }</strong><span>{ item.Customer }</span><span>{ item.Subject }</span><span class={ "status " + priorityClass(item.Priority) }>{ item.Priority }</span><span>{ item.Date }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
 				}
-				if len(p.SupportCases) == 0 {
+				if len(p.SupportCases) == 0 && p.DataWarning == "" {
 					@AdminTableEmpty("No support cases are open.", "New customer requests will appear in the support queue.")
 				}
 			</div>
@@ -309,7 +309,7 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 						</div>
 					</details>
 				}
-				if len(p.Campaigns) == 0 {
+				if len(p.Campaigns) == 0 && p.DataWarning == "" {
 					@AdminTableEmpty("No promotions are configured.", "Create a draft above to set up a coupon campaign.")
 				}
 			</div>
@@ -347,7 +347,7 @@ templ PortalProductQueue(p viewmodels.AdminPage) {
 					<div class="table-row"><strong>{ product.Name }</strong><span>{ product.Seller }</span><span class="status pending">{ product.Status }</span></div>
 				}
 			}
-			if !hasPendingProducts(p.Products) {
+			if !hasPendingProducts(p.Products) && p.DataWarning == "" {
 				@AdminTableEmpty("No products are waiting for review.", "New submissions from sellers will appear here.")
 			}
 		</div>
@@ -360,7 +360,7 @@ templ PortalSellerList(p viewmodels.AdminPage) {
 			for _, seller := range p.Sellers {
 				<div class="table-row"><strong>{ seller.Name }</strong><span>{ seller.Applied }</span><span class={ "status " + statusClass(seller.Status) }>{ seller.Status }</span></div>
 			}
-			if len(p.Sellers) == 0 {
+			if len(p.Sellers) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No seller accounts yet.", "Seller applications will appear here after onboarding.")
 			}
 		</div>
@@ -373,7 +373,7 @@ templ PortalOrderList(p viewmodels.AdminPage) {
 			for _, order := range p.Orders {
 				<div class="table-row"><strong>{ order.Number }</strong><span>{ order.Customer }</span><span>{ order.Value }</span><span class={ "status " + statusClass(order.Fulfillment) }>{ order.Fulfillment }</span></div>
 			}
-			if len(p.Orders) == 0 {
+			if len(p.Orders) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
 			}
 		</div>
@@ -394,7 +394,7 @@ templ PortalReturnList(p viewmodels.AdminPage) {
 					}
 				</section>
 			}
-			if len(p.Returns) == 0 {
+			if len(p.Returns) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No return requests are open.", "Customer return requests will appear in this queue.")
 			}
 		</div>
@@ -420,7 +420,7 @@ templ PortalSettlementTable(p viewmodels.AdminPage) {
 					}
 				</span></div>
 			}
-			if len(p.Settlements) == 0 {
+			if len(p.Settlements) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No settlement records yet.", "Create a batch after captured seller orders appear in the ledger.")
 			}
 		</div>
@@ -433,7 +433,7 @@ templ PortalTransactionTable(p viewmodels.AdminPage) {
 			for _, item := range p.Transactions {
 				<div class="table-row"><span>{ item.Date }</span><strong>{ item.Reference }</strong><span>{ item.Amount }</span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></div>
 			}
-			if len(p.Transactions) == 0 {
+			if len(p.Transactions) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No payment attempts yet.", "Payment records will appear here after a customer starts checkout.")
 			}
 		</div>
@@ -446,7 +446,7 @@ templ PortalAuditList(p viewmodels.AdminPage) {
 			for _, item := range p.AuditEntries {
 				<div class="table-row"><span>{ item.Date }</span><span>{ item.User }</span><strong>{ item.Action }</strong><span>{ item.Entity } #{ item.Details }</span></div>
 			}
-			if len(p.AuditEntries) == 0 {
+			if len(p.AuditEntries) == 0 && p.DataWarning == "" {
 				@AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.")
 			}
 		</div>
