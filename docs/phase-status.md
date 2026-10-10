@@ -57,7 +57,7 @@
   payment intents, order history, and transactional outbox events.
 - Added PostgreSQL-backed search fallback with Redis cache-aside, a
   Meilisearch HTTP adapter plus rebuild command, Razorpay HTTP/HMAC adapter,
-  server-side payment-order preparation and webhook processor, S3/MinIO
+  server-side payment-order preparation and webhook processor, S3/Garage
   presigned media adapter, privacy center records, and OpenAPI documentation at
   `docs/api/openapi.yaml`.
 - Added an additive search-options contract for category filtering, price/newest
@@ -208,8 +208,8 @@
   response consistency checks. PostgreSQL refund integration covers atomic
   paid-to-refunded state, one order-history/audit transition, same-key replay,
   and different-key rejection.
-- Media unit, PostgreSQL lifecycle, MinIO adapter, and opt-in PostgreSQL plus
-  MinIO end-to-end tests cover presigned upload, object inspection, metadata
+- Media unit, PostgreSQL lifecycle, S3-compatible adapter, and opt-in PostgreSQL plus
+  Garage end-to-end tests cover presigned upload, object inspection, metadata
   mismatch rejection, stable public references, signed readback, ownership
   denial, and cleanup deletion.
 - Recovery application, PostgreSQL token-consumption, SMTP validation, and web
@@ -233,7 +233,7 @@ The following checks passed in the current workspace:
 - `go test -race ./...`
 - `sqlc generate -f sqlc.yaml`
 - `docker compose config`
-- `docker compose up -d --build` with migrations 0001–0015 and local MinIO
+- `docker compose up -d --build` with migrations 0001–0015 and local Garage
   bucket creation attempted through the adapter
 - `GET /health/live` → HTTP 200, `{"status":"live"}`
 - `GET /health/ready` → HTTP 200 with PostgreSQL, Redis, Meilisearch, and S3
@@ -278,8 +278,8 @@ The following checks passed in the current workspace:
 - `go run ./cmd/rebuild-search` rebuilt the disposable Meilisearch index from
   one approved PostgreSQL catalogue document, including filterable category
   settings; the live search path hydrated that indexed hit from PostgreSQL.
-- Opt-in MinIO media E2E passed: a presigned image upload was written to
-  MinIO, verified by byte size/content type, finalized in PostgreSQL, resolved
+- Opt-in Garage media E2E passed: a presigned image upload was written to
+  Garage, verified by byte size/content type, finalized in PostgreSQL, resolved
   through a signed read URL, and read back byte-for-byte.
 - Authenticated API privacy E2E passed registration with lower-snake-case JSON,
   deletion-request creation, transactional eligible-data deletion, session

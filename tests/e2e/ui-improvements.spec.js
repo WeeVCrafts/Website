@@ -6,7 +6,7 @@ async function login(page, account, landing) {
   await page.goto('/login');
   await page.locator('#page input[name="email"]').fill(`demo.${account}01@weevcrafts.local`);
   await page.locator('#page input[name="password"]').fill('WeeVCrafts-Demo-2026!');
-  await page.getByRole('button', { name: /^Sign in$/i }).click();
+  await page.getByRole('button', { name: /continue with email|sign in/i }).click();
   await page.waitForURL(url => url.pathname === landing);
 }
 

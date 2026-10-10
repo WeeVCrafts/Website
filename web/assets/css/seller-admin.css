@@ -103,6 +103,10 @@ body.seller-body img { display: block; max-width: 100%; }
 .seller-user strong { font: 700 11px var(--seller-serif); }
 .seller-user small { margin-top: 2px; color: var(--seller-muted); font-size: 11px; }
 .seller-user > .material-symbols-outlined { margin-left: auto; font-size: 17px; }
+.seller-header-logout { display: flex; align-items: center; }
+.seller-header-logout button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--seller-line); border-radius: 6px; color: var(--seller-red-dark); background: transparent; font-size: 11px; font-weight: 700; }
+.seller-header-logout button:hover { border-color: var(--seller-red); background: var(--seller-red-soft); }
+.seller-header-logout .material-symbols-outlined { font-size: 18px; }
 .seller-global-nav { display: flex; align-items: center; gap: 25px; min-height: 37px; padding: 0 30px; border-top: 1px solid #f2eee8; color: #303945; font-size: 10px; font-weight: 600; }
 .seller-global-nav span { flex: 1; }
 .seller-global-nav a { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
@@ -546,3 +550,17 @@ body.seller-body { font-size: 14px; line-height: 1.5; }
 }
 .seller-body :where(small, .seller-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
 .seller-body :where(input, select, textarea) { min-height: 40px; }
+
+/* Header logout remains visible in the same top-right action area at every width. */
+.seller-header-main { grid-template-columns: auto auto auto minmax(180px, 1fr) auto auto; }
+@media (max-width: 960px) {
+  .seller-header-main { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+  .seller-header-logout button { width: 44px; padding: 0; }
+  .seller-header-logout button > span:last-child { display: none; }
+}
+@media (max-width: 720px) {
+  .seller-header-user { right: 54px; }
+  .seller-user { right: 54px !important; }
+  .seller-header-logout { position: absolute; top: 8px; right: 10px; }
+  .seller-header-logout button { width: 36px; min-width: 36px; min-height: 36px; }
+}

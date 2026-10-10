@@ -28,7 +28,7 @@ do not import HTTP/template concerns, PostgreSQL implementation packages,
 Redis or Meilisearch SDKs, S3 SDKs, or payment-provider SDKs.
 
 The composition root registers PostgreSQL, Redis sessions/cache/rate limiting,
-the Meilisearch HTTP adapter seam and rebuild command, S3/MinIO media,
+the Meilisearch HTTP adapter seam and rebuild command, S3/Garage media,
 Razorpay payment/webhook services, and health probes. Provider SDKs remain in
 adapter packages; the application layer receives only the provider-neutral
 ports.

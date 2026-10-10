@@ -40,6 +40,7 @@ input, textarea { caret-color: var(--terracotta); }
 .socials a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
 /* Give search room and keep all counters inside consistent touch targets. */
 .header-main { grid-template-columns: auto minmax(220px, 1fr) auto; grid-template-areas: "brand search actions" "left left left"; gap: 16px 32px; padding-block: 20px 12px; }
+.site-header { position: sticky; top: 0; z-index: 80; box-shadow: 0 6px 18px rgb(45 32 27 / 8%); }
 .header-tools { display: contents; }
 .header-main > .wordmark { justify-self: start; }
 .header-main .wordmark small, .header-main .location small { font-size: 14px !important; }
@@ -112,6 +113,69 @@ html:has(.mobile-menu[open]) { scrollbar-gutter: auto; }
 .firebase-google-panel [aria-hidden]{font-size:22px;font-weight:700}
 [data-firebase-status]{font-size:16px;line-height:1.5;margin-top:16px}
 [data-firebase-google-panel][hidden],[data-firebase-link][hidden],[data-firebase-push-panel][hidden],[data-firebase-diagnostics][hidden],[data-firebase-push-panel] [hidden]{display:none!important}
+
+/* Auth choices remain visible even when optional Firebase configuration is absent. */
+.firebase-google-panel { display: grid; gap: 12px; margin-top: 26px; padding-top: 0; border-top: 0; }
+.google-button { justify-content: center; gap: 10px; min-height: 48px; color: var(--ink); background: var(--surface); }
+.google-button:disabled { cursor: not-allowed; opacity: .58; }
+.google-mark { display: grid; place-items: center; width: 24px; height: 24px; color: #4285f4; border: 1px solid #d5dce8; border-radius: 50%; font: 700 16px/1 Arial, sans-serif; background: #fff; }
+.google-terms-label { margin: 0; font-size: 13px !important; }
+.google-terms-label[hidden] { display: none !important; }
+.auth-provider-note { margin: 0; color: var(--muted); font-size: 13px !important; line-height: 1.45; }
+.auth-method-divider { display: flex; align-items: center; gap: 14px; margin: 24px 0 20px; color: var(--muted); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }
+.auth-method-divider::before, .auth-method-divider::after { flex: 1; height: 1px; content: ""; background: var(--line); }
+.auth-method-divider span { white-space: nowrap; }
+.auth-card .utility-form { gap: 16px; }
+.auth-card .utility-form .primary-button { min-height: 48px; }
+
+/* The cart opens as a focused, reusable side panel after an item is added. */
+.cart-drawer { inset: 0 0 0 auto; width: min(440px, 100vw); height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; color: var(--ink); background: var(--surface); box-shadow: -12px 0 32px rgb(45 32 27 / 14%); }
+.cart-drawer:not([open]) { display: none; }
+.cart-drawer[open] { display: block; animation: cart-drawer-enter 180ms ease-out; }
+.cart-drawer::backdrop { background: rgb(18 24 20 / 42%); }
+.cart-drawer-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.cart-drawer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 24px 24px 18px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.cart-drawer-header .eyebrow { margin: 0 0 4px; }
+.cart-drawer-header h2 { margin: 0; font: 500 28px/1.2 var(--serif); }
+.cart-drawer-header p:last-child { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+.cart-drawer-close { width: 44px; min-width: 44px; min-height: 44px; border-radius: 6px; }
+.cart-drawer-items { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px 20px; }
+.cart-drawer .cart-seller { margin: 0 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.cart-drawer .cart-seller-head { padding: 10px 12px; }
+.cart-drawer .cart-line { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 12px; }
+.cart-drawer .cart-line img { width: 72px; height: 78px; object-fit: cover; border-radius: 5px; }
+.cart-drawer .cart-line-copy h2 { margin: 4px 0; font-size: 15px; line-height: 1.35; }
+.cart-drawer .cart-line-copy p { margin: 2px 0; font-size: 13px; }
+.cart-drawer .cart-line-actions { flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cart-drawer .cart-line-actions .text-button { min-height: 36px; padding: 6px 0; font-size: 13px; }
+.cart-drawer .cart-line-actions .text-button:last-child { display: none; }
+.cart-drawer .quantity-control button { min-width: 36px; min-height: 36px; }
+.cart-drawer-footer { flex-shrink: 0; padding: 16px 20px 20px; border-top: 1px solid var(--line); background: var(--surface); }
+.cart-drawer-footer p { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+.cart-drawer-footer p b { color: var(--ink); font-weight: 600; }
+.cart-drawer-footer .cart-drawer-total { margin: 12px 0 16px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink); font-size: 16px; }
+.cart-drawer-footer .cart-drawer-total strong { color: var(--forest); font-size: 18px; }
+.cart-drawer-footer .full + .full { margin-top: 8px; }
+.checkout-quick-fill { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); }
+.checkout-quick-fill strong, .checkout-quick-fill small { display: block; }
+.checkout-quick-fill small { margin-top: 2px; color: var(--muted); font-size: 13px; }
+.checkout-quick-fill .outline-button { flex-shrink: 0; min-height: 44px; }
+@keyframes cart-drawer-enter { from { opacity: .6; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+@media (max-width: 560px) {
+  .cart-drawer-header { padding: 20px 16px 14px; }
+  .cart-drawer-items { padding-inline: 12px; }
+  .cart-drawer-footer { padding-inline: 12px; }
+  .checkout-quick-fill { align-items: flex-start; flex-direction: column; }
+  .checkout-quick-fill .outline-button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cart-drawer[open] { animation: none; }
+}
+
+@media (max-width: 960px) {
+  /* Keep the authenticated exit action in the compact top-right action row. */
+  .header-actions .header-logout { display: inline-flex; }
+}
 
 /* Approved October refinement: one craft focal point and early shopping content. */
 .hero { grid-template-columns: minmax(0,1fr) minmax(0,1fr); min-height: 0; margin-top: 24px; }

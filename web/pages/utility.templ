@@ -17,16 +17,17 @@ templ Auth(p viewmodels.CustomerPage) {
         }
         if p.Route == "/login" {
           @AuthHeading("WELCOME BACK", "Sign in to Weevcrafts", "Keep your saved pieces, orders and maker stories close.")
+          @FirebaseGoogle()
+          <div class="auth-method-divider" role="separator"><span>or continue with email</span></div>
           <form class="utility-form" action="/login" method="post" data-backend-auth="login">
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
             <label>Email or role username<input name="email" type="text" autocomplete="username" required/></label>
             <label>Password<div class="password-field"><input name="password" type="password" autocomplete="current-password" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
             <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
-            <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="primary-button full" type="submit">Continue with email <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
           <div class="auth-links"><a href="/forgot-password">Forgot your password?</a><span>New here? <a href="/register">Create an account</a></span></div>
-          @FirebaseGoogle()
         } else if p.Route == "/register" {
           @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
           <form class="utility-form" action="/register" method="post" data-backend-auth="register">
@@ -78,10 +79,10 @@ templ AuthHeading(kicker, title, copy string) {
 }
 
 templ FirebaseGoogle() {
-  <div class="firebase-google-panel" data-firebase-google-panel hidden>
-    <p class="auth-divider">or continue with Google</p>
-    <label class="check-line"><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
-    <button class="outline-button full" type="button"><span aria-hidden="true">G</span> Continue with Google</button>
+  <div class="firebase-google-panel" data-firebase-google-panel>
+    <button class="outline-button full google-button" type="button" data-google-signin><span class="google-mark" aria-hidden="true">G</span> Continue with Google</button>
+    <label class="check-line google-terms-label"><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
+    <p class="auth-provider-note" data-firebase-config-note role="status" aria-live="polite">Checking Google sign-in availability…</p>
   </div>
   <form class="utility-form firebase-link-panel" data-firebase-link hidden>
     <h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>

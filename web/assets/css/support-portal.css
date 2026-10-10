@@ -50,6 +50,10 @@ body.support-body img { display: block; max-width: 100%; }
 .support-user small { color: var(--support-muted); font-size: 11px; line-height: 1.25; }
 .support-user small i { display: inline-block; width: 7px; height: 7px; margin-right: 2px; border-radius: 50%; background: var(--support-green); }
 .support-user > .material-symbols-outlined { margin-left: auto; font-size: 17px; }
+.support-header-logout { display: flex; align-items: center; }
+.support-header-logout button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 44px; min-height: 44px; padding: 0 10px; border: 1px solid var(--support-line); border-radius: 6px; color: var(--support-red); background: transparent; font-size: 11px; font-weight: 700; }
+.support-header-logout button:hover { border-color: var(--support-red); background: var(--support-red-soft); }
+.support-header-logout .material-symbols-outlined { font-size: 18px; }
 .support-menu-button { display: none; border: 0; color: var(--support-red); background: transparent; }
 
 .support-app { display: flex; align-items: stretch; min-height: calc(100vh - 62px); }
@@ -345,3 +349,16 @@ body.support-body { font-size: 14px; line-height: 1.5; }
 }
 .support-body :where(small, .support-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
 .support-body :where(input, select, textarea) { min-height: 40px; }
+
+/* Keep the account exit action visible beside the support identity block. */
+.support-header-main { grid-template-columns: auto auto auto minmax(190px, 1fr) auto auto; }
+.support-header-logout { display: flex; align-items: center; }
+@media (max-width: 960px) {
+  .support-header-main { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+  .support-header-logout button > span:last-child { display: none; }
+}
+@media (max-width: 720px) {
+  .support-user { right: 54px !important; }
+  .support-header-logout { position: absolute; top: 8px; right: 10px; }
+  .support-header-logout button { width: 36px; min-width: 36px; min-height: 36px; padding: 0; }
+}

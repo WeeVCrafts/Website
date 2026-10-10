@@ -19,6 +19,11 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
    await page.goto(baseURL + '/products');
    await page.waitForFunction(()=>!!document.querySelector('.site-header')._x_dataStack);
    await page.evaluate(()=>document.fonts.ready);
+   await page.evaluate(()=>window.scrollTo(0,Math.min(500,document.body.scrollHeight)));
+   const stickyState=await page.locator('.site-header').evaluate(el=>({position:getComputedStyle(el).position,top:Math.round(el.getBoundingClientRect().top)}));
+   expect(stickyState.position,`${name} ${role} header position`).toBe('sticky');
+   expect(stickyState.top,`${name} ${role} header top after scroll`).toBe(0);
+   await page.evaluate(()=>window.scrollTo(0,0));
    for (const width of [320,390,560,768,820,960,1024,1280,1440]) {
     await page.setViewportSize({width,height:900});
     for (const value of ['0','12','123','—']) {

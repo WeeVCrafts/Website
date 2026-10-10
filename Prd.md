@@ -2219,7 +2219,7 @@ Must pass:
 * [ ] PostgreSQL healthy;
 * [ ] Redis healthy;
 * [ ] Meilisearch healthy;
-* [ ] MinIO healthy;
+* [ ] Garage S3 storage healthy;
 * [ ] Go server healthy;
 * [ ] Go worker healthy;
 * [ ] `/health/live`;
@@ -2381,7 +2381,7 @@ Must pass:
 
 # Phase 12 — storage
 
-* [ ] MinIO development;
+* [ ] Garage S3 development;
 * [ ] S3 adapter;
 * [ ] presigned upload;
 * [ ] private documents;

@@ -12,7 +12,7 @@ const desiredMonitors = [
   { name: 'PostgreSQL connection', type: 'port', hostname: 'postgres', port: 5432 },
   { name: 'Redis connection', type: 'port', hostname: 'redis', port: 6379 },
   { name: 'Meilisearch health', type: 'http', url: 'http://meilisearch:7700/health' },
-  { name: 'MinIO readiness', type: 'http', url: 'http://minio:9000/minio/health/ready' },
+  { name: 'Garage readiness', type: 'http', url: 'http://garage:3903/health' },
   { name: 'Mailpit inbox', type: 'http', url: 'http://mailpit:8025/' },
   { name: 'Adminer login', type: 'http', url: 'http://adminer:8080/' },
 ];

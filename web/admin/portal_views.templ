@@ -4,7 +4,10 @@ import "github.com/wecratfs/commerce/internal/web/viewmodels"
 import "github.com/wecratfs/commerce/web/components"
 
 templ PortalDashboard(p viewmodels.AdminPage) {
- p = dashboardPreview(p)
+	@PortalDashboardView(dashboardPreview(p))
+}
+
+templ PortalDashboardView(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
 		if p.IsFinance {
@@ -330,6 +333,9 @@ templ PortalAnalytics(p viewmodels.AdminPage) {
 templ PortalSecurity(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
+		if p.Workspace == "users" {
+			<section class="admin-panel security-panel user-management-intro"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>User management</h2><p>Create, search, update, suspend and remove marketplace accounts from one audited workspace.</p></div></div></div></section>
+		}
 		@RoleUserCreateForm(p)
 		@RoleAssignmentList(p)
 		@PortalAuditList(p)

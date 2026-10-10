@@ -1,4 +1,4 @@
-.PHONY: templ-generate templ-check css-build css-check web-test seed-demo
+.PHONY: templ-generate templ-check css-build css-check web-test seed-demo reset-local
 
 TEMPL_VERSION := v0.3.1020
 
@@ -26,3 +26,6 @@ web-test:
 
 seed-demo:
 	go run ./cmd/seed-demo
+
+reset-local:
+	WECRATFS_ENV=development WECRATFS_LOCAL_MODE=true WECRATFS_RESET_LOCAL=true go run ./cmd/reset-local

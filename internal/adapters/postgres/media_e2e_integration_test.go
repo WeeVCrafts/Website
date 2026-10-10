@@ -14,13 +14,13 @@ import (
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 )
 
-func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndMinIO(t *testing.T) {
+func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndS3CompatibleStorage(t *testing.T) {
 	if os.Getenv("S3_INTEGRATION") != "1" {
-		t.Skip("S3_INTEGRATION=1 is required for PostgreSQL and MinIO media integration")
+		t.Skip("S3_INTEGRATION=1 is required for PostgreSQL and S3-compatible media integration")
 	}
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
-	storage, err := storageadapter.NewS3(envOrDefault("S3_ADDR", "localhost:9000"), envOrDefault("S3_ACCESS_KEY", "wecratfs"), envOrDefault("S3_SECRET_KEY", "wecratfs-local-only"), envOrDefault("S3_BUCKET", "wecratfs-media"), false)
+	storage, err := storageadapter.NewS3(envOrDefault("S3_ADDR", "localhost:3900"), envOrDefault("S3_ACCESS_KEY", "GK0123456789abcdef01234567"), envOrDefault("S3_SECRET_KEY", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"), envOrDefault("S3_BUCKET", "wecratfs-media"), false)
 	if err != nil {
 		t.Fatalf("create storage adapter: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndMinIO(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = storage.DeleteObject(context.Background(), upload.ObjectKey) })
 	if err := storage.PutObject(ctx, upload.ObjectKey, "image/png", int64(len(payload)), bytes.NewReader(payload)); err != nil {
-		t.Fatalf("put media object into MinIO: %v", err)
+		t.Fatalf("put media object into S3-compatible storage: %v", err)
 	}
 	ready, err := service.FinalizeUpload(ctx, fixture.ownerID, upload.ID)
 	if err != nil {

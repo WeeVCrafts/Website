@@ -7,7 +7,7 @@
 
 ## Outcome
 
-Make the complete local development stack reproducible: Go server, bounded worker, PostgreSQL, Redis, Meilisearch, and MinIO/S3-compatible storage.
+Make the complete local development stack reproducible: Go server, bounded worker, PostgreSQL, Redis, Meilisearch, and Garage S3-compatible storage.
 
 ## In scope
 
@@ -33,7 +33,7 @@ Business schema, user accounts, catalog behavior, cloud deployment, Cloudflare p
 
 ## Preview
 
-Open the local health endpoint and inspect a status view or JSON response showing Go, PostgreSQL, Redis, Meilisearch, MinIO, and worker state. A dependency that is down must be reported as not ready rather than hidden behind a green response.
+Open the local health endpoint and inspect a status view or JSON response showing Go, PostgreSQL, Redis, Meilisearch, Garage, and worker state. A dependency that is down must be reported as not ready rather than hidden behind a green response.
 
 ## Verification
 

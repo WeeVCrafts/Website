@@ -15,7 +15,7 @@ These gates apply in addition to the detailed checks in every phase file. A gate
 | Gate | Required evidence | Blocks progression when |
 | --- | --- | --- |
 | G00 Architecture | Import-boundary check, port contracts, `gofmt`, `go vet`, `go test ./...`, `go test -race ./...` | Business code imports an adapter or the core cannot be tested independently |
-| G01 Infrastructure | `docker compose config`, healthy PostgreSQL/Redis/Meilisearch/MinIO, live/ready checks, shutdown evidence | A required local dependency is non-reproducible or readiness lies |
+| G01 Infrastructure | `docker compose config`, healthy PostgreSQL/Redis/Meilisearch/Garage, live/ready checks, shutdown evidence | A required local dependency is non-reproducible or readiness lies |
 | G02 Persistence | Empty-database migration run, generated sqlc check, transaction/cancellation/idempotency/outbox/audit tests | Data cannot be created from zero or critical mutation primitives are unproven |
 | G03 Auth | Registration/login/logout/session/CSRF/RBAC/rate-limit tests, cookie inspection | Authentication or role isolation can be bypassed |
 | G04 Catalog | Seller ownership tests, admin approval tests, cursor pagination tests, catalog preview | A seller can read or mutate another seller's data |

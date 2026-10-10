@@ -22,7 +22,7 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		active = "finance"
 	case "disputes", "refunds":
 		active = "returns"
-	case "roles", "security-events":
+	case "roles", "users", "security-events":
 		active = "security"
 	case "seller-approvals", "seller-details", "seller-suspensions":
 		active = "sellers"
@@ -308,6 +308,9 @@ func adminPage(path string, values url.Values) viewmodels.AdminPage {
 		case "roles":
 			page.Title = "Role Management"
 			page.Subtitle = "Manage least-privilege roles, permission rules and privileged access review."
+		case "users":
+			page.Title = "User Management"
+			page.Subtitle = "Create, search, update, suspend and remove marketplace accounts with an audited workflow."
 		case "audit-logs":
 			page.Title = "Audit Logs"
 			page.Subtitle = "Trace privileged actions, actor context and request IDs."

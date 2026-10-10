@@ -76,7 +76,7 @@ docker compose --profile demo run --rm seed-demo
 ```
 
 Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
-Meilisearch, MinIO, Mailpit, Adminer, and Uptime Kuma. Demo accounts and local payment scenarios are
+Meilisearch, Garage S3 storage, Mailpit, Adminer, and Uptime Kuma. Demo accounts and local payment scenarios are
 documented in [`docs/demo-accounts.md`](docs/demo-accounts.md).
 
 Local tools:
@@ -99,7 +99,7 @@ this volume, copy `/app/web/assets/images/uploads` out before recreating it,
 then restore those files into the volume with ownership assigned to `app`.
 The product editor accepts PNG, JPEG and WebP covers up to 25 MB and reports
 upload failures instead of substituting a stock image. Additional product
-media continues to use MinIO/S3.
+media continues to use the local Garage S3-compatible service.
 
 Useful endpoints:
 

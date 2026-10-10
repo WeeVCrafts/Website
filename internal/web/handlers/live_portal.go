@@ -750,6 +750,9 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	page.IsFinance = role == domainidentity.RoleFinanceOperator
 	page.IsOperations = role == domainidentity.RoleOperations
 	page.NavActive = page.Active
+	if page.Active == "security" && page.Workspace == "users" {
+		page.NavActive = "users"
+	}
 	if page.IsFinance && page.Workspace != "" {
 		page.NavActive = page.Workspace
 	}
@@ -907,7 +910,7 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 		active = "finance"
 	case "disputes", "refunds":
 		active = "returns"
-	case "roles", "security-events":
+	case "roles", "users", "security-events":
 		active = "security"
 	case "audit-logs", "system-health", "search-indexing-health", "worker-queue-health", "settings":
 		active = "analytics"
@@ -931,6 +934,10 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	if workspace == "reviews" {
 		page.Title = "Review moderation"
 		page.Subtitle = "Moderate verified customer reviews and publish approved feedback."
+	}
+	if workspace == "users" {
+		page.Title = "User Management"
+		page.Subtitle = "Create, search, update, suspend and remove marketplace accounts with an audited workflow."
 	}
 	page.Stats = h.adminStats(r)
 

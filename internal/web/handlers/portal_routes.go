@@ -32,8 +32,8 @@ func roleAllowsPortalPath(role domainidentity.Role, path string) bool {
 
 func adminRestrictedPath(path string) bool {
 	path = strings.Trim(path, "/")
-	return path == "security" || path == "roles" || path == "finance" ||
-		strings.HasPrefix(path, "security/") || strings.HasPrefix(path, "roles/") ||
+	return path == "security" || path == "roles" || path == "users" || path == "finance" ||
+		strings.HasPrefix(path, "security/") || strings.HasPrefix(path, "roles/") || strings.HasPrefix(path, "users/") ||
 		strings.HasPrefix(path, "finance/") || path == "payments" || path == "failed-payments" ||
 		path == "refunds" || path == "finance-reconciliation" || path == "settlements" ||
 		path == "commission-rules"
@@ -189,7 +189,7 @@ func knownAdminPage(path string) bool {
 	switch strings.Trim(path, "/") {
 	case "", "dashboard", "sellers", "products", "inventory", "orders", "returns", "finance", "support", "marketing", "analytics", "security",
 		"brands", "customers", "category-management", "commission-rules", "settings", "reviews", "payments", "failed-payments", "refunds", "settlements", "finance-reconciliation",
-		"roles", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health", "seller-approvals", "seller-suspensions":
+		"roles", "users", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health", "seller-approvals", "seller-suspensions":
 		return true
 	}
 	return false

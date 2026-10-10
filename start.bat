@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [+] Starting services (PostgreSQL, Redis, Search, MinIO, Mailpit, Adminer, Uptime Kuma, Web)...
+echo [+] Starting services (PostgreSQL, Redis, Search, Garage S3, Mailpit, Adminer, Uptime Kuma, Web)...
 docker compose up -d --build
 if %errorlevel% neq 0 exit /b 1
 

@@ -10,7 +10,7 @@ The application fails startup in production if the public URL/cookies are insecu
 
 Use separate, least-privilege credentials for the database, private object bucket, Redis, search and email. Keep secrets in the deployment secret store, rotate them, and restrict who can read them. Do not copy `.env`, `.env.kuma.local`, development passwords, customer uploads or session material into source control or build logs. Restrict Redis and search to private infrastructure; use authentication and encrypted transport supported by their adapters/providers. The search index must contain public catalog data only.
 
-Keep Adminer, Uptime Kuma, Mailpit and the MinIO console off the public internet. Local ports bind to `127.0.0.1`; remote administration needs a private network or authenticated tunnel. Adminer additionally requires database login; Kuma has its own persisted administrator login. Neither tool inherits marketplace roles. Disable public bucket access and anonymous listing; avatars are served by the application only after owner authentication.
+Keep Adminer, Uptime Kuma, Mailpit and the Garage admin API off the public internet. Local ports bind to `127.0.0.1`; remote administration needs a private network or authenticated tunnel. Adminer additionally requires database login; Kuma has its own persisted administrator login. Neither tool inherits marketplace roles. Disable public bucket access and anonymous listing; avatars are served by the application only after owner authentication.
 
 ## Data and recovery
 

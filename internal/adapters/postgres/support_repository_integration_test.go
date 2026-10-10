@@ -53,7 +53,7 @@ func TestSupportAgentReplyPersistsWithoutChangingStatusOrInternalStatusNote(t *t
 
 	repository := NewCommerceRepository(pool)
 	if os.Getenv("S3_INTEGRATION") == "1" {
-		storage, err := storageadapter.NewS3(os.Getenv("S3_ADDR"), "wecratfs", "wecratfs-local-only", os.Getenv("S3_BUCKET"), false)
+		storage, err := storageadapter.NewS3(envOrDefault("S3_ADDR", "localhost:3900"), envOrDefault("S3_ACCESS_KEY", "GK0123456789abcdef01234567"), envOrDefault("S3_SECRET_KEY", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"), envOrDefault("S3_BUCKET", "wecratfs-media"), false)
 		if err != nil {
 			t.Fatal(err)
 		}

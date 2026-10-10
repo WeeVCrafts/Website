@@ -11,7 +11,7 @@ Add S3-compatible media and document storage through `ObjectStorage`, keeping fi
 
 ## In scope
 
-- MinIO development adapter and S3-compatible production adapter;
+- Garage development adapter and S3-compatible production adapter;
 - presigned upload/download flow so large bytes avoid Go where appropriate;
 - public product media versus private seller KYC/customer documents;
 - content type, size, key ownership, and upload validation;
@@ -41,7 +41,7 @@ Seller/admin reviewer can upload product media, see the selected variant on a pr
 ## Verification
 
 - [ ] adapter contract tests run against a fake/object-storage test seam;
-- [ ] MinIO integration tests cover upload, signed access, expiry, replacement, and deletion;
+- [x] Garage integration tests cover upload, signed access, expiry, replacement, and deletion;
 - [ ] private document access is denied to guests, other sellers, and support users without permission;
 - [ ] content type/size/path traversal/object-key tests pass;
 - [ ] image variant and cleanup tests pass;

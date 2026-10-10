@@ -70,6 +70,7 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
       </form>
 
       <a class="seller-user" href="/seller-admin"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
+      <form class="seller-header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </div>
     <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/makers">Makers</a><span></span><a href="/">Storefront</a></nav>
   </header>

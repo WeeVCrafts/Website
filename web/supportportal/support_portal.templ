@@ -58,6 +58,7 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
         <input id="support-search" name="q" value={ p.Query } placeholder="Search cases, orders, customers, sellers or anything..."/>
       </form>
       <div class="support-user"><span class="support-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+      <form class="support-header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </div>
   </header>
 }

@@ -37,7 +37,7 @@ creates an administrator on a fresh installation and adds these monitors:
 | PostgreSQL connection | `postgres:5432` | TCP connections are accepted. |
 | Redis connection | `redis:6379` | TCP connections are accepted. |
 | Meilisearch health | `http://meilisearch:7700/health` | Search health responds with HTTP 2xx. |
-| MinIO readiness | `http://minio:9000/minio/health/ready` | Object storage readiness responds with HTTP 2xx. |
+| Garage readiness | `http://garage:3903/health` | S3-compatible object storage reports operational. |
 | Mailpit inbox | `http://mailpit:8025/` | Local email inbox web interface responds. |
 | Adminer login | `http://adminer:8080/` | Database tool web interface responds. |
 

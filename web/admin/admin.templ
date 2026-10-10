@@ -107,6 +107,7 @@ templ Sidebar(p viewmodels.AdminPage) {
           @AdminNav("commission-rules", "Commission rules", "percent", p.NavActive, p.PortalRoot + "/commission-rules")
         }
         if p.CanSecurity {
+          @AdminNav("users", "User Management", "manage_accounts", p.NavActive, p.PortalRoot + "/users")
           @AdminNav("security", "Security & Roles", "admin_panel_settings", p.NavActive, p.PortalRoot + "/security")
         }
         @AdminNav("analytics", "Analytics & Health", "monitoring", p.NavActive, p.PortalRoot + "/analytics")
@@ -163,12 +164,12 @@ templ Security(p viewmodels.AdminPage) {
 
 templ RoleAssignmentList(p viewmodels.AdminPage) {
   <article class="admin-panel security-panel role-assignment-panel">
-    <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>Live role assignments</h2><p>Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.</p></div></div></div>
-    <form method="get" action={ p.PortalRoot + "/security" } class="role-assignment-search">
+    <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>{ roleManagementHeading(p) }</h2><p>Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.</p></div></div></div>
+    <form method="get" action={ p.PortalRoot + "/users" } class="role-assignment-search">
       <label>Find an account<input type="search" name="q" value={ p.Query } maxlength="120" placeholder="Name, email or role"/></label>
       <button class="admin-button secondary" type="submit">Search</button>
       if p.Query != "" {
-        <a class="admin-button secondary" href={ p.PortalRoot + "/security" }>Clear</a>
+        <a class="admin-button secondary" href={ p.PortalRoot + "/users" }>Clear</a>
       }
     </form>
     if len(p.RoleAssignments) == 0 {

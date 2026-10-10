@@ -972,15 +972,19 @@ templ Checkout(p viewmodels.CustomerPage) {
                 }
               </select></label>
             }
+            if p.UserName != "" || p.UserPhone != "" {
+              <div class="checkout-quick-fill"><div><strong>Save time</strong><small>Use your account details for the contact fields.</small></div><button class="outline-button" type="button" data-checkout-prefill="account" data-name={ p.UserName } data-phone={ p.UserPhone }><span class="material-symbols-outlined" aria-hidden="true">auto_fix_high</span>Use account details</button></div>
+            }
             <label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
             <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" inputmode="tel" autocomplete="tel" required maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed"/></label>
             <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
             <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
             <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
-            <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" required/></label>
+            <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" list="indian-states" required/></label>
             <input name="region" type="hidden" value={ p.Address.State }/>
             <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
+            <datalist id="indian-states"><option value="Andhra Pradesh"/><option value="Assam"/><option value="Bihar"/><option value="Delhi"/><option value="Goa"/><option value="Gujarat"/><option value="Haryana"/><option value="Karnataka"/><option value="Kerala"/><option value="Madhya Pradesh"/><option value="Maharashtra"/><option value="Odisha"/><option value="Punjab"/><option value="Rajasthan"/><option value="Tamil Nadu"/><option value="Telangana"/><option value="Uttar Pradesh"/><option value="Uttarakhand"/><option value="West Bengal"/></datalist>
             <button class="primary-button full" type="button" data-checkout-step="2" @click="if (WVUI.validate($el.form)) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
         </section>

@@ -9,7 +9,7 @@ This document defines what a reviewer must be able to see while RES2 is being bu
 Reviewer can start the local stack and see:
 
 - Go application live status;
-- readiness status for PostgreSQL, Redis, Meilisearch, and MinIO;
+- readiness status for PostgreSQL, Redis, Meilisearch, and Garage;
 - worker status and graceful shutdown behavior.
 
 Required evidence: reproducible compose command, health endpoint responses, and service logs. This preview contains no business fixture fallback.

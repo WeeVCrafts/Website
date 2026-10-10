@@ -7,6 +7,7 @@
   let backendError = null;
   let authenticated = false;
   let razorpayLoader = null;
+  let drawerRestoreFocus = null;
 
   const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
@@ -279,6 +280,56 @@
     markReady(document.getElementById("wishlist-count"));
   }
 
+  function renderCartDrawer(cart, signedIn) {
+    const drawer = document.querySelector("[data-backend-cart-drawer]");
+    if (!drawer) return;
+    const itemsHost = drawer.querySelector("[data-cart-drawer-items]");
+    const summary = drawer.querySelector("[data-cart-drawer-summary]");
+    const countLabel = drawer.querySelector("[data-cart-drawer-count]");
+    const items = cart.items || [];
+    const totals = cartTotals(items);
+    if (countLabel) countLabel.textContent = totals.count + " item" + (totals.count === 1 ? "" : "s") + " from independent Indian makers";
+    if (itemsHost) {
+      if (!signedIn) {
+        itemsHost.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">person</span><h3>Sign in to see your cart</h3><p>Your saved items will follow you across devices.</p><a class="primary-button" href="/login">Sign in</a></div>';
+      } else if (!items.length) {
+        itemsHost.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><h3>Your cart is empty</h3><p>Browse handmade treasures and bring a little India home.</p><a class="primary-button" href="/products">Continue shopping</a></div>';
+      } else {
+        itemsHost.innerHTML = items.map(cartItemMarkup).join("");
+        wireCartLineActions(itemsHost, items);
+      }
+    }
+    if (summary) {
+      summary.hidden = !signedIn || !items.length;
+      const subtotal = summary.querySelector("[data-cart-drawer-subtotal]");
+      const shipping = summary.querySelector("[data-cart-drawer-shipping]");
+      const total = summary.querySelector("[data-cart-drawer-total]");
+      if (subtotal) subtotal.textContent = money(totals.subtotal);
+      if (shipping) shipping.textContent = money(totals.shipping);
+      if (total) total.textContent = money(totals.total);
+    }
+  }
+
+  function openCartDrawer(trigger) {
+    const drawer = document.querySelector("[data-backend-cart-drawer]");
+    if (!drawer) return;
+    drawerRestoreFocus = trigger || document.activeElement;
+    if (!drawer.open && typeof drawer.showModal === "function") drawer.showModal();
+    else if (!drawer.open) drawer.setAttribute("open", "");
+    requestAnimationFrame(function () {
+      drawer.querySelector("[data-cart-drawer-close]")?.focus({ preventScroll: true });
+    });
+  }
+
+  function closeCartDrawer() {
+    const drawer = document.querySelector("[data-backend-cart-drawer]");
+    if (!drawer) return;
+    if (drawer.open && typeof drawer.close === "function") drawer.close();
+    else drawer.removeAttribute("open");
+    if (drawerRestoreFocus && typeof drawerRestoreFocus.focus === "function") drawerRestoreFocus.focus({ preventScroll: true });
+    drawerRestoreFocus = null;
+  }
+
   function cartItemMarkup(item) {
     const slug = esc(item.slug);
       return "<article class=\"cart-seller\"><div class=\"cart-seller-head\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><b>" + esc(item.seller) + "</b></div></div><div class=\"cart-line\"><img src=\"" + esc(item.image) + "\" alt=\"" + esc(item.name) + "\" width=\"160\" height=\"173\"/><div class=\"cart-line-copy\"><span class=\"badge\">" + (item.available > 0 ? "In stock" : "Sold out") + "</span><h2>" + esc(item.name) + "</h2><p class=\"cart-variant\">Option: <b>" + esc(item.optionLabel || "Standard") + "</b></p><div class=\"price\"><strong>" + money(item.priceCents) + "</strong>" + (item.compareAtCents > item.priceCents ? "<del>" + money(item.compareAtCents) + "</del>" : "") + "</div><div class=\"cart-line-actions\"><span class=\"quantity-control\"><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-1\" aria-label=\"Decrease quantity\">-</button><output aria-live=\"polite\">" + Number(item.quantity || 0) + "</output><button type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"1\" aria-label=\"Increase quantity\">+</button></span><button class=\"text-button\" type=\"button\" data-backend-action=\"cart-change\" data-product-slug=\"" + slug + "\" data-delta=\"-" + Number(item.quantity || 0) + "\">Remove</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-move\" data-product-slug=\"" + slug + "\">Move to wishlist</button></div></div></div></article>";
@@ -302,7 +353,8 @@
     });
   }
 
-  async function hydrateCart() {
+  async function hydrateCart(options) {
+    options = options || {};
     const cartRoot = document.querySelector("[data-backend-cart]");
     const wishlistRoot = document.getElementById("wishlist-grid");
     const backendInstance = ensureBackend();
@@ -317,11 +369,15 @@
       const emptyWishlistCount = document.querySelector("[data-backend-wishlist-count]");
       if (emptyCartCount) { emptyCartCount.textContent = "0 items from independent Indian makers"; markReady(emptyCartCount); }
       if (emptyWishlistCount) { emptyWishlistCount.textContent = "0 items in your wishlist"; markReady(emptyWishlistCount); }
+      renderCartDrawer({ items: [] }, false);
+      if (options.open) openCartDrawer(options.trigger);
       return;
     }
     const cart = normalizeCart(await backendInstance.cart());
     const wishlist = await backendInstance.wishlist();
     updateBadges(cart, wishlist);
+    renderCartDrawer(cart, true);
+    if (options.open) openCartDrawer(options.trigger);
     const cartCountLabel = document.querySelector("[data-backend-cart-count]");
     if (cartCountLabel) { cartCountLabel.textContent = cartTotals(cart.items).count + " items from independent Indian makers"; markReady(cartCountLabel); }
     const wishlistCountLabel = document.querySelector("[data-backend-wishlist-count]");
@@ -393,8 +449,8 @@
       await api.addCart(slug, quantity, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       await refreshCounts();
-      if (document.querySelector("[data-backend-cart]")) await hydrateCart();
-      else notice("Added to your cart.", false);
+      await hydrateCart({ open: true, trigger: triggerElement });
+      notice("Added to your cart.", false);
       return;
     }
     if (action === "cart-buy") {
@@ -773,7 +829,37 @@
         form.dispatchEvent(new Event("change", {bubbles:true}));
       });
     }
+    const cartDrawer = document.querySelector("[data-backend-cart-drawer]");
+    if (cartDrawer) {
+      cartDrawer.addEventListener("cancel", function (event) {
+        event.preventDefault();
+        closeCartDrawer();
+      });
+      cartDrawer.addEventListener("click", function (event) {
+        if (event.target === cartDrawer) closeCartDrawer();
+      });
+    }
     document.addEventListener("click", async function (event) {
+      const cartDrawerClose = event.target.closest("[data-cart-drawer-close]");
+      if (cartDrawerClose) {
+        event.preventDefault();
+        closeCartDrawer();
+        return;
+      }
+      const accountPrefill = event.target.closest('[data-checkout-prefill="account"]');
+      if (accountPrefill) {
+        event.preventDefault();
+        const form = document.getElementById("checkout-address-form");
+        if (!form) return;
+        const name = form.elements.namedItem("recipient_name");
+        const phone = form.elements.namedItem("phone");
+        if (name && accountPrefill.dataset.name) name.value = accountPrefill.dataset.name;
+        if (phone && accountPrefill.dataset.phone) phone.value = accountPrefill.dataset.phone;
+        form.dispatchEvent(new Event("input", { bubbles: true }));
+        form.elements.namedItem("line1")?.focus();
+        notice("Account details added. Add your delivery address to continue.", false);
+        return;
+      }
       const passwordToggle = event.target.closest("[data-password-toggle]");
       if (passwordToggle) {
         event.preventDefault();

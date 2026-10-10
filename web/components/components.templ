@@ -28,6 +28,7 @@ templ Header(p viewmodels.CustomerPage) {
         </nav>
       </div>
     </div>
+    @CartDrawer(p)
     if p.Category != "" {
       <nav class="category-nav container" aria-label="Category navigation">
         if p.Category == "natural-care" {
@@ -82,6 +83,33 @@ templ Header(p viewmodels.CustomerPage) {
       }
     </dialog>
   </header>
+}
+
+templ CartDrawer(p viewmodels.CustomerPage) {
+  <dialog id="cart-drawer" class="cart-drawer" aria-labelledby="cart-drawer-title" data-backend-cart-drawer>
+    <div class="cart-drawer-shell">
+      <header class="cart-drawer-header">
+        <div><p class="eyebrow">YOUR BAG</p><h2 id="cart-drawer-title">Shopping bag</h2><p data-cart-drawer-count>{ p.CartCount } items from independent Indian makers</p></div>
+        <button class="icon-button cart-drawer-close" type="button" data-cart-drawer-close aria-label="Close shopping bag"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      </header>
+      <div class="cart-drawer-items" data-cart-drawer-items>
+        if p.Authenticated && p.CartCount > 0 {
+          <p class="empty-state">Loading your shopping bag…</p>
+        } else if p.Authenticated {
+          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><h3>Your cart is empty</h3><p>Browse handmade treasures and bring a little India home.</p><a class="primary-button" href="/products">Continue shopping</a></div>
+        } else {
+          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">person</span><h3>Sign in to see your cart</h3><p>Your saved items will follow you across devices.</p><a class="primary-button" href="/login">Sign in</a></div>
+        }
+      </div>
+      <footer class="cart-drawer-footer" data-cart-drawer-summary hidden>
+        <p><span>Subtotal</span><b data-cart-drawer-subtotal>₹0</b></p>
+        <p><span>Delivery</span><b data-cart-drawer-shipping>₹0</b></p>
+        <p class="cart-drawer-total"><span>Total</span><strong data-cart-drawer-total>₹0</strong></p>
+        <a class="primary-button full" href="/cart">View full cart <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+        <a class="outline-button full" href="/checkout">Proceed to checkout</a>
+      </footer>
+    </div>
+  </dialog>
 }
 
 templ MenuLink(href string, label string, icon string) {

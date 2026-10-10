@@ -45,7 +45,7 @@ if [ -z "$COMPOSE_CMD" ]; then
     exit 1
 fi
 
-echo "[+] Starting services (PostgreSQL, Redis, Search, MinIO, Mailpit, Adminer, Uptime Kuma, Web)..."
+echo "[+] Starting services (PostgreSQL, Redis, Search, Garage S3, Mailpit, Adminer, Uptime Kuma, Web)..."
 $COMPOSE_CMD up -d --build
 
 # The setup service is idempotent; inspect its exit status on Docker/Podman.
@@ -68,5 +68,6 @@ echo " -> Storefront:     http://localhost:8080"
 echo " -> Mailpit (Email):http://localhost:8025"
 echo " -> Adminer:        http://localhost:8082"
 echo " -> Uptime Kuma:    http://localhost:3001"
-echo " -> MinIO Console:  http://localhost:9001 (wecratfs / wecratfs-local-only)"
+echo " -> Garage S3 API:   http://localhost:3900"
+echo " -> Garage Admin:    http://localhost:3903/health"
 echo "========================================================"

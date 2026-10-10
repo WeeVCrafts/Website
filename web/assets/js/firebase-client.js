@@ -110,6 +110,14 @@
     if (!status) {status=document.createElement("p");status.dataset.firebaseStatus="";status.setAttribute("role","status");status.setAttribute("aria-live","polite");container.append(status);}
     status.textContent=text; status.className=error?"form-message error":"form-message";
   }
+  function setGoogleAvailability(panel,enabled,text) {
+    const button=panel.querySelector("[data-google-signin]");
+    const terms=panel.querySelector(".google-terms-label");
+    const note=panel.querySelector("[data-firebase-config-note]");
+    if (button) {button.disabled=!enabled;button.setAttribute("aria-disabled",String(!enabled));}
+    if (terms) terms.hidden=!enabled;
+    if (note) {note.hidden=enabled;note.textContent=text||"";}
+  }
   async function google(button) {
     const panel=button.closest("[data-firebase-google-panel]");
     const terms=panel.querySelector("[data-google-terms]").checked;
@@ -129,8 +137,13 @@
     const panels=document.querySelectorAll("[data-firebase-google-panel], [data-firebase-push-panel], [data-firebase-diagnostics]");
     if (!panels.length) return;
     try {
-      const f=await ready(); if(!f)return;
-      document.querySelectorAll("[data-firebase-google-panel]").forEach(panel=>{panel.hidden=false;panel.querySelector("button").addEventListener("click",event=>google(event.currentTarget));});
+      const googlePanels=document.querySelectorAll("[data-firebase-google-panel]");
+      const f=await ready();
+      if(!f) {
+        googlePanels.forEach(panel=>setGoogleAvailability(panel,false,"Google sign-in is not configured in this local workspace. Continue with email to use the local accounts."));
+        return;
+      }
+      googlePanels.forEach(panel=>{setGoogleAvailability(panel,true,"");panel.querySelector("[data-google-signin]").addEventListener("click",event=>google(event.currentTarget));});
       const link=document.querySelector("[data-firebase-link]");
       if (link)link.addEventListener("submit",async event=>{
         event.preventDefault(); if(!pendingLink)return;
@@ -146,7 +159,10 @@
           catch(_){message(panel,"Diagnostics could not be enabled.",true);}
         });
       });
-    }catch(_){ /* Existing first-party forms remain available during a CDN outage. */ }
+    }catch(_){
+      document.querySelectorAll("[data-firebase-google-panel]").forEach(panel=>setGoogleAvailability(panel,false,"Google sign-in could not be loaded. Continue with email or try again later."));
+      /* Existing first-party forms remain available during a CDN outage. */
+    }
   }
   async function setupPush(f) {
     const panel=document.querySelector("[data-firebase-push-panel]");if(!panel||!f.settings.vapidKey)return;

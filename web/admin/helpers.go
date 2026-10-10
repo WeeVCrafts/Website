@@ -33,6 +33,13 @@ func navClass(key, current string) string {
 	return "admin-nav-link"
 }
 
+func roleManagementHeading(p viewmodels.AdminPage) string {
+	if p.Workspace == "users" {
+		return "User management"
+	}
+	return "Live role assignments"
+}
+
 func ariaCurrent(active bool) string {
 	if active {
 		return "page"
