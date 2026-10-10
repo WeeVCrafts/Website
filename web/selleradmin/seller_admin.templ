@@ -17,6 +17,8 @@ templ Document(p viewmodels.SellerAdminPage) {
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
       <link rel="stylesheet" href={ assets.URL("css/seller-admin.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
+      <script defer src={ assets.URL("js/ui-standards.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/htmx.min.js"></script>
       <script defer src="/assets/js/alpine.min.js"></script>
@@ -66,10 +68,10 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
         <input id="seller-search" name="q" value={ p.Query } placeholder="Search orders, products, payouts, and more..."/>
         <button type="submit" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>
       </form>
-      <a class="seller-notification" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span><small>Workspaces</small></a>
+
       <a class="seller-user" href="/seller-admin"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
     </div>
-    <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/brands">Makers</a><span></span><a href="/">Storefront</a><a href="/workspaces">Switch workspace</a></nav>
+    <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/makers">Makers</a><span></span><a href="/">Storefront</a></nav>
   </header>
 }
 
@@ -97,12 +99,9 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
         <a class="seller-nav-link" href="/seller-admin/settings"><span class="material-symbols-outlined" aria-hidden="true">store</span><span>Store profile</span></a>
       }
       <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
-      <a class="seller-nav-link" href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Switch workspace</span></a>
+
       <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="seller-nav-link" type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </nav>
-    if p.CanProductWrite {
-      <div class="seller-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><p>Grow together<br/>Create with purpose.</p><strong>Weevcrafts<br/>supports artisan<br/>businesses.</strong><a href="/seller/products/new">List New Product <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
-    }
   </aside>
 }
 
@@ -145,7 +144,9 @@ templ SellerStatGrid(p viewmodels.SellerAdminPage) {
       <article class={ "seller-stat-card tone-" + sellerToneClass(stat.Tone) }>
         <span class="seller-stat-icon material-symbols-outlined" aria-hidden="true">{ sellerStatIcon(stat.Icon) }</span>
         <div><strong>{ stat.Value }</strong><b>{ stat.Label }</b>
-          @SellerStatMeta(stat)
+          if p.Active != "dashboard" {
+            @SellerStatMeta(stat)
+          }
         </div>
       </article>
     }

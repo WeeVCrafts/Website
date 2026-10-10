@@ -41,7 +41,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 15, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 15, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -54,13 +54,39 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/seller-admin.min.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 19, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 19, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/htmx.min.js\"></script><script defer src=\"/assets/js/alpine.min.js\"></script><script defer src=\"/assets/js/product-media.js\"></script></head><body class=\"seller-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"seller-skip-link\" href=\"#seller-main\">Skip to main content</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 templ.SafeURL
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/ui-standards.min.css"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 20, Col: 74}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script defer src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(assets.URL("js/ui-standards.js"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 21, Col: 58}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></script><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/htmx.min.js\"></script><script defer src=\"/assets/js/alpine.min.js\"></script><script defer src=\"/assets/js/product-media.js\"></script></head><body class=\"seller-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"seller-skip-link\" href=\"#seller-main\">Skip to main content</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -68,7 +94,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"seller-app\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"seller-app\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,7 +102,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<button class=\"seller-sidebar-backdrop\" type=\"button\" aria-label=\"Close seller navigation\" :class=\"sidebar ? 'is-open' : ''\" @click=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\"></button><div class=\"seller-main\" :inert=\"sidebar\"><main id=\"seller-main\" class=\"seller-content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<button class=\"seller-sidebar-backdrop\" type=\"button\" aria-label=\"Close seller navigation\" :class=\"sidebar ? 'is-open' : ''\" @click=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\"></button><div class=\"seller-main\" :inert=\"sidebar\"><main id=\"seller-main\" class=\"seller-content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -85,39 +111,39 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Notice != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"seller-notice\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"seller-notice\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 35, Col: 143}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 37, Col: 143}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if p.DataWarning != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"seller-notice\" role=\"alert\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"seller-notice\" role=\"alert\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataWarning)
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataWarning)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 38, Col: 142}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 40, Col: 142}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -130,7 +156,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</main></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</main></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -138,7 +164,7 @@ func Document(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -162,12 +188,12 @@ func SellerLegalBottom() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<footer class=\"seller-legal-bottom\" aria-label=\"Seller legal links\"><span>© 2026 Weevcrafts</span><nav aria-label=\"Policies\"><a href=\"/seller-admin/terms\">Seller Terms &amp; Conditions</a><a href=\"/privacy\">Privacy Policy</a></nav></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<footer class=\"seller-legal-bottom\" aria-label=\"Seller legal links\"><span>© 2026 Weevcrafts</span><nav aria-label=\"Policies\"><a href=\"/seller-admin/terms\">Seller Terms &amp; Conditions</a><a href=\"/privacy\">Privacy Policy</a></nav></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -191,77 +217,77 @@ func SellerHeader(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<header class=\"seller-header\"><div class=\"seller-header-main\"><button class=\"seller-menu-button\" type=\"button\" x-ref=\"sellerMenu\" aria-label=\"Open seller navigation\" aria-controls=\"seller-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.sellerSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"seller-wordmark\" href=\"/seller-admin\" aria-label=\"Weevcrafts seller portal\"><img class=\"seller-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"seller-portal-pill\">Seller Portal</span><form class=\"seller-search\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<header class=\"seller-header\"><div class=\"seller-header-main\"><button class=\"seller-menu-button\" type=\"button\" x-ref=\"sellerMenu\" aria-label=\"Open seller navigation\" aria-controls=\"seller-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.sellerSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"seller-wordmark\" href=\"/seller-admin\" aria-label=\"Weevcrafts seller portal\"><img class=\"seller-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"seller-portal-pill\">Seller Portal</span><form class=\"seller-search\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 templ.SafeURL
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(sellerPath(p.Active))
+		var templ_7745c5c3_Var10 templ.SafeURL
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(sellerPath(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 63, Col: 63}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" method=\"get\"><label class=\"sr-only\" for=\"seller-search\">Search seller portal</label> <span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span> <input id=\"seller-search\" name=\"q\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 66, Col: 58}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" placeholder=\"Search orders, products, payouts, and more...\"> <button type=\"submit\" aria-label=\"Search\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span></button></form><a class=\"seller-notification\" href=\"/workspaces\" aria-label=\"Switch workspace\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">apps</span><small>Workspaces</small></a> <a class=\"seller-user\" href=\"/seller-admin\"><span class=\"seller-user-avatar\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 70, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 65, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span><span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" method=\"get\"><label class=\"sr-only\" for=\"seller-search\">Search seller portal</label> <span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span> <input id=\"seller-search\" name=\"q\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 70, Col: 133}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 68, Col: 58}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"Search orders, products, payouts, and more...\"> <button type=\"submit\" aria-label=\"Search\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span></button></form><a class=\"seller-user\" href=\"/seller-admin\"><span class=\"seller-user-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 70, Col: 164}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 72, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</small></span></a></div><nav class=\"seller-global-nav\" aria-label=\"Store navigation\"><a href=\"/categories\">Categories <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a><a href=\"/products?category=offers\">Offers</a><a href=\"/brands\">Makers</a><span></span><a href=\"/\">Storefront</a><a href=\"/workspaces\">Switch workspace</a></nav></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</span><span><strong>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 72, Col: 133}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</strong><small>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 72, Col: 164}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</small></span></a></div><nav class=\"seller-global-nav\" aria-label=\"Store navigation\"><a href=\"/categories\">Categories <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a><a href=\"/products?category=offers\">Offers</a><a href=\"/makers\">Makers</a><span></span><a href=\"/\">Storefront</a></nav></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -285,51 +311,51 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<aside id=\"seller-sidebar\" class=\"seller-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"seller-sidebar-close\" type=\"button\" x-ref=\"sellerSidebarClose\" aria-label=\"Close seller navigation\" @click=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"seller-profile-mini\"><span class=\"seller-profile-avatar\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 79, Col: 85}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</span><span><strong>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.SellerName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 79, Col: 122}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<aside id=\"seller-sidebar\" class=\"seller-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"seller-sidebar-close\" type=\"button\" x-ref=\"sellerSidebarClose\" aria-label=\"Close seller navigation\" @click=\"sidebar=false; $nextTick(() => $refs.sellerMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"seller-profile-mini\"><span class=\"seller-profile-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.UserEmail)
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 79, Col: 153}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 81, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</small><a href=\"/seller-admin/onboarding\">Seller application status</a></span></div><nav class=\"seller-nav\" aria-label=\"Seller portal navigation\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</span><span><strong>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.SellerName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 81, Col: 122}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</strong><small>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.UserEmail)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 81, Col: 153}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</small><a href=\"/seller-admin/onboarding\">Seller application status</a></span></div><nav class=\"seller-nav\" aria-label=\"Seller portal navigation\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -360,7 +386,7 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -374,35 +400,25 @@ func SellerSidebar(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " <a class=\"seller-nav-link\" href=\"/seller-admin/settings\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">store</span><span>Store profile</span></a> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " <a class=\"seller-nav-link\" href=\"/seller-admin/settings\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">store</span><span>Store profile</span></a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<a class=\"seller-nav-link\" href=\"/\" aria-label=\"Go to storefront\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span>Storefront</span></a> <a class=\"seller-nav-link\" href=\"/workspaces\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">apps</span><span>Switch workspace</span></a><form method=\"post\" action=\"/logout\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<a class=\"seller-nav-link\" href=\"/\" aria-label=\"Go to storefront\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span>Storefront</span></a><form method=\"post\" action=\"/logout\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 101, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 103, Col: 101}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><button class=\"seller-nav-link\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></nav>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if p.CanProductWrite {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<div class=\"seller-impact\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">park</span><p>Grow together<br>Create with purpose.</p><strong>Weevcrafts<br>supports artisan<br>businesses.</strong><a href=\"/seller/products/new\">List New Product <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</aside>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\"><button class=\"seller-nav-link\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></nav></aside>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -426,13 +442,13 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var19 = []any{sellerNavClass(key, current)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
+		var templ_7745c5c3_Var21 = []any{sellerNavClass(key, current)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var21...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -440,12 +456,12 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var19).String())
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var21).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -453,12 +469,12 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var21 templ.SafeURL
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinURLErrs(href)
+		var templ_7745c5c3_Var23 templ.SafeURL
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 110, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 109, Col: 55}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -466,12 +482,12 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 110, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 109, Col: 100}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -479,12 +495,12 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
+		var templ_7745c5c3_Var25 string
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 110, Col: 168}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 109, Col: 168}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -492,12 +508,12 @@ func SellerNav(key, label, icon, current, href string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(label)
+		var templ_7745c5c3_Var26 string
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 110, Col: 190}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 109, Col: 190}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -525,21 +541,21 @@ func SellerTableEmpty(message, hint string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
+		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var27 == nil {
+			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"seller-table-empty\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search_off</span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(message)
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 114, Col: 141}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 113, Col: 141}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -547,12 +563,12 @@ func SellerTableEmpty(message, hint string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(hint)
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(hint)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 114, Col: 165}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 113, Col: 165}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -580,13 +596,13 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var28 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var28 == nil {
-			templ_7745c5c3_Var28 = templ.NopComponent
+		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var30 == nil {
+			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var29 = []any{"seller-page-intro intro-" + p.Active}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var29...)
+		var templ_7745c5c3_Var31 = []any{"seller-page-intro intro-" + p.Active}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var31...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -594,12 +610,12 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var30 string
-		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var29).String())
+		var templ_7745c5c3_Var32 string
+		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var31).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -607,12 +623,12 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var31 string
-		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
+		var templ_7745c5c3_Var33 string
+		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 119, Col: 263}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 118, Col: 263}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -620,12 +636,12 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var32 string
-		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 120, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 119, Col: 102}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -633,12 +649,12 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var33 string
-		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 120, Col: 124}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 119, Col: 124}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -646,12 +662,12 @@ func SellerPageIntro(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var34 string
-		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerIntroImage(p.Active))
+		var templ_7745c5c3_Var36 string
+		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerIntroImage(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 121, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 120, Col: 98}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -687,9 +703,9 @@ func SellerIntroNote(active string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var35 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var35 == nil {
-			templ_7745c5c3_Var35 = templ.NopComponent
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if active == "returns" {
@@ -738,13 +754,13 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var36 == nil {
-			templ_7745c5c3_Var36 = templ.NopComponent
+		templ_7745c5c3_Var38 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var38 == nil {
+			templ_7745c5c3_Var38 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var37 = []any{"seller-stat-grid count-" + sellerStatCount(len(p.Stats))}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var37...)
+		var templ_7745c5c3_Var39 = []any{"seller-stat-grid count-" + sellerStatCount(len(p.Stats))}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var39...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -752,12 +768,12 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var38 string
-		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var37).String())
+		var templ_7745c5c3_Var40 string
+		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var39).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var38)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -766,8 +782,8 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, stat := range p.Stats {
-			var templ_7745c5c3_Var39 = []any{"seller-stat-card tone-" + sellerToneClass(stat.Tone)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var39...)
+			var templ_7745c5c3_Var41 = []any{"seller-stat-card tone-" + sellerToneClass(stat.Tone)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var41...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -775,12 +791,12 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var40 string
-			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var39).String())
+			var templ_7745c5c3_Var42 string
+			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var41).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -788,12 +804,12 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var41 string
-			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStatIcon(stat.Icon))
+			var templ_7745c5c3_Var43 string
+			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStatIcon(stat.Icon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 146, Col: 111}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 145, Col: 111}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -801,12 +817,12 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var42 string
-			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
+			var templ_7745c5c3_Var44 string
+			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 147, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 146, Col: 33}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -814,22 +830,24 @@ func SellerStatGrid(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var43 string
-			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
+			var templ_7745c5c3_Var45 string
+			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 147, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 146, Col: 59}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</b>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</b> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = SellerStatMeta(stat).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
+			if p.Active != "dashboard" {
+				templ_7745c5c3_Err = SellerStatMeta(stat).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div></article>")
 			if templ_7745c5c3_Err != nil {
@@ -860,14 +878,14 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var44 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var44 == nil {
-			templ_7745c5c3_Var44 = templ.NopComponent
+		templ_7745c5c3_Var46 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var46 == nil {
+			templ_7745c5c3_Var46 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if stat.Delta != "" {
-			var templ_7745c5c3_Var45 = []any{sellerTrendClass(stat.Positive)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var45...)
+			var templ_7745c5c3_Var47 = []any{sellerTrendClass(stat.Positive)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var47...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -875,12 +893,12 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var46 string
-			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var45).String())
+			var templ_7745c5c3_Var48 string
+			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var47).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var46)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var48)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -888,12 +906,12 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var47 string
-			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(sellerTrendIcon(stat.Positive))
+			var templ_7745c5c3_Var49 string
+			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(sellerTrendIcon(stat.Positive))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 157, Col: 144}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 158, Col: 144}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -901,12 +919,12 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var48 string
-			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
+			var templ_7745c5c3_Var50 string
+			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 157, Col: 165}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 158, Col: 165}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -914,12 +932,12 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var49 string
-			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
+			var templ_7745c5c3_Var51 string
+			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 157, Col: 185}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 158, Col: 185}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -932,12 +950,12 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var50 string
-			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
+			var templ_7745c5c3_Var52 string
+			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 159, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 160, Col: 24}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -951,57 +969,6 @@ func SellerStatMeta(stat viewmodels.SellerAdminStat) templ.Component {
 }
 
 func Dashboard(p viewmodels.SellerAdminPage) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var51 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var51 == nil {
-			templ_7745c5c3_Var51 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var52 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-			if !templ_7745c5c3_IsBuffer {
-				defer func() {
-					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err == nil {
-						templ_7745c5c3_Err = templ_7745c5c3_BufErr
-					}
-				}()
-			}
-			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = SellerStatGrid(p).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, " <section class=\"seller-dashboard-grid\"><article class=\"seller-panel sales-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bar_chart</span><span><h2>Sales Overview</h2><p>Track your sales performance over time</p></span></div><select aria-label=\"Sales period\"><option>Last 7 Days</option><option>Last 30 Days</option></select></div><div class=\"sales-chart\"><div class=\"chart-y\"><span>40K</span><span>30K</span><span>20K</span><span>10K</span><span>0</span></div><div class=\"chart-area\"><div class=\"chart-grid-lines\"><i></i><i></i><i></i><i></i><i></i></div><svg viewBox=\"0 0 620 220\" role=\"img\" aria-label=\"Sales trend chart\"><path class=\"chart-fill\" d=\"M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135 L555 205 L15 205 Z\"></path><path class=\"chart-line\" d=\"M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135\"></path><circle cx=\"15\" cy=\"170\" r=\"5\"></circle><circle cx=\"105\" cy=\"130\" r=\"5\"></circle><circle cx=\"195\" cy=\"148\" r=\"5\"></circle><circle cx=\"285\" cy=\"90\" r=\"5\"></circle><circle cx=\"375\" cy=\"150\" r=\"5\"></circle><circle cx=\"465\" cy=\"105\" r=\"5\"></circle><circle cx=\"555\" cy=\"135\" r=\"5\"></circle></svg><div class=\"chart-x\"><span>20 Apr</span><span>21 Apr</span><span>22 Apr</span><span>23 Apr</span><span>24 Apr</span><span>25 Apr</span><span>26 Apr</span></div><b class=\"chart-tooltip\">INR 14,797<br><small>26 Apr 2024</small></b></div></div><div class=\"sales-summary\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">bar_chart</i><b>INR 1,02,340</b><small>Total Sales<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</i><b>28</b><small>Total Orders<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</i><b>42</b><small>Products Sold<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">trending_up</i><b>INR 3,655</b><small>Average Order<br>Value</small></span></div></article><article class=\"seller-panel quick-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><span><h2>Quick Actions</h2></span></div></div><div class=\"seller-quick-actions\"><a href=\"/seller-admin/products?notice=New+product+form+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><b>Add New Product</b><small>List a new handcrafted item</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/inventory?notice=Inventory+manager+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">redeem</span><b>Manage Inventory</b><small>Update stock and variants</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/orders?notice=Pending+orders+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><b>Process Orders</b><small>View and ship pending orders</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/products?tab=approval&amp;notice=Product+approval+tracker+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_circle_up</span><b>Request Product Approval</b><small>Track approval status</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/settings?notice=Offers+manager+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_offer</span><b>Manage Offers</b><small>Create discounts and offers</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a></div></article></section><section class=\"seller-two-grid dashboard-tables\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">emoji_events</span><span><h2>Top Selling Products</h2></span></div><a href=\"/seller-admin/products\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-mini-table\"><div class=\"seller-table-head\"><span>#</span><span>Product</span><span>Units Sold</span><span>Sales Value</span></div><div class=\"seller-table-row\"><b>1</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\">Chanderi Silk Cotton Saree<small>INR 5,999</small></span><strong>12</strong><strong>INR 71,988</strong></div><div class=\"seller-table-row\"><b>2</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\">Handpainted Ceramic Mugs<small>INR 1,299</small></span><strong>8</strong><strong>INR 10,392</strong></div><div class=\"seller-table-row\"><b>3</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\">Madhubani Painting - Tree of Life<small>INR 2,499</small></span><strong>6</strong><strong>INR 14,994</strong></div><div class=\"seller-table-row\"><b>4</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\">Carved Wooden Jewellery Box<small>INR 1,299</small></span><strong>5</strong><strong>INR 6,495</strong></div><div class=\"seller-table-row\"><b>5</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\">Chanderi Silk Cotton Saree - Peach Gold<small>INR 5,999</small></span><strong>4</strong><strong>INR 23,996</strong></div></div></article><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</span><span><h2>Recent Orders</h2></span></div><a href=\"/seller-admin/orders\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-mini-table orders-mini\"><div class=\"seller-table-head\"><span>Order #</span><span>Customer</span><span>Items</span><span>Amount</span><span>Status</span></div><div class=\"seller-table-row\"><b>#WC2504267819</b><span>Priya Sharma</span><span>3</span><strong>INR 14,797</strong><span class=\"seller-chip success\">Processing</span></div><div class=\"seller-table-row\"><b>#WC2504216632</b><span>Rohit Mehta</span><span>1</span><strong>INR 2,499</strong><span class=\"seller-chip success\">Delivered</span></div><div class=\"seller-table-row\"><b>#WC2504149981</b><span>Ananya Iyer</span><span>2</span><strong>INR 8,298</strong><span class=\"seller-chip success\">Delivered</span></div><div class=\"seller-table-row\"><b>#WC2504097712</b><span>Suresh Nair</span><span>1</span><strong>INR 1,899</strong><span class=\"seller-chip danger\">Cancelled</span></div><div class=\"seller-table-row\"><b>#WC2504015520</b><span>Meera Krishnan</span><span>4</span><strong>INR 6,247</strong><span class=\"seller-chip success\">Delivered</span></div></div></article></section><section class=\"seller-two-grid dashboard-tables\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">hourglass_top</span><span><h2>Approval Alerts</h2></span></div><a href=\"/seller-admin/products?tab=approval\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-alert-list\"><a href=\"/seller-admin/products?notice=Product+approval+opened\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\"><span><b>Chanderi Silk Cotton Saree - Peach Gold</b><small>Product submitted on 25 Apr 2024</small></span><em>Under Review</em></a><a href=\"/seller-admin/products?notice=Product+approval+opened\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><span><b>Handpainted Ceramic Mug - Blue Motif</b><small>Product submitted on 24 Apr 2024</small></span><em>Under Review</em></a></div></article><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">campaign</span><span><h2>Announcements &amp; Support</h2></span></div><a href=\"/seller-admin/settings?notice=All+announcements+opened\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-announcements\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span><p><b>India Crafts Festival 2024</b><small>Prepare your product listings and delivery details for orders across India.</small></p><time>24 Apr 2024</time></div><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">support_agent</span><p><b>Need Help?</b><small>Our seller support team is here to help. Reach out for any assistance.</small></p><a href=\"/seller-admin/settings?notice=Support+request+opened\">Contact Support</a></div></div></article></section>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			return nil
-		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var52), templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func Onboarding(p viewmodels.SellerAdminPage) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1034,7 +1001,11 @@ func Onboarding(p viewmodels.SellerAdminPage) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<section class=\"onboarding-layout\"><div class=\"onboarding-main\"><div class=\"onboarding-steps\"><span class=\"done\"><i>✓</i>Registration</span><b></b><span class=\"done\"><i>✓</i>KYC</span><b></b><span class=\"done\"><i>3</i>Business Details</span><b></b><span class=\"done\"><i>✓</i>Bank Details</span><b></b><span class=\"done\"><i>5</i>Store Setup</span><b></b><span class=\"current\"><i>6</i>Agreement</span><b></b><span><i>7</i>Approval</span></div><div class=\"onboarding-card completed\"><header><span>1</span><div><h2>Registration <em>✓ Completed</em></h2><p>Basic account information</p></div><a href=\"/seller-admin/onboarding?notice=Registration+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields\"><span><small>Seller Name</small>Weaver's Touch</span><span><small>Email</small>weaverstouch@gmail.com</span><span><small>Phone</small>+91 98765 43210</span></div></div><div class=\"onboarding-card completed\"><header><span>2</span><div><h2>KYC (Identity Verification) <em>✓ Completed</em></h2><p>Upload your identity documents</p></div><a href=\"/seller-admin/onboarding?notice=KYC+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"document-cards\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">description</i><b>PAN Card</b><small>pan_card.pdf</small><em>✓ Verified</em></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">article</i><b>Aadhaar Card</b><small>aadhaar.pdf</small><em>✓ Verified</em></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">draft</i><b>Address Proof</b><small>address_proof.pdf</small><em>✓ Verified</em></span></div></div><div class=\"onboarding-card completed\"><header><span>3</span><div><h2>Business Details <em>✓ Completed</em></h2><p>Tell us about your business</p></div><a href=\"/seller-admin/onboarding?notice=Business+details+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields four\"><span><small>Business Type</small>Proprietorship</span><span><small>PAN Number</small>ABCDE1234F</span><span><small>GST Number</small>29ABCDE1234F1Z5</span><span><small>Business Name</small>Weaver's Touch</span></div></div><div class=\"onboarding-card completed\"><header><span>4</span><div><h2>Bank Details <em>✓ Completed</em></h2><p>Add your bank account for payouts</p></div><strong>✓ Verified</strong><a href=\"/seller-admin/settings?notice=Bank+details+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields four\"><span><small>Account Holder Name</small>Priya Sharma</span><span><small>Bank Name</small>HDFC Bank</span><span><small>Account Number</small>XXXXXXXX4321</span><span><small>IFSC Code</small>HDFC0001234</span></div></div><div class=\"onboarding-card completed\"><header><span>5</span><div><h2>Store Setup <em>✓ Completed</em></h2><p>Set up your storefront</p></div><a href=\"/seller-admin/settings?notice=Store+settings+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"store-setup-fields\"><div class=\"store-logo\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"Store logo\"><b>Change</b></div><img width=\"1254\" height=\"1254\" class=\"store-banner-mini\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Store banner\"><span><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span>Pickup Location</b>Matheswar, Madhya Pradesh 456001<br><b>Categories</b><em>Sarees</em><em>Home Decor</em><em>Wall Art</em></span></div></div><div class=\"onboarding-card completed\"><header><span>6</span><div><h2>Agreement <em>✓ Completed</em></h2><p>Review and accept our policies</p></div><a href=\"/seller-admin/onboarding?notice=Agreement+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><label class=\"agreement\"><input type=\"checkbox\" aria-label=\"Agree to Weevcrafts seller terms and policies\" checked> I have read and agree to the <a href=\"/seller-admin/onboarding?notice=Terms+opened\">Weevcrafts Seller Terms &amp; Conditions</a>, <a href=\"/seller-admin/onboarding?notice=Privacy+opened\">Privacy Policy</a> and <a href=\"/seller-admin/onboarding?notice=Marketplace+Policies+opened\">Marketplace Policies</a>.<small>Accepted on<br>26 Apr 2024, 10:24 AM</small></label></div><div class=\"onboarding-card\"><header><span>7</span><div><h2>Approval Status <em class=\"in-review\">◷ In Review</em></h2><p>Our team is reviewing your application</p></div></header><div class=\"approval-message\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">info</span><p><b>You're all set!</b>We'll review your application and get back to you within 2 - 3 business days.</p></div></div></div><aside class=\"onboarding-aside\"><article><h2>Onboarding Progress</h2><strong>82%</strong><i><b></b></i><p><b>5</b> of 6 steps completed</p></article><article><h2>Current Status</h2><strong class=\"status-large\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">schedule</span>Under Review</strong><p>Submitted on 26 Apr 2024, 10:24 AM</p><small>Your application is under review by our team. We'll notify you via email and SMS once it’s approved.</small></article><article class=\"missing\"><h2><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span>Missing Items</h2><strong>1 item pending</strong><a href=\"/seller-admin/onboarding?notice=GST+certificate+upload+opened\"><b>GST Certificate (Optional)</b><small>Recommended for higher visibility and trust.<span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></small></a></article><article class=\"almost\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span><h2>Almost there!</h2><p>Once approved, you can list your products and start selling to customers across India.</p></article><article class=\"help-card\"><h2><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span>Need Help?</h2><p>Our seller support team is here for you.</p><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span>+91 98765 43210<small>Mon - Sat, 9 AM - 7 PM</small></b><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span>sellers@weevcrafts.com<small>We usually respond within 24 hours</small></b><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat_bubble_outline</span>Live Chat<small>Chat with our team</small></b><a href=\"/seller-admin/settings?notice=Support+request+opened\">Contact Support <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></article></aside></section>")
+			templ_7745c5c3_Err = SellerStatGrid(p).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, " <section class=\"seller-dashboard-grid\"><article class=\"seller-panel sales-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bar_chart</span><span><h2>Sales Overview</h2><p>Track your sales performance over time</p></span></div><select aria-label=\"Sales period\"><option>Last 7 Days</option><option>Last 30 Days</option></select></div><div class=\"sales-chart\"><div class=\"chart-y\"><span>40K</span><span>30K</span><span>20K</span><span>10K</span><span>0</span></div><div class=\"chart-area\"><div class=\"chart-grid-lines\"><i></i><i></i><i></i><i></i><i></i></div><svg viewBox=\"0 0 620 220\" role=\"img\" aria-label=\"Sales trend chart\"><path class=\"chart-fill\" d=\"M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135 L555 205 L15 205 Z\"></path><path class=\"chart-line\" d=\"M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135\"></path><circle cx=\"15\" cy=\"170\" r=\"5\"></circle><circle cx=\"105\" cy=\"130\" r=\"5\"></circle><circle cx=\"195\" cy=\"148\" r=\"5\"></circle><circle cx=\"285\" cy=\"90\" r=\"5\"></circle><circle cx=\"375\" cy=\"150\" r=\"5\"></circle><circle cx=\"465\" cy=\"105\" r=\"5\"></circle><circle cx=\"555\" cy=\"135\" r=\"5\"></circle></svg><div class=\"chart-x\"><span>20 Apr</span><span>21 Apr</span><span>22 Apr</span><span>23 Apr</span><span>24 Apr</span><span>25 Apr</span><span>26 Apr</span></div><b class=\"chart-tooltip\">INR 14,797<br><small>26 Apr 2024</small></b></div></div><div class=\"sales-summary\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">bar_chart</i><b>INR 1,02,340</b><small>Total Sales<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</i><b>28</b><small>Total Orders<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</i><b>42</b><small>Products Sold<br>(Last 7 days)</small></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">trending_up</i><b>INR 3,655</b><small>Average Order<br>Value</small></span></div></article><article class=\"seller-panel quick-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><span><h2>Quick Actions</h2></span></div></div><div class=\"seller-quick-actions\"><a href=\"/seller-admin/products?notice=New+product+form+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><b>Add New Product</b><small>List a new handcrafted item</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/inventory?notice=Inventory+manager+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">redeem</span><b>Manage Inventory</b><small>Update stock and variants</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/orders?notice=Pending+orders+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><b>Process Orders</b><small>View and ship pending orders</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/products?tab=approval&amp;notice=Product+approval+tracker+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_circle_up</span><b>Request Product Approval</b><small>Track approval status</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a><a href=\"/seller-admin/settings?notice=Offers+manager+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_offer</span><b>Manage Offers</b><small>Create discounts and offers</small><i class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</i></a></div></article></section><section class=\"seller-two-grid dashboard-tables\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">emoji_events</span><span><h2>Top Selling Products</h2></span></div><a href=\"/seller-admin/products\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-mini-table\"><div class=\"seller-table-head\"><span>#</span><span>Product</span><span>Units Sold</span><span>Sales Value</span></div><div class=\"seller-table-row\"><b>1</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\">Chanderi Silk Cotton Saree<small>INR 5,999</small></span><strong>12</strong><strong>INR 71,988</strong></div><div class=\"seller-table-row\"><b>2</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\">Handpainted Ceramic Mugs<small>INR 1,299</small></span><strong>8</strong><strong>INR 10,392</strong></div><div class=\"seller-table-row\"><b>3</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\">Madhubani Painting - Tree of Life<small>INR 2,499</small></span><strong>6</strong><strong>INR 14,994</strong></div><div class=\"seller-table-row\"><b>4</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\">Carved Wooden Jewellery Box<small>INR 1,299</small></span><strong>5</strong><strong>INR 6,495</strong></div><div class=\"seller-table-row\"><b>5</b><span class=\"seller-product-cell\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\">Chanderi Silk Cotton Saree - Peach Gold<small>INR 5,999</small></span><strong>4</strong><strong>INR 23,996</strong></div></div></article><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</span><span><h2>Recent Orders</h2></span></div><a href=\"/seller-admin/orders\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-mini-table orders-mini\"><div class=\"seller-table-head\"><span>Order #</span><span>Customer</span><span>Items</span><span>Amount</span><span>Status</span></div><div class=\"seller-table-row\"><b>#WC2504267819</b><span>Priya Sharma</span><span>3</span><strong>INR 14,797</strong><span class=\"seller-chip success\">Processing</span></div><div class=\"seller-table-row\"><b>#WC2504216632</b><span>Rohit Mehta</span><span>1</span><strong>INR 2,499</strong><span class=\"seller-chip success\">Delivered</span></div><div class=\"seller-table-row\"><b>#WC2504149981</b><span>Ananya Iyer</span><span>2</span><strong>INR 8,298</strong><span class=\"seller-chip success\">Delivered</span></div><div class=\"seller-table-row\"><b>#WC2504097712</b><span>Suresh Nair</span><span>1</span><strong>INR 1,899</strong><span class=\"seller-chip danger\">Cancelled</span></div><div class=\"seller-table-row\"><b>#WC2504015520</b><span>Meera Krishnan</span><span>4</span><strong>INR 6,247</strong><span class=\"seller-chip success\">Delivered</span></div></div></article></section><section class=\"seller-two-grid dashboard-tables\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">hourglass_top</span><span><h2>Approval Alerts</h2></span></div><a href=\"/seller-admin/products?tab=approval\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-alert-list\"><a href=\"/seller-admin/products?notice=Product+approval+opened\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\"><span><b>Chanderi Silk Cotton Saree - Peach Gold</b><small>Product submitted on 25 Apr 2024</small></span><em>Under Review</em></a><a href=\"/seller-admin/products?notice=Product+approval+opened\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><span><b>Handpainted Ceramic Mug - Blue Motif</b><small>Product submitted on 24 Apr 2024</small></span><em>Under Review</em></a></div></article><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">campaign</span><span><h2>Announcements &amp; Support</h2></span></div><a href=\"/seller-admin/settings?notice=All+announcements+opened\" class=\"seller-panel-link\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"seller-announcements\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span><p><b>India Crafts Festival 2024</b><small>Prepare your product listings and delivery details for orders across India.</small></p><time>24 Apr 2024</time></div><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">support_agent</span><p><b>Need Help?</b><small>Our seller support team is here to help. Reach out for any assistance.</small></p><a href=\"/seller-admin/settings?notice=Support+request+opened\">Contact Support</a></div></div></article></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1048,7 +1019,7 @@ func Onboarding(p viewmodels.SellerAdminPage) templ.Component {
 	})
 }
 
-func Products(p viewmodels.SellerAdminPage) templ.Component {
+func Onboarding(p viewmodels.SellerAdminPage) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1081,12 +1052,59 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<section class=\"onboarding-layout\"><div class=\"onboarding-main\"><div class=\"onboarding-steps\"><span class=\"done\"><i>✓</i>Registration</span><b></b><span class=\"done\"><i>✓</i>KYC</span><b></b><span class=\"done\"><i>3</i>Business Details</span><b></b><span class=\"done\"><i>✓</i>Bank Details</span><b></b><span class=\"done\"><i>5</i>Store Setup</span><b></b><span class=\"current\"><i>6</i>Agreement</span><b></b><span><i>7</i>Approval</span></div><div class=\"onboarding-card completed\"><header><span>1</span><div><h2>Registration <em>✓ Completed</em></h2><p>Basic account information</p></div><a href=\"/seller-admin/onboarding?notice=Registration+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields\"><span><small>Seller Name</small>Weaver's Touch</span><span><small>Email</small>weaverstouch@gmail.com</span><span><small>Phone</small>+91 98765 43210</span></div></div><div class=\"onboarding-card completed\"><header><span>2</span><div><h2>KYC (Identity Verification) <em>✓ Completed</em></h2><p>Upload your identity documents</p></div><a href=\"/seller-admin/onboarding?notice=KYC+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"document-cards\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">description</i><b>PAN Card</b><small>pan_card.pdf</small><em>✓ Verified</em></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">article</i><b>Aadhaar Card</b><small>aadhaar.pdf</small><em>✓ Verified</em></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">draft</i><b>Address Proof</b><small>address_proof.pdf</small><em>✓ Verified</em></span></div></div><div class=\"onboarding-card completed\"><header><span>3</span><div><h2>Business Details <em>✓ Completed</em></h2><p>Tell us about your business</p></div><a href=\"/seller-admin/onboarding?notice=Business+details+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields four\"><span><small>Business Type</small>Proprietorship</span><span><small>PAN Number</small>ABCDE1234F</span><span><small>GST Number</small>29ABCDE1234F1Z5</span><span><small>Business Name</small>Weaver's Touch</span></div></div><div class=\"onboarding-card completed\"><header><span>4</span><div><h2>Bank Details <em>✓ Completed</em></h2><p>Add your bank account for payouts</p></div><strong>✓ Verified</strong><a href=\"/seller-admin/settings?notice=Bank+details+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"onboarding-fields four\"><span><small>Account Holder Name</small>Priya Sharma</span><span><small>Bank Name</small>HDFC Bank</span><span><small>Account Number</small>XXXXXXXX4321</span><span><small>IFSC Code</small>HDFC0001234</span></div></div><div class=\"onboarding-card completed\"><header><span>5</span><div><h2>Store Setup <em>✓ Completed</em></h2><p>Set up your storefront</p></div><a href=\"/seller-admin/settings?notice=Store+settings+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"store-setup-fields\"><div class=\"store-logo\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"Store logo\"><b>Change</b></div><img width=\"1254\" height=\"1254\" class=\"store-banner-mini\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Store banner\"><span><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span>Pickup Location</b>Matheswar, Madhya Pradesh 456001<br><b>Categories</b><em>Sarees</em><em>Home Decor</em><em>Wall Art</em></span></div></div><div class=\"onboarding-card completed\"><header><span>6</span><div><h2>Agreement <em>✓ Completed</em></h2><p>Review and accept our policies</p></div><a href=\"/seller-admin/onboarding?notice=Agreement+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><label class=\"agreement\"><input type=\"checkbox\" aria-label=\"Agree to Weevcrafts seller terms and policies\" checked> I have read and agree to the <a href=\"/seller-admin/onboarding?notice=Terms+opened\">Weevcrafts Seller Terms &amp; Conditions</a>, <a href=\"/seller-admin/onboarding?notice=Privacy+opened\">Privacy Policy</a> and <a href=\"/seller-admin/onboarding?notice=Marketplace+Policies+opened\">Marketplace Policies</a>.<small>Accepted on<br>26 Apr 2024, 10:24 AM</small></label></div><div class=\"onboarding-card\"><header><span>7</span><div><h2>Approval Status <em class=\"in-review\">◷ In Review</em></h2><p>Our team is reviewing your application</p></div></header><div class=\"approval-message\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">info</span><p><b>You're all set!</b>We'll review your application and get back to you within 2 - 3 business days.</p></div></div></div><aside class=\"onboarding-aside\"><article><h2>Onboarding Progress</h2><strong>82%</strong><i><b></b></i><p><b>5</b> of 6 steps completed</p></article><article><h2>Current Status</h2><strong class=\"status-large\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">schedule</span>Under Review</strong><p>Submitted on 26 Apr 2024, 10:24 AM</p><small>Your application is under review by our team. We'll notify you via email and SMS once it’s approved.</small></article><article class=\"missing\"><h2><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span>Missing Items</h2><strong>1 item pending</strong><a href=\"/seller-admin/onboarding?notice=GST+certificate+upload+opened\"><b>GST Certificate (Optional)</b><small>Recommended for higher visibility and trust.<span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></small></a></article><article class=\"almost\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span><h2>Almost there!</h2><p>Once approved, you can list your products and start selling to customers across India.</p></article><article class=\"help-card\"><h2><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span>Need Help?</h2><p>Our seller support team is here for you.</p><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span>+91 98765 43210<small>Mon - Sat, 9 AM - 7 PM</small></b><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span>sellers@weevcrafts.com<small>We usually respond within 24 hours</small></b><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat_bubble_outline</span>Live Chat<small>Chat with our team</small></b><a href=\"/seller-admin/settings?notice=Support+request+opened\">Contact Support <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></article></aside></section>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var56), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func Products(p viewmodels.SellerAdminPage) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var57 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var57 == nil {
+			templ_7745c5c3_Var57 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Var58 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "<section class=\"products-layout\"><div class=\"products-main\"><nav class=\"seller-tabs\" aria-label=\"Product status\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var57 = []any{sellerTabClass(p.Tab, "all")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var57...)
+			var templ_7745c5c3_Var59 = []any{sellerTabClass(p.Tab, "all")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var59...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1094,12 +1112,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var58 string
-			templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var57).String())
+			var templ_7745c5c3_Var60 string
+			templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var59).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var58)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var60)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1107,12 +1125,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var59 string
-			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
+			var templ_7745c5c3_Var61 string
+			templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 208}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 208}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var61)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1120,8 +1138,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var60 = []any{sellerTabClass(p.Tab, "draft")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var60...)
+			var templ_7745c5c3_Var62 = []any{sellerTabClass(p.Tab, "draft")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var62...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1129,12 +1147,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var61 string
-			templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var60).String())
+			var templ_7745c5c3_Var63 string
+			templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var62).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var61)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var63)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1142,12 +1160,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var62 string
-			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "draft"))
+			var templ_7745c5c3_Var64 string
+			templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "draft"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 348}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 348}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var62)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var64)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1155,8 +1173,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var63 = []any{sellerTabClass(p.Tab, "review")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var63...)
+			var templ_7745c5c3_Var65 = []any{sellerTabClass(p.Tab, "review")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var65...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1164,12 +1182,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var64 string
-			templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var63).String())
+			var templ_7745c5c3_Var66 string
+			templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var65).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var64)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var66)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1177,12 +1195,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var65 string
-			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "review"))
+			var templ_7745c5c3_Var67 string
+			templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "review"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 501}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 501}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var65)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var67)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1190,8 +1208,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var66 = []any{sellerTabClass(p.Tab, "approved")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var66...)
+			var templ_7745c5c3_Var68 = []any{sellerTabClass(p.Tab, "approved")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var68...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1199,12 +1217,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var67 string
-			templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var66).String())
+			var templ_7745c5c3_Var69 string
+			templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var68).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var67)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var69)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1212,12 +1230,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var68 string
-			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "approved"))
+			var templ_7745c5c3_Var70 string
+			templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "approved"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 666}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 666}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var70)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1225,8 +1243,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var69 = []any{sellerTabClass(p.Tab, "changes")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var69...)
+			var templ_7745c5c3_Var71 = []any{sellerTabClass(p.Tab, "changes")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var71...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1234,12 +1252,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var70 string
-			templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var69).String())
+			var templ_7745c5c3_Var72 string
+			templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var71).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var70)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var72)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1247,12 +1265,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var71 string
-			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "changes"))
+			var templ_7745c5c3_Var73 string
+			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "changes"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 827}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 827}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var73)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1260,8 +1278,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var72 = []any{sellerTabClass(p.Tab, "rejected")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var72...)
+			var templ_7745c5c3_Var74 = []any{sellerTabClass(p.Tab, "rejected")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var74...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1269,12 +1287,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var73 string
-			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var72).String())
+			var templ_7745c5c3_Var75 string
+			templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var74).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var73)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var75)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1282,12 +1300,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var74 string
-			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rejected"))
+			var templ_7745c5c3_Var76 string
+			templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rejected"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 997}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 997}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var74)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var76)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1295,8 +1313,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var75 = []any{sellerTabClass(p.Tab, "stock")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var75...)
+			var templ_7745c5c3_Var77 = []any{sellerTabClass(p.Tab, "stock")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var77...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1304,12 +1322,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var76 string
-			templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var75).String())
+			var templ_7745c5c3_Var78 string
+			templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var77).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var76)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var78)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1317,12 +1335,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var77 string
-			templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "stock"))
+			var templ_7745c5c3_Var79 string
+			templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "stock"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 1154}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 1154}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var77)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var79)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1330,12 +1348,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var78 string
-			templ_7745c5c3_Var78, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
+			var templ_7745c5c3_Var80 string
+			templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 183, Col: 1591}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 184, Col: 1591}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var78)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var80)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1348,12 +1366,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var79 string
-				templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.ResolveAttributeValue("Select " + product.Name)
+				var templ_7745c5c3_Var81 string
+				templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.ResolveAttributeValue("Select " + product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 107}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 107}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var79)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var81)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1361,12 +1379,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var80 string
-				templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Image)
+				var templ_7745c5c3_Var82 string
+				templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Image)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 204}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 204}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var80)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var82)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1374,12 +1392,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var81 string
-				templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Name)
+				var templ_7745c5c3_Var83 string
+				templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.ResolveAttributeValue(product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 225}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 225}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var81)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var83)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1387,12 +1405,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var82 string
-				templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(product.Name)
+				var templ_7745c5c3_Var84 string
+				templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 246}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 246}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1400,12 +1418,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var83 string
-				templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinStringErrs(product.SKU)
+				var templ_7745c5c3_Var85 string
+				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(product.SKU)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 277}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 277}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var85))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1413,12 +1431,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var84 string
-				templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinStringErrs(product.Category)
+				var templ_7745c5c3_Var86 string
+				templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(product.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 318}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 318}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1426,12 +1444,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var85 string
-				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(product.Price)
+				var templ_7745c5c3_Var87 string
+				templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(product.Price)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 350}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 350}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var85))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1439,12 +1457,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var86 string
-				templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.JoinStringErrs(product.Variants)
+				var templ_7745c5c3_Var88 string
+				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.JoinStringErrs(product.Variants)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 385}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 385}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var86))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var88))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1452,8 +1470,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var87 = []any{sellerStockClass(product.Stock)}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var87...)
+				var templ_7745c5c3_Var89 = []any{sellerStockClass(product.Stock)}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var89...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1461,12 +1479,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var88 string
-				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var87).String())
+				var templ_7745c5c3_Var90 string
+				templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var89).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var88)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var90)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1474,12 +1492,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var89 string
-				templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.JoinStringErrs(product.Stock)
+				var templ_7745c5c3_Var91 string
+				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(product.Stock)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 457}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 457}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var89))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1487,12 +1505,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var90 string
-				templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStockLabel(product.Stock))
+				var templ_7745c5c3_Var92 string
+				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinStringErrs(sellerStockLabel(product.Stock))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 499}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 499}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var90))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var92))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1500,8 +1518,8 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var91 = []any{"seller-chip " + sellerStatusClass(product.Status)}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var91...)
+				var templ_7745c5c3_Var93 = []any{"seller-chip " + sellerStatusClass(product.Status)}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var93...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1509,12 +1527,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var92 string
-				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var91).String())
+				var templ_7745c5c3_Var94 string
+				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var93).String())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var92)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var94)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1522,12 +1540,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var93 string
-				templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinStringErrs(product.Status)
+				var templ_7745c5c3_Var95 string
+				templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(product.Status)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 599}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 599}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1535,12 +1553,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var94 string
-				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "D"))
+				var templ_7745c5c3_Var96 string
+				templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "D"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 691}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 691}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var94))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1548,12 +1566,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var95 string
-				templ_7745c5c3_Var95, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "E"))
+				var templ_7745c5c3_Var97 string
+				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.JoinStringErrs(sellerAvailability(product.Availability, "E"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 747}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 747}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var95))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var97))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1561,12 +1579,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var96 templ.SafeURL
-				templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/products?notice=" + sellerNotice("Product details opened: ", product.Name))
+				var templ_7745c5c3_Var98 templ.SafeURL
+				templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/products?notice=" + sellerNotice("Product details opened: ", product.Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 878}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 878}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var98))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1574,12 +1592,12 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var97 string
-				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.ResolveAttributeValue("Open " + product.Name)
+				var templ_7745c5c3_Var99 string
+				templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.ResolveAttributeValue("Open " + product.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 185, Col: 916}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 186, Col: 916}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var97)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var99)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1600,7 +1618,7 @@ func Products(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var56), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var58), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1624,12 +1642,12 @@ func Inventory(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var98 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var98 == nil {
-			templ_7745c5c3_Var98 = templ.NopComponent
+		templ_7745c5c3_Var100 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var100 == nil {
+			templ_7745c5c3_Var100 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var99 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var101 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1649,12 +1667,12 @@ func Inventory(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var100 string
-			templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
+			var templ_7745c5c3_Var102 string
+			templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 197, Col: 3433}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 198, Col: 3433}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var100)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var102)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1678,7 +1696,7 @@ func Inventory(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var99), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var101), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1702,12 +1720,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var101 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var101 == nil {
-			templ_7745c5c3_Var101 = templ.NopComponent
+		templ_7745c5c3_Var103 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var103 == nil {
+			templ_7745c5c3_Var103 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var102 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var104 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1723,8 +1741,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var103 = []any{sellerTabClass(p.Tab, "all")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var103...)
+			var templ_7745c5c3_Var105 = []any{sellerTabClass(p.Tab, "all")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var105...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1732,12 +1750,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var104 string
-			templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var103).String())
+			var templ_7745c5c3_Var106 string
+			templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var105).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var104)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var106)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1745,12 +1763,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var105 string
-			templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
+			var templ_7745c5c3_Var107 string
+			templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 161}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var105)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var107)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1758,8 +1776,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var106 = []any{sellerTabClass(p.Tab, "new")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var106...)
+			var templ_7745c5c3_Var108 = []any{sellerTabClass(p.Tab, "new")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var108...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1767,12 +1785,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var107 string
-			templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var106).String())
+			var templ_7745c5c3_Var109 string
+			templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var108).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var107)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var109)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1780,12 +1798,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var108 string
-			templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "new"))
+			var templ_7745c5c3_Var110 string
+			templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "new"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 302}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 302}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var108)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var110)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1793,8 +1811,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var109 = []any{sellerTabClass(p.Tab, "processing")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var109...)
+			var templ_7745c5c3_Var111 = []any{sellerTabClass(p.Tab, "processing")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var111...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1802,12 +1820,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var110 string
-			templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var109).String())
+			var templ_7745c5c3_Var112 string
+			templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var111).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var110)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var112)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1815,12 +1833,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var111 string
-			templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "processing"))
+			var templ_7745c5c3_Var113 string
+			templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "processing"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 457}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 457}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var111)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var113)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1828,8 +1846,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var112 = []any{sellerTabClass(p.Tab, "ready")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var112...)
+			var templ_7745c5c3_Var114 = []any{sellerTabClass(p.Tab, "ready")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var114...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1837,12 +1855,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var113 string
-			templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var112).String())
+			var templ_7745c5c3_Var115 string
+			templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var114).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var113)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var115)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1850,12 +1868,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var114 string
-			templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "ready"))
+			var templ_7745c5c3_Var116 string
+			templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "ready"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 616}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 616}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var114)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var116)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1863,8 +1881,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var115 = []any{sellerTabClass(p.Tab, "shipped")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var115...)
+			var templ_7745c5c3_Var117 = []any{sellerTabClass(p.Tab, "shipped")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var117...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1872,12 +1890,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var116 string
-			templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var115).String())
+			var templ_7745c5c3_Var118 string
+			templ_7745c5c3_Var118, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var117).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var116)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var118)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1885,12 +1903,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var117 string
-			templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "shipped"))
+			var templ_7745c5c3_Var119 string
+			templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "shipped"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 777}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 777}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var117)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var119)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1898,8 +1916,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var118 = []any{sellerTabClass(p.Tab, "delivered")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var118...)
+			var templ_7745c5c3_Var120 = []any{sellerTabClass(p.Tab, "delivered")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var120...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1907,12 +1925,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var119 string
-			templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var118).String())
+			var templ_7745c5c3_Var121 string
+			templ_7745c5c3_Var121, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var120).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var119)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var121)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1920,12 +1938,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var120 string
-			templ_7745c5c3_Var120, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "delivered"))
+			var templ_7745c5c3_Var122 string
+			templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "delivered"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 938}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 938}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var120)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var122)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1933,8 +1951,8 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var121 = []any{sellerTabClass(p.Tab, "rto")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var121...)
+			var templ_7745c5c3_Var123 = []any{sellerTabClass(p.Tab, "rto")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var123...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1942,12 +1960,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var122 string
-			templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var121).String())
+			var templ_7745c5c3_Var124 string
+			templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var123).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var122)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var124)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1955,12 +1973,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var123 string
-			templ_7745c5c3_Var123, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rto"))
+			var templ_7745c5c3_Var125 string
+			templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.ResolveAttributeValue(sellerTabAriaCurrent(p.Tab, "rto"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1091}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 1091}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var123)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var125)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1968,12 +1986,12 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var124 string
-			templ_7745c5c3_Var124, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
+			var templ_7745c5c3_Var126 string
+			templ_7745c5c3_Var126, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 208, Col: 1732}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 209, Col: 1732}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var124)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var126)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1997,7 +2015,7 @@ func Orders(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var102), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var104), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2021,12 +2039,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var125 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var125 == nil {
-			templ_7745c5c3_Var125 = templ.NopComponent
+		templ_7745c5c3_Var127 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var127 == nil {
+			templ_7745c5c3_Var127 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var126 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var128 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -2043,12 +2061,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var127 string
-				templ_7745c5c3_Var127, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Number)
+				var templ_7745c5c3_Var129 string
+				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Number)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 671}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 671}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var127))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2056,12 +2074,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var128 string
-				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Date)
+				var templ_7745c5c3_Var130 string
+				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Date)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 733}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 733}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var128))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2069,12 +2087,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var129 string
-				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Order)
+				var templ_7745c5c3_Var131 string
+				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Order)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 807}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 807}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var131))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2082,12 +2100,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var130 string
-				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Customer)
+				var templ_7745c5c3_Var132 string
+				templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Customer)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 991}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 991}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var130))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2095,12 +2113,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var131 string
-				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Image)
+				var templ_7745c5c3_Var133 string
+				templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Image)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 1121}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 1121}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var131)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var133)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2108,12 +2126,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var132 string
-				templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Product)
+				var templ_7745c5c3_Var134 string
+				templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSellerReturn(p.Returns).Product)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 1166}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 1166}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var132)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var134)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2121,12 +2139,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var133 string
-				templ_7745c5c3_Var133, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Product)
+				var templ_7745c5c3_Var135 string
+				templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Product)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 1217}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 1217}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var133))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var135))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2134,12 +2152,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var134 string
-				templ_7745c5c3_Var134, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Amount)
+				var templ_7745c5c3_Var136 string
+				templ_7745c5c3_Var136, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Amount)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 1317}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 1317}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var134))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var136))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2147,12 +2165,12 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var135 string
-				templ_7745c5c3_Var135, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Reason)
+				var templ_7745c5c3_Var137 string
+				templ_7745c5c3_Var137, templ_7745c5c3_Err = templ.JoinStringErrs(firstSellerReturn(p.Returns).Reason)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 220, Col: 1403}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 221, Col: 1403}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var135))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var137))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2176,7 +2194,7 @@ func Returns(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var126), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var128), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2200,12 +2218,12 @@ func Earnings(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var136 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var136 == nil {
-			templ_7745c5c3_Var136 = templ.NopComponent
+		templ_7745c5c3_Var138 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var138 == nil {
+			templ_7745c5c3_Var138 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var137 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var139 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -2247,7 +2265,7 @@ func Earnings(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var137), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var139), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2271,12 +2289,12 @@ func Analytics(p viewmodels.SellerAdminPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var138 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var138 == nil {
-			templ_7745c5c3_Var138 = templ.NopComponent
+		templ_7745c5c3_Var140 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var140 == nil {
+			templ_7745c5c3_Var140 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var139 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var141 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -2310,53 +2328,6 @@ func Analytics(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var139), templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func Settings(p viewmodels.SellerAdminPage) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var140 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var140 == nil {
-			templ_7745c5c3_Var140 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var141 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-			if !templ_7745c5c3_IsBuffer {
-				defer func() {
-					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err == nil {
-						templ_7745c5c3_Err = templ_7745c5c3_BufErr
-					}
-				}()
-			}
-			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "<section class=\"settings-grid\"><div class=\"settings-column\"><article class=\"seller-panel settings-card\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span><h2>Storefront Settings</h2><p>Customize how your store appears to customers on Weevcrafts.</p></span></div></div><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">groups</span><h3>Store Profile</h3><a href=\"/seller-admin/settings?notice=Store+profile+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"profile-setting\"><div><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"Store logo\"><a href=\"/seller-admin/settings?notice=Store+logo+editor+opened\">Change Logo</a><small>Recommended: 400 × 400 px<br>JPG or PNG, max 2 MB</small></div><dl><dt>Store Name</dt><dd>Weaver's Touch</dd><dt>Tagline</dt><dd>Handwoven stories from Bharat</dd><dt>Store URL</dt><dd>weevcrafts.com/weavers-touch <a href=\"/seller-admin/settings?notice=Store+URL+copied\">Copy <span class=\"material-symbols-outlined\" aria-hidden=\"true\">content_copy</span></a></dd></dl></div></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">image</span><h3>Store Banner</h3><a href=\"/seller-admin/settings?notice=Store+banner+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><img width=\"1254\" height=\"1254\" class=\"store-banner\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Timeless traditions woven for modern homes\"><a class=\"change-banner\" href=\"/seller-admin/settings?notice=Store+banner+changed\">Change Banner</a><small class=\"setting-help\">Recommended: 1200 × 400 px (JPG or PNG, max 5 MB)</small></section><section class=\"settings-section store-description\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><h3>Store Description</h3><a href=\"/seller-admin/settings?notice=Store+description+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Weaver's Touch brings you authentic handwoven textiles and artisanal home decor crafted by skilled weavers from across India. Each piece is a celebration of heritage, sustainability and the timeless beauty of handmade.</p><div class=\"description-values\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</i><b>Authentic<small>Handmade</small></b></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">groups</i><b>Support<small>Indian Artisans</small></b></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">spa</i><b>Sustainable<small>&amp; Ethical</small></b></span></div></section><section class=\"settings-section public-preview\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span><h3>Public Store Preview</h3><a href=\"/makers/weavers-touch\">View Store ↗</a></header><div><div class=\"preview-store-head\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><b>Weaver's Touch<small>Handwoven stories from Bharat</small></b><span>♡ Follow<small>1.2K followers</small></span></div><nav>Home &nbsp;&nbsp; All Products &nbsp;&nbsp; Sarees &nbsp;&nbsp; Home Decor &nbsp;&nbsp; Accessories &nbsp;&nbsp; About</nav><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Tradition in every thread\"></div></section><section class=\"settings-section pickup-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span><h3>Pickup / Fulfilment Locations</h3><a href=\"/seller-admin/settings?notice=Pickup+locations+manager+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Manage where you fulfil and hand over orders for pickup.</p><div class=\"pickup-card\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span><b>Main Pickup Location <em>Default</em><small>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034<br>+91 98765 43210</small></b><a href=\"/seller-admin/settings?notice=Pickup+location+edited\">Edit</a><a href=\"/seller-admin/settings?notice=Pickup+location+deleted\">Delete</a></div><a class=\"seller-button outline full\" href=\"/seller-admin/settings?notice=Pickup+location+form+opened\">＋ Add Another Pickup Location</a></section></article></div><div class=\"settings-column\"><article class=\"seller-panel settings-card\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">settings</span><span><h2>Account &amp; Business Settings</h2><p>Manage your business information, payments and preferences.</p></span></div></div><section class=\"settings-section business-information\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">lock</span><h3>Business Information</h3><a href=\"/seller-admin/settings?notice=Business+information+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Business Name</dt><dd>Weaver's Touch</dd><dt>Business Type</dt><dd>Individual / Proprietor</dd><dt>GST Number</dt><dd>29ABCDE1234F1Z5 <em>✓ Verified</em></dd><dt>Business Address</dt><dd>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</dd><dt>Business Phone</dt><dd>+91 98765 43210</dd><dt>Business Email</dt><dd>weaverstouch@gmail.com</dd><dt>Year of Establishment</dt><dd>2020</dd></dl></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><h3>Account Owner Information</h3><a href=\"/seller-admin/settings?notice=Owner+information+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Owner Name</dt><dd>Priya Sharma</dd><dt>Email Address</dt><dd>priya@weaverstouch.in</dd><dt>Phone Number</dt><dd>+91 98765 43210</dd><dt>Alternate Contact</dt><dd>+91 91234 56789</dd></dl></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">account_balance</span><h3>Bank Account Details</h3><a href=\"/seller-admin/settings?notice=Bank+account+manager+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Account Holder Name</dt><dd>Priya Sharma</dd><dt>Bank Name</dt><dd>HDFC Bank</dd><dt>Account Number</dt><dd>•••• 4586</dd><dt>IFSC Code</dt><dd>HDFC0001234 <em>✓ Verified</em></dd></dl><p class=\"secure-inline\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">verified_user</span>Your bank account is verified and ready for payouts.</p></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><h3>Domestic Delivery</h3><a href=\"/seller-admin/settings?notice=Delivery+settings+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Orders are delivered only to serviceable PIN codes within India.</p></section><section class=\"settings-section notifications-setting\" x-data=\"{newOrders:true,messages:true,payouts:true,promotions:true}\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">notifications</span><h3>Notification Preferences</h3><a href=\"/seller-admin/settings?notice=Notification+preferences+saved\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Choose what you want to be notified about.</p><label>New Orders<small>Get notified when you receive a new order</small><button type=\"button\" aria-label=\"Toggle new order notifications\" :class=\"newOrders ? 'on' : ''\" @click=\"newOrders=!newOrders\"><i></i></button></label><label>Customer Messages<small>Get notified about new messages from customers</small><button type=\"button\" aria-label=\"Toggle customer message notifications\" :class=\"messages ? 'on' : ''\" @click=\"messages=!messages\"><i></i></button></label><label>Payout Updates<small>Get notified about payouts and settlements</small><button type=\"button\" aria-label=\"Toggle payout notifications\" :class=\"payouts ? 'on' : ''\" @click=\"payouts=!payouts\"><i></i></button></label><label>Promotions &amp; Opportunities<small>Updates about campaigns, offers and seller programs</small><button type=\"button\" aria-label=\"Toggle promotion notifications\" :class=\"promotions ? 'on' : ''\" @click=\"promotions=!promotions\"><i></i></button></label></section><section class=\"settings-section help-actions\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">help</span><h3>Need Help?</h3></header><p>We're here for you.</p><div><a href=\"/seller-admin/settings?notice=Help+center+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>Visit Help Center</a><a href=\"/seller-admin/settings?notice=Support+request+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span>Contact Support</a><a href=\"/seller-admin/settings?notice=Seller+guide+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu_book</span>View Seller Guide</a></div></section></article></div></section>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			return nil
-		})
 		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var141), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -2365,7 +2336,7 @@ func Settings(p viewmodels.SellerAdminPage) templ.Component {
 	})
 }
 
-func Workspace(p viewmodels.SellerAdminPage) templ.Component {
+func Settings(p viewmodels.SellerAdminPage) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -2398,12 +2369,59 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "<section class=\"settings-grid\"><div class=\"settings-column\"><article class=\"seller-panel settings-card\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span><h2>Storefront Settings</h2><p>Customize how your store appears to customers on Weevcrafts.</p></span></div></div><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">groups</span><h3>Store Profile</h3><a href=\"/seller-admin/settings?notice=Store+profile+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><div class=\"profile-setting\"><div><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"Store logo\"><a href=\"/seller-admin/settings?notice=Store+logo+editor+opened\">Change Logo</a><small>Recommended: 400 × 400 px<br>JPG or PNG, max 2 MB</small></div><dl><dt>Store Name</dt><dd>Weaver's Touch</dd><dt>Tagline</dt><dd>Handwoven stories from Bharat</dd><dt>Store URL</dt><dd>weevcrafts.com/weavers-touch <a href=\"/seller-admin/settings?notice=Store+URL+copied\">Copy <span class=\"material-symbols-outlined\" aria-hidden=\"true\">content_copy</span></a></dd></dl></div></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">image</span><h3>Store Banner</h3><a href=\"/seller-admin/settings?notice=Store+banner+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><img width=\"1254\" height=\"1254\" class=\"store-banner\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Timeless traditions woven for modern homes\"><a class=\"change-banner\" href=\"/seller-admin/settings?notice=Store+banner+changed\">Change Banner</a><small class=\"setting-help\">Recommended: 1200 × 400 px (JPG or PNG, max 5 MB)</small></section><section class=\"settings-section store-description\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><h3>Store Description</h3><a href=\"/seller-admin/settings?notice=Store+description+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Weaver's Touch brings you authentic handwoven textiles and artisanal home decor crafted by skilled weavers from across India. Each piece is a celebration of heritage, sustainability and the timeless beauty of handmade.</p><div class=\"description-values\"><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</i><b>Authentic<small>Handmade</small></b></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">groups</i><b>Support<small>Indian Artisans</small></b></span><span><i class=\"material-symbols-outlined\" aria-hidden=\"true\">spa</i><b>Sustainable<small>&amp; Ethical</small></b></span></div></section><section class=\"settings-section public-preview\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span><h3>Public Store Preview</h3><a href=\"/makers/weavers-touch\">View Store ↗</a></header><div><div class=\"preview-store-head\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><b>Weaver's Touch<small>Handwoven stories from Bharat</small></b><span>♡ Follow<small>1.2K followers</small></span></div><nav>Home &nbsp;&nbsp; All Products &nbsp;&nbsp; Sarees &nbsp;&nbsp; Home Decor &nbsp;&nbsp; Accessories &nbsp;&nbsp; About</nav><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/hero-studio.webp\" alt=\"Tradition in every thread\"></div></section><section class=\"settings-section pickup-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span><h3>Pickup / Fulfilment Locations</h3><a href=\"/seller-admin/settings?notice=Pickup+locations+manager+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Manage where you fulfil and hand over orders for pickup.</p><div class=\"pickup-card\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span><b>Main Pickup Location <em>Default</em><small>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034<br>+91 98765 43210</small></b><a href=\"/seller-admin/settings?notice=Pickup+location+edited\">Edit</a><a href=\"/seller-admin/settings?notice=Pickup+location+deleted\">Delete</a></div><a class=\"seller-button outline full\" href=\"/seller-admin/settings?notice=Pickup+location+form+opened\">＋ Add Another Pickup Location</a></section></article></div><div class=\"settings-column\"><article class=\"seller-panel settings-card\"><div class=\"seller-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">settings</span><span><h2>Account &amp; Business Settings</h2><p>Manage your business information, payments and preferences.</p></span></div></div><section class=\"settings-section business-information\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">lock</span><h3>Business Information</h3><a href=\"/seller-admin/settings?notice=Business+information+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Business Name</dt><dd>Weaver's Touch</dd><dt>Business Type</dt><dd>Individual / Proprietor</dd><dt>GST Number</dt><dd>29ABCDE1234F1Z5 <em>✓ Verified</em></dd><dt>Business Address</dt><dd>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</dd><dt>Business Phone</dt><dd>+91 98765 43210</dd><dt>Business Email</dt><dd>weaverstouch@gmail.com</dd><dt>Year of Establishment</dt><dd>2020</dd></dl></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><h3>Account Owner Information</h3><a href=\"/seller-admin/settings?notice=Owner+information+editor+opened\">Edit <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Owner Name</dt><dd>Priya Sharma</dd><dt>Email Address</dt><dd>priya@weaverstouch.in</dd><dt>Phone Number</dt><dd>+91 98765 43210</dd><dt>Alternate Contact</dt><dd>+91 91234 56789</dd></dl></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">account_balance</span><h3>Bank Account Details</h3><a href=\"/seller-admin/settings?notice=Bank+account+manager+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><dl><dt>Account Holder Name</dt><dd>Priya Sharma</dd><dt>Bank Name</dt><dd>HDFC Bank</dd><dt>Account Number</dt><dd>•••• 4586</dd><dt>IFSC Code</dt><dd>HDFC0001234 <em>✓ Verified</em></dd></dl><p class=\"secure-inline\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">verified_user</span>Your bank account is verified and ready for payouts.</p></section><section class=\"settings-section\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><h3>Domestic Delivery</h3><a href=\"/seller-admin/settings?notice=Delivery+settings+opened\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Orders are delivered only to serviceable PIN codes within India.</p></section><section class=\"settings-section notifications-setting\" x-data=\"{newOrders:true,messages:true,payouts:true,promotions:true}\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">notifications</span><h3>Notification Preferences</h3><a href=\"/seller-admin/settings?notice=Notification+preferences+saved\">Manage <span class=\"material-symbols-outlined\" aria-hidden=\"true\">edit</span></a></header><p>Choose what you want to be notified about.</p><label>New Orders<small>Get notified when you receive a new order</small><button type=\"button\" aria-label=\"Toggle new order notifications\" :class=\"newOrders ? 'on' : ''\" @click=\"newOrders=!newOrders\"><i></i></button></label><label>Customer Messages<small>Get notified about new messages from customers</small><button type=\"button\" aria-label=\"Toggle customer message notifications\" :class=\"messages ? 'on' : ''\" @click=\"messages=!messages\"><i></i></button></label><label>Payout Updates<small>Get notified about payouts and settlements</small><button type=\"button\" aria-label=\"Toggle payout notifications\" :class=\"payouts ? 'on' : ''\" @click=\"payouts=!payouts\"><i></i></button></label><label>Promotions &amp; Opportunities<small>Updates about campaigns, offers and seller programs</small><button type=\"button\" aria-label=\"Toggle promotion notifications\" :class=\"promotions ? 'on' : ''\" @click=\"promotions=!promotions\"><i></i></button></label></section><section class=\"settings-section help-actions\"><header><span class=\"material-symbols-outlined\" aria-hidden=\"true\">help</span><h3>Need Help?</h3></header><p>We're here for you.</p><div><a href=\"/seller-admin/settings?notice=Help+center+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>Visit Help Center</a><a href=\"/seller-admin/settings?notice=Support+request+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span>Contact Support</a><a href=\"/seller-admin/settings?notice=Seller+guide+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu_book</span>View Seller Guide</a></div></section></article></div></section>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var143), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func Workspace(p viewmodels.SellerAdminPage) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var144 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var144 == nil {
+			templ_7745c5c3_Var144 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Var145 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "<section class=\"seller-workspace\"><nav class=\"seller-workspace-tabs\" aria-label=\"Seller workspace\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var144 = []any{sellerWorkspaceTabClass(p.Workspace == "promotions")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var144...)
+			var templ_7745c5c3_Var146 = []any{sellerWorkspaceTabClass(p.Workspace == "promotions")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var146...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2411,12 +2429,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var145 string
-			templ_7745c5c3_Var145, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var144).String())
+			var templ_7745c5c3_Var147 string
+			templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var146).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var145)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var147)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2424,12 +2442,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var146 string
-			templ_7745c5c3_Var146, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "promotions"))
+			var templ_7745c5c3_Var148 string
+			templ_7745c5c3_Var148, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "promotions"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 257, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 258, Col: 161}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var146)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var148)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2437,8 +2455,8 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var147 = []any{sellerWorkspaceTabClass(p.Workspace == "commission")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var147...)
+			var templ_7745c5c3_Var149 = []any{sellerWorkspaceTabClass(p.Workspace == "commission")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var149...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2446,12 +2464,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var148 string
-			templ_7745c5c3_Var148, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var147).String())
+			var templ_7745c5c3_Var150 string
+			templ_7745c5c3_Var150, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var149).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var148)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var150)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2459,12 +2477,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var149 string
-			templ_7745c5c3_Var149, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "commission"))
+			var templ_7745c5c3_Var151 string
+			templ_7745c5c3_Var151, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "commission"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 258, Col: 161}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 259, Col: 161}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var149)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var151)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2472,8 +2490,8 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var150 = []any{sellerWorkspaceTabClass(p.Workspace == "audit")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var150...)
+			var templ_7745c5c3_Var152 = []any{sellerWorkspaceTabClass(p.Workspace == "audit")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var152...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2481,12 +2499,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var151 string
-			templ_7745c5c3_Var151, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var150).String())
+			var templ_7745c5c3_Var153 string
+			templ_7745c5c3_Var153, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var152).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var151)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var153)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2494,12 +2512,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var152 string
-			templ_7745c5c3_Var152, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "audit"))
+			var templ_7745c5c3_Var154 string
+			templ_7745c5c3_Var154, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "audit"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 259, Col: 146}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 260, Col: 146}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var152)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var154)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2507,8 +2525,8 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var153 = []any{sellerWorkspaceTabClass(p.Workspace == "reviews")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var153...)
+			var templ_7745c5c3_Var155 = []any{sellerWorkspaceTabClass(p.Workspace == "reviews")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var155...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2516,12 +2534,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var154 string
-			templ_7745c5c3_Var154, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var153).String())
+			var templ_7745c5c3_Var156 string
+			templ_7745c5c3_Var156, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var155).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var154)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var156)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2529,12 +2547,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var155 string
-			templ_7745c5c3_Var155, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "reviews"))
+			var templ_7745c5c3_Var157 string
+			templ_7745c5c3_Var157, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "reviews"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 260, Col: 152}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 261, Col: 152}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var155)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var157)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2542,8 +2560,8 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var156 = []any{sellerWorkspaceTabClass(p.Workspace == "messages")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var156...)
+			var templ_7745c5c3_Var158 = []any{sellerWorkspaceTabClass(p.Workspace == "messages")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var158...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2551,12 +2569,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var157 string
-			templ_7745c5c3_Var157, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var156).String())
+			var templ_7745c5c3_Var159 string
+			templ_7745c5c3_Var159, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var158).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var157)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var159)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2564,12 +2582,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var158 string
-			templ_7745c5c3_Var158, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "messages"))
+			var templ_7745c5c3_Var160 string
+			templ_7745c5c3_Var160, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "messages"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 261, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 262, Col: 155}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var158)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var160)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2577,8 +2595,8 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var159 = []any{sellerWorkspaceTabClass(p.Workspace == "support")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var159...)
+			var templ_7745c5c3_Var161 = []any{sellerWorkspaceTabClass(p.Workspace == "support")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var161...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2586,12 +2604,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var160 string
-			templ_7745c5c3_Var160, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var159).String())
+			var templ_7745c5c3_Var162 string
+			templ_7745c5c3_Var162, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var161).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var160)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var162)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2599,12 +2617,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var161 string
-			templ_7745c5c3_Var161, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "support"))
+			var templ_7745c5c3_Var163 string
+			templ_7745c5c3_Var163, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(p.Workspace == "support"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 262, Col: 152}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 263, Col: 152}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var161)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var163)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2647,12 +2665,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var162 string
-				templ_7745c5c3_Var162, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
+				var templ_7745c5c3_Var164 string
+				templ_7745c5c3_Var164, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 277, Col: 204}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 278, Col: 204}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var162))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var164))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2660,12 +2678,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var163 string
-				templ_7745c5c3_Var163, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
+				var templ_7745c5c3_Var165 string
+				templ_7745c5c3_Var165, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 277, Col: 226}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 278, Col: 226}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var163))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var165))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2673,12 +2691,12 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var164 templ.SafeURL
-				templ_7745c5c3_Var164, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/" + p.Workspace + "?notice=Workspace+action+opened")
+				var templ_7745c5c3_Var166 templ.SafeURL
+				templ_7745c5c3_Var166, templ_7745c5c3_Err = templ.JoinURLErrs("/seller-admin/" + p.Workspace + "?notice=Workspace+action+opened")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/seller_admin.templ`, Line: 277, Col: 353}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `selleradmin/seller_admin.templ`, Line: 278, Col: 353}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var164))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var166))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -2693,7 +2711,7 @@ func Workspace(p viewmodels.SellerAdminPage) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var143), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Document(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var145), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2717,9 +2735,9 @@ func SellerFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var165 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var165 == nil {
-			templ_7745c5c3_Var165 = templ.NopComponent
+		templ_7745c5c3_Var167 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var167 == nil {
+			templ_7745c5c3_Var167 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 189, "<footer class=\"seller-footer\"><div class=\"seller-trust\"><span><b>Crafted in India</b><small>Independent maker marketplace</small></span><span><b>Customer reviews</b><small>Read published product reviews</small></span><span><b>Artisan craft</b><small>Made by independent sellers</small></span><span><b>Secure Payments</b><small>Track payment status</small></span><span><b>Easy Returns</b><small>See the returns policy</small></span><span><b>India Delivery</b><small>Serviceable PIN codes</small></span></div><div class=\"seller-footer-main\"><div><a class=\"seller-wordmark inverse\" href=\"/seller-admin\"><img class=\"seller-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for India's arts, crafts and sarees.<br>Supporting artisans. Preserving traditions. Building a<br>brighter, more inclusive tomorrow.</p><div class=\"seller-socials\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">photo_camera</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">play_circle</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">language</span></div></div><div><h3>Seller Portal</h3><a href=\"/seller-admin\">Dashboard</a><a href=\"/seller-admin/products\">Products</a><a href=\"/seller-admin/orders\">Orders</a><a href=\"/seller-admin/earnings\">Payments &amp; Settlements</a><a href=\"/seller-admin/analytics\">Analytics</a></div><div><h3>Help</h3><a href=\"/seller-admin/settings\">Seller Guide</a><a href=\"/seller-admin/settings\">Shipping &amp; Fulfilment</a><a href=\"/seller-admin/products\">Product Approvals</a><a href=\"/seller-admin/earnings\">Payments &amp; Settlements</a><a href=\"/seller-admin/settings\">Support</a></div><div><h3>About</h3><a href=\"/account\">Our Story</a><a href=\"/makers/mithila-arts\">Makers</a><a href=\"/seller-admin/settings\">Sustainability</a><a href=\"/seller-admin/settings\">Careers</a><a href=\"/seller-admin/settings\">Contact Us</a></div><div><h3>Join our seller community</h3><p>Get updates, tips and stories from Weevcrafts.</p><form action=\"/seller-admin/settings?notice=Newsletter+subscription+submitted\" method=\"get\"><input name=\"email\" placeholder=\"Enter your email address\" aria-label=\"Email address\"><button type=\"submit\" aria-label=\"Subscribe\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form><label><input type=\"checkbox\"> I agree to receive updates from Weevcrafts</label></div></div><div class=\"seller-footer-bottom\"><span>© 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions &nbsp;|&nbsp; Privacy Policy &nbsp;|&nbsp; Cookie Policy</span><span>Made with <em>♥</em> in India &nbsp;|&nbsp; A more handmade tomorrow</span></div></footer>")

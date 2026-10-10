@@ -1,0 +1,30 @@
+ Container weevcrafts-mailpit-1 Running 
+ Container weevcrafts-app-1 Running 
+ Container weevcrafts-meilisearch-1 Running 
+ Container weevcrafts-postgres-1 Running 
+ Container weevcrafts-uptime-kuma-1 Running 
+ Container weevcrafts-redis-1 Running 
+ Container weevcrafts-adminer-1 Running 
+ Container weevcrafts-minio-1 Running 
+ Container weevcrafts-postgres-1 Waiting 
+ Container weevcrafts-redis-1 Waiting 
+ Container weevcrafts-postgres-1 Waiting 
+ Container weevcrafts-postgres-1 Healthy 
+ Container weevcrafts-postgres-1 Healthy 
+ Container weevcrafts-redis-1 Healthy 
+ Container weevcrafts-app-1 Waiting 
+ Container weevcrafts-uptime-kuma-1 Waiting 
+ Container weevcrafts-app-1 Healthy 
+ Container weevcrafts-uptime-kuma-1 Healthy 
+ Container weevcrafts-uptime-kuma-setup-run-54dd802d4021 Creating 
+ Container weevcrafts-uptime-kuma-setup-run-54dd802d4021 Created 
+Retained: WeeVCrafts storefront
+Retained: WeeVCrafts readiness
+Retained: WeeVCrafts liveness
+Retained: PostgreSQL connection
+Retained: Redis connection
+Retained: Meilisearch health
+Retained: MinIO readiness
+Retained: Mailpit inbox
+Retained: Adminer login
+Local monitoring configured. Notification delivery channels can be selected in Kuma settings.

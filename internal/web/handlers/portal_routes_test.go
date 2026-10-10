@@ -159,7 +159,7 @@ func TestLegacyAdminURLsRedirectToTheAssignedRolePortal(t *testing.T) {
 		{name: "super admin security", path: "/admin/security", roles: []domainidentity.Role{domainidentity.RoleSuperAdmin}, want: "/super-admin/security"},
 		{name: "finance report", path: "/admin/finance-reconciliation", roles: []domainidentity.Role{domainidentity.RoleFinanceOperator}, want: "/finance-portal/finance-reconciliation"},
 		{name: "operations returns", path: "/admin/returns", roles: []domainidentity.Role{domainidentity.RoleOperations}, want: "/operations-portal/returns"},
-		{name: "ambiguous root", path: "/admin", roles: []domainidentity.Role{domainidentity.RoleMarketplaceAdmin, domainidentity.RoleFinanceOperator}, want: "/workspaces"},
+		{name: "ambiguous root", path: "/admin", roles: []domainidentity.Role{domainidentity.RoleMarketplaceAdmin, domainidentity.RoleFinanceOperator}, want: "/access-unavailable"},
 		{name: "unauthorized security", path: "/admin/security", roles: []domainidentity.Role{domainidentity.RoleMarketplaceAdmin}, want: ""},
 	}
 	for _, test := range tests {

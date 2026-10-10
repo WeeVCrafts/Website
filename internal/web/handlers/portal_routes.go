@@ -121,7 +121,7 @@ func legacyAdminDestination(path string, roles []domainidentity.Role) string {
 	if path == "/admin" {
 		workspaces := applicationauth.WorkspacesForRoles(roles)
 		if len(workspaces) != 1 {
-			return "/workspaces"
+			return "/access-unavailable"
 		}
 		role := workspaces[0].Role
 		if role == domainidentity.RoleMarketplaceAdmin || role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleFinanceOperator || role == domainidentity.RoleOperations {

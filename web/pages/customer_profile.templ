@@ -1,0 +1,33 @@
+package pages
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ CustomerAvatar(p viewmodels.CustomerPage) {
+ if p.AvatarURL != "" {
+  <img class="customer-avatar" src={ p.AvatarURL } width="96" height="96" alt="Your profile photo"/>
+ } else {
+  <span class="customer-avatar avatar-initials" aria-label="Your profile initials">{ customerInitials(p.UserName) }</span>
+ }
+}
+
+templ ProfileEditor(p viewmodels.CustomerPage) {
+ <section class="utility-card account-panel">
+  <h2>Profile information</h2><p>Your photo stays private to your account. A name and phone number complete your profile.</p>
+  if p.ProfileError != "" {
+   <p class="profile-error" role="alert">{ p.ProfileError }</p>
+  }
+  <form class="utility-form two-column" action="/account/profile" method="post" enctype="multipart/form-data" data-profile-form>
+   <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+   <div class="profile-photo-editor"><div data-photo-preview>@CustomerAvatar(p)</div><label>Profile photo<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" data-photo-input/><small>JPEG, PNG or WebP · up to 5 MiB</small></label>
+    if p.AvatarURL != "" {
+      <label class="remove-photo"><input type="checkbox" name="remove_photo" value="1"/> Remove photo</label>
+    }
+   </div>
+   <label>Full name<input name="name" value={ p.UserName } minlength="2" maxlength="100" autocomplete="name" required/></label>
+   <label>Phone number<input name="phone" value={ p.UserPhone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required/><small>Include your country code, for example +91.</small></label>
+   <label>Email address<input name="email" type="email" value={ p.UserEmail } disabled/></label>
+   <label>Member since<input value={ p.MemberSince } disabled/></label>
+   <button class="primary-button" type="submit">Save changes</button>
+  </form>
+  <p class="muted">Email changes require verification. Contact support if you need to update your email address.</p>
+ </section>
+}

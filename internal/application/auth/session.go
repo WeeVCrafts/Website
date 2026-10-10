@@ -17,11 +17,12 @@ const DefaultSessionTTL = 24 * time.Hour
 const RememberSessionTTL = 30 * 24 * time.Hour
 
 type SessionService struct {
-	store          ports.SessionStore
-	statusChecker  ports.UserStatusChecker
-	sessionChecker ports.UserSessionChecker
-	now            func() time.Time
-	newID          func() (string, error)
+	store             ports.SessionStore
+	statusChecker     ports.UserStatusChecker
+	sessionChecker    ports.UserSessionChecker
+	now               func() time.Time
+	newID             func() (string, error)
+	revocationCleanup func(context.Context, int64, string) error
 }
 
 func NewSessionService(store ports.SessionStore) *SessionService {
@@ -35,6 +36,11 @@ func (s *SessionService) WithUserStatusChecker(checker ports.UserStatusChecker) 
 
 func (s *SessionService) WithSessionChecker(checker ports.UserSessionChecker) *SessionService {
 	s.sessionChecker = checker
+	return s
+}
+
+func (s *SessionService) WithRevocationCleanup(cleanup func(context.Context, int64, string) error) *SessionService {
+	s.revocationCleanup = cleanup
 	return s
 }
 
@@ -106,14 +112,26 @@ func (s *SessionService) Revoke(ctx context.Context, sessionID string) error {
 	if sessionID == "" {
 		return nil
 	}
-	return s.store.Delete(ctx, sessionID)
+	if err := s.store.Delete(ctx, sessionID); err != nil {
+		return err
+	}
+	if s.revocationCleanup != nil {
+		return s.revocationCleanup(ctx, 0, sessionID)
+	}
+	return nil
 }
 
 func (s *SessionService) RevokeAll(ctx context.Context, userID int64) error {
 	if userID <= 0 {
 		return nil
 	}
-	return s.store.DeleteAll(ctx, userID)
+	if err := s.store.DeleteAll(ctx, userID); err != nil {
+		return err
+	}
+	if s.revocationCleanup != nil {
+		return s.revocationCleanup(ctx, userID, "")
+	}
+	return nil
 }
 
 func (s *SessionService) List(ctx context.Context, userID int64) ([]ports.SessionRecord, error) {

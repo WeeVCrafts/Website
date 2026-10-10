@@ -116,6 +116,7 @@ type SellerAdminPage struct {
 	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning       string
 	DisplayName, UserEmail, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
 	RangeLabel                                                                       string
+	PublicLocation, PublicStory, PublicTechnique, PublicPortrait                     string
 	LowStockThreshold                                                                int
 	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite                    bool
 	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam                           bool

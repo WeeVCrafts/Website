@@ -1,0 +1,88 @@
+ Image weevcrafts-app Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 631B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 30B 0.1s
+#2 transferring dockerfile: 529B 0.3s done
+#2 DONE 0.4s
+
+#3 [internal] load metadata for docker.io/library/alpine:3.22
+#3 ...
+
+#4 [internal] load metadata for docker.io/library/golang:1.26-alpine
+#4 DONE 0.4s
+
+#3 [internal] load metadata for docker.io/library/alpine:3.22
+#3 DONE 13.1s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 127B 0.1s done
+#5 DONE 0.2s
+
+#6 [internal] load build context
+#6 DONE 0.0s
+
+#7 [stage-1 1/6] FROM docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+#7 resolve docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+#7 ...
+
+#8 [build 1/6] FROM docker.io/library/golang:1.26-alpine@sha256:8ac98ca534ac3f51e1f420a1dd2c15e74c75cfa0f23f3ad27eb5d7236c349a0c
+#8 resolve docker.io/library/golang:1.26-alpine@sha256:8ac98ca534ac3f51e1f420a1dd2c15e74c75cfa0f23f3ad27eb5d7236c349a0c 0.8s done
+#8 DONE 0.9s
+
+#7 [stage-1 1/6] FROM docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8
+#7 resolve docker.io/library/alpine:3.22@sha256:5291449c3df73caf6ed85e649dec1b9e818b39a5d8c871e97afc13e9cd5e8fa8 0.8s done
+#7 DONE 0.9s
+
+#6 [internal] load build context
+#6 transferring context: 94.57kB 1.9s done
+#6 DONE 2.2s
+
+#9 [build 2/6] WORKDIR /src
+#9 CACHED
+
+#10 [build 3/6] COPY go.mod go.sum* ./
+#10 CACHED
+
+#11 [build 4/6] RUN go mod download
+#11 CACHED
+
+#12 [build 5/6] COPY . .
+#12 DONE 6.2s
+
+#13 [build 6/6] RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/wecratfs ./cmd/website
+#13 DONE 424.2s
+
+#14 [stage-1 2/6] RUN apk add --no-cache ca-certificates
+#14 CACHED
+
+#15 [stage-1 3/6] RUN addgroup -S app && adduser -S -D -H -G app app
+#15 CACHED
+
+#16 [stage-1 4/6] WORKDIR /app
+#16 CACHED
+
+#17 [stage-1 5/6] RUN mkdir -p /app/web/assets/images/uploads && chown -R app:app /app
+#17 CACHED
+
+#18 [stage-1 6/6] COPY --from=build /out/wecratfs /usr/local/bin/wecratfs
+#18 DONE 0.2s
+
+#19 exporting to image
+#19 exporting layers
+#19 exporting layers 6.8s done
+#19 exporting manifest sha256:22f4b22e0d3266ca66342c0d053e00b94047293ed4b22af17b07202625509dd0 0.0s done
+#19 exporting config sha256:64ad9f6b403fc9a77ccbd1e41495729270eefe6828025ad547508f577fa771ea 0.0s done
+#19 exporting attestation manifest sha256:e2782cf4e97ea270fd25f55528eb8ffd56f53d21900a4e066ad1fd1e4ee894cc
+#19 exporting attestation manifest sha256:e2782cf4e97ea270fd25f55528eb8ffd56f53d21900a4e066ad1fd1e4ee894cc 0.1s done
+#19 exporting manifest list sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 0.0s done
+#19 naming to docker.io/library/weevcrafts-app:latest done
+#19 unpacking to docker.io/library/weevcrafts-app:latest
+#19 unpacking to docker.io/library/weevcrafts-app:latest 1.6s done
+#19 DONE 8.8s
+
+#20 resolving provenance for metadata file
+#20 DONE 0.1s
+ Image weevcrafts-app Built 

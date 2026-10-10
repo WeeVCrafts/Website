@@ -1,0 +1,4 @@
+{"check":"configured monitors","monitors":[{"id":1,"name":"WeeVCrafts storefront","status":1,"heartbeatCount":2},{"id":2,"name":"WeeVCrafts readiness","status":1,"heartbeatCount":2},{"id":3,"name":"WeeVCrafts liveness","status":1,"heartbeatCount":2},{"id":4,"name":"PostgreSQL connection","status":1,"heartbeatCount":2},{"id":5,"name":"Redis connection","status":1,"heartbeatCount":2},{"id":6,"name":"Meilisearch health","status":1,"heartbeatCount":2},{"id":7,"name":"MinIO readiness","status":1,"heartbeatCount":2},{"id":8,"name":"Mailpit inbox","status":1,"heartbeatCount":2},{"id":9,"name":"Adminer login","status":1,"heartbeatCount":2}]}
+{"check":"failure detection","status":"Down"}
+{"check":"recovery detection","status":"Up"}
+Removed temporary verification probe.

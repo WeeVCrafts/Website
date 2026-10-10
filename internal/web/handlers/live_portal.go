@@ -402,7 +402,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			redirectToLogin(w, r)
 			return
 		}
-		h.renderWorkspaces(w, r, session)
+		http.Redirect(w, r, applicationauth.LoginDestination(h.userRoles(r, session.UserID)), http.StatusSeeOther)
 		return
 	}
 	session, ok := h.session(r)
@@ -2033,6 +2033,9 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		page.Settlements = h.sellerSettlements(r, sellerID)
 	}
 	if isOwner {
+		if active == "settings" {
+			_ = h.queryRow(r, `SELECT public_location,public_story,public_technique,public_portrait FROM sellers WHERE id=$1`, sellerID).Scan(&page.PublicLocation, &page.PublicStory, &page.PublicTechnique, &page.PublicPortrait)
+		}
 		page.Team = h.sellerTeam(r, sellerID)
 	}
 	page.Pagination = projectionPagination(r, sellerProjectionKey(active, page.Tab))
@@ -2594,7 +2597,7 @@ func (h *LivePortalHandler) renderAdminComponent(w http.ResponseWriter, r *http.
 	}
 	financeTarget := page.PortalRoot + "/finance"
 	if !page.CanFinance {
-		financeTarget = "/workspaces"
+		financeTarget = "/access-unavailable"
 	}
 	replacer := strings.NewReplacer(
 		`href="/admin`, `href="`+page.PortalRoot,

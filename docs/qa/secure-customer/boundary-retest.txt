@@ -1,0 +1,19 @@
+
+Running 3 tests using 1 worker
+
+
+
+(node:9432) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/3] [chromium] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+(node:13224) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[2/3] [firefox] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+(node:16824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[3/3] [webkit] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+  3 passed (41.9s)

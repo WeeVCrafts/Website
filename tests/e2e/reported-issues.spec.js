@@ -7,7 +7,8 @@ async function signIn(page, email, landing, passwordValue = password) {
   await page.locator('#page input[name="email"]').fill(email);
   await page.locator('#page input[name="password"]').fill(passwordValue);
   await page.getByRole("button", { name: /sign in/i }).click();
-  await page.waitForURL(url => url.pathname.replace(/\/$/, "") === landing.replace(/\/$/, ""));
+  await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""));
+  if (landing === "/account") await page.goto("/account");
 }
 
 function tinyPNG() {
@@ -67,7 +68,7 @@ test("reported product image and seller dropdown workflows work live", async ({ 
     await productForm.locator('input[name="category_name"]').fill("QA Reported Crafts");
     await productForm.locator('input[name="category_slug"]').fill(`qa-reported-crafts-${suffix}`);
     await productForm.locator('input[name="sku"]').fill(sku);
-    await productForm.locator('input[name="price_cents"]').fill("199900");
+    await productForm.locator('input[name="price_rupees"]').fill("1999.00");
     await productForm.locator('input[name="initial_stock"]').fill("2");
     await productForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
     await productForm.locator('textarea[name="description"]').fill("Live verification of the super admin uploaded product image.");

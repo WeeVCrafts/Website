@@ -37,6 +37,7 @@ type Handler struct {
 	refunds         *applicationpayment.RefundService
 	recovery        *applicationauth.RecoveryService
 	secureCookies   bool
+	firebase        *applicationauth.FirebaseService
 }
 
 func NewHandler(catalogService *applicationcatalog.Service) *Handler {
@@ -165,6 +166,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		Phone         string `json:"phone"`
 		Password      string `json:"password"`
 		AcceptedTerms bool   `json:"accepted_terms"`
+		Next          string `json:"next"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -181,7 +183,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), w, r, user.ID)
-	writeJSON(w, http.StatusCreated, map[string]any{"data": user, "csrf_token": session.CSRFToken})
+	writeJSON(w, http.StatusCreated, map[string]any{"data": user, "csrf_token": session.CSRFToken, "redirect_to": applicationauth.RedirectDestination(user.Roles, input.Next)})
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
@@ -193,6 +195,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 		Remember bool   `json:"remember"`
+		Next     string `json:"next"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -213,7 +216,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	h.setSessionCookie(w, session)
 	h.mergeGuestCart(r.Context(), w, r, user.ID)
-	writeJSON(w, http.StatusOK, map[string]any{"data": user, "csrf_token": session.CSRFToken})
+	writeJSON(w, http.StatusOK, map[string]any{"data": user, "csrf_token": session.CSRFToken, "redirect_to": applicationauth.RedirectDestination(user.Roles, input.Next)})
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {

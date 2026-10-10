@@ -1,0 +1,7 @@
+/weevcrafts-app-1 sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 running
+/weev-qa-20261009-app sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 exited
+/weev-qa-20261009-guard sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 exited
+/weev-qa-20261009-search sha256:c9fac23131cca4db95173d41cc50fd5639121ee381795528fdd7522d7978a7b8 exited
+/weev-qa-20261009-redis sha256:520775a41a63e77e06c73e35d2fd9cc15921a609516818796b4ecbb813078bc7 exited
+Main readiness after QA shutdown: 200 {"checks":{"postgresql":"ready","redis":"ready"},"status":"ready"}
+

@@ -37,6 +37,17 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 
 	oldSessionCreated := time.Now().Add(-time.Hour)
 	repository := NewRoleAdministrationRepository(pool)
+	// Correct an ambiguous protected identity without dropping its Super Admin role.
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'customer')`, actorID); err != nil {
+		t.Fatal(err)
+	}
+	if err := repository.UpdateRoleAssignment(ctx, actorID, actorID, 0, domainidentity.RoleSuperAdmin, true, "Correct protected role assignment"); err != nil {
+		t.Fatal(err)
+	}
+	var protectedRoles int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM user_roles WHERE user_id=$1`, actorID).Scan(&protectedRoles); err != nil || protectedRoles != 1 {
+		t.Fatal("protected role correction failed")
+	}
 	if changed, err := repository.UpdateRoleUser(ctx, actorID, userID, "session-target-"+suffix+"@example.invalid", "Renamed fixture", "active", "", "Integration display name edit"); err != nil || changed {
 		t.Fatalf("display-name-only edit should not change security state: changed=%t err=%v", changed, err)
 	}
@@ -74,6 +85,10 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 	if err := repository.UpdateRoleAssignment(ctx, actorID, userID, 0, domainidentity.RoleFinanceOperator, true, "Integration role change"); err != nil {
 		t.Fatalf("grant role: %v", err)
 	}
+	var count int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM user_roles WHERE user_id=$1`, userID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("replacement retained combined privileges: %d %v", count, err)
+	}
 	if active, err := checker.IsSessionActive(ctx, userID, newSessionCreated); err != nil || active {
 		t.Fatalf("role change should invalidate the old session: active=%t err=%v", active, err)
 	}
@@ -82,5 +97,36 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 	}
 	if active, err := checker.IsSessionActive(ctx, userID, time.Now().Add(time.Minute)); err != nil || active {
 		t.Fatalf("suspended account session should be rejected: active=%t err=%v", active, err)
+	}
+}
+
+func TestIdentityAuditsAvoidCopyingPersonalEmail(t *testing.T) {
+	pool := openIntegrationPool(t)
+	ctx := context.Background()
+	var actorID int64
+	if err := pool.QueryRow(ctx, `INSERT INTO users(email,display_name,status) VALUES($1,'Audit fixture','active') RETURNING id`, fmt.Sprintf("audit-admin-%d@example.invalid", time.Now().UnixNano())).Scan(&actorID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'super_admin')`, actorID); err != nil {
+		t.Fatal(err)
+	}
+	repository := NewRoleAdministrationRepository(pool)
+	id, err := repository.CreateRoleUser(ctx, actorID, fmt.Sprintf("audit-target-%d@example.invalid", time.Now().UnixNano()), "Audit target", "fixture-hash", domainidentity.RoleCustomer, 0, "Verify minimal audit metadata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(ctx, `DELETE FROM audit_logs WHERE actor_id=$1`, fmt.Sprint(actorID))
+		_, _ = pool.Exec(ctx, `DELETE FROM users WHERE id IN ($1,$2)`, actorID, id)
+	})
+	if err := repository.DeleteRoleUser(ctx, actorID, id, "Verify deletion audit metadata"); err != nil {
+		t.Fatal(err)
+	}
+	var events, personalFields int
+	if err := pool.QueryRow(ctx, `SELECT count(*),count(*) FILTER (WHERE metadata ? 'email' OR metadata ? 'phone' OR metadata ? 'password') FROM audit_logs WHERE actor_id=$1 AND resource_id=$2`, fmt.Sprint(actorID), fmt.Sprint(id)).Scan(&events, &personalFields); err != nil {
+		t.Fatal(err)
+	}
+	if events != 2 || personalFields != 0 {
+		t.Fatalf("unsafe audit events=%d personal_fields=%d", events, personalFields)
 	}
 }

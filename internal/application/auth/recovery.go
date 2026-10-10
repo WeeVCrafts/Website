@@ -28,12 +28,22 @@ const (
 // enough to build an email action URL; PostgreSQL receives only SHA-256 token
 // hashes and the email sender is a separate external boundary.
 type RecoveryService struct {
-	repository ports.AuthTokenRepository
-	hasher     ports.PasswordHasher
-	sender     ports.EmailSender
-	baseURL    string
-	now        func() time.Time
-	newToken   func() (string, error)
+	repository         ports.AuthTokenRepository
+	hasher             ports.PasswordHasher
+	sender             ports.EmailSender
+	baseURL            string
+	now                func() time.Time
+	newToken           func() (string, error)
+	firebaseLinks      ports.FirebaseEmailLinks
+	firebaseRepository ports.FirebaseRecoveryRepository
+	firebaseReturnURL  string
+}
+
+func (s *RecoveryService) WithFirebaseEmails(links ports.FirebaseEmailLinks, repository ports.FirebaseRecoveryRepository, returnURL string) *RecoveryService {
+	s.firebaseLinks = links
+	s.firebaseRepository = repository
+	s.firebaseReturnURL = returnURL
+	return s
 }
 
 func NewRecoveryService(repository ports.AuthTokenRepository, hasher ports.PasswordHasher, sender ports.EmailSender, baseURL string) *RecoveryService {
@@ -48,6 +58,25 @@ func (s *RecoveryService) RequestPasswordReset(ctx context.Context, email string
 	}
 	if s.repository == nil || s.sender == nil {
 		return ErrRecoveryUnavailable
+	}
+	if s.firebaseLinks != nil && s.firebaseRepository != nil {
+		proof, found, err := s.firebaseRepository.FirebaseEmailRecipient(ctx, 0, normalizeEmail(email))
+		if err != nil {
+			return ErrRecoveryUnavailable
+		}
+		if found {
+			link, err := s.firebaseLinks.PasswordResetLink(ctx, proof, s.firebaseReturnURL)
+			if errors.Is(err, ports.ErrCredentialsNotFound) {
+				return nil
+			}
+			if err != nil {
+				return ErrRecoveryUnavailable
+			}
+			if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: PasswordResetSubject, ActionURL: link}) != nil {
+				return ErrRecoveryUnavailable
+			}
+			return nil
+		}
 	}
 	rawToken, tokenHash, err := s.newActionToken()
 	if err != nil {
@@ -85,6 +114,15 @@ func (s *RecoveryService) RequestEmailVerification(ctx context.Context, userID i
 	if s.repository == nil || s.sender == nil {
 		return ErrRecoveryUnavailable
 	}
+	if s.firebaseLinks != nil && s.firebaseRepository != nil {
+		proof, found, err := s.firebaseRepository.FirebaseEmailRecipient(ctx, userID, "")
+		if err != nil {
+			return ErrRecoveryUnavailable
+		}
+		if found {
+			return s.RequestFirebaseVerification(ctx, proof)
+		}
+	}
 	rawToken, tokenHash, err := s.newActionToken()
 	if err != nil {
 		return ErrRecoveryUnavailable
@@ -95,6 +133,35 @@ func (s *RecoveryService) RequestEmailVerification(ctx context.Context, userID i
 	}
 	if err := s.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: EmailVerificationSubject, ActionURL: s.actionURL("/verify-email", rawToken)}); err != nil {
 		_ = s.repository.RevokeAuthToken(ctx, tokenHash)
+		return ErrRecoveryUnavailable
+	}
+	return nil
+}
+
+// The transport supplies freshly verified Firebase proof, never a client email.
+// This also supports verification before an existing customer can securely link.
+func (s *RecoveryService) RequestFirebaseVerification(ctx context.Context, proof ports.FirebaseIdentity) error {
+	if s.firebaseLinks == nil || s.firebaseRepository == nil || s.sender == nil {
+		return ErrRecoveryUnavailable
+	}
+	if proof.UID == "" || !validEmail(proof.Email) {
+		return ErrRecoveryInvalidRequest
+	}
+	allowed, err := s.firebaseRepository.FirebaseVerificationAllowed(ctx, proof.Email)
+	if err != nil {
+		return ErrRecoveryUnavailable
+	}
+	if !allowed {
+		return ErrRecoveryInvalidRequest
+	}
+	if proof.EmailVerified {
+		return nil
+	}
+	link, err := s.firebaseLinks.EmailVerificationLink(ctx, proof, s.firebaseReturnURL)
+	if err != nil {
+		return ErrRecoveryUnavailable
+	}
+	if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: EmailVerificationSubject, ActionURL: link}) != nil {
 		return ErrRecoveryUnavailable
 	}
 	return nil

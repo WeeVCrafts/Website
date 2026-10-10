@@ -1,0 +1,190 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/manual-recovery.spec.js",
+      "--grep",
+      "AUTH-011--customer|AUTH-012--customer",
+      "--reporter=list,json",
+      "--output=docs/qa/QA-20261009-01/recovery-focused"
+    ],
+    "configFile": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\playwright.config.js",
+    "rootDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/recovery-focused",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "manual-recovery.spec.js",
+      "file": "manual-recovery.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "AUTH-011--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=53; email=qa.recovery.auth-011.customer.1791543120314@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15618,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:51:55.800Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=53; email=qa.recovery.auth-011.customer.1791543120314@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-a89b051bb7181c484cb8",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=54; email=qa.recovery.auth-012.customer.1791543133473@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13563,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:52:11.747Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=54; email=qa.recovery.auth-012.customer.1791543133473@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-9a42af311a8bef1c2622",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T10:51:54.152Z",
+    "duration": 31510.943000000003,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

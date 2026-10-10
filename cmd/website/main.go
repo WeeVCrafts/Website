@@ -18,6 +18,7 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 
 	emailadapter "github.com/wecratfs/commerce/internal/adapters/email"
+	firebaseadapter "github.com/wecratfs/commerce/internal/adapters/firebase"
 	localpayment "github.com/wecratfs/commerce/internal/adapters/localpayment"
 	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
 	metricsadapter "github.com/wecratfs/commerce/internal/adapters/metrics"
@@ -44,6 +45,14 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 	cfg := config.FromEnv()
+	if err := validateFirebaseEnvironment(cfg.Environment); err != nil {
+		logger.Error("invalid Firebase configuration", "error", err)
+		os.Exit(1)
+	}
+	if err := cfg.ValidateSecurity(); err != nil {
+		logger.Error("invalid security configuration", "error", err)
+		os.Exit(1)
+	}
 	if cfg.Environment == "production" && strings.EqualFold(cfg.PaymentMode, "local") && cfg.LocalPaymentSecret == "wecratfs-local-payment" {
 		logger.Error("local payment mode in production requires a unique WECRATFS_LOCAL_PAYMENT_SECRET")
 		os.Exit(1)
@@ -92,7 +101,22 @@ func main() {
 	authService := applicationauth.NewService(userRepository, passwordHasher)
 	sessionService := applicationauth.NewSessionService(redisadapter.NewSessionStore(redisClient)).WithSessionChecker(userRepository)
 	var emailSender ports.EmailSender
-	if cfg.SMTPAddress != "" && cfg.SMTPFrom != "" {
+	if cfg.ResendAPIKey != "" || cfg.ResendAPIKeyFile != "" {
+		resendKey := cfg.ResendAPIKey
+		if cfg.ResendAPIKeyFile != "" {
+			raw, readErr := os.ReadFile(cfg.ResendAPIKeyFile)
+			if readErr != nil {
+				logger.Error("Resend credential unavailable")
+				os.Exit(1)
+			}
+			resendKey = strings.TrimSpace(string(raw))
+		}
+		emailSender, err = emailadapter.NewResend(resendKey, cfg.ResendFrom, cfg.ResendReplyTo)
+		if err != nil {
+			logger.Error("Resend sender configuration invalid")
+			os.Exit(1)
+		}
+	} else if cfg.SMTPAddress != "" && cfg.SMTPFrom != "" {
 		emailSender = emailadapter.NewSMTP(cfg.SMTPAddress, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom)
 	} else {
 		logger.Info("account recovery email delivery is disabled; configure WECRATFS_SMTP_ADDR and WECRATFS_SMTP_FROM to enable it")
@@ -162,6 +186,27 @@ func main() {
 	webHandler.SetSupportAttachmentService(supportAttachmentService)
 	webHandler.SetReturnService(returnService)
 	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService).WithNoPaymentDemo(cfg.NoPaymentDemo)
+	var firebaseProvider *firebaseadapter.Provider
+	if project := os.Getenv("WECRATFS_FIREBASE_PROJECT_ID"); project != "" {
+		firebaseProvider, err = firebaseadapter.New(startupContext, project, os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+		if err != nil {
+			logger.Error("Firebase configuration unavailable", "error", err)
+			os.Exit(1)
+		}
+		firebaseRepository := postgres.NewFirebaseRepository(pool)
+		firebaseService := applicationauth.NewFirebaseService(firebaseProvider, firebaseRepository, authService, userRepository)
+		recoveryService.WithFirebaseEmails(firebaseProvider, firebaseRepository, "https://weevcrafts.com/")
+		apiHandler.WithFirebase(firebaseService)
+		sessionService.WithSessionChecker(firebaseService)
+		sessionService.WithRevocationCleanup(func(ctx context.Context, userID int64, sessionID string) error {
+			if sessionID != "" {
+				_, err := pool.Exec(ctx, `DELETE FROM customer_push_subscriptions WHERE session_hash=$1`, pushHash(sessionID))
+				return err
+			}
+			_, err := pool.Exec(ctx, `DELETE FROM customer_push_subscriptions WHERE user_id=$1`, userID)
+			return err
+		})
+	}
 	backgroundWorker, err := worker.New(1, 16)
 	if err != nil {
 		logger.Error("configure background worker", "error", err)
@@ -232,6 +277,22 @@ func main() {
 	mux.HandleFunc("/api/v1/search", apiHandler.Search)
 	mux.HandleFunc("/api/v1/auth/register", apiHandler.Register)
 	mux.HandleFunc("/api/v1/auth/login", apiHandler.Login)
+	mux.HandleFunc("/api/v1/auth/firebase/session", apiHandler.FirebaseSession)
+	mux.HandleFunc("/api/v1/auth/firebase/verification", apiHandler.FirebaseVerificationRequest)
+	mux.HandleFunc("/api/v1/firebase/config", firebaseConfiguration(firebaseProvider != nil))
+	mux.HandleFunc("/firebase-messaging-sw.js", firebaseWorker)
+	if firebaseProvider != nil {
+		push := &customerPush{pool, redisClient, sessionService, firebaseProvider}
+		mux.HandleFunc("/api/v1/customer/push", push.Handle)
+		mux.HandleFunc("/api/v1/customer/push/test", push.Handle)
+		go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+			err := runFirebaseProcessing(ctx, push)
+			if err != nil {
+				logger.Warn("Firebase background processing unavailable")
+			}
+			return err
+		})
+	}
 	mux.HandleFunc("/api/v1/auth/session", apiHandler.CurrentSession)
 	mux.HandleFunc("/api/v1/auth/logout", apiHandler.Logout)
 	mux.HandleFunc("/api/v1/auth/password-reset/request", apiHandler.PasswordResetRequest)
@@ -256,14 +317,13 @@ func main() {
 	mux.HandleFunc("/api/v1/seller/products/media-upload/", apiHandler.MediaUpload)
 	mux.HandleFunc("/api/v1/seller/products/media-finalize", apiHandler.MediaFinalize)
 	mux.HandleFunc("/api/v1/seller/products/media-delete", apiHandler.MediaDelete)
-	if cfg.LocalMode {
+	if cfg.LocalMode && !strings.EqualFold(cfg.Environment, "production") {
 		mux.Handle("/api/v1/local/", apiTransport.NewLocalDemoHandler(pool, sessionService))
 	}
 	mux.Handle("/webhooks/razorpay", webhookTransport.NewRazorpayHandler(paymentService))
-	if localGateway == nil {
-		localGateway = localpayment.NewGateway(cfg.LocalPaymentSecret)
+	if developmentPaymentHelpersEnabled(cfg) {
+		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	}
-	mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
 		"database": pool.Ping,
@@ -274,6 +334,13 @@ func main() {
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
+	storefrontHandler.SetProfileStorage(mediaStorage)
+	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		return storefrontHandler.CleanupAvatars(cleanupContext)
+	})
+	mux.HandleFunc("/access-unavailable", storefrontHandler.AccessUnavailable)
 	// Keep customer support mutations and protected attachment reads ahead of
 	// the broad /support/ portal route. The portal still owns support-agent GET
 	// pages and delegates its mutation endpoints to webHandler.
@@ -307,7 +374,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           requestID(authRateLimit(mux, rateLimiter)),
+		Handler:           requestID(authRateLimit(accountSecurity(mux, sessionService), rateLimiter)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,
@@ -339,6 +406,10 @@ func main() {
 		logger.Error("HTTP server stopped", "error", err)
 		os.Exit(1)
 	}
+}
+
+func developmentPaymentHelpersEnabled(cfg config.Config) bool {
+	return cfg.Environment != "production" && cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local")
 }
 
 func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, service *applicationpayment.Service, gateway *localpayment.Gateway, paymentRepo ports.PaymentWebhookRepository) http.HandlerFunc {
@@ -449,7 +520,7 @@ func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 
 func isAuthenticationAttempt(path string) bool {
 	switch path {
-	case "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account/verify-email",
+	case "/api/v1/customer/push/test", "/api/v1/customer/push", "/api/v1/auth/firebase/session", "/api/v1/auth/firebase/verification", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account/verify-email",
 		"/api/v1/auth/register", "/api/v1/auth/login",
 		"/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm",
 		"/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm":
@@ -461,13 +532,13 @@ func isAuthenticationAttempt(path string) bool {
 
 func authenticationAttemptBucket(path string) string {
 	switch path {
-	case "/login", "/api/v1/auth/login":
+	case "/api/v1/auth/firebase/session", "/login", "/api/v1/auth/login":
 		return "login"
 	case "/register", "/api/v1/auth/register":
 		return "register"
 	case "/forgot-password", "/reset-password", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm":
 		return "password-recovery"
-	case "/verify-email", "/account/verify-email", "/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm":
+	case "/verify-email", "/account/verify-email", "/api/v1/auth/email-verification/request", "/api/v1/auth/email-verification/confirm", "/api/v1/auth/firebase/verification":
 		return "email-verification"
 	default:
 		return "other"

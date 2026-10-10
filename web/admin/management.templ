@@ -17,6 +17,15 @@ templ Management(m viewmodels.ManagementPage) {
      @ManagementToken(m.Admin.CSRFToken)
      <label>Support email<input type="email" name="support_email" value={ m.Settings.SupportEmail } maxlength="254" required/></label>
      <label>Shipping information<textarea name="shipping_information" minlength="10" maxlength="3000" required>{ m.Settings.ShippingInformation }</textarea></label>
+     if m.Admin.CanSecurity {
+      <h3>Social media links</h3><p>Use HTTPS links. Leave a field empty to hide it from the customer footer.</p>
+      <input type="hidden" name="save_social_links" value="1"/>
+      <label>Instagram<input type="url" name="instagram_url" value={ m.Settings.InstagramURL } maxlength="2048"/></label>
+      <label>Facebook<input type="url" name="facebook_url" value={ m.Settings.FacebookURL } maxlength="2048"/></label>
+      <label>YouTube<input type="url" name="youtube_url" value={ m.Settings.YouTubeURL } maxlength="2048"/></label>
+      <label>X<input type="url" name="x_url" value={ m.Settings.XURL } maxlength="2048"/></label>
+      <label>WhatsApp<input type="url" name="whatsapp_url" value={ m.Settings.WhatsAppURL } maxlength="2048"/></label>
+     }
      @ManagementReason()
      <button class="admin-button primary" type="submit">Save customer details</button>
     </form>

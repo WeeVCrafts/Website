@@ -100,13 +100,19 @@ document.addEventListener("DOMContentLoaded", function () {
       if (files.some(function (file) { return !["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"].includes(file.type); })) { status.textContent = "Choose a JPEG, PNG, WebP, MP4 or WebM file."; return; }
       if (files.some(function (file) { return file.size <= 0 || file.size > 25 * 1024 * 1024; })) { status.textContent = "Product media must be 25 MB or smaller."; return; }
       uploadButton.disabled = true;
-      try { for (var index = 0; index < files.length; index++) await uploadFile(files[index], productID); status.textContent = files.length === 1 && files[0].type.startsWith("video/") ? "Product video saved." : files.length === 1 ? "Product image saved." : "Product media saved."; window.setTimeout(function () { window.location.reload(); }, 1000); }
+      try { for (var index = 0; index < files.length; index++) {
+        await uploadFile(files[index], productID);
+        // Only retry files that have not already been finalized.
+        var remaining = new DataTransfer();
+        files.slice(index + 1).forEach(function(file) { remaining.items.add(file); });
+        input.files=remaining.files; previewFiles();
+      } status.textContent = files.length === 1 && files[0].type.startsWith("video/") ? "Product video saved." : files.length === 1 ? "Product image saved." : "Product media saved."; window.setTimeout(function () { window.location.reload(); }, 1000); }
       catch (error) { status.textContent = error.message || "Media upload failed. Please try again."; }
       finally { uploadButton.disabled = false; }
     });
     panel.querySelectorAll("[data-media-delete]").forEach(function (button) {
       button.addEventListener("click", async function () {
-        if (!window.confirm("Delete this product image?")) return;
+        if (!await window.WVUI.confirmAction("Delete this uploaded product media? It will be removed from the product gallery.", button, "Delete media")) return;
         button.disabled = true; status.textContent = "Removing product image...";
         try {
           var result = await fetch("/api/v1/seller/products/media-delete", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken }, body: JSON.stringify({ media_id: Number(button.dataset.mediaId) }) }).then(function (response) { return response.json(); });

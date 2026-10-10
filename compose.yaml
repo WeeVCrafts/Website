@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       WECRATFS_ENV: development
       WECRATFS_ADDR: ":8080"
@@ -41,7 +41,7 @@ services:
       POSTGRES_USER: wecratfs
       POSTGRES_PASSWORD: wecratfs
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -53,7 +53,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -66,7 +66,7 @@ services:
       MEILI_NO_ANALYTICS: "true"
       MEILI_ENV: development
     ports:
-      - "7700:7700"
+      - "127.0.0.1:7700:7700"
     volumes:
       - meilisearch_data:/meili_data
 
@@ -77,16 +77,62 @@ services:
       MINIO_ROOT_USER: wecratfs
       MINIO_ROOT_PASSWORD: wecratfs-local-only
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
 
   mailpit:
     image: axllent/mailpit:v1.21
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+  adminer:
+    image: adminer:6.1.1-standalone
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "127.0.0.1:8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.5-slim
+    restart: unless-stopped
+    environment:
+      UPTIME_KUMA_DB_TYPE: sqlite
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    healthcheck:
+      test: ["CMD", "extra/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 12
+
+  uptime-kuma-setup:
+    image: louislam/uptime-kuma:2.5.5-slim
+    restart: "no"
+    command: ["node", "/app/extra/weevcrafts-provision.cjs"]
+    environment:
+      UPTIME_KUMA_URL: http://uptime-kuma:3001
+      UPTIME_KUMA_USERNAME: ${UPTIME_KUMA_USERNAME:-weevcrafts-local}
+      UPTIME_KUMA_PASSWORD: ${UPTIME_KUMA_PASSWORD:-}
+    volumes:
+      - uptime_kuma_data:/app/data
+      - ./scripts/provision-uptime-kuma.cjs:/app/extra/weevcrafts-provision.cjs:ro
+    depends_on:
+      uptime-kuma:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+      adminer:
+        condition: service_started
 
   seed-demo:
     profiles: ["demo"]
@@ -104,3 +150,4 @@ volumes:
   postgres_data:
   meilisearch_data:
   minio_data:
+  uptime_kuma_data:

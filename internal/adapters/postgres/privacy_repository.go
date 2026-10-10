@@ -125,6 +125,15 @@ func (r *PrivacyRepository) ExecuteDeletion(ctx context.Context, userID, request
 		if userStatus == "deleted" {
 			return ports.ErrPrivacyRequestState
 		}
+		// Self-service privacy deletion must not bypass protected administrator
+		// safeguards. These accounts require the administrative deletion workflow.
+		var protected bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, userID).Scan(&protected); err != nil {
+			return err
+		}
+		if protected {
+			return ports.ErrForbidden
+		}
 
 		// Orders, payment attempts, and consent history remain available for
 		// accounting, dispute, and compliance retention. Direct account data
@@ -147,7 +156,19 @@ func (r *PrivacyRepository) ExecuteDeletion(ctx context.Context, userID, request
 				return err
 			}
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE users SET email = $2, display_name = 'Deleted account', status = 'deleted', updated_at = NOW() WHERE id = $1`, userID, fmt.Sprintf("deleted+%d@invalid.wecratfs", userID)); err != nil {
+		if _, err := tx.Exec(transactionContext, `INSERT INTO firebase_deletion_queue(firebase_uid) SELECT firebase_uid FROM firebase_identities WHERE user_id=$1 ON CONFLICT DO NOTHING`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM firebase_identities WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM customer_push_subscriptions WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM user_avatars WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET email = $2, display_name = 'Deleted account', phone = '', status = 'deleted', sessions_revoked_at=NOW(), updated_at = NOW() WHERE id = $1`, userID, fmt.Sprintf("deleted+%d@invalid.wecratfs", userID)); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(transactionContext, `UPDATE privacy_requests SET status = 'completed', details = details || jsonb_build_object('completed_at', NOW(), 'retained_records', jsonb_build_array('orders', 'payment_attempts', 'consent_history')), updated_at = NOW() WHERE id = $1 AND user_id = $2`, requestID, userID); err != nil {

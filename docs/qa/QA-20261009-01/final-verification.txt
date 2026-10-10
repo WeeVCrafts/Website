@@ -1,0 +1,18 @@
+Latest fetched upstream relative to HEAD (ahead behind):
+0	0
+Running containers and image IDs:
+/weevcrafts-app-1 sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 running
+/weev-qa-20261009-app sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 running
+/weev-qa-20261009-guard sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108 running
+port=8080 /health/live status=200 {"status":"live"}
+
+port=8080 /health/ready status=200 {"checks":{"postgresql":"ready","redis":"ready"},"status":"ready"}
+
+port=18080 /health/live status=200 {"status":"live"}
+
+port=18080 /health/ready status=200 {"checks":{"postgresql":"ready","redis":"ready"},"status":"ready"}
+
+port=18081 /health/live status=200 {"status":"live"}
+
+port=18081 /health/ready status=200 {"checks":{"postgresql":"ready","redis":"ready"},"status":"ready"}
+

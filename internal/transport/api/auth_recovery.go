@@ -25,9 +25,10 @@ func (h *Handler) PasswordResetRequest(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, applicationauth.ErrRecoveryInvalidRequest):
 			writeError(w, http.StatusUnprocessableEntity, "RECOVERY_INVALID", "Enter a valid email address.")
 		case errors.Is(err, applicationauth.ErrRecoveryUnavailable):
-			writeError(w, http.StatusServiceUnavailable, "RECOVERY_UNAVAILABLE", "Recovery email delivery is not configured.")
+			// Delivery failures must not reveal whether an address is registered.
+			writeJSON(w, http.StatusAccepted, map[string]string{"status": "accepted"})
 		default:
-			writeError(w, http.StatusServiceUnavailable, "RECOVERY_UNAVAILABLE", "Recovery could not be started.")
+			writeJSON(w, http.StatusAccepted, map[string]string{"status": "accepted"})
 		}
 		return
 	}

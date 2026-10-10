@@ -4,7 +4,9 @@
   "scripts": {
     "css:preview": "node ./scripts/minify-preview-css.js",
     "css:build": "tailwindcss -i ./web/assets/css/source.css -o ./internal/transport/web/static/app.css --minify && npm run css:preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:storefront-header": "node scripts/check-storefront-header.cjs",
+    "test:firebase-ui": "node scripts/check-firebase-ui.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

@@ -55,7 +55,7 @@
 
   function savedMarkup(product) {
     const slug = esc(product.slug);
-    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><button class=\"primary-button\" type=\"button\" data-backend-action=\"wishlist-to-cart\" data-product-slug=\"" + slug + "\">Move to cart</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
+    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart is-active\" aria-pressed=\"true\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><button class=\"primary-button\" type=\"button\" data-backend-action=\"wishlist-to-cart\" data-product-slug=\"" + slug + "\">Move to cart</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
   }
 
   async function hydrateCatalog() {
@@ -215,7 +215,7 @@
     const orderNumber = order.order_number || order.orderNumber || "Order";
     const paymentStatus = order.payment_status || order.paymentStatus || (String(order.status || "").toLowerCase() === "paid" ? "captured" : "pending");
     const first = items[0];
-    return "<article class=\"order-card compact-order\"><header><div><p class=\"eyebrow\">" + esc(status) + "</p><h2><a href=\"/orders/" + encodeURIComponent(orderNumber) + "\">" + esc(orderNumber) + "</a></h2><small>Placed on " + esc(orderDate(order.created_at || order.createdAt)) + " | Payment " + esc(paymentStatus) + "</small></div><div><strong>" + money(order.total_cents || order.totalCents) + "</strong><span class=\"status\">" + esc(status) + "</span></div></header><div class=\"compact-order-item\">" + (first ? "<img src=\"" + esc(first.image || first.image_url || "/assets/images/customer/maker-mithila.webp") + "\" alt=\"" + esc(first.name || first.product_name || "Handmade product") + "\" width=\"160\" height=\"173\"/><span>" + esc(first.name || first.product_name || "Handmade product") + "<small>" + items.length + " item" + (items.length === 1 ? "" : "s") + "</small></span>" : "<span>Order items</span>") + "</div></article>";
+    return "<article class=\"order-card compact-order\"><header><div><p class=\"eyebrow\">" + esc(status) + "</p><h2><a href=\"/orders/" + encodeURIComponent(orderNumber) + "\">" + esc(orderNumber) + "</a></h2><small>Placed on " + esc(orderDate(order.created_at || order.createdAt)) + " | Payment " + esc(paymentStatus) + "</small></div><div><strong>" + money(order.total_cents || order.totalCents) + "</strong><span class=\"status\">" + esc(status) + "</span></div></header><div class=\"compact-order-item\">" + (first ? "<img src=\"" + esc(first.image || first.image_url || "/assets/images/product-unavailable.svg") + "\" alt=\"" + esc(first.name || first.product_name || "Handmade product") + "\" width=\"160\" height=\"173\"/><span>" + esc(first.name || first.product_name || "Handmade product") + "<small>" + items.length + " item" + (items.length === 1 ? "" : "s") + "</small></span>" : "<span>Order items</span>") + "</div></article>";
   }
 
   async function hydrateOrders() {
@@ -332,7 +332,10 @@
       wireCartLineActions(host, cart.items);
       const totals = cartTotals(cart.items);
       const summary = cartRoot.querySelector(".cart-summary");
+      const layout=document.getElementById("cart-layout");
+      if(layout) { layout.classList.toggle("cart-layout",cart.items.length>0); layout.classList.toggle("cart-layout--empty",cart.items.length===0); }
       if (summary) {
+        summary.hidden=cart.items.length===0;
         const values = summary.querySelectorAll("p b");
         if (values[0]) values[0].textContent = money(totals.subtotal);
         if (values[1]) values[1].textContent = money(totals.shipping);
@@ -365,6 +368,23 @@
     return user;
   }
 
+  function syncWishlistHearts(slug, saved) {
+    document.querySelectorAll(".heart, .gallery-heart").forEach(function (button) {
+      const path = button.getAttribute("hx-post") || "";
+      const buttonSlug = button.dataset.productSlug || (path.startsWith("/ui/wishlist/") ? decodeURIComponent(path.slice(13)) : "");
+      if (buttonSlug !== slug) return;
+      button.dataset.productSlug = slug;
+      button.dataset.backendAction = saved ? "wishlist-remove" : "wishlist-add";
+      button.classList.toggle("is-active", saved);
+      button.setAttribute("aria-pressed", String(saved));
+      const name = button.closest("article")?.querySelector("h3")?.textContent || "product";
+      button.setAttribute("aria-label", (saved ? "Remove " : "Save ") + name + (saved ? " from wishlist" : " to wishlist"));
+      const icon = button.querySelector(".material-symbols-outlined");
+      if (icon) icon.textContent = saved ? "favorite" : "favorite_border";
+    });
+  }
+
+  const wishlistPending = new Set();
   async function runAction(action, slug, delta, selectedVariantId, triggerElement) {
     const api = ensureBackend();
     if (action === "cart-add") {
@@ -406,7 +426,6 @@
       if (optimisticallyGlowed) heartBtn.classList.add("is-active");
       try {
         await api.addWishlist(slug);
-        await refreshCounts();
       } catch (error) {
         if (optimisticallyGlowed) heartBtn.classList.remove("is-active");
         throw error;
@@ -417,13 +436,18 @@
         const icon = heartBtn.querySelector(".material-symbols-outlined");
         if (icon) icon.textContent = "favorite";
         heartBtn.dataset.backendAction = "wishlist-remove";
+        heartBtn.dataset.productSlug = slug;
+        heartBtn.setAttribute("aria-label", "Remove product from wishlist");
       }
+      syncWishlistHearts(slug, true);
+      await refreshCounts().catch(function () { notice("Saved. Refresh the page to update the wishlist count.", false); });
       notice("Saved to your wishlist.", false);
       return;
     }
     if (action === "wishlist-remove") {
       await requireUser();
       await api.removeWishlist(slug);
+      syncWishlistHearts(slug, false);
       if (triggerElement) {
         const heartBtn = triggerElement.closest(".heart, .gallery-heart") || triggerElement;
         const isOnProductCard = heartBtn.closest(".product-card, .gallery-main");
@@ -433,6 +457,8 @@
           const icon = heartBtn.querySelector(".material-symbols-outlined");
           if (icon) icon.textContent = "favorite_border";
           heartBtn.dataset.backendAction = "wishlist-add";
+          heartBtn.dataset.productSlug = slug;
+          heartBtn.setAttribute("aria-label", "Save product to wishlist");
           await refreshCounts();
           return;
         }
@@ -474,40 +500,22 @@
     target.classList.toggle("is-error", Boolean(error));
   }
 
-  function authDestination(candidate, user) {
-    const roleDestinations = {
-      customer: "/account",
-      seller_owner: "/seller-admin",
-      seller_staff: "/seller-admin",
-      marketplace_admin: "/marketplace-admin",
-      super_admin: "/super-admin",
-      finance_operator: "/finance-portal",
-      operations_returns: "/operations-portal",
-      support_agent: "/support-portal"
-    };
-    const roles = new Set(Array.isArray(user && user.roles) ? user.roles : []);
-    if (roles.has("seller_owner")) roles.delete("seller_staff");
-    const destinations = [...new Set([...roles].map(role => roleDestinations[role]).filter(Boolean))];
-    if (destinations.length !== 1) return "/workspaces";
-
-    const destination = destinations[0];
-    const safeCandidate = typeof candidate === "string" && candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\");
-    if (destination === "/account" && safeCandidate) return candidate;
-    return destination;
-  }
-
   async function submitAuth(form) {
+    if (form.dataset.submitting === "true") return;
+    form.dataset.submitting = "true";
+    const authButton = form.querySelector('button[type="submit"]');
+    if (authButton) authButton.disabled = true;
     const api = ensureBackend();
     const action = form.dataset.backendAuth;
     const values = formData(form);
     try {
       if (action === "login") {
-        const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on" });
-        global.location.assign(authDestination(values.next, unwrap(result) || result));
+        const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "" });
+        global.location.assign(result.redirect_to || "/products");
       } else if (action === "register") {
-        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, phone: values.phone, acceptedTerms: values.consent === "on" });
+        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, phone: values.phone, acceptedTerms: values.consent === "on", next: values.next || "" });
         const data = unwrap(result) || result;
-        if (data && (data.access_token || result.csrf_token)) global.location.assign(authDestination(values.next, data));
+        if (data && (data.access_token || result.csrf_token)) global.location.assign(result.redirect_to || "/products");
         else showFormMessage(form, "Check your email to verify your new account.", false);
       } else if (action === "recover") {
         await api.recover(values.email);
@@ -525,6 +533,9 @@
       }
     } catch (error) {
       showFormMessage(form, error.message, true);
+    } finally {
+      form.dataset.submitting = "false";
+      if (authButton) authButton.disabled = false;
     }
   }
 
@@ -599,6 +610,7 @@
       const elements = document.querySelectorAll("[data-quote-" + field + "]");
       elements.forEach((element) => { element.textContent = money(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
     }
+    document.querySelectorAll("[data-quote-shipping-label]").forEach(label => { label.textContent="Shipping"; });
     return quote;
   }
 
@@ -606,7 +618,7 @@
     const button = document.querySelector('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
     const noPaymentDemo = button && button.dataset.backendAction === "checkout-no-payment";
     const form = document.getElementById("checkout-address-form");
-    if (!button || !form || !form.reportValidity()) return;
+    if (!button || !form || !global.WVUI.validate(form)) return;
     await requireUser();
     const couponInput = document.getElementById("checkout-coupon-code");
     const acceptedCoupon = couponInput ? couponInput.value.trim() : "";
@@ -706,6 +718,8 @@
         const values = formData(checkoutAddressForm);
         const summary = document.querySelector("[data-checkout-address-summary]");
         if (summary) summary.textContent = [values.recipient_name, values.line1, values.city, values.state || values.region, values.postal_code].filter(Boolean).join(" · ") || "Enter your delivery address";
+        const deliveryLocation = document.querySelector('.header-main .location small');
+        if (deliveryLocation) deliveryLocation.textContent = [values.city, values.state || values.region].filter(Boolean).join(', ') || 'Choose delivery location';
       };
       checkoutAddressForm.addEventListener("input", updateSummary);
       checkoutAddressForm.addEventListener("change", function () { queueMicrotask(updateSummary); });
@@ -728,7 +742,14 @@
       }
       savedAddressSelect.addEventListener("change", function () {
         const option = savedAddressSelect.selectedOptions[0];
-        if (!option || !option.value) return;
+        if (!option) return;
+        if (!option.value) {
+          const form = document.getElementById("checkout-address-form");
+          ["line1","line2","city","state","region","postal_code"].forEach(name => { const field=form?.elements.namedItem(name); if(field) field.value=""; });
+          form?.dispatchEvent(new Event("change", {bubbles:true}));
+          form?.elements.namedItem("line1")?.focus();
+          return;
+        }
         const form = document.getElementById("checkout-address-form");
         if (!form) return;
         const fields = {
@@ -749,6 +770,7 @@
         if (regionField) regionField.value = option.dataset.state || "";
         const stateField = form.elements.namedItem("state");
         if (stateField) stateField.value = option.dataset.state || "";
+        form.dispatchEvent(new Event("change", {bubbles:true}));
       });
     }
     document.addEventListener("click", async function (event) {
@@ -791,7 +813,7 @@
       let slug = element.dataset.productSlug || "";
       let delta = element.dataset.delta || "";
       let selectedVariantId = element.dataset.variantId || "";
-      if (!action) {
+      if (!action || !slug) {
         const path = element.getAttribute("hx-post") || "";
         const match = path.match(/^\/ui\/(cart|wishlist)\/([^/?#]+)/);
         if (!match) return;
@@ -804,7 +826,7 @@
           action = extras.remove ? "cart-remove" : extras.delta ? "cart-change" : element.closest(".saved-card") ? "wishlist-to-cart" : extras.intent === "buy" ? "cart-buy" : "cart-add";
           delta = extras.delta || document.getElementById("detail-quantity")?.value || "1";
         } else {
-          action = extras.source === "cart" ? "wishlist-move" : extras.source === "wishlist" ? "wishlist-remove" : "wishlist-add";
+          action = action || (extras.source === "cart" ? "wishlist-move" : extras.source === "wishlist" ? "wishlist-remove" : "wishlist-add");
         }
       }
       // The server-rendered storefront owns guest cart mutations. Let HTMX
@@ -822,8 +844,21 @@
       event.stopImmediatePropagation();
       const detailActions = element.closest(".detail-actions, .mobile-buy-bar");
       selectedVariantId = selectedVariantId || (detailActions ? document.querySelector("#detail-variant")?.value : undefined);
+      if (element.dataset.pending === "true") return;
+      const wishlistToggle = action === "wishlist-add" || action === "wishlist-remove";
+      if (wishlistToggle && wishlistPending.has(slug)) return;
+      if (wishlistToggle) wishlistPending.add(slug);
+      element.dataset.pending = "true";
+      element.setAttribute("aria-busy", "true");
+      if ("disabled" in element) element.disabled = true;
       try { await runAction(action, slug, delta, selectedVariantId, element); }
       catch (error) { notice(error.message, true); }
+      finally {
+        if (wishlistToggle) wishlistPending.delete(slug);
+        delete element.dataset.pending;
+        element.removeAttribute("aria-busy");
+        if ("disabled" in element) element.disabled = false;
+      }
     }, true);
 
     document.addEventListener("submit", function (event) {
@@ -881,6 +916,35 @@
   }
 
   async function start() {
+    const photoInput = document.querySelector("[data-photo-input]");
+    if (photoInput) {
+      const preview = document.querySelector("[data-photo-preview]");
+      const initialPreview = preview.innerHTML;
+      let previewURL;
+      photoInput.addEventListener("change", function () {
+        if (previewURL) global.URL.revokeObjectURL(previewURL);
+        const file = photoInput.files[0];
+        preview.innerHTML = initialPreview;
+        if (!file) return;
+        // Some browsers report WebP as application/octet-stream (or omit the
+        // type). The server verifies the actual decoded image before saving.
+        const imageType = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+        const unknownType = !file.type || file.type === "application/octet-stream";
+        const imageName = /\.(jpe?g|png|webp)$/i.test(file.name);
+        if (file.size > 5 * 1024 * 1024 || (!imageType && !(unknownType && imageName))) {
+          photoInput.value = "";
+          notice("Choose a JPEG, PNG or WebP photo up to 5 MiB.", true);
+          return;
+        }
+        const removal = document.querySelector('[name="remove_photo"]');
+        if (removal) removal.checked = false;
+        previewURL = global.URL.createObjectURL(file);
+        const img = document.createElement("img");
+        img.className = "customer-avatar"; img.alt = "Selected photo preview";
+        img.src = previewURL; img.width = 96; img.height = 96;
+        preview.replaceChildren(img);
+      });
+    }
     bindActions();
     try {
       backend = await create();
@@ -904,6 +968,13 @@
       if (authenticated && ["/cart", "/wishlist"].includes(global.location.pathname)) await hydrateCart();
       if (global.location.pathname === "/orders") await hydrateOrders();
       await refreshCounts();
+      try {
+        const authNotice = global.sessionStorage.getItem("weevcrafts_auth_notice");
+        if (authNotice) {
+          global.sessionStorage.removeItem("weevcrafts_auth_notice");
+          notice(authNotice, true);
+        }
+      } catch (_) { /* Storage can be disabled by the browser. */ }
     } catch (error) {
       backend = null;
       backendError = error;

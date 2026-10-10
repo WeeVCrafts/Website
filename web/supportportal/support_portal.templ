@@ -17,6 +17,8 @@ templ SupportDocument(p viewmodels.SupportPortalPage) {
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
       <link rel="stylesheet" href={ assets.URL("css/support-portal.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
+      <script defer src={ assets.URL("js/ui-standards.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/alpine.min.js"></script>
     </head>
@@ -55,8 +57,7 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
         <span class="material-symbols-outlined" aria-hidden="true">search</span>
         <input id="support-search" name="q" value={ p.Query } placeholder="Search cases, orders, customers, sellers or anything..."/>
       </form>
-      <a class="support-notification" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span></a>
-      <a class="support-user" href="/workspaces"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a>
+      <div class="support-user"><span class="support-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
     </div>
   </header>
 }
@@ -64,13 +65,13 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
 templ SupportSidebar(p viewmodels.SupportPortalPage) {
   <aside id="support-sidebar" class="support-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="support-sidebar-close" type="button" x-ref="supportSidebarClose" aria-label="Close support navigation" @click="sidebar=false; $nextTick(() => $refs.supportMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="support-profile-mini"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small><a href="/workspaces">Switch workspace</a></span></div>
+    <div class="support-profile-mini"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
     <nav class="support-nav" aria-label="Support portal navigation">
       @SupportNav("dashboard", "Dashboard", "home", p.Active, "/support-portal")
       @SupportNav("cases", "Cases", "work_outline", p.Active, "/support-portal/cases")
       @SupportNav("customers", "Customers", "person_outline", p.Active, "/support-portal/customers")
       @SupportNav("orders", "Orders", "inventory_2", p.Active, "/support-portal/orders")
-      <a class="support-nav-link" href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Switch workspace</span></a>
+
       <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="support-nav-link" type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </nav>
     <div class="support-impact"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><p>Resolve customer issues with care and keep every update on the ticket record.</p><a href="/support-portal/cases">Open case queue <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>

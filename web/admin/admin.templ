@@ -19,6 +19,8 @@ templ AdminDocument(p viewmodels.AdminPage) {
       <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
       <link rel="stylesheet" href={ assets.URL("css/admin.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
+      <script defer src={ assets.URL("js/ui-standards.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/alpine.min.js"></script>
       <script defer src="/assets/js/htmx.min.js"></script>
@@ -133,7 +135,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
       <span class="material-symbols-outlined" aria-hidden="true">search</span>
       <input id="admin-search" name="q" value={ p.Query } placeholder="Search orders, sellers, products, customers or tickets..."/>
     </form>
-    <a class="admin-icon-button" href="/workspaces" aria-label="Switch workspace"><span class="material-symbols-outlined" aria-hidden="true">apps</span></a>
+
     <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
     <form class="admin-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
   </header>
@@ -229,7 +231,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                       }
                     </select>
                   </label>
-                  <label>Action<select name="action" required><option value="grant">Grant</option><option value="revoke">Revoke</option></select></label>
+                  <input type="hidden" name="action" value="grant"/><p>The selected role replaces the current role and signs out existing sessions.</p>
                   <label class="role-reason">Reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
                   <button class="admin-button primary" type="submit">Save role change</button>
                 </form>
@@ -242,7 +244,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
             }
             if assignment.Status != "deleted" && assignment.ID != p.ActorID {
               <div class="role-assignment-actions">
-                <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } onsubmit="return confirm('Delete this account? Past orders and audit history will be retained.');">
+                <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } data-confirm="Delete this account? Past orders and audit history will be retained.">
                   <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
                   <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
                   <label>Delete reason<input name="reason" minlength="4" maxlength="1000" placeholder="Required for the audit trail" required/></label>
@@ -369,7 +371,7 @@ templ AdminFooter(p viewmodels.AdminPage) {
   <footer class="admin-footer admin-footer-simple">
     <a class="admin-brand inverse" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
     <span>Handmade in India · Delivery to serviceable PIN codes across India</span>
-    <a href="/workspaces">Switch workspace</a>
+
   </footer>
 }
 

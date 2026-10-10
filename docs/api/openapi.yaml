@@ -6,6 +6,29 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/auth/firebase/verification:
+    post:
+      summary: Send branded customer verification email using fresh Firebase identity proof
+      parameters:
+        - {name: X-CSRF-Token, in: header, required: true, schema: {type: string}}
+        - {name: Origin, in: header, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [id_token]
+              properties:
+                id_token: {type: string, description: Fresh Firebase ID token; recipient comes from verified identity}
+      responses:
+        '202': {description: Verification accepted}
+        '400': {description: Invalid JSON or client-supplied recipient}
+        '401': {description: Invalid or stale Firebase proof}
+        '403': {description: CSRF or customer role rejection}
+        '429': {description: Authentication rate limit}
+        '503': {description: Delivery temporarily unavailable}
   /api/v1/products:
     get:
       summary: List approved products
@@ -36,12 +59,12 @@ paths:
     post:
       summary: Register a customer and create a session
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
-      responses: {'201': {description: Registered}, '422': {description: Invalid input}}
+      responses: {'201': {description: 'Registered; response includes data, csrf_token and server-owned redirect_to'}, '422': {description: Invalid input}}
   /api/v1/auth/login:
     post:
       summary: Sign in and create a session
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LoginRequest'}}}}
-      responses: {'200': {description: Signed in}, '401': {description: Invalid credentials}}
+      responses: {'200': {description: 'Signed in; response includes data, csrf_token and server-owned redirect_to'}, '401': {description: Invalid credentials}}
   /api/v1/auth/logout:
     post:
       summary: Revoke the current session
@@ -213,18 +236,20 @@ components:
         email: {type: string, format: email}
         display_name: {type: string}
         password: {type: string, minLength: 12}
+        next: {type: string, description: Optional supported customer return path}
     LoginRequest:
       type: object
       required: [email, password]
       properties:
         email: {type: string, format: email}
         password: {type: string}
+        next: {type: string, description: Optional customer return path; unsafe or unauthorized destinations fall back to the assigned portal}
     CheckoutRequest:
       type: object
       required: [cart_id, address]
       properties:
-          coupon_code: {type: string, maxLength: 40}
-          expected_total_cents: {type: integer, format: int64, minimum: 0, description: Reviewed quote total; changed totals reject placement without reserving inventory}
+        coupon_code: {type: string, maxLength: 40}
+        expected_total_cents: {type: integer, format: int64, minimum: 0, description: Reviewed quote total; changed totals reject placement without reserving inventory}
         cart_id: {type: integer, format: int64, minimum: 1}
         idempotency_key: {type: string, minLength: 16, description: Used only when the Idempotency-Key header is absent}
         address:

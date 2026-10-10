@@ -1,0 +1,2190 @@
+{
+  "run": "QA-20261009-01",
+  "date": "2026-10-09",
+  "finalBuild": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+  "counts": {
+    "Passed": 124,
+    "Not run": 591,
+    "Failed": 1,
+    "Blocked": 38
+  },
+  "bySection": {
+    "Sign-in, account recovery, and sessions": {
+      "Passed": 112,
+      "Not run": 16
+    },
+    "Workspace navigation and access boundaries": {
+      "Not run": 88,
+      "Passed": 8
+    },
+    "Guest and public storefront": {
+      "Not run": 19,
+      "Failed": 1
+    },
+    "Customer shopping and account workflows": {
+      "Not run": 56,
+      "Blocked": 5
+    },
+    "Seller owner workflows": {
+      "Not run": 53
+    },
+    "Seller staff permissions": {
+      "Not run": 22
+    },
+    "Marketplace administration": {
+      "Not run": 62
+    },
+    "Super Admin workflows": {
+      "Not run": 24
+    },
+    "Finance operator workflows": {
+      "Not run": 39
+    },
+    "Returns and operations workflows": {
+      "Not run": 16
+    },
+    "Support agent workflows": {
+      "Not run": 22
+    },
+    "Usability, accessibility, and browser checks": {
+      "Not run": 144,
+      "Blocked": 9
+    },
+    "Complete workflows across roles": {
+      "Blocked": 2,
+      "Not run": 13
+    },
+    "Service, payment, persistence, and recovery checks": {
+      "Blocked": 12,
+      "Passed": 4,
+      "Not run": 17
+    },
+    "Requirements and release gaps": {
+      "Blocked": 10
+    }
+  },
+  "go": [
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests.jsonl",
+      "build": "Base revision; first native run; projection database not configured",
+      "pass": 675,
+      "fail": 0,
+      "skip": 3,
+      "topLevelPass": 283
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests-final.jsonl",
+      "build": "Guard change; concurrent run; one fixture-setup timeout",
+      "pass": 699,
+      "fail": 1,
+      "skip": 0,
+      "topLevelPass": 286
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests-serial.jsonl",
+      "build": "Guard change; final serial native run; PostgreSQL, Redis, MinIO, projection database enabled",
+      "pass": 700,
+      "fail": 0,
+      "skip": 0,
+      "topLevelPass": 287
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-race.jsonl",
+      "build": "Base revision; Linux Go 1.26 race suite; one fixture-setup timeout",
+      "pass": 674,
+      "fail": 1,
+      "skip": 3,
+      "topLevelPass": 282
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-race-retest.jsonl",
+      "build": "Guard change; Linux Go 1.26; reduced-concurrency race retest of the failed inventory case and guard",
+      "pass": 7,
+      "fail": 0,
+      "skip": 0,
+      "topLevelPass": 2
+    }
+  ],
+  "playwright": [
+    {
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "startTime": "2026-10-09T10:17:50.515Z",
+      "duration": 1213011.228,
+      "expected": 99,
+      "skipped": 0,
+      "unexpected": 8,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/production-guard-before.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "startTime": "2026-10-09T10:27:06.834Z",
+      "duration": 43640.23,
+      "expected": 0,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/production-guard-after.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "startTime": "2026-10-09T10:39:43.228Z",
+      "duration": 10914.993,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "startTime": "2026-10-09T10:54:45.324Z",
+      "duration": 664885.566,
+      "expected": 64,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/mail-evidence.json",
+      "browser": "Playwright HTTP client; real local SMTP / Mailpit",
+      "startTime": "2026-10-09T11:00:44.390Z",
+      "duration": 5027.447,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "browser": "Firefox and WebKit / Playwright 1.63.0",
+      "startTime": "2026-10-09T11:09:11.463Z",
+      "duration": 533225.488,
+      "expected": 27,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/local-helper-retest.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "startTime": "2026-10-09T11:13:00.171Z",
+      "duration": 68084.633,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/browser-matrix-retest.json",
+      "browser": "WebKit / Playwright 1.63.0",
+      "startTime": "2026-10-09T11:18:36.784Z",
+      "duration": 67102.251,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  ],
+  "executions": [
+    {
+      "title": "AUTH-001--customer",
+      "id": "AUTH-001--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--customer",
+      "id": "AUTH-002--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--customer",
+      "id": "AUTH-003--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--customer",
+      "id": "AUTH-004--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--customer",
+      "id": "AUTH-007--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--customer",
+      "id": "AUTH-013--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--customer",
+      "id": "AUTH-016--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--customer",
+      "id": "NAV-002--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-001--seller-owner",
+      "id": "AUTH-001--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--seller-owner",
+      "id": "AUTH-002--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--seller-owner",
+      "id": "AUTH-003--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--seller-owner",
+      "id": "AUTH-004--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--seller-owner",
+      "id": "AUTH-007--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--seller-owner",
+      "id": "AUTH-013--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--seller-owner",
+      "id": "AUTH-016--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--seller-owner",
+      "id": "NAV-002--seller-owner",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: seller-owner accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       expect((await page.request.get(root, { maxRedirects: 0 })).status(), `${role.id} accessing ${root}`).toBe(403);\n      |                                                                                                            ^\n  130 |     }\n  131 |     await page.goto('/workspaces');\n  132 |     const choices = page.getByRole('navigation', { name: 'Available workspaces' });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--seller-staff",
+      "id": "AUTH-001--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--seller-staff",
+      "id": "AUTH-002--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--seller-staff",
+      "id": "AUTH-003--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--seller-staff",
+      "id": "AUTH-004--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--seller-staff",
+      "id": "AUTH-007--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--seller-staff",
+      "id": "AUTH-013--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--seller-staff",
+      "id": "AUTH-016--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--seller-staff",
+      "id": "NAV-002--seller-staff",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: seller-staff accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       expect((await page.request.get(root, { maxRedirects: 0 })).status(), `${role.id} accessing ${root}`).toBe(403);\n      |                                                                                                            ^\n  130 |     }\n  131 |     await page.goto('/workspaces');\n  132 |     const choices = page.getByRole('navigation', { name: 'Available workspaces' });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--marketplace-admin",
+      "id": "AUTH-001--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--marketplace-admin",
+      "id": "AUTH-002--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--marketplace-admin",
+      "id": "AUTH-003--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--marketplace-admin",
+      "id": "AUTH-004--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--marketplace-admin",
+      "id": "AUTH-007--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--marketplace-admin",
+      "id": "AUTH-013--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--marketplace-admin",
+      "id": "AUTH-016--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--marketplace-admin",
+      "id": "NAV-002--marketplace-admin",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: marketplace-admin accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       expect((await page.request.get(root, { maxRedirects: 0 })).status(), `${role.id} accessing ${root}`).toBe(403);\n      |                                                                                                            ^\n  130 |     }\n  131 |     await page.goto('/workspaces');\n  132 |     const choices = page.getByRole('navigation', { name: 'Available workspaces' });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--super-admin",
+      "id": "AUTH-001--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--super-admin",
+      "id": "AUTH-002--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--super-admin",
+      "id": "AUTH-003--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--super-admin",
+      "id": "AUTH-004--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--super-admin",
+      "id": "AUTH-007--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--super-admin",
+      "id": "AUTH-013--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--super-admin",
+      "id": "AUTH-016--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--super-admin",
+      "id": "NAV-002--super-admin",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: super-admin accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       const response = await page.request.get(root, { maxRedirects: 0 });\n      |                                                                          ^\n  130 |       if (root === '/account' && response.status() === 303) {\n  131 |         // The generic account entry redirects non-customers to their own\n  132 |         // assigned portal; it must never serve customer workspace data.\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--support-agent",
+      "id": "AUTH-001--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--support-agent",
+      "id": "AUTH-002--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--support-agent",
+      "id": "AUTH-003--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--support-agent",
+      "id": "AUTH-004--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--support-agent",
+      "id": "AUTH-007--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--support-agent",
+      "id": "AUTH-013--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--support-agent",
+      "id": "AUTH-016--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--support-agent",
+      "id": "NAV-002--support-agent",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: support-agent accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       const response = await page.request.get(root, { maxRedirects: 0 });\n      |                                                                          ^\n  130 |       if (root === '/account' && response.status() === 303) {\n  131 |         // The generic account entry redirects non-customers to their own\n  132 |         // assigned portal; it must never serve customer workspace data.\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--finance-operator",
+      "id": "AUTH-001--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--finance-operator",
+      "id": "AUTH-002--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--finance-operator",
+      "id": "AUTH-003--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--finance-operator",
+      "id": "AUTH-004--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--finance-operator",
+      "id": "AUTH-007--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--finance-operator",
+      "id": "AUTH-013--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--finance-operator",
+      "id": "AUTH-016--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--finance-operator",
+      "id": "NAV-002--finance-operator",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: finance-operator accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       const response = await page.request.get(root, { maxRedirects: 0 });\n      |                                                                          ^\n  130 |       if (root === '/account' && response.status() === 303) {\n  131 |         // The generic account entry redirects non-customers to their own\n  132 |         // assigned portal; it must never serve customer workspace data.\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "AUTH-001--returns-operations",
+      "id": "AUTH-001--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-002--returns-operations",
+      "id": "AUTH-002--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-003--returns-operations",
+      "id": "AUTH-003--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-004--returns-operations",
+      "id": "AUTH-004--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-007--returns-operations",
+      "id": "AUTH-007--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-013--returns-operations",
+      "id": "AUTH-013--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-016--returns-operations",
+      "id": "AUTH-016--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--returns-operations",
+      "id": "NAV-002--returns-operations",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: returns-operations accessing /account\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 403\nReceived: 303\n\n  127 |     await login(page, role);\n  128 |     for (const root of roots.filter(root => root !== role.root)) {\n> 129 |       const response = await page.request.get(root, { maxRedirects: 0 });\n      |                                                                          ^\n  130 |       if (root === '/account' && response.status() === 303) {\n  131 |         // The generic account entry redirects non-customers to their own\n  132 |         // assigned portal; it must never serve customer workspace data.\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:129:108"
+    },
+    {
+      "title": "GST-020--guest",
+      "id": "GST-020--guest",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: /category/missing-qa-1791541497688\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 404\nReceived: 200\n\n  141 |     const choices = page.getByRole('navigation', { name: 'Available workspaces' });\n  142 |     if (await choices.count()) {\n> 143 |       for (const href of await choices.locator('a').evaluateAll(links => links.map(link => link.getAttribute('href')))) expect(href).toBe(role.root);\n      |                                      ^\n  144 |     }\n  145 |   });\n  146 | }\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:143:38"
+    },
+    {
+      "title": "INT-027--qa-and-technical-operator",
+      "id": "INT-027--qa-and-technical-operator",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/production-guard-before.json",
+      "source": "production-guards.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": "Error: Disabled development capture changed persisted order state\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: \"pending_payment\"\nReceived: \"paid\"\n\n  18 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });\n  19 |   // Report the business effect as well as route status when the guard fails.\n> 20 |   expect.soft(state(), 'Disabled development capture changed persisted order state').toBe(before);\n     |                                                                                      ^\n  21 |   expect(response.status(), 'Disabled development capture endpoint must not be registered').toBe(404);\n  22 | });\n  23 |\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\production-guards.spec.js:20:86\nError: Disabled development capture endpoint must not be registered\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 404\nReceived: 200\n\n  19 |   // Report the business effect as well as route status when the guard fails.\n  20 |   expect.soft(state(), 'Disabled development capture changed persisted order state').toBe(before);\n> 21 |   expect(response.status(), 'Disabled development capture endpoint must not be registered').toBe(404);\n     |                                                                                             ^\n  22 | });\n  23 |\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\production-guards.spec.js:21:93"
+    },
+    {
+      "title": "INT-027--qa-and-technical-operator",
+      "id": "INT-027--qa-and-technical-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/production-guard-after.json",
+      "source": "production-guards.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--customer",
+      "id": "NAV-002--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--seller-owner",
+      "id": "NAV-002--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--seller-staff",
+      "id": "NAV-002--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--marketplace-admin",
+      "id": "NAV-002--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--super-admin",
+      "id": "NAV-002--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--support-agent",
+      "id": "NAV-002--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--finance-operator",
+      "id": "NAV-002--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "NAV-002--returns-operations",
+      "id": "NAV-002--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "GST-020--guest",
+      "id": "GST-020--guest",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": "Error: /category/missing-qa-1791543313523\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 404\nReceived: 200\n\n  150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {\n  151 |     const response = await request.get(route);\n> 152 |     expect.soft(response.status(), route).toBe(404);\n      |                                           ^\n  153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);\n  154 |   }\n  155 | });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:152:43\nError: /brands/missing-qa-1791543313523\n\nexpect(received).toBe(expected) // Object.is equality\n\nExpected: 404\nReceived: 200\n\n  150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {\n  151 |     const response = await request.get(route);\n> 152 |     expect.soft(response.status(), route).toBe(404);\n      |                                           ^\n  153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);\n  154 |   }\n  155 | });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:152:43"
+    },
+    {
+      "title": "AUTH-008--customer",
+      "id": "AUTH-008--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--customer",
+      "id": "AUTH-009--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--customer",
+      "id": "AUTH-010--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--customer",
+      "id": "AUTH-014--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--customer",
+      "id": "AUTH-011--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--customer",
+      "id": "AUTH-012--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--seller-owner",
+      "id": "AUTH-008--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--seller-owner",
+      "id": "AUTH-009--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--seller-owner",
+      "id": "AUTH-010--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--seller-owner",
+      "id": "AUTH-014--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--seller-owner",
+      "id": "AUTH-011--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--seller-owner",
+      "id": "AUTH-012--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--seller-staff",
+      "id": "AUTH-008--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--seller-staff",
+      "id": "AUTH-009--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--seller-staff",
+      "id": "AUTH-010--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--seller-staff",
+      "id": "AUTH-014--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--seller-staff",
+      "id": "AUTH-011--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--seller-staff",
+      "id": "AUTH-012--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--marketplace-admin",
+      "id": "AUTH-008--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--marketplace-admin",
+      "id": "AUTH-009--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--marketplace-admin",
+      "id": "AUTH-010--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--marketplace-admin",
+      "id": "AUTH-014--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--marketplace-admin",
+      "id": "AUTH-011--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--marketplace-admin",
+      "id": "AUTH-012--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--super-admin",
+      "id": "AUTH-008--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--super-admin",
+      "id": "AUTH-009--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--super-admin",
+      "id": "AUTH-010--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--super-admin",
+      "id": "AUTH-014--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--super-admin",
+      "id": "AUTH-011--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--super-admin",
+      "id": "AUTH-012--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--support-agent",
+      "id": "AUTH-008--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--support-agent",
+      "id": "AUTH-009--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--support-agent",
+      "id": "AUTH-010--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--support-agent",
+      "id": "AUTH-014--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--support-agent",
+      "id": "AUTH-011--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--support-agent",
+      "id": "AUTH-012--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--finance-operator",
+      "id": "AUTH-008--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--finance-operator",
+      "id": "AUTH-009--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--finance-operator",
+      "id": "AUTH-010--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--finance-operator",
+      "id": "AUTH-014--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--finance-operator",
+      "id": "AUTH-011--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--finance-operator",
+      "id": "AUTH-012--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-008--returns-operations",
+      "id": "AUTH-008--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-009--returns-operations",
+      "id": "AUTH-009--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-010--returns-operations",
+      "id": "AUTH-010--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-014--returns-operations",
+      "id": "AUTH-014--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-011--returns-operations",
+      "id": "AUTH-011--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-012--returns-operations",
+      "id": "AUTH-012--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-recovery.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--customer",
+      "id": "AUTH-006--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--seller-owner",
+      "id": "AUTH-006--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--seller-staff",
+      "id": "AUTH-006--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--marketplace-admin",
+      "id": "AUTH-006--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--super-admin",
+      "id": "AUTH-006--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--support-agent",
+      "id": "AUTH-006--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--finance-operator",
+      "id": "AUTH-006--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "AUTH-006--returns-operations",
+      "id": "AUTH-006--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    }
+  ],
+  "supporting": [
+    {
+      "title": "category selection can be cleared and product structured data is valid",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "admin directories persist catalog changes and settings affect storefront",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "marketplace cannot change commissions and finance can open the editor",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--guest",
+      "id": "UI-001--guest",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--customer",
+      "id": "UI-001--customer",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--seller-owner",
+      "id": "UI-001--seller-owner",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--seller-staff",
+      "id": "UI-001--seller-staff",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--marketplace-admin",
+      "id": "UI-001--marketplace-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--super-admin",
+      "id": "UI-001--super-admin",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--support-agent",
+      "id": "UI-001--support-agent",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--finance-operator",
+      "id": "UI-001--finance-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "UI-001--returns-operations",
+      "id": "UI-001--returns-operations",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "manual-matrix.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "multi-role login and workspace switcher expose only assigned roles",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "unknown product URLs return not found",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "registration, email verification, password recovery and login complete end to end",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer address create, edit and delete persist with field validation",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer security and privacy controls reach their persisted workflows",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer can revoke one device session without ending the current session",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer profile name saves to PostgreSQL and restores cleanly",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "cart Remove deletes an entire line at quantity two",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer notification choices persist and preserve consent state",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer seller follows persist and seller catalog sorting is applied",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller owner profile edits persist while seller staff remain blocked",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "super admin logout and user lifecycle work end to end",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "pending seller owner accounts see an honest onboarding state",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "super admin can create, edit and archive product listings",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "marketplace promotions support create, edit, activate, pause, archive and delete",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller listing approval, mock-paid order, fulfilment and return handling work across roles",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "finance operator reconciles and simulates seller settlement payouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer and support agent share a persisted ticket conversation",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "portal-workflows.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "reported product image and seller dropdown workflows work live",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "reported-issues.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller-owner: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller-staff: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "marketplace-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "super-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "finance: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "operations: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "support: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "role-portals.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller support saves a real request and reply across reloads",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "seller staff cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "customer cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "errors": ""
+    },
+    {
+      "title": "enabled local payment helper still processes an owned QA order",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"pending_payment\"\nReceived: \"payment_failed\"\n\n  61 |   await login(page, 'demo.customer01@weevcrafts.local', '/account');\n  62 |   const csrf = await page.locator('input[name=\"csrf_token\"]').first().inputValue();\n> 63 |   expect(sql(\"SELECT status FROM orders WHERE order_number='WCDEMO1001'\")).toBe('pending_payment');\n     |                                                                            ^\n  64 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });\n  65 |   expect(response.status()).toBe(200);\n  66 |   expect((await response.json()).processed).toBe(true);\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js:63:76"
+    },
+    {
+      "title": "INT-014--qa-and-technical-operator",
+      "id": "INT-014--qa-and-technical-operator",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/mail-evidence.json",
+      "source": "manual-mail.spec.js",
+      "browser": "Playwright HTTP client; real local SMTP / Mailpit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "category selection can be cleared and product structured data is valid",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "admin directories persist catalog changes and settings affect storefront",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "marketplace cannot change commissions and finance can open the editor",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "category selection can be cleared and product structured data is valid",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "admin directories persist catalog changes and settings affect storefront",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "marketplace cannot change commissions and finance can open the editor",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "integration-gaps.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "customer: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller-owner: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller-staff: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "marketplace-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "super-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "finance: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "operations: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "support: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "customer: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller-owner: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller-staff: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "marketplace-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "super-admin: landing, boundaries and responsive layouts",
+      "status": "Failed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": "Test timeout of 60000ms exceeded.\nError: page.screenshot: Test timeout of 60000ms exceeded.\nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n\n\n  83 |         const screenshotPath = testInfo.outputPath(`${account.id}-${width}.png`);\n  84 |         fs.mkdirSync(path.dirname(screenshotPath), { recursive: true });\n> 85 |         await page.screenshot({ path: screenshotPath });\n     |                    ^\n  86 |       }\n  87 |\n  88 |       if (account.id === \"seller-staff\") {\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\role-portals.spec.js:85:20"
+    },
+    {
+      "title": "finance: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "operations: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "support: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller support saves a real request and reply across reloads",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller staff cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "customer cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "Firefox",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller support saves a real request and reply across reloads",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "seller staff cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "customer cannot access seller owner support",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "source": "seller-support-live.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "enabled local payment helper still processes an owned QA order",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/local-helper-retest.json",
+      "source": "manual-security.spec.js",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    },
+    {
+      "title": "super-admin: landing, boundaries and responsive layouts",
+      "status": "Passed",
+      "file": "docs/qa/QA-20261009-01/browser-matrix-retest.json",
+      "source": "role-portals.spec.js",
+      "browser": "WebKit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "errors": ""
+    }
+  ]
+}

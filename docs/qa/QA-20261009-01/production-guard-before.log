@@ -1,0 +1,57 @@
+
+Running 1 test using 1 worker
+
+(node:4048) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\e2e\production-guards.spec.js:5:1 › INT-027--qa-and-technical-operator (22.1s)
+
+
+  1) tests\e2e\production-guards.spec.js:5:1 › INT-027--qa-and-technical-operator ──────────────────
+
+    Error: Disabled development capture changed persisted order state
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "pending_payment"
+    Received: "paid"
+
+      18 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });
+      19 |   // Report the business effect as well as route status when the guard fails.
+    > 20 |   expect.soft(state(), 'Disabled development capture changed persisted order state').toBe(before);
+         |                                                                                      ^
+      21 |   expect(response.status(), 'Disabled development capture endpoint must not be registered').toBe(404);
+      22 | });
+      23 |
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\production-guards.spec.js:20:86
+
+    Error: Disabled development capture endpoint must not be registered
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 200
+
+      19 |   // Report the business effect as well as route status when the guard fails.
+      20 |   expect.soft(state(), 'Disabled development capture changed persisted order state').toBe(before);
+    > 21 |   expect(response.status(), 'Disabled development capture endpoint must not be registered').toBe(404);
+         |                                                                                             ^
+      22 | });
+      23 |
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\production-guards.spec.js:21:93
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\guard-before\production-guards-INT-027--qa-and-technical-operator\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs\qa\QA-20261009-01\guard-before\production-guards-INT-027--qa-and-technical-operator\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\guard-before\production-guards-INT-027--qa-and-technical-operator\trace.zip
+    Usage:
+
+        npx playwright show-trace docs\qa\QA-20261009-01\guard-before\production-guards-INT-027--qa-and-technical-operator\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\e2e\production-guards.spec.js:5:1 › INT-027--qa-and-technical-operator ───────────────────

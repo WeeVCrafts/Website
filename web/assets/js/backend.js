@@ -28,6 +28,10 @@
     return payload && Object.prototype.hasOwnProperty.call(payload, "data") ? payload.data : payload;
   }
 
+  function customerOption(value) {
+    return !value || /^default variant$/i.test(value.trim()) ? "Standard" : value;
+  }
+
   function normalizeProduct(row) {
     if (!row) return null;
     const seller = Array.isArray(row.seller) ? row.seller[0] : row.seller;
@@ -37,14 +41,14 @@
     return {
       id: row.id,
       variantId: (variant && (variant.id || variant.variant_id)) || row.variant_id,
-      optionLabel: (variant && variant.option_label) || row.option_label || "Standard",
+      optionLabel: customerOption((variant && variant.option_label) || row.option_label),
       slug: row.slug || row.product_slug || "",
       name: row.name || row.product_name || "Handmade product",
       description: row.description || "",
       seller: (seller && (seller.display_name || seller.name)) || row.brand || "Independent maker",
       sellerSlug: (seller && seller.slug) || row.seller_slug || "",
       location: (seller && seller.location) || "",
-      image: row.image_url || row.image || "/assets/images/customer/maker-mithila.webp",
+      image: row.image_url || row.image || "/assets/images/product-unavailable.svg",
       priceCents: price,
       compareAtCents: Number(row.compare_at_cents || 0),
       available: Number(variant && variant.inventory_quantity != null ? variant.inventory_quantity : row.available || 0),
@@ -63,11 +67,11 @@
         slug: row.product_slug,
         name: row.product_name,
         seller: row.brand || "Independent maker",
-        image: row.image_url || "/assets/images/customer/maker-mithila.webp",
+        image: row.image_url || "/assets/images/product-unavailable.svg",
         quantity: Number(row.quantity || 0),
         priceCents: Number(row.unit_price_cents || 0),
         variantId: row.variant_id,
-        optionLabel: row.variant_name || row.option_label || "Standard",
+        optionLabel: customerOption(row.variant_name || row.option_label),
         available: Number(row.available || 0)
       };
     }
@@ -102,22 +106,25 @@
     }
 
     async signIn(input) {
-      const result = await this.call(ROOT + "/auth/login", { method: "POST", body: input });
+      if (global.WeevcraftsFirebase && !input.nativeOnly) return global.WeevcraftsFirebase.signIn(this, input, () => this.signIn(Object.assign({},input,{nativeOnly:true})));
+      const { nativeOnly, ...credentials } = input;
+      const result = await this.call(ROOT + "/auth/login", { method: "POST", body: credentials });
       this.csrf = result.csrf_token || "";
       return result;
     }
 
     async signUp(input) {
+      if (global.WeevcraftsFirebase && !input.nativeOnly) return global.WeevcraftsFirebase.signUp(this, input, () => this.signUp(Object.assign({},input,{nativeOnly:true})));
       const result = await this.call(ROOT + "/auth/register", {
-        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true }
+        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true, next: input.next || "" }
       });
       this.csrf = result.csrf_token || "";
       return result;
     }
 
-    async recover(email) { return this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); }
-    async updatePassword(password, token) { return this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); }
-    async verifyEmail(token) { return this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); }
+    async recover(email) { const legacy=()=>this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.recover(email,legacy) : legacy(); }
+    async updatePassword(password, token) { const legacy=()=>this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.action(password,legacy) : legacy(); }
+    async verifyEmail(token) { const legacy=()=>this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.action(null,legacy) : legacy(); }
 
     async signOut() {
       await this.call(ROOT + "/auth/logout", { method: "POST", authenticated: true, body: {} });
@@ -155,7 +162,7 @@
         items.push(Object.assign(product, {
           quantity: Number(item.quantity),
           variantId: item.variant_id,
-          optionLabel: item.variant_name || product.optionLabel,
+          optionLabel: customerOption(item.variant_name || product.optionLabel),
           priceCents: Number(item.unit_price_cents),
           available: Number(item.available || 0)
         }));
@@ -210,14 +217,14 @@
 
     async addWishlist(slug) {
       const product = await this.product(slug);
+      if (!product || !Number.isSafeInteger(product.id) || product.id <= 0) throw new Error("This product is unavailable. Refresh the page and try again.");
       await this.call(ROOT + "/wishlist/add", { method: "POST", authenticated: true, body: { product_id: product.id } });
-      return this.wishlist();
     }
 
     async removeWishlist(slug) {
       const product = await this.product(slug);
+      if (!product || !Number.isSafeInteger(product.id) || product.id <= 0) throw new Error("This product is unavailable. Refresh the page and try again.");
       await this.call(ROOT + "/wishlist/" + product.id, { method: "DELETE", authenticated: true });
-      return this.wishlist();
     }
 
     async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID) {

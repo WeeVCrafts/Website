@@ -29,6 +29,10 @@ type Config struct {
 	SMTPUsername          string
 	SMTPPassword          string
 	SMTPFrom              string
+	ResendAPIKey          string
+	ResendAPIKeyFile      string
+	ResendFrom            string
+	ResendReplyTo         string
 	S3AccessKey           string
 	S3SecretKey           string
 	S3Bucket              string
@@ -64,11 +68,15 @@ func FromEnv() Config {
 		PaymentMode:           env("WECRATFS_PAYMENT_MODE", "razorpay"),
 		NoPaymentDemo:         boolEnv("WECRATFS_NO_PAYMENT_DEMO", false) && !strings.EqualFold(environment, "production"),
 		LocalPaymentSecret:    env("WECRATFS_LOCAL_PAYMENT_SECRET", "wecratfs-local-payment"),
-		LocalMode:             boolEnv("WECRATFS_LOCAL_MODE", false),
+		LocalMode:             boolEnv("WECRATFS_LOCAL_MODE", false) && !strings.EqualFold(environment, "production"),
 		SMTPAddress:           env("WECRATFS_SMTP_ADDR", ""),
 		SMTPUsername:          env("WECRATFS_SMTP_USERNAME", ""),
 		SMTPPassword:          env("WECRATFS_SMTP_PASSWORD", ""),
 		SMTPFrom:              env("WECRATFS_SMTP_FROM", ""),
+		ResendAPIKey:          env("WECRATFS_RESEND_API_KEY", ""),
+		ResendAPIKeyFile:      env("WECRATFS_RESEND_API_KEY_FILE", ""),
+		ResendFrom:            env("WECRATFS_RESEND_FROM", ""),
+		ResendReplyTo:         env("WECRATFS_RESEND_REPLY_TO", ""),
 		S3AccessKey:           env("S3_ACCESS_KEY", "wecratfs"),
 		S3SecretKey:           env("S3_SECRET_KEY", "wecratfs-local-only"),
 		S3Bucket:              env("S3_BUCKET", "wecratfs-media"),

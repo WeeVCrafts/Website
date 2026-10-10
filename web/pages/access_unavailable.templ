@@ -1,0 +1,7 @@
+package pages
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+templ AccessUnavailable(p viewmodels.CustomerPage) {
+ @Document(p) {
+  <section class="container page-intro"><h1>Account access needs attention</h1><p>Your account needs one assigned role before you can continue. Ask your company’s Super Admin to correct the assignment.</p><a class="primary-button" href="/products">Browse products</a><form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
+ }
+}

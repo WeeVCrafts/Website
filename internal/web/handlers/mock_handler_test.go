@@ -84,13 +84,13 @@ func TestMockCustomerInteractionAffordances(t *testing.T) {
 		if strings.Contains(body, `href="#"`) {
 			t.Fatalf("route %s contains a dead hash link", route)
 		}
-		if !strings.Contains(body, `aria-expanded`) || !strings.Contains(body, `mobile-menu-backdrop`) || !strings.Contains(body, `aria-modal="true"`) {
+		if !strings.Contains(body, `aria-expanded`) || !strings.Contains(body, `<dialog id="mobile-menu"`) || !strings.Contains(body, `aria-labelledby="menu-title"`) {
 			t.Fatalf("route %s is missing accessible drawer navigation affordances", route)
 		}
 		if !strings.Contains(body, `href="/our-story">Our Story`) {
 			t.Fatalf("route %s has an incorrect Our Story destination", route)
 		}
-		for _, destination := range []string{`href="/categories"`, `href="/products?category=offers"`, `href="/makers/mithila-arts"`, `href="/account"`, `href="/wishlist"`, `href="/cart"`} {
+		for _, destination := range []string{`href="/categories"`, `href="/products?category=offers"`, `href="/makers"`, `href="/account"`, `href="/wishlist"`, `href="/cart"`} {
 			if !strings.Contains(body, destination) {
 				t.Errorf("route %s navigation drawer is missing %s", route, destination)
 			}
@@ -216,11 +216,11 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		route string
 		want  []string
 	}{
-		{route: "/", want: []string{"Trending now", "Stories behind the craft", "/assets/images/customer/hero-studio.webp"}},
+		{route: "/", want: []string{"Pieces to make your own", "Stories behind the craft", "/assets/images/customer/hero-studio.webp"}},
 		{route: "/categories", want: []string{"Browse by craft", "Shop by craft", "Gifts that feel personal"}},
 		{route: "/brands", want: []string{"Explore brands with a story", "Mithila Arts", "Weaver&#39;s Touch"}},
 		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Verified maker brand", "Pieces from Mithila Arts"}},
-		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "THE HANDLOOM EDIT", "Add to Cart"}},
+		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "handloom sarees", "Add to cart"}},
 		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More made-for-you finds"}},
 		{route: "/wishlist", want: []string{"items in your wishlist", "Move to cart", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},

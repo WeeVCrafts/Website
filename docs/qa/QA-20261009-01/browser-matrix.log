@@ -1,0 +1,72 @@
+
+Running 28 tests using 1 worker
+
+(node:14728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [Firefox] › tests\e2e\integration-gaps.spec.js:14:1 › category selection can be cleared and product structured data is valid (16.2s)
+  ok  2 [Firefox] › tests\e2e\integration-gaps.spec.js:27:1 › admin directories persist catalog changes and settings affect storefront (14.4s)
+  ok  3 [Firefox] › tests\e2e\integration-gaps.spec.js:78:1 › marketplace cannot change commissions and finance can open the editor (9.4s)
+  ok  4 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › customer: landing, boundaries and responsive layouts (12.8s)
+  ok  5 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › seller-owner: landing, boundaries and responsive layouts (14.8s)
+  ok  6 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › seller-staff: landing, boundaries and responsive layouts (14.9s)
+  ok  7 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › marketplace-admin: landing, boundaries and responsive layouts (21.3s)
+  ok  8 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › super-admin: landing, boundaries and responsive layouts (57.3s)
+  ok  9 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › finance: landing, boundaries and responsive layouts (17.6s)
+  ok 10 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › operations: landing, boundaries and responsive layouts (18.2s)
+  ok 11 [Firefox] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › support: landing, boundaries and responsive layouts (12.8s)
+  ok 12 [Firefox] › tests\e2e\seller-support-live.spec.js:17:1 › seller support saves a real request and reply across reloads (11.0s)
+  ok 13 [Firefox] › tests\e2e\seller-support-live.spec.js:44:3 › seller staff cannot access seller owner support (6.5s)
+  ok 14 [Firefox] › tests\e2e\seller-support-live.spec.js:44:3 › customer cannot access seller owner support (8.3s)
+(node:16388) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 15 [WebKit] › tests\e2e\integration-gaps.spec.js:14:1 › category selection can be cleared and product structured data is valid (8.9s)
+  ok 16 [WebKit] › tests\e2e\integration-gaps.spec.js:27:1 › admin directories persist catalog changes and settings affect storefront (22.9s)
+  ok 17 [WebKit] › tests\e2e\integration-gaps.spec.js:78:1 › marketplace cannot change commissions and finance can open the editor (13.4s)
+  ok 18 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › customer: landing, boundaries and responsive layouts (14.6s)
+  ok 19 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › seller-owner: landing, boundaries and responsive layouts (24.4s)
+  ok 20 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › seller-staff: landing, boundaries and responsive layouts (17.8s)
+  ok 21 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › marketplace-admin: landing, boundaries and responsive layouts (22.8s)
+  x  22 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › super-admin: landing, boundaries and responsive layouts (1.2m)
+(node:16464) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 23 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › finance: landing, boundaries and responsive layouts (16.8s)
+  ok 24 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › operations: landing, boundaries and responsive layouts (18.1s)
+  ok 25 [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › support: landing, boundaries and responsive layouts (14.1s)
+  ok 26 [WebKit] › tests\e2e\seller-support-live.spec.js:17:1 › seller support saves a real request and reply across reloads (12.2s)
+  ok 27 [WebKit] › tests\e2e\seller-support-live.spec.js:44:3 › seller staff cannot access seller owner support (4.5s)
+  ok 28 [WebKit] › tests\e2e\seller-support-live.spec.js:44:3 › customer cannot access seller owner support (6.3s)
+
+
+  1) [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › super-admin: landing, boundaries and responsive layouts 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.screenshot: Test timeout of 60000ms exceeded.
+    Call log:
+      - taking page screenshot
+      - waiting for fonts to load...
+      - fonts loaded
+
+
+      83 |         const screenshotPath = testInfo.outputPath(`${account.id}-${width}.png`);
+      84 |         fs.mkdirSync(path.dirname(screenshotPath), { recursive: true });
+    > 85 |         await page.screenshot({ path: screenshotPath });
+         |                    ^
+      86 |       }
+      87 |
+      88 |       if (account.id === "seller-staff") {
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\role-portals.spec.js:85:20
+
+    Error Context: docs\qa\QA-20261009-01\browser-matrix\role-portals-role-specific-005c9-ries-and-responsive-layouts-WebKit\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\browser-matrix\role-portals-role-specific-005c9-ries-and-responsive-layouts-WebKit\trace.zip
+    Usage:
+
+        npx playwright show-trace docs\qa\QA-20261009-01\browser-matrix\role-portals-role-specific-005c9-ries-and-responsive-layouts-WebKit\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [WebKit] › tests\e2e\role-portals.spec.js:42:5 › role-specific portals › super-admin: landing, boundaries and responsive layouts 
+  27 passed (8.9m)

@@ -7,7 +7,39 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wecratfs/commerce/internal/config"
 )
+
+func TestDevelopmentPaymentHelpersRequireLocalDevelopmentRuntime(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		cfg  config.Config
+		want bool
+	}{
+		{"local development", config.Config{Environment: "development", LocalMode: true, PaymentMode: "local"}, true},
+		{"production local provider", config.Config{Environment: "production", LocalMode: true, PaymentMode: "local"}, false},
+		{"production provider", config.Config{Environment: "production", LocalMode: false, PaymentMode: "razorpay"}, false},
+		{"local mode off", config.Config{Environment: "development", LocalMode: false, PaymentMode: "local"}, false},
+		{"real provider in development", config.Config{Environment: "development", LocalMode: true, PaymentMode: "razorpay"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mux := http.NewServeMux()
+			if developmentPaymentHelpersEnabled(tc.cfg) {
+				mux.HandleFunc("/dev/payments/", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+			}
+			recorder := httptest.NewRecorder()
+			mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/dev/payments/owned-order/capture", nil))
+			wantStatus := http.StatusNotFound
+			if tc.want {
+				wantStatus = http.StatusNoContent
+			}
+			if recorder.Code != wantStatus {
+				t.Fatalf("development payment route status = %d, want %d", recorder.Code, wantStatus)
+			}
+		})
+	}
+}
 
 type fakeRateLimiter struct {
 	allowed bool

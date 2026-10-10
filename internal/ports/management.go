@@ -25,11 +25,30 @@ type ManagementMutation struct {
 	BasisPoints                                 int
 	Active                                      bool
 	Settings                                    StorefrontSettings
+	SaveSocialLinks                             bool
 }
 
 type StorefrontSettings struct {
 	SupportEmail        string `json:"support_email"`
 	ShippingInformation string `json:"shipping_information"`
+	InstagramURL        string `json:"instagram_url"`
+	FacebookURL         string `json:"facebook_url"`
+	YouTubeURL          string `json:"youtube_url"`
+	XURL                string `json:"x_url"`
+	WhatsAppURL         string `json:"whatsapp_url"`
+}
+
+type SocialLink struct{ Name, URL string }
+
+func (s StorefrontSettings) SocialLinks() []SocialLink {
+	links := []SocialLink{{"Instagram", s.InstagramURL}, {"Facebook", s.FacebookURL}, {"YouTube", s.YouTubeURL}, {"X", s.XURL}, {"WhatsApp", s.WhatsAppURL}}
+	result := make([]SocialLink, 0, 5)
+	for _, link := range links {
+		if link.URL != "" {
+			result = append(result, link)
+		}
+	}
+	return result
 }
 
 type ManagementRepository interface {

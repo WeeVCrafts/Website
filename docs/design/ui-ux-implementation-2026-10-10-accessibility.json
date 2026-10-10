@@ -1,0 +1,146 @@
+[
+  {
+    "route": "/",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/products",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/products",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/products/blue-tote",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/products/blue-tote",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/makers",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/makers",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/cart",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/cart",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/checkout",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/checkout",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/account",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/account",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/seller-admin",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/seller-admin",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/seller-admin/products/new",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/seller-admin/products/new",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/super-admin",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/super-admin",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/super-admin/products",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/super-admin/products",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/support-portal/cases",
+    "width": 1440,
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "route": "/support-portal/cases",
+    "width": 390,
+    "overflow": false,
+    "violations": []
+  }
+]

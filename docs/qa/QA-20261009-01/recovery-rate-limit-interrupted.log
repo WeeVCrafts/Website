@@ -1,0 +1,31 @@
+
+Running 66 tests using 1 worker
+
+(node:16848) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--customer (4.6s)
+  ok  2 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--seller-owner (2.8s)
+  ok  3 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--seller-staff (3.4s)
+  ok  4 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--marketplace-admin (3.1s)
+  ok  5 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--super-admin (2.8s)
+  ok  6 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--support-agent (3.5s)
+  ok  7 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--finance-operator (3.9s)
+  ok  8 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--returns-operations (2.9s)
+  x   9 tests\e2e\manual-matrix.spec.js:148:1 › GST-020--guest (172ms)
+(node:14452) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 10 tests\e2e\manual-recovery.spec.js:74:3 › AUTH-008--customer (5.8s)
+  ok 11 tests\e2e\manual-recovery.spec.js:85:3 › AUTH-009--customer (4.9s)
+  ok 12 tests\e2e\manual-recovery.spec.js:95:3 › AUTH-010--customer (13.8s)
+  ok 13 tests\e2e\manual-recovery.spec.js:118:3 › AUTH-014--customer (6.1s)
+  x  14 tests\e2e\manual-recovery.spec.js:131:3 › AUTH-011--customer (10.3s)
+(node:17580) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  15 tests\e2e\manual-recovery.spec.js:157:3 › AUTH-012--customer (2.0m)
+(node:15660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 16 tests\e2e\manual-recovery.spec.js:74:3 › AUTH-008--seller-owner (7.9s)
+  ok 17 tests\e2e\manual-recovery.spec.js:85:3 › AUTH-009--seller-owner (6.1s)
+  ok 18 tests\e2e\manual-recovery.spec.js:95:3 › AUTH-010--seller-owner (14.1s)
+  ok 19 tests\e2e\manual-recovery.spec.js:118:3 › AUTH-014--seller-owner (5.9s)
+  ok 20 tests\e2e\manual-recovery.spec.js:131:3 › AUTH-011--seller-owner (13.1s)

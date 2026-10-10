@@ -522,6 +522,20 @@ func (h *Handler) sellerSettingsUpdate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if _, provided := r.Form["public_story"]; provided {
+		portrait, err := productImageFromForm(r)
+		if err != nil {
+			h.renderError(w, 422, "Portrait not saved", "Choose a JPEG, PNG or WebP image up to 25 MB.")
+			return
+		}
+		err = h.commerceCatalog.UpdateMakerStory(r.Context(), session.UserID, domaincommerce.MakerStoryInput{DisplayName: r.FormValue("display_name"), Location: r.FormValue("public_location"), Story: r.FormValue("public_story"), Technique: r.FormValue("public_technique"), PortraitURL: portrait, Reason: r.FormValue("reason")})
+		if err != nil {
+			h.renderCommerceError(w, r, err, "We could not save your public maker story.")
+			return
+		}
+		h.redirect(w, r, "/seller-admin/settings?notice=Public+maker+story+saved")
+		return
+	}
 	if err := h.commerceCatalog.UpdateSellerProfile(r.Context(), session.UserID, r.FormValue("display_name"), r.FormValue("reason")); err != nil {
 		h.renderCommerceError(w, r, err, "We could not update your seller profile.")
 		return
@@ -714,26 +728,28 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	} else {
 		_ = r.ParseForm()
 	}
-	price, err := strconv.ParseInt(r.FormValue("price_cents"), 10, 64)
+	price, err := moneyFromForm(r, "price_cents")
 	stock, stockErr := strconv.Atoi(r.FormValue("initial_stock"))
 	if err != nil || stockErr != nil {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Price and stock must be numeric.")
 		return
 	}
 	var compareAt *int64
-	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
+	if raw := moneyFormRaw(r, "compare_at_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "compare_at_cents")
 		if parseErr != nil {
 			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Compare-at price must be numeric.")
 			return
 		}
-		compareAt = &value
+		if value > 0 {
+			compareAt = &value
+		}
 	}
 	var costPrice *int64
-	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
+	if raw := moneyFormRaw(r, "cost_price_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "cost_price_cents")
 		if parseErr != nil || value < 0 {
-			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Cost price must be a non-negative amount in paise.")
+			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Cost price must be a non-negative amount with up to two decimal places.")
 			return
 		}
 		costPrice = &value
@@ -754,7 +770,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
-		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: r.FormValue("description"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
+		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
 	})
 	if err != nil {
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
@@ -943,7 +959,7 @@ func (h *Handler) mutateProductVariant(w http.ResponseWriter, r *http.Request, a
 }
 
 func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductVariantInput, error) {
-	price, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("price_cents")), 10, 64)
+	price, err := moneyFromForm(r, "price_cents")
 	if err != nil {
 		return domaincommerce.ProductVariantInput{}, err
 	}
@@ -955,16 +971,18 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 		}
 	}
 	var compareAt *int64
-	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
+	if raw := moneyFormRaw(r, "compare_at_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "compare_at_cents")
 		if parseErr != nil {
 			return domaincommerce.ProductVariantInput{}, parseErr
 		}
-		compareAt = &value
+		if value > 0 {
+			compareAt = &value
+		}
 	}
 	var costPrice *int64
-	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
-		value, parseErr := strconv.ParseInt(raw, 10, 64)
+	if raw := moneyFormRaw(r, "cost_price_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "cost_price_cents")
 		if parseErr != nil || value < 0 {
 			return domaincommerce.ProductVariantInput{}, errors.New("invalid cost price")
 		}
@@ -1089,28 +1107,35 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	} else {
 		_ = r.ParseForm()
 	}
-	price, err := parsePriceCents(r.FormValue("price_cents"))
-	if err != nil {
-		price = 49900
+	price, err := moneyFromForm(r, "price_cents")
+	if err != nil || price <= 0 {
+		return domaincommerce.ProductDraftInput{}, errors.New("enter a price greater than zero, with up to two decimal places")
 	}
 	stock := 0
 	if includeStock {
-		stock = 10
-		if parsedStock, sErr := strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock"))); sErr == nil && parsedStock >= 0 {
-			stock = parsedStock
+		parsedStock, sErr := strconv.Atoi(strings.TrimSpace(r.FormValue("initial_stock")))
+		if sErr != nil || parsedStock < 0 || parsedStock > 100000 {
+			return domaincommerce.ProductDraftInput{}, errors.New("enter a stock quantity from zero to 100,000")
 		}
+		stock = parsedStock
 	}
 	var compareAt *int64
-	if raw := strings.TrimSpace(r.FormValue("compare_at_cents")); raw != "" {
-		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= price {
+	if raw := moneyFormRaw(r, "compare_at_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "compare_at_cents")
+		if parseErr != nil || value < 0 || value > 0 && value < price {
+			return domaincommerce.ProductDraftInput{}, errors.New("compare-at price must be at least the selling price")
+		}
+		if value > 0 {
 			compareAt = &value
 		}
 	}
 	var costPrice *int64
-	if raw := strings.TrimSpace(r.FormValue("cost_price_cents")); raw != "" {
-		if value, parseErr := parsePriceCents(raw); parseErr == nil && value >= 0 {
-			costPrice = &value
+	if raw := moneyFormRaw(r, "cost_price_cents"); raw != "" {
+		value, parseErr := moneyFromForm(r, "cost_price_cents")
+		if parseErr != nil || value < 0 {
+			return domaincommerce.ProductDraftInput{}, errors.New("enter a non-negative cost with up to two decimal places")
 		}
+		costPrice = &value
 	}
 	name := strings.TrimSpace(r.FormValue("name"))
 	if name == "" {
@@ -1140,7 +1165,7 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	if sku == "" {
 		sku = "WC-" + strconv.FormatInt(time.Now().UnixNano()%1000000, 10)
 	}
-	description := strings.TrimSpace(r.FormValue("description"))
+	description := strings.TrimSpace(productDescriptionFromForm(r))
 	if description == "" {
 		description = "Beautiful handcrafted item made with traditional techniques."
 	}

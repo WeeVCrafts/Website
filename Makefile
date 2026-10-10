@@ -16,6 +16,7 @@ css-check:
 	@test -s web/assets/css/fonts.min.css
 	@test -s web/assets/css/theme.min.css
 	@test -s web/assets/css/utility.min.css
+	@test -s web/assets/css/customer-polish.min.css
 	@test -s web/assets/css/admin.min.css
 	@test -s web/assets/css/seller-admin.min.css
 	@test -s web/assets/css/support-portal.min.css

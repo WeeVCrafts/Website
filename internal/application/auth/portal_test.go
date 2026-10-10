@@ -11,7 +11,7 @@ func TestLoginDestinationRoutesSingleRoleToItsPortal(t *testing.T) {
 		role domainidentity.Role
 		want string
 	}{
-		{domainidentity.RoleCustomer, "/account"},
+		{domainidentity.RoleCustomer, "/products"},
 		{domainidentity.RoleSellerOwner, "/seller-admin"},
 		{domainidentity.RoleSellerStaff, "/seller-admin"},
 		{domainidentity.RoleMarketplaceAdmin, "/marketplace-admin"},
@@ -35,8 +35,8 @@ func TestLoginDestinationRequiresWorkspaceChoiceForMultipleRoles(t *testing.T) {
 		domainidentity.RoleFinanceOperator,
 		domainidentity.RoleSellerOwner,
 	}
-	if got := LoginDestination(roles); got != "/workspaces" {
-		t.Fatalf("LoginDestination(multiple roles) = %q, want /workspaces", got)
+	if got := LoginDestination(roles); got != "/access-unavailable" {
+		t.Fatalf("LoginDestination(multiple roles) = %q, want /access-unavailable", got)
 	}
 }
 
@@ -45,13 +45,13 @@ func TestSellerOwnerAndStaffShareOneWorkspace(t *testing.T) {
 	if len(workspaces) != 1 || workspaces[0].Role != domainidentity.RoleSellerOwner || workspaces[0].Path != "/seller-admin" {
 		t.Fatalf("seller roles should share the owner workspace when both are assigned: %#v", workspaces)
 	}
-	if got := LoginDestination([]domainidentity.Role{domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff}); got != "/seller-admin" {
-		t.Fatalf("LoginDestination() = %q, want /seller-admin", got)
+	if got := LoginDestination([]domainidentity.Role{domainidentity.RoleSellerOwner, domainidentity.RoleSellerStaff}); got != "/access-unavailable" {
+		t.Fatalf("LoginDestination() = %q, want /access-unavailable", got)
 	}
 }
 
 func TestLoginDestinationDoesNotInventPortalForRolelessIdentity(t *testing.T) {
-	if got := LoginDestination(nil); got != "/workspaces" {
-		t.Fatalf("LoginDestination(no roles) = %q, want /workspaces", got)
+	if got := LoginDestination(nil); got != "/access-unavailable" {
+		t.Fatalf("LoginDestination(no roles) = %q, want /access-unavailable", got)
 	}
 }

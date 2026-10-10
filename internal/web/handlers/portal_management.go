@@ -97,6 +97,16 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 			}
 		}
 		mutation := ports.ManagementMutation{Section: section, Action: action, ID: r.Form.Get("id"), Name: r.Form.Get("name"), Category: r.Form.Get("category"), Reason: r.Form.Get("reason"), BasisPoints: points, Active: r.Form.Get("active") == "true", Settings: ports.StorefrontSettings{SupportEmail: r.Form.Get("support_email"), ShippingInformation: r.Form.Get("shipping_information")}}
+		mutation.SaveSocialLinks = r.Form.Get("save_social_links") == "1"
+		mutation.Settings.InstagramURL = r.Form.Get("instagram_url")
+		mutation.Settings.FacebookURL = r.Form.Get("facebook_url")
+		mutation.Settings.YouTubeURL = r.Form.Get("youtube_url")
+		mutation.Settings.XURL = r.Form.Get("x_url")
+		mutation.Settings.WhatsAppURL = r.Form.Get("whatsapp_url")
+		if mutation.SaveSocialLinks && role != domainidentity.RoleSuperAdmin {
+			http.Error(w, "Super Admin access required.", 403)
+			return true
+		}
 		if err := service.Mutate(r.Context(), session.UserID, mutation); err != nil {
 			switch {
 			case errors.Is(err, ports.ErrForbidden):

@@ -38,7 +38,7 @@ func NewCatalogServiceWithRoles(repository ports.CatalogManagementRepository, ro
 
 func (s *CatalogService) EnsureSeller(ctx context.Context, ownerUserID int64, displayName string) (domaincommerce.Seller, error) {
 	displayName = strings.TrimSpace(displayName)
-	if ownerUserID <= 0 || len(displayName) < 2 || len(displayName) > 120 || !s.allowed(ctx, ownerUserID, domainidentity.RoleCustomer, domainidentity.RoleSellerOwner) {
+	if ownerUserID <= 0 || len(displayName) < 2 || len(displayName) > 120 || !s.allowed(ctx, ownerUserID, domainidentity.RoleSellerOwner) {
 		return domaincommerce.Seller{}, ports.ErrForbidden
 	}
 	return s.repository.EnsureSeller(ctx, ownerUserID, displayName)

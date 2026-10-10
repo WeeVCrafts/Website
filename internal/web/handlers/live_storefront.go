@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
 
@@ -47,6 +48,7 @@ type LiveStorefrontHandler struct {
 	noPaymentDemo      bool
 	publicURL          string
 	supportAttachments *applicationcommerce.SupportAttachmentService
+	profileStorage     ports.ObjectStorage
 	fallback           http.Handler
 }
 
@@ -77,6 +79,10 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/account/profile/photo" {
+		h.profilePhoto(w, r)
+		return
+	}
 	if h.serveReturnLabel(w, r) {
 		return
 	}
@@ -87,7 +93,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if r.URL.Path == "/account/profile" && r.Method == http.MethodPost {
-		h.updateProfile(w, r)
+		h.saveCustomerProfile(w, r)
 		return
 	}
 	if r.URL.Path == "/account/addresses" && r.Method == http.MethodPost {
@@ -153,8 +159,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
-		if destination == "/account" {
-			destination = "/workspaces"
+		if destination == "/products" {
+			destination = "/access-unavailable"
 		}
 		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
@@ -162,18 +168,18 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if (r.URL.Path == "/login" || r.URL.Path == "/register") && authenticated {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
-		if destination == "/account" {
-			destination = "/"
+		if destination == "/products" {
+			destination = "/products"
 		}
 		if customerRoleAllowed(roles) {
-			destination = safeCustomerNext(r.URL.Query().Get("next"), destination)
+			destination = applicationauth.RedirectDestination(roles, r.URL.Query().Get("next"))
 		}
 		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
 	}
 	page, err := h.page(r)
 	if err != nil {
-		if errors.Is(err, applicationcatalog.ErrProductNotFound) {
+		if errors.Is(err, applicationcatalog.ErrProductNotFound) || errors.Is(err, ports.ErrOrderNotFound) {
 			http.NotFound(w, r)
 			return
 		}
@@ -231,6 +237,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		component = pages.Home(page)
 	case r.URL.Path == "/categories":
 		component = pages.Categories(page)
+	case r.URL.Path == "/makers":
+		component = pages.Makers(page)
 	case r.URL.Path == "/brands":
 		component = pages.Brands(page)
 	case strings.HasPrefix(r.URL.Path, "/brands/"):
@@ -351,40 +359,6 @@ func ensureGuestCartCookie(w http.ResponseWriter, r *http.Request) string {
 	return token
 }
 
-func (h *LiveStorefrontHandler) updateProfile(w http.ResponseWriter, r *http.Request) {
-	userID, csrf, ok := h.session(r)
-	if !ok {
-		http.Redirect(w, r, "/login?next=%2Faccount%2Fprofile", http.StatusSeeOther)
-		return
-	}
-	if !h.customerRole(userID, r) {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid profile form", http.StatusBadRequest)
-		return
-	}
-	providedToken := r.Header.Get("X-CSRF-Token")
-	if providedToken == "" {
-		providedToken = r.Form.Get("csrf_token")
-	}
-	if subtle.ConstantTimeCompare([]byte(csrf), []byte(providedToken)) != 1 {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	name := strings.TrimSpace(r.Form.Get("name"))
-	if len([]rune(name)) < 2 || len([]rune(name)) > 100 {
-		http.Error(w, "name must contain 2 to 100 characters", http.StatusUnprocessableEntity)
-		return
-	}
-	if _, err := h.pool.Exec(r.Context(), `UPDATE users SET display_name = $1, updated_at = NOW() WHERE id = $2 AND status = 'active'`, name, userID); err != nil {
-		http.Error(w, "profile could not be saved", http.StatusServiceUnavailable)
-		return
-	}
-	http.Redirect(w, r, "/account/profile?notice=Profile+updated", http.StatusSeeOther)
-}
-
 func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Request) {
 	userID, ok := h.customerMutationActor(w, r)
 	if !ok {
@@ -490,7 +464,7 @@ func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *
 }
 
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
-	return path == "/" || path == "/categories" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+	return path == "/" || path == "/categories" || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
 }
 
 func isCustomerAccountRoute(path string) bool {
@@ -624,13 +598,35 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
-	if r.URL.Path == "/contact" || r.URL.Path == "/shipping" {
+	{
 		settings, settingsErr := postgres.ReadStorefrontSettings(r.Context(), h.pool)
 		if settingsErr != nil {
 			return viewmodels.CustomerPage{}, settingsErr
 		}
 		page.SupportEmail = settings.SupportEmail
 		page.ShippingInformation = settings.ShippingInformation
+		page.SocialLinks = settings.SocialLinks()
+	}
+	if authenticated && h.customerRole(userID, r) {
+		var hasPhoto bool
+		if err := h.loadProfileSummary(r.Context(), userID, &page.UserName, &page.UserPhone, &hasPhoto); err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
+		page.IsCustomer = true
+		page.ProfileIncomplete = !validProfile(page.UserName, page.UserPhone)
+		if !needsAccountData(r.URL.Path) {
+			var addressID int64
+			addressErr := h.pool.QueryRow(r.Context(), `SELECT id, city, state FROM addresses WHERE user_id=$1 AND country_code='IN' ORDER BY id DESC LIMIT 1`, userID).Scan(&addressID, &page.Address.City, &page.Address.State)
+			if addressErr != nil && !errors.Is(addressErr, pgx.ErrNoRows) {
+				return viewmodels.CustomerPage{}, addressErr
+			}
+			if addressErr == nil {
+				page.Address.ID = strconv.FormatInt(addressID, 10)
+			}
+		}
+		if hasPhoto {
+			page.AvatarURL = "/account/profile/photo"
+		}
 	}
 	if strings.HasPrefix(r.URL.Path, "/products/") {
 		product, productErr := h.catalog.Get(r.Context(), strings.TrimPrefix(r.URL.Path, "/products/"))
@@ -1149,7 +1145,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	}
 	view.CanRequestRefund = view.ReturnStatus == "received" && view.RefundStatus == "" && order.PaymentStatus == "captured" && (order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered")
 	rows, err := h.pool.Query(ctx, `
-		SELECT COALESCE(p.slug, ''), oi.product_name, oi.unit_price_cents, oi.quantity,
+		SELECT COALESCE(p.slug, ''), CASE WHEN oi.product_name = 'Default variant' THEN COALESCE(p.name, oi.product_name) ELSE oi.product_name END, oi.unit_price_cents, oi.quantity,
 		       COALESCE(p.image_url, ''), COALESCE(s.display_name, 'Independent maker')
 		FROM order_items oi
 		LEFT JOIN product_variants v ON v.id = oi.variant_id
@@ -1170,7 +1166,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 			return viewmodels.Order{}, err
 		}
 		if image == "" {
-			image = "/assets/images/customer/maker-mithila.webp"
+			image = "/assets/images/product-unavailable.svg"
 		}
 		product := viewmodels.Product{Slug: slug, Name: name, Seller: seller, ImageURL: image, PriceCents: cents, Price: storefrontMoney(cents)}
 		view.Items = append(view.Items, viewmodels.CartItem{Product: product, Quantity: quantity, Delivery: "See order tracking for delivery updates"})
@@ -1556,7 +1552,15 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		w.Header().Set("HX-Redirect", "/checkout")
 		return
 	}
-	page, _ := h.page(r)
+	page, pageErr := h.page(r)
+	if pageErr != nil {
+		http.Error(w, "Cart saved. Refresh the page to see the updated cart.", http.StatusInternalServerError)
+		return
+	}
+	if r.Header.Get("HX-Target") == "cart-layout" {
+		h.render(w, r, pages.CartUpdate(page))
+		return
+	}
 	h.render(w, r, components.CartMutation(page))
 }
 
@@ -1694,7 +1698,8 @@ func (h *LiveStorefrontHandler) sellers(ctx context.Context) []viewmodels.Seller
 		(SELECT COUNT(*) FROM products p WHERE p.seller_id=s.id AND p.status='approved'),
 		COALESCE((SELECT ROUND(AVG(pr.rating),1)::text FROM product_reviews pr JOIN products rp ON rp.id=pr.product_id WHERE rp.seller_id=s.id AND rp.status='approved' AND pr.status='published'),''),
 		COALESCE((SELECT image_url FROM products WHERE seller_id=s.id AND status='approved' ORDER BY id LIMIT 1),'')
-		FROM sellers s WHERE s.status='active' ORDER BY s.display_name`)
+		 ,s.public_location,s.public_story,s.public_technique,s.public_portrait
+ FROM sellers s WHERE s.status='active' AND EXISTS (SELECT 1 FROM products public_product WHERE public_product.seller_id=s.id AND public_product.status='approved') ORDER BY s.display_name`)
 	if err != nil {
 		return nil
 	}
@@ -1702,10 +1707,10 @@ func (h *LiveStorefrontHandler) sellers(ctx context.Context) []viewmodels.Seller
 	result := make([]viewmodels.Seller, 0)
 	for rows.Next() {
 		var id int64
-		var name, status, rating, image string
+		var name, status, rating, image, location, story, technique, portrait string
 		var count int
-		if rows.Scan(&id, &name, &status, &count, &rating, &image) == nil {
-			result = append(result, viewmodels.Seller{ID: id, Slug: liveSlug(name), Name: name, Status: status, Rating: rating, ImageURL: image, Products: count})
+		if rows.Scan(&id, &name, &status, &count, &rating, &image, &location, &story, &technique, &portrait) == nil {
+			result = append(result, viewmodels.Seller{ID: id, Slug: liveSlug(name), Name: name, Status: status, Rating: rating, ImageURL: image, Products: count, Location: location, Description: story, Technique: technique, PortraitURL: portrait})
 		}
 	}
 	return result
@@ -1828,6 +1833,8 @@ func (h *LiveStorefrontHandler) productsForSeller(ctx context.Context, slug, csr
 }
 
 func (h *LiveStorefrontHandler) render(w http.ResponseWriter, r *http.Request, component templ.Component) {
+	// Storefront HTML contains per-browser CSRF tokens, even before sign-in.
+	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := component.Render(r.Context(), w); err != nil {
 		h.renderError(w, http.StatusInternalServerError, "The page could not be rendered.")
@@ -1987,6 +1994,10 @@ func liveTitle(path string) string {
 		return "Order details"
 	case path == "/categories":
 		return "Categories"
+	case path == "/makers":
+		return "Makers"
+	case strings.HasPrefix(path, "/makers/"):
+		return "Maker collection"
 	case path == "/brands":
 		return "Brands"
 	case path == "/deals":

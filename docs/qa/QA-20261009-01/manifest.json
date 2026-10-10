@@ -1,0 +1,169 @@
+{
+  "run": "QA-20261009-01",
+  "date": "2026-10-09",
+  "tracker": "docs/test-execution-tracker.csv",
+  "environment": "Isolated local Docker QA; PostgreSQL 17, Redis 7, Meilisearch 1.12.8, MinIO, Mailpit; local deterministic payments",
+  "finalBuild": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+  "playwright": [
+    {
+      "file": "docs/qa/QA-20261009-01/playwright-chromium.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "environment": "http://127.0.0.1:18080; isolated weev_qa_20261009_browser database; local payments; migration 37",
+      "notes": "Sampled application procedures and representative 360, 390, 768, 1024, 1440px layouts. Related workflow automation does not pass every corresponding manual row."
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/production-guard-before.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261; Docker sha256:ba1187b780b3d892cad0b9264cfd15c479146b047e922a1899d34e0d428a00de",
+      "environment": "http://127.0.0.1:18081; isolated weev_qa_20261009_guard database; production environment; local mode off; Razorpay mode",
+      "notes": "Disposable production-configured HTTP instance with secure cookies disabled solely for local testing. This proves the development-route boundary, not HTTPS or a genuine provider integration.",
+      "accounts": "demo.customer01@weevcrafts.local; order_number=WCDEMO1001; isolated guard database"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/production-guard-after.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "http://127.0.0.1:18081; isolated guard database; production environment; local mode off; Razorpay mode",
+      "notes": "QA-PAY-001 fixed and retested: authenticated development capture returns 404 and does not change the persisted order. HTTP-only setup does not establish secure-cookie/HTTPS release coverage.",
+      "accounts": "demo.customer01@weevcrafts.local; order_number=WCDEMO1001; isolated guard database"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/playwright-chromium-retest.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "http://127.0.0.1:18080; isolated browser database; local payments; migration 37",
+      "notes": "Disposable identities copied from each seeded role. Session/token expiration uses controlled persistence fixtures. Independent cases reset only the isolated Docker gateway client's authentication attempt quota; production limit values remain unchanged."
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/mail-evidence.json",
+      "browser": "Playwright HTTP client; real local SMTP / Mailpit",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "Isolated browser database, application workers, actual SMTP delivery to local Mailpit",
+      "notes": "The earlier local paid and fulfilled order prepared the fixture. Order and dispatch mail recipient, order, tracking, and public URL were verified. This does not prove production SMTP or provider payment capture."
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/browser-matrix.json",
+      "browser": "Firefox and WebKit / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "http://127.0.0.1:18080; isolated browser database; local payments",
+      "notes": "Supporting cross-engine portal, responsive, seller-support, catalog-directory, settings, and commission boundary checks. Full per-role critical workflows across engines remain unexecuted."
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/local-helper-retest.json",
+      "browser": "Chromium / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "Isolated browser QA database and local payment adapter",
+      "notes": "Supporting local helper boundary retest with a newly created pending order. Original seed reservation expired during the long campaign; this fixture has no inventory reservation and proves neither inventory nor genuine provider capture."
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/browser-matrix-retest.json",
+      "browser": "WebKit / Playwright 1.63.0",
+      "build": "e853611798973f9197efc007357f19b1bbc5e261 + payment-helper guard working-tree change; Docker sha256:3d47fd8ddbe8946e2cbd109cf432818e8a6e6a1db7f40a2d41b529900bac7108",
+      "environment": "Isolated browser QA database and local payment adapter",
+      "notes": "Focused retest of the original Super Admin screenshot timeout. Five viewport visits/captures use a 180-second budget; all functional and overflow assertions are retained."
+    }
+  ],
+  "go": [
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests.jsonl",
+      "build": "Base revision; first native run; projection database not configured"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests-final.jsonl",
+      "build": "Guard change; concurrent run; one fixture-setup timeout"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-tests-serial.jsonl",
+      "build": "Guard change; final serial native run; PostgreSQL, Redis, MinIO, projection database enabled"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-race.jsonl",
+      "build": "Base revision; Linux Go 1.26 race suite; one fixture-setup timeout"
+    },
+    {
+      "file": "docs/qa/QA-20261009-01/go-race-retest.jsonl",
+      "build": "Guard change; Linux Go 1.26; reduced-concurrency race retest of the failed inventory case and guard"
+    }
+  ],
+  "completeMappings": [
+    {
+      "id": "INT-007--qa-and-technical-operator",
+      "goTest": "TestInventoryReservationConcurrencyCheckpoint",
+      "actual": "Real PostgreSQL: 100 independent customers attempted one-unit checkout against ten units; exactly ten succeeded, ninety returned insufficient-stock errors, available stock was zero and reserved stock ten.",
+      "notes": "Unique technical fixtures. Earlier overloaded runs timed out during fixture setup; the final serial suite and focused Linux race retest completed the full contention check."
+    },
+    {
+      "id": "INT-008--qa-and-technical-operator",
+      "goTest": "TestCheckoutIdenticalRetriesCreateOneOrderReservationPaymentAndOutbox",
+      "actual": "Real PostgreSQL: twenty identical concurrent checkout retries returned the same order; exactly one order, reservation, payment attempt, and OrderCreated outbox record persisted.",
+      "notes": "Repository integration boundary with actual persistence; does not establish a genuine provider charge."
+    },
+    {
+      "id": "INT-030--qa-and-technical-operator",
+      "k6File": "docs/qa/QA-20261009-01/load-smoke.json",
+      "goTests": [
+        "TestInventoryReservationConcurrencyCheckpoint",
+        "TestCheckoutIdenticalRetriesCreateOneOrderReservationPaymentAndOutbox"
+      ],
+      "actual": "Documented 30s/60s/30s public browse/search/live-probe stages, 10 then 50 virtual users, against the final isolated image. Compared with repository thresholds failure rate below 1%, P95 below 500ms, P99 below 1000ms. Real PostgreSQL 100-way inventory and 20-way identical checkout checks also passed.",
+      "notes": "Local acceptance of the documented smoke and concurrency procedures only. Docker allocation 4 CPUs, 8240349184 memory bytes; dedicated seeded QA data plus campaign records. No production capacity or provider latency claim. See load-environment.txt, load-smoke.log, and go-tests-serial.jsonl."
+    }
+  ],
+  "blockers": [
+    {
+      "ids": [
+        "CUS-027",
+        "CUS-028",
+        "CUS-029",
+        "CUS-030",
+        "CUS-042",
+        "E2E-001",
+        "E2E-007",
+        "INT-001",
+        "INT-002",
+        "INT-003",
+        "INT-004",
+        "INT-005",
+        "INT-006",
+        "INT-010",
+        "INT-011",
+        "INT-012",
+        "INT-013",
+        "INT-014"
+      ],
+      "reason": "Genuine payment-provider sandbox credentials, configured callbacks/webhooks, and provider evidence access were not supplied. Local deterministic captures/refunds and mocked adapter tests cannot pass the provider procedure. Configure an authorized sandbox environment and rerun."
+    },
+    {
+      "ids": [
+        "INT-028"
+      ],
+      "reason": "No authorized HTTPS release environment was supplied. Local HTTP cookie/session checks do not prove the configured Secure-cookie release policy. Rerun against the approved HTTPS candidate."
+    },
+    {
+      "ids": [
+        "UI-005"
+      ],
+      "reason": "An actual assistive-technology testing session was unavailable. Automated browser inspection cannot substitute for the procedure's screen-reader interaction. Complete with an accessible screen-reader environment."
+    },
+    {
+      "ids": [
+        "GAP-001",
+        "GAP-002",
+        "GAP-003",
+        "GAP-004",
+        "GAP-005",
+        "GAP-006",
+        "GAP-007",
+        "GAP-008",
+        "GAP-009",
+        "GAP-010"
+      ],
+      "reason": "Approved release scope/policies and representative production/provider configuration were not supplied. Real payouts, shipping, privileged MFA, emergency access, dispute/refund scope, and privacy fulfillment require their accepted implementation and authorized release evidence. Release owner must supply the applicable scope and environment."
+    }
+  ],
+  "partialCases": [
+    "UI-001",
+    "INT-014"
+  ]
+}

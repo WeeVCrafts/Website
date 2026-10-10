@@ -76,8 +76,21 @@ docker compose --profile demo run --rm seed-demo
 ```
 
 Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
-Meilisearch, MinIO, and Mailpit. Demo accounts and local payment scenarios are
+Meilisearch, MinIO, Mailpit, Adminer, and Uptime Kuma. Demo accounts and local payment scenarios are
 documented in [`docs/demo-accounts.md`](docs/demo-accounts.md).
+
+Local tools:
+
+| Tool | URL | Use |
+| --- | --- | --- |
+| Mailpit | <http://localhost:8025> | Read captured verification, recovery, and order emails. |
+| Adminer | <http://localhost:8082/?pgsql=postgres&username=wecratfs&db=wecratfs> | Inspect the local PostgreSQL database. Password: `wecratfs`. |
+| Uptime Kuma | <http://localhost:3001> | View app and dependency availability and response times. |
+
+All published development services bind to `127.0.0.1`. Adminer and Kuma are local operator tools. They have
+separate authentication from marketplace roles. They are not deployed by the
+production app Dockerfile. See [`docs/local-tools.md`](docs/local-tools.md)
+for monitor setup, credentials, persistence, and troubleshooting.
 
 Product cover uploads are stored in the `product_uploads` Docker volume, so
 rebuilding or recreating the app preserves the original files. Back up this
@@ -124,6 +137,17 @@ The Go process embeds the generated templates, CSS, JavaScript, and images; it
 does not start Node.js in production. `docs/architecture.md` describes the
 application boundaries, `docs/api/openapi.yaml` records the JSON API, and
 `docs/phase-status.md` tracks implementation status.
+
+The [secure customer update](docs/secure-customer-update.md) describes wishlist,
+private profile photos, role replacement, social settings and verification.
+Review [deployment security requirements](docs/deployment-security.md) before
+production; the local Compose stack uses development credentials.
+
+The [Firebase customer integration](docs/firebase-integration.md) documents
+Google/email sign-in, account linking, web push, optional performance diagnostics,
+local credential provisioning and the current email-template restriction.
+The [Resend integration](docs/resend-integration.md) documents application-owned
+branded verification/reset emails, the verified sender domain and private keys.
 
 PostgreSQL query sources live in `internal/adapters/postgres/queries/` and
 generated sqlc files live in `internal/adapters/postgres/generated/`. After

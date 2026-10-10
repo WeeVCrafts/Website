@@ -34,7 +34,8 @@ async function signIn(page, email, landing) {
   await page.locator("#page input[name=\"email\"]").fill(email);
   await page.locator("#page input[name=\"password\"]").fill(password);
   await page.getByRole("button", { name: /sign in/i }).click();
-  await page.waitForURL(url => url.pathname.replace(/\/$/, "") === landing.replace(/\/$/, ""), { timeout: 30_000 });
+  await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""), { timeout: 30_000 });
+  if (landing === "/account") await page.goto("/account");
 }
 
 test.describe("role-specific portals", () => {

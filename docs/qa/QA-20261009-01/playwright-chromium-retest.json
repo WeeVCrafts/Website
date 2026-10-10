@@ -1,0 +1,3375 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/manual-matrix.spec.js",
+      "tests/e2e/manual-recovery.spec.js",
+      "tests/e2e/manual-security.spec.js",
+      "--grep",
+      "NAV-002|GST-020|AUTH-008|AUTH-009|AUTH-010|AUTH-011|AUTH-012|AUTH-014|AUTH-006|enabled local",
+      "--reporter=list,json",
+      "--output=docs/qa/QA-20261009-01/chromium-complete"
+    ],
+    "configFile": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\playwright.config.js",
+    "rootDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/chromium-complete",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "manual-matrix.spec.js",
+      "file": "manual-matrix.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "NAV-002--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4481,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:54:46.595Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-5c4dd835710ab0a55d2c",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3477,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:54:51.601Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-5c1076ee70c92d9d455b",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3588,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:54:55.120Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-5c1bcb12039bb4a4d2fe",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3061,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:54:58.754Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-4ed408e9d5ff9d334128",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3340,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:01.858Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-a63463ebf3e7ee69cf02",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2993,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:05.261Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-efac513cbfe66439db4b",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2437,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:08.296Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-202bec3231eecf9149d4",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "NAV-002--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2681,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:10.773Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-19e6b55df14224a38a54",
+          "file": "manual-matrix.spec.js",
+          "line": 126,
+          "column": 3
+        },
+        {
+          "title": "GST-020--guest",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 221,
+                  "error": {
+                    "message": "Error: /category/missing-qa-1791543313523\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m200\u001b[39m",
+                    "stack": "Error: /category/missing-qa-1791543313523\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m200\u001b[39m\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:152:43",
+                    "location": {
+                      "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js",
+                      "column": 43,
+                      "line": 152
+                    },
+                    "snippet": "  150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {\n  151 |     const response = await request.get(route);\n> 152 |     expect.soft(response.status(), route).toBe(404);\n      |                                           ^\n  153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);\n  154 |   }\n  155 | });"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js",
+                        "column": 43,
+                        "line": 152
+                      },
+                      "message": "Error: /category/missing-qa-1791543313523\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m200\u001b[39m\n\n  150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {\n  151 |     const response = await request.get(route);\n> 152 |     expect.soft(response.status(), route).toBe(404);\n      |                                           ^\n  153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);\n  154 |   }\n  155 | });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:152:43"
+                    },
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js",
+                        "column": 43,
+                        "line": 152
+                      },
+                      "message": "Error: /brands/missing-qa-1791543313523\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m200\u001b[39m\n\n  150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {\n  151 |     const response = await request.get(route);\n> 152 |     expect.soft(response.status(), route).toBe(404);\n      |                                           ^\n  153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);\n  154 |   }\n  155 | });\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js:152:43"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:13.494Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\chromium-complete\\manual-matrix-GST-020--guest\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\chromium-complete\\manual-matrix-GST-020--guest\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-matrix.spec.js",
+                    "column": 43,
+                    "line": 152
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "d99d9fadbe97dec6c626-7cd750364ba425f3a2d5",
+          "file": "manual-matrix.spec.js",
+          "line": 148,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "manual-recovery.spec.js",
+      "file": "manual-recovery.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "AUTH-008--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=55; email=qa.recovery.auth-008.customer.1791543318172@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7845,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:15.617Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=55; email=qa.recovery.auth-008.customer.1791543318172@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-8efded58226a2e872517",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=56; email=qa.recovery.auth-009.customer.1791543325663@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6618,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:23.977Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=56; email=qa.recovery.auth-009.customer.1791543325663@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-08c289076e90ed4fa80b",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=57; email=qa.recovery.auth-010.customer.1791543332931@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 17267,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:30.646Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=57; email=qa.recovery.auth-010.customer.1791543332931@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-2e17af139864c1544710",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=58; email=qa.recovery.auth-014.customer.1791543350508@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7653,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:47.959Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=58; email=qa.recovery.auth-014.customer.1791543350508@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-e781d4dd6a7ae14a31f3",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=59; email=qa.recovery.auth-011.customer.1791543357669@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13648,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:55:55.662Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=59; email=qa.recovery.auth-011.customer.1791543357669@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-a89b051bb7181c484cb8",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=60; email=qa.recovery.auth-012.customer.1791543371130@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14619,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:56:09.372Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=60; email=qa.recovery.auth-012.customer.1791543371130@weevcrafts.local; role copied from demo.customer01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-9a42af311a8bef1c2622",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=61; email=qa.recovery.auth-008.seller-owner.1791543386301@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8078,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:56:24.041Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=61; email=qa.recovery.auth-008.seller-owner.1791543386301@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-768e2bdf5ee30f44034f",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=62; email=qa.recovery.auth-009.seller-owner.1791543394367@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7614,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:56:32.180Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=62; email=qa.recovery.auth-009.seller-owner.1791543394367@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-c5a4a9fd307129469089",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=63; email=qa.recovery.auth-010.seller-owner.1791543401584@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 19526,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:56:39.870Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=63; email=qa.recovery.auth-010.seller-owner.1791543401584@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-f8c22bc19bd2e8c9280a",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=64; email=qa.recovery.auth-014.seller-owner.1791543422029@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8007,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:56:59.465Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=64; email=qa.recovery.auth-014.seller-owner.1791543422029@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-59b4646ca499b8dc43f4",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=65; email=qa.recovery.auth-011.seller-owner.1791543429452@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14204,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:57:07.515Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=65; email=qa.recovery.auth-011.seller-owner.1791543429452@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-6ee7e380be132ac58646",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=66; email=qa.recovery.auth-012.seller-owner.1791543443761@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15630,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:57:21.772Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=66; email=qa.recovery.auth-012.seller-owner.1791543443761@weevcrafts.local; role copied from demo.owner01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-cb75a7b70af71e3dfbb2",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=67; email=qa.recovery.auth-008.seller-staff.1791543459737@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6867,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:57:37.459Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=67; email=qa.recovery.auth-008.seller-staff.1791543459737@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-2391364ec4a1bfe96eba",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=68; email=qa.recovery.auth-009.seller-staff.1791543466285@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6526,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:57:44.389Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=68; email=qa.recovery.auth-009.seller-staff.1791543466285@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-ffb0e2c03856b4347d84",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=69; email=qa.recovery.auth-010.seller-staff.1791543472827@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14315,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:57:50.961Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=69; email=qa.recovery.auth-010.seller-staff.1791543472827@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-abb25c19a0fe3428981a",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=70; email=qa.recovery.auth-014.seller-staff.1791543487732@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6756,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:05.333Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=70; email=qa.recovery.auth-014.seller-staff.1791543487732@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-8a67f58199e92ddc605a",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=71; email=qa.recovery.auth-011.seller-staff.1791543494163@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13437,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:12.135Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=71; email=qa.recovery.auth-011.seller-staff.1791543494163@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-4f6b1e8038c7947cf979",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=72; email=qa.recovery.auth-012.seller-staff.1791543507831@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14230,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:25.626Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=72; email=qa.recovery.auth-012.seller-staff.1791543507831@weevcrafts.local; role copied from demo.staff01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-f0a6024038db53aded2c",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=73; email=qa.recovery.auth-008.marketplace-admin.1791543522058@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6782,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:39.917Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=73; email=qa.recovery.auth-008.marketplace-admin.1791543522058@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-dd8e6b028d27d60a16c5",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=74; email=qa.recovery.auth-009.marketplace-admin.1791543528685@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7385,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:46.750Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=74; email=qa.recovery.auth-009.marketplace-admin.1791543528685@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-09a2d9f08279990b7a72",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=75; email=qa.recovery.auth-010.marketplace-admin.1791543536049@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13975,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:58:54.194Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=75; email=qa.recovery.auth-010.marketplace-admin.1791543536049@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-3281fdafb5ccadeac1d3",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=76; email=qa.recovery.auth-014.marketplace-admin.1791543550599@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7076,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:08.221Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=76; email=qa.recovery.auth-014.marketplace-admin.1791543550599@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-c68633eb74dbd4ad05aa",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=77; email=qa.recovery.auth-011.marketplace-admin.1791543557159@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13346,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:15.342Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=77; email=qa.recovery.auth-011.marketplace-admin.1791543557159@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-4b45241a3044e67bc42d",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=78; email=qa.recovery.auth-012.marketplace-admin.1791543570432@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13408,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:28.740Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=78; email=qa.recovery.auth-012.marketplace-admin.1791543570432@weevcrafts.local; role copied from demo.marketplace01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-03ac2267c2b4c749eedb",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=79; email=qa.recovery.auth-008.super-admin.1791543584317@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7363,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:42.202Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=79; email=qa.recovery.auth-008.super-admin.1791543584317@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-9045b63d2f2d7236be62",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=80; email=qa.recovery.auth-009.super-admin.1791543594118@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9795,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:49.622Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=80; email=qa.recovery.auth-009.super-admin.1791543594118@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-b4d3165d3a15caac48e4",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=81; email=qa.recovery.auth-010.super-admin.1791543601514@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16226,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:59:59.466Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=81; email=qa.recovery.auth-010.super-admin.1791543601514@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-53d76d6d412ca02e5717",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=82; email=qa.recovery.auth-014.super-admin.1791543617962@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6559,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:00:15.740Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=82; email=qa.recovery.auth-014.super-admin.1791543617962@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-c73d1231935d3f7a1a9a",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=83; email=qa.recovery.auth-011.super-admin.1791543624309@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13276,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:00:22.355Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=83; email=qa.recovery.auth-011.super-admin.1791543624309@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-b09c2abd1ea7221be947",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=84; email=qa.recovery.auth-012.super-admin.1791543637669@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 17767,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:00:35.685Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=84; email=qa.recovery.auth-012.super-admin.1791543637669@weevcrafts.local; role copied from demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-e0876fde9d64c85b4f43",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=85; email=qa.recovery.auth-008.support-agent.1791543656459@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8044,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:00:53.505Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=85; email=qa.recovery.auth-008.support-agent.1791543656459@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-7a573a8a0a4938e5f4c3",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=86; email=qa.recovery.auth-009.support-agent.1791543663376@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6747,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:01.602Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=86; email=qa.recovery.auth-009.support-agent.1791543663376@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-a3ff1764bb66f0d5ad25",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=87; email=qa.recovery.auth-010.support-agent.1791543670250@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13657,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:08.393Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=87; email=qa.recovery.auth-010.support-agent.1791543670250@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-2175eee9fdd92318b19e",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=88; email=qa.recovery.auth-014.support-agent.1791543684473@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6936,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:22.105Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=88; email=qa.recovery.auth-014.support-agent.1791543684473@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-0aadbd13a1c4923eb80a",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=89; email=qa.recovery.auth-011.support-agent.1791543690935@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13293,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:29.085Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=89; email=qa.recovery.auth-011.support-agent.1791543690935@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-158d204a2a1b0439acc3",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=90; email=qa.recovery.auth-012.support-agent.1791543704230@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13990,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:42.437Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=90; email=qa.recovery.auth-012.support-agent.1791543704230@weevcrafts.local; role copied from demo.support01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-08c196979357e637120a",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=91; email=qa.recovery.auth-008.finance-operator.1791543718750@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6972,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:01:56.479Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=91; email=qa.recovery.auth-008.finance-operator.1791543718750@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-c71c12debf9151243c2a",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=92; email=qa.recovery.auth-009.finance-operator.1791543725263@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6461,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:02:03.507Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=92; email=qa.recovery.auth-009.finance-operator.1791543725263@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-6ba7de33f63c97a67db4",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=93; email=qa.recovery.auth-010.finance-operator.1791543732008@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13831,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:02:10.018Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=93; email=qa.recovery.auth-010.finance-operator.1791543732008@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-abbedf82076d3fd28aab",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=94; email=qa.recovery.auth-014.finance-operator.1791543746095@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6773,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:02:23.914Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=94; email=qa.recovery.auth-014.finance-operator.1791543746095@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-40648b192c57a2b3c9ab",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=95; email=qa.recovery.auth-011.finance-operator.1791543752614@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:02:30.741Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=95; email=qa.recovery.auth-011.finance-operator.1791543752614@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-6818f28da61de9756ae8",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=96; email=qa.recovery.auth-012.finance-operator.1791543766746@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 17260,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:02:44.916Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=96; email=qa.recovery.auth-012.finance-operator.1791543766746@weevcrafts.local; role copied from demo.finance01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-796eaa90ea215102a58a",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        },
+        {
+          "title": "AUTH-008--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=97; email=qa.recovery.auth-008.returns-operations.1791543784695@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7351,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:02.223Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=97; email=qa.recovery.auth-008.returns-operations.1791543784695@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-7929606b3f7bbab654e3",
+          "file": "manual-recovery.spec.js",
+          "line": 79,
+          "column": 3
+        },
+        {
+          "title": "AUTH-009--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=98; email=qa.recovery.auth-009.returns-operations.1791543791487@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6403,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:09.626Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=98; email=qa.recovery.auth-009.returns-operations.1791543791487@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-716bd538f3467915a12b",
+          "file": "manual-recovery.spec.js",
+          "line": 90,
+          "column": 3
+        },
+        {
+          "title": "AUTH-010--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=99; email=qa.recovery.auth-010.returns-operations.1791543798019@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14269,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:16.084Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=99; email=qa.recovery.auth-010.returns-operations.1791543798019@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-df166c91205a1c5f79e2",
+          "file": "manual-recovery.spec.js",
+          "line": 100,
+          "column": 3
+        },
+        {
+          "title": "AUTH-014--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=100; email=qa.recovery.auth-014.returns-operations.1791543812607@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6978,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:30.414Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=100; email=qa.recovery.auth-014.returns-operations.1791543812607@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-143446fe4b50d3ad9306",
+          "file": "manual-recovery.spec.js",
+          "line": 123,
+          "column": 3
+        },
+        {
+          "title": "AUTH-011--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=101; email=qa.recovery.auth-011.returns-operations.1791543819376@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14683,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:37.456Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=101; email=qa.recovery.auth-011.returns-operations.1791543819376@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-67dada55d24e3fe83cd6",
+          "file": "manual-recovery.spec.js",
+          "line": 136,
+          "column": 3
+        },
+        {
+          "title": "AUTH-012--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "fixture",
+                  "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                },
+                {
+                  "type": "account",
+                  "description": "user_id=102; email=qa.recovery.auth-012.returns-operations.1791543834271@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14319,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:03:52.205Z",
+                  "annotations": [
+                    {
+                      "type": "fixture",
+                      "description": "Reset the isolated Docker gateway authentication quota between independent cases; controlled session/token expiry uses test-only persistence fixtures."
+                    },
+                    {
+                      "type": "account",
+                      "description": "user_id=102; email=qa.recovery.auth-012.returns-operations.1791543834271@weevcrafts.local; role copied from demo.operations01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e491c59fccc3705e7cd2-d887fedfaa1e6e7ca34f",
+          "file": "manual-recovery.spec.js",
+          "line": 162,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "manual-security.spec.js",
+      "file": "manual-security.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "AUTH-006--customer",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=103; email=qa.suspension.customer.1791543849101@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12460,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:04:06.609Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=103; email=qa.suspension.customer.1791543849101@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-8463c12130b5e1f18b67",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--seller-owner",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=104; email=qa.suspension.seller-owner.1791543861049@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13120,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:04:19.120Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=104; email=qa.suspension.seller-owner.1791543861049@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-e07e665e0450223b4109",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--seller-staff",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=105; email=qa.suspension.seller-staff.1791543874284@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11532,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:04:32.290Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=105; email=qa.suspension.seller-staff.1791543874284@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-e9ddfcc46705ce7e4fbb",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--marketplace-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=106; email=qa.suspension.marketplace-admin.1791543885540@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12010,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:04:43.882Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=106; email=qa.suspension.marketplace-admin.1791543885540@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-07cd99a09c35637106f9",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--super-admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=107; email=qa.suspension.super-admin.1791543897601@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11573,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:04:55.929Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=107; email=qa.suspension.super-admin.1791543897601@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-7159f25a9918b76b6570",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--support-agent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=108; email=qa.suspension.support-agent.1791543909190@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11196,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:05:07.554Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=108; email=qa.suspension.support-agent.1791543909190@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-ad37b4dbc343dc90d479",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--finance-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=109; email=qa.suspension.finance-operator.1791543920498@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11281,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:05:18.820Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=109; email=qa.suspension.finance-operator.1791543920498@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-cde5d45579ada74f17f3",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "AUTH-006--returns-operations",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "user_id=110; email=qa.suspension.returns-operations.1791543932057@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12328,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:05:30.155Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "user_id=110; email=qa.suspension.returns-operations.1791543932057@weevcrafts.local; actor=demo.super01@weevcrafts.local"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-33649e90d031a9817abc",
+          "file": "manual-security.spec.js",
+          "line": 29,
+          "column": 3
+        },
+        {
+          "title": "enabled local payment helper still processes an owned QA order",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 5954,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"p\u001b[7mending_payment\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"p\u001b[7mayment_failed\u001b[27m\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"p\u001b[7mending_payment\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"p\u001b[7mayment_failed\u001b[27m\"\u001b[39m\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js:63:76",
+                    "location": {
+                      "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js",
+                      "column": 76,
+                      "line": 63
+                    },
+                    "snippet": "  61 |   await login(page, 'demo.customer01@weevcrafts.local', '/account');\n  62 |   const csrf = await page.locator('input[name=\"csrf_token\"]').first().inputValue();\n> 63 |   expect(sql(\"SELECT status FROM orders WHERE order_number='WCDEMO1001'\")).toBe('pending_payment');\n     |                                                                            ^\n  64 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });\n  65 |   expect(response.status()).toBe(200);\n  66 |   expect((await response.json()).processed).toBe(true);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js",
+                        "column": 76,
+                        "line": 63
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"p\u001b[7mending_payment\u001b[27m\"\u001b[39m\nReceived: \u001b[31m\"p\u001b[7mayment_failed\u001b[27m\"\u001b[39m\n\n  61 |   await login(page, 'demo.customer01@weevcrafts.local', '/account');\n  62 |   const csrf = await page.locator('input[name=\"csrf_token\"]').first().inputValue();\n> 63 |   expect(sql(\"SELECT status FROM orders WHERE order_number='WCDEMO1001'\")).toBe('pending_payment');\n     |                                                                            ^\n  64 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });\n  65 |   expect(response.status()).toBe(200);\n  66 |   expect((await response.json()).processed).toBe(true);\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js:63:76"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:05:42.534Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\chromium-complete\\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\chromium-complete\\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\chromium-complete\\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\manual-security.spec.js",
+                    "column": 76,
+                    "line": 63
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6fde92daf9a3ad4c7f04-4f640380cbdbd4c2ba49",
+          "file": "manual-security.spec.js",
+          "line": 60,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T10:54:45.324Z",
+    "duration": 664885.566,
+    "expected": 64,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

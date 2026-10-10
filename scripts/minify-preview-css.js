@@ -5,8 +5,10 @@ const CleanCSS = require("clean-css");
 const root = path.resolve(__dirname, "..");
 const files = [
   "fonts.css",
+  "ui-standards.css",
   "theme.css",
   "utility.css",
+  "customer-polish.css",
   "admin.css",
   "seller-admin.css",
   "support-portal.css",
@@ -20,5 +22,6 @@ for (const file of files) {
   if (result.errors.length > 0) {
     throw new Error(`${file}: ${result.errors.join("; ")}`);
   }
-  fs.writeFileSync(outputPath, `${result.styles}\n`);
+  const minified = `${result.styles}\n`;
+  if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8") !== minified) fs.writeFileSync(outputPath, minified);
 }

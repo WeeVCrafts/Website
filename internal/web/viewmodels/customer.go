@@ -1,6 +1,7 @@
 package viewmodels
 
 import (
+	"github.com/wecratfs/commerce/internal/ports"
 	"net/url"
 	"time"
 
@@ -57,6 +58,7 @@ type ProductReview struct {
 
 type Seller struct {
 	Slug, Name, Location, ImageURL, Description string
+	PortraitURL, Technique                      string
 	Rating                                      string
 	Products                                    int
 	ID                                          int64
@@ -105,6 +107,9 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	UserPhone, AvatarURL, ProfileError              string
+	IsCustomer, ProfileIncomplete                   bool
+	SocialLinks                                     []ports.SocialLink
 	SupportEmail, ShippingInformation               string
 	Sessions                                        []CustomerSession
 	Notifications                                   []CustomerNotification

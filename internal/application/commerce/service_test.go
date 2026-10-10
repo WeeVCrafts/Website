@@ -107,6 +107,9 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 		12: {domainidentity.RoleMarketplaceAdmin: true},
 	}, permissions: map[int64]map[string]bool{13: {domaincommerce.SellerPermissionProductWrite: true}}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
+	if _, err := service.EnsureSeller(context.Background(), 10, "Customer self promotion"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("customer self-assigned seller access: %v", err)
+	}
 
 	if _, err := service.CreateDraft(context.Background(), 10, validDraft()); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("customer created a draft without seller role: %v", err)

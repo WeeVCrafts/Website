@@ -3,6 +3,7 @@ package commerce
 import (
 	"context"
 	"net/mail"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -43,6 +44,16 @@ func (s *ManagementService) Mutate(ctx context.Context, actorID int64, m ports.M
 		}
 		m.Settings.SupportEmail = strings.TrimSpace(m.Settings.SupportEmail)
 		m.Settings.ShippingInformation = strings.TrimSpace(m.Settings.ShippingInformation)
+		for _, field := range []*string{&m.Settings.InstagramURL, &m.Settings.FacebookURL, &m.Settings.YouTubeURL, &m.Settings.XURL, &m.Settings.WhatsAppURL} {
+			*field = strings.TrimSpace(*field)
+			if *field == "" {
+				continue
+			}
+			parsed, err := url.Parse(*field)
+			if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" || parsed.User != nil || len(*field) > 2048 || strings.ContainsAny(*field, "\r\n\\") {
+				return ports.ErrManagementValidation
+			}
+		}
 		address, err := mail.ParseAddress(m.Settings.SupportEmail)
 		if err != nil || address.Address != m.Settings.SupportEmail || len(m.Settings.SupportEmail) > 254 || len(m.Settings.ShippingInformation) < 10 || len(m.Settings.ShippingInformation) > 3000 {
 			return ports.ErrManagementValidation

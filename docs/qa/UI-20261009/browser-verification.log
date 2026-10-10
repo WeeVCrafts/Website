@@ -1,0 +1,2 @@
+{"check":"Adminer database login","title":"Schema: public - postgres - Adminer","table":"users","result":"passed"}
+{"check":"Uptime Kuma dashboard login","title":"Uptime Kuma","result":"passed"}

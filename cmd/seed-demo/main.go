@@ -68,10 +68,10 @@ var products = []product{
 	{"product-06", "blue-tote", "weavers-touch", "Weaver's Touch", "textiles", "Textiles", "Indigo Everyday Tote", "A sturdy naturally dyed cotton tote for everyday carrying.", "WT-TOT-006", "/assets/images/customer/blue-tote.webp", 89900, 119900, 35, "owner-01"},
 	{"product-07", "terracotta-lamp", "earth-and-fire", "Earth & Fire", "home", "Home", "Terracotta Evening Lamp", "Soft light shaped and fired by a family pottery studio.", "EF-LMP-007", "/assets/images/customer/terracotta-lamp.webp", 159900, 219900, 16, "owner-02"},
 	{"product-08", "block-print-scarf", "rangrez", "Rangrez Studio", "textiles", "Textiles", "Block Print Cotton Scarf", "A breathable cotton scarf printed with traditional wooden blocks.", "RS-SCF-008", "/assets/images/customer/blue-tote.webp", 79900, 99900, 22, "owner-03"},
-	{"product-09", "wicker-basket", "bamboo-root", "Bamboo Root", "home", "Home", "Handwoven Wicker Basket", "A flexible storage basket woven from locally harvested fibres.", "BR-BSK-009", "/assets/images/customer/wooden-box.webp", 109900, 139900, 20, "owner-01"},
-	{"product-10", "blue-pottery", "jaipur-blue", "Jaipur Blue", "crafts", "Crafts", "Blue Pottery Serving Plate", "A glazed serving piece inspired by Jaipur's blue pottery tradition.", "JB-PLT-010", "/assets/images/customer/ceramic-mugs.webp", 179900, 229900, 14, "owner-02"},
+	{"product-09", "wicker-basket", "bamboo-root", "Bamboo Root", "home", "Home", "Handwoven Wicker Basket", "A flexible storage basket woven from locally harvested fibres.", "BR-BSK-009", "/assets/images/product-unavailable.svg", 109900, 139900, 20, "owner-01"},
+	{"product-10", "blue-pottery", "jaipur-blue", "Jaipur Blue", "crafts", "Crafts", "Blue Pottery Serving Plate", "A glazed serving piece inspired by Jaipur's blue pottery tradition.", "JB-PLT-010", "/assets/images/product-unavailable.svg", 179900, 229900, 14, "owner-02"},
 	{"product-11", "copper-bottle", "tamra", "Tamra", "wellness", "Wellness", "Hand-hammered Copper Bottle", "A reusable copper bottle with a tactile hand-hammered finish.", "TM-BTL-011", "/assets/images/customer/brass-elephant.webp", 99900, 129900, 28, "owner-03"},
-	{"product-12", "natural-soap", "forest-rituals", "Forest Rituals", "wellness", "Wellness", "Neem and Sandalwood Soap", "A gentle cold-process soap made with simple, traceable ingredients.", "FR-SOP-012", "/assets/images/customer/terracotta-lamp.webp", 49900, 59900, 50, "owner-01"},
+	{"product-12", "natural-soap", "forest-rituals", "Forest Rituals", "wellness", "Wellness", "Neem and Sandalwood Soap", "A gentle cold-process soap made with simple, traceable ingredients.", "FR-SOP-012", "/assets/images/product-unavailable.svg", 49900, 59900, 50, "owner-01"},
 }
 
 var orders = []order{

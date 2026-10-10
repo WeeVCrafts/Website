@@ -129,7 +129,7 @@ func TestCheckoutPlaceOrderButtonTracksPaymentReadiness(t *testing.T) {
 	render := func(paymentReady bool) string {
 		recorder := httptest.NewRecorder()
 		request := httptest.NewRequest("GET", "/checkout", nil)
-		page := viewmodels.CustomerPage{Route: "/checkout", Title: "Checkout", PaymentReady: paymentReady}
+		page := viewmodels.CustomerPage{Route: "/checkout", Title: "Checkout", PaymentReady: paymentReady, Cart: []viewmodels.CartItem{{Quantity: 1}}}
 		if err := pages.Checkout(page).Render(request.Context(), recorder); err != nil {
 			t.Fatalf("render checkout: %v", err)
 		}
@@ -156,5 +156,16 @@ func TestCheckoutPlaceOrderButtonTracksPaymentReadiness(t *testing.T) {
 		if got := strings.Contains(button, " disabled"); got != test.wantDisabled {
 			t.Errorf("PaymentReady=%v disabled=%v, want %v", test.ready, got, test.wantDisabled)
 		}
+	}
+}
+
+func TestEmptyCheckoutHasOnlyShoppingNextAction(t *testing.T) {
+	response := httptest.NewRecorder()
+	if err := pages.Checkout(viewmodels.CustomerPage{Route: "/checkout", PaymentReady: true}).Render(t.Context(), response); err != nil {
+		t.Fatal(err)
+	}
+	body := response.Body.String()
+	if strings.Contains(body, `id="checkout-address-form"`) || strings.Contains(body, `data-backend-action="checkout"`) || !strings.Contains(body, "Continue shopping") {
+		t.Fatal("empty checkout exposed a purchase action or lost its next step")
 	}
 }

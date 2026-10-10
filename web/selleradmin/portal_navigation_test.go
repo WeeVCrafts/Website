@@ -15,12 +15,12 @@ func TestSellerStaffNavigationReflectsAssignedPermissions(t *testing.T) {
 		t.Fatalf("render seller portal: %v", err)
 	}
 	body := recorder.Body.String()
-	for _, visible := range []string{"Asha Staff", "Seller Staff", "Asha&#39;s Studio", "/seller-admin/products", "/seller-admin/inventory", "Switch workspace"} {
+	for _, visible := range []string{"Asha Staff", "Seller Staff", "Asha&#39;s Studio", "/seller-admin/products", "/seller-admin/inventory"} {
 		if !strings.Contains(body, visible) {
 			t.Errorf("seller staff portal is missing %q", visible)
 		}
 	}
-	for _, hidden := range []string{"Team &amp; Permissions", "Create product draft", "/seller-admin/orders"} {
+	for _, hidden := range []string{"Switch workspace", "/workspaces", "Team &amp; Permissions", "Create product draft", "/seller-admin/orders"} {
 		if strings.Contains(body, hidden) {
 			t.Errorf("seller staff portal exposes unassigned action %q", hidden)
 		}

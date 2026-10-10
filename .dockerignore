@@ -10,3 +10,8 @@ Phases
 *.png
 *.exe
 node_modules
+firebase-debug.log*
+.firebase
+*-adminsdk-*.json
+*service-account*.json
+firebase-admin*.json

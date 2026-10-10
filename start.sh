@@ -20,16 +20,20 @@ fi
 
 # 2. Detect container engine: podman-compose, podman, or docker
 COMPOSE_CMD=""
+CONTAINER_ENGINE=""
 if command -v podman-compose >/dev/null 2>&1; then
     COMPOSE_CMD="podman-compose"
+    CONTAINER_ENGINE="podman"
     echo "[+] Using Podman Compose ($COMPOSE_CMD)"
 elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
     COMPOSE_CMD="docker compose"
+    CONTAINER_ENGINE="docker"
     echo "[+] Using Docker Compose ($COMPOSE_CMD)"
 elif command -v podman >/dev/null 2>&1; then
     # In RHEL, podman compose is often run via 'podman compose' or podman-compose
     if podman compose version >/dev/null 2>&1; then
         COMPOSE_CMD="podman compose"
+        CONTAINER_ENGINE="podman"
         echo "[+] Using Podman Compose ($COMPOSE_CMD)"
     fi
 fi
@@ -41,8 +45,16 @@ if [ -z "$COMPOSE_CMD" ]; then
     exit 1
 fi
 
-echo "[+] Starting services (PostgreSQL, Redis, Search, MinIO, Mailpit, Web)..."
+echo "[+] Starting services (PostgreSQL, Redis, Search, MinIO, Mailpit, Adminer, Uptime Kuma, Web)..."
 $COMPOSE_CMD up -d --build
+
+# The setup service is idempotent; inspect its exit status on Docker/Podman.
+SETUP_CONTAINER="$($COMPOSE_CMD ps -a -q uptime-kuma-setup)"
+SETUP_EXIT="$("$CONTAINER_ENGINE" wait "$SETUP_CONTAINER")"
+if [ "$SETUP_EXIT" != "0" ]; then
+    $COMPOSE_CMD logs uptime-kuma-setup
+    exit 1
+fi
 
 echo "[+] Waiting for database to become healthy..."
 sleep 5
@@ -54,5 +66,7 @@ echo "========================================================"
 echo " Weevcrafts is LIVE!"
 echo " -> Storefront:     http://localhost:8080"
 echo " -> Mailpit (Email):http://localhost:8025"
+echo " -> Adminer:        http://localhost:8082"
+echo " -> Uptime Kuma:    http://localhost:3001"
 echo " -> MinIO Console:  http://localhost:9001 (wecratfs / wecratfs-local-only)"
 echo "========================================================"

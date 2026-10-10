@@ -141,7 +141,22 @@ func (r *ManagementRepository) MutateManagement(ctx context.Context, actorID int
 			if m.Action != "save" {
 				return ports.ErrManagementValidation
 			}
-			for key, value := range map[string]string{"support_email": m.Settings.SupportEmail, "shipping_information": m.Settings.ShippingInformation} {
+			values := map[string]string{"support_email": m.Settings.SupportEmail, "shipping_information": m.Settings.ShippingInformation}
+			if m.SaveSocialLinks {
+				var allowed bool
+				if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles r ON r.user_id=u.id WHERE u.id=$1 AND u.status='active' AND r.role_slug='super_admin')`, actorID).Scan(&allowed); err != nil {
+					return err
+				}
+				if !allowed {
+					return ports.ErrForbidden
+				}
+				values["instagram_url"] = m.Settings.InstagramURL
+				values["facebook_url"] = m.Settings.FacebookURL
+				values["youtube_url"] = m.Settings.YouTubeURL
+				values["x_url"] = m.Settings.XURL
+				values["whatsapp_url"] = m.Settings.WhatsAppURL
+			}
+			for key, value := range values {
 				encoded, _ := json.Marshal(value)
 				if _, err = tx.Exec(ctx, `INSERT INTO system_settings(setting_key,setting_value,updated_by) VALUES($1,$2,$3) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_by=EXCLUDED.updated_by,updated_at=NOW()`, key, encoded, actorID); err != nil {
 					return err
@@ -180,7 +195,7 @@ func (r *ManagementRepository) StorefrontSettings(ctx context.Context) (ports.St
 // Call at request time so edits take effect without restarting the application.
 func ReadStorefrontSettings(ctx context.Context, pool *pgxpool.Pool) (ports.StorefrontSettings, error) {
 	settings := ports.StorefrontSettings{SupportEmail: "support@weevcrafts.com", ShippingInformation: "Delivery options and shipping charges are shown at checkout."}
-	rows, err := pool.Query(ctx, `SELECT setting_key,setting_value FROM system_settings WHERE setting_key IN ('support_email','shipping_information')`)
+	rows, err := pool.Query(ctx, `SELECT setting_key,setting_value FROM system_settings WHERE setting_key IN ('support_email','shipping_information','instagram_url','facebook_url','youtube_url','x_url','whatsapp_url')`)
 	if err != nil {
 		return settings, err
 	}
@@ -195,10 +210,21 @@ func ReadStorefrontSettings(ctx context.Context, pool *pgxpool.Pool) (ports.Stor
 		if err := json.Unmarshal(encoded, &value); err != nil {
 			return settings, err
 		}
-		if key == "support_email" {
+		switch key {
+		case "support_email":
 			settings.SupportEmail = value
-		} else {
+		case "shipping_information":
 			settings.ShippingInformation = value
+		case "instagram_url":
+			settings.InstagramURL = value
+		case "facebook_url":
+			settings.FacebookURL = value
+		case "youtube_url":
+			settings.YouTubeURL = value
+		case "x_url":
+			settings.XURL = value
+		case "whatsapp_url":
+			settings.WhatsAppURL = value
 		}
 	}
 	return settings, rows.Err()

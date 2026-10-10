@@ -5,6 +5,11 @@
 /tmp/
 *.exe
 node_modules/
+firebase-debug.log*
+.firebase/
+*-adminsdk-*.json
+*service-account*.json
+firebase-admin*.json
 test-results/
 /admin-qa/profile*/
 /admin-qa/chrome-profile*/

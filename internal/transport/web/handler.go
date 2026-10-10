@@ -661,15 +661,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func authRedirectDestination(roles []domainidentity.Role, next string) string {
-	destination := applicationauth.LoginDestination(roles)
-	if destination != "/" && destination != "/account" {
-		return destination
-	}
-	candidate := strings.TrimSpace(next)
-	if !strings.HasPrefix(candidate, "/") || strings.HasPrefix(candidate, "//") || strings.Contains(candidate, "\\") {
-		return destination
-	}
-	return candidate
+	return applicationauth.RedirectDestination(roles, next)
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {

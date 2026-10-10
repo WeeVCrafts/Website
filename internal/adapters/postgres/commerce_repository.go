@@ -52,6 +52,13 @@ func ensureCatalogName(ctx context.Context, tx pgx.Tx, table, slug, name string)
 func (r *CommerceRepository) EnsureSeller(ctx context.Context, ownerUserID int64, displayName string) (domaincommerce.Seller, error) {
 	var seller domaincommerce.Seller
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		var allowed bool
+		if err := tx.QueryRow(transactionContext, `SELECT status='active' AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller_owner') FROM users WHERE id=$1 FOR UPDATE`, ownerUserID).Scan(&allowed); err != nil {
+			return err
+		}
+		if !allowed {
+			return ports.ErrForbidden
+		}
 		row := tx.QueryRow(transactionContext, `
 			INSERT INTO sellers (owner_user_id, display_name, status)
 			VALUES ($1, $2, 'pending')
@@ -60,8 +67,7 @@ func (r *CommerceRepository) EnsureSeller(ctx context.Context, ownerUserID int64
 		if err := row.Scan(&seller.ID, &seller.OwnerUserID, &seller.DisplayName, &seller.Status); err != nil {
 			return err
 		}
-		_, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'seller_owner') ON CONFLICT DO NOTHING`, ownerUserID)
-		return err
+		return nil
 	})
 	return seller, err
 }

@@ -1,5 +1,7 @@
 package pages
 
+import "github.com/wecratfs/commerce/web/components"
+
 import (
   "strconv"
 
@@ -24,6 +26,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
           <div class="auth-links"><a href="/forgot-password">Forgot your password?</a><span>New here? <a href="/register">Create an account</a></span></div>
+          @FirebaseGoogle()
         } else if p.Route == "/register" {
           @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
           <form class="utility-form" action="/register" method="post" data-backend-auth="register">
@@ -37,6 +40,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
           <div class="auth-links"><span>Already have an account? <a href="/login">Sign in</a></span></div>
+          @FirebaseGoogle()
         } else if p.Route == "/forgot-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Reset your password", "Enter your email and we will guide you through the next step.")
           <form class="utility-form" action="/forgot-password" method="post" data-backend-auth="recover">
@@ -71,6 +75,19 @@ templ AuthHeading(kicker, title, copy string) {
   <p class="eyebrow">{ kicker }</p>
   <h1>{ title }</h1>
   <p class="utility-lead">{ copy }</p>
+}
+
+templ FirebaseGoogle() {
+  <div class="firebase-google-panel" data-firebase-google-panel hidden>
+    <p class="auth-divider">or continue with Google</p>
+    <label class="check-line"><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
+    <button class="outline-button full" type="button"><span aria-hidden="true">G</span> Continue with Google</button>
+  </div>
+  <form class="utility-form firebase-link-panel" data-firebase-link hidden>
+    <h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
+    <label>Current Weevcrafts password<input type="password" autocomplete="current-password" required/></label>
+    <button class="primary-button full" type="submit">Connect account securely</button>
+  </form>
 }
 
 templ InfoPage(p viewmodels.CustomerPage) {
@@ -121,7 +138,7 @@ templ ContactContent(p viewmodels.CustomerPage) {
           <button class="primary-button" type="submit">Send support request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
         </form>
       } else if p.Authenticated {
-        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Support requests are available from customer accounts. Choose your customer workspace from <a href="/workspaces">the workspace switcher</a>.</p></div>
+        <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Support requests are available from customer accounts. Sign in with a customer account to contact support.</p></div>
       } else {
         <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Sign in to a customer account to create and track support requests.</p></div>
         <a class="primary-button" href="/login?next=%2Fcontact">Sign in to contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
@@ -151,6 +168,10 @@ templ PolicyContent(p viewmodels.CustomerPage) {
       @PolicySection("Questions and disputes", "Start with customer care so we can understand the situation and help the relevant parties.")
     } else if p.Route == "/privacy" {
       @PolicySection("What we use", "Account, delivery, order and preference information helps us provide the service. Support teams only receive the context they need.")
+      @PolicySection("Your profile", "We save your name and phone number as account details. A profile photo is optional and stays private to your signed-in account. You can replace or remove it from Profile.")
+      @PolicySection("Customer sign-in", "Google Firebase processes customer email/password and Google sign-in. Your email and sign-in profile name are shared with this identity service. Profile phone numbers, private photos and commerce records remain in our application storage.")
+      @PolicySection("Optional browser services", "Browser notifications require your permission and use a private delivery token to send generic account-update notices. You can disable them from Notifications. Optional Firebase performance diagnostics collect technical page, device and network information only after you enable them for a visit; we do not add your name, email, phone or order details to diagnostics.")
+      @PolicySection("Account deletion", "Deletion clears your profile phone and photo and removes saved account details. Order, payment and consent history may be retained under the applicable record-retention requirements.")
       @PolicySection("Your choices", "Visit privacy preferences to review communication choices or request access, correction or deletion.")
       @PolicySection("Questions or grievances", "Contact our team with a privacy question and we will route it correctly.")
     } else {
@@ -177,12 +198,14 @@ templ AccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/addresses" {
         @AddressPanel()
       } else if p.Route == "/account/notifications" {
+        @FirebasePushPanel()
         @NotificationPanel()
       } else if p.Route == "/account/sessions" {
         @LiveSessions(p)
       } else if p.Route == "/account/security" {
         @SecurityPanel()
       } else if p.Route == "/account/privacy" {
+        @FirebaseDiagnosticsPanel()
         @PrivacyPanel()
       } else if p.Route == "/payments" {
         @PaymentPanel()
@@ -289,7 +312,7 @@ templ ReviewPanel() {
 
 templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
   <aside class="account-sidebar">
-    <div class="profile-mini"><div class="avatar">{ customerInitials(p.UserName) }</div><b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
+    <div class="profile-mini">@CustomerAvatar(p)<b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
     <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
     <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
     <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
@@ -302,13 +325,13 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
     <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
-    <a href="/workspaces"><span class="material-symbols-outlined" aria-hidden="true">apps</span> Switch workspace</a>
+
   </aside>
 }
 
 templ LiveAccount(p viewmodels.CustomerPage) {
   @Document(p) {
-    <section class="account-welcome"><div class="container"><p class="eyebrow">YOUR WEEVCRAFTS HOME</p><h1>Welcome back,<br/><em>{ p.UserName }</em></h1><p>Glad to have you here. Together, we support artisans and keep traditions alive.</p></div><img src="/assets/images/customer/maker-mithila.webp" alt="Artisan at work" width="1254" height="1254"/></section>
+    <section class="container page-intro account-overview-intro"><h1>Your account</h1><p>Welcome back, { p.UserName }. Track your orders and manage your details.</p></section>
     <section class="container account-layout">
       @LiveAccountSidebar(p, "account")
       <div class="account-content">
@@ -317,19 +340,20 @@ templ LiveAccount(p viewmodels.CustomerPage) {
         }
         <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>{ p.ReviewCount }</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
         <div class="account-cards">
+          <section class="account-wide account-order-priority"><h2>Your orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+            if len(p.Orders) > 0 {
+              @HistoryRows(accountOrders(p.Orders))
+            } else {
+              <p>Your orders will appear here after checkout.</p>
+            }
+          </section>
+
           <section id="profile"><h2>Profile information</h2><a href="/account/profile">Edit <span class="material-symbols-outlined" aria-hidden="true">edit</span></a><p><b>{ p.UserName }</b><br/>{ p.UserEmail }<br/><small>Member since { p.MemberSince }</small></p></section>
           <section id="addresses"><h2>Saved addresses</h2><a href="/account/addresses">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
             if p.Address.Lines != "" {
               <p><b>{ p.Address.Name }</b><br/>{ p.Address.Lines }</p>
             } else {
-              <p>No saved addresses yet.<br/><a href="/checkout">Add one during checkout</a></p>
-            }
-          </section>
-          <section><h2>Recent orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
-            if len(p.Orders) > 0 {
-              @HistoryRows(firstOrderList(p.Orders))
-            } else {
-              <p>Your orders will appear here after checkout.</p>
+              <p>No saved addresses yet.<br/><a href="/account/addresses">Add a delivery address</a></p>
             }
           </section>
           <section><h2>Returns &amp; refunds</h2><a href="/returns">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>View return requests linked to your orders.</p></section>
@@ -368,7 +392,7 @@ templ LiveTracking(p viewmodels.CustomerPage) {
     <section class="container tracking-layout"><div class="tracking-main">
       <form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value={ p.SelectedOrder.Number } placeholder="Enter your order number" required/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form>
       if p.SelectedOrder.Number != "" {
-        <article class="tracking-card-main"><header><div><span class="badge">{ p.SelectedOrder.Status }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
+        <article class="tracking-card-main"><header><div><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
       } else {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
       }
@@ -418,7 +442,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
       if p.Route == "/account/profile" {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR DETAILS</p><h2>Profile information</h2></div><span class="material-symbols-outlined" aria-hidden="true">person</span></div><form class="utility-form two-column" action="/account/profile" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Full name<input name="name" value={ p.UserName } minlength="2" maxlength="100" required/></label><label>Email address<input name="email" type="email" value={ p.UserEmail } disabled/></label><label>Member since<input value={ p.MemberSince } disabled/></label><button class="primary-button" type="submit">Save changes</button></form><p class="muted">Email changes require verification. Contact support if you need to update your email address.</p></section>
+        @ProfileEditor(p)
       } else if p.Route == "/account/addresses" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">DELIVERY DETAILS</p><h2>Saved addresses</h2></div><span class="material-symbols-outlined" aria-hidden="true">location_on</span></div>
           if len(p.Addresses) > 0 {
@@ -451,8 +475,12 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/security" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
+        @FirebasePushPanel()
         <section class="utility-card account-panel"><h2>Your updates</h2>
-          if len(p.Notifications) == 0 {
+          if p.ProfileIncomplete {
+            <article class="profile-reminder"><h3>Complete your profile</h3><p>Add your name and phone number to keep your account details up to date.</p><a class="primary-button" href="/account/profile">Complete your profile</a></article>
+          }
+          if len(p.Notifications) == 0 && !p.ProfileIncomplete {
             <p>No notifications yet.</p>
           }
           for _, notification := range p.Notifications {
@@ -475,6 +503,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/support" {
         @CustomerSupportPanel(p)
       } else if p.Route == "/account/privacy" {
+        @FirebaseDiagnosticsPanel()
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">YOUR CHOICES</p><h2>Privacy preferences</h2></div><span class="material-symbols-outlined" aria-hidden="true">lock</span></div><p>Review or change saved consent, manage email marketing, and submit data access, correction, grievance, or account deletion requests.</p><a class="outline-button" href="/privacy/center">Manage privacy choices and data requests</a><a class="outline-button" href="/privacy">Read the privacy policy</a></section>
       } else if p.Route == "/account/reviews" {
         <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">SHARE THE LOVE</p><h2>Reviews</h2></div><span class="material-symbols-outlined" aria-hidden="true">reviews</span></div>
@@ -518,6 +547,14 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       }
     </div></section>
   }
+}
+
+templ FirebasePushPanel() {
+  <section class="utility-card account-panel" data-firebase-push-panel hidden><h2>Browser notifications</h2><p>Receive private account updates on this signed-in browser. Personal order details stay inside your account.</p><div class="privacy-actions"><button class="primary-button" type="button" data-push-enable>Enable notifications</button><button class="outline-button" type="button" data-push-disable hidden>Disable notifications</button><button class="outline-button" type="button" data-push-test hidden>Send a test update</button></div></section>
+}
+
+templ FirebaseDiagnosticsPanel() {
+  <section class="utility-card account-panel" data-firebase-diagnostics hidden><h2>Optional performance diagnostics</h2><p>Help measure page speed during this visit. Firebase receives technical performance data. Your name, email, phone and order details are not added to diagnostics.</p><button class="outline-button" type="button">Enable for this visit</button></section>
 }
 
 templ AddressFormFields(address viewmodels.Address, csrfToken string) {

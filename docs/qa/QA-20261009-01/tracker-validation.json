@@ -1,0 +1,12 @@
+{
+  "valid": true,
+  "columns": 24,
+  "executionRows": 754,
+  "cases": 373,
+  "counts": {
+    "Passed": 124,
+    "Not run": 591,
+    "Failed": 1,
+    "Blocked": 38
+  }
+}
