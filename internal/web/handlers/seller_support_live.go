@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
 	"errors"
 	"mime/multipart"
@@ -34,7 +35,7 @@ func (h *LivePortalHandler) serveSellerSupport(w http.ResponseWriter, r *http.Re
 		return true
 	}
 	var allowed bool
-	err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM sellers s JOIN users u ON u.id=s.owner_user_id JOIN user_roles ur ON ur.user_id=u.id AND ur.role_slug='seller_owner' WHERE s.owner_user_id=$1 AND u.status='active' AND s.status NOT IN ('suspended','closed'))`, session.UserID).Scan(&allowed)
+	err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM sellers s JOIN users u ON u.id=s.owner_user_id JOIN user_roles ur ON ur.user_id=u.id AND ur.role_slug='seller' WHERE s.owner_user_id=$1 AND u.status='active' AND s.status NOT IN ('suspended','closed'))`, session.UserID).Scan(&allowed)
 	if err != nil {
 		http.Error(w, "support unavailable", http.StatusServiceUnavailable)
 		return true
@@ -132,7 +133,26 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 	page.Portal.UserEmail = h.userEmail(r, userID)
 	page.Portal.Initials = initials(page.Portal.DisplayName)
 	page.Portal.CSRFToken = csrf
-	page.Portal.RoleLabel = "Seller Owner"
+	page.Portal.RoleLabel = "Seller"
+	page.RequestKey = rand.Text()
+	before, _ := strconv.ParseInt(r.URL.Query().Get("coordination_before"), 10, 64)
+	page.QueueStatus = r.URL.Query().Get("coordination_status")
+	confirmations, confirmationErr := h.confirmationService().Queue(r.Context(), userID, 0, true, page.QueueStatus, before)
+	if errors.Is(confirmationErr, applicationcommerce.ErrInvalidSupportTicket) {
+		http.Error(w, "Invalid request status or cursor", http.StatusBadRequest)
+		return
+	}
+	if confirmationErr != nil {
+		http.Error(w, "seller confirmations could not be loaded", http.StatusServiceUnavailable)
+		return
+	}
+	page.Confirmations = confirmations
+	if len(page.Confirmations) > 50 {
+		page.Confirmations = page.Confirmations[:50]
+		values := r.URL.Query()
+		values.Set("coordination_before", strconv.FormatInt(page.Confirmations[49].ID, 10))
+		page.QueueNext = "/seller-admin/support?" + values.Encode()
+	}
 	page.Portal.Title = "Seller support"
 	page.Portal.Subtitle = "Contact marketplace support and follow your saved conversations."
 	page.Portal.CanProducts = true
@@ -143,7 +163,7 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 	page.Portal.CanFulfill = true
 	page.Portal.CanReturns = true
 	page.Portal.CanReports = true
-	page.Portal.CanTeam = true
+	page.Portal.CanManageStore = true
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	filter := ` WHERE t.user_id=$1 AND ($2='' OR t.status=$2) AND ($3='' OR POSITION(lower($3) IN lower(t.ticket_number||' '||t.subject||' '||t.message||' '||COALESCE(o.order_number,'')))>0 OR EXISTS(SELECT 1 FROM support_ticket_messages sm WHERE sm.ticket_id=t.id AND POSITION(lower($3) IN lower(sm.body))>0))`
 	if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id`+filter, userID, page.Status, query).Scan(&page.Total); err != nil {
@@ -216,7 +236,7 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 			}
 			message.Created = created.Format("2 Jan 2006, 15:04")
 			message.Role = "You"
-			if role == "support_agent" {
+			if role == "admin" {
 				message.Role = "Support agent"
 			}
 			message.Attachments = supportAttachmentViews(filterSupportMessageAttachments(ticketAttachments, messageID))

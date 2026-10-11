@@ -95,7 +95,10 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
         @SellerNav("earnings", "Earnings", "account_balance_wallet", p.Active, "/seller-admin/earnings")
         @SellerNav("analytics", "Analytics", "bar_chart", p.Active, "/seller-admin/analytics")
       }
-      if p.CanTeam {
+      if p.CanReturns {
+ @SellerNav("returns", "Returns", "undo", p.Active, "/seller-admin/returns")
+ }
+ if p.CanManageStore {
         @SellerNav("support", "Support", "support_agent", p.Active, "/seller-admin/support")
         <a class="seller-nav-link" href="/seller-admin/settings"><span class="material-symbols-outlined" aria-hidden="true">store</span><span>Store profile</span></a>
       }

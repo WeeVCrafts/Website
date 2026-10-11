@@ -102,9 +102,9 @@ func (catalogRepository) ListSellerProducts(context.Context, int64) ([]domaincom
 func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		10: {domainidentity.RoleCustomer: true},
-		11: {domainidentity.RoleSellerOwner: true},
-		13: {domainidentity.RoleSellerStaff: true},
-		12: {domainidentity.RoleMarketplaceAdmin: true},
+		11: {domainidentity.RoleSeller: true},
+		13: {domainidentity.Role("seller_staff"): true},
+		12: {domainidentity.RoleAdmin: true},
 	}, permissions: map[int64]map[string]bool{13: {domaincommerce.SellerPermissionProductWrite: true}}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
 	if _, err := service.EnsureSeller(context.Background(), 10, "Customer self promotion"); !errors.Is(err, ports.ErrForbidden) {
@@ -131,7 +131,7 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 func TestCatalogServiceRestrictsAdministratorProductManagementToSuperAdmin(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		10: {domainidentity.RoleCustomer: true},
-		12: {domainidentity.RoleMarketplaceAdmin: true},
+		12: {domainidentity.RoleAdmin: true},
 		14: {domainidentity.RoleSuperAdmin: true},
 	}, permissions: map[int64]map[string]bool{}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
@@ -154,8 +154,8 @@ func TestCatalogServiceRestrictsAdministratorProductManagementToSuperAdmin(t *te
 
 func TestCatalogServiceRequiresProductWriteToArchiveSellerProducts(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		11: {domainidentity.RoleSellerOwner: true},
-		12: {domainidentity.RoleSellerStaff: true},
+		11: {domainidentity.RoleSeller: true},
+		12: {domainidentity.Role("seller_staff"): true},
 	}, permissions: map[int64]map[string]bool{
 		12: {domaincommerce.SellerPermissionProductRead: true},
 	}}
@@ -227,18 +227,18 @@ func TestNormalizeDraftEnforcesTextFieldLimits(t *testing.T) {
 
 func TestCatalogServiceProtectsSellerDraftEditing(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		11: {domainidentity.RoleSellerOwner: true},
-		12: {domainidentity.RoleSellerStaff: true},
+		11: {domainidentity.RoleSeller: true},
+		12: {domainidentity.Role("seller_staff"): true},
 	}, permissions: map[int64]map[string]bool{
 		12: {domaincommerce.SellerPermissionProductRead: true, domaincommerce.SellerPermissionProductWrite: true},
 	}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
 
-	if _, err := service.GetSellerProduct(context.Background(), 12, 1); err != nil {
-		t.Fatalf("seller staff with product-read permission was denied: %v", err)
+	if _, err := service.GetSellerProduct(context.Background(), 12, 1); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("retired staff read was accepted: %v", err)
 	}
-	if _, err := service.UpdateDraft(context.Background(), 12, 1, validDraft()); err != nil {
-		t.Fatalf("seller staff with product-write permission was denied: %v", err)
+	if _, err := service.UpdateDraft(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("retired staff write was accepted: %v", err)
 	}
 	checker.permissions[12][domaincommerce.SellerPermissionProductWrite] = false
 	if _, err := service.UpdateDraft(context.Background(), 12, 1, validDraft()); !errors.Is(err, ports.ErrForbidden) {
@@ -254,8 +254,8 @@ func TestCatalogServiceProtectsSellerDraftEditing(t *testing.T) {
 
 func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		11: {domainidentity.RoleSellerOwner: true},
-		12: {domainidentity.RoleSellerStaff: true},
+		11: {domainidentity.RoleSeller: true},
+		12: {domainidentity.Role("seller_staff"): true},
 	}, permissions: map[int64]map[string]bool{
 		12: {domaincommerce.SellerPermissionProductRead: true},
 	}}
@@ -269,18 +269,18 @@ func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *test
 		t.Fatalf("product-only staff could create variant inventory: %v", err)
 	}
 	input.InitialStock = 0
-	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); err != nil {
+	if _, err := service.CreateSellerProductVariant(context.Background(), 11, 5, input); err != nil {
 		t.Fatalf("product writer could not create a zero-stock variant: %v", err)
 	}
-	if _, err := service.UpdateSellerProductVariant(context.Background(), 12, 5, 1, input); err != nil {
+	if _, err := service.UpdateSellerProductVariant(context.Background(), 11, 5, 1, input); err != nil {
 		t.Fatalf("product writer could not update a variant: %v", err)
 	}
-	if err := service.ArchiveSellerProductVariant(context.Background(), 12, 5, 1, "retire blue option"); err != nil {
+	if err := service.ArchiveSellerProductVariant(context.Background(), 11, 5, 1, "retire blue option"); err != nil {
 		t.Fatalf("product writer could not archive a variant: %v", err)
 	}
 	checker.permissions[12][domaincommerce.SellerPermissionInventoryWrite] = true
 	input.InitialStock = 3
-	if _, err := service.CreateSellerProductVariant(context.Background(), 12, 5, input); err != nil {
+	if _, err := service.CreateSellerProductVariant(context.Background(), 11, 5, input); err != nil {
 		t.Fatalf("product and inventory writer could not create a stocked variant: %v", err)
 	}
 	input.InitialStock = -1
@@ -298,7 +298,7 @@ func TestCatalogServiceProtectsSellerVariantManagementAndValidatesFields(t *test
 func TestCatalogServiceRestrictsAdminVariantManagementToSuperAdmin(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		10: {domainidentity.RoleCustomer: true},
-		12: {domainidentity.RoleMarketplaceAdmin: true},
+		12: {domainidentity.RoleAdmin: true},
 		14: {domainidentity.RoleSuperAdmin: true},
 	}, permissions: map[int64]map[string]bool{}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)

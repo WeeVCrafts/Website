@@ -1093,8 +1093,8 @@ func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, user
 				return nil, err
 			}
 			role := "You"
-			if authorRole == "support_agent" {
-				role = "Support agent"
+			if authorRole == "admin" || authorRole == "super_admin" || authorRole == "support_agent" {
+				role = "Company support"
 			}
 			message := viewmodels.CustomerSupportMessage{Author: author, Role: role, Body: body, Created: created.Format("2 Jan 2006, 15:04")}
 			if h.supportAttachments != nil {

@@ -205,15 +205,11 @@ func (s *MediaService) canManageProduct(ctx context.Context, userID int64) bool 
 	if s.roles == nil {
 		return true
 	}
-	allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin, domainidentity.RoleSellerOwner)
+	allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin, domainidentity.RoleSeller)
 	if err == nil && allowed {
 		return true
 	}
-	if s.permissions == nil {
-		return false
-	}
-	allowed, err = s.permissions.HasSellerPermission(ctx, userID, domaincommerce.SellerPermissionProductWrite)
-	return err == nil && allowed
+	return false
 }
 
 func (s *MediaService) CleanupExpired(ctx context.Context, limit int) (int, error) {

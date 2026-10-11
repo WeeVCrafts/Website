@@ -14,6 +14,7 @@ var (
 	ErrAuthTokenInvalid    = errors.New("authentication token is invalid or expired")
 	ErrEmailUnavailable    = errors.New("email delivery is unavailable")
 	ErrRoleState           = errors.New("role assignment state is invalid")
+	ErrSellerPendingWork   = errors.New("seller has unfinished orders or returns")
 )
 
 type UserRepository interface {

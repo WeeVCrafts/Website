@@ -225,7 +225,7 @@ func TestMarketplaceAdminCanPreviewUnapprovedProductMedia(t *testing.T) {
 	repository := &mediaLifecycleRepository{record: domaincommerce.MediaRecord{ID: 76, ObjectKey: "products/9/review-image", ContentType: "image/png", ByteSize: 12, Status: "ready"}}
 	storage := &mediaStorage{info: ports.ObjectInfo{ContentType: "image/png", ByteSize: 12}, object: []byte("review-image")}
 	roles := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		111: {domainidentity.RoleMarketplaceAdmin: true},
+		111: {domainidentity.RoleAdmin: true},
 	}}
 	service := NewMediaService(storage, repository, roles)
 

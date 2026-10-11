@@ -20,7 +20,7 @@ func (r *storyRepository) UpdateMakerStory(_ context.Context, _ int64, in domain
 }
 func TestMakerStoryRequiresOwnerAndKeepsMissingContentEmpty(t *testing.T) {
 	r := &storyRepository{}
-	s := NewCatalogServiceWithRoles(r, roleChecker{roles: map[int64]map[domainidentity.Role]bool{1: {domainidentity.RoleSellerOwner: true}}})
+	s := NewCatalogServiceWithRoles(r, roleChecker{roles: map[int64]map[domainidentity.Role]bool{1: {domainidentity.RoleSeller: true}}})
 	in := domaincommerce.MakerStoryInput{DisplayName: " Real studio ", Reason: "Update public name"}
 	if err := s.UpdateMakerStory(t.Context(), 2, in); !errors.Is(err, ports.ErrForbidden) || r.saved != nil {
 		t.Fatal("non-owner could write public story", err)

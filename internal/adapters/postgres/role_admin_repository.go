@@ -76,7 +76,21 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 			return err
 		}
 		if protected && role != domainidentity.RoleSuperAdmin {
+			var others bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.status='active' AND ur.role_slug='super_admin' AND u.id<>$1)`, userID).Scan(&others); err != nil {
+				return err
+			}
+			if !others {
+				return ports.ErrRoleState
+			}
+		}
+		if !domainidentity.ValidRole(role) || sellerID != 0 {
 			return ports.ErrRoleState
+		}
+		if role != domainidentity.RoleSeller {
+			if err := guardSellerRoleExit(transactionContext, tx, userID); err != nil {
+				return err
+			}
 		}
 		// Replacement is atomic: never leave an account with combined privileges.
 		var previousRoles []string
@@ -89,27 +103,10 @@ func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context,
 		if _, err := tx.Exec(transactionContext, `UPDATE seller_users SET status='revoked',updated_at=NOW() WHERE user_id=$1 AND status='active'`, userID); err != nil {
 			return err
 		}
-		if role == domainidentity.RoleSellerOwner {
-			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'active' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO UPDATE SET status='active',updated_at=NOW()`, userID); err != nil {
+		if role == domainidentity.RoleSeller {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'pending' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO NOTHING`, userID); err != nil {
 				return err
 			}
-		}
-		if role == domainidentity.RoleSellerStaff {
-			if sellerID <= 0 {
-				return ports.ErrRoleState
-			}
-			var active bool
-			if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM sellers WHERE id=$1 AND status='active')`, sellerID).Scan(&active); err != nil {
-				return err
-			}
-			if !active {
-				return ports.ErrSellerNotFound
-			}
-			if _, err := tx.Exec(transactionContext, `INSERT INTO seller_users (seller_id,user_id,status,permissions,added_by) VALUES ($1,$2,'active',$3,$4) ON CONFLICT (seller_id,user_id) DO UPDATE SET status='active',permissions=EXCLUDED.permissions,added_by=EXCLUDED.added_by,updated_at=NOW()`, sellerID, userID, []string{"PRODUCT_READ", "ORDER_READ"}, actorID); err != nil {
-				return err
-			}
-		} else if sellerID != 0 {
-			return ports.ErrRoleState
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2)`, userID, string(role)); err != nil {
 			return err
@@ -133,14 +130,8 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
 			return err
 		}
-		if role == domainidentity.RoleSellerStaff {
-			var active bool
-			if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM sellers WHERE id=$1 AND status='active')`, sellerID).Scan(&active); err != nil {
-				return err
-			}
-			if !active {
-				return ports.ErrSellerNotFound
-			}
+		if !domainidentity.ValidRole(role) || sellerID != 0 {
+			return ports.ErrRoleState
 		}
 		if err := tx.QueryRow(transactionContext, `INSERT INTO users (email, display_name, status, email_verified_at) VALUES ($1, $2, 'active', NOW()) RETURNING id`, email, displayName).Scan(&userID); err != nil {
 			if isUniqueViolation(err) {
@@ -154,13 +145,7 @@ func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actor
 		if _, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2)`, userID, string(role)); err != nil {
 			return err
 		}
-		if role == domainidentity.RoleSellerStaff {
-			permissions := []string{"PRODUCT_READ", "ORDER_READ"}
-			if _, err := tx.Exec(transactionContext, `INSERT INTO seller_users (seller_id, user_id, status, permissions, added_by) VALUES ($1, $2, 'active', $3, $4)`, sellerID, userID, permissions, actorID); err != nil {
-				return err
-			}
-		}
-		if role == domainidentity.RoleSellerOwner {
+		if role == domainidentity.RoleSeller {
 			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'pending')`, userID, displayName); err != nil {
 				return err
 			}
@@ -208,6 +193,9 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 			return err
 		}
 		rows.Close()
+		if err := guardSellerRoleExit(transactionContext, tx, userID); err != nil {
+			return err
+		}
 		if actorID == userID || status == "deleted" {
 			return ports.ErrRoleState
 		}

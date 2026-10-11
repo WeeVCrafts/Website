@@ -38,8 +38,8 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 	oldSessionCreated := time.Now().Add(-time.Hour)
 	repository := NewRoleAdministrationRepository(pool)
 	// Correct an ambiguous protected identity without dropping its Super Admin role.
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'customer')`, actorID); err != nil {
-		t.Fatal(err)
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'customer')`, actorID); err == nil {
+		t.Fatal("multiple role assignments accepted")
 	}
 	if err := repository.UpdateRoleAssignment(ctx, actorID, actorID, 0, domainidentity.RoleSuperAdmin, true, "Correct protected role assignment"); err != nil {
 		t.Fatal(err)
@@ -82,7 +82,7 @@ func TestUserChangesInvalidateSessionsAndEmailChangesClearVerification(t *testin
 		t.Fatalf("new session should be active: active=%t err=%v", active, err)
 	}
 
-	if err := repository.UpdateRoleAssignment(ctx, actorID, userID, 0, domainidentity.RoleFinanceOperator, true, "Integration role change"); err != nil {
+	if err := repository.UpdateRoleAssignment(ctx, actorID, userID, 0, domainidentity.RoleAdmin, true, "Integration role change"); err != nil {
 		t.Fatalf("grant role: %v", err)
 	}
 	var count int

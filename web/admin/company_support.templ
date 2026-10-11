@@ -1,0 +1,40 @@
+package admin
+
+import (
+ "fmt"
+ "net/url"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+ "github.com/wecratfs/commerce/web/components"
+ "github.com/wecratfs/commerce/web/supportportal"
+)
+
+templ CompanySupport(p viewmodels.CompanySupportPage) {
+ @AdminDocument(p.Admin) {
+  @supportportal.CaseContent(p.Support,p.Admin.PortalRoot+"/support")
+  if p.Support.SelectedCase.DatabaseID>0 {
+   if p.Support.SelectedCase.Order!="" {
+    <section class="admin-panel coordination support-linked-order" aria-labelledby="case-order-heading">
+     <h2 id="case-order-heading">Linked order { p.Support.SelectedCase.Order }</h2>
+     <dl class="coordination-tracking"><div><dt>Order status</dt><dd>{ components.StatusLabel(p.Support.SelectedCase.OrderStatus) }</dd></div><div><dt>Payment status</dt><dd>{ components.StatusLabel(p.Support.SelectedCase.PaymentStatus) }</dd></div><div><dt>Order total</dt><dd>{ p.Support.SelectedCase.OrderValue }</dd></div></dl>
+     <a class="admin-button" href={ p.Admin.PortalRoot+"/orders?q="+url.QueryEscape(p.Support.SelectedCase.Order) }>Inspect linked order</a>
+    </section>
+   }
+<section class="admin-panel coordination">
+    <h2>Request seller confirmation</h2><p>Only sellers represented in this order can receive this private request.</p>
+if len(p.Sellers)==0 {
+<p>This case has no seller order to confirm.</p>
+} else if p.Support.SelectedCase.Status!="closed" && p.Support.SelectedCase.Status!="resolved" {
+<form method="post" action={ p.Admin.PortalRoot+"/support/confirmations/create" }><input type="hidden" name="csrf_token" value={ p.Admin.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.Support.SelectedCase.DatabaseID) }/><input type="hidden" name="request_key" value={ p.RequestKey }/><label for="confirmation-seller">Seller for this order</label><select id="confirmation-seller" name="seller_id" required>
+for _, seller := range p.Sellers {
+<option value={ fmt.Sprint(seller.ID) }>{ seller.Name }
+</option>
+}
+</select><label for="confirmation-question">What should the seller confirm?</label><textarea id="confirmation-question" name="message" rows="4" maxlength="4000" required></textarea><button type="submit" class="admin-button primary">Send private request</button></form>
+} else {
+<p>Resolved or closed cases cannot receive new requests.</p>
+}
+   </section>
+}
+  @components.SellerConfirmations(p.Confirmations,p.Admin.PortalRoot+"/support",p.Admin.CSRFToken,p.RequestKey,false,p.QueueStatus,p.QueueNext,p.Support.SelectedCase.DatabaseID)
+ }
+}

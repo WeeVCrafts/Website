@@ -10,7 +10,7 @@ import (
 func (r *CommerceRepository) ListAdminOrders(ctx context.Context, actorID int64, limit int) ([]domaincommerce.AdminOrder, error) {
 	var allowed bool
 	if err := r.pool.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ('marketplace_admin', 'operations_returns', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
+		SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ('admin', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
 		return nil, err
 	}
 	if !allowed {

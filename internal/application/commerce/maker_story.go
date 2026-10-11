@@ -15,7 +15,7 @@ type makerStoryRepository interface {
 }
 
 func (s *CatalogService) UpdateMakerStory(ctx context.Context, ownerID int64, input domaincommerce.MakerStoryInput) error {
-	if ownerID <= 0 || !s.allowed(ctx, ownerID, domainidentity.RoleSellerOwner) {
+	if ownerID <= 0 || !s.allowed(ctx, ownerID, domainidentity.RoleSeller) {
 		return ports.ErrForbidden
 	}
 	input.DisplayName = strings.TrimSpace(input.DisplayName)

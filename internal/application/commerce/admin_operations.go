@@ -21,7 +21,7 @@ func (s *AdminOperationsService) ListOrders(ctx context.Context, actorID int64) 
 	if actorID <= 0 || s.repository == nil || s.roles == nil {
 		return nil, ports.ErrForbidden
 	}
-	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleOperations, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	if err != nil || !ok {
 		return nil, ports.ErrForbidden
 	}

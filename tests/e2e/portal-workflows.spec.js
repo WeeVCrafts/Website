@@ -67,7 +67,7 @@ async function signIn(page, email, landing, passwordValue = password) {
   await page.goto("/login");
   await page.locator("#page input[name=\"email\"]").fill(email);
   await page.locator("#page input[name=\"password\"]").fill(passwordValue);
-  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.getByRole("button", { name: "Continue with email" }).click();
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""), { timeout: 30_000 });
   if (landing === "/account") await page.goto("/account");
 }
@@ -117,18 +117,10 @@ async function createMockPaidOrder(page, email) {
 async function submitRoleChange(card, role, action, reason, sellerID = "") {
   const form = card.locator("form.role-assignment-form");
   await form.locator('select[name="role"]').selectOption(role);
-  if (role === "seller_staff") {
-    const seller = form.locator('select[name="seller_id"]');
-    await expect(seller).toBeVisible();
-    if (sellerID) {
-      await seller.selectOption(sellerID);
-    } else {
-      await seller.selectOption({ index: 1 });
-    }
-  }
   // Role changes replace the assigned role; cleanup restores the customer role.
   if (action === "revoke") await form.locator('select[name="role"]').selectOption('customer');
   await form.locator('input[name="reason"]').fill(reason);
+  await form.locator('input[name="confirm"]').check();
   await form.getByRole("button", { name: "Save role change" }).click();
   if (action === "grant") {
     await expect(card.locator(".role-badges")).toContainText(role);
@@ -201,16 +193,16 @@ test("role replacement routes to one portal and removes switching", async ({ bro
   const admin = await superContext.newPage();
   try {
     await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
-    await admin.goto("/super-admin/security");
+    await admin.goto("/super-admin/users");
     const card = admin.locator(".role-assignment-card").filter({ hasText: "demo.customer08@weevcrafts.local" });
-    await submitRoleChange(card, "finance_operator", "grant", "Local role replacement verification");
+    await submitRoleChange(card, "admin", "grant", "Local role replacement verification");
     const customer = await targetContext.newPage();
-    await signIn(customer, "demo.customer08@weevcrafts.local", "/finance-portal");
+    await signIn(customer, "demo.customer08@weevcrafts.local", "/admin");
     await expect(customer.locator('a[href="/workspaces"]')).toHaveCount(0);
     await customer.goto("/workspaces");
-    await expect(customer).toHaveURL(/\/finance-portal\/?$/);
+    await expect(customer).toHaveURL(/\/admin\/?$/);
   } finally {
-    await admin.goto("/super-admin/security");
+    await admin.goto("/super-admin/users");
     const card = admin.locator(".role-assignment-card").filter({ hasText: "demo.customer08@weevcrafts.local" });
     await submitRoleChange(card, "customer", "grant", "Restore customer role after verification");
     await targetContext.close();
@@ -295,7 +287,7 @@ test("registration, email verification, password recovery and login complete end
     await page.locator('#page input[name="email"]').fill(email);
     await page.locator('#page input[name="password"]').fill(recoveredPassword);
     await page.locator('#page input[name="remember"]').check();
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByRole("button", { name: "Continue with email" }).click();
     await page.waitForURL(/\/products\/?$/);
     const sessionCookie = (await page.context().cookies()).find(cookie => cookie.name === "wecratfs_session");
     expect(sessionCookie).toBeTruthy();
@@ -639,13 +631,13 @@ test("customer seller follows persist and seller catalog sorting is applied", as
   }
 });
 
-test("seller owner profile edits persist while seller staff remain blocked", async ({ browser }) => {
+test("seller profile edits persist while customers remain blocked", async ({ browser }) => {
   test.skip(!localMutationTarget, "Seller profile mutations are restricted to the local test deployment.");
   const suffix = Date.now().toString();
   const ownerContext = await browser.newContext();
-  const staffContext = await browser.newContext();
+  const customerContext = await browser.newContext();
   const owner = await ownerContext.newPage();
-  const staff = await staffContext.newPage();
+  const customer = await customerContext.newPage();
   let originalName = "";
   let restored = false;
 
@@ -672,11 +664,11 @@ test("seller owner profile edits persist while seller staff remain blocked", asy
     await owner.goto("/seller-admin/settings");
     await expect(owner.locator('form[action="/seller-admin/settings"] input[name="display_name"]')).toHaveValue(updatedName);
 
-    await signIn(staff, "demo.staff01@weevcrafts.local", "/seller-admin");
-    const staffSettings = await staff.request.get("/seller-admin/settings", { maxRedirects: 0 });
-    expect(staffSettings.status()).toBe(403);
-    const staffMutation = await staff.request.post("/seller-admin/settings", { form: { display_name: "Unauthorized QA Edit", reason: "Should be rejected" } });
-    expect(staffMutation.status()).toBe(403);
+    await signIn(customer, "demo.customer03@weevcrafts.local", "/account");
+    const customerSettings = await customer.request.get("/seller-admin/settings", { maxRedirects: 0 });
+    expect(customerSettings.status()).toBe(403);
+    const customerMutation = await customer.request.post("/seller-admin/settings", { form: { display_name: "Unauthorized QA Edit", reason: "Should be rejected" } });
+    expect(customerMutation.status()).toBe(403);
 
     await saveProfile(originalName, "Restore seller profile after local verification");
     restored = true;
@@ -687,265 +679,23 @@ test("seller owner profile edits persist while seller staff remain blocked", asy
       } catch {}
     }
     await ownerContext.close();
-    await staffContext.close();
+    await customerContext.close();
   }
 });
 
-test("super admin logout and user lifecycle work end to end", async ({ browser }) => {
-  test.skip(!localMutationTarget, "User management mutations are restricted to the local test deployment.");
-  test.setTimeout(420_000);
-
-  const suffix = Date.now().toString();
-  const email = `qa.role.${suffix}@example.test`;
-  const updatedEmail = `qa.updated.${suffix}@example.test`;
-  const passwordForNewUser = "QA-Role-Setup-2026!";
-  const passwordAfterReset = "QA-Role-Updated-2026!";
-  const adminContext = await browser.newContext();
-  const userContext = await browser.newContext();
-  const ownerContext = await browser.newContext();
-  const admin = await adminContext.newPage();
-  let owner;
-  let accountCreated = false;
-  let accountDeleted = false;
-
-  try {
-    await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
-    await admin.goto("/super-admin/security");
-    await expect(admin.getByRole("button", { name: "Log out" })).toBeVisible();
-    await admin.getByRole("button", { name: "Log out" }).click();
-    await expect(admin).toHaveURL(new URL("/", target).href);
-    await admin.goto("/super-admin/security");
-    await expect(admin).toHaveURL(/\/login\?/);
-    await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
-
-    await admin.goto("/super-admin/security");
-    const oldQACards = admin.locator(".role-assignment-card").filter({ hasText: /qa\.role\.\d+@example\.test/ });
-    while (await oldQACards.count()) {
-      await deleteRoleUser(admin, oldQACards.first(), "Remove account left by an interrupted local browser run");
-    }
-    const createForm = admin.locator("form.role-user-create-form");
-    await createForm.locator('input[name="display_name"]').fill(`QA Finance ${suffix}`);
-    await createForm.locator('input[name="email"]').fill(email);
-    await createForm.locator('input[name="password"]').fill(passwordForNewUser);
-    const initialRole = createForm.locator('select[name="role"]');
-    await initialRole.selectOption("seller_staff");
-    await expect(createForm.locator('select[name="seller_id"]')).toHaveAttribute("required", "required");
-    await initialRole.selectOption("finance_operator");
-    await expect(createForm.locator('select[name="seller_id"]')).toBeDisabled();
-    await createForm.locator('select[name="role"]').selectOption("finance_operator");
-    await createForm.locator('input[name="reason"]').fill("Local end-to-end role lifecycle verification");
-    await createForm.getByRole("button", { name: "Create account" }).click();
-    accountCreated = true;
-    await expect(admin).toHaveURL(/\/super-admin\/security/);
-
-    let userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
-    await expect(userCard).toContainText("finance_operator");
-
-    const user = await userContext.newPage();
-    await signIn(user, email, "/finance-portal", passwordForNewUser);
-    await expect(user.locator("body")).toContainText(`QA Finance ${suffix}`);
-    await expect(user.locator("body")).toContainText("Finance Operator");
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
-    await updateRoleUser(admin, userCard, {
-      email,
-      displayName: `QA Finance Renamed ${suffix}`,
-      status: "active",
-      reason: "Local display-name-only session persistence verification",
-    });
-    await user.goto("/finance-portal");
-    await expect(user).toHaveURL(/\/finance-portal/);
-    await expect(user.locator("body")).toContainText(`QA Finance Renamed ${suffix}`);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: email });
-    await updateRoleUser(admin, userCard, {
-      email: updatedEmail,
-      displayName: `QA Finance Updated ${suffix}`,
-      status: "active",
-      password: passwordAfterReset,
-      reason: "Local account edit, email verification and password reset verification",
-    });
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await expect(userCard).toContainText(`QA Finance Updated ${suffix}`);
-    await user.goto("/finance-portal");
-    await expect(user).toHaveURL(/\/login/);
-    await signIn(user, updatedEmail, "/finance-portal", passwordAfterReset);
-
-    owner = await ownerContext.newPage();
-    await signIn(owner, "demo.owner01@weevcrafts.local", "/seller-admin");
-    await owner.goto("/seller-admin/team");
-    const unauthorizedStaffForm = owner.locator('form[action="/seller-admin/team/add"]');
-    await unauthorizedStaffForm.locator('input[name="email"]').fill(updatedEmail);
-    await unauthorizedStaffForm.locator('input[name="permissions"][value="PRODUCT_READ"]').check();
-    const unauthorizedStaff = await owner.request.post("/seller-admin/team/add", { maxRedirects: 0, form: {
-      csrf_token: await unauthorizedStaffForm.locator('input[name="csrf_token"]').inputValue(),
-      email: updatedEmail, permissions: ["PRODUCT_READ"],
-    } });
-    expect(unauthorizedStaff.status()).toBe(422);
-    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await updateRoleUser(admin, userCard, { status: "suspended", reason: "Local session revocation verification" });
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: updatedEmail })).toContainText("suspended");
-    await user.goto("/finance-portal");
-    await expect(user).toHaveURL(/\/login/);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await updateRoleUser(admin, userCard, { status: "active", reason: "Reactivate local account for role checks" });
-    await user.goto("/finance-portal");
-    await expect(user).toHaveURL(/\/login/);
-    await signIn(user, updatedEmail, "/finance-portal", passwordAfterReset);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    const roleForm = userCard.locator("form.role-assignment-form");
-    await roleForm.locator('select[name="role"]').selectOption("seller_staff");
-    const sellerSelect = roleForm.locator('select[name="seller_id"]');
-    await expect(sellerSelect).toBeVisible();
-    await expect.poll(() => sellerSelect.locator("option").count()).toBeGreaterThan(1);
-    const ownerSellerOption = sellerSelect.locator("option").filter({ hasText: "Weaver's Touch" });
-    await expect(ownerSellerOption).toHaveCount(1);
-    const sellerID = await ownerSellerOption.getAttribute("value");
-    await submitRoleChange(userCard, "seller_staff", "grant", "Local seller staff role assignment verification", sellerID);
-
-    await signIn(user, updatedEmail, "/seller-admin", passwordAfterReset);
-    await expect(user.locator('a[href="/workspaces"]')).toHaveCount(0);
-    await expect(user.getByRole("navigation", { name: "Seller portal navigation" })).not.toContainText("Team");
-    const deniedCreate = await userContext.request.get("/seller-admin/products/new", { maxRedirects: 0 });
-    expect(deniedCreate.status()).toBe(403);
-    const deniedInventory = await userContext.request.get("/seller-admin/inventory", { maxRedirects: 0 });
-    expect(deniedInventory.status()).toBe(403);
-    const allowedOrders = await userContext.request.get("/seller-admin/orders", { maxRedirects: 0 });
-    expect(allowedOrders.status()).toBe(200);
-    const deniedFulfillment = await userContext.request.post("/seller-admin/orders/fulfill", { maxRedirects: 0 });
-    expect(deniedFulfillment.status()).toBe(403);
-
-    await owner.goto("/seller-admin/team");
-    const permissionForm = owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` });
-    await expect(permissionForm).toHaveCount(1);
-    for (const width of [360, 390, 768, 1024, 1440]) {
-      await owner.setViewportSize({ width, height: 1000 });
-      const dimensions = await owner.evaluate(() => ({ document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-      expect(dimensions.document, `seller team document overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
-      expect(dimensions.body, `seller team body overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
-      const fieldset = permissionForm.locator("fieldset");
-      const columns = await fieldset.locator(":scope > label").evaluateAll(labels =>
-        new Set(labels.map(label => Math.round(label.getBoundingClientRect().left))).size
-      );
-      expect(columns, `seller permission grid columns at ${width}px`).toBe(width <= 480 ? 1 : width <= 820 ? 2 : 4);
-      const checkboxBox = await permissionForm.locator('input[type="checkbox"]').first().boundingBox();
-      expect(checkboxBox.width, `permission checkbox stretches at ${width}px`).toBeLessThanOrEqual(20);
-    }
-    await permissionForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
-    await permissionForm.getByRole("button", { name: "Save permissions" }).click();
-    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+permissions\+updated/);
-    await owner.goto("/seller-admin/team");
-    await expect(owner.locator('form[action="/seller-admin/team/update"]').filter({ hasText: `Update permissions for QA Finance Updated ${suffix}` })).toContainText("Edit products");
-    await user.goto("/seller-admin/products/new");
-    await expect(user.locator("form.seller-form-grid")).toBeVisible();
-    await expect(user.locator('form.seller-form-grid input[name="initial_stock"]')).toHaveValue("0");
-    const staffProductName = `QA Staff Draft ${suffix}`;
-    const staffProductSKU = `STAFF-QA-${suffix}`;
-    const staffProductForm = user.locator("form.seller-form-grid").first();
-    await staffProductForm.locator('input[name="name"]').fill(staffProductName);
-    await setHiddenInputValue(staffProductForm.locator('input[name="slug"]'), `qa-staff-draft-${suffix}`);
-    await setHiddenInputValue(staffProductForm.locator('input[name="brand_name"]'), `QA Staff Brand ${suffix}`);
-    await setHiddenInputValue(staffProductForm.locator('input[name="brand_slug"]'), `qa-staff-brand-${suffix}`);
-    await setHiddenInputValue(staffProductForm.locator('input[name="category_name"]'), "Crafts");
-    await staffProductForm.locator('select[name="category_slug"]').selectOption("crafts");
-    await staffProductForm.locator('input[name="sku"]').fill(staffProductSKU);
-    await staffProductForm.locator('input[name="price_rupees"]').fill("15.00");
-    await staffProductForm.locator('input[name="initial_stock"]').evaluate(input => { if (input.type === "hidden") input.value = "0"; });
-    await staffProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
-    await staffProductForm.locator('textarea[name="description"]').fill("A staff-created draft used to verify product write access and zero-stock variant creation.");
-    const staffProductCreate = user.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products");
-    await staffProductForm.getByRole("button", { name: "Save product draft" }).click();
-    expect((await staffProductCreate).status()).toBe(303);
-    await user.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    const staffDraftRow = user.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU });
-    await expect(staffDraftRow).toHaveCount(1);
-    await staffDraftRow.getByRole("link", { name: "Edit product" }).click();
-    const staffZeroVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
-    const zeroVariantResponse = await user.request.post("/seller-admin/products/variants/create", { maxRedirects: 0, form: {
-      csrf_token: await staffZeroVariantForm.locator('input[name="csrf_token"]').inputValue(),
-      product_id: await staffZeroVariantForm.locator('input[name="product_id"]').inputValue(),
-      name: "Staff created zero-stock option", sku: `STAFF-ALT-${suffix}`, price_cents: "1750", initial_stock: "0",
-    } });
-    expect(zeroVariantResponse.status()).toBe(303);
-    await owner.goto("/seller-admin/products");
-    const existingProductEdit = owner.locator('.portal-product-row a[href*="/edit"], .seller-product-row a[href*="/edit"]').first();
-    await existingProductEdit.click();
-    await user.goto(owner.url());
-    const staffVariantForm = user.locator('form[action="/seller-admin/products/variants/create"]');
-    const deniedVariant = await user.request.post("/seller-admin/products/variants/create", { maxRedirects: 0, form: {
-      csrf_token: await staffVariantForm.locator('input[name="csrf_token"]').inputValue(),
-      product_id: await staffVariantForm.locator('input[name="product_id"]').inputValue(),
-      name: `Forbidden stocked variant ${suffix}`, sku: `DENIED-${suffix}`, price_cents: "1000", initial_stock: "2",
-    } });
-    expect(deniedVariant.status()).toBe(403);
-    await owner.goto("/seller-admin/team");
-
-    const addStaffForm = owner.locator('form[action="/seller-admin/team/add"]');
-    await addStaffForm.locator('input[name="email"]').fill(updatedEmail);
-    await addStaffForm.locator('input[name="permissions"][value="PRODUCT_READ"]').check();
-    await addStaffForm.locator('input[name="permissions"][value="PRODUCT_WRITE"]').check();
-    await addStaffForm.getByRole("button", { name: "Add seller staff" }).click();
-    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+added/);
-    await owner.goto("/seller-admin/team");
-    const staffRow = owner.locator(".seller-product-row").filter({ hasText: updatedEmail });
-    await expect(staffRow).toContainText("PRODUCT_WRITE");
-    const removeStaffResponse = owner.waitForResponse(response => response.url().includes("/seller-admin/team/remove") && response.request().method() === "POST");
-    await staffRow.locator('form[action="/seller-admin/team/remove"] button').click();
-    expect((await removeStaffResponse).status()).toBe(303);
-    await expect(owner).toHaveURL(/\/seller-admin\/team\?notice=Staff\+access\+removed/);
-    await owner.goto("/seller-admin/team");
-    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: updatedEmail })).toHaveCount(0);
-    await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    const staffDraftOwnerRow = owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU });
-    await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] input[name="reason"]').fill("Archive local E2E staff draft after permission check");
-    const archiveStaffDraft = owner.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/seller-admin/products/archive");
-    owner.once("dialog", dialog => dialog.accept());
-    await staffDraftOwnerRow.locator('form[action="/seller-admin/products/archive"] button').click();
-    expect((await archiveStaffDraft).status()).toBe(303);
-    await owner.goto(`/seller-admin/products?q=${encodeURIComponent(staffProductSKU)}`);
-    await expect(owner.locator(".portal-product-row, .seller-product-row").filter({ hasText: staffProductSKU })).toContainText("archived");
-    const staffDenied = await userContext.request.get("/seller-admin", { maxRedirects: 0 });
-    expect(staffDenied.status()).toBe(403);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await submitRoleChange(userCard, "seller_staff", "grant", "Restore staff workspace after seller removal verification", sellerID);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await submitRoleChange(userCard, "seller_staff", "revoke", "Local seller staff role revocation verification", sellerID);
-
-    await admin.goto("/super-admin/security");
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await updateRoleUser(admin, userCard, { status: "suspended", reason: "Suspend account before deletion verification" });
-    userCard = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-    await deleteRoleUser(admin, userCard, "Local end-to-end role lifecycle cleanup");
-    accountDeleted = true;
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: updatedEmail })).toHaveCount(0);
-  } finally {
-    if (accountCreated && !accountDeleted) {
-      await admin.goto("/super-admin/security");
-      const card = admin.locator(".role-assignment-card").filter({ hasText: updatedEmail });
-      if (await card.count()) {
-        await deleteRoleUser(admin, card, "Cleanup failed local browser run");
-      }
-    }
-    await adminContext.close();
-    await userContext.close();
-    await ownerContext.close();
+test("Super Admin role selectors contain four roles and Team endpoints are retired", async ({ page }) => {
+  test.skip(!localMutationTarget, "An isolated demo fixture is required.");
+  await signIn(page, "demo.super01@weevcrafts.local", "/super-admin");
+  await page.goto("/super-admin/users");
+  const values = await page.locator('.role-user-create-form select[name="role"] option').evaluateAll(items => items.map(item => item.value));
+  expect(values).toEqual(['customer', 'seller', 'admin', 'super_admin']);
+  for (const route of ['/seller-admin/team', '/seller-admin/team/add', '/seller-admin/team/remove']) {
+    expect((await page.request.get(route)).status()).toBe(404);
+    expect((await page.request.post(route, { form: {} })).status()).toBe(404);
   }
 });
 
-test("pending seller owner accounts see an honest onboarding state", async ({ browser }) => {
+test("pending seller accounts see an honest onboarding state", async ({ browser }) => {
   test.skip(!localMutationTarget, "User management mutations are restricted to the local test deployment.");
   const suffix = Date.now().toString();
   const email = `qa.pending-owner.${suffix}@example.test`;
@@ -958,17 +708,18 @@ test("pending seller owner accounts see an honest onboarding state", async ({ br
 
   try {
     await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
-    await admin.goto("/super-admin/security");
+    await admin.goto("/super-admin/users");
     const form = admin.locator("form.role-user-create-form");
     await form.locator('input[name="display_name"]').fill(`QA Pending Owner ${suffix}`);
     await form.locator('input[name="email"]').fill(email);
     await form.locator('input[name="password"]').fill(userPassword);
-    await form.locator('select[name="role"]').selectOption("seller_owner");
+    await form.locator('select[name="role"]').selectOption("seller");
     await form.locator('input[name="reason"]').fill("Verify pending seller onboarding restrictions");
+    await form.locator('input[name="confirm"]').check();
     await form.getByRole("button", { name: "Create account" }).click();
     created = true;
     await expect(admin).toHaveURL(/\/super-admin\/security/);
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: email })).toContainText("seller_owner");
+    await expect(admin.locator(".role-assignment-card").filter({ hasText: email })).toContainText("seller");
 
     await signIn(owner, email, "/seller-admin", userPassword);
     await owner.goto("/seller-admin/onboarding");
@@ -982,7 +733,7 @@ test("pending seller owner accounts see an honest onboarding state", async ({ br
   } finally {
     if (created) {
       try {
-        await admin.goto("/super-admin/security");
+        await admin.goto("/super-admin/users");
         const card = admin.locator(".role-assignment-card").filter({ hasText: email });
         if (await card.count()) await deleteRoleUser(admin, card, "Clean up pending seller owner E2E account");
       } catch {}
@@ -1111,10 +862,10 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
   const suffix = Date.now().toString();
   const name = `QA Campaign ${suffix}`;
   const editedName = `QA Campaign Edited ${suffix}`;
-  await signIn(page, "demo.marketplace01@weevcrafts.local", "/marketplace-admin");
-  await page.goto("/marketplace-admin/marketing");
+  await signIn(page, "demo.marketplace01@weevcrafts.local", "/admin");
+  await page.goto("/admin/marketing");
 
-  const create = page.locator('form[action="/marketplace-admin/marketing/create"]');
+  const create = page.locator('form[action="/admin/marketing/create"]');
   await create.locator('input[name="name"]').fill(name);
   await create.locator('textarea[name="description"]').fill("Browser verification campaign.");
   await create.locator('input[name="code"]').fill(`CRUD${suffix}`);
@@ -1123,12 +874,12 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
   const createResponse = page.waitForResponse(response => response.url().includes("/marketing/create") && response.request().method() === "POST");
   await create.getByRole("button", { name: "Create draft" }).click();
   expect((await createResponse).status()).toBe(303);
-  await page.goto("/marketplace-admin/marketing");
+  await page.goto("/admin/marketing");
 
   let campaign = page.locator(".admin-campaign-item").filter({ hasText: name });
   await expect(campaign).toHaveCount(1);
   await campaign.locator("summary").click();
-  const edit = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  const edit = campaign.locator('form[action="/admin/marketing/update"]');
   await edit.locator('input[name="name"]').fill(editedName);
   await edit.locator('input[name="code"]').fill(`EDIT${suffix}`);
   await edit.locator('select[name="discount_type"]').selectOption("fixed");
@@ -1137,46 +888,46 @@ test("marketplace promotions support create, edit, activate, pause, archive and 
   const updateResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
   await edit.getByRole("button", { name: "Save changes" }).click();
   expect((await updateResponse).status()).toBe(303);
-  await page.goto("/marketplace-admin/marketing");
+  await page.goto("/admin/marketing");
 
   campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
   await campaign.locator("summary").click();
   await expect(campaign).toContainText(`EDIT${suffix}`);
-  let editForm = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  let editForm = campaign.locator('form[action="/admin/marketing/update"]');
   await editForm.locator('select[name="discount_type"]').selectOption("free_shipping");
   await expect(editForm.locator('input[name="discount_value"]')).toBeDisabled();
   const freeShippingResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
   await editForm.getByRole("button", { name: "Save changes" }).click();
   expect((await freeShippingResponse).status()).toBe(303);
-  await page.goto("/marketplace-admin/marketing");
+  await page.goto("/admin/marketing");
   campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
   await campaign.locator("summary").click();
-  editForm = campaign.locator('form[action="/marketplace-admin/marketing/update"]');
+  editForm = campaign.locator('form[action="/admin/marketing/update"]');
   await editForm.locator('select[name="discount_type"]').selectOption("percentage");
   await expect(editForm.locator('input[name="discount_value"]')).toHaveAttribute("step", "1");
   await editForm.locator('input[name="discount_value"]').fill("15");
   const percentageResponse = page.waitForResponse(response => response.url().includes("/marketing/update") && response.request().method() === "POST");
   await editForm.getByRole("button", { name: "Save changes" }).click();
   expect((await percentageResponse).status()).toBe(303);
-  await page.goto("/marketplace-admin/marketing");
+  await page.goto("/admin/marketing");
   campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
   await campaign.locator("summary").click();
   for (const [index, status, button] of [[0, "active", "Activate"], [1, "draft", "Pause"], [2, "archived", "Archive"]]) {
-    const statusForm = campaign.locator('form[action="/marketplace-admin/marketing/status"]').nth(index);
+    const statusForm = campaign.locator('form[action="/admin/marketing/status"]').nth(index);
     const response = page.waitForResponse(item => item.url().includes("/marketing/status") && item.request().method() === "POST");
     await statusForm.getByRole("button", { name: button }).click();
     expect((await response).status()).toBe(303);
-    await page.goto("/marketplace-admin/marketing");
+    await page.goto("/admin/marketing");
     campaign = page.locator(".admin-campaign-item").filter({ hasText: editedName });
     await campaign.locator("summary").click();
     await expect(campaign.locator("summary")).toContainText(status);
   }
-  const deleteForm = campaign.locator('form[action="/marketplace-admin/marketing/delete"]');
+  const deleteForm = campaign.locator('form[action="/admin/marketing/delete"]');
   const deleteResponse = page.waitForResponse(response => response.url().includes("/marketing/delete") && response.request().method() === "POST");
   page.once("dialog", dialog => dialog.accept());
   await deleteForm.getByRole("button", { name: "Delete unused campaign" }).click();
   expect((await deleteResponse).status()).toBe(303);
-  await page.goto("/marketplace-admin/marketing");
+  await page.goto("/admin/marketing");
   await expect(page.locator(".admin-campaign-item").filter({ hasText: editedName })).toHaveCount(0);
 });
 
@@ -1344,10 +1095,10 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("button", { name: "Submit for review" }).click();
 
-    await signIn(marketplace, "demo.marketplace01@weevcrafts.local", "/marketplace-admin");
+    await signIn(marketplace, "demo.marketplace01@weevcrafts.local", "/admin");
     const couponCode = `QA${suffix}`;
-    await marketplace.goto("/marketplace-admin/marketing");
-    const campaignForm = marketplace.locator('form[action="/marketplace-admin/marketing/create"]');
+    await marketplace.goto("/admin/marketing");
+    const campaignForm = marketplace.locator('form[action="/admin/marketing/create"]');
     await campaignForm.locator('input[name="name"]').fill(`QA Checkout Campaign ${suffix}`);
     await campaignForm.locator('textarea[name="description"]').fill("End-to-end checkout coupon verification.");
     await campaignForm.locator('input[name="code"]').fill(couponCode);
@@ -1356,15 +1107,15 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const campaignCreated = marketplace.waitForResponse(response => response.url().includes("/marketing/create") && response.request().method() === "POST");
     await campaignForm.getByRole("button", { name: "Create draft" }).click();
     expect((await campaignCreated).status()).toBe(303);
-    await marketplace.goto("/marketplace-admin/marketing");
+    await marketplace.goto("/admin/marketing");
     const checkoutCampaign = marketplace.locator(".admin-campaign-item").filter({ hasText: couponCode });
     await checkoutCampaign.locator("summary").click();
-    const activateCampaign = checkoutCampaign.locator('form[action="/marketplace-admin/marketing/status"]').nth(0);
+    const activateCampaign = checkoutCampaign.locator('form[action="/admin/marketing/status"]').nth(0);
     const activationResponse = marketplace.waitForResponse(response => response.url().includes("/marketing/status") && response.request().method() === "POST");
     await activateCampaign.getByRole("button", { name: "Activate" }).click();
     expect((await activationResponse).status()).toBe(303);
 
-    await marketplace.goto(`/marketplace-admin/products?q=${encodeURIComponent(sku)}`);
+    await marketplace.goto(`/admin/products?q=${encodeURIComponent(sku)}`);
     const reviewRow = marketplace.locator(".table-row").filter({ hasText: productName });
     await expect(reviewRow).toHaveCount(1);
     await reviewRow.getByRole("button", { name: "Approve" }).click();
@@ -1551,7 +1302,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const reviewProductID = await reviewForm.locator('input[name="product_id"]').inputValue();
     const reviewOrderID = await reviewForm.locator('input[name="order_id"]').inputValue();
     const reviewCSRF = await reviewForm.locator('input[name="csrf_token"]').inputValue();
-    const deniedModeration = await customer.request.post("/marketplace-admin/reviews/status", { form: {
+    const deniedModeration = await customer.request.post("/admin/reviews/status", { form: {
       csrf_token: reviewCSRF, review_id: "1", decision: "published",
     } });
     expect(deniedModeration.status()).toBe(403);
@@ -1568,11 +1319,11 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     } });
     expect(duplicateReview.status()).toBe(409);
 
-    await marketplace.goto("/marketplace-admin/reviews");
+    await marketplace.goto("/admin/reviews");
     const reviewCard = marketplace.getByRole("article").filter({ hasText: reviewTitle });
     await expect(reviewCard).toBeVisible();
     await expect(reviewCard).toContainText("Verified purchase");
-    const approveReview = marketplace.waitForResponse(response => response.url().includes("/marketplace-admin/reviews/status") && response.request().method() === "POST");
+    const approveReview = marketplace.waitForResponse(response => response.url().includes("/admin/reviews/status") && response.request().method() === "POST");
     await reviewCard.getByRole("button", { name: "Approve and publish" }).click();
     const moderationResponse = await approveReview;
     expect(moderationResponse.status()).toBe(303);
@@ -1590,13 +1341,13 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await customer.getByRole("button", { name: "Submit return request" }).click();
     await expect(customer.locator("body")).toContainText("Pending review");
 
-    await signIn(operations, "demo.operations01@weevcrafts.local", "/operations-portal");
-    await operations.goto(`/operations-portal/returns?q=${encodeURIComponent(orderNumber)}`);
+    await signIn(operations, "demo.operations01@weevcrafts.local", "/admin");
+    await operations.goto(`/admin/returns?q=${encodeURIComponent(orderNumber)}`);
     const returnRow = operations.locator(".portal-return-item").filter({ hasText: orderNumber });
     await expect(returnRow).toHaveCount(1);
     await returnRow.locator('select[name="status"]').selectOption("approved");
     await returnRow.getByRole("button", { name: "Save decision" }).click();
-    await operations.goto(`/operations-portal/returns?q=${encodeURIComponent(orderNumber)}`);
+    await operations.goto(`/admin/returns?q=${encodeURIComponent(orderNumber)}`);
     const approvedReturn = operations.locator(".portal-return-item").filter({ hasText: orderNumber });
     await expect(approvedReturn).toContainText("approved");
     await customer.goto("/returns");
@@ -1700,15 +1451,15 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
   }
 });
 
-test("finance operator reconciles and simulates seller settlement payouts", async ({ browser, page }) => {
+test("Admin reconciles and simulates seller settlement payouts", async ({ browser, page }) => {
   test.skip(!localMutationTarget, "Settlement mutations are restricted to the local test deployment.");
-  await signIn(page, "demo.finance01@weevcrafts.local", "/finance-portal");
-  await page.goto("/finance-portal/settlements");
+  await signIn(page, "demo.finance01@weevcrafts.local", "/admin");
+  await page.goto("/admin/settlements");
   const panel = page.locator(".admin-panel").filter({ hasText: "Seller settlements" });
   const createResponse = page.waitForResponse(response => response.url().includes("/settlements/create") && response.request().method() === "POST");
   await panel.getByRole("button", { name: "Create settlement batches" }).click();
   expect((await createResponse).status()).toBe(303);
-  await page.waitForURL(/\/finance-portal\/settlements/);
+  await page.waitForURL(/\/admin\/settlements/);
 
   let pendingRow = panel.locator(".table-row").filter({ hasText: "pending" }).first();
   if (await pendingRow.count() === 0) {
@@ -1721,7 +1472,7 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
     const retryBatchResponse = page.waitForResponse(response => response.url().includes("/settlements/create") && response.request().method() === "POST");
     await panel.getByRole("button", { name: "Create settlement batches" }).click();
     expect((await retryBatchResponse).status()).toBe(303);
-    await page.waitForURL(/\/finance-portal\/settlements/);
+    await page.waitForURL(/\/admin\/settlements/);
   }
   await expect(pendingRow).toBeVisible();
   const reference = (await pendingRow.locator("span").nth(0).textContent()).trim();
@@ -1730,7 +1481,7 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
   const approveResponse = page.waitForResponse(response => response.url().includes("/settlements/status") && response.request().method() === "POST");
   await pendingRow.getByRole("button", { name: "Approve" }).click();
   expect((await approveResponse).status()).toBe(303);
-  await page.waitForURL(/\/finance-portal\/settlements/);
+  await page.waitForURL(/\/admin\/settlements/);
 
   let approvedRow = panel.locator(".table-row").filter({ hasText: reference });
   await expect(approvedRow).toContainText("approved");
@@ -1738,11 +1489,11 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
   page.once("dialog", dialog => dialog.accept());
   await approvedRow.getByRole("button", { name: "Record mock payout" }).click();
   expect((await payoutResponse).status()).toBe(303);
-  await page.waitForURL(/\/finance-portal\/settlements/);
+  await page.waitForURL(/\/admin\/settlements/);
   const paidRow = panel.locator(".table-row").filter({ hasText: reference });
   await expect(paidRow).toContainText("paid");
 
-  const terminalMutation = await page.request.post("/finance-portal/settlements/status", {
+  const terminalMutation = await page.request.post("/admin/settlements/status", {
     maxRedirects: 0,
     form: { csrf_token: csrfToken, settlement_id: settlementID, status: "failed" },
   });
@@ -1751,7 +1502,7 @@ test("finance operator reconciles and simulates seller settlement payouts", asyn
   await expect(panel.locator(".table-row").filter({ hasText: reference })).toContainText("paid");
 });
 
-test("customer and support agent share a persisted ticket conversation", async ({ browser }) => {
+test("customer and Admin share a persisted ticket conversation", async ({ browser }) => {
   test.skip(!localMutationTarget, "Support workflow mutations are restricted to the local test deployment.");
 
   const suffix = Date.now().toString();
@@ -1784,15 +1535,15 @@ test("customer and support agent share a persisted ticket conversation", async (
     await admin.goto("/super-admin/support");
     await expect(admin.locator("body")).toContainText(subject);
 
-    await signIn(support, "demo.support01@weevcrafts.local", "/support-portal");
-    await support.goto(`/support-portal/cases?ticket_id=${ticketID}`);
+    await signIn(support, "demo.support01@weevcrafts.local", "/admin");
+    await support.goto(`/admin/support/cases?ticket_id=${ticketID}`);
     await expect(support.locator("body")).toContainText(subject);
     await expect(support.locator("body")).toContainText("Please help me check a question about this handmade order.");
     const agentReply = `We have received your request ${suffix} and will follow up here.`;
-    const replyForm = support.locator('form[action="/support-portal/cases/reply"]');
+    const replyForm = support.locator('form[action="/admin/support/cases/reply"]');
     await replyForm.locator('textarea[name="message"]').fill(agentReply);
     await replyForm.getByRole("button", { name: "Send Reply" }).click();
-    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
+    await expect(support).toHaveURL(new RegExp(`/admin/support/cases\\?ticket_id=${ticketID}`));
 
     await customer.goto(`/account/support?ticket_id=${ticketID}`);
     const customerTicket = customer.locator(`#ticket-${ticketID}`);
@@ -1803,18 +1554,18 @@ test("customer and support agent share a persisted ticket conversation", async (
     await customerReplyForm.getByRole("button", { name: "Send reply" }).click();
     await expect(customer).toHaveURL(new RegExp(`/account/support\\?ticket_id=${ticketID}`));
 
-    await support.goto(`/support-portal/cases?ticket_id=${ticketID}`);
+    await support.goto(`/admin/support/cases?ticket_id=${ticketID}`);
     await expect(support.locator("body")).toContainText(customerReply);
-    const updateForm = support.locator('.live-case-detail form[action="/support-portal/cases/status"]');
+    const updateForm = support.locator('.live-case-detail form[action="/admin/support/cases/status"]');
     await updateForm.locator('select[name="status"]').selectOption("resolved");
     await updateForm.locator('input[name="note"]').fill("Resolved after customer follow-up.");
     await updateForm.getByRole("button", { name: "Save status" }).click();
-    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
-    const closeForm = support.locator('.live-case-detail form[action="/support-portal/cases/status"]');
+    await expect(support).toHaveURL(new RegExp(`/admin/support/cases\\?ticket_id=${ticketID}`));
+    const closeForm = support.locator('.live-case-detail form[action="/admin/support/cases/status"]');
     await closeForm.locator('select[name="status"]').selectOption("closed");
     await closeForm.locator('input[name="note"]').fill("Resolved after customer follow-up.");
     await closeForm.getByRole("button", { name: "Save status" }).click();
-    await expect(support).toHaveURL(new RegExp(`/support-portal/cases\\?ticket_id=${ticketID}`));
+    await expect(support).toHaveURL(new RegExp(`/admin/support/cases\\?ticket_id=${ticketID}`));
     await customer.goto(`/account/support?ticket_id=${ticketID}`);
     await expect(customer.locator(`#ticket-${ticketID}`)).toContainText("closed");
     await expect(customer.locator(`#ticket-${ticketID} form[action="/support/customer-reply"]`)).toHaveCount(0);

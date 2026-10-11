@@ -17,7 +17,7 @@ import (
 )
 
 func managementPortalPath(path string) (root, section, action string, ok bool) {
-	for _, prefix := range []string{"/super-admin/", "/marketplace-admin/", "/finance-portal/"} {
+	for _, prefix := range []string{"/super-admin/", "/admin/"} {
 		if !strings.HasPrefix(path, prefix) {
 			continue
 		}
@@ -56,18 +56,19 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 		redirectToLogin(w, r)
 		return true
 	}
-	role := domainidentity.RoleMarketplaceAdmin
+	role := domainidentity.RoleAdmin
 	if root == "/super-admin" {
 		role = domainidentity.RoleSuperAdmin
-	} else if root == "/finance-portal" {
-		role = domainidentity.RoleFinanceOperator
 	}
-	if !h.hasRole(r, session.UserID, roleString(role)) {
+	if !h.hasRole(r, session.UserID, roleString(role), "super_admin") {
 		denyPortalAccess(w, r)
 		return true
 	}
-	if role == domainidentity.RoleMarketplaceAdmin && section == "commission-rules" {
-		http.Error(w, "finance access required", http.StatusForbidden)
+	if h.hasRole(r, session.UserID, "super_admin") {
+		role = domainidentity.RoleSuperAdmin
+	}
+	if role == domainidentity.RoleAdmin && (section == "settings" || (section == "customers" && action != "")) {
+		http.Error(w, "Super Admin access required", http.StatusForbidden)
 		return true
 	}
 	service := applicationcommerce.NewManagementService(postgres.NewManagementRepository(h.pool))
@@ -144,7 +145,7 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Management directory could not be loaded.", http.StatusInternalServerError)
 		return true
 	}
-	page := viewmodels.AdminPage{Active: section, NavActive: section, Workspace: section, Title: title(section), Subtitle: "Manage current marketplace records.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, Notice: r.URL.Query().Get("notice"), CanSecurity: role == domainidentity.RoleSuperAdmin, CanFinance: role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleFinanceOperator, CanManageCatalog: role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleMarketplaceAdmin, IsFinance: role == domainidentity.RoleFinanceOperator, Query: query}
+	page := viewmodels.AdminPage{Active: section, NavActive: section, Workspace: section, Title: title(section), Subtitle: "Manage current marketplace records.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, Notice: r.URL.Query().Get("notice"), CanSecurity: role == domainidentity.RoleSuperAdmin, CanFinance: role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleAdmin, CanManageCatalog: role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleAdmin, IsFinance: false, Query: query}
 	model := viewmodels.ManagementPage{Admin: page, Section: section, Action: root + "/" + section, Query: query, Page: pageNumber, Total: result.Total, Records: result.Records}
 	if section == "settings" {
 		model.Settings, err = postgres.ReadStorefrontSettings(r.Context(), h.pool)

@@ -1,10 +1,12 @@
+> Current role contract: [four-role operations](four-role-workflow.md). Role findings below describe the earlier audited release.
+
 # Weevcrafts phase status
 
 **Current status:** The local live demo runs from `cmd/website` with PostgreSQL-backed customer, seller, marketplace-admin, super-admin, and support workflows. The responsive storefront UI is retained, while local integrations remain deterministic and production integrations are opt-in.
 
 **Current gate:** Local frontend V1 — complete; full production-release gates remain open
 **Completion estimate:** 100% of the requested locally verifiable frontend scope; approximately 45% of the broader production-release gate set.
-**Source PRD:** [`../Prd.md`](../Prd.md)  
+**Source PRD:** [`../Prd.md`](../Prd.md)
 **Execution plan:** [`../Phases/README.md`](../Phases/README.md)
 
 ## Files changed

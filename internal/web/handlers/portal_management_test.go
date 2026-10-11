@@ -3,7 +3,7 @@ package handlers
 import "testing"
 
 func TestManagementRouteMatching(t *testing.T) {
-	for _, path := range []string{"/super-admin/customers", "/marketplace-admin/brands/create", "/super-admin/category-management/update", "/super-admin/commission-rules/delete", "/super-admin/settings/save", "/finance-portal/commission-rules", "/finance-portal/commission-rules/update"} {
+	for _, path := range []string{"/super-admin/customers", "/admin/brands/create", "/super-admin/category-management/update", "/super-admin/commission-rules/delete", "/super-admin/settings/save", "/admin/commission-rules", "/admin/commission-rules/update"} {
 		if _, _, _, ok := managementPortalPath(path); !ok {
 			t.Errorf("live management route rejected: %s", path)
 		}

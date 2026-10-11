@@ -130,7 +130,7 @@ func supportTrendClass(positive bool) string {
 
 func supportStatIcon(icon string) string {
 	if icon == "" {
-		return "support_agent"
+		return "admin"
 	}
 	return icon
 }

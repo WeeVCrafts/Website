@@ -23,30 +23,25 @@ func (r *inventoryRepository) AdjustSellerInventory(_ context.Context, _ int64, 
 	return nil
 }
 
-func TestInventoryServiceSeparatesReadAndWritePermissions(t *testing.T) {
+func TestInventoryOnlySellerOwnerCanReadAndWrite(t *testing.T) {
 	repository := &inventoryRepository{}
-	checker := roleChecker{
-		roles:       map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSellerOwner: true}, 11: {domainidentity.RoleSellerStaff: true}},
-		permissions: map[int64]map[string]bool{11: {domaincommerce.SellerPermissionInventoryRead: true}},
-	}
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSeller: true}, 11: {domainidentity.Role("seller_staff"): true}}, permissions: map[int64]map[string]bool{11: {"INVENTORY_READ": true, "INVENTORY_WRITE": true}}}
 	service := NewInventoryService(repository, checker)
-	if items, err := service.List(context.Background(), 11); err != nil || len(items) != 1 {
-		t.Fatalf("inventory reader was denied: items=%+v err=%v", items, err)
+	if _, err := service.List(context.Background(), 11); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatal("staff read authorized", err)
 	}
 	if err := service.Adjust(context.Background(), 11, domaincommerce.InventoryAdjustment{VariantID: 7, Delta: 3, Reason: "received stock"}); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("inventory reader adjusted stock: %v", err)
+		t.Fatal("staff write authorized", err)
 	}
-	checker.permissions[11][domaincommerce.SellerPermissionInventoryWrite] = true
-	if err := service.Adjust(context.Background(), 11, domaincommerce.InventoryAdjustment{VariantID: 7, Delta: 3, Reason: "received stock"}); err != nil {
-		t.Fatalf("inventory writer was denied: %v", err)
+	if items, err := service.List(context.Background(), 10); err != nil || len(items) != 1 {
+		t.Fatal(items, err)
 	}
-	if repository.adjustment.Delta != 3 || repository.adjustment.Reason != "received stock" {
-		t.Fatalf("adjustment was not passed through: %+v", repository.adjustment)
+	if err := service.Adjust(context.Background(), 10, domaincommerce.InventoryAdjustment{VariantID: 7, Delta: 3, Reason: "received stock"}); err != nil {
+		t.Fatal(err)
 	}
 }
-
 func TestInventoryServiceRejectsUnsafeAdjustments(t *testing.T) {
-	service := NewInventoryService(&inventoryRepository{}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSellerOwner: true}}})
+	service := NewInventoryService(&inventoryRepository{}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSeller: true}}})
 	for _, adjustment := range []domaincommerce.InventoryAdjustment{
 		{VariantID: 0, Delta: 1, Reason: "count"},
 		{VariantID: 7, Delta: 0, Reason: "count"},

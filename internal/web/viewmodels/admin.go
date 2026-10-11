@@ -120,7 +120,7 @@ type SellerAdminPage struct {
 	PublicLocation, PublicStory, PublicTechnique, PublicPortrait                     string
 	LowStockThreshold                                                                int
 	CanProducts, CanProductWrite, CanInventory, CanInventoryWrite                    bool
-	CanOrders, CanFulfill, CanReturns, CanReports, CanTeam                           bool
+	CanOrders, CanFulfill, CanReturns, CanReports, CanManageStore                    bool
 	Stats                                                                            []SellerAdminStat
 	TopProducts                                                                      []SellerAdminTopProduct
 	LowStock                                                                         []SellerAdminInventory

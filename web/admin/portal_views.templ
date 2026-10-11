@@ -208,7 +208,7 @@ templ PortalInventory(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warehouse</span><div><h2>Marketplace inventory</h2><p>Current variant stock and reservations across Indian sellers.</p></div></div></div>
-			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Seller owners manage stock adjustments in their inventory workspace.</p>
+			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Sellers manage stock adjustments in their inventory workspace.</p>
 			<div class="admin-table wide"><div class="table-head"><span>Product</span><span>SKU</span><span>On hand</span><span>Reserved</span><span>Available</span><span>Stock signal</span><span>Inventory value</span></div>
 				for _, item := range p.Inventory {
 					<div class="table-row"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span><span>{ item.SKU }</span><span>{ item.Stock }</span><span>{ item.Reserved }</span><span>{ item.Available }</span><span class={ "ui-status " + components.StatusTone(item.Status) }>{ item.Reorder }</span><strong>{ item.Value }</strong></div>
@@ -237,7 +237,10 @@ templ PortalReturns(p viewmodels.AdminPage) {
 
 templ PortalFinance(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
-		@StatGrid(p)
+		<nav class="workspace-tabs" aria-label="Finance sections">
+ <a href={ p.PortalRoot+"/payments" }>Payments</a><a href={ p.PortalRoot+"/failed-payments" }>Failed payments</a><a href={ p.PortalRoot+"/refunds" }>Refunds</a><a href={ p.PortalRoot+"/settlements" }>Settlements</a><a href={ p.PortalRoot+"/commission-rules" }>Commission rules</a><a href={ p.PortalRoot+"/finance-reconciliation" }>Reconciliation</a>
+ </nav>
+ @StatGrid(p)
 		if p.Workspace == "failed-payments" {
 			<p class="admin-page-note">Showing failed payment attempts from the live payment ledger.</p>
 		} else if p.Workspace == "refunds" {
@@ -320,6 +323,8 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 templ PortalAnalytics(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div></div>@StatGrid(p)</article>
+ if p.CanSecurity {
+
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span><div><h2>Service configuration</h2><p>Runtime integrations configured for this deployment.</p></div></div></div>
 			<div class="admin-table wide"><div class="table-head"><span>Service</span><span>Value</span><span>Purpose</span></div>
 				for _, config := range p.Configs {
@@ -327,6 +332,7 @@ templ PortalAnalytics(p viewmodels.AdminPage) {
 				}
 			</div>
 		</article>
+ }
 	}
 }
 

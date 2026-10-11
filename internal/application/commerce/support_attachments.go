@@ -138,7 +138,7 @@ func (s *SupportAttachmentService) authorizeTicket(ctx context.Context, actorID,
 		return nil
 	}
 	if s.roles != nil {
-		allowed, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleSupportAgent, domainidentity.RoleSuperAdmin)
+		allowed, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 		if err != nil {
 			return err
 		}

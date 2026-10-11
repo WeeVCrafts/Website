@@ -51,7 +51,7 @@ func liveSupportFixture(t *testing.T) (*pgxpool.Pool, *applicationauth.SessionSe
 			_, _ = pool.Exec(context.Background(), `DELETE FROM users WHERE id=$1`, id)
 		}
 	})
-	for index, role := range []string{"seller_owner", "seller_owner", "customer", "customer", "seller_staff"} {
+	for index, role := range []string{"seller", "seller", "customer", "customer", "customer"} {
 		var id int64
 		if err := pool.QueryRow(ctx, `INSERT INTO users(email,display_name,status) VALUES($1,'Live support QA','active') RETURNING id`, fmt.Sprintf("seller-support-%d-%d@example.invalid", time.Now().UnixNano(), index)).Scan(&id); err != nil {
 			t.Fatal(err)
@@ -60,7 +60,7 @@ func liveSupportFixture(t *testing.T) (*pgxpool.Pool, *applicationauth.SessionSe
 		if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,$2)`, id, role); err != nil {
 			t.Fatal(err)
 		}
-		if role == "seller_owner" {
+		if role == "seller" {
 			if _, err := pool.Exec(ctx, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,'Support QA seller','active')`, id); err != nil {
 				t.Fatal(err)
 			}
@@ -117,7 +117,7 @@ func TestSellerSupportLivePersistsRepliesAndRejectsForeignTickets(t *testing.T) 
 	if err := pool.QueryRow(context.Background(), `SELECT m.author_role,m.body,t.status,t.agent_note FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id WHERE t.id=$1`, ticketID).Scan(&role, &body, &status, &note); err != nil {
 		t.Fatal(err)
 	}
-	if role != "seller_owner" || body != form.Get("message") || status != "in_progress" || note != "Private note" {
+	if role != "seller" || body != form.Get("message") || status != "in_progress" || note != "Private note" {
 		t.Fatalf("incorrect persisted conversation: %s %s %s %s", role, body, status, note)
 	}
 	response = invoke(http.MethodGet, "/seller-admin/support?q=Catalogue+details", nil, records[0])

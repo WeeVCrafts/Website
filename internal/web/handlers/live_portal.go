@@ -314,98 +314,21 @@ func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionS
 
 func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = projectionRequest(r)
-	if h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
-		return
-	}
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
 		if serveUploadedAsset(w, r) {
 			return
 		}
-		if strings.HasPrefix(r.URL.Path, "/assets/js/") {
-			w.Header().Set("Cache-Control", "no-cache, must-revalidate")
-		} else {
-			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-		}
 		h.assets.ServeHTTP(w, r)
 		return
 	}
-	if r.Method != http.MethodGet {
-		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-			_ = r.ParseMultipartForm(32 << 20)
-		}
-		if r.URL.Path == "/seller-admin/inventory/threshold" {
-			h.updateSellerLowStockThreshold(w, r)
-			return
-		}
-		if isSettlementMutationPath(r.URL.Path) {
-			h.adminSettlementMutation(w, r)
-			return
-		}
-		if isPromotionMutationPath(r.URL.Path) {
-			h.adminPromotionMutation(w, r)
-			return
-		}
-		if r.URL.Path == "/marketplace-admin/reviews/status" || r.URL.Path == "/super-admin/reviews/status" {
-			h.adminReviewStatus(w, r)
-			return
-		}
-		if legacyPath := canonicalAdminMutationPath(r.URL.Path); legacyPath != "" {
-			_, root, _ := canonicalAdminPortal(r.URL.Path)
-			h.delegateWithPortalRedirect(w, requestWithPath(r, legacyPath), root)
-			return
-		}
-		if legacyPath := canonicalSellerMutationPath(r.URL.Path); legacyPath != "" {
-			session, ok := h.session(r)
-			if !ok {
-				redirectToLogin(w, r)
-				return
-			}
-			roles := h.userRoles(r, session.UserID)
-			isOwner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
-			permissions, assigned := h.sellerPermissions(r, session.UserID)
-			if !assigned || !sellerMutationAllowed(r.URL.Path, isOwner, permissions) {
-				denyPortalAccess(w, r)
-				return
-			}
-			h.delegateWithPortalRedirect(w, requestWithPath(r, legacyPath), "/seller-admin")
-			return
-		}
-		if r.URL.Path == "/support-portal/cases/status" {
-			session, ok := h.session(r)
-			if !ok {
-				redirectToLogin(w, r)
-				return
-			}
-			if !h.hasRole(r, session.UserID, "support_agent") {
-				denyPortalAccess(w, r)
-				return
-			}
-			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/status"), "/support-portal")
-			return
-		}
-		if r.URL.Path == "/support-portal/cases/reply" {
-			session, ok := h.session(r)
-			if !ok {
-				redirectToLogin(w, r)
-				return
-			}
-			if !h.hasRole(r, session.UserID, "support_agent") {
-				denyPortalAccess(w, r)
-				return
-			}
-			h.delegateWithPortalRedirect(w, requestWithPath(r, "/support/reply"), "/support-portal")
-			return
-		}
-		h.delegate(w, r)
+	if strings.Contains(r.URL.Path, "/team") {
+		http.NotFound(w, r)
 		return
 	}
-	if r.URL.Path == "/workspaces" {
-		session, ok := h.session(r)
-		if !ok {
-			redirectToLogin(w, r)
-			return
-		}
-		http.Redirect(w, r, applicationauth.LoginDestination(h.userRoles(r, session.UserID)), http.StatusSeeOther)
+	if h.serveRetiredPortal(w, r) {
+		return
+	}
+	if h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
 		return
 	}
 	session, ok := h.session(r)
@@ -413,95 +336,168 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		redirectToLogin(w, r)
 		return
 	}
+	roles := h.userRoles(r, session.UserID)
+	if applicationauth.LoginDestination(roles) == "/access-unavailable" {
+		denyPortalAccess(w, r)
+		return
+	}
+	currentRole := roles[0]
+	if r.URL.Path == "/workspaces" {
+		http.Redirect(w, r, applicationauth.LoginDestination(roles), http.StatusSeeOther)
+		return
+	}
 	if pathUnder(r.URL.Path, "/seller") {
-		destination := legacySellerPortalDestination(r.URL.Path)
-		roles := h.userRoles(r, session.UserID)
-		isOwner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
-		isStaff := hasIdentityRole(roles, domainidentity.RoleSellerStaff)
-		permissions, assigned := h.sellerPermissions(r, session.UserID)
-		if destination == "" || (!isOwner && !isStaff) || !assigned || !sellerPortalAllowed(destination, isOwner, permissions) {
+		if r.Method == http.MethodGet {
+			target := legacySellerPortalDestination(r.URL.Path)
+			if target == "" || currentRole != domainidentity.RoleSeller {
+				denyPortalAccess(w, r)
+				return
+			}
+			redirectPortalDestination(w, r, target)
+			return
+		}
+		if currentRole != domainidentity.RoleSeller {
 			denyPortalAccess(w, r)
 			return
 		}
-		redirectPortalDestination(w, r, destination)
+		h.delegateWithPortalRedirect(w, r, "/seller-admin")
 		return
 	}
-	if pathUnder(r.URL.Path, "/support") {
-		destination := legacySupportPortalDestination(r.URL.Path)
-		if destination == "" || !h.hasRole(r, session.UserID, "support_agent") {
-			denyPortalAccess(w, r)
+	if r.Method != http.MethodGet {
+		if _, root, canonical := canonicalAdminPortal(r.URL.Path); canonical {
+			if !roleAllowsPortalPath(currentRole, r.URL.Path) {
+				denyPortalAccess(w, r)
+				return
+			}
+			if isSettlementMutationPath(r.URL.Path) {
+				h.adminSettlementMutation(w, r)
+				return
+			}
+			if isPromotionMutationPath(r.URL.Path) {
+				h.adminPromotionMutation(w, r)
+				return
+			}
+			if strings.HasSuffix(r.URL.Path, "/reviews/status") {
+				h.adminReviewStatus(w, r)
+				return
+			}
+			h.delegateWithPortalRedirect(w, requestWithPath(r, adminLegacyPagePath(r.URL.Path, root)), root)
 			return
 		}
-		redirectPortalDestination(w, r, destination)
+		if pathUnder(r.URL.Path, "/seller-admin") {
+			if currentRole != domainidentity.RoleSeller {
+				denyPortalAccess(w, r)
+				return
+			}
+			if r.URL.Path == "/seller-admin/inventory/threshold" {
+				h.updateSellerLowStockThreshold(w, r)
+				return
+			}
+			if legacy := canonicalSellerMutationPath(r.URL.Path); legacy != "" {
+				h.delegateWithPortalRedirect(w, requestWithPath(r, legacy), "/seller-admin")
+				return
+			}
+			http.NotFound(w, r)
+			return
+		}
+		h.delegate(w, r)
 		return
 	}
-	if r.URL.Path == "/admin" || strings.HasPrefix(r.URL.Path, "/admin/") || r.URL.Path == "/finance" || r.URL.Path == "/finance/" {
-		roles := h.userRoles(r, session.UserID)
-		destination := legacyAdminDestination(r.URL.Path, roles)
-		if destination == "" {
+	if r.URL.Path == "/finance" || r.URL.Path == "/finance/" {
+		target := legacyAdminDestination("/finance", roles)
+		if target == "" {
 			denyPortalAccess(w, r)
 			return
 		}
-		if r.URL.RawQuery != "" {
-			destination += "?" + r.URL.RawQuery
-		}
-		http.Redirect(w, r, destination, http.StatusSeeOther)
+		redirectPortalDestination(w, r, target)
 		return
 	}
 	switch {
 	case isCanonicalAdminPortal(r.URL.Path):
-		role, root, _ := canonicalAdminPortal(r.URL.Path)
-		if !knownAdminPage(strings.TrimPrefix(r.URL.Path, root)) && !isSuperAdminProductEditorPath(r.URL.Path) {
-			http.NotFound(w, r)
-			return
-		}
-		if !roleAllowsPortalPath(role, r.URL.Path) || !h.hasRole(r, session.UserID, roleString(role)) {
+		_, root, _ := canonicalAdminPortal(r.URL.Path)
+		if !roleAllowsPortalPath(currentRole, r.URL.Path) {
 			denyPortalAccess(w, r)
 			return
 		}
-		if role == domainidentity.RoleSuperAdmin && isSuperAdminProductEditorPath(r.URL.Path) {
+		if isSuperAdminProductEditorPath(r.URL.Path) {
 			h.renderSuperAdminProductEditor(w, r, session.UserID, h.userDisplayName(r, session.UserID), session.CSRFToken)
 			return
 		}
-		legacyPath := adminLegacyPagePath(r.URL.Path, root)
-		pageRequest := requestWithPath(r, legacyPath)
-		name := h.userDisplayName(r, session.UserID)
-		h.renderAdmin(w, pageRequest, session.UserID, role, root, name, session.CSRFToken)
-	case r.URL.Path == "/seller-admin" || strings.HasPrefix(r.URL.Path, "/seller-admin/"):
-		roles := h.userRoles(r, session.UserID)
-		isOwner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
-		if !isOwner && !hasIdentityRole(roles, domainidentity.RoleSellerStaff) {
+		if !knownAdminPage(strings.TrimPrefix(r.URL.Path, root)) {
+			http.NotFound(w, r)
+			return
+		}
+		h.renderAdmin(w, requestWithPath(r, adminLegacyPagePath(r.URL.Path, root)), session.UserID, currentRole, root, h.userDisplayName(r, session.UserID), session.CSRFToken)
+	case pathUnder(r.URL.Path, "/seller-admin"):
+		if currentRole != domainidentity.RoleSeller || !sellerPortalAllowed(r.URL.Path, true, nil) {
 			denyPortalAccess(w, r)
 			return
 		}
-		permissions, assigned := h.sellerPermissions(r, session.UserID)
-		if !assigned || !sellerPortalAllowed(r.URL.Path, isOwner, permissions) {
+		_, assigned := h.sellerPermissions(r, session.UserID)
+		if !assigned {
 			denyPortalAccess(w, r)
 			return
 		}
 		name := h.userDisplayName(r, session.UserID)
 		if r.URL.Path == "/seller-admin/products/new" || isSellerProductFormPath(r.URL.Path) {
-			h.renderSellerProductForm(w, r, session.UserID, name, isOwner, permissions, session.CSRFToken)
+			h.renderSellerProductForm(w, r, session.UserID, name, true, nil, session.CSRFToken)
 			return
 		}
 		if r.URL.Path == "/seller-admin/terms" {
-			h.renderSellerTerms(w, r, session.UserID, name, isOwner, permissions, session.CSRFToken)
+			h.renderSellerTerms(w, r, session.UserID, name, true, nil, session.CSRFToken)
 			return
 		}
-		if strings.HasPrefix(r.URL.Path, "/seller-admin/orders/") && sellerOrderDetailPath(strings.Trim(strings.TrimPrefix(r.URL.Path, "/seller-admin/"), "/")) {
-			h.renderSellerOrderDetail(w, r, session.UserID, name, isOwner, permissions, session.CSRFToken)
+		if strings.HasPrefix(r.URL.Path, "/seller-admin/orders/") && sellerOrderDetailPath(strings.TrimPrefix(r.URL.Path, "/seller-admin/")) {
+			h.renderSellerOrderDetail(w, r, session.UserID, name, true, nil, session.CSRFToken)
 			return
 		}
-		h.renderSeller(w, r, session.UserID, name, isOwner, permissions, session.CSRFToken)
-	case r.URL.Path == "/support-portal" || strings.HasPrefix(r.URL.Path, "/support-portal/"):
-		if !h.hasRole(r, session.UserID, "support_agent") {
-			denyPortalAccess(w, r)
-			return
-		}
-		h.renderSupport(w, r, session.UserID, session.CSRFToken)
+		h.renderSeller(w, r, session.UserID, name, true, nil, session.CSRFToken)
 	default:
 		h.delegate(w, r)
 	}
+}
+
+// Keep old bookmarks without retaining separate operational identities.
+func (h *LivePortalHandler) serveRetiredPortal(w http.ResponseWriter, r *http.Request) bool {
+	for _, root := range []string{"/marketplace-admin", "/finance-portal", "/operations-portal", "/support-portal", "/support"} {
+		if !pathUnder(r.URL.Path, root) {
+			continue
+		}
+		session, ok := h.session(r)
+		if !ok {
+			redirectToLogin(w, r)
+			return true
+		}
+		roles := h.userRoles(r, session.UserID)
+		if len(roles) != 1 || !domainidentity.CompanyRole(roles[0]) {
+			denyPortalAccess(w, r)
+			return true
+		}
+		dest := applicationauth.LoginDestination(roles)
+		relative := strings.TrimPrefix(r.URL.Path, root)
+		if root == "/support-portal" || root == "/support" {
+			relative = "/support" + relative
+		}
+		if root == "/finance-portal" && relative == "" {
+			relative = "/finance"
+		}
+		if root == "/operations-portal" && relative == "" {
+			relative = "/returns"
+		}
+		target := dest + relative
+		if !roleAllowsPortalPath(roles[0], target) {
+			denyPortalAccess(w, r)
+			return true
+		}
+		if r.Method == http.MethodGet {
+			redirectPortalDestination(w, r, target)
+			return true
+		}
+		// Rewrite internally: never redirect a POST to a different operation.
+		h.ServeHTTP(w, requestWithPath(r, target))
+		return true
+	}
+	return false
 }
 
 // serveUploadedAsset serves product images saved by the legacy admin form.
@@ -538,10 +534,7 @@ func (h *LivePortalHandler) renderSellerTerms(w http.ResponseWriter, r *http.Req
 	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
-	page.RoleLabel = "Seller Staff"
-	if isOwner {
-		page.RoleLabel = "Seller Owner"
-	}
+	page.RoleLabel = "Seller"
 	h.render(w, r, sellerpages.PortalTerms(page))
 }
 
@@ -555,17 +548,17 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
 	page.CanProducts = sellerPortalAllowed("/seller-admin/products", isOwner, permissions)
-	page.CanProductWrite = page.SellerStatus == "active" && (isOwner || containsString(permissions, "PRODUCT_WRITE"))
+	page.CanProductWrite = page.SellerStatus == "active" && (isOwner)
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
-	page.CanInventoryWrite = isOwner || containsString(permissions, "INVENTORY_WRITE")
+	page.CanInventoryWrite = isOwner
 	page.CanOrders = true
-	page.CanFulfill = isOwner || containsString(permissions, "ORDER_FULFILL")
+	page.CanFulfill = isOwner
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
-	page.CanTeam = isOwner
+	page.CanManageStore = isOwner
 	detail := &viewmodels.SellerAdminOrderDetail{}
 	var created time.Time
 	var subtotal int64
-	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss LEFT JOIN seller_users assigned ON assigned.seller_id=ss.id AND assigned.user_id=$2 AND assigned.status='active' WHERE ss.owner_user_id=$2 OR assigned.user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active')) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
+	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss  WHERE ss.owner_user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 ) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)
@@ -576,7 +569,7 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	}
 	detail.Date = created.Format("2 Jan 2006")
 	detail.Subtotal = money(subtotal)
-	rows, err := h.query(r, `SELECT oi.product_name,oi.sku,oi.quantity,oi.unit_price_cents,oi.line_total_cents FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id WHERE o.order_number=$1 AND s.id=$2 AND (s.owner_user_id=$3 OR EXISTS(SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$3 AND su.status='active')) ORDER BY oi.id`, number, detail.SellerID, userID)
+	rows, err := h.query(r, `SELECT oi.product_name,oi.sku,oi.quantity,oi.unit_price_cents,oi.line_total_cents FROM orders o JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id WHERE o.order_number=$1 AND s.id=$2 AND (s.owner_user_id=$3 ) ORDER BY oi.id`, number, detail.SellerID, userID)
 	if err != nil {
 		http.Error(w, "order details unavailable", http.StatusServiceUnavailable)
 		return
@@ -608,9 +601,9 @@ func (h *LivePortalHandler) updateSellerLowStockThreshold(w http.ResponseWriter,
 		return
 	}
 	roles := h.userRoles(r, session.UserID)
-	owner := hasIdentityRole(roles, domainidentity.RoleSellerOwner)
-	permissions, assigned := h.sellerPermissions(r, session.UserID)
-	if !assigned || (!owner && !containsString(permissions, "INVENTORY_WRITE")) {
+	owner := hasIdentityRole(roles, domainidentity.RoleSeller)
+	_, assigned := h.sellerPermissions(r, session.UserID)
+	if !assigned || !owner {
 		denyPortalAccess(w, r)
 		return
 	}
@@ -619,7 +612,7 @@ func (h *LivePortalHandler) updateSellerLowStockThreshold(w http.ResponseWriter,
 		http.Error(w, "threshold must be between 1 and 100000", http.StatusUnprocessableEntity)
 		return
 	}
-	result, err := h.pool.Exec(r.Context(), `UPDATE sellers SET low_stock_threshold=$1,updated_at=NOW() WHERE id=(SELECT s.id FROM sellers s LEFT JOIN seller_users su ON su.seller_id=s.id AND su.user_id=$2 AND su.status='active' WHERE s.owner_user_id=$2 OR su.user_id=$2 ORDER BY CASE WHEN s.owner_user_id=$2 THEN 0 ELSE 1 END,s.id LIMIT 1)`, threshold, session.UserID)
+	result, err := h.pool.Exec(r.Context(), `UPDATE sellers SET low_stock_threshold=$1,updated_at=NOW() WHERE id=(SELECT s.id FROM sellers s  WHERE s.owner_user_id=$2 ORDER BY CASE WHEN s.owner_user_id=$2 THEN 0 ELSE 1 END,s.id LIMIT 1)`, threshold, session.UserID)
 	if err != nil || result.RowsAffected() == 0 {
 		http.Error(w, "could not save threshold", http.StatusServiceUnavailable)
 		return
@@ -709,10 +702,10 @@ func (h *LivePortalHandler) sellerPermissions(r *http.Request, userID int64) ([]
 	var permissions []string
 	var assigned bool
 	err := h.queryRow(r, `
-		SELECT COALESCE(su.permissions, ARRAY[]::text[]), (s.owner_user_id=$1 OR su.user_id=$1)
+		SELECT ARRAY[]::text[], (s.owner_user_id=$1)
 		FROM sellers s
-		LEFT JOIN seller_users su ON su.seller_id=s.id AND su.user_id=$1 AND su.status='active'
-		WHERE s.owner_user_id=$1 OR su.user_id=$1
+
+		WHERE s.owner_user_id=$1
 		ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id
 		LIMIT 1`, userID).Scan(&permissions, &assigned)
 	if err != nil {
@@ -740,19 +733,20 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	page := h.adminPage(r, actorID, role)
 	page.PortalRoot = root
 	page.SettlementRoot = root
-	if role == domainidentity.RoleSuperAdmin {
-		page.SettlementRoot = root + "/finance"
-	}
+	page.SettlementRoot = root + "/finance"
 	page.PortalLabel = portalLabel(role)
 	page.RoleLabel = roleLabel(role)
 	page.DisplayName = displayName
 	page.CSRFToken = csrfToken
-	page.CanFinance = role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleFinanceOperator
+	page.CanFinance = role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleAdmin
 	page.CanSecurity = role == domainidentity.RoleSuperAdmin
-	page.CanManageCatalog = role == domainidentity.RoleSuperAdmin
-	page.IsFinance = role == domainidentity.RoleFinanceOperator
-	page.IsOperations = role == domainidentity.RoleOperations
+	page.CanManageCatalog = domainidentity.CompanyRole(role)
+	page.IsFinance = false
+	page.IsOperations = false
 	page.NavActive = page.Active
+	if page.Workspace == "roles" {
+		page.NavActive = "roles"
+	}
 	if page.Active == "security" && page.Workspace == "users" {
 		page.NavActive = "users"
 	}
@@ -764,7 +758,7 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	if page.DataWarning != "" {
 		page.Stats = nil
 	}
-	if role == domainidentity.RoleFinanceOperator {
+	if domainidentity.CompanyRole(role) {
 		switch page.Workspace {
 		case "failed-payments":
 			page.Transactions = keepAdminTransactions(page.Transactions, "failed")
@@ -816,35 +810,41 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 }
 
 func isSuperAdminProductEditorPath(path string) bool {
-	if path == "/super-admin/products/new" {
+	if path == "/super-admin/products/new" || path == "/admin/products/new" {
 		return true
 	}
-	if !strings.HasPrefix(path, "/super-admin/products/") || !strings.HasSuffix(path, "/edit") {
+	if !(strings.HasPrefix(path, "/super-admin/products/") || strings.HasPrefix(path, "/admin/products/")) || !strings.HasSuffix(path, "/edit") {
 		return false
 	}
-	id := strings.TrimSuffix(strings.TrimPrefix(path, "/super-admin/products/"), "/edit")
+	id := strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(path, "/super-admin/products/"), "/admin/products/"), "/edit")
 	parsed, err := strconv.ParseInt(id, 10, 64)
 	return err == nil && parsed > 0 && !strings.Contains(id, "/")
 }
 
 func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter, r *http.Request, actorID int64, displayName, csrfToken string) {
+	root := "/admin"
+	role := domainidentity.RoleAdmin
+	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
+		root = "/super-admin"
+		role = domainidentity.RoleSuperAdmin
+	}
 	pageRequest := requestWithPath(r, "/admin/products")
-	page := h.adminPage(pageRequest, actorID, domainidentity.RoleSuperAdmin)
-	page.PortalRoot = "/super-admin"
-	page.PortalLabel = portalLabel(domainidentity.RoleSuperAdmin)
-	page.RoleLabel = roleLabel(domainidentity.RoleSuperAdmin)
+	page := h.adminPage(pageRequest, actorID, role)
+	page.PortalRoot = root
+	page.PortalLabel = portalLabel(role)
+	page.RoleLabel = roleLabel(role)
 	page.DisplayName = displayName
 	page.CSRFToken = csrfToken
-	page.CanFinance, page.CanSecurity, page.CanManageCatalog = true, true, true
-	page.Stats = h.portalStats(r, domainidentity.RoleSuperAdmin)
+	page.CanFinance, page.CanSecurity, page.CanManageCatalog = true, role == domainidentity.RoleSuperAdmin, true
+	page.Stats = h.portalStats(r, role)
 	page.Sellers = h.adminSellers(r)
 
 	form := viewmodels.AdminProductEditor{Action: r.URL.Path, InitialStock: "0", DeliveryLabel: "Delivery to serviceable PIN codes in India"}
-	if r.URL.Path == "/super-admin/products/new" {
+	if r.URL.Path == root+"/products/new" {
 		page.Title = "Add product"
 		page.Subtitle = "Create a product draft for an active Indian seller, then submit it for marketplace review."
 	} else {
-		idText := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/super-admin/products/"), "/edit")
+		idText := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, root+"/products/"), "/edit")
 		productID, err := strconv.ParseInt(idText, 10, 64)
 		if err != nil || productID <= 0 {
 			http.NotFound(w, r)
@@ -901,7 +901,7 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 	if active == "" {
 		active = "dashboard"
 	}
-	if requestedWorkspace := r.URL.Query().Get("workspace"); requestedWorkspace == "settlements" && (role == domainidentity.RoleFinanceOperator || role == domainidentity.RoleSuperAdmin) {
+	if requestedWorkspace := r.URL.Query().Get("workspace"); requestedWorkspace == "settlements" && (role == domainidentity.RoleAdmin || role == domainidentity.RoleSuperAdmin) {
 		workspace = requestedWorkspace
 	}
 	switch active {
@@ -922,7 +922,7 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 	case "coupons":
 		active = "marketing"
 	}
-	if role == domainidentity.RoleFinanceOperator && workspace == "refunds" {
+	if domainidentity.CompanyRole(role) && workspace == "refunds" {
 		active = "finance"
 	}
 	return h.adminData(r, actorID, active, workspace, r.URL.Query().Get("notice"), r.URL.Query().Get("q"))
@@ -966,9 +966,10 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	page.Reviews = h.adminReviews(r)
 	page.Campaigns = h.adminCampaigns(r)
 	page.Settlements = h.adminSettlements(r)
-	page.AuditEntries = h.adminAudit(r)
-
-	page.Configs = h.runtimeConfigs(r)
+	if h.hasRole(r, actorID, "super_admin") {
+		page.AuditEntries = h.adminAudit(r)
+		page.Configs = h.runtimeConfigs(r)
+	}
 	page.Pagination = projectionPagination(r, adminProjectionKey(active, workspace))
 	page.DataWarning = projectionWarning(r, page.DataWarning)
 	if page.DataWarning != "" {
@@ -1005,14 +1006,7 @@ func (h *LivePortalHandler) portalStats(r *http.Request, role domainidentity.Rol
 		return viewmodels.AdminStat{Icon: icon, Value: strconv.FormatInt(value, 10), Label: label, Delta: "Live", Positive: value == 0, Period: "current"}
 	}
 	switch role {
-	case domainidentity.RoleFinanceOperator:
-		return []viewmodels.AdminStat{
-			count(`SELECT COUNT(*) FROM payment_attempts WHERE status='captured'`, "Captured payments", "payments"),
-			count(`SELECT COUNT(*) FROM payment_attempts WHERE status='failed'`, "Failed payments", "error"),
-			count(`SELECT COUNT(*) FROM seller_settlements WHERE status IN ('pending','approved')`, "Pending settlements", "account_balance"),
-			count(`SELECT COUNT(*) FROM return_requests WHERE status='approved'`, "Approved returns", "currency_rupee"),
-		}
-	case domainidentity.RoleOperations:
+	case domainidentity.RoleAdmin:
 		return []viewmodels.AdminStat{
 			count(`SELECT COUNT(*) FROM orders WHERE status IN ('paid','processing')`, "Orders to fulfil", "inventory_2"),
 			count(`SELECT COUNT(*) FROM orders WHERE status='shipped'`, "In transit", "local_shipping"),
@@ -1238,12 +1232,12 @@ var promotionCodePattern = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_-]{2,39}$`)
 var promotionAmountPattern = regexp.MustCompile(`^[0-9]{1,8}(?:\.[0-9]{1,2})?$`)
 
 func isPromotionMutationPath(path string) bool {
-	return path == "/marketplace-admin/marketing/create" || path == "/marketplace-admin/marketing/update" || path == "/marketplace-admin/marketing/status" || path == "/marketplace-admin/marketing/delete" ||
+	return path == "/admin/marketing/create" || path == "/admin/marketing/update" || path == "/admin/marketing/status" || path == "/admin/marketing/delete" ||
 		path == "/super-admin/marketing/create" || path == "/super-admin/marketing/update" || path == "/super-admin/marketing/status" || path == "/super-admin/marketing/delete"
 }
 
 func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *http.Request) {
-	root, requiredRole := "/marketplace-admin", "marketplace_admin"
+	root, requiredRole := "/admin", "admin"
 	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
 		root, requiredRole = "/super-admin", "super_admin"
 	}
@@ -1501,7 +1495,7 @@ func (h *LivePortalHandler) adminReviewStatus(w http.ResponseWriter, r *http.Req
 	if r.URL.Path == "/super-admin/reviews/status" {
 		root = "/super-admin"
 	}
-	if !h.hasRole(r, session.UserID, "marketplace_admin", "super_admin") {
+	if !h.hasRole(r, session.UserID, "admin", "super_admin") {
 		denyPortalAccess(w, r)
 		return
 	}
@@ -1627,12 +1621,12 @@ func (h *LivePortalHandler) adminSettlements(r *http.Request) []viewmodels.Admin
 }
 
 func isSettlementMutationPath(path string) bool {
-	return path == "/finance-portal/settlements/create" || path == "/finance-portal/settlements/status" ||
+	return path == "/admin/finance/settlements/create" || path == "/admin/finance/settlements/status" ||
 		path == "/super-admin/finance/settlements/create" || path == "/super-admin/finance/settlements/status"
 }
 
 func (h *LivePortalHandler) adminSettlementMutation(w http.ResponseWriter, r *http.Request) {
-	root, role := "/finance-portal", "finance_operator"
+	root, role := "/admin/finance", "admin"
 	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
 		root, role = "/super-admin/finance", "super_admin"
 	}
@@ -1789,19 +1783,16 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
-	page.RoleLabel = "Seller Staff"
-	if isOwner {
-		page.RoleLabel = "Seller Owner"
-	}
+	page.RoleLabel = "Seller"
 	page.CanProducts = sellerPortalAllowed("/seller-admin/products", isOwner, permissions)
-	page.CanProductWrite = page.SellerStatus == "active" && (isOwner || containsString(permissions, "PRODUCT_WRITE"))
+	page.CanProductWrite = page.SellerStatus == "active" && (isOwner)
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
-	page.CanInventoryWrite = isOwner || containsString(permissions, "INVENTORY_WRITE")
+	page.CanInventoryWrite = isOwner
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
-	page.CanFulfill = isOwner || containsString(permissions, "ORDER_FULFILL")
+	page.CanFulfill = isOwner
 	page.CanReturns = sellerPortalAllowed("/seller-admin/returns", isOwner, permissions)
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
-	page.CanTeam = isOwner
+	page.CanManageStore = isOwner
 	var component templ.Component
 	switch page.Active {
 	case "dashboard":
@@ -1822,8 +1813,6 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 		component = sellerpages.PortalAnalytics(page)
 	case "settings":
 		component = sellerpages.PortalSettings(page)
-	case "team":
-		component = sellerpages.PortalTeam(page)
 	default:
 		component = sellerpages.PortalUnavailable(page)
 	}
@@ -1845,23 +1834,23 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	page.DataWarning = projectionWarning(r, page.DataWarning)
 	page.Initials = initials(displayName)
 	page.CSRFToken = csrfToken
-	page.RoleLabel = roleLabel(domainidentity.RoleSellerStaff)
+	page.RoleLabel = roleLabel(domainidentity.RoleSeller)
 	if isOwner {
-		page.RoleLabel = roleLabel(domainidentity.RoleSellerOwner)
+		page.RoleLabel = roleLabel(domainidentity.RoleSeller)
 	}
 	page.CanProducts = true
-	page.CanProductWrite = page.SellerStatus == "active" && (isOwner || containsString(permissions, "PRODUCT_WRITE"))
+	page.CanProductWrite = page.SellerStatus == "active" && (isOwner)
 	if !page.CanProductWrite {
 		http.Redirect(w, r, "/seller-admin/onboarding", http.StatusSeeOther)
 		return
 	}
-	page.CanInventoryWrite = isOwner || containsString(permissions, "INVENTORY_WRITE")
+	page.CanInventoryWrite = isOwner
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
-	page.CanFulfill = isOwner || containsString(permissions, "ORDER_FULFILL")
+	page.CanFulfill = isOwner
 	page.CanReturns = sellerPortalAllowed("/seller-admin/returns", isOwner, permissions)
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
-	page.CanTeam = isOwner
+	page.CanManageStore = isOwner
 
 	form := viewmodels.SellerProductForm{Action: "/seller-admin/products", InitialStock: "0", DeliveryLabel: "Delivery to serviceable PIN codes in India", BrandName: page.SellerName, BrandSlug: productSlugForPortal(page.SellerName)}
 	if categoryRows, categoryErr := h.query(r, `SELECT slug,name FROM categories ORDER BY name`); categoryErr == nil {
@@ -1891,8 +1880,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents,cost_price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id
 			WHERE p.id=$1 AND p.status<>'archived' AND p.seller_id IN (
-				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 OR EXISTS (
-					SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active'))`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &cost, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
+				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 )`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &cost, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				http.NotFound(w, r)
@@ -2014,7 +2002,7 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	var sellerID int64
 	var name, sellerStatus string
 	var lowStockThreshold int
-	if err := h.queryRow(r, `SELECT s.id,s.display_name,s.status,s.low_stock_threshold FROM sellers s WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$1 AND su.status='active') ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold); err != nil {
+	if err := h.queryRow(r, `SELECT s.id,s.display_name,s.status,s.low_stock_threshold FROM sellers s WHERE s.owner_user_id=$1  ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold); err != nil {
 		return viewmodels.SellerAdminPage{Active: active, Title: "Seller workspace", Subtitle: "No seller profile is assigned to this account.", DataWarning: projectionWarning(r, "")}
 	}
 	period := r.URL.Query().Get("range")
@@ -2053,7 +2041,6 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		if active == "settings" {
 			_ = h.queryRow(r, `SELECT public_location,public_story,public_technique,public_portrait FROM sellers WHERE id=$1`, sellerID).Scan(&page.PublicLocation, &page.PublicStory, &page.PublicTechnique, &page.PublicPortrait)
 		}
-		page.Team = h.sellerTeam(r, sellerID)
 	}
 	page.Pagination = projectionPagination(r, sellerProjectionKey(active, page.Tab))
 	page.LedgerPagination = projectionPagination(r, "seller-ledger")
@@ -2350,24 +2337,6 @@ func (h *LivePortalHandler) sellerSettlements(r *http.Request, sellerID int64) [
 	return result
 }
 
-func (h *LivePortalHandler) sellerTeam(r *http.Request, sellerID int64) []viewmodels.SellerTeamMember {
-	rows, err := h.query(r, `SELECT u.id,u.display_name,u.email,su.status,su.permissions FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=$1 AND su.status='active' ORDER BY u.id`, sellerID)
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
-	result := make([]viewmodels.SellerTeamMember, 0)
-	for rows.Next() {
-		var userID int64
-		var name, email, status string
-		var permissions []string
-		if rows.Scan(&userID, &name, &email, &status, &permissions) == nil {
-			result = append(result, viewmodels.SellerTeamMember{UserID: strconv.FormatInt(userID, 10), Name: name, Email: email, Role: "Seller staff", Status: status, Permissions: strings.Join(permissions, ", "), LastActive: "Live account", ProductRead: sellerHasPermission(permissions, "PRODUCT_READ"), ProductWrite: sellerHasPermission(permissions, "PRODUCT_WRITE"), InventoryRead: sellerHasPermission(permissions, "INVENTORY_READ"), InventoryWrite: sellerHasPermission(permissions, "INVENTORY_WRITE"), OrderRead: sellerHasPermission(permissions, "ORDER_READ"), OrderFulfill: sellerHasPermission(permissions, "ORDER_FULFILL"), ReturnRead: sellerHasPermission(permissions, "RETURN_READ"), ReportRead: sellerHasPermission(permissions, "REPORT_READ")})
-		}
-	}
-	return result
-}
-
 func portalQuery(value string) string {
 	value = strings.TrimSpace(value)
 	runes := []rune(value)
@@ -2375,15 +2344,6 @@ func portalQuery(value string) string {
 		return string(runes[:120])
 	}
 	return value
-}
-
-func sellerHasPermission(permissions []string, wanted string) bool {
-	for _, permission := range permissions {
-		if permission == wanted {
-			return true
-		}
-	}
-	return false
 }
 
 func (h *LivePortalHandler) renderSupport(w http.ResponseWriter, r *http.Request, actorID int64, csrfToken string) {
@@ -2410,7 +2370,7 @@ func (h *LivePortalHandler) supportPage(r *http.Request, actorID int64, csrfToke
 	if trimmed != "" {
 		active = trimmed
 	}
-	page := viewmodels.SupportPortalPage{Active: active, Title: title(active), Subtitle: "Support cases backed by live PostgreSQL records.", Query: r.URL.Query().Get("q"), Notice: r.URL.Query().Get("notice"), Tab: r.URL.Query().Get("tab"), DisplayName: h.userDisplayName(r, actorID), RoleLabel: roleLabel(domainidentity.RoleSupportAgent), CSRFToken: csrfToken}
+	page := viewmodels.SupportPortalPage{Active: active, Title: title(active), Subtitle: "Support cases backed by live PostgreSQL records.", Query: r.URL.Query().Get("q"), Notice: r.URL.Query().Get("notice"), Tab: r.URL.Query().Get("tab"), DisplayName: h.userDisplayName(r, actorID), RoleLabel: roleLabel(domainidentity.RoleAdmin), CSRFToken: csrfToken}
 	page.Initials = initials(page.DisplayName)
 	page.Cases = h.supportCases(r)
 
@@ -2494,7 +2454,7 @@ func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPo
 	if selectedID > 0 {
 		projectionKey = "support-selected"
 	}
-	rows, err := h.projectionRows(r, projectionKey, `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role='support_agent' ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE WHERE ($1='' OR concat_ws(' ',t.ticket_number,t.subject,u.display_name,COALESCE(o.order_number,''),t.status,t.priority) ILIKE '%'||$1||'%') AND ($2<>'orders' OR t.order_id IS NOT NULL) AND ($3=0 OR t.id=$3) ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")), strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/"), selectedID)
+	rows, err := h.projectionRows(r, projectionKey, `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role IN ('admin','super_admin','support_agent') ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE WHERE ($1='' OR concat_ws(' ',t.ticket_number,t.subject,u.display_name,COALESCE(o.order_number,''),t.status,t.priority) ILIKE '%'||$1||'%') AND ($2<>'orders' OR t.order_id IS NOT NULL) AND ($3=0 OR t.id=$3) ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")), strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/"), selectedID)
 	if err != nil {
 		return nil
 	}
@@ -2525,11 +2485,11 @@ func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int6
 		var created time.Time
 		if rows.Scan(&authorID, &author, &authorRole, &body, &created) == nil {
 			role, tone := "Customer", "customer"
-			if authorRole == "support_agent" {
-				role, tone = "Support Agent", "agent"
+			if authorRole == "admin" {
+				role, tone = "Company support", "agent"
 			} else {
 				author = maskName(author)
-				if authorRole == "seller_owner" {
+				if authorRole == "seller" {
 					role = "Seller"
 				}
 			}
@@ -2540,7 +2500,7 @@ func (h *LivePortalHandler) supportTicketMessages(r *http.Request, ticketID int6
 }
 
 func (h *LivePortalHandler) latestSupportConversations(r *http.Request) []viewmodels.SupportPortalConversation {
-	rows, err := h.query(r, `SELECT m.ticket_id,t.ticket_number,u.display_name,m.body,m.created_at FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id JOIN users u ON u.id=m.author_id WHERE m.author_role='support_agent' ORDER BY m.created_at DESC,m.id DESC LIMIT 12`)
+	rows, err := h.query(r, `SELECT m.ticket_id,t.ticket_number,u.display_name,m.body,m.created_at FROM support_ticket_messages m JOIN support_tickets t ON t.id=m.ticket_id JOIN users u ON u.id=m.author_id WHERE m.author_role IN ('admin','super_admin','support_agent') ORDER BY m.created_at DESC,m.id DESC LIMIT 12`)
 	if err != nil {
 		return nil
 	}
@@ -2551,7 +2511,7 @@ func (h *LivePortalHandler) latestSupportConversations(r *http.Request) []viewmo
 		var created time.Time
 		if rows.Scan(&item.TicketID, &item.TicketNumber, &item.Author, &item.Message, &created) == nil {
 			item.Initials = initials(item.Author)
-			item.Role = "Support Agent"
+			item.Role = "Company support"
 			item.Time = created.Format("2 Jan 2006 15:04")
 			item.Tone = "agent"
 			if runes := []rune(item.Message); len(runes) > 120 {

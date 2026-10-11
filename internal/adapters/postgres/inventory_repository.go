@@ -21,10 +21,7 @@ func (r *CommerceRepository) ListSellerInventory(ctx context.Context, userID int
 		JOIN products p ON p.id = pv.product_id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
-		WHERE (s.owner_user_id = $1 OR EXISTS (
-			SELECT 1 FROM seller_users su
-			WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active'
-		)) AND pv.status = 'active'
+		WHERE (s.owner_user_id = $1 ) AND pv.status = 'active'
 		ORDER BY p.updated_at DESC, p.id DESC, pv.id
 		LIMIT 200`, userID)
 	if err != nil {
@@ -52,10 +49,7 @@ func (r *CommerceRepository) AdjustSellerInventory(ctx context.Context, userID i
 			JOIN product_variants pv ON pv.id = i.variant_id AND pv.status = 'active'
 			JOIN products p ON p.id = pv.product_id
 			JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
-			WHERE i.variant_id = $1 AND (s.owner_user_id = $2 OR EXISTS (
-				SELECT 1 FROM seller_users su
-				WHERE su.seller_id = s.id AND su.user_id = $2 AND su.status = 'active'
-			))
+			WHERE i.variant_id = $1 AND (s.owner_user_id = $2 )
 			FOR UPDATE OF i`, adjustment.VariantID, userID).Scan(&sellerID, &before, &reserved)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden

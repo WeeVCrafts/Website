@@ -46,15 +46,12 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 	if active == "seller-profile" {
 		active = "settings"
 	}
-	if active == "staff" || active == "staff-permissions" {
-		active = "team"
-	}
 
 	page := viewmodels.SellerAdminPage{
 		Active: active, Workspace: requested,
-		DisplayName: "Preview Seller", UserEmail: "seller@example.test", SellerName: "Weaver's Touch", RoleLabel: "Seller Owner", Initials: "PS", CSRFToken: "test-csrf",
+		DisplayName: "Preview Seller", UserEmail: "seller@example.test", SellerName: "Weaver's Touch", RoleLabel: "Seller", Initials: "PS", CSRFToken: "test-csrf",
 		CanProducts: true, CanProductWrite: true, CanInventory: true, CanInventoryWrite: true,
-		CanOrders: true, CanFulfill: true, CanReturns: true, CanReports: true, CanTeam: true,
+		CanOrders: true, CanFulfill: true, CanReturns: true, CanReports: true, CanManageStore: true,
 		Query:  values.Get("q"),
 		Range:  values.Get("range"),
 		Tab:    values.Get("tab"),
@@ -135,20 +132,6 @@ func sellerAdminPage(path string, values url.Values) viewmodels.SellerAdminPage 
 	case "settings":
 		page.Title = "Store & Account"
 		page.Subtitle = "Manage your storefront, business details and account settings — all in one place."
-	case "team":
-		page.Title = "Team & Permissions"
-		page.Subtitle = "Invite trusted staff and give each person only the access they need to help run your store."
-		page.Stats = []viewmodels.SellerAdminStat{
-			{Icon: "groups", Value: "4", Label: "Team members", Period: "Seller workspace"},
-			{Icon: "verified_user", Value: "3", Label: "Active members", Period: "Access reviewed"},
-			{Icon: "schedule", Value: "1", Label: "Pending invite", Period: "Awaiting acceptance", Tone: "gold"},
-		}
-		page.Team = []viewmodels.SellerTeamMember{
-			{Name: "Priya Sharma", Email: "priya@weaverstouch.in", Role: "Store owner", Status: "Active", LastActive: "Now", Permissions: "Everything", Image: "/assets/images/customer/maker-mithila.webp"},
-			{Name: "Rohan Mehta", Email: "rohan@weaverstouch.in", Role: "Catalog manager", Status: "Active", LastActive: "12 min ago", Permissions: "Products, media, inventory", Image: "/assets/images/customer/saree-blue.webp"},
-			{Name: "Aditi Rao", Email: "aditi@weaverstouch.in", Role: "Order assistant", Status: "Active", LastActive: "1 hour ago", Permissions: "Orders, fulfilment, returns", Image: "/assets/images/customer/ceramic-mugs.webp"},
-			{Name: "Neha Kapoor", Email: "neha@weaverstouch.in", Role: "Finance viewer", Status: "Invite pending", LastActive: "Not active yet", Permissions: "Read-only earnings", Image: "/assets/images/customer/wooden-box.webp"},
-		}
 	default:
 		page.Active = "dashboard"
 		page.Title = "Dashboard"

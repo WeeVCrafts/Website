@@ -7,90 +7,40 @@ import (
 	"strings"
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
-	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 )
 
 func roleAllowsPortalPath(role domainidentity.Role, path string) bool {
-	switch {
-	case pathUnder(path, "/marketplace-admin"):
-		return role == domainidentity.RoleMarketplaceAdmin && !adminRestrictedPath(strings.TrimPrefix(path, "/marketplace-admin"))
-	case pathUnder(path, "/super-admin"):
+	if pathUnder(path, "/super-admin") {
 		return role == domainidentity.RoleSuperAdmin
-	case pathUnder(path, "/finance-portal"):
-		return role == domainidentity.RoleFinanceOperator && financeLegacyPath(strings.TrimPrefix(path, "/finance-portal"))
-	case pathUnder(path, "/operations-portal"):
-		return role == domainidentity.RoleOperations && operationsLegacyPath(strings.TrimPrefix(path, "/operations-portal"))
-	case pathUnder(path, "/seller-admin"):
-		return role == domainidentity.RoleSellerOwner || role == domainidentity.RoleSellerStaff
-	case pathUnder(path, "/support-portal"):
-		return role == domainidentity.RoleSupportAgent
-	default:
-		return false
 	}
+	if pathUnder(path, "/admin") {
+		return domainidentity.CompanyRole(role) && (!adminRestrictedPath(strings.TrimPrefix(path, "/admin")) || role == domainidentity.RoleSuperAdmin)
+	}
+	if pathUnder(path, "/seller-admin") {
+		return role == domainidentity.RoleSeller
+	}
+	return false
 }
-
 func adminRestrictedPath(path string) bool {
 	path = strings.Trim(path, "/")
-	return path == "security" || path == "roles" || path == "users" || path == "finance" ||
-		strings.HasPrefix(path, "security/") || strings.HasPrefix(path, "roles/") || strings.HasPrefix(path, "users/") ||
-		strings.HasPrefix(path, "finance/") || path == "payments" || path == "failed-payments" ||
-		path == "refunds" || path == "finance-reconciliation" || path == "settlements" ||
-		path == "commission-rules"
-}
-
-func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
-	relative := strings.Trim(strings.TrimPrefix(path, "/seller-admin"), "/")
-	if relative == "" {
-		return true
-	}
-	if isOwner {
-		switch relative {
-		case "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "team", "settings", "onboarding", "support", "terms":
-			return true
-		}
-		if isSellerProductEditPath(relative) {
-			return true
-		}
-		if sellerOrderDetailPath(relative) {
-			return true
-		}
-		return false
-	}
-
-	permission := ""
-	switch {
-	case relative == "terms":
-		return true
-	case relative == "products":
-		permission = domaincommerce.SellerPermissionProductRead
-	case relative == "inventory":
-		permission = domaincommerce.SellerPermissionInventoryRead
-	case relative == "orders":
-		permission = domaincommerce.SellerPermissionOrderRead
-	case sellerOrderDetailPath(relative):
-		permission = domaincommerce.SellerPermissionOrderRead
-	case relative == "returns":
-		permission = domaincommerce.SellerPermissionReturnRead
-	case relative == "earnings" || relative == "commission" || relative == "analytics" || relative == "audit":
-		permission = domaincommerce.SellerPermissionReportRead
-	case relative == "onboarding":
-		return true
-	case isSellerProductEditPath(relative), relative == "products/new":
-		permission = domaincommerce.SellerPermissionProductWrite
-	case relative == "inventory/adjust":
-		permission = domaincommerce.SellerPermissionInventoryWrite
-	case strings.HasPrefix(relative, "orders/") && strings.HasSuffix(relative, "/fulfill"):
-		permission = domaincommerce.SellerPermissionOrderFulfill
-	default:
-		return false
-	}
-	for _, assigned := range permissions {
-		if assigned == permission {
+	for _, prefix := range []string{"security", "roles", "users", "settings", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health"} {
+		if path == prefix || strings.HasPrefix(path, prefix+"/") {
 			return true
 		}
 	}
 	return false
+}
+func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
+	if !isOwner {
+		return false
+	}
+	relative := strings.Trim(strings.TrimPrefix(path, "/seller-admin"), "/")
+	switch relative {
+	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "onboarding", "support", "terms":
+		return true
+	}
+	return isSellerProductEditPath(relative) || sellerOrderDetailPath(relative)
 }
 
 func sellerOrderDetailPath(relative string) bool {
@@ -117,73 +67,36 @@ func pathUnder(path, prefix string) bool {
 	return path == prefix || strings.HasPrefix(path, prefix+"/")
 }
 
+// Retired GET portal links are resolved only after current authorization.
 func legacyAdminDestination(path string, roles []domainidentity.Role) string {
-	if path == "/admin" {
-		workspaces := applicationauth.WorkspacesForRoles(roles)
-		if len(workspaces) != 1 {
-			return "/access-unavailable"
-		}
-		role := workspaces[0].Role
-		if role == domainidentity.RoleMarketplaceAdmin || role == domainidentity.RoleSuperAdmin || role == domainidentity.RoleFinanceOperator || role == domainidentity.RoleOperations {
-			return workspaces[0].Path
-		}
+	destination := applicationauth.LoginDestination(roles)
+	if destination != "/admin" && destination != "/super-admin" {
 		return ""
 	}
-
-	relative := strings.TrimPrefix(path, "/admin")
+	relative := ""
+	for _, root := range []string{"/marketplace-admin", "/finance-portal", "/operations-portal", "/admin", "/finance"} {
+		if pathUnder(path, root) {
+			relative = strings.TrimPrefix(path, root)
+			break
+		}
+	}
 	if path == "/finance" {
-		relative = ""
+		relative = "/finance"
 	}
-	if !strings.HasPrefix(path, "/admin/") && path != "/finance" {
+	if relative == "" && pathUnder(path, "/finance-portal") {
+		relative = "/finance"
+	}
+	if relative == "" && pathUnder(path, "/operations-portal") {
+		relative = "/returns"
+	}
+	if !knownAdminPage(relative) || !roleAllowsPortalPath(roles[0], destination+relative) {
 		return ""
 	}
-
-	for _, role := range roles {
-		if role == domainidentity.RoleSuperAdmin && superAdminLegacyPath(relative) {
-			return "/super-admin" + relative
-		}
-	}
-	if financeLegacyPath(relative) {
-		for _, role := range roles {
-			if role == domainidentity.RoleFinanceOperator {
-				if relative == "/finance" {
-					relative = ""
-				}
-				return "/finance-portal" + relative
-			}
-		}
-	}
-	if operationsLegacyPath(relative) {
-		for _, role := range roles {
-			if role == domainidentity.RoleOperations {
-				return "/operations-portal" + relative
-			}
-		}
-	}
-	for _, role := range roles {
-		if role == domainidentity.RoleMarketplaceAdmin && !adminRestrictedPath(relative) {
-			return "/marketplace-admin" + relative
-		}
-	}
-	return ""
+	return destination + relative
 }
-
-func financeLegacyPath(path string) bool {
-	path = strings.Trim(path, "/")
-	if path == "" || path == "finance" || path == "payments" || path == "failed-payments" || path == "refunds" || path == "finance-reconciliation" || path == "settlements" || path == "commission-rules" {
-		return true
-	}
-	return false
-}
-
-func operationsLegacyPath(path string) bool {
-	path = strings.Trim(path, "/")
-	return path == "" || path == "orders" || path == "returns" || path == "refunds" || path == "disputes"
-}
-
-func superAdminLegacyPath(path string) bool {
-	return knownAdminPage(path)
-}
+func financeLegacyPath(path string) bool    { return knownAdminPage(path) }
+func operationsLegacyPath(path string) bool { return knownAdminPage(path) }
+func superAdminLegacyPath(path string) bool { return knownAdminPage(path) }
 
 func knownAdminPage(path string) bool {
 	switch strings.Trim(path, "/") {
@@ -196,18 +109,11 @@ func knownAdminPage(path string) bool {
 }
 
 func canonicalAdminPortal(path string) (domainidentity.Role, string, bool) {
-	for _, portal := range []struct {
-		prefix string
-		role   domainidentity.Role
-	}{
-		{prefix: "/marketplace-admin", role: domainidentity.RoleMarketplaceAdmin},
-		{prefix: "/super-admin", role: domainidentity.RoleSuperAdmin},
-		{prefix: "/finance-portal", role: domainidentity.RoleFinanceOperator},
-		{prefix: "/operations-portal", role: domainidentity.RoleOperations},
-	} {
-		if pathUnder(path, portal.prefix) {
-			return portal.role, portal.prefix, true
-		}
+	if pathUnder(path, "/super-admin") {
+		return domainidentity.RoleSuperAdmin, "/super-admin", true
+	}
+	if pathUnder(path, "/admin") {
+		return domainidentity.RoleAdmin, "/admin", true
 	}
 	return "", "", false
 }
@@ -217,28 +123,7 @@ func isCanonicalAdminPortal(path string) bool {
 	return ok
 }
 
-func adminLegacyPagePath(path, root string) string {
-	relative := strings.TrimPrefix(path, root)
-	switch root {
-	case "/marketplace-admin", "/super-admin":
-		if relative == "" {
-			return "/admin"
-		}
-		return "/admin" + relative
-	case "/finance-portal":
-		if relative == "" || relative == "/finance" {
-			return "/admin/finance"
-		}
-		return "/admin" + relative
-	case "/operations-portal":
-		if relative == "" {
-			return "/admin/returns"
-		}
-		return "/admin" + relative
-	default:
-		return "/admin"
-	}
-}
+func adminLegacyPagePath(path, root string) string { return "/admin" + strings.TrimPrefix(path, root) }
 
 func canonicalAdminMutationPath(path string) string {
 	_, root, ok := canonicalAdminPortal(path)
@@ -268,12 +153,6 @@ func canonicalSellerMutationPath(path string) string {
 		return "/seller/inventory/adjust"
 	case "/seller-admin/orders/fulfill":
 		return "/seller/orders/fulfill"
-	case "/seller-admin/team/add":
-		return "/seller/team/add"
-	case "/seller-admin/team/update":
-		return "/seller/team/update"
-	case "/seller-admin/team/remove":
-		return "/seller/team/remove"
 	case "/seller-admin/onboarding":
 		return "/seller/onboard"
 	case "/seller-admin/settings":
@@ -292,21 +171,7 @@ func canonicalSellerMutationPath(path string) string {
 }
 
 func sellerMutationAllowed(path string, isOwner bool, permissions []string) bool {
-	if isOwner {
-		return true
-	}
-	permission := ""
-	switch {
-	case path == "/seller-admin/products" || path == "/seller-admin/products/submit" || path == "/seller-admin/products/archive" || path == "/seller-admin/products/restore" || path == "/seller-admin/products/variants/create" || path == "/seller-admin/products/variants/update" || path == "/seller-admin/products/variants/archive" || strings.HasPrefix(path, "/seller-admin/products/") && strings.HasSuffix(path, "/edit"):
-		permission = domaincommerce.SellerPermissionProductWrite
-	case path == "/seller-admin/inventory/adjust":
-		permission = domaincommerce.SellerPermissionInventoryWrite
-	case path == "/seller-admin/orders/fulfill":
-		permission = domaincommerce.SellerPermissionOrderFulfill
-	default:
-		return false
-	}
-	return containsPermission(permissions, permission)
+	return isOwner && !strings.Contains(path, "/team")
 }
 
 func containsPermission(permissions []string, required string) bool {
@@ -324,40 +189,22 @@ func roleString(role domainidentity.Role) string {
 
 func roleLabel(role domainidentity.Role) string {
 	switch role {
-	case domainidentity.RoleMarketplaceAdmin:
-		return "Marketplace Admin"
+	case domainidentity.RoleAdmin:
+		return "Admin"
 	case domainidentity.RoleSuperAdmin:
 		return "Super Admin"
-	case domainidentity.RoleFinanceOperator:
-		return "Finance Operator"
-	case domainidentity.RoleOperations:
-		return "Returns Operations"
-	case domainidentity.RoleSellerOwner:
-		return "Seller Owner"
-	case domainidentity.RoleSellerStaff:
-		return "Seller Staff"
-	case domainidentity.RoleSupportAgent:
-		return "Support Agent"
+	case domainidentity.RoleSeller:
+		return "Seller"
 	case domainidentity.RoleCustomer:
 		return "Customer"
-	default:
-		return "Account"
 	}
+	return "Account"
 }
-
 func portalLabel(role domainidentity.Role) string {
-	switch role {
-	case domainidentity.RoleMarketplaceAdmin:
-		return "Marketplace Portal"
-	case domainidentity.RoleSuperAdmin:
+	if role == domainidentity.RoleSuperAdmin {
 		return "Super Admin Portal"
-	case domainidentity.RoleFinanceOperator:
-		return "Finance Portal"
-	case domainidentity.RoleOperations:
-		return "Operations Portal"
-	default:
-		return "Workspace"
 	}
+	return "Admin Portal"
 }
 
 func hasIdentityRole(roles []domainidentity.Role, wanted domainidentity.Role) bool {
@@ -370,7 +217,7 @@ func hasIdentityRole(roles []domainidentity.Role, wanted domainidentity.Role) bo
 }
 
 func customerRoleAllowed(roles []domainidentity.Role) bool {
-	return hasIdentityRole(roles, domainidentity.RoleCustomer)
+	return len(roles) == 1 && roles[0] == domainidentity.RoleCustomer
 }
 
 func requestWithPath(r *http.Request, path string) *http.Request {
@@ -399,7 +246,7 @@ func legacySellerPortalDestination(path string) string {
 		"orders": "/seller-admin/orders", "inventory": "/seller-admin/inventory",
 		"returns": "/seller-admin/returns", "earnings": "/seller-admin/earnings",
 		"analytics": "/seller-admin/analytics", "audit": "/seller-admin/audit",
-		"team": "/seller-admin/team", "settings": "/seller-admin/settings",
+		"settings":   "/seller-admin/settings",
 		"onboarding": "/seller-admin/onboarding", "support": "/seller-admin/support",
 		"commission": "/seller-admin/commission",
 	}

@@ -18,7 +18,7 @@ type MediaRepository struct{ pool *pgxpool.Pool }
 
 func NewMediaRepository(pool *pgxpool.Pool) *MediaRepository { return &MediaRepository{pool: pool} }
 
-const mediaManageCondition = `(s.owner_user_id=$2 OR EXISTS(SELECT 1 FROM seller_users su JOIN users member ON member.id=su.user_id AND member.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions)) OR EXISTS(SELECT 1 FROM user_roles ur JOIN users admin ON admin.id=ur.user_id AND admin.status='active' WHERE ur.user_id=$2 AND ur.role_slug IN ('marketplace_admin','super_admin')))`
+const mediaManageCondition = `((s.owner_user_id=$2 AND s.status='active' AND EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$2 AND u.status='active' AND ur.role_slug='seller')) OR EXISTS(SELECT 1 FROM user_roles ur JOIN users admin ON admin.id=ur.user_id AND admin.status='active' WHERE ur.user_id=$2 AND ur.role_slug IN ('admin','super_admin')))`
 
 func (r *MediaRepository) PrepareUpload(ctx context.Context, sellerOwnerID, productID int64, objectKey, contentType string, byteSize int64) (int64, error) {
 	var mediaID int64

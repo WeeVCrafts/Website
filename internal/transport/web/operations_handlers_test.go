@@ -122,16 +122,16 @@ func TestLiveOperationsPagesRenderTheirDataContracts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create operations handler: %v", err)
 	}
-	handler.SetSellerOrderService(applicationcommerce.NewSellerOrderService(webSellerOrderRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSellerOwner: true}}}))
-	handler.SetSellerReportService(applicationcommerce.NewSellerReportService(webSellerOrderRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSellerOwner: true}}}))
-	handler.SetSellerAdminService(applicationcommerce.NewSellerAdminService(webSellerAdminRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleMarketplaceAdmin: true}}}))
-	handler.SetAuditService(applicationcommerce.NewAuditService(webAuditRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleMarketplaceAdmin: true, domainidentity.RoleSellerOwner: true}}}))
+	handler.SetSellerOrderService(applicationcommerce.NewSellerOrderService(webSellerOrderRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSeller: true}}}))
+	handler.SetSellerReportService(applicationcommerce.NewSellerReportService(webSellerOrderRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSeller: true}}}))
+	handler.SetSellerAdminService(applicationcommerce.NewSellerAdminService(webSellerAdminRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true}}}))
+	handler.SetAuditService(applicationcommerce.NewAuditService(webAuditRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true, domainidentity.RoleSeller: true}}}))
 	handler.SetRoleAdminService(applicationauth.NewRoleAdminService(webRoleAdminRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSuperAdmin: true}}}))
-	handler.SetAdminOperationsService(applicationcommerce.NewAdminOperationsService(webAdminOperationsRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleMarketplaceAdmin: true}}}))
-	handler.SetBrandDirectoryService(applicationcommerce.NewBrandDirectoryService(webBrandDirectoryRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleMarketplaceAdmin: true}}}))
-	handler.SetCustomerDirectoryService(applicationauth.NewCustomerDirectoryService(webCustomerDirectoryRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleMarketplaceAdmin: true}}}))
-	handler.SetFinanceService(applicationcommerce.NewFinanceService(webFinanceRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleFinanceOperator: true}}}))
-	handler.SetSupportService(applicationcommerce.NewSupportService(webSupportRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSupportAgent: true, domainidentity.RoleSellerOwner: true}}}))
+	handler.SetAdminOperationsService(applicationcommerce.NewAdminOperationsService(webAdminOperationsRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true}}}))
+	handler.SetBrandDirectoryService(applicationcommerce.NewBrandDirectoryService(webBrandDirectoryRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true}}}))
+	handler.SetCustomerDirectoryService(applicationauth.NewCustomerDirectoryService(webCustomerDirectoryRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true}}}))
+	handler.SetFinanceService(applicationcommerce.NewFinanceService(webFinanceRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true}}}))
+	handler.SetSupportService(applicationcommerce.NewSupportService(webSupportRepository{}, operationRoles{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleAdmin: true, domainidentity.RoleSeller: true}}}))
 
 	for _, test := range []struct {
 		path string

@@ -13,6 +13,9 @@ import (
 func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
+	if _, err := pool.Exec(context.Background(), `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller')`, fixture.ownerID); err != nil {
+		t.Fatal(err)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	repository := NewMediaRepository(pool)

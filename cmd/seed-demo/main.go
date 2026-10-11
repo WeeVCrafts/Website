@@ -41,22 +41,19 @@ var accounts = []account{
 	{"customer-06", "demo.customer06@weevcrafts.local", "Rahul Menon", "customer"},
 	{"customer-07", "demo.customer07@weevcrafts.local", "Meera Joshi", "customer"},
 	{"customer-08", "demo.customer08@weevcrafts.local", "Vikram Das", "customer"},
-	{"owner-01", "demo.owner01@weevcrafts.local", "Aditi Rao", "seller_owner"},
-	{"owner-02", "demo.owner02@weevcrafts.local", "Mithila Arts Owner", "seller_owner"},
-	{"owner-03", "demo.owner03@weevcrafts.local", "CraftVilla Owner", "seller_owner"},
-	{"staff-01", "demo.staff01@weevcrafts.local", "Arjun Nair Staff", "seller_staff"},
-	{"staff-02", "demo.staff02@weevcrafts.local", "Nisha Kapoor Staff", "seller_staff"},
-	{"staff-03", "demo.staff03@weevcrafts.local", "Dev Shah Staff", "seller_staff"},
-	{"marketplace-01", "demo.marketplace01@weevcrafts.local", "Marketplace Reviewer", "marketplace_admin"},
-	{"marketplace-02", "demo.marketplace02@weevcrafts.local", "Marketplace Operations", "marketplace_admin"},
-	{"marketplace-03", "demo.marketplace03@weevcrafts.local", "Marketplace Content", "marketplace_admin"},
+	{"owner-01", "demo.owner01@weevcrafts.local", "Aditi Rao", "seller"},
+	{"owner-02", "demo.owner02@weevcrafts.local", "Mithila Arts Owner", "seller"},
+	{"owner-03", "demo.owner03@weevcrafts.local", "CraftVilla Owner", "seller"},
+	{"marketplace-01", "demo.marketplace01@weevcrafts.local", "Marketplace Reviewer", "admin"},
+	{"marketplace-02", "demo.marketplace02@weevcrafts.local", "Marketplace Operations", "admin"},
+	{"marketplace-03", "demo.marketplace03@weevcrafts.local", "Marketplace Content", "admin"},
 	{"super-01", "demo.super01@weevcrafts.local", "Super Admin One", "super_admin"},
 	{"super-02", "demo.super02@weevcrafts.local", "Super Admin Two", "super_admin"},
-	{"support-01", "demo.support01@weevcrafts.local", "Aditi Support", "support_agent"},
-	{"support-02", "demo.support02@weevcrafts.local", "Rohan Support", "support_agent"},
-	{"finance-01", "demo.finance01@weevcrafts.local", "Finance Operator", "finance_operator"},
-	{"finance-02", "demo.finance02@weevcrafts.local", "Settlement Operator", "finance_operator"},
-	{"operations-01", "demo.operations01@weevcrafts.local", "Returns Operator", "operations_returns"},
+	{"support-01", "demo.support01@weevcrafts.local", "Aditi Support", "admin"},
+	{"support-02", "demo.support02@weevcrafts.local", "Rohan Support", "admin"},
+	{"finance-01", "demo.finance01@weevcrafts.local", "Company Admin", "admin"},
+	{"finance-02", "demo.finance02@weevcrafts.local", "Settlement Operator", "admin"},
+	{"operations-01", "demo.operations01@weevcrafts.local", "Company Admin", "admin"},
 }
 
 var products = []product{
@@ -129,9 +126,6 @@ func seed(ctx context.Context, pool *pgxpool.Pool) error {
 			}
 			sellers[item.key] = id
 		}
-		if err := seedStaff(ctx, tx, users, sellers); err != nil {
-			return fmt.Errorf("seller staff: %w", err)
-		}
 		productIDs := map[string]int64{}
 		variantIDs := map[string]int64{}
 		for _, item := range products {
@@ -195,21 +189,8 @@ func ensureSeller(ctx context.Context, tx pgx.Tx, ownerID int64, name string) (i
 	if err != nil {
 		return 0, err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'seller_owner') ON CONFLICT DO NOTHING`, ownerID)
+	_, err = tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'seller') ON CONFLICT DO NOTHING`, ownerID)
 	return id, err
-}
-
-func seedStaff(ctx context.Context, tx pgx.Tx, users, sellers map[string]int64) error {
-	permissions := []string{"PRODUCT_READ", "PRODUCT_WRITE", "INVENTORY_READ", "INVENTORY_WRITE", "ORDER_READ", "ORDER_FULFILL", "RETURN_READ", "REPORT_READ"}
-	for _, item := range []struct{ user, owner string }{{"staff-01", "owner-01"}, {"staff-02", "owner-02"}, {"staff-03", "owner-03"}} {
-		if _, err := tx.Exec(ctx, `INSERT INTO seller_users (seller_id, user_id, status, permissions, added_by) VALUES ($1, $2, 'active', $3, $4) ON CONFLICT (seller_id, user_id) DO NOTHING`, sellers[item.owner], users[item.user], permissions, users[item.owner]); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'seller_staff') ON CONFLICT DO NOTHING`, users[item.user]); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func ensureProduct(ctx context.Context, tx pgx.Tx, item product, sellerID int64) (int64, int64, error) {

@@ -60,7 +60,12 @@ func main() {
 
 	startupContext, startupCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer startupCancel()
-	pool, err := pgxpool.New(startupContext, cfg.DatabaseURL)
+	poolConfig, err := cfg.DatabasePoolConfig()
+	if err != nil {
+		logger.Error("configure PostgreSQL TLS", "error", err)
+		os.Exit(1)
+	}
+	pool, err := pgxpool.NewWithConfig(startupContext, poolConfig)
 	if err != nil {
 		logger.Error("create PostgreSQL pool", "error", err)
 		os.Exit(1)
@@ -125,7 +130,6 @@ func main() {
 	commerceRepository := postgres.NewCommerceRepository(pool)
 	roleAuthorizer := postgres.NewRoleAuthorizer(pool)
 	commerceCatalog := applicationcommerce.NewCatalogServiceWithRoles(commerceRepository, roleAuthorizer)
-	sellerStaffService := applicationcommerce.NewSellerStaffService(postgres.NewSellerStaffRepository(pool), roleAuthorizer)
 	inventoryService := applicationcommerce.NewInventoryService(commerceRepository, roleAuthorizer)
 	sellerOrderService := applicationcommerce.NewSellerOrderService(commerceRepository, roleAuthorizer)
 	sellerReportService := applicationcommerce.NewSellerReportService(commerceRepository, roleAuthorizer)
@@ -171,7 +175,6 @@ func main() {
 		logger.Error("load web templates", "error", err)
 		os.Exit(1)
 	}
-	webHandler.SetSellerStaffService(sellerStaffService)
 	webHandler.SetInventoryService(inventoryService)
 	webHandler.SetSellerOrderService(sellerOrderService)
 	webHandler.SetSellerReportService(sellerReportService)

@@ -35,7 +35,7 @@ func (supportRepository) ReplySupportTicket(context.Context, int64, int64, strin
 func TestSupportServiceSeparatesCustomerAndAgentViews(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		30: {domainidentity.RoleCustomer: true},
-		31: {domainidentity.RoleSupportAgent: true},
+		31: {domainidentity.RoleAdmin: true},
 	}}
 	service := NewSupportService(supportRepository{}, checker)
 	if _, err := service.Create(context.Background(), 30, "WC-1", "Damaged item", "The item arrived damaged and needs help."); err != nil {
@@ -58,7 +58,7 @@ func TestSupportServiceValidatesTicketContent(t *testing.T) {
 
 func TestSupportServiceProvidesSellerOwnedSupport(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		41: {domainidentity.RoleSellerOwner: true},
+		41: {domainidentity.RoleSeller: true},
 		42: {domainidentity.RoleCustomer: true},
 	}}
 	service := NewSupportService(supportRepository{}, checker)
@@ -107,7 +107,7 @@ func (r *supportReplyRecorder) ReplyCustomerSupportTicket(_ context.Context, act
 func TestSupportServiceRequiresAgentForCustomerReplies(t *testing.T) {
 	repository := &supportReplyRecorder{}
 	service := NewSupportService(repository, roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		31: {domainidentity.RoleSupportAgent: true},
+		31: {domainidentity.RoleAdmin: true},
 		30: {domainidentity.RoleCustomer: true},
 		32: {domainidentity.RoleSuperAdmin: true},
 	}})
@@ -119,7 +119,10 @@ func TestSupportServiceRequiresAgentForCustomerReplies(t *testing.T) {
 		t.Fatalf("reply was not normalized and persisted: %+v", repository)
 	}
 
-	for _, userID := range []int64{30, 32} {
+	if err := service.Reply(context.Background(), 32, 9, "Company response"); err != nil {
+		t.Fatal(err)
+	}
+	for _, userID := range []int64{30} {
 		if err := service.Reply(context.Background(), userID, 9, "A response"); !errors.Is(err, ports.ErrForbidden) {
 			t.Errorf("non-agent %d could reply: %v", userID, err)
 		}
@@ -140,7 +143,7 @@ func TestCustomerCanReplyOnlyThroughOwnedCustomerSupportFlow(t *testing.T) {
 	repository := &supportReplyRecorder{}
 	service := NewSupportService(repository, roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		30: {domainidentity.RoleCustomer: true},
-		31: {domainidentity.RoleSupportAgent: true},
+		31: {domainidentity.RoleAdmin: true},
 	}})
 	if err := service.ReplyCustomer(context.Background(), 30, 9, "  I have added the requested details.  "); err != nil {
 		t.Fatalf("customer follow-up failed: %v", err)

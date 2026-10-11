@@ -23,7 +23,7 @@ func managementAuthorize(ctx context.Context, db interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }, actorID int64, section string) error {
 	var allowed bool
-	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND (ur.role_slug='super_admin' OR (ur.role_slug='marketplace_admin' AND $2<>'commission-rules') OR ($2='commission-rules' AND ur.role_slug='finance_operator')))`, actorID, section).Scan(&allowed); err != nil {
+	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND (ur.role_slug='super_admin' OR (ur.role_slug='admin' AND $2 NOT IN ('settings','customers'))))`, actorID, section).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {
@@ -34,7 +34,11 @@ func managementAuthorize(ctx context.Context, db interface {
 
 func (r *ManagementRepository) ListManagement(ctx context.Context, actorID int64, section, query string, limit, offset int) (ports.ManagementResult, error) {
 	result := ports.ManagementResult{Records: []ports.ManagementRecord{}}
-	if err := managementAuthorize(ctx, r.pool, actorID, section); err != nil {
+	authorizedSection := section
+	if section == "customers" {
+		authorizedSection = "customer-directory"
+	}
+	if err := managementAuthorize(ctx, r.pool, actorID, authorizedSection); err != nil {
 		return result, err
 	}
 	if limit < 1 || limit > 100 {

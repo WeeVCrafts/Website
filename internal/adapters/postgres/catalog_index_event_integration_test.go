@@ -26,7 +26,7 @@ func TestApprovedProductPublishesTransactionalIndexEvent(t *testing.T) {
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM outbox_events WHERE event_type = 'ProductIndexRequested' AND aggregate_id = $1`, fmt.Sprint(fixture.productID))
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM users WHERE id = $1`, adminID)
 	})
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'marketplace_admin')`, adminID); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'admin')`, adminID); err != nil {
 		t.Fatalf("grant index admin role: %v", err)
 	}
 	if err := NewCommerceRepository(pool).ApproveProduct(ctx, adminID, fixture.productID, true, "ready for search"); err != nil {

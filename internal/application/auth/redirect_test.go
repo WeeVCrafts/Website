@@ -15,7 +15,7 @@ func TestCustomerRedirectAllowsOnlyCustomerPaths(t *testing.T) {
 	if got := RedirectDestination(roles, "/checkout?step=address"); got != "/checkout?step=address" {
 		t.Fatal(got)
 	}
-	if got := RedirectDestination([]domainidentity.Role{domainidentity.RoleFinanceOperator}, "/checkout"); got != "/finance-portal" {
+	if got := RedirectDestination([]domainidentity.Role{domainidentity.RoleAdmin}, "/checkout"); got != "/admin" {
 		t.Fatal(got)
 	}
 }

@@ -7,24 +7,16 @@ const accountSet = process.env.WEEVCRAFTS_ROLE_TEST_ACCOUNT_SET || "demo";
 const viewportWidths = [360, 390, 768, 1024, 1440];
 const demoAccounts = [
   { id: "customer", email: "demo.customer01@weevcrafts.local", name: "Priya Sharma", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
-  { id: "seller-owner", email: "demo.owner01@weevcrafts.local", name: "Aditi Rao", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
-  { id: "seller-staff", email: "demo.staff01@weevcrafts.local", name: "Arjun Nair Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
-  { id: "marketplace-admin", email: "demo.marketplace01@weevcrafts.local", name: "Marketplace Reviewer", landing: "/marketplace-admin", page: "/marketplace-admin/products", roleText: "Marketplace Admin", forbidden: "/super-admin" },
-  { id: "super-admin", email: "demo.super01@weevcrafts.local", name: "Super Admin One", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/support-portal" },
-  { id: "finance", email: "demo.finance01@weevcrafts.local", name: "Finance Operator", landing: "/finance-portal", page: "/finance-portal/refunds", roleText: "Finance Operator", forbidden: "/operations-portal" },
-  { id: "operations", email: "demo.operations01@weevcrafts.local", name: "Returns Operator", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
-  { id: "support", email: "demo.support01@weevcrafts.local", name: "Aditi Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
+  { id: "seller", email: "demo.owner01@weevcrafts.local", name: "Aditi Rao", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller", forbidden: "/admin" },
+  { id: "admin", email: "demo.marketplace01@weevcrafts.local", name: "Marketplace Reviewer", landing: "/admin", page: "/admin/products", roleText: "Admin", forbidden: "/super-admin" },
+  { id: "super-admin", email: "demo.super01@weevcrafts.local", name: "Super Admin One", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/seller-admin" },
 ];
 
 const launchAccounts = [
   { id: "customer", email: "customer@weevcrafts.test", name: "QA Customer", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
-  { id: "seller-owner", email: "seller@weevcrafts.test", name: "QA Seller", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
-  { id: "seller-staff", email: "sellerstaff@weevcrafts.test", name: "QA Seller Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
-  { id: "marketplace-admin", email: "marketplaceadmin@weevcrafts.test", name: "QA Marketplace Admin", landing: "/marketplace-admin", page: "/marketplace-admin/products", roleText: "Marketplace Admin", forbidden: "/super-admin" },
-  { id: "super-admin", email: "superadmin@weevcrafts.test", name: "QA Super Admin", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/support-portal" },
-  { id: "finance", email: "finance@weevcrafts.test", name: "QA Finance", landing: "/finance-portal", page: "/finance-portal/refunds", roleText: "Finance Operator", forbidden: "/operations-portal" },
-  { id: "operations", email: "operations@weevcrafts.test", name: "QA Operations", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
-  { id: "support", email: "support@weevcrafts.test", name: "QA Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
+  { id: "seller", email: "seller@weevcrafts.test", name: "QA Seller", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller", forbidden: "/admin" },
+  { id: "admin", email: "admin@weevcrafts.test", name: "QA Admin", landing: "/admin", page: "/admin/products", roleText: "Admin", forbidden: "/super-admin" },
+  { id: "super-admin", email: "superadmin@weevcrafts.test", name: "QA Super Admin", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/seller-admin" },
 ];
 
 const accounts = accountSet === "launch" ? launchAccounts : demoAccounts;
@@ -33,7 +25,7 @@ async function signIn(page, email, landing) {
   await page.goto("/login");
   await page.locator("#page input[name=\"email\"]").fill(email);
   await page.locator("#page input[name=\"password\"]").fill(password);
-  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.getByRole("button", { name: /continue with email/i }).click();
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""), { timeout: 30_000 });
   if (landing === "/account") await page.goto("/account");
 }
@@ -66,7 +58,7 @@ test.describe("role-specific portals", () => {
           await expect(menu).toBeVisible();
           await menu.click();
           await expect(menu).toHaveAttribute("aria-expanded", "true");
-          const sidebarId = account.id.startsWith("seller") ? "seller-sidebar" : account.id === "support" ? "support-sidebar" : "admin-sidebar";
+          const sidebarId = account.id.startsWith("seller") ? "seller-sidebar" : "admin-sidebar";
           const close = page.locator(`#${sidebarId} button[aria-label^="Close"]`);
           await expect(close).toBeVisible();
           await close.click();
@@ -86,10 +78,10 @@ test.describe("role-specific portals", () => {
         await page.screenshot({ path: screenshotPath });
       }
 
-      if (account.id === "seller-staff") {
+      if (account.id === "seller") {
         await expect(page.getByRole("navigation", { name: "Seller portal navigation" })).not.toContainText("Team");
       }
-      if (account.id === "seller-owner") {
+      if (account.id === "seller") {
         await page.goto("/seller-admin");
         const policies = page.getByRole("navigation", { name: "Policies" });
         await expect(policies.getByRole("link", { name: "Seller Terms & Conditions" })).toBeVisible();
@@ -102,7 +94,7 @@ test.describe("role-specific portals", () => {
         await expect(page.locator("body")).toContainText("Privacy policy");
       }
       if (account.id === "super-admin") {
-        await expect(page.getByRole("navigation", { name: "Admin navigation" })).toContainText("Security & Roles");
+        await expect(page.getByRole("navigation", { name: "Admin navigation" })).toContainText("Security");
       }
       expect(browserErrors, `${account.id} browser errors`).toEqual([]);
     });

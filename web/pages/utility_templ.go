@@ -85,7 +85,7 @@ func Auth(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " <div class=\"auth-method-divider\" role=\"separator\"><span>or continue with email</span></div><form class=\"utility-form\" action=\"/login\" method=\"post\" data-backend-auth=\"login\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " <div class=\"auth-method-divider\" role=\"separator\"><span>or use your account</span></div><form class=\"utility-form\" action=\"/login\" method=\"post\" data-backend-auth=\"login\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -111,7 +111,7 @@ func Auth(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"> <label>Email or role username<input name=\"email\" type=\"text\" autocomplete=\"username\" required></label> <label>Password<div class=\"password-field\"><input name=\"password\" type=\"password\" autocomplete=\"current-password\" required><button class=\"password-toggle\" type=\"button\" data-password-toggle aria-label=\"Show password\" aria-pressed=\"false\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">visibility</span></button></div></label> <label class=\"check-line\"><input type=\"checkbox\" name=\"remember\"> Keep me signed in on this device</label> <button class=\"primary-button full\" type=\"submit\">Continue with email <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form><div class=\"auth-links\"><a href=\"/forgot-password\">Forgot your password?</a><span>New here? <a href=\"/register\">Create an account</a></span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"> <label>Username or email<input name=\"email\" type=\"text\" autocomplete=\"username\" required></label> <label>Password<div class=\"password-field\"><input name=\"password\" type=\"password\" autocomplete=\"current-password\" required><button class=\"password-toggle\" type=\"button\" data-password-toggle aria-label=\"Show password\" aria-pressed=\"false\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">visibility</span></button></div></label> <label class=\"check-line\"><input type=\"checkbox\" name=\"remember\"> Keep me signed in on this device</label> <button class=\"primary-button full\" type=\"submit\">Sign in <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form><div class=\"auth-links\"><a href=\"/forgot-password\">Forgot your password?</a><span>New here? <a href=\"/register\">Create an account</a></span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

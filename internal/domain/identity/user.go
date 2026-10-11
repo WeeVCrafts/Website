@@ -5,15 +5,17 @@ import "time"
 type Role string
 
 const (
-	RoleCustomer         Role = "customer"
-	RoleSellerOwner      Role = "seller_owner"
-	RoleSellerStaff      Role = "seller_staff"
-	RoleMarketplaceAdmin Role = "marketplace_admin"
-	RoleSuperAdmin       Role = "super_admin"
-	RoleSupportAgent     Role = "support_agent"
-	RoleFinanceOperator  Role = "finance_operator"
-	RoleOperations       Role = "operations_returns"
+	RoleCustomer   Role = "customer"
+	RoleSeller     Role = "seller"
+	RoleAdmin      Role = "admin"
+	RoleSuperAdmin Role = "super_admin"
 )
+
+// ValidRole is the single vocabulary used for role assignment and authorization.
+func ValidRole(role Role) bool {
+	return role == RoleCustomer || role == RoleSeller || role == RoleAdmin || role == RoleSuperAdmin
+}
+func CompanyRole(role Role) bool { return role == RoleAdmin || role == RoleSuperAdmin }
 
 type User struct {
 	ID            int64     `json:"id"`

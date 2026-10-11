@@ -53,7 +53,7 @@ func (r *CommerceRepository) EnsureSeller(ctx context.Context, ownerUserID int64
 	var seller domaincommerce.Seller
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var allowed bool
-		if err := tx.QueryRow(transactionContext, `SELECT status='active' AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller_owner') FROM users WHERE id=$1 FOR UPDATE`, ownerUserID).Scan(&allowed); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT status='active' AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller') FROM users WHERE id=$1 FOR UPDATE`, ownerUserID).Scan(&allowed); err != nil {
 			return err
 		}
 		if !allowed {
@@ -78,7 +78,7 @@ func (r *CommerceRepository) GetSeller(ctx context.Context, userID int64) (domai
 		SELECT s.id, s.owner_user_id, s.display_name, s.status
 		FROM sellers s
 		WHERE s.owner_user_id = $1
-		   OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')
+
 		ORDER BY CASE WHEN s.owner_user_id = $1 THEN 0 ELSE 1 END, s.id
 		LIMIT 1`, userID).Scan(&seller.ID, &seller.OwnerUserID, &seller.DisplayName, &seller.Status)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -110,7 +110,7 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 	var product domaincommerce.ManagedProduct
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var sellerID int64
-		if err := tx.QueryRow(transactionContext, `SELECT id FROM sellers WHERE status = 'active' AND (owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users WHERE seller_id = sellers.id AND user_id = $1 AND status = 'active'))`, ownerUserID).Scan(&sellerID); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT id FROM sellers WHERE status = 'active' AND (owner_user_id = $1 )`, ownerUserID).Scan(&sellerID); err != nil {
 			return ports.ErrForbidden
 		}
 		if err := ensureCatalogName(transactionContext, tx, "brands", input.BrandSlug, input.BrandName); err != nil {
@@ -248,7 +248,7 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if err := requireActiveSuperAdmin(transactionContext, tx, actorID); err != nil {
+		if err := requireCompanyCatalogActor(transactionContext, tx, actorID); err != nil {
 			return err
 		}
 		var sellerName string
@@ -309,7 +309,7 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 
 func (r *CommerceRepository) GetAdminProduct(ctx context.Context, actorID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'admin'))`, actorID).Scan(&allowed); err != nil {
 		return domaincommerce.ManagedProduct{}, err
 	}
 	if !allowed {
@@ -325,7 +325,7 @@ func (r *CommerceRepository) GetAdminProduct(ctx context.Context, actorID, produ
 func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if err := requireActiveSuperAdmin(transactionContext, tx, actorID); err != nil {
+		if err := requireCompanyCatalogActor(transactionContext, tx, actorID); err != nil {
 			return err
 		}
 		var currentStatus string
@@ -413,7 +413,7 @@ func (r *CommerceRepository) ArchiveSellerProduct(ctx context.Context, ownerUser
 func (r *CommerceRepository) RestoreSellerProduct(ctx context.Context, ownerUserID, productID int64, reason string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var sellerID int64
-		err := tx.QueryRow(transactionContext, `SELECT s.id FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=$1 AND p.status='archived' AND s.status='active' AND ((s.owner_user_id=$2 AND EXISTS(SELECT 1 FROM users u WHERE u.id=$2 AND u.status='active')) OR EXISTS(SELECT 1 FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions))) FOR UPDATE OF p`, productID, ownerUserID).Scan(&sellerID)
+		err := tx.QueryRow(transactionContext, `SELECT s.id FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=$1 AND p.status='archived' AND s.status='active' AND ((s.owner_user_id=$2 AND EXISTS(SELECT 1 FROM users u WHERE u.id=$2 AND u.status='active')) ) FOR UPDATE OF p`, productID, ownerUserID).Scan(&sellerID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden
 		}
@@ -435,7 +435,7 @@ func (r *CommerceRepository) RestoreSellerProduct(ctx context.Context, ownerUser
 
 func (r *CommerceRepository) ArchiveAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if err := requireActiveSuperAdmin(transactionContext, tx, actorID); err != nil {
+		if err := requireCompanyCatalogActor(transactionContext, tx, actorID); err != nil {
 			return err
 		}
 		var status string
@@ -464,7 +464,7 @@ func (r *CommerceRepository) ArchiveAdminProduct(ctx context.Context, actorID, p
 func (r *CommerceRepository) SubmitProduct(ctx context.Context, ownerUserID, productID int64) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var status string
-		err := tx.QueryRow(transactionContext, `SELECT p.status FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=$1 AND s.status='active' AND ((s.owner_user_id=$2 AND EXISTS(SELECT 1 FROM users u WHERE u.id=$2 AND u.status='active')) OR EXISTS(SELECT 1 FROM seller_users su JOIN users u ON u.id=su.user_id AND u.status='active' WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions))) FOR UPDATE OF p`, productID, ownerUserID).Scan(&status)
+		err := tx.QueryRow(transactionContext, `SELECT p.status FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=$1 AND s.status='active' AND ((s.owner_user_id=$2 AND EXISTS(SELECT 1 FROM users u WHERE u.id=$2 AND u.status='active')) ) FOR UPDATE OF p`, productID, ownerUserID).Scan(&status)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden
 		}
@@ -489,7 +489,7 @@ func (r *CommerceRepository) SubmitProduct(ctx context.Context, ownerUserID, pro
 
 func (r *CommerceRepository) SubmitAdminProduct(ctx context.Context, actorID, productID int64) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if err := requireActiveSuperAdmin(transactionContext, tx, actorID); err != nil {
+		if err := requireCompanyCatalogActor(transactionContext, tx, actorID); err != nil {
 			return err
 		}
 		var status string
@@ -517,7 +517,7 @@ func (r *CommerceRepository) SubmitAdminProduct(ctx context.Context, actorID, pr
 
 func (r *CommerceRepository) RestoreAdminProduct(ctx context.Context, actorID, productID int64, reason string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		if err := requireActiveSuperAdmin(transactionContext, tx, actorID); err != nil {
+		if err := requireCompanyCatalogActor(transactionContext, tx, actorID); err != nil {
 			return err
 		}
 		result, err := tx.Exec(transactionContext, `UPDATE products SET status='draft',updated_at=NOW() WHERE id=$1 AND status='archived'`, productID)
@@ -537,9 +537,9 @@ func (r *CommerceRepository) RestoreAdminProduct(ctx context.Context, actorID, p
 	})
 }
 
-func requireActiveSuperAdmin(ctx context.Context, tx pgx.Tx, actorID int64) error {
+func requireCompanyCatalogActor(ctx context.Context, tx pgx.Tx, actorID int64) error {
 	var allowed bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'admin'))`, actorID).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {
@@ -555,7 +555,7 @@ func (r *CommerceRepository) ApproveProduct(ctx context.Context, actorID, produc
 	}
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var allowed bool
-		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('marketplace_admin', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('admin', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
 			return err
 		}
 		if !allowed {
@@ -580,12 +580,12 @@ func (r *CommerceRepository) ApproveProduct(ctx context.Context, actorID, produc
 }
 
 func (r *CommerceRepository) ListSellerProducts(ctx context.Context, ownerUserID int64) ([]domaincommerce.ManagedProduct, error) {
-	return r.listManagedProducts(ctx, `WHERE s.owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')`, ownerUserID)
+	return r.listManagedProducts(ctx, `WHERE s.owner_user_id = $1 `, ownerUserID)
 }
 
 func (r *CommerceRepository) ListPendingProducts(ctx context.Context, actorID int64) ([]domaincommerce.ManagedProduct, error) {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('marketplace_admin', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('admin', 'super_admin'))`, actorID).Scan(&allowed); err != nil {
 		return nil, err
 	}
 	if !allowed {
@@ -618,7 +618,7 @@ type catalogProductQuerier interface {
 
 func (r *CommerceRepository) getSellerProduct(ctx context.Context, querier catalogProductQuerier, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
-	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(pv.compare_at_cents, 0), pv.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 OR EXISTS (SELECT 1 FROM seller_users su WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active')) AND p.id = $2 ORDER BY pv.id LIMIT 1`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(pv.compare_at_cents, 0), pv.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 ) AND p.id = $2 ORDER BY pv.id LIMIT 1`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
 	return product, err
 }
 
@@ -874,6 +874,23 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 				return err
 			}
 			return ports.ErrCartNotFound
+		}
+		// Serialize checkout with seller role replacement before availability is read.
+		sellerLocks, lockErr := tx.Query(transactionContext, `SELECT s.id FROM sellers s WHERE s.id IN (SELECT p.seller_id FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id WHERE ci.cart_id=$1) ORDER BY s.id FOR UPDATE`, cartID)
+		if lockErr != nil {
+			return lockErr
+		}
+		for sellerLocks.Next() {
+			var id int64
+			if err := sellerLocks.Scan(&id); err != nil {
+				sellerLocks.Close()
+				return err
+			}
+		}
+		lockErr = sellerLocks.Err()
+		sellerLocks.Close()
+		if lockErr != nil {
+			return lockErr
 		}
 		var cartItemCount int
 		if err := tx.QueryRow(transactionContext, `SELECT COUNT(*) FROM cart_items WHERE cart_id=$1`, cartID).Scan(&cartItemCount); err != nil {

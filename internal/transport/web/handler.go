@@ -321,14 +321,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.sellerProductVariantUpdate(w, r)
 	case r.URL.Path == "/seller/products/variants/archive":
 		h.sellerProductVariantArchive(w, r)
-	case r.URL.Path == "/seller/team":
-		h.sellerTeam(w, r)
-	case r.URL.Path == "/seller/team/add":
-		h.sellerTeamAdd(w, r)
-	case r.URL.Path == "/seller/team/update":
-		h.sellerTeamUpdate(w, r)
-	case r.URL.Path == "/seller/team/remove":
-		h.sellerTeamRemove(w, r)
+	case r.URL.Path == "/seller/team" || strings.HasPrefix(r.URL.Path, "/seller/team/"):
+		http.NotFound(w, r)
 	case r.URL.Path == "/seller/inventory":
 		h.sellerInventory(w, r)
 	case r.URL.Path == "/seller/inventory/adjust":
@@ -644,7 +638,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.auth.Login(r.Context(), r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
-		h.renderAuth(w, r, "login", http.StatusUnauthorized, r.FormValue("email"), "Email or password is incorrect.")
+		h.renderAuth(w, r, "login", http.StatusUnauthorized, r.FormValue("email"), "Username, email or password is incorrect.")
 		return
 	}
 	ttl := applicationauth.DefaultSessionTTL

@@ -18,9 +18,9 @@ func (financeRepository) ListFinanceEntries(context.Context, int) ([]domaincomme
 
 func TestFinanceServiceAllowsFinanceButNotSellerOrCustomer(t *testing.T) {
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
-		20: {domainidentity.RoleFinanceOperator: true},
-		21: {domainidentity.RoleSellerOwner: true},
-		22: {domainidentity.RoleMarketplaceAdmin: true},
+		20: {domainidentity.RoleAdmin: true},
+		21: {domainidentity.RoleSeller: true},
+		22: {domainidentity.RoleAdmin: true},
 	}}
 	service := NewFinanceService(financeRepository{}, checker)
 	entries, err := service.List(context.Background(), 20)

@@ -68,14 +68,10 @@ func (s *SellerReportService) reportAllowed(ctx context.Context, userID int64) b
 		return false
 	}
 	if s.roles != nil {
-		allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSellerOwner)
+		allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSeller)
 		if err == nil && allowed {
 			return true
 		}
 	}
-	if s.permissions == nil {
-		return false
-	}
-	allowed, err := s.permissions.HasSellerPermission(ctx, userID, domaincommerce.SellerPermissionReportRead)
-	return err == nil && allowed
+	return false
 }

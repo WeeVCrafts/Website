@@ -58,20 +58,20 @@ func TestRoleAdminServiceRequiresSuperAdmin(t *testing.T) {
 
 func TestRoleAdminServiceValidatesAssignableRoleAndReason(t *testing.T) {
 	service := NewRoleAdminService(roleAdminRepository{}, roleAdminChecker{super: true})
-	if err := service.Update(context.Background(), 42, 9, 0, "super_admin", true, "promote"); !errors.Is(err, ErrInvalidRoleAssignment) {
-		t.Fatalf("expected super-admin assignment denial, got %v", err)
+	if err := service.Update(context.Background(), 42, 9, 0, "super_admin", true, "promote"); err != nil {
+		t.Fatalf("expected super-admin promotion, got %v", err)
 	}
-	if err := service.Update(context.Background(), 42, 9, 0, "finance_operator", true, "no"); !errors.Is(err, ErrInvalidRoleAssignment) {
+	if err := service.Update(context.Background(), 42, 9, 0, "admin", true, "no"); !errors.Is(err, ErrInvalidRoleAssignment) {
 		t.Fatalf("expected short reason denial, got %v", err)
 	}
-	if err := service.Update(context.Background(), 42, 9, 0, "finance_operator", true, "finance responsibility"); err != nil {
+	if err := service.Update(context.Background(), 42, 9, 0, "admin", true, "finance responsibility"); err != nil {
 		t.Fatalf("valid role grant failed: %v", err)
 	}
 	if err := service.Update(context.Background(), 42, 9, 0, "seller_staff", true, "staff responsibility"); !errors.Is(err, ErrInvalidRoleAssignment) {
 		t.Fatalf("seller staff assignment without a seller should be rejected, got %v", err)
 	}
-	if err := service.Update(context.Background(), 42, 9, 12, "seller_staff", true, "staff responsibility"); err != nil {
-		t.Fatalf("seller staff assignment with a seller should be accepted: %v", err)
+	if err := service.Update(context.Background(), 42, 9, 12, "seller_staff", true, "staff responsibility"); !errors.Is(err, ErrInvalidRoleAssignment) {
+		t.Fatalf("retired staff role should be rejected: %v", err)
 	}
 }
 
@@ -119,14 +119,14 @@ func (roleAdminTestHasher) Compare(hash, value string) bool   { return hash == "
 
 func TestRoleAdminServiceCreatesAssignableUsersAndProtectsSuperAdmin(t *testing.T) {
 	service := NewRoleAdminService(roleAdminRepository{}, roleAdminChecker{super: true}, roleAdminTestHasher{})
-	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "long-enough-password", "finance_operator", 0, "new finance login"); err != nil {
+	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "long-enough-password", "admin", 0, "new finance login"); err != nil {
 		t.Fatalf("valid role user create failed: %v", err)
 	}
-	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "short", "finance_operator", 0, "new finance login"); !errors.Is(err, ErrInvalidRoleAssignment) {
+	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "short", "admin", 0, "new finance login"); !errors.Is(err, ErrInvalidRoleAssignment) {
 		t.Fatalf("short password should be rejected, got %v", err)
 	}
-	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "long-enough-password", "super_admin", 0, "promote"); !errors.Is(err, ErrInvalidRoleAssignment) {
-		t.Fatalf("super-admin creation should stay bootstrap-controlled, got %v", err)
+	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "long-enough-password", "super_admin", 0, "promote"); err != nil {
+		t.Fatalf("super-admin creation should be available to Super Admin, got %v", err)
 	}
 	if err := service.CreateUser(context.Background(), 42, "new@example.test", "New Operator", "long-enough-password", "seller_staff", 0, "seller staff"); !errors.Is(err, ErrInvalidRoleAssignment) {
 		t.Fatalf("seller staff without seller assignment should be rejected, got %v", err)

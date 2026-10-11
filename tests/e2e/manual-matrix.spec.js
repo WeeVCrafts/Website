@@ -4,13 +4,9 @@ const { test, expect } = require('@playwright/test');
 // assertion set limited to the complete procedure named by that execution ID.
 const roles = [
   ['customer', 'customer01', '/account', 'Priya Sharma', 'My account'],
-  ['seller-owner', 'owner01', '/seller-admin', 'Aditi Rao', 'Seller Owner'],
-  ['seller-staff', 'staff01', '/seller-admin', 'Arjun Nair Staff', 'Seller Staff'],
-  ['marketplace-admin', 'marketplace01', '/marketplace-admin', 'Marketplace Reviewer', 'Marketplace Admin'],
+  ['seller', 'owner01', '/seller-admin', 'Aditi Rao', 'Seller'],
+  ['admin', 'marketplace01', '/admin', 'Marketplace Reviewer', 'Admin'],
   ['super-admin', 'super01', '/super-admin', 'Super Admin One', 'Super Admin'],
-  ['support-agent', 'support01', '/support-portal', 'Aditi Support', 'Support Agent'],
-  ['finance-operator', 'finance01', '/finance-portal', 'Finance Operator', 'Finance Operator'],
-  ['returns-operations', 'operations01', '/operations-portal', 'Returns Operator', 'Returns Operations'],
 ].map(([id, account, root, name, label]) => ({ id, email: `demo.${account}@weevcrafts.local`, root, name, label }));
 const roots = [...new Set(roles.map(role => role.root))];
 const password = 'WeeVCrafts-Demo-2026!';
@@ -19,7 +15,7 @@ async function login(page, role) {
   await page.goto('/login');
   await page.locator('#page input[name="email"]').fill(role.email);
   await page.locator('#page input[name="password"]').fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: /continue with email/i }).click();
   await page.waitForURL(url => url.pathname.replace(/\/$/, '') === (role.root === '/account' ? '/products' : role.root));
   if (role.root === '/account') await page.goto('/account');
 }
@@ -47,7 +43,7 @@ for (const role of roles) {
     await page.goto('/login');
     await page.locator('#page input[name="email"]').fill(role.email);
     await page.locator('#page input[name="password"]').fill('Definitely-Incorrect-2026!');
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', { name: /continue with email/i }).click();
     await expect(page.locator('body')).toContainText(/email or password is incorrect/i);
     expect((await page.context().cookies()).some(cookie => cookie.name === 'wecratfs_session')).toBe(false);
     await denied(page, role.root);
@@ -57,7 +53,7 @@ for (const role of roles) {
     await page.goto('/login');
     await page.locator('#page input[name="email"]').fill(`qa.unknown.${role.id}.${Date.now()}@example.invalid`);
     await page.locator('#page input[name="password"]').fill(password);
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByRole('button', { name: /continue with email/i }).click();
     await expect(page.locator('body')).toContainText(/email or password is incorrect/i);
     expect((await page.context().cookies()).some(cookie => cookie.name === 'wecratfs_session')).toBe(false);
   });
@@ -67,7 +63,7 @@ for (const role of roles) {
       await page.goto('/login');
       await page.locator('#page input[name="email"]').fill(email);
       await page.locator('#page input[name="password"]').fill(pass);
-      await page.getByRole('button', { name: /sign in/i }).click();
+      await page.getByRole('button', { name: /continue with email/i }).click();
       const invalid = await page.locator('#page input:invalid').count();
       if (!invalid) await expect(page.locator('body')).toContainText(/required|email or password|enter/i);
       expect(new URL(page.url()).pathname).toBe('/login');
@@ -85,7 +81,7 @@ for (const role of roles) {
       });
       expect(response.status()).toBe(303);
       const location = response.headers().location;
-      expect(location).toBe(role.root);
+      expect(location).toBe(role.root === '/account' ? '/products' : role.root);
       expect(new URL(location, page.url()).origin).toBe(new URL(page.url()).origin);
     }
   });
@@ -128,7 +124,9 @@ for (const role of roles) {
     await login(page, role);
     for (const root of roots.filter(root => root !== role.root)) {
       const response = await page.request.get(root, { maxRedirects: 0 });
-      if (root === '/account' && response.status() === 303) {
+      if (role.id === 'super-admin' && root === '/admin') {
+        expect(response.status()).toBe(200);
+      } else if (root === '/account' && response.status() === 303) {
         // The generic account entry redirects non-customers to their own
         // assigned portal; it must never serve customer workspace data.
         expect(response.headers().location).toBe(role.root);
@@ -155,7 +153,7 @@ test('GST-020--guest', async ({ request }) => {
 
 for (const role of [null, ...roles]) {
   const id = role ? role.id : 'guest';
-  const paths = role ? (role.id === 'customer' ? ['/account', '/account/addresses', '/orders', '/products/natural-soap'] : [role.root, `${role.root}/${role.id.startsWith('seller') ? 'products' : role.id === 'support-agent' ? 'cases' : role.id === 'returns-operations' ? 'returns' : role.id === 'finance-operator' ? 'payments' : 'products'}`]) : ['/', '/products', '/products/natural-soap', '/login'];
+  const paths = role ? (role.id === 'customer' ? ['/account', '/account/addresses', '/orders', '/products/natural-soap'] : [role.root, `${role.root}/products`]) : ['/', '/products', '/products/natural-soap', '/login'];
   test(`UI-001--${id}`, async ({ page }, testInfo) => {
     test.setTimeout(180_000);
     if (role) await login(page, role);

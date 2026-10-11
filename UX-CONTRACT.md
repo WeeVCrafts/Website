@@ -34,3 +34,9 @@ Modal navigation and confirmations contain focus, support Escape and restore the
 The shared header's profile disclosure uses a button with an expanded state and ordinary navigation links. Opening moves focus to its first link; Escape closes it and restores the button. Outside clicks and focus leaving the disclosure close it without trapping focus. Opening the navigation drawer closes the disclosure. Wishlist and cart counters retain their existing IDs and live updates as direct header actions. Mobile account navigation collapses into an accessible native disclosure. Checkout includes Back and Edit actions that preserve fields, with focus on the destination heading. Existing private profile-photo access remains session scoped.
 
 Customer password changes require the current password, the existing password-length policy and CSRF; their atomic commit invalidates previous sessions and recovery tokens. Emails distinguish received orders from captured-payment confirmation and include authenticated tracking links. Local payment simulations never appear in production; delivery progress reflects seller-recorded fulfilment rather than fabricated courier scans.
+
+## Company support and account roles
+
+Customer, Seller, Admin and Super Admin are the only assignable roles. Admin and Super Admin share the established operational shell; only Super Admin receives account, role, security, settings and audit controls. Seller navigation contains no Team workflow.
+
+Private confirmations use the shared support shell, semantic statuses, explicit field labels, CSRF-backed forms and duplicate-safe submission keys. Customer replies, internal notes and seller confirmations are separate channels. Each seller sees only its own items and recorded fulfilment events. Closing coordination records never completes delivery or financial processing. See `docs/four-role-workflow.md` for the authoritative transition and rollout rules.

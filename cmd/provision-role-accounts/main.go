@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -29,13 +30,9 @@ type account struct {
 
 var roleAccounts = []account{
 	{Email: "customer@weevcrafts.test", Name: "QA Customer", Role: "customer"},
-	{Email: "seller@weevcrafts.test", Name: "QA Seller Owner", Role: "seller_owner"},
-	{Email: "sellerstaff@weevcrafts.test", Name: "QA Seller Staff", Role: "seller_staff"},
-	{Email: "marketplaceadmin@weevcrafts.test", Name: "QA Marketplace Admin", Role: "marketplace_admin"},
+	{Email: "seller@weevcrafts.test", Name: "QA Seller", Role: "seller"},
+	{Email: "admin@weevcrafts.test", Name: "QA Admin", Role: "admin"},
 	{Email: "superadmin@weevcrafts.test", Name: "QA Super Admin", Role: "super_admin"},
-	{Email: "support@weevcrafts.test", Name: "QA Support Agent", Role: "support_agent"},
-	{Email: "finance@weevcrafts.test", Name: "QA Finance Operator", Role: "finance_operator"},
-	{Email: "operations@weevcrafts.test", Name: "QA Operations and Returns", Role: "operations_returns"},
 }
 
 func main() {
@@ -96,6 +93,10 @@ func main() {
 				return fmt.Errorf("assign role %s to %s: %w", item.Role, item.Email, err)
 			}
 			ids[item.Role] = id
+			username := strings.SplitN(item.Email, "@", 2)[0]
+			if _, err := tx.Exec(ctx, `UPDATE users SET username=$2 WHERE id=$1`, id, username); err != nil {
+				return fmt.Errorf("set QA username: %w", err)
+			}
 		}
 
 		var sellerID int64
@@ -103,19 +104,14 @@ func main() {
 			INSERT INTO sellers (owner_user_id, display_name, status)
 			VALUES ($1, 'Weevcrafts QA Seller', 'active')
 			ON CONFLICT (owner_user_id) DO NOTHING
-			RETURNING id`, ids["seller_owner"]).Scan(&sellerID)
+			RETURNING id`, ids["seller"]).Scan(&sellerID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE owner_user_id=$1`, ids["seller_owner"]).Scan(&sellerID)
+			err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE owner_user_id=$1`, ids["seller"]).Scan(&sellerID)
 		}
 		if err != nil {
 			return fmt.Errorf("create QA seller: %w", err)
 		}
-		permissions := []string{"PRODUCT_READ", "PRODUCT_WRITE", "INVENTORY_READ", "INVENTORY_WRITE", "ORDER_READ", "ORDER_FULFILL", "RETURN_READ", "REPORT_READ"}
-		if _, err := tx.Exec(ctx, `
-			INSERT INTO seller_users (seller_id, user_id, status, permissions, added_by)
-			VALUES ($1, $2, 'active', $3, $4) ON CONFLICT (seller_id, user_id) DO NOTHING`, sellerID, ids["seller_staff"], permissions, ids["seller_owner"]); err != nil {
-			return fmt.Errorf("associate QA seller staff: %w", err)
-		}
+
 		return nil
 	}); err != nil {
 		log.Fatal(err)

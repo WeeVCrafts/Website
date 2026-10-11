@@ -12,7 +12,7 @@ func TestWorkspacePageShowsOnlyProvidedRoleDestinations(t *testing.T) {
 	page := viewmodels.WorkspacePage{
 		DisplayName: "Vinay QA",
 		Workspaces: []viewmodels.WorkspaceChoice{
-			{Role: "finance_operator", Label: "Finance", Path: "/finance-portal"},
+			{Role: "admin", Label: "Admin", Path: "/admin"},
 		},
 	}
 	recorder := httptest.NewRecorder()
@@ -20,7 +20,7 @@ func TestWorkspacePageShowsOnlyProvidedRoleDestinations(t *testing.T) {
 		t.Fatalf("render workspace chooser: %v", err)
 	}
 	body := recorder.Body.String()
-	for _, expected := range []string{"Vinay QA", "Finance", `href="/finance-portal"`} {
+	for _, expected := range []string{"Vinay QA", "Admin", `href="/admin"`} {
 		if !strings.Contains(body, expected) {
 			t.Errorf("workspace chooser does not contain %q: %s", expected, body)
 		}

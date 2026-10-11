@@ -22,13 +22,9 @@ type account struct{ key, name, role string }
 
 var accounts = []account{
 	{"customer", "QA Customer", "customer"},
-	{"seller", "QA Seller", "seller_owner"},
-	{"sellerstaff", "QA Seller Staff", "seller_staff"},
-	{"marketplaceadmin", "QA Marketplace Admin", "marketplace_admin"},
+	{"seller", "QA Seller", "seller"},
+	{"admin", "QA Admin", "admin"},
 	{"superadmin", "QA Super Admin", "super_admin"},
-	{"support", "QA Support", "support_agent"},
-	{"operations", "QA Operations", "operations_returns"},
-	{"finance", "QA Finance", "finance_operator"},
 }
 
 type product struct {
@@ -120,9 +116,6 @@ func main() {
 		}
 		if sellerID == 0 {
 			return fmt.Errorf("seller account missing")
-		}
-		if _, err := tx.Exec(ctx, `INSERT INTO seller_users (seller_id,user_id,status,permissions,added_by) VALUES ($1,$2,'active',$3,$4) ON CONFLICT (seller_id,user_id) DO UPDATE SET status='active',permissions=EXCLUDED.permissions`, sellerID, accountIDs["sellerstaff"], []string{"PRODUCT_READ", "PRODUCT_WRITE", "INVENTORY_READ", "INVENTORY_WRITE", "ORDER_READ", "ORDER_FULFILL", "RETURN_READ", "REPORT_READ"}, accountIDs["seller"]); err != nil {
-			return fmt.Errorf("seller staff: %w", err)
 		}
 		for _, item := range products {
 			if _, err := tx.Exec(ctx, `INSERT INTO categories (slug,name) VALUES ($1,initcap($1)) ON CONFLICT DO NOTHING`, item.category); err != nil {

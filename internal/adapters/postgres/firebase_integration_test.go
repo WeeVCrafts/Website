@@ -62,7 +62,7 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 	if _, err = r.ResolveFirebase(ctx, proof, "", true, id); !errors.Is(err, applicationauth.ErrFirebaseInvalid) {
 		t.Fatalf("second identity took over account: %v", err)
 	}
-	if _, err = pool.Exec(ctx, `UPDATE user_roles SET role_slug='seller_owner' WHERE user_id=$1`, id); err != nil {
+	if _, err = pool.Exec(ctx, `UPDATE user_roles SET role_slug='seller' WHERE user_id=$1`, id); err != nil {
 		t.Fatal(err)
 	}
 	proof.UID = uid

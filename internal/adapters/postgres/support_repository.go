@@ -74,7 +74,7 @@ func (r *CommerceRepository) listSupportTickets(ctx context.Context, suffix stri
 		LEFT JOIN orders o ON o.id = st.order_id
 		LEFT JOIN LATERAL (
 			SELECT body FROM support_ticket_messages
-			WHERE ticket_id = st.id AND author_role = 'support_agent'
+			WHERE ticket_id = st.id AND author_role IN ('admin','super_admin','support_agent')
 			ORDER BY created_at DESC, id DESC LIMIT 1
 		) reply ON TRUE
 		` + suffix
@@ -134,7 +134,7 @@ func (r *CommerceRepository) ReplySupportTicketWithID(ctx context.Context, actor
 		}
 		if err := tx.QueryRow(transactionContext, `
 			INSERT INTO support_ticket_messages (ticket_id, author_id, author_role, body)
-			VALUES ($1, $2, 'support_agent', $3)
+			VALUES ($1, $2, 'admin', $3)
 			RETURNING id`, ticketID, actorID, reply).Scan(&messageID); err != nil {
 			return err
 		}

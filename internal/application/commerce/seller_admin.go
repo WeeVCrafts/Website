@@ -44,6 +44,6 @@ func (s *SellerAdminService) allowed(ctx context.Context, actorID int64) bool {
 	if actorID <= 0 || s.repository == nil || s.roles == nil {
 		return false
 	}
-	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	return err == nil && ok
 }

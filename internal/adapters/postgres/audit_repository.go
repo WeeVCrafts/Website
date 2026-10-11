@@ -48,7 +48,7 @@ func (r *CommerceRepository) ListSellerAuditEntries(ctx context.Context, ownerUs
 		FROM audit_logs al
 		WHERE EXISTS (
 			SELECT 1 FROM user_roles ur
-			WHERE ur.user_id = $1 AND ur.role_slug = 'seller_owner'
+			WHERE ur.user_id = $1 AND ur.role_slug = 'seller'
 		)
 		AND (
 			al.actor_id = $1::text

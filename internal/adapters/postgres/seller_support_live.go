@@ -13,7 +13,7 @@ import (
 
 func sellerSupportOwner(ctx context.Context, tx pgx.Tx, userID int64) error {
 	var allowed bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM sellers s JOIN users u ON u.id=s.owner_user_id JOIN user_roles ur ON ur.user_id=u.id AND ur.role_slug='seller_owner' WHERE s.owner_user_id=$1 AND u.status='active' AND s.status NOT IN ('suspended','closed'))`, userID).Scan(&allowed); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM sellers s JOIN users u ON u.id=s.owner_user_id JOIN user_roles ur ON ur.user_id=u.id AND ur.role_slug='seller' WHERE s.owner_user_id=$1 AND u.status='active' AND s.status NOT IN ('suspended','closed'))`, userID).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {
@@ -71,7 +71,7 @@ func (r *CommerceRepository) ReplySellerSupportTicketWithID(ctx context.Context,
 		if status == "closed" {
 			return ports.ErrSupportState
 		}
-		if err := tx.QueryRow(ctx, `INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) VALUES($1,$2,'seller_owner',$3) RETURNING id`, ticketID, userID, message).Scan(&messageID); err != nil {
+		if err := tx.QueryRow(ctx, `INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) VALUES($1,$2,'seller',$3) RETURNING id`, ticketID, userID, message).Scan(&messageID); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `UPDATE support_tickets SET status=CASE WHEN status IN ('resolved','waiting_customer') THEN 'in_progress' ELSE status END,updated_by=$1,updated_at=NOW() WHERE id=$2`, userID, ticketID); err != nil {

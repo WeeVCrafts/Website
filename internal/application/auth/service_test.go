@@ -40,11 +40,11 @@ func (f *fakeUserRepository) GetCredentialsByEmail(ctx context.Context, email st
 	return f.credentials, nil
 }
 
-func TestLoginMapsSeededRoleUsernameToEmail(t *testing.T) {
-	for _, username := range []string{"customer", "seller", "sellerstaff", "marketplaceadmin", "superadmin", "support", "operations", "finance"} {
+func TestLoginNormalizesAccountUsername(t *testing.T) {
+	for _, username := range []string{"customer", "seller", "admin", "superadmin"} {
 		repository := &fakeUserRepository{getErr: ports.ErrCredentialsNotFound}
 		_, _ = NewService(repository, fakeHasher{}).Login(context.Background(), strings.ToUpper(username), "wrong")
-		if want := username + "@weevcrafts.test"; repository.seenEmail != want {
+		if want := username; repository.seenEmail != want {
 			t.Fatalf("%s looked up %s, want %s", username, repository.seenEmail, want)
 		}
 	}

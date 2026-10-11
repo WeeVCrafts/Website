@@ -1,10 +1,12 @@
 package selleradmin
 
 import "strconv"
+import "github.com/wecratfs/commerce/web/components"
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ SupportLive(p viewmodels.SellerSupportPage) {
  @Document(p.Portal) {
+ @components.SellerConfirmations(p.Confirmations,"/seller-admin/support",p.Portal.CSRFToken,p.RequestKey,true,p.QueueStatus,p.QueueNext,0)
   <section class="seller-panel">
    <h2>Create a support request</h2>
    <form action="/seller-admin/support/create" method="post" enctype="multipart/form-data">

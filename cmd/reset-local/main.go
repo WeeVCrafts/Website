@@ -115,7 +115,7 @@ func resetAndSeed(ctx context.Context, pool *pgxpool.Pool, password string, rese
 	}
 	accounts := []localAccount{
 		{email: "customer@weevcrafts.local", name: "Local Customer", phone: "", role: "customer"},
-		{email: "seller@weevcrafts.local", name: "Local Seller Owner", phone: "", role: "seller_owner"},
+		{email: "seller@weevcrafts.local", name: "Local Seller", phone: "", role: "seller"},
 		{email: "superadmin@weevcrafts.local", name: "Local Super Admin", phone: "", role: "super_admin"},
 	}
 
@@ -149,7 +149,7 @@ func resetAndSeed(ctx context.Context, pool *pgxpool.Pool, password string, rese
 			}
 			ids[account.role] = id
 		}
-		_, err := seedSeller(ctx, tx, ids["seller_owner"])
+		_, err := seedSeller(ctx, tx, ids["seller"])
 		if err != nil {
 			return err
 		}
@@ -189,13 +189,10 @@ func truncateApplicationTables(ctx context.Context, tx pgx.Tx) error {
 func seedRoles(ctx context.Context, tx pgx.Tx) error {
 	_, err := tx.Exec(ctx, `INSERT INTO roles (slug, name) VALUES
 		('customer', 'Customer'),
-		('seller_owner', 'Seller owner'),
-		('seller_staff', 'Seller staff'),
-		('marketplace_admin', 'Marketplace admin'),
+		('seller', 'Seller'),
+
 		('super_admin', 'Super admin'),
-		('support_agent', 'Support agent'),
-		('finance_operator', 'Finance operator'),
-		('operations_returns', 'Operations and returns') ON CONFLICT (slug) DO NOTHING`)
+		('admin', 'Admin') ON CONFLICT (slug) DO NOTHING`)
 	if err != nil {
 		return fmt.Errorf("seed roles: %w", err)
 	}

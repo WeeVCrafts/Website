@@ -224,11 +224,90 @@ paths:
       security: [{cookieSession: []}, {csrfHeader: []}]
       requestBody: {required: true, content: {application/json: {schema: {type: object, required: [media_id], properties: {media_id: {type: integer, format: int64, minimum: 1}}}}}}
       responses: {'200': {description: Upload deleted}, '409': {description: Ready media cannot be deleted through this endpoint}}
+  /admin/support/confirmations/create:
+    post:
+      summary: Request confirmation from a seller represented in the case order
+      description: Cookie-authenticated form action. Admin and Super Admin create/close; Seller replies only for its own business. Super Admin also reuses the actions under /super-admin/support. CSRF is mandatory.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [csrf_token, ticket_id, seller_id, message, request_key]
+              properties:
+                csrf_token: {type: string}
+                ticket_id: {type: integer, format: int64, minimum: 1}
+                seller_id: {type: integer, format: int64, minimum: 1}
+                message: {type: string, minLength: 1, maxLength: 4000}
+                request_key: {type: string, minLength: 16, maxLength: 200}
+      responses:
+        "303": {description: Saved; returns to the relevant support workspace}
+        "403": {description: Authentication, CSRF or ownership rejected}
+        "404": {description: Invalid case-order-seller relationship}
+        "409": {description: Closed request or conflicting duplicate submission}
+        "422": {description: Message or form validation failed}
+  /admin/support/confirmations/close:
+    post:
+      summary: Record company follow-up outcome and close the private request
+      description: Cookie-authenticated form action. Admin and Super Admin create/close; Seller replies only for its own business. Super Admin also reuses the actions under /super-admin/support. CSRF is mandatory.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [csrf_token, confirmation_id, reason]
+              properties:
+                csrf_token: {type: string}
+                confirmation_id: {type: integer, format: int64, minimum: 1}
+                reason: {type: string, minLength: 4, maxLength: 1000}
+      responses:
+        "303": {description: Saved; returns to the relevant support workspace}
+        "403": {description: Authentication, CSRF or ownership rejected}
+        "404": {description: Invalid case-order-seller relationship}
+        "409": {description: Closed request or conflicting duplicate submission}
+        "422": {description: Message or form validation failed}
+  /seller-admin/support/confirmations/reply:
+    post:
+      summary: Reply to a private request owned by the signed-in seller
+      description: Cookie-authenticated form action. Admin and Super Admin create/close; Seller replies only for its own business. Super Admin also reuses the actions under /super-admin/support. CSRF is mandatory.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [csrf_token, confirmation_id, message, request_key]
+              properties:
+                csrf_token: {type: string}
+                confirmation_id: {type: integer, format: int64, minimum: 1}
+                message: {type: string, minLength: 1, maxLength: 4000}
+                request_key: {type: string, minLength: 16, maxLength: 200}
+      responses:
+        "303": {description: Saved; returns to the relevant support workspace}
+        "403": {description: Authentication, CSRF or ownership rejected}
+        "404": {description: Invalid case-order-seller relationship}
+        "409": {description: Closed request or conflicting duplicate submission}
+        "422": {description: Message or form validation failed}
 components:
   securitySchemes:
     cookieSession: {type: apiKey, in: cookie, name: wecratfs_session}
     csrfHeader: {type: apiKey, in: header, name: X-CSRF-Token}
   schemas:
+    AccountRole:
+      type: string
+      enum: [customer, seller, admin, super_admin]
+      description: Exactly one role per account. Public registration always assigns customer.
+    PrivateSellerRequest:
+      type: object
+      description: Private company-to-seller confirmation; never included in customer support responses.
+      properties:
+        id: {type: integer, format: int64}
+        ticket_id: {type: integer, format: int64}
+        order_id: {type: integer, format: int64}
+        seller_id: {type: integer, format: int64}
+        status: {type: string, enum: [open, answered, closed]}
     RegisterRequest:
       type: object
       required: [email, display_name, password]
@@ -241,7 +320,7 @@ components:
       type: object
       required: [email, password]
       properties:
-        email: {type: string, format: email}
+        email: {type: string, description: Username or email address}
         password: {type: string}
         next: {type: string, description: Optional customer return path; unsafe or unauthorized destinations fall back to the assigned portal}
     CheckoutRequest:

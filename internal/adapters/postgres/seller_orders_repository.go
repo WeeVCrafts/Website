@@ -24,10 +24,7 @@ func (r *CommerceRepository) ListSellerOrders(ctx context.Context, userID int64)
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		LEFT JOIN seller_fulfillments sf ON sf.order_id = o.id AND sf.seller_id = s.id
 		WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered', 'pending_payment')
-		  AND (s.owner_user_id = $1 OR EXISTS (
-			SELECT 1 FROM seller_users su
-			WHERE su.seller_id = s.id AND su.user_id = $1 AND su.status = 'active'
-		  ))
+		  AND (s.owner_user_id = $1 )
 		ORDER BY o.created_at DESC, o.id DESC, s.id, oi.id`, userID)
 	if err != nil {
 		return nil, err
@@ -78,10 +75,7 @@ func (r *CommerceRepository) UpdateSellerFulfillment(ctx context.Context, userID
 				JOIN products p ON p.id = pv.product_id
 				WHERE oi.order_id = o.id AND p.seller_id = s.id
 			  )
-			  AND (s.owner_user_id = $3 OR EXISTS (
-				SELECT 1 FROM seller_users su
-				WHERE su.seller_id = s.id AND su.user_id = $3 AND su.status = 'active'
-			  ))
+			  AND (s.owner_user_id = $3 )
 			FOR UPDATE OF o`, orderNumber, sellerID, userID).Scan(&orderID, &currentStatus, &overallStatus)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrOrderNotFound

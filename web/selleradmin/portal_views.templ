@@ -399,31 +399,3 @@ templ PortalSettings(p viewmodels.SellerAdminPage) {
   </section>
  }
 }
-
-templ PortalTeam(p viewmodels.SellerAdminPage) {
-	@Document(p) {
-		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller staff</h2><p>A Super Admin assigns the Seller Staff role first. You can then add that account here and set its seller-scoped permissions.</p></div></div>
-			if p.CanTeam {
-				<p class="seller-muted">Use an active account that already has the Seller Staff role. Account creation and global role assignment stay with Super Admin.</p>
-				<form class="seller-inline-form" method="post" action="/seller-admin/team/add"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Email<input type="email" name="email" autocomplete="email" required/></label><fieldset><legend>Assign permissions</legend><label><input type="checkbox" name="permissions" value="PRODUCT_READ"/>Products</label><label><input type="checkbox" name="permissions" value="PRODUCT_WRITE"/>Edit products</label><label><input type="checkbox" name="permissions" value="INVENTORY_READ"/>Inventory</label><label><input type="checkbox" name="permissions" value="INVENTORY_WRITE"/>Adjust stock</label><label><input type="checkbox" name="permissions" value="ORDER_READ"/>Orders</label><label><input type="checkbox" name="permissions" value="ORDER_FULFILL"/>Fulfil orders</label><label><input type="checkbox" name="permissions" value="RETURN_READ"/>Returns</label><label><input type="checkbox" name="permissions" value="REPORT_READ"/>Reports</label></fieldset><button class="seller-button primary" type="submit">Add seller staff</button></form>
-			}
-			if len(p.Team) == 0 && p.DataWarning == "" {
-				@SellerTableEmpty("No staff accounts", "Add a staff account and assign only the access it needs.")
-			} else {
-				<div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Name</span><span>Email</span><span>Status</span><span>Permissions</span><span>Action</span></div>
-					for _, member := range p.Team {
-						<div class="seller-product-row"><b>{ member.Name }</b><span>{ member.Email }</span><span>{ member.Status }</span><span>{ member.Permissions }</span><span><form method="post" action="/seller-admin/team/remove"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="user_id" value={ member.UserID }/><button class="seller-button outline" type="submit">Remove</button></form></span></div>
-						if p.CanTeam {
-							<form class="seller-inline-form" method="post" action="/seller-admin/team/update"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="user_id" value={ member.UserID }/><fieldset><legend>Update permissions for { member.Name }</legend>
-								<label><input type="checkbox" name="permissions" value="PRODUCT_READ" checked?={ member.ProductRead }/> View products</label><label><input type="checkbox" name="permissions" value="PRODUCT_WRITE" checked?={ member.ProductWrite }/> Edit products</label>
-								<label><input type="checkbox" name="permissions" value="INVENTORY_READ" checked?={ member.InventoryRead }/> View inventory</label><label><input type="checkbox" name="permissions" value="INVENTORY_WRITE" checked?={ member.InventoryWrite }/> Adjust inventory</label>
-								<label><input type="checkbox" name="permissions" value="ORDER_READ" checked?={ member.OrderRead }/> View orders</label><label><input type="checkbox" name="permissions" value="ORDER_FULFILL" checked?={ member.OrderFulfill }/> Fulfil orders</label>
-								<label><input type="checkbox" name="permissions" value="RETURN_READ" checked?={ member.ReturnRead }/> View returns</label><label><input type="checkbox" name="permissions" value="REPORT_READ" checked?={ member.ReportRead }/> View reports</label>
-							</fieldset><button class="seller-button primary" type="submit">Save permissions</button></form>
-						}
-					}
-				</div></div>
-			}
-		</section>
-	}
-}

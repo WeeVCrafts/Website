@@ -1,11 +1,16 @@
 package viewmodels
 
+import domain "github.com/wecratfs/commerce/internal/domain/commerce"
+
 type SellerSupportPage struct {
-	Portal               SellerAdminPage
-	Tickets              []CustomerSupportTicket
-	Status               string
-	Total                int
-	PreviousURL, NextURL string
+	QueueStatus, QueueNext string
+	Portal                 SellerAdminPage
+	Confirmations          []domain.SellerConfirmation
+	RequestKey             string
+	Tickets                []CustomerSupportTicket
+	Status                 string
+	Total                  int
+	PreviousURL, NextURL   string
 }
 
 type ReturnLabelPage struct {
@@ -19,4 +24,13 @@ type ReturnLabelPage struct {
 
 type ReturnLabelItem struct {
 	Name, SKU, Quantity, Seller string
+}
+
+type CompanySupportPage struct {
+	Admin                  AdminPage
+	Support                SupportPortalPage
+	Confirmations          []domain.SellerConfirmation
+	Sellers                []domain.CaseSeller
+	RequestKey             string
+	QueueStatus, QueueNext string
 }

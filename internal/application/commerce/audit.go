@@ -21,7 +21,7 @@ func (s *AuditService) List(ctx context.Context, actorID int64) ([]domaincommerc
 	if actorID <= 0 || s.repository == nil || s.roles == nil {
 		return nil, ports.ErrForbidden
 	}
-	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	if err != nil || !ok {
 		return nil, ports.ErrForbidden
 	}
@@ -32,7 +32,7 @@ func (s *AuditService) ListSeller(ctx context.Context, ownerUserID int64) ([]dom
 	if ownerUserID <= 0 || s.repository == nil || s.roles == nil {
 		return nil, ports.ErrForbidden
 	}
-	ok, err := s.roles.HasAnyRole(ctx, ownerUserID, domainidentity.RoleSellerOwner)
+	ok, err := s.roles.HasAnyRole(ctx, ownerUserID, domainidentity.RoleSeller)
 	if err != nil || !ok {
 		return nil, ports.ErrForbidden
 	}

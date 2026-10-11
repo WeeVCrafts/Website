@@ -26,19 +26,22 @@ templ LiveDashboard(p viewmodels.SupportPortalPage) {
 }
 
 templ LiveCases(p viewmodels.SupportPortalPage) {
-	@SupportDocument(p) {
-		<form class="support-directory-toolbar" method="get" action="/support-portal/cases"><label class="sr-only" for="support-live-search">Search cases</label><input id="support-live-search" name="q" value={ p.Query } placeholder="Search case ID, subject, status or order"/><button class="support-button primary" type="submit">Search</button><a class="support-button outline" href="/support-portal/cases">Clear</a></form>
+	@SupportDocument(p) { @CaseContent(p, "/support-portal") }
+}
+
+templ CaseContent(p viewmodels.SupportPortalPage, root string) {
+		<form class="support-directory-toolbar" method="get" action={ root }><label class="sr-only" for="support-live-search">Search cases</label><input id="support-live-search" name="q" value={ p.Query } placeholder="Search case ID, subject, status or order"/><button class="support-button primary" type="submit">Search</button><a class="support-button outline" href={ root }>Clear</a></form>
 		if p.SelectedCase.DatabaseID == 0 {
 <section class="support-panel"><div class="support-panel-heading"><div><h2>Cases</h2><p>Open a case to read the conversation, reply or update its status.</p></div></div>
-@LiveSupportCaseTable(p)
+@CompanyCaseTable(p, root)
 </section>
 } else {
-<a class="support-button outline" href={ "/support-portal/cases?q=" + url.QueryEscape(p.Query) }>Back to case queue</a>
+<a class="support-button outline" href={ root + "?q=" + url.QueryEscape(p.Query) }>Back to case queue</a>
 }
 		if p.SelectedCase.DatabaseID > 0 {
 			<section class="support-panel live-case-detail" aria-labelledby="live-case-heading">
 				<div class="support-panel-heading"><div><h2 id="live-case-heading">{ p.SelectedCase.ID } · { p.SelectedCase.Subject }</h2><p>{ p.SelectedCase.Customer } · { p.SelectedCase.Status } · Created { p.SelectedCase.Created }</p></div></div>
-				<form method="post" action="/support-portal/cases/status" class="support-case-update"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.SelectedCase.DatabaseID) }/><label for={ "ticket-status-" + fmt.Sprint(p.SelectedCase.DatabaseID) }>Status for { p.SelectedCase.ID }</label><select id={ "ticket-status-" + fmt.Sprint(p.SelectedCase.DatabaseID) } name="status">
+				<form method="post" action={ root + "/cases/status" } class="support-case-update"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.SelectedCase.DatabaseID) }/><label for={ "ticket-status-" + fmt.Sprint(p.SelectedCase.DatabaseID) }>Status for { p.SelectedCase.ID }</label><select id={ "ticket-status-" + fmt.Sprint(p.SelectedCase.DatabaseID) } name="status">
 						if supportStatusTransitionAllowed(p.SelectedCase.Status, "open") {
 							<option value="open" selected?={ p.SelectedCase.Status == "open" }>Open</option>
 						}
@@ -79,7 +82,7 @@ templ LiveCases(p viewmodels.SupportPortalPage) {
 				if p.SelectedCase.AgentNote != "" {
 					<aside class="internal-note live-internal-note"><b>Latest internal status note</b><p>{ p.SelectedCase.AgentNote }</p></aside>
 				}
-				<form class="support-reply live-support-reply" method="post" action="/support-portal/cases/reply" enctype="multipart/form-data">
+				<form class="support-reply live-support-reply" method="post" action={ root + "/cases/reply" } enctype="multipart/form-data">
 					<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.SelectedCase.DatabaseID) }/>
 					<label for="support-agent-reply">Reply to customer</label><textarea id="support-agent-reply" name="message" maxlength="4000" required placeholder="Write a response. It will be saved to this case conversation."></textarea>
 					<label for="support-agent-attachments">Attachments <span>(up to 3 images, 10 MB each)</span></label><input id="support-agent-attachments" type="file" name="attachments[]" accept="image/jpeg,image/png,image/webp" multiple/>
@@ -87,17 +90,20 @@ templ LiveCases(p viewmodels.SupportPortalPage) {
 				</form>
 			</section>
 		}
-	}
 }
 
 templ LiveSupportCaseTable(p viewmodels.SupportPortalPage) {
+ @CompanyCaseTable(p, "/support-portal/cases")
+}
+
+templ CompanyCaseTable(p viewmodels.SupportPortalPage, root string) {
  if len(p.Cases) == 0 && p.DataWarning == "" {
   <div class="support-empty-state" role="status"><h2>No support cases</h2><p>Try a different search. New customer requests will appear here.</p></div>
  } else {
   <div class="ui-table-region" tabindex="0" role="region" aria-label="Live support case queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Case</th><th scope="col">Priority</th><th scope="col">Order</th><th scope="col">Status</th><th scope="col">Latest reply</th><th scope="col">Created</th></tr></thead><tbody>
    for i, item := range p.Cases {
     if p.Active != "dashboard" || i < 6 {
-     <tr><th scope="row" class="record-title"><a href={ "/support-portal/cases?ticket_id=" + fmt.Sprint(item.DatabaseID) + "&q=" + url.QueryEscape(p.Query) }>{ item.ID } · { item.Subject }</a><small>{ item.Customer }</small></th><td data-label="Priority">{ components.StatusLabel(item.Priority) }</td><td data-label="Order">{ item.Order }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td><td class="preview-copy" data-label="Latest reply"><span>{ item.LatestReply }</span></td><td data-label="Created">{ item.Created }</td></tr>
+     <tr><th scope="row" class="record-title"><a href={ root + "?ticket_id=" + fmt.Sprint(item.DatabaseID) + "&q=" + url.QueryEscape(p.Query) }>{ item.ID } · { item.Subject }</a><small>{ item.Customer }</small></th><td data-label="Priority">{ components.StatusLabel(item.Priority) }</td><td data-label="Order">{ item.Order }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td><td class="preview-copy" data-label="Latest reply"><span>{ item.LatestReply }</span></td><td data-label="Created">{ item.Created }</td></tr>
     }
    }
   </tbody></table></div>

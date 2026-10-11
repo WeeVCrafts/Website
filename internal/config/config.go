@@ -11,6 +11,7 @@ type Config struct {
 	Environment           string
 	PublicURL             string
 	DatabaseURL           string
+	DatabaseCACert        string
 	RedisAddress          string
 	RedisURL              string
 	MeiliAddress          string
@@ -55,6 +56,7 @@ func FromEnv() Config {
 		Environment:           environment,
 		PublicURL:             publicURL,
 		DatabaseURL:           env("DATABASE_URL", "postgres://wecratfs:wecratfs@localhost:5432/wecratfs?sslmode=disable"),
+		DatabaseCACert:        env("DATABASE_CA_CERT", ""),
 		RedisAddress:          env("REDIS_ADDR", "localhost:6379"),
 		RedisURL:              env("REDIS_URL", ""),
 		MeiliAddress:          env("MEILI_ADDR", "localhost:7700"),

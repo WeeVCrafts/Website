@@ -56,7 +56,7 @@ func (r *CommerceRepository) ListReturnRequests(ctx context.Context, actorID int
 		FROM return_requests rr
 		JOIN orders o ON o.id = rr.order_id
 		JOIN users u ON u.id = rr.user_id
-		WHERE EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = $1 AND ur.role_slug IN ('operations_returns', 'marketplace_admin', 'super_admin'))
+		WHERE EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = $1 AND ur.role_slug IN ('admin', 'super_admin'))
 		ORDER BY CASE rr.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END, rr.created_at ASC, rr.id ASC
 		LIMIT 200`, actorID)
 	if err != nil {
@@ -81,7 +81,7 @@ func (r *CommerceRepository) UpdateReturnRequest(ctx context.Context, actorID, r
 			UPDATE return_requests rr
 			SET status = $1, reason = CASE WHEN $3 <> '' THEN $3 ELSE rr.reason END, updated_at = NOW()
 			WHERE rr.id = $2
-			  AND EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = $4 AND ur.role_slug IN ('operations_returns', 'marketplace_admin', 'super_admin'))
+			  AND EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = $4 AND ur.role_slug IN ('admin', 'super_admin'))
 			  AND ((rr.status = 'pending' AND $1 IN ('approved', 'rejected')) OR (rr.status = 'approved' AND $1 = 'received'))
 			RETURNING rr.order_id`, status, requestID, reason, actorID).Scan(&orderID)
 		if errors.Is(err, pgx.ErrNoRows) {

@@ -146,9 +146,9 @@ test('role replacement removes prior privileges and revokes existing sessions', 
   const adminContext = await browser.newContext();
   try {
     const adminPage = await adminContext.newPage(); const admin = await login(adminPage, 'super01');
-    const form = { csrf_token: admin.csrf_token, user_id: String(identity.data.id), role: 'finance_operator', action: 'grant', reason: 'Isolated role replacement verification' };
+    const form = { csrf_token: admin.csrf_token, user_id: String(identity.data.id), role: 'admin', action: 'grant', confirm: 'yes', reason: 'Isolated role replacement verification' };
     expect((await adminPage.request.post('/super-admin/roles/update', { form, maxRedirects: 0 })).status()).toBe(303);
-    expect(sql(`SELECT string_agg(role_slug,',') FROM user_roles WHERE user_id=${identity.data.id}`)).toBe('finance_operator');
+    expect(sql(`SELECT string_agg(role_slug,',') FROM user_roles WHERE user_id=${identity.data.id}`)).toBe('admin');
     expect((await page.request.get('/api/v1/wishlist')).status()).toBe(401);
     sql(`INSERT INTO user_roles(user_id,role_slug) VALUES(${identity.data.id},'customer')`);
     const email = sql(`SELECT email FROM users WHERE id=${identity.data.id}`);
@@ -181,7 +181,7 @@ test('cross-account orders, addresses, wishlist and privileged operations stay i
     expect((await (await page.request.get('/api/v1/wishlist')).json()).data.some(item => item.product_id === product.id)).toBe(true);
     expect((await page.request.post('/api/v1/wishlist/add', { data: { product_id: product.id } })).status()).toBe(403);
     expect((await other.request.get('/super-admin/security', { maxRedirects: 0 })).status()).toBe(403);
-    expect((await other.request.post('/super-admin/roles/update', { form: { csrf_token: second.csrf_token, user_id: String(first.data.id), action: 'grant', role: 'finance_operator', reason: 'Must be denied' }, maxRedirects: 0 })).status()).toBe(403);
+    expect((await other.request.post('/super-admin/roles/update', { form: { csrf_token: second.csrf_token, user_id: String(first.data.id), action: 'grant', role: 'admin', reason: 'Must be denied' }, maxRedirects: 0 })).status()).toBe(403);
   } finally { await context.close(); }
 });
 

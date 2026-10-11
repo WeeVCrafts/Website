@@ -80,6 +80,6 @@ func (s *ReturnService) operationsAllowed(ctx context.Context, userID int64) boo
 	if s.roles == nil {
 		return true
 	}
-	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleOperations, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	return err == nil && ok
 }

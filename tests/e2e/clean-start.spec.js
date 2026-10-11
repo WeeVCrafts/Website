@@ -43,9 +43,10 @@ for (const role of roles) {
    await expect(page.locator('.role-assignment-card')).toHaveCount(3);
    const owner=page.locator('.role-assignment-card').filter({hasText:'seller@weevcrafts.local'});
    await owner.locator('summary').click();
-   await expect(owner.locator('[name="role"]')).toHaveValue('seller_owner');
+   await expect(owner.locator('[name="role"]')).toHaveValue('seller');
    const own=page.locator('.role-assignment-card').filter({hasText:'superadmin@weevcrafts.local'});
-   expect(await own.locator('.role-assignment-form,.role-delete-form').count()).toBe(0);
+   await expect(own.locator('.role-delete-form')).toHaveCount(0);
+   await expect(own.locator('.role-assignment-form [name="role"]')).toHaveValue('super_admin');
   }
   await page.locator(role.logout+' button').press('Enter');
   await page.goto(role.path);
@@ -63,6 +64,7 @@ test('Super Admin account creation, search, edits, role changes and deletion per
  await expect(create.locator('[name="password"]')).toHaveAttribute('type','text');
  await create.getByRole('button',{name:'Hide password'}).click();
  await create.locator('[name="reason"]').fill('Verify account creation');
+ await create.locator('[name="confirm"]').check();
  await create.getByRole('button',{name:'Create account',exact:true}).click();
  await expect(page).toHaveURL(/\/super-admin\/users\?notice=/);
  await page.locator('.role-assignment-search [name="q"]').fill('qa.clean');
@@ -92,12 +94,13 @@ test('Super Admin account creation, search, edits, role changes and deletion per
  } finally { await loginCheck.dispose(); }
  await account.locator('summary').click();
  const role=account.locator('.role-assignment-form');
- await role.locator('[name="role"]').selectOption('support_agent');
+ await role.locator('[name="role"]').selectOption('admin');
  await role.locator('[name="reason"]').fill('Verify scoped role change');
+ await role.locator('[name="confirm"]').check();
  await role.getByRole('button',{name:'Save role change'}).click();
  await expect(page).toHaveURL(/notice=Role\+updated/);
  account=page.locator('.role-assignment-card').filter({hasText:'qa.clean@example.test'});
- await expect(account.locator('.role-badges')).toContainText('Support agent');
+ await expect(account.locator('.role-badges')).toContainText('Admin');
  await account.locator('summary').click();
  const remove=account.locator('.role-delete-form');
  await remove.locator('[name="reason"]').fill('Remove temporary verification account');

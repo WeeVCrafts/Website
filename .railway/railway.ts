@@ -1,4 +1,4 @@
-import { defineRailway, github, project, service } from "railway/iac";
+import { defineRailway, github, preserve, project, service } from "railway/iac";
 
 // This repository manages only its own resources in the environment. Other
 // repositories export their own partial name.
@@ -11,21 +11,23 @@ export default defineRailway(() => {
     healthcheck: "/health/ready",
     healthcheckTimeout: 300,
     variables: {
-      DATABASE_URL: "${{Postgres.DATABASE_URL}}",
+      DATABASE_URL: "${{Postgres.DATABASE_URL}}?sslmode=verify-full",
+      DATABASE_CA_CERT: preserve(),
       REDIS_URL: "${{Redis.REDIS_URL}}",
       S3_ADDR: "${{weevcrafts-media.ENDPOINT}}",
-      S3_ACCESS_KEY: "${{weevcrafts-media.ACCESS_KEY_ID}}",
-      S3_SECRET_KEY: "${{weevcrafts-media.SECRET_ACCESS_KEY}}",
+      S3_ACCESS_KEY: preserve(),
+      S3_SECRET_KEY: preserve(),
       S3_BUCKET: "${{weevcrafts-media.BUCKET}}",
       S3_SECURE: "true",
       WECRATFS_ENV: "production",
       WECRATFS_SECURE_COOKIES: "true",
-      WECRATFS_PUBLIC_URL: "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+      WECRATFS_PUBLIC_URL: preserve(),
       WECRATFS_LOCAL_MODE: "false",
       WECRATFS_PAYMENT_MODE: "local",
+      WECRATFS_LOCAL_PAYMENT_SECRET: preserve(),
     },
   });
-  return project("attractive-warmth", {
+  return project("weevcrafts", {
     resources: [Website],
   });
 });

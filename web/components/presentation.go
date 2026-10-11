@@ -93,3 +93,10 @@ func ProductStory(description string) string {
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
+
+func confirmationTone(status string) string {
+	if status == "open" {
+		return "warning"
+	}
+	return "neutral"
+}

@@ -26,7 +26,7 @@ func TestSellerReportSummaryUsesSellerOrderProjection(t *testing.T) {
 	service := NewSellerReportService(sellerReportRepository{orders: []domaincommerce.SellerOrder{
 		{Currency: "INR", SellerSubtotalCents: 2500, FulfillmentStatus: "processing", Items: []domaincommerce.SellerOrderItem{{Quantity: 2}}},
 		{Currency: "INR", SellerSubtotalCents: 1200, FulfillmentStatus: "delivered", Items: []domaincommerce.SellerOrderItem{{Quantity: 1}, {Quantity: 3}}},
-	}}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSellerOwner: true}}})
+	}}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{42: {domainidentity.RoleSeller: true}}})
 
 	report, err := service.Summary(context.Background(), 42)
 	if err != nil {
@@ -39,11 +39,11 @@ func TestSellerReportSummaryUsesSellerOrderProjection(t *testing.T) {
 
 func TestSellerReportRequiresReportPermissionForStaff(t *testing.T) {
 	checker := roleChecker{
-		roles:       map[int64]map[domainidentity.Role]bool{17: {domainidentity.RoleSellerStaff: true}},
+		roles:       map[int64]map[domainidentity.Role]bool{17: {domainidentity.Role("seller_staff"): true}},
 		permissions: map[int64]map[string]bool{17: {domaincommerce.SellerPermissionReportRead: true}},
 	}
 	service := NewSellerReportService(sellerReportRepository{}, checker)
-	if _, err := service.Summary(context.Background(), 17); err != nil {
+	if _, err := service.Summary(context.Background(), 17); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("report-enabled staff member was denied: %v", err)
 	}
 	if _, err := service.Summary(context.Background(), 18); !errors.Is(err, ports.ErrForbidden) {

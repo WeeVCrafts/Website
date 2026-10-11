@@ -116,7 +116,7 @@ func TestMockPortalRoutesHaveNoDeadGeneratedLinks(t *testing.T) {
 		"/seller-admin", "/seller-admin/products", "/seller-admin/inventory", "/seller-admin/orders",
 		"/seller-admin/returns", "/seller-admin/earnings", "/seller-admin/commission", "/seller-admin/analytics",
 		"/seller-admin/audit", "/seller-admin/promotions", "/seller-admin/reviews", "/seller-admin/messages",
-		"/seller-admin/support", "/seller-admin/settings", "/seller-admin/team",
+		"/seller-admin/support", "/seller-admin/settings",
 		"/support-portal", "/support-portal/cases", "/support-portal/customers", "/support-portal/orders",
 	}
 	for _, route := range routes {
@@ -148,7 +148,7 @@ func TestMockPRDScreenRouteMatrix(t *testing.T) {
 			"/register", "/login", "/forgot-password", "/reset-password", "/verify-email", "/account/security", "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/privacy", "/account/reviews", "/orders", "/orders/WC2504267819", "/tracking", "/returns/RET123456/label", "/wishlist", "/cart", "/checkout", "/payments", "/payments/success", "/payments/failed", "/payments/pending",
 		}},
 		{name: "seller", prefix: "Seller Portal", paths: []string{
-			"/seller-admin/onboarding", "/seller-admin/verification", "/seller-admin", "/seller-admin/products", "/seller-admin/product-list", "/seller-admin/add-product", "/seller-admin/edit-product", "/seller-admin/variants", "/seller-admin/media", "/seller-admin/pricing", "/seller-admin/inventory", "/seller-admin/inventory-transactions", "/seller-admin/orders", "/seller-admin/order-details", "/seller-admin/fulfillment", "/seller-admin/returns", "/seller-admin/refund-status", "/seller-admin/promotions", "/seller-admin/analytics", "/seller-admin/commission", "/seller-admin/earnings", "/seller-admin/settings", "/seller-admin/team", "/seller-admin/staff-permissions", "/seller-admin/support", "/seller-admin/audit",
+			"/seller-admin/onboarding", "/seller-admin/verification", "/seller-admin", "/seller-admin/products", "/seller-admin/product-list", "/seller-admin/add-product", "/seller-admin/edit-product", "/seller-admin/variants", "/seller-admin/media", "/seller-admin/pricing", "/seller-admin/inventory", "/seller-admin/inventory-transactions", "/seller-admin/orders", "/seller-admin/order-details", "/seller-admin/fulfillment", "/seller-admin/returns", "/seller-admin/refund-status", "/seller-admin/promotions", "/seller-admin/analytics", "/seller-admin/commission", "/seller-admin/earnings", "/seller-admin/settings", "/seller-admin/staff-permissions", "/seller-admin/support", "/seller-admin/audit",
 		}},
 		{name: "admin", prefix: "Admin Portal", paths: []string{
 			"/admin", "/admin/sellers", "/admin/seller-approvals", "/admin/seller-details", "/admin/seller-suspensions", "/admin/products", "/admin/product-details", "/admin/category-management", "/admin/brands", "/admin/customers", "/admin/orders", "/admin/payments", "/admin/failed-payments", "/admin/refunds", "/admin/returns", "/admin/disputes", "/admin/marketing", "/admin/coupons", "/admin/reviews", "/admin/commission-rules", "/admin/settlements", "/admin/finance-reconciliation", "/admin/support", "/admin/audit-logs", "/admin/system-health", "/admin/search-indexing-health", "/admin/worker-queue-health", "/admin/security", "/admin/security-events", "/admin/settings", "/admin/roles",
@@ -393,7 +393,7 @@ func TestMockAdminAndSellerWorkspacesRenderTheirOwnSurface(t *testing.T) {
 
 func TestMockSellerAdminRoutes(t *testing.T) {
 	h := NewMockHandler()
-	routes := []string{"/seller-admin/onboarding", "/seller-admin", "/seller-admin/products", "/seller-admin/inventory", "/seller-admin/orders", "/seller-admin/returns", "/seller-admin/earnings", "/seller-admin/commission", "/seller-admin/analytics", "/seller-admin/audit", "/seller-admin/promotions", "/seller-admin/reviews", "/seller-admin/messages", "/seller-admin/support", "/seller-admin/settings", "/seller-admin/team"}
+	routes := []string{"/seller-admin/onboarding", "/seller-admin", "/seller-admin/products", "/seller-admin/inventory", "/seller-admin/orders", "/seller-admin/returns", "/seller-admin/earnings", "/seller-admin/commission", "/seller-admin/analytics", "/seller-admin/audit", "/seller-admin/promotions", "/seller-admin/reviews", "/seller-admin/messages", "/seller-admin/support", "/seller-admin/settings"}
 	for _, route := range routes {
 		t.Run(route, func(t *testing.T) {
 			res := httptest.NewRecorder()
@@ -503,7 +503,7 @@ func TestMockSupportPortalRoutes(t *testing.T) {
 				t.Fatalf("status = %d, want 200", res.Code)
 			}
 			body := res.Body.String()
-			for _, want := range []string{"Support Agent", "Preview Support Agent", "Preview action completed"} {
+			for _, want := range []string{"Admin", "Preview Admin", "Preview action completed"} {
 				if !strings.Contains(body, want) {
 					t.Errorf("response is missing %q", want)
 				}

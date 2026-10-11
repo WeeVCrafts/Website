@@ -17,11 +17,13 @@ startup.
 `.railway/railway.ts` keeps the app service linked to this repository, sets the
 `/health/ready` health check, and wires the resource variables. Install the
 Railway SDK with `npm install`, then review configuration with
-`railway config plan` and apply planned changes with `railway config apply`.
+`railway config plan`. Review the exact plan before explicitly applying it with
+`railway config apply`.
 The app service variables should resolve to:
 
 ```text
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+DATABASE_URL=${{Postgres.DATABASE_URL}}?sslmode=verify-full
+DATABASE_CA_CERT=<public PEM certificate from the managed Postgres root CA>
 REDIS_URL=${{Redis.REDIS_URL}}
 S3_ADDR=${{weevcrafts-media.ENDPOINT}}
 S3_ACCESS_KEY=${{weevcrafts-media.ACCESS_KEY_ID}}
@@ -31,9 +33,23 @@ S3_SECURE=true
 WECRATFS_ENV=production
 WECRATFS_SECURE_COOKIES=true
 WECRATFS_LOCAL_MODE=false
-WECRATFS_PAYMENT_MODE=razorpay
+WECRATFS_PAYMENT_MODE=local
+WECRATFS_LOCAL_PAYMENT_SECRET=<unique secret stored in Railway>
 WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 ```
+
+The current Railway environment uses simulated payments. Set payment mode to
+`razorpay` only after configuring and verifying the live provider. Keep secrets
+in Railway variables, never in this repository.
+
+For Railway's Postgres SSL template, export the public certificate at
+`/var/lib/postgresql/data/certs/root.crt` from the Postgres service and set
+`DATABASE_CA_CERT` through `railway variable set DATABASE_CA_CERT --stdin`.
+Use the private database hostname covered by that certificate; production
+requires `sslmode=verify-full`. The app trusts this CA without disabling
+certificate or hostname verification. Refresh the variable if the CA rotates.
+The Dockerfile cache IDs are scoped to the existing Website service; update the
+IDs if moving the app to a different Railway service.
 
 Generate a public domain for the app service in Railway Networking. The app
 binds to Railway's `PORT`, marks session cookies secure in production, and
@@ -164,3 +180,7 @@ bash scripts/check-sqlc-generated.sh
 Normal startup bootstraps an empty database with three accounts and no products. Existing accounts are preserved on later starts. See [the clean-start guide](docs/local-clean-start.md) for credentials and the explicit local reset. The larger `seed-demo` profile is opt-in and adds demo data.
 
 See [the customer workflow update](docs/customer-workflow-update.md) for checkout corrections, account security, mock payments, delivery progress, notification setup and isolated regression checks.
+
+## Current account and operations model
+
+WeeVCrafts uses Customer, Seller, Admin and Super Admin, with one role per account. See [four-role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.

@@ -94,7 +94,7 @@ func (s *SupportService) Reply(ctx context.Context, actorID, ticketID int64, mes
 }
 
 func (s *SupportService) ReplyWithMessageID(ctx context.Context, actorID, ticketID int64, message string) (int64, error) {
-	if !s.hasRole(ctx, actorID, domainidentity.RoleSupportAgent) {
+	if !s.agentAllowed(ctx, actorID) {
 		return 0, ports.ErrForbidden
 	}
 	message = strings.TrimSpace(message)
@@ -142,7 +142,7 @@ func (s *SupportService) agentAllowed(ctx context.Context, userID int64) bool {
 	if userID <= 0 || s.repository == nil || s.roles == nil {
 		return false
 	}
-	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSupportAgent, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	return err == nil && ok
 }
 
@@ -150,6 +150,6 @@ func (s *SupportService) sellerAllowed(ctx context.Context, userID int64) bool {
 	if userID <= 0 || s.repository == nil || s.roles == nil {
 		return false
 	}
-	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSellerOwner)
+	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSeller)
 	return err == nil && ok
 }

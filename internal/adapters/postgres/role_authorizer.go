@@ -41,20 +41,7 @@ func (r *RoleAuthorizer) HasAnyRole(ctx context.Context, userID int64, roles ...
 	return allowed, nil
 }
 
+// Staff grants are retired. Seller ownership and role checks are authoritative.
 func (r *RoleAuthorizer) HasSellerPermission(ctx context.Context, userID int64, permission string) (bool, error) {
-	if userID <= 0 || permission == "" {
-		return false, nil
-	}
-	var allowed bool
-	if err := r.pool.QueryRow(ctx, `
-		SELECT EXISTS (
-			SELECT 1
-			FROM seller_users su
-			JOIN sellers s ON s.id = su.seller_id AND s.status = 'active'
-			JOIN users u ON u.id = su.user_id AND u.status = 'active'
-			WHERE su.user_id = $1 AND su.status = 'active' AND $2 = ANY(su.permissions)
-		)`, userID, permission).Scan(&allowed); err != nil {
-		return false, fmt.Errorf("check seller permission: %w", err)
-	}
-	return allowed, nil
+	return false, nil
 }

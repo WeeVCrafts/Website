@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
-	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -66,16 +65,8 @@ func (s *SellerStaffService) Remove(ctx context.Context, ownerUserID, staffUserI
 	return s.repository.RemoveStaff(ctx, ownerUserID, staffUserID)
 }
 
-func (s *SellerStaffService) ownerAllowed(ctx context.Context, userID int64) bool {
-	if userID <= 0 || s.repository == nil {
-		return false
-	}
-	if s.roles == nil {
-		return true
-	}
-	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSellerOwner)
-	return err == nil && ok
-}
+// Team management is retired; retained compatibility calls fail closed.
+func (s *SellerStaffService) ownerAllowed(ctx context.Context, userID int64) bool { return false }
 
 func normalizeStaffEmail(value string) (string, error) {
 	value = strings.ToLower(strings.TrimSpace(value))

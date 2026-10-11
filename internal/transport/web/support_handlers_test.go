@@ -54,7 +54,7 @@ func TestSupportReplyRouteRequiresCSRFAndSupportAgentRole(t *testing.T) {
 		return recorder
 	}
 
-	response := post(makeHandler(domainidentity.RoleSupportAgent), "wrong-token")
+	response := post(makeHandler(domainidentity.RoleAdmin), "wrong-token")
 	if response.Code != http.StatusForbidden || capture.called {
 		t.Fatalf("reply without CSRF should be denied, code=%d called=%t", response.Code, capture.called)
 	}
@@ -64,7 +64,7 @@ func TestSupportReplyRouteRequiresCSRFAndSupportAgentRole(t *testing.T) {
 		t.Fatalf("customer reply should be denied, code=%d called=%t", response.Code, capture.called)
 	}
 
-	response = post(makeHandler(domainidentity.RoleSupportAgent), session.CSRFToken)
+	response = post(makeHandler(domainidentity.RoleAdmin), session.CSRFToken)
 	if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/support/cases?ticket_id=91" {
 		t.Fatalf("support agent reply should return to its case, code=%d location=%q", response.Code, response.Header().Get("Location"))
 	}

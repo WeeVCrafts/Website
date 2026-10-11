@@ -21,7 +21,7 @@ func (s *FinanceService) List(ctx context.Context, actorID int64) ([]domaincomme
 	if actorID <= 0 || s.repository == nil || s.roles == nil {
 		return nil, ports.ErrForbidden
 	}
-	allowed, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleFinanceOperator, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	allowed, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	if err != nil || !allowed {
 		return nil, ports.ErrForbidden
 	}

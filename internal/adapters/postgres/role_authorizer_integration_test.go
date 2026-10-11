@@ -21,16 +21,16 @@ func TestRoleAuthorizerReadsAuthoritativeAssignments(t *testing.T) {
 	t.Cleanup(func() {
 		_, _ = pool.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, userID)
 	})
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'marketplace_admin')`, userID); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, 'admin')`, userID); err != nil {
 		t.Fatalf("assign role fixture: %v", err)
 	}
 
 	authorizer := NewRoleAuthorizer(pool)
-	allowed, err := authorizer.HasAnyRole(ctx, userID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	allowed, err := authorizer.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	if err != nil || !allowed {
 		t.Fatalf("expected assigned role to authorize, allowed=%v err=%v", allowed, err)
 	}
-	allowed, err = authorizer.HasAnyRole(ctx, userID, domainidentity.RoleFinanceOperator)
+	allowed, err = authorizer.HasAnyRole(ctx, userID, domainidentity.RoleSuperAdmin)
 	if err != nil {
 		t.Fatalf("check denied role: %v", err)
 	}

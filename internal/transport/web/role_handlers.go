@@ -51,6 +51,11 @@ func (h *Handler) adminRoleUpdate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if r.FormValue("confirm") != "yes" {
+		h.renderError(w, http.StatusUnprocessableEntity, "Confirmation required", "Confirm the selected account role before saving.")
+		return
+	}
+
 	userID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
 	if err != nil || userID <= 0 {
 		h.renderError(w, http.StatusUnprocessableEntity, "Role change invalid", "Choose a valid user.")
@@ -65,7 +70,7 @@ func (h *Handler) adminRoleUpdate(w http.ResponseWriter, r *http.Request) {
 	if raw := strings.TrimSpace(r.FormValue("seller_id")); raw != "" {
 		parsed, parseErr := strconv.ParseInt(raw, 10, 64)
 		if parseErr != nil || parsed <= 0 {
-			h.renderError(w, http.StatusUnprocessableEntity, "Role change invalid", "Choose an active seller for seller staff access.")
+			h.renderError(w, http.StatusUnprocessableEntity, "Role change invalid", "Seller staff assignments are retired.")
 			return
 		}
 		sellerID = parsed
@@ -78,7 +83,9 @@ func (h *Handler) adminRoleUpdate(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ports.ErrNotFound):
 			h.renderError(w, http.StatusNotFound, "User not found", "That user account is no longer available.")
 		case errors.Is(err, ports.ErrSellerNotFound):
-			h.renderError(w, http.StatusUnprocessableEntity, "Seller not available", "Choose an active seller before granting Seller Staff access.")
+			h.renderError(w, http.StatusUnprocessableEntity, "Seller not available", "Seller staff assignments are retired.")
+		case errors.Is(err, ports.ErrSellerPendingWork):
+			h.renderError(w, http.StatusConflict, "Seller has outstanding work", "Resolve unfinished orders and returns before changing this seller’s role.")
 		case errors.Is(err, ports.ErrRoleState), errors.Is(err, applicationauth.ErrInvalidRoleAssignment):
 			h.renderError(w, http.StatusConflict, "Role change rejected", "The role assignment is invalid, unchanged, or protected.")
 		default:
@@ -103,11 +110,16 @@ func (h *Handler) adminRoleUserCreate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if r.FormValue("confirm") != "yes" {
+		h.renderError(w, http.StatusUnprocessableEntity, "Confirmation required", "Confirm the selected account role before saving.")
+		return
+	}
+
 	sellerID := int64(0)
 	if raw := strings.TrimSpace(r.FormValue("seller_id")); raw != "" {
 		parsed, err := strconv.ParseInt(raw, 10, 64)
 		if err != nil || parsed <= 0 {
-			h.renderError(w, http.StatusUnprocessableEntity, "User details invalid", "Choose an active seller for seller staff accounts.")
+			h.renderError(w, http.StatusUnprocessableEntity, "User details invalid", "Seller staff assignments are retired.")
 			return
 		}
 		sellerID = parsed
@@ -121,9 +133,9 @@ func (h *Handler) adminRoleUserCreate(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, ports.ErrUserAlreadyExists):
 		h.renderError(w, http.StatusConflict, "Email already in use", "An account already uses that email address.")
 	case errors.Is(err, ports.ErrSellerNotFound):
-		h.renderError(w, http.StatusUnprocessableEntity, "Seller not available", "Choose an active seller before assigning the Seller Staff role.")
+		h.renderError(w, http.StatusUnprocessableEntity, "Seller not available", "Seller team assignments are no longer available.")
 	case errors.Is(err, applicationauth.ErrInvalidRoleAssignment):
-		h.renderError(w, http.StatusUnprocessableEntity, "User details invalid", "Check the email, password, role, seller selection and audit reason.")
+		h.renderError(w, http.StatusUnprocessableEntity, "User details invalid", "Check the email, password, selected role and audit reason.")
 	default:
 		h.renderError(w, http.StatusServiceUnavailable, "User creation unavailable", "We could not create this account.")
 	}

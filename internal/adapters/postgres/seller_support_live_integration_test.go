@@ -15,7 +15,7 @@ func TestSellerSupportRequestLinksSellerOrderAndRejectsOtherSeller(t *testing.T)
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 2, 5)
 	ctx := context.Background()
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller_owner'),($2,'seller_owner')`, fixture.ownerID, fixture.userIDs[1]); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller'),($2,'seller')`, fixture.ownerID, fixture.userIDs[1]); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,'Other support seller','active')`, fixture.userIDs[1]); err != nil {

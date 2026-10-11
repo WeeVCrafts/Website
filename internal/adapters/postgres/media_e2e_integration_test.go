@@ -20,6 +20,9 @@ func TestMediaUploadFinalizeAndPublicReadAgainstPostgresAndS3CompatibleStorage(t
 	}
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
+	if _, err := pool.Exec(context.Background(), `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller')`, fixture.ownerID); err != nil {
+		t.Fatal(err)
+	}
 	storage, err := storageadapter.NewS3(envOrDefault("S3_ADDR", "localhost:3900"), envOrDefault("S3_ACCESS_KEY", "GK0123456789abcdef01234567"), envOrDefault("S3_SECRET_KEY", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"), envOrDefault("S3_BUCKET", "wecratfs-media"), false)
 	if err != nil {
 		t.Fatalf("create storage adapter: %v", err)

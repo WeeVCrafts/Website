@@ -62,7 +62,7 @@ func TestUpgradeRepairsEitherHistoricalMigration28(t *testing.T) {
 			if _, err = pool.Exec(ctx, string(data)); err != nil {
 				t.Fatal(err)
 			}
-			if _, err = pool.Exec(ctx, `INSERT INTO schema_migrations(version) VALUES(28); INSERT INTO users(email,display_name,status) VALUES('upgrade@example.invalid','Preserved customer','active')`); err != nil {
+			if _, err = pool.Exec(ctx, `INSERT INTO schema_migrations(version) VALUES(28); INSERT INTO users(email,display_name,status) VALUES('upgrade@example.invalid','Preserved customer','active'); INSERT INTO user_roles(user_id,role_slug) SELECT id,'customer' FROM users WHERE email='upgrade@example.invalid'`); err != nil {
 				t.Fatal(err)
 			}
 			if err = ApplyMigrations(ctx, pool); err != nil {

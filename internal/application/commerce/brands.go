@@ -21,7 +21,7 @@ func (s *BrandDirectoryService) List(ctx context.Context, actorID int64) ([]doma
 	if actorID <= 0 || s.repository == nil || s.roles == nil {
 		return nil, ports.ErrForbidden
 	}
-	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleMarketplaceAdmin, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
 	if err != nil || !ok {
 		return nil, ports.ErrForbidden
 	}

@@ -6,7 +6,7 @@ async function signIn(page, email, landing, passwordValue = password) {
   await page.goto("/login");
   await page.locator('#page input[name="email"]').fill(email);
   await page.locator('#page input[name="password"]').fill(passwordValue);
-  await page.getByRole("button", { name: /sign in/i }).click();
+  await page.getByRole("button", { name: /continue with email/i }).click();
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""));
   if (landing === "/account") await page.goto("/account");
 }
@@ -23,9 +23,7 @@ test("reported product image and seller dropdown workflows work live", async ({ 
   const suffix = Date.now().toString();
   const productName = `QA Reported Image ${suffix}`;
   const sku = `QA-REPORTED-${suffix}`;
-  const sellerEmail = `qa.reported.owner.${suffix}@weevcrafts.local`;
-  const sellerName = `QA Reported Owner ${suffix}`;
-  const sellerPassword = "QA-Reported-Owner-2026!";
+  const sellerName = "Aditi Rao"; // Approved demo seller; new sellers require onboarding.
   const context = await browser.newContext();
   const admin = await context.newPage();
   const browserErrors = [];
@@ -36,24 +34,10 @@ test("reported product image and seller dropdown workflows work live", async ({ 
   admin.on("response", response => {
     if (response.status() >= 400) browserErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
   });
-  const staffEmail = `qa.reported.staff.${suffix}@weevcrafts.local`;
-  let staffCreated = false;
-  let sellerCreated = false;
   let productCreated = false;
 
   try {
     await signIn(admin, "demo.super01@weevcrafts.local", "/super-admin");
-
-    await admin.goto("/super-admin/security");
-    const createUser = admin.locator("form.role-user-create-form");
-    await createUser.locator('input[name="display_name"]').fill(sellerName);
-    await createUser.locator('input[name="email"]').fill(sellerEmail);
-    await createUser.locator('input[name="password"]').fill(sellerPassword);
-    await createUser.locator('select[name="role"]').selectOption("seller_owner");
-    await createUser.locator('input[name="reason"]').fill("Live reported issue seller dropdown verification");
-    await createUser.getByRole("button", { name: "Create account" }).click();
-    sellerCreated = true;
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: sellerEmail })).toContainText("seller_owner");
 
     await admin.goto("/super-admin/products/new");
     const productForm = admin.locator("form.admin-product-editor-form");
@@ -90,26 +74,9 @@ test("reported product image and seller dropdown workflows work live", async ({ 
     await admin.reload();
     expect(await (await admin.request.get(await admin.locator("img.product-media-preview").getAttribute("src"))).body()).toEqual(tinyPNG());
 
-    await admin.goto("/super-admin/security");
-    const staffCreate = admin.locator("form.role-user-create-form");
-    await staffCreate.locator('select[name="role"]').selectOption("seller_staff");
-    const staffSellerSelect = staffCreate.locator('select[name="seller_id"]');
-    await expect(staffSellerSelect.locator("option", { hasText: sellerName })).toHaveCount(1);
-    await staffSellerSelect.selectOption(await staffSellerSelect.locator("option", { hasText: sellerName }).getAttribute("value"));
-    await staffCreate.locator('input[name="display_name"]').fill(`QA Staff ${suffix}`);
-    await staffCreate.locator('input[name="email"]').fill(staffEmail);
-    await staffCreate.locator('input[name="password"]').fill(sellerPassword);
-    await staffCreate.locator('input[name="reason"]').fill("Verify persisted staff assignment to newly created seller");
-    await staffCreate.getByRole("button", { name: "Create account" }).click();
-    staffCreated = true;
-    await expect(admin.locator(".role-assignment-card").filter({ hasText: staffEmail })).toContainText("seller_staff");
-    const staffContext = await browser.newContext();
-    try {
-      const staff = await staffContext.newPage();
-      await signIn(staff, staffEmail, "/seller-admin", sellerPassword);
-      await staff.goto("/seller-admin/products");
-      await expect(staff.locator("body")).toContainText(productName);
-    } finally { await staffContext.close(); }
+    await admin.goto("/super-admin/users");
+    const roleOptions = await admin.locator('.role-user-create-form select[name="role"] option').evaluateAll(options => options.map(option => option.value));
+    expect(roleOptions).toEqual(["customer", "seller", "admin", "super_admin"]);
     expect(browserErrors).toEqual([]);
   } finally {
     if (productCreated) {
@@ -122,23 +89,6 @@ test("reported product image and seller dropdown workflows work live", async ({ 
           admin.once("dialog", dialog => dialog.accept());
           await row.getByRole("button", { name: "Archive" }).click();
         }
-      }
-    }
-    if (staffCreated) {
-      await admin.goto("/super-admin/security");
-      const card = admin.locator(".role-assignment-card").filter({ hasText: staffEmail });
-      await card.locator('form.role-delete-form input[name="reason"]').fill("Clean up live staff assignment verification account");
-      admin.once("dialog", dialog => dialog.accept());
-      await card.locator('form.role-delete-form button').click();
-    }
-    if (sellerCreated) {
-      await admin.goto("/super-admin/security");
-      const card = admin.locator(".role-assignment-card").filter({ hasText: sellerEmail });
-      if (await card.count()) {
-        const reason = card.locator('form.role-delete-form input[name="reason"]');
-        await reason.fill("Clean up live reported seller dropdown verification account");
-        admin.once("dialog", dialog => dialog.accept());
-        await card.locator('form.role-delete-form button', { hasText: "Delete account" }).click();
       }
     }
     await context.close();

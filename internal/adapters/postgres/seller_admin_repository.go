@@ -69,7 +69,7 @@ func (r *CommerceRepository) UpdateSellerStatus(ctx context.Context, actorID, se
 
 func (r *CommerceRepository) requireMarketplaceAdmin(ctx context.Context, actorID int64) error {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ($2, $3))`, actorID, string(domainidentity.RoleMarketplaceAdmin), string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ($2, $3))`, actorID, string(domainidentity.RoleAdmin), string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {

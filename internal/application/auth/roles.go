@@ -13,13 +13,7 @@ import (
 var ErrInvalidRoleAssignment = errors.New("role assignment request is invalid")
 
 var RoleAdminAssignableRoles = []domainidentity.Role{
-	domainidentity.RoleCustomer,
-	domainidentity.RoleSellerOwner,
-	domainidentity.RoleSellerStaff,
-	domainidentity.RoleMarketplaceAdmin,
-	domainidentity.RoleSupportAgent,
-	domainidentity.RoleFinanceOperator,
-	domainidentity.RoleOperations,
+	domainidentity.RoleCustomer, domainidentity.RoleSeller, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin,
 }
 
 type RoleAdminService struct {
@@ -60,7 +54,7 @@ func (s *RoleAdminService) Update(ctx context.Context, actorID, userID, sellerID
 	}
 	roleValue := domainidentity.Role(strings.ToLower(strings.TrimSpace(role)))
 	reason = strings.TrimSpace(reason)
-	if actorID <= 0 || userID <= 0 || len(reason) < 4 || len(reason) > 1000 || !assignableRole(roleValue) || roleValue == domainidentity.RoleSellerStaff && sellerID <= 0 || roleValue != domainidentity.RoleSellerStaff && sellerID != 0 {
+	if actorID <= 0 || userID <= 0 || len(reason) < 4 || len(reason) > 1000 || !assignableRole(roleValue) || sellerID != 0 {
 		return ErrInvalidRoleAssignment
 	}
 	if actorID == userID && roleValue == domainidentity.RoleSuperAdmin {
@@ -87,7 +81,7 @@ func (s *RoleAdminService) CreateUser(ctx context.Context, actorID int64, email,
 	reason = strings.TrimSpace(reason)
 	parsedEmail, emailErr := mail.ParseAddress(email)
 	roleValue := domainidentity.Role(strings.ToLower(strings.TrimSpace(role)))
-	if emailErr != nil || parsedEmail.Address != email || len(email) > 320 || len(displayName) < 2 || len(displayName) > 120 || len(password) < 12 || len(password) > 1024 || len(reason) < 4 || len(reason) > 1000 || !assignableRole(roleValue) || roleValue == domainidentity.RoleSellerStaff && sellerID <= 0 || roleValue != domainidentity.RoleSellerStaff && sellerID != 0 {
+	if emailErr != nil || parsedEmail.Address != email || len(email) > 320 || len(displayName) < 2 || len(displayName) > 120 || len(password) < 12 || len(password) > 1024 || len(reason) < 4 || len(reason) > 1000 || !assignableRole(roleValue) || sellerID != 0 {
 		return ErrInvalidRoleAssignment
 	}
 	passwordHash, err := s.hasher.Hash(password)

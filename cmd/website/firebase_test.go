@@ -68,7 +68,7 @@ func TestPushEnforcesCustomerRoleAndCSRF(t *testing.T) {
 		name  string
 		roles []string
 		csrf  string
-	}{{"seller", []string{"seller_owner"}, "csrf"}, {"ambiguous", []string{"customer", "seller_owner"}, "csrf"}, {"missing csrf", []string{"customer"}, ""}} {
+	}{{"seller", []string{"seller"}, "csrf"}, {"ambiguous", []string{"customer", "seller"}, "csrf"}, {"missing csrf", []string{"customer"}, ""}} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := pushSessionFixture{ports.SessionRecord{ID: "fixture", UserID: 10, RoleSlugs: tc.roles, CSRFToken: "csrf", ExpiresAt: time.Now().Add(time.Hour)}}
 			p := &customerPush{sessions: applicationauth.NewSessionService(store)}

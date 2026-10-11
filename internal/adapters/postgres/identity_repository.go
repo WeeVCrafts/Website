@@ -83,6 +83,16 @@ func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName,
 }
 
 func (r *UserRepository) GetCredentialsByEmail(ctx context.Context, email string) (domainidentity.Credentials, error) {
+	// Resolve a persisted username to the same identity used by email login.
+	// Changing an account's role never transfers or changes its username.
+	if !strings.Contains(email, "@") {
+		if err := r.pool.QueryRow(ctx, `SELECT email FROM users WHERE username=$1`, strings.ToLower(strings.TrimSpace(email))).Scan(&email); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domainidentity.Credentials{}, ports.ErrCredentialsNotFound
+			}
+			return domainidentity.Credentials{}, fmt.Errorf("resolve login identity: %w", err)
+		}
+	}
 	row, err := r.queries.GetCredentialsByEmail(ctx, email)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domainidentity.Credentials{}, ports.ErrCredentialsNotFound
@@ -138,7 +148,7 @@ func (r *UserRepository) ResetFailedLogin(ctx context.Context, userID int64) err
 
 func (r *UserRepository) ListCustomers(ctx context.Context, actorID int64, limit int) ([]domainidentity.AdminCustomer, error) {
 	var allowed bool
-	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ($2, $3))`, actorID, string(domainidentity.RoleMarketplaceAdmin), string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles WHERE user_id = $1 AND role_slug IN ($2, $3))`, actorID, string(domainidentity.RoleAdmin), string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
 		return nil, err
 	}
 	if !allowed {

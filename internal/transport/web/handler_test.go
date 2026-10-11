@@ -703,7 +703,7 @@ func TestSellerProductID(t *testing.T) {
 	}
 }
 
-func TestSellerTeamRendersAndMutatesThroughHTMX(t *testing.T) {
+func TestRetiredSellerTeamEndpointsReturnNotFound(t *testing.T) {
 	staffRepository := &webSellerStaffRepository{members: []domaincommerce.SellerStaffMember{{
 		UserID: 17, Email: "staff@example.com", DisplayName: "Staff Account", Status: "active",
 		Permissions: []string{domaincommerce.SellerPermissionProductRead},
@@ -716,30 +716,16 @@ func TestSellerTeamRendersAndMutatesThroughHTMX(t *testing.T) {
 	}
 	handler.SetSellerStaffService(applicationcommerce.NewSellerStaffService(staffRepository, nil))
 
-	request := httptest.NewRequest(http.MethodGet, "/seller/team", nil)
-	request.AddCookie(&http.Cookie{Name: "wecratfs_session", Value: session.ID})
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected seller team status 200, got %d: %s", recorder.Code, recorder.Body.String())
-	}
-	for _, expected := range []string{"Seller team", "staff@example.com", "PRODUCT_READ", `action="/seller/team/add"`, `name="permissions"`} {
-		if !strings.Contains(recorder.Body.String(), expected) {
-			t.Fatalf("expected seller team response to contain %q: %s", expected, recorder.Body.String())
+	for _, path := range []string{"/seller/team", "/seller/team/add", "/seller/team/update", "/seller/team/remove"} {
+		for _, method := range []string{http.MethodGet, http.MethodPost} {
+			request := httptest.NewRequest(method, path, nil)
+			request.AddCookie(&http.Cookie{Name: "wecratfs_session", Value: session.ID})
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, request)
+			if recorder.Code != http.StatusNotFound {
+				t.Fatalf("%s %s returned %d", method, path, recorder.Code)
+			}
 		}
-	}
-
-	request = commerceRequest(http.MethodPost, "/seller/team/add", url.Values{
-		"csrf_token": {session.CSRFToken}, "email": {"new@example.com"},
-		"permissions": {domaincommerce.SellerPermissionProductRead, domaincommerce.SellerPermissionOrderRead},
-	}, session)
-	recorder = httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller-admin/team?notice=Staff+access+added" {
-		t.Fatalf("expected team add redirect, got %d %q: %s", recorder.Code, recorder.Header().Get("HX-Redirect"), recorder.Body.String())
-	}
-	if staffRepository.addedEmail != "new@example.com" || len(staffRepository.addedPermissions) != 2 {
-		t.Fatalf("team add did not reach repository: email=%q permissions=%#v", staffRepository.addedEmail, staffRepository.addedPermissions)
 	}
 }
 

@@ -23,30 +23,25 @@ func (r *sellerOrderRepository) UpdateSellerFulfillment(context.Context, int64, 
 	return nil
 }
 
-func TestSellerOrderServiceSeparatesReadAndFulfillmentPermissions(t *testing.T) {
+func TestFulfilmentOnlySellerOwnerCanReadAndWrite(t *testing.T) {
 	repository := &sellerOrderRepository{}
-	checker := roleChecker{
-		roles:       map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSellerOwner: true}, 11: {domainidentity.RoleSellerStaff: true}},
-		permissions: map[int64]map[string]bool{11: {domaincommerce.SellerPermissionOrderRead: true}},
-	}
+	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSeller: true}, 11: {domainidentity.Role("seller_staff"): true}}, permissions: map[int64]map[string]bool{11: {"ORDER_READ": true, "ORDER_FULFILL": true}}}
 	service := NewSellerOrderService(repository, checker)
-	if orders, err := service.List(context.Background(), 11); err != nil || len(orders) != 1 {
-		t.Fatalf("order reader was denied: orders=%+v err=%v", orders, err)
+	if _, err := service.List(context.Background(), 11); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatal("staff read authorized", err)
 	}
 	if err := service.UpdateFulfillment(context.Background(), 11, 3, "WC-1", "processing", "", "", "picked"); !errors.Is(err, ports.ErrForbidden) {
-		t.Fatalf("order reader updated fulfilment: %v", err)
+		t.Fatal("staff write authorized", err)
 	}
-	checker.permissions[11][domaincommerce.SellerPermissionOrderFulfill] = true
-	if err := service.UpdateFulfillment(context.Background(), 11, 3, "WC-1", "processing", "", "", "picked"); err != nil {
-		t.Fatalf("fulfilment writer was denied: %v", err)
+	if items, err := service.List(context.Background(), 10); err != nil || len(items) != 1 {
+		t.Fatal(items, err)
 	}
-	if !repository.updated {
-		t.Fatal("fulfilment update did not reach repository")
+	if err := service.UpdateFulfillment(context.Background(), 10, 3, "WC-1", "processing", "", "", "picked"); err != nil {
+		t.Fatal(err)
 	}
 }
-
 func TestSellerOrderServiceValidatesFulfillment(t *testing.T) {
-	service := NewSellerOrderService(&sellerOrderRepository{}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSellerOwner: true}}})
+	service := NewSellerOrderService(&sellerOrderRepository{}, roleChecker{roles: map[int64]map[domainidentity.Role]bool{10: {domainidentity.RoleSeller: true}}})
 	for _, status := range []string{"", "pending", "cancelled"} {
 		if err := service.UpdateFulfillment(context.Background(), 10, 3, "WC-1", status, "", "", "note"); !errors.Is(err, ErrInvalidSellerFulfillment) {
 			t.Fatalf("status %q returned %v", status, err)

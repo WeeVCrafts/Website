@@ -233,11 +233,11 @@ func (h *LocalDemoHandler) sellerFinance(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	if !h.hasRole(r, userID, "seller_owner", "finance_operator") {
+	if !h.hasRole(r, userID, "seller", "admin", "super_admin") {
 		writeLocalError(w, http.StatusForbidden, "FORBIDDEN", "Finance data is restricted to seller owners and finance operators.")
 		return
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT s.display_name,l.gross_cents,l.commission_cents,l.net_cents,l.status,l.created_at FROM seller_ledger l JOIN sellers s ON s.id=l.seller_id WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='finance_operator') ORDER BY l.created_at DESC LIMIT 100`, userID)
+	rows, err := h.pool.Query(r.Context(), `SELECT s.display_name,l.gross_cents,l.commission_cents,l.net_cents,l.status,l.created_at FROM seller_ledger l JOIN sellers s ON s.id=l.seller_id WHERE s.owner_user_id=$1 OR EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug IN ('admin','super_admin')) ORDER BY l.created_at DESC LIMIT 100`, userID)
 	if err != nil {
 		writeLocalError(w, http.StatusInternalServerError, "FINANCE_UNAVAILABLE", "Seller finance data could not be loaded.")
 		return
@@ -264,11 +264,11 @@ func (h *LocalDemoHandler) supportTickets(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	if !h.hasRole(r, userID, "support_agent", "marketplace_admin", "super_admin", "customer") {
+	if !h.hasRole(r, userID, "admin", "super_admin", "customer") {
 		writeLocalError(w, http.StatusForbidden, "FORBIDDEN", "Support access is restricted.")
 		return
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT t.ticket_number,t.subject,u.display_name,t.status,t.priority,t.created_at FROM support_tickets t JOIN users u ON u.id=t.user_id WHERE t.user_id=$1 OR EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug IN ('support_agent','marketplace_admin','super_admin')) ORDER BY t.created_at DESC LIMIT 100`, userID)
+	rows, err := h.pool.Query(r.Context(), `SELECT t.ticket_number,t.subject,u.display_name,t.status,t.priority,t.created_at FROM support_tickets t JOIN users u ON u.id=t.user_id WHERE t.user_id=$1 OR EXISTS (SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug IN ('admin','super_admin')) ORDER BY t.created_at DESC LIMIT 100`, userID)
 	if err != nil {
 		writeLocalError(w, http.StatusInternalServerError, "SUPPORT_UNAVAILABLE", "Support tickets could not be loaded.")
 		return
@@ -279,7 +279,7 @@ func (h *LocalDemoHandler) supportTickets(w http.ResponseWriter, r *http.Request
 		var number, subject, customer, status, priority string
 		var created time.Time
 		if rows.Scan(&number, &subject, &customer, &status, &priority, &created) == nil {
-			if !h.hasRole(r, userID, "marketplace_admin", "super_admin") {
+			if !h.hasRole(r, userID, "admin", "super_admin") {
 				customer = maskLocalName(customer)
 			}
 			result = append(result, map[string]any{"ticket_number": number, "subject": subject, "customer": customer, "status": status, "priority": priority, "created_at": created})

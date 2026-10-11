@@ -40,7 +40,7 @@ func TestReturnServiceSeparatesCustomerCreateFromOperationsUpdate(t *testing.T) 
 	repository := &returnRepository{}
 	checker := roleChecker{roles: map[int64]map[domainidentity.Role]bool{
 		10: {domainidentity.RoleCustomer: true},
-		20: {domainidentity.RoleOperations: true},
+		20: {domainidentity.RoleAdmin: true},
 	}}
 	service := NewReturnService(repository, checker)
 	if _, err := service.Create(context.Background(), 10, "WC-123", "The item arrived damaged"); err != nil {

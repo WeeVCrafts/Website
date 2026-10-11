@@ -203,8 +203,6 @@ func (h *MockHandler) sellerAdmin(w http.ResponseWriter, r *http.Request) {
 		h.render(w, r, selleradminpages.Analytics(page))
 	case "settings":
 		h.render(w, r, selleradminpages.Settings(page))
-	case "team":
-		h.render(w, r, selleradminpages.Team(page))
 	default:
 		h.notFound(w, r)
 	}

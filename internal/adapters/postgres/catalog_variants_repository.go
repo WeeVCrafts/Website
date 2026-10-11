@@ -17,9 +17,7 @@ func (r *CommerceRepository) ListSellerProductVariants(ctx context.Context, owne
 		SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id
 		JOIN users u ON u.id=$2 AND u.status='active'
 		WHERE p.id=$1 AND p.status<>'archived' AND s.status='active'
-		AND ((s.owner_user_id=$2) OR EXISTS (
-			SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2
-			AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions))))`, productID, ownerUserID).Scan(&allowed)
+		AND ((s.owner_user_id=$2) ))`, productID, ownerUserID).Scan(&allowed)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +29,7 @@ func (r *CommerceRepository) ListSellerProductVariants(ctx context.Context, owne
 
 func (r *CommerceRepository) ListAdminProductVariants(ctx context.Context, actorID, productID int64) ([]commerce.ProductVariant, error) {
 	var allowed bool
-	err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'marketplace_admin', 'seller_owner', 'seller_staff'))`, actorID).Scan(&allowed)
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('super_admin', 'admin'))`, actorID).Scan(&allowed)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +81,7 @@ func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, 
 	var variant commerce.ProductVariant
 	err := WithinTransaction(ctx, r.pool, func(txctx context.Context, tx pgx.Tx) error {
 		if admin {
-			if err := requireActiveSuperAdmin(txctx, tx, actorID); err != nil {
+			if err := requireCompanyCatalogActor(txctx, tx, actorID); err != nil {
 				return err
 			}
 			if err := lockAdminVariantProduct(txctx, tx, productID); err != nil {
@@ -125,7 +123,7 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 	var variant commerce.ProductVariant
 	err := WithinTransaction(ctx, r.pool, func(txctx context.Context, tx pgx.Tx) error {
 		if admin {
-			if err := requireActiveSuperAdmin(txctx, tx, actorID); err != nil {
+			if err := requireCompanyCatalogActor(txctx, tx, actorID); err != nil {
 				return err
 			}
 			if err := lockAdminVariantProduct(txctx, tx, productID); err != nil {
@@ -169,7 +167,7 @@ func (r *CommerceRepository) ArchiveAdminProductVariant(ctx context.Context, act
 func (r *CommerceRepository) archiveProductVariant(ctx context.Context, actorID, productID, variantID int64, reason string, admin bool) error {
 	return WithinTransaction(ctx, r.pool, func(txctx context.Context, tx pgx.Tx) error {
 		if admin {
-			if err := requireActiveSuperAdmin(txctx, tx, actorID); err != nil {
+			if err := requireCompanyCatalogActor(txctx, tx, actorID); err != nil {
 				return err
 			}
 			if err := lockAdminVariantProduct(txctx, tx, productID); err != nil {
@@ -216,8 +214,7 @@ func lockSellerVariantProduct(ctx context.Context, tx pgx.Tx, userID, productID 
 	var status string
 	err := tx.QueryRow(ctx, `SELECT p.status FROM products p JOIN sellers s ON s.id=p.seller_id
 		JOIN users u ON u.id=$2 AND u.status='active'
-		WHERE p.id=$1 AND s.status='active' AND ((s.owner_user_id=$2) OR EXISTS(
-			SELECT 1 FROM seller_users su WHERE su.seller_id=s.id AND su.user_id=$2 AND su.status='active' AND 'PRODUCT_WRITE'=ANY(su.permissions)))
+		WHERE p.id=$1 AND s.status='active' AND ((s.owner_user_id=$2) )
 		FOR UPDATE OF p`, productID, userID).Scan(&status)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ports.ErrForbidden

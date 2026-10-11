@@ -10,7 +10,7 @@ import (
 
 func TestLiveSupportPortalUsesCurrentIdentityAndCaseLink(t *testing.T) {
 	page := viewmodels.SupportPortalPage{
-		Active: "cases", Title: "Support cases", DisplayName: "Leela Agent", RoleLabel: "Support Agent", Initials: "LA", CSRFToken: "csrf-value",
+		Active: "cases", Title: "Support cases", DisplayName: "Leela Agent", RoleLabel: "Admin", Initials: "LA", CSRFToken: "csrf-value",
 		Cases: []viewmodels.SupportPortalCase{{DatabaseID: 91, ID: "CASE-91", Subject: "Order is delayed", Customer: "R*** K.", Priority: "normal", Created: "20 Sep 2026", Status: "open", Order: "WC-91"}},
 	}
 	recorder := httptest.NewRecorder()
@@ -18,7 +18,7 @@ func TestLiveSupportPortalUsesCurrentIdentityAndCaseLink(t *testing.T) {
 		t.Fatalf("render support case portal: %v", err)
 	}
 	body := recorder.Body.String()
-	for _, visible := range []string{"Leela Agent", "Support Agent", "CASE-91", "Order is delayed", `href="/support-portal/cases?ticket_id=91&amp;q="`, `<table class="ui-table ui-table--records">`} {
+	for _, visible := range []string{"Leela Agent", "Admin", "CASE-91", "Order is delayed", `href="/support-portal?ticket_id=91&amp;q="`, `<table class="ui-table ui-table--records">`} {
 		if !strings.Contains(body, visible) {
 			t.Errorf("live support portal is missing %q", visible)
 		}
@@ -30,7 +30,7 @@ func TestLiveSupportPortalUsesCurrentIdentityAndCaseLink(t *testing.T) {
 
 func TestLiveSupportCaseShowsStoredConversationAndCSRFReplyForm(t *testing.T) {
 	page := viewmodels.SupportPortalPage{
-		Active: "cases", Title: "Support cases", DisplayName: "Leela Agent", RoleLabel: "Support Agent", Initials: "LA", CSRFToken: "csrf-value",
+		Active: "cases", Title: "Support cases", DisplayName: "Leela Agent", RoleLabel: "Admin", Initials: "LA", CSRFToken: "csrf-value",
 		SelectedCase: viewmodels.SupportPortalCase{DatabaseID: 91, ID: "CASE-91", Subject: "Order is delayed", Customer: "R*** K.", Created: "20 Sep 2026", Status: "in_progress", InitialMessage: "My parcel has not arrived.", AgentNote: "Checking the carrier scan."},
 		Messages:     []viewmodels.SupportPortalConversation{{Author: "Leela Agent", Initials: "LA", Role: "Support Agent", Message: "We are checking with the carrier.", Time: "20 Sep 2026 10:30", Tone: "agent"}},
 		Cases:        []viewmodels.SupportPortalCase{{DatabaseID: 91, ID: "CASE-91", Subject: "Order is delayed", Customer: "R*** K.", Priority: "normal", Created: "20 Sep 2026", Status: "in_progress", Order: "WC-91", LatestReply: "We are checking with the carrier."}},

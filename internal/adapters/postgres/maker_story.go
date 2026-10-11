@@ -13,7 +13,7 @@ import (
 func (r *CommerceRepository) UpdateMakerStory(ctx context.Context, ownerID int64, input domaincommerce.MakerStoryInput) error {
 	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
 		var sellerID int64
-		err := tx.QueryRow(ctx, `SELECT s.id FROM sellers s JOIN users u ON u.id=s.owner_user_id AND u.status='active' WHERE s.owner_user_id=$1 AND s.status<>'closed' AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller_owner') FOR UPDATE OF s`, ownerID).Scan(&sellerID)
+		err := tx.QueryRow(ctx, `SELECT s.id FROM sellers s JOIN users u ON u.id=s.owner_user_id AND u.status='active' WHERE s.owner_user_id=$1 AND s.status<>'closed' AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='seller') FOR UPDATE OF s`, ownerID).Scan(&sellerID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden
 		}

@@ -20,7 +20,7 @@ func supportPortalPage(path string, values url.Values) viewmodels.SupportPortalP
 
 	page := viewmodels.SupportPortalPage{
 		Active:      active,
-		DisplayName: "Preview Support Agent", RoleLabel: "Support Agent", Initials: "PSA",
+		DisplayName: "Preview Admin", RoleLabel: "Admin", Initials: "PSA",
 		Query:  values.Get("q"),
 		Range:  values.Get("range"),
 		Tab:    values.Get("tab"),
