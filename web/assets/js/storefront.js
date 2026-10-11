@@ -1010,6 +1010,16 @@
   }
 
   async function start() {
+    const siteHeader = document.querySelector('.site-header');
+    if (siteHeader) {
+      const updateHeader = () => {
+        const compact = global.scrollY > 72;
+        siteHeader.classList.toggle('is-compact', compact);
+        siteHeader.querySelector('.header-main')?.classList.toggle('is-compact', compact);
+      };
+      global.addEventListener('scroll', updateHeader, {passive: true});
+      updateHeader();
+    }
     const photoInput = document.querySelector("[data-photo-input]");
     if (photoInput) {
       const preview = document.querySelector("[data-photo-preview]");

@@ -18,7 +18,7 @@ func TestCustomerPageSEOIndexingPolicy(t *testing.T) {
 		{route: "/", want: "index,follow"},
 		{route: "/products/blue-bowl", want: "index,follow"},
 		{route: "/account", want: "noindex,nofollow"},
-		{route: "/faq", want: "noindex,nofollow"},
+		{route: "/faq", want: "index,follow"},
 	} {
 		if got := pageRobots(viewmodels.CustomerPage{Route: test.route}); got != test.want {
 			t.Fatalf("pageRobots(%q) = %q, want %q", test.route, got, test.want)

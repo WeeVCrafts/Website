@@ -56,13 +56,25 @@ func privacyRequestID(value int64) string { return strconv.FormatInt(value, 10) 
 
 func pageIsIndexable(p viewmodels.CustomerPage) bool {
 	switch {
-	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products":
+	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products", p.Route == "/makers", p.Route == "/our-story", p.Route == "/about", p.Route == "/contact", p.Route == "/shipping", p.Route == "/faq":
 		return true
 	case strings.HasPrefix(p.Route, "/products/"), strings.HasPrefix(p.Route, "/brands/"), strings.HasPrefix(p.Route, "/makers/"):
 		return true
 	default:
 		return false
 	}
+}
+
+func websiteStructuredData(p viewmodels.CustomerPage) string {
+	if p.Route != "/" { return "" }
+	data := map[string]any{
+		"@context": "https://schema.org",
+		"@graph": []any{
+			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p)+"#website", "name": "Weevcrafts", "alternateName": "WeeVCrafts", "url": pageCanonicalURL(p)},
+			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p)+"#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/favicon.svg")},
+		},
+	}
+	encoded, err := json.Marshal(data); if err != nil { return "" }; return string(encoded)
 }
 
 func pageRobots(p viewmodels.CustomerPage) string {

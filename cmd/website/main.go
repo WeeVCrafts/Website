@@ -191,14 +191,23 @@ func main() {
 	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService).WithNoPaymentDemo(cfg.NoPaymentDemo)
 	var firebaseProvider *firebaseadapter.Provider
 	if project := os.Getenv("WECRATFS_FIREBASE_PROJECT_ID"); project != "" {
-		firebaseProvider, err = firebaseadapter.New(startupContext, project, os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+		credentialFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+		if credentialJSON := os.Getenv("WECRATFS_FIREBASE_CREDENTIALS_JSON"); credentialJSON != "" {
+			file, writeErr := os.CreateTemp("", "weevcrafts-firebase-*.json")
+			if writeErr != nil { logger.Error("Firebase credential staging unavailable", "error", writeErr); os.Exit(1) }
+			if _, writeErr = file.WriteString(credentialJSON); writeErr != nil { _ = file.Close(); logger.Error("Firebase credential staging unavailable", "error", writeErr); os.Exit(1) }
+			_ = file.Close()
+			credentialFile = file.Name()
+			defer os.Remove(credentialFile)
+		}
+		firebaseProvider, err = firebaseadapter.New(startupContext, project, credentialFile)
 		if err != nil {
 			logger.Error("Firebase configuration unavailable", "error", err)
 			os.Exit(1)
 		}
 		firebaseRepository := postgres.NewFirebaseRepository(pool)
 		firebaseService := applicationauth.NewFirebaseService(firebaseProvider, firebaseRepository, authService, userRepository)
-		recoveryService.WithFirebaseEmails(firebaseProvider, firebaseRepository, "https://weevcrafts.com/")
+		recoveryService.WithFirebaseEmails(firebaseProvider, firebaseRepository, cfg.PublicURL+"/")
 		apiHandler.WithFirebase(firebaseService)
 		sessionService.WithSessionChecker(firebaseService)
 		sessionService.WithRevocationCleanup(func(ctx context.Context, userID int64, sessionID string) error {
@@ -280,6 +289,9 @@ func main() {
 	mux.HandleFunc("/health/live", healthHandler.Live)
 	mux.HandleFunc("/health/ready", healthHandler.Ready)
 	mux.HandleFunc("/health/metrics", healthHandler.Metrics)
+	robotsHandler, sitemapHandler := seoHandler(pool, cfg.PublicURL)
+	mux.HandleFunc("/robots.txt", robotsHandler)
+	mux.HandleFunc("/sitemap.xml", sitemapHandler)
 	mux.HandleFunc("/api/v1/products", apiHandler.Products)
 	mux.HandleFunc("/api/v1/products/", apiHandler.Products)
 	mux.HandleFunc("/api/v1/search", apiHandler.Search)
@@ -383,7 +395,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           requestID(authRateLimit(accountSecurity(mux, sessionService), rateLimiter)),
+		Handler:           requestID(authRateLimit(accountSecurity(canonicalHostRedirect(mux, cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

@@ -22,8 +22,16 @@ templ Document(p viewmodels.CustomerPage) {
       <meta property="og:description" content={ pageOGDescription(p) }/>
       <meta property="og:type" content={ pageOGType(p) }/>
       <meta property="og:url" content={ pageCanonicalURL(p) }/>
+      <meta property="og:site_name" content="Weevcrafts"/>
+      <meta name="twitter:card" content="summary_large_image"/>
+      <meta name="twitter:title" content={ pageOGTitle(p) }/>
+      <meta name="twitter:description" content={ pageOGDescription(p) }/>
       if image := pageOGImage(p); image != "" {
         <meta property="og:image" content={ image }/>
+        <meta name="twitter:image" content={ image }/>
+      }
+      if schema := websiteStructuredData(p); schema != "" {
+        @templ.JSONScript("website-schema", json.RawMessage(schema)).WithType("application/ld+json")
       }
       if schema := productStructuredData(p); schema != "" {
         @templ.JSONScript("product-schema", json.RawMessage(schema)).WithType("application/ld+json")

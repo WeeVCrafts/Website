@@ -379,3 +379,35 @@ html:has(.mobile-menu[open]) { scrollbar-gutter: auto; }
   .shipment-timeline li.done, .shipment-timeline li.current { border-left-color: var(--forest); }
 }
 @media(prefers-reduced-motion:reduce) { .account-navigation summary .material-symbols-outlined { transition: none; } }
+
+/* Storefront chrome: the brand is a quiet first row; the shopping toolbar is
+   the only row that remains pinned while browsing. */
+.header-main { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "brand brand brand" "menu tools exit"; gap: 6px 18px; padding-block: 10px 12px; }
+.header-main > .wordmark { grid-area: brand; justify-self: center; }
+.header-main > .header-logout { grid-area: exit; align-self: center; }
+.header-left { grid-area: menu; }
+.header-tools { grid-area: tools; justify-self: stretch; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) auto; gap: 12px; }
+.menu-toggle { min-width: 44px; width: 44px; padding: 0; }
+.menu-toggle > span:last-child { display: none; }
+.header-main.is-compact { grid-template-columns: 44px auto minmax(0, 1fr) auto; grid-template-areas: "menu brand tools exit"; grid-template-rows: 56px; min-height: 56px; padding-block: 6px; gap: 10px; }
+.header-main.is-compact .wordmark { justify-self: start; }
+.header-main.is-compact .wordmark small { display: none; }
+.header-main.is-compact .wordmark strong { font-size: 18px; }
+.header-main.is-compact .wordmark-mark { width: 30px; height: 30px; }
+.header-main.is-compact .header-tools { grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) auto; }
+html { scroll-padding-block-start: 64px; }
+@media (max-width: 700px) {
+  .header-main { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "menu brand exit" "tools tools tools"; }
+  .header-tools { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "location actions" "search search"; }
+  .header-tools > .location { grid-area: location; }
+  .header-main .search-shell { grid-area: search; max-width: none; }
+  .header-main.is-compact { grid-template-columns: 44px auto minmax(0, 1fr) auto; grid-template-areas: "menu brand tools exit"; }
+  .header-main.is-compact .header-tools { grid-template-columns: 44px auto; grid-template-areas: "search actions"; gap: 8px; }
+  .header-main.is-compact .location { display: none; }
+  .header-main.is-compact .search-shell { width: 44px; justify-self: end; transition: width 160ms ease-out; }
+  .header-main.is-compact .search-shell:focus-within { width: min(220px, calc(100vw - 150px)); }
+  .header-main.is-compact .search-shell input { min-width: 0; width: 0; padding-inline: 0; opacity: 0; }
+  .header-main.is-compact .search-shell:focus-within input { width: 100%; padding-inline: 10px; opacity: 1; }
+  .header-main.is-compact .header-actions > a:first-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .header-main.is-compact .search-shell { transition: none; } }

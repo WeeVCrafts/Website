@@ -645,6 +645,10 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		page.Product = liveProduct(product, csrf)
 		page.Product.Seller = h.sellerName(r.Context(), product.Slug)
 		page.Product.SellerSlug = liveSlug(page.Product.Seller)
+		page.Title = page.Product.Name
+		if strings.TrimSpace(page.Product.Description) != "" {
+			page.Description = page.Product.Description
+		}
 		page.Products = []viewmodels.Product{page.Product}
 		if h.search != nil && strings.TrimSpace(product.CategorySlug) != "" {
 			related, _, _, relatedErr := h.search.SearchWithFilters(r.Context(), ports.ProductSearchOptions{
