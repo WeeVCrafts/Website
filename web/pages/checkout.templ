@@ -1,4 +1,69 @@
 package pages
 
+import (
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
 // Checkout route boundary; implementation is in pages.templ.
-templ checkoutBoundary() { <span hidden>checkout</span> }
+templ checkoutBoundary() { <span hidden>checkout</span>
+ }
+
+templ OrderConfirmation(p viewmodels.CustomerPage) {
+ @Document(p) {
+  <section class="container order-confirmation" aria-labelledby="confirmation-title">
+   <div class="confirmation-art" aria-hidden="true"><svg width="160" height="140" viewBox="0 0 160 140" fill="none"><ellipse cx="80" cy="84" rx="66" ry="49" fill="#e6efdf"/><path d="M42 49h76l5 72H37l5-72Z" stroke="currentColor" stroke-width="3"/><path d="M60 56V34a20 20 0 0 1 40 0v22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="85" r="22" fill="currentColor"/><path d="m68 85 8 8 17-18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="m20 67-8-3m128 0 8-3M20 88H9m131 0h11" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+   if p.SelectedOrder.State=="cancelled" || p.SelectedOrder.State=="payment_failed" {
+    <h1 id="confirmation-title">Your order is saved</h1><p class="confirmation-lead">Payment was not completed. Open your order to review its status and available next steps.</p>
+
+} else {
+
+    <h1 id="confirmation-title">Order placed successfully!</h1><p class="confirmation-lead">Thank you for supporting independent makers. Your order is saved, and you can follow every update from your order details.</p>
+   }
+   if p.Notice!="" {
+ <p class="utility-notice" role="status">{ p.Notice }</p>
+}
+ <div class="confirmation-summary">
+    <div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><small>Order number</small><strong>{ p.SelectedOrder.Number }</strong><small>{ p.SelectedOrder.Date } · { p.SelectedOrder.Total }</small></div></div>
+    <div><span class="material-symbols-outlined" aria-hidden="true">payments</span><div><strong>{ confirmationPayment(p.SelectedOrder) }</strong>
+     if p.PaymentMode=="local" {
+<p>Demo payment. No money has been charged.</p>
+} else {
+<p>Your payment status reflects the provider’s latest confirmed update.</p>
+}
+    </div></div>
+   </div>
+   <ol class="confirmation-progress" aria-label="Order progress">
+    <li class="done"><span class="material-symbols-outlined" aria-hidden="true">check</span><strong>Order placed</strong><small>{ p.SelectedOrder.Date }</small></li>
+    <li class={ confirmationStep(p.SelectedOrder.PaymentState=="captured") }><span class="material-symbols-outlined" aria-hidden="true">payments</span><strong>Payment</strong><small>{ confirmationPayment(p.SelectedOrder) }</small></li>
+    <li class={ confirmationStep(p.SelectedOrder.State=="processing" || p.SelectedOrder.State=="shipped" || p.SelectedOrder.State=="delivered") }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><strong>Processing</strong><small>
+     if p.SelectedOrder.State=="processing" || p.SelectedOrder.State=="shipped" || p.SelectedOrder.State=="delivered" {
+Started
+} else {
+Not started
+}
+    </small></li>
+    <li class={ confirmationStep(p.SelectedOrder.State=="delivered") }><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><strong>Delivered</strong><small>
+     if p.SelectedOrder.State=="delivered" {
+Delivered
+} else {
+Awaiting delivery
+}
+    </small></li>
+   </ol>
+   <div class="confirmation-actions"><a class="primary-button" href={ "/orders/"+p.SelectedOrder.Number }>View order details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><a class="outline-button" href="/products">Continue shopping</a></div>
+   <p class="confirmation-help">Need a hand? <a href={ "/account/support?order="+p.SelectedOrder.Number }>Contact support</a></p>
+  </section>
+ }
+}
+
+func confirmationStep(done bool) string {
+ if done {
+return "done"}; return ""
+}
+
+func confirmationPayment(order viewmodels.Order) string {
+ if order.PaymentState=="captured" {return "Payment completed"}
+ if order.PaymentState=="failed" || order.State=="payment_failed" {return "Payment failed"}
+ if order.State=="cancelled" {return "Order cancelled"}
+ return "Payment pending"
+}

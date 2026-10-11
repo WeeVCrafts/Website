@@ -17,8 +17,8 @@ func (r *CommerceRepository) PrepareOrderConfirmation(ctx context.Context, event
 	if err != nil {
 		return recipient, false, err
 	}
-	_, err = r.pool.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,source_event_id)
-		VALUES($1,'order','Order received',$2,$3) ON CONFLICT (source_event_id) WHERE source_event_id IS NOT NULL DO NOTHING`, recipient.UserID, fmt.Sprintf("Order %s is saved. Open your orders to check payment and delivery status.", number), eventID)
+	_, err = r.pool.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,source_event_id,link_url)
+		VALUES($1,'order','Order received',$2,$3,$4) ON CONFLICT (source_event_id) WHERE source_event_id IS NOT NULL DO NOTHING`, recipient.UserID, fmt.Sprintf("Order %s is saved. Open your orders to check payment and delivery status.", number), eventID, "/orders/"+number)
 	return recipient, enabled, err
 }
 
@@ -29,6 +29,6 @@ func (r *CommerceRepository) PreparePaidOrderConfirmation(ctx context.Context, e
 	if err != nil {
 		return recipient, false, err
 	}
-	_, err = r.pool.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,source_event_id) VALUES($1,'order','Order confirmed',$2,$3) ON CONFLICT(source_event_id) WHERE source_event_id IS NOT NULL DO NOTHING`, recipient.UserID, fmt.Sprintf("Payment confirmed for order %s. Open your order to track delivery.", number), eventID)
+	_, err = r.pool.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,source_event_id,link_url) VALUES($1,'order','Order confirmed',$2,$3,$4) ON CONFLICT(source_event_id) WHERE source_event_id IS NOT NULL DO NOTHING`, recipient.UserID, fmt.Sprintf("Payment confirmed for order %s. Open your order to track delivery.", number), eventID, "/orders/"+number)
 	return recipient, enabled, err
 }

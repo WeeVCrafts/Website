@@ -34,3 +34,15 @@ func TestPaidConfirmationIncludesAuthenticatedTrackingLink(t *testing.T) {
 		t.Fatalf("unexpected message: %+v", sender.message)
 	}
 }
+
+func TestDemoPaidConfirmationDisclosesNoCharge(t *testing.T) {
+	events := &paidConfirmationEvents{dispatchEvents: dispatchEvents{events: []ports.OutboxEvent{{ID: 43, AggregateID: "WC-DEMO"}}}}
+	sender := &dispatchSender{}
+	processor := NewPaidOrderConfirmationProcessor(events, paidConfirmationSource{confirmationSource{enabled: true}}, sender, "https://shop.example.test", true)
+	if _, err := processor.Process(context.Background(), 10); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(sender.message.Body, "Demo payment completed. No money has been charged.") {
+		t.Fatal("demo payment email concealed its simulated state")
+	}
+}

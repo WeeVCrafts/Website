@@ -10,6 +10,9 @@ Phases
 *.png
 *.exe
 node_modules
+.codebase-memory
+test-results
+playwright-report
 firebase-debug.log*
 .firebase
 *-adminsdk-*.json

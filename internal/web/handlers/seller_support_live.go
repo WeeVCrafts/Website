@@ -135,9 +135,10 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 	page.Portal.CSRFToken = csrf
 	page.Portal.RoleLabel = "Seller"
 	page.RequestKey = rand.Text()
+	ticketID, _ := strconv.ParseInt(r.URL.Query().Get("ticket_id"), 10, 64)
 	before, _ := strconv.ParseInt(r.URL.Query().Get("coordination_before"), 10, 64)
 	page.QueueStatus = r.URL.Query().Get("coordination_status")
-	confirmations, confirmationErr := h.confirmationService().Queue(r.Context(), userID, 0, true, page.QueueStatus, before)
+	confirmations, confirmationErr := h.confirmationService().Queue(r.Context(), userID, ticketID, true, page.QueueStatus, before)
 	if errors.Is(confirmationErr, applicationcommerce.ErrInvalidSupportTicket) {
 		http.Error(w, "Invalid request status or cursor", http.StatusBadRequest)
 		return
@@ -165,8 +166,8 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 	page.Portal.CanReports = true
 	page.Portal.CanManageStore = true
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
-	filter := ` WHERE t.user_id=$1 AND ($2='' OR t.status=$2) AND ($3='' OR POSITION(lower($3) IN lower(t.ticket_number||' '||t.subject||' '||t.message||' '||COALESCE(o.order_number,'')))>0 OR EXISTS(SELECT 1 FROM support_ticket_messages sm WHERE sm.ticket_id=t.id AND POSITION(lower($3) IN lower(sm.body))>0))`
-	if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id`+filter, userID, page.Status, query).Scan(&page.Total); err != nil {
+	filter := ` WHERE ($5::bigint=0 OR t.id=$5) AND t.user_id=$1 AND ($2='' OR t.status=$2) AND ($3='' OR POSITION(lower($3) IN lower(t.ticket_number||' '||t.subject||' '||t.message||' '||COALESCE(o.order_number,'')))>0 OR EXISTS(SELECT 1 FROM support_ticket_messages sm WHERE sm.ticket_id=t.id AND POSITION(lower($3) IN lower(sm.body))>0))`
+	if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id`+strings.ReplaceAll(filter, "$5", "$4"), userID, page.Status, query, ticketID).Scan(&page.Total); err != nil {
 		http.Error(w, "support tickets could not be loaded", http.StatusServiceUnavailable)
 		return
 	}
@@ -181,7 +182,7 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 	if number > last {
 		number = last
 	}
-	rows, err := h.pool.Query(r.Context(), `SELECT t.id,t.ticket_number,t.subject,t.message,t.status,t.priority,t.created_at,COALESCE(o.order_number,'') FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id`+filter+` ORDER BY t.updated_at DESC,t.id DESC LIMIT 20 OFFSET $4`, userID, page.Status, query, (number-1)*20)
+	rows, err := h.pool.Query(r.Context(), `SELECT t.id,t.ticket_number,t.subject,t.message,t.status,t.priority,t.created_at,COALESCE(o.order_number,'') FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id`+filter+` ORDER BY t.updated_at DESC,t.id DESC LIMIT 20 OFFSET $4`, userID, page.Status, query, (number-1)*20, ticketID)
 	if err != nil {
 		http.Error(w, "support tickets could not be loaded", http.StatusServiceUnavailable)
 		return

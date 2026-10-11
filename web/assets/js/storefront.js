@@ -596,13 +596,7 @@
   }
 
   function paymentReceipt(orderNumber, message, localSimulator) {
-    const main = document.getElementById("page");
-    if (!main) return;
-    const encoded = encodeURIComponent(orderNumber);
-    const simulator = localSimulator
-      ? "<div class=\"payment-simulator\" aria-label=\"Local payment test actions\"><button class=\"primary-button\" type=\"button\" data-local-payment=\"capture\" data-order-number=\"" + esc(orderNumber) + "\">Simulate successful payment</button><button class=\"outline-button\" type=\"button\" data-local-payment=\"fail\" data-order-number=\"" + esc(orderNumber) + "\">Simulate failed payment</button><button class=\"text-button\" type=\"button\" data-local-payment=\"pending\" data-order-number=\"" + esc(orderNumber) + "\">Leave payment pending</button></div>"
-      : "";
-    main.innerHTML = "<section class=\"container checkout-complete\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</span><h1>Order " + esc(orderNumber) + "</h1><p>" + esc(message) + "</p>" + simulator + "<a class=\"primary-button\" href=\"/orders/" + encoded + "\">View order details</a><a class=\"outline-button\" href=\"/orders/" + encoded + "/tracking\">Track delivery</a></section>";
+    global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation?notice=" + encodeURIComponent(message.slice(0,300)));
   }
 
   function loadRazorpay() {
@@ -624,7 +618,8 @@
     const mode = config && config.dataset.paymentMode;
     const intent = unwrap(await ensureBackend().createPayment(orderNumber)) || {};
     if (mode === "local") {
-      paymentReceipt(orderNumber, "Your order is saved. No money will be charged. Choose a mock payment result below.", true);
+      await ensureBackend().localPayment(orderNumber, "capture");
+      global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation");
       return;
     }
     const key = config && config.dataset.paymentPublicKey;
@@ -1013,11 +1008,11 @@
     const siteHeader = document.querySelector('.site-header');
     if (siteHeader) {
       const updateHeader = () => {
-        const compact = global.scrollY > 72;
+        const compact = true;
         siteHeader.classList.toggle('is-compact', compact);
         siteHeader.querySelector('.header-main')?.classList.toggle('is-compact', compact);
       };
-      global.addEventListener('scroll', updateHeader, {passive: true});
+      // One stable toolbar at every scroll position.
       updateHeader();
     }
     const photoInput = document.querySelector("[data-photo-input]");

@@ -380,34 +380,81 @@ html:has(.mobile-menu[open]) { scrollbar-gutter: auto; }
 }
 @media(prefers-reduced-motion:reduce) { .account-navigation summary .material-symbols-outlined { transition: none; } }
 
-/* Storefront chrome: the brand is a quiet first row; the shopping toolbar is
-   the only row that remains pinned while browsing. */
-.header-main { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "brand brand brand" "menu tools exit"; gap: 6px 18px; padding-block: 10px 12px; }
-.header-main > .wordmark { grid-area: brand; justify-self: center; }
-.header-main > .header-logout { grid-area: exit; align-self: center; }
-.header-left { grid-area: menu; }
-.header-tools { grid-area: tools; justify-self: stretch; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) auto; gap: 12px; }
-.menu-toggle { min-width: 44px; width: 44px; padding: 0; }
-.menu-toggle > span:last-child { display: none; }
-.header-main.is-compact { grid-template-columns: 44px auto minmax(0, 1fr) auto; grid-template-areas: "menu brand tools exit"; grid-template-rows: 56px; min-height: 56px; padding-block: 6px; gap: 10px; }
-.header-main.is-compact .wordmark { justify-self: start; }
-.header-main.is-compact .wordmark small { display: none; }
-.header-main.is-compact .wordmark strong { font-size: 18px; }
-.header-main.is-compact .wordmark-mark { width: 30px; height: 30px; }
-.header-main.is-compact .header-tools { grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) auto; }
-html { scroll-padding-block-start: 64px; }
-@media (max-width: 700px) {
-  .header-main { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "menu brand exit" "tools tools tools"; }
-  .header-tools { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "location actions" "search search"; }
-  .header-tools > .location { grid-area: location; }
-  .header-main .search-shell { grid-area: search; max-width: none; }
-  .header-main.is-compact { grid-template-columns: 44px auto minmax(0, 1fr) auto; grid-template-areas: "menu brand tools exit"; }
-  .header-main.is-compact .header-tools { grid-template-columns: 44px auto; grid-template-areas: "search actions"; gap: 8px; }
-  .header-main.is-compact .location { display: none; }
-  .header-main.is-compact .search-shell { width: 44px; justify-self: end; transition: width 160ms ease-out; }
-  .header-main.is-compact .search-shell:focus-within { width: min(220px, calc(100vw - 150px)); }
-  .header-main.is-compact .search-shell input { min-width: 0; width: 0; padding-inline: 0; opacity: 0; }
-  .header-main.is-compact .search-shell:focus-within input { width: 100%; padding-inline: 10px; opacity: 1; }
-  .header-main.is-compact .header-actions > a:first-child { display: none; }
+/* One stable shopping toolbar, aligned with the catalogue. */
+.header-main, .header-main.is-compact { position: relative; display:grid; grid-template-columns:44px auto minmax(0,1fr) auto; grid-template-areas:"menu brand tools exit"; grid-template-rows:56px; min-height:72px; gap:12px; padding-block:8px; }
+.header-main > .wordmark, .header-main.is-compact .wordmark { grid-area:brand; position:static; width:auto; max-width:none; transform:none; overflow:visible; justify-self:start; gap:8px; }
+.header-main > .wordmark strong, .header-main.is-compact .wordmark strong {font-size:22px;}
+.header-main > .wordmark small {display:none;}
+.header-main > .wordmark .wordmark-mark, .header-main.is-compact .wordmark-mark {width:36px;height:36px;flex:none;}
+.header-left {display:flex;grid-area:menu;}
+.menu-toggle {width:44px;height:44px;min-width:44px;flex-basis:44px;padding:0;border-radius:6px;}
+.menu-toggle > span:last-child {display:none;}
+.header-tools, .header-main.is-compact .header-tools {display:grid;grid-area:tools;grid-template-columns:minmax(100px,185px) minmax(0,1fr) auto;gap:12px;justify-self:stretch;}
+.header-main .location {grid-area:auto;margin:0;max-width:185px;min-height:44px;}
+.header-main .location small {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.header-main .search-shell {grid-area:auto;width:100%;min-width:0;max-width:none;}
+.header-main .global-search {height:48px;margin:0;border-radius:6px;overflow:hidden;}
+.header-main .header-actions {grid-area:auto;gap:4px;}
+.header-main > .header-logout {grid-area:exit;}
+.category-nav {display:none;}
+html {scroll-padding-block-start:90px;}
+@media(max-width:1100px) {.header-main .location {display:none;} .header-tools, .header-main.is-compact .header-tools {grid-template-columns:minmax(0,1fr) auto;}}
+@media(max-width:700px) {
+ .profile-panel {position:fixed;inset:64px 12px auto auto;width:calc(100vw - 24px);max-width:300px;max-height:calc(100dvh - 80px);}
+ .header-main, .header-main.is-compact {width:calc(100% - 24px);grid-template-columns:44px 36px minmax(0,1fr) auto;gap:6px;min-height:64px;grid-template-rows:48px;}
+ .header-main > .wordmark > span {display:none;}
+ .header-tools, .header-main.is-compact .header-tools {grid-template-columns:44px auto;gap:4px;justify-self:end;}
+ .header-main .header-actions > #wishlist-count {display:none;}
+ .header-main .search-shell {width:44px;}
+ .header-main .global-search {height:44px;}
+ .header-main .global-search input {width:0;min-width:0;padding:0;opacity:0;}
+ .header-main .search-shell:focus-within {position:absolute;inset:8px 6px;z-index:6;width:auto;background:var(--surface);}
+ .header-main .search-shell:focus-within input {width:100%;padding-inline:12px;opacity:1;}
+ .header-main .search-shell:focus-within .global-search {box-shadow:0 0 0 2px var(--forest);}
+ .header-main .global-search button {width:44px;flex:none;}
 }
-@media (prefers-reduced-motion: reduce) { .header-main.is-compact .search-shell { transition: none; } }
+@media(max-width:380px) { .header-main, .header-main.is-compact {grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"menu tools exit";gap:4px;} .header-main > .wordmark {display:none;} }
+
+/* Customer account navigation shares the same rhythm as the role workspaces. */
+.account-layout {grid-template-columns:260px minmax(0,1fr);align-items:start;}
+.account-sidebar {border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0;overflow:hidden;position:sticky;top:96px;}
+.account-sidebar .profile-mini {display:flex;flex-direction:row;align-items:center;gap:12px;text-align:left;padding:20px 16px;border-bottom:1px solid var(--line);}
+.account-sidebar .profile-mini > :first-child {width:44px;height:44px;min-width:44px;margin:0;object-fit:cover;font-size:20px;}
+.account-sidebar .profile-mini > div {min-width:0;}
+.account-sidebar .profile-mini b {font:600 16px/1.4 var(--sans);display:block;}
+.account-sidebar .profile-mini small {font-size:13px;line-height:1.5;display:block;color:var(--muted);}
+.account-sidebar .profile-email {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.account-navigation nav {padding:8px;gap:3px;}
+.account-navigation nav > a {min-height:44px;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:6px;font-size:14px;color:var(--muted);border:0;line-height:1.4;}
+.account-navigation nav > a .material-symbols-outlined {font-size:21px;flex:none;}
+.account-navigation nav > a:hover {background:var(--surface-2);color:var(--forest);}
+.account-navigation nav > a[aria-current="page"] {background:#eaf0e8;color:var(--forest);font-weight:700;box-shadow:inset 3px 0 var(--forest);}
+.account-navigation nav > a:focus-visible {outline:2px solid var(--forest);outline-offset:-2px;}
+@media(max-width:720px) {.account-layout {grid-template-columns:minmax(0,1fr);} .account-sidebar {position:static;} .account-sidebar .profile-mini {display:none;} }
+
+.order-confirmation {max-width:1000px;text-align:center;padding-block:48px 64px;}
+.confirmation-art {color:var(--forest);display:flex;justify-content:center;margin-bottom:24px;}
+.order-confirmation h1 {font-size:clamp(32px,4vw,48px);color:var(--forest);line-height:1.15;margin-bottom:18px;}
+.confirmation-lead {max-width:680px;margin:0 auto 32px;color:var(--muted);font-size:18px;}
+.confirmation-summary {display:grid;grid-template-columns:1.3fr 1fr;gap:24px;padding:28px;text-align:left;border:1px solid #d5e4d1;background:#f1f7ed;border-radius:12px;}
+.confirmation-summary > div {display:flex;align-items:start;gap:16px;min-width:0;}
+.confirmation-summary > div + div {border-left:1px solid #d5e4d1;padding-left:24px;}
+.confirmation-summary .material-symbols-outlined {font-size:30px;color:var(--forest);}
+.confirmation-summary strong {display:block;color:var(--forest);overflow-wrap:anywhere;font-size:18px;}
+.confirmation-summary small {display:block;color:var(--muted);margin-bottom:4px;}
+.confirmation-summary p {margin:8px 0 0;color:var(--muted);}
+.confirmation-progress {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0;margin:40px 0;}
+.confirmation-progress li {position:relative;display:grid;justify-items:center;gap:8px;color:var(--muted);}
+.confirmation-progress li::before {content:"";position:absolute;height:1px;background:var(--line);left:-50%;right:50%;top:22px;z-index:-1;}
+.confirmation-progress li:first-child::before {display:none;}
+.confirmation-progress .material-symbols-outlined {display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:23px;}
+.confirmation-progress li.done {color:var(--forest);}
+.confirmation-progress li.done .material-symbols-outlined {background:var(--forest);color:white;border-color:var(--forest);}
+.confirmation-progress small {font-size:13px;}
+.confirmation-actions {display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+.confirmation-actions > a {min-width:220px;min-height:48px;border-radius:24px;}
+.confirmation-actions .primary-button {background:var(--forest);}
+.confirmation-actions .outline-button {border-color:var(--forest);color:var(--forest);}
+.confirmation-help {margin-top:24px;color:var(--muted);}
+.confirmation-help a {text-decoration:underline;color:var(--forest);}
+@media(max-width:600px) { .order-confirmation {padding-block:28px 40px;} .confirmation-summary {grid-template-columns:1fr;padding:20px;} .confirmation-summary > div + div {border-left:0;border-top:1px solid #d5e4d1;padding:20px 0 0;} .confirmation-progress {gap:12px 4px;} .confirmation-progress strong,.confirmation-progress small {font-size:12px !important;} .confirmation-actions > a {width:100%;} }

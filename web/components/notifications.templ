@@ -1,0 +1,35 @@
+package components
+
+import (
+ "fmt"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ NotificationBell() {
+ <a class="notification-bell" href="/notifications" data-notification-bell aria-label="Notifications" title="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><em data-notification-count hidden></em></a>
+}
+
+templ NotificationList(items []viewmodels.CustomerNotification, csrf string) {
+ <div class="notification-list">
+ if len(items)==0 {
+  <div class="ui-empty-state"><span class="material-symbols-outlined" aria-hidden="true">notifications_none</span><h2>You’re all caught up</h2><p>Order updates and replies will appear here.</p></div>
+ }
+ for _, item := range items {
+  <article class="notification-card" data-unread={ fmt.Sprint(item.Unread) }>
+   <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
+   <div><h2>{ item.Title }</h2><p>{ item.Body }</p><time>{ item.Date }</time>
+    if item.Unread {
+ <span class="notification-unread">Unread</span>
+ }
+   </div>
+   <form action="/notifications/read" method="post"><input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="notification_id" value={ fmt.Sprint(item.ID) }/><button class="outline-button" type="submit">
+    if item.Link!="" {
+ View update <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+} else {
+ Mark as read
+ }
+   </button></form>
+  </article>
+ }
+ </div>
+}

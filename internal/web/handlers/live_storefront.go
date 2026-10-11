@@ -282,7 +282,10 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			http.NotFound(w, r)
 			return
 		}
-		if strings.HasSuffix(r.URL.Path, "/invoice") {
+		if strings.HasSuffix(r.URL.Path, "/confirmation") {
+			page.Title = "Order confirmation"
+			component = pages.OrderConfirmation(page)
+		} else if strings.HasSuffix(r.URL.Path, "/invoice") {
 			if r.URL.Query().Get("format") == "pdf" {
 				serveReceiptPDF(w, page.SelectedOrder)
 				return
@@ -715,7 +718,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotals(page.Cart)
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
-		if err := h.loadCustomerData(r.Context(), userID, &page); err != nil {
+		if err := h.loadCustomerData(r.Context(), userID, &page, r.URL.Query().Get("ticket_id")); err != nil {
 			return viewmodels.CustomerPage{}, err
 		}
 	}
@@ -743,7 +746,7 @@ func needsAccountData(path string) bool {
 	return path == "/account" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || path == "/payments" || strings.HasPrefix(path, "/account/")
 }
 
-func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
+func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int64, page *viewmodels.CustomerPage, selected ...string) error {
 	if h.pool == nil || userID <= 0 {
 		return fmt.Errorf("customer account data is unavailable")
 	}
@@ -760,7 +763,7 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	page.RoleLabel = customerPortalRoleLabel(roleSlugs)
 	page.PortalLabel = "Customer Account"
 	if page.Route == "/account/support" {
-		page.SupportTickets, err = h.customerSupportTickets(ctx, userID, page.UserName)
+		page.SupportTickets, err = h.customerSupportTickets(ctx, userID, page.UserName, selected...)
 		if err != nil {
 			return err
 		}
@@ -814,6 +817,7 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 			orderNumber := strings.TrimPrefix(page.Route, "/orders/")
 			orderNumber = strings.TrimSuffix(orderNumber, "/invoice")
 			orderNumber = strings.TrimSuffix(orderNumber, "/tracking")
+			orderNumber = strings.TrimSuffix(orderNumber, "/confirmation")
 			if orderNumber == "" || strings.Contains(orderNumber, "/") {
 				return nil
 			}
@@ -1082,8 +1086,12 @@ func customerPortalRoleLabel(roles []string) string {
 	return "Account"
 }
 
-func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, userID int64, customerName string) ([]viewmodels.CustomerSupportTicket, error) {
-	rows, err := h.pool.Query(ctx, `SELECT t.id,t.ticket_number,t.subject,t.message,t.status,t.priority,t.created_at,COALESCE(o.order_number,'') FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id WHERE t.user_id=$1 ORDER BY t.created_at DESC,t.id DESC LIMIT 100`, userID)
+func (h *LiveStorefrontHandler) customerSupportTickets(ctx context.Context, userID int64, customerName string, selected ...string) ([]viewmodels.CustomerSupportTicket, error) {
+	var ticketID int64
+	if len(selected) > 0 {
+		ticketID, _ = strconv.ParseInt(selected[0], 10, 64)
+	}
+	rows, err := h.pool.Query(ctx, `SELECT t.id,t.ticket_number,t.subject,t.message,t.status,t.priority,t.created_at,COALESCE(o.order_number,'') FROM support_tickets t LEFT JOIN orders o ON o.id=t.order_id WHERE t.user_id=$1 AND ($2::bigint=0 OR t.id=$2) ORDER BY t.created_at DESC,t.id DESC LIMIT 100`, userID, ticketID)
 	if err != nil {
 		return nil, err
 	}
@@ -1172,7 +1180,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	payment := displayPaymentStatus(order.PaymentStatus, order.Status)
 	view := viewmodels.Order{
 		Shipments: order.Fulfillments,
-		Number:    order.OrderNumber, Status: status, State: order.Status, Payment: payment,
+		Number:    order.OrderNumber, Status: status, State: order.Status, Payment: payment, PaymentState: order.PaymentStatus,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
 		Subtotal: storefrontMoney(order.SubtotalCents), Shipping: storefrontMoney(order.ShippingCents), Discount: storefrontMoney(order.DiscountCents),
 		CanCancel:        order.Status == "pending_payment",

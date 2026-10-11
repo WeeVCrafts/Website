@@ -121,6 +121,7 @@ func main() {
 			logger.Error("Resend sender configuration invalid")
 			os.Exit(1)
 		}
+		logger.Info("transactional email configured", "provider", "resend")
 	} else if cfg.SMTPAddress != "" && cfg.SMTPFrom != "" {
 		emailSender = emailadapter.NewSMTP(cfg.SMTPAddress, cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPFrom)
 	} else {
@@ -194,8 +195,15 @@ func main() {
 		credentialFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 		if credentialJSON := os.Getenv("WECRATFS_FIREBASE_CREDENTIALS_JSON"); credentialJSON != "" {
 			file, writeErr := os.CreateTemp("", "weevcrafts-firebase-*.json")
-			if writeErr != nil { logger.Error("Firebase credential staging unavailable", "error", writeErr); os.Exit(1) }
-			if _, writeErr = file.WriteString(credentialJSON); writeErr != nil { _ = file.Close(); logger.Error("Firebase credential staging unavailable", "error", writeErr); os.Exit(1) }
+			if writeErr != nil {
+				logger.Error("Firebase credential staging unavailable", "error", writeErr)
+				os.Exit(1)
+			}
+			if _, writeErr = file.WriteString(credentialJSON); writeErr != nil {
+				_ = file.Close()
+				logger.Error("Firebase credential staging unavailable", "error", writeErr)
+				os.Exit(1)
+			}
 			_ = file.Close()
 			credentialFile = file.Name()
 			defer os.Remove(credentialFile)
@@ -229,7 +237,7 @@ func main() {
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
-	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
+	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL, cfg.PaymentMode == "local")
 	go worker.RunPeriodic(workerContext, 10*time.Second, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
@@ -370,6 +378,9 @@ func main() {
 	mux.Handle("/support/reply", webHandler)
 	mux.Handle("/support/status", webHandler)
 	mux.Handle("/support/attachments/", webHandler)
+	mux.Handle("/notifications", portalHandler)
+	mux.Handle("/notifications/read", portalHandler)
+	mux.Handle("/ui/notifications", portalHandler)
 	mux.Handle("/workspaces", portalHandler)
 	mux.Handle("/admin", portalHandler)
 	mux.Handle("/admin/", portalHandler)

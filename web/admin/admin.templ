@@ -160,7 +160,7 @@ templ Sidebar(p viewmodels.AdminPage) {
 
     <button class="admin-sidebar-close" type="button" x-ref="adminSidebarClose" aria-label="Close admin navigation" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
 
-    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "Weevcrafts " + p.PortalLabel }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
+    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "Weevcrafts " + p.PortalLabel }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
 
     <nav class="admin-nav" aria-label="Admin navigation">
 
@@ -198,7 +198,7 @@ templ Sidebar(p viewmodels.AdminPage) {
 
     </nav>
 
-    <div class="admin-impact"><span class="material-symbols-outlined" aria-hidden="true">park</span><h2>Empowering<br/>Indian Crafts<br/>Across India</h2><p>More artisans.<br/>Brighter futures.</p><a href={ p.PortalRoot + "/analytics" }>View marketplace <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    <div class="workspace-identity"><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small><a href="/notifications">Notifications <span class="material-symbols-outlined" aria-hidden="true">notifications</span></a></div>
 
   </aside>
 
@@ -228,7 +228,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
 
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
 
-    <a class="admin-header-brand" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
+    <a class="admin-header-brand" href={ p.PortalRoot } aria-label="Weevcrafts"><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
 
     <span class="admin-portal-pill">{ p.PortalLabel }</span>
 
@@ -236,7 +236,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
 
       <label class="sr-only" for="admin-search">Search the admin portal</label>
 
-      <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      <button type="submit" aria-label="Search the admin portal"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>
 
       <input id="admin-search" name="q" value={ p.Query } placeholder="Search orders, sellers, products, customers or tickets..."/>
 
@@ -244,7 +244,8 @@ templ AdminHeader(p viewmodels.AdminPage) {
 
 
 
-    <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+    @components.NotificationBell()
+ <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
 
     <form class="admin-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
 

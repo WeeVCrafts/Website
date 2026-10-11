@@ -162,7 +162,7 @@
     const form=event.target;
     if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
     const action=new URL(form.getAttribute("action") || location.href,location.href);
-    if(action.origin!==location.origin || !/^\/(seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname)) return;
+    if(action.origin!==location.origin || !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname)) return;
     event.preventDefault();
     if(form.dataset.saving) return;
     const payload=new FormData(form);
@@ -201,4 +201,36 @@
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (event.detail>0 && !reduced) { panel.getAnimations().forEach(animation=>animation.cancel()); panel.animate([{opacity:0.65,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'cubic-bezier(0.23,1,0.32,1)'}); } } });
   });
+  // Refresh badges across all role portals without exposing conversation bodies.
+  async function refreshNotifications() {
+    if (document.hidden || !document.querySelector('[data-notification-bell]')) return;
+    try {
+      const response=await fetch('/ui/notifications',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
+      if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) return;
+      const data=await response.json();
+      document.querySelectorAll('[data-notification-bell]').forEach(bell=> {
+        const count=bell.querySelector('[data-notification-count]');
+        if (!count) return;
+        count.hidden=!data.unread;count.textContent=data.unread>99?'99+':String(data.unread||'');
+        bell.setAttribute('aria-label',data.unread?'Notifications, '+data.unread+' unread':'Notifications');
+      });
+    } catch (_) { /* The inbox remains usable when a badge refresh fails. */ }
+  }
+  refreshNotifications();
+  setInterval(refreshNotifications,30000);
+  document.addEventListener('visibilitychange',refreshNotifications);
+  document.addEventListener('htmx:afterSettle',refreshNotifications);
+  document.addEventListener('keydown',event=> {
+    if (event.key==='Escape' && event.target.closest('.search-shell,.seller-search,.admin-search')) {
+      event.target.blur();
+      document.querySelector('.menu-toggle,.seller-menu-button,.admin-menu-button')?.focus();
+    }
+  });
+  document.addEventListener('click',event=> {
+    const button=event.target.closest('.global-search button[type="submit"],.seller-search button[type="submit"],.admin-search button[type="submit"]');
+    const input=button?.form.querySelector('input[name="q"]');
+    if (innerWidth<=(button?.closest('.admin-search')?960:800) && input && document.activeElement!==input && !input.value.trim()) {
+      event.preventDefault();event.stopImmediatePropagation();input.focus();
+    }
+  },true);
 })();

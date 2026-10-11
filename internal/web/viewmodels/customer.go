@@ -85,13 +85,13 @@ type CartItem struct {
 }
 
 type Order struct {
-	Shipments                                     []domaincommerce.OrderFulfillment
-	Number, Status, State, Payment, Date          string
-	ReturnStatus, RefundStatus                    string
-	Total                                         string
-	Subtotal, Shipping, Discount                  string
-	Items                                         []CartItem
-	CanCancel, CanRequestReturn, CanRequestRefund bool
+	Shipments                                          []domaincommerce.OrderFulfillment
+	Number, Status, State, Payment, Date, PaymentState string
+	ReturnStatus, RefundStatus                         string
+	Total                                              string
+	Subtotal, Shipping, Discount                       string
+	Items                                              []CartItem
+	CanCancel, CanRequestReturn, CanRequestRefund      bool
 }
 
 type PaymentActivity struct {
@@ -116,6 +116,7 @@ type CustomerPage struct {
 	SupportEmail, ShippingInformation               string
 	Sessions                                        []CustomerSession
 	Notifications                                   []CustomerNotification
+	NotificationsNextURL                            string
 	Route, Title, Query, Category, Sort, Notice     string
 	CouponCode                                      string
 	Brand, Tagline, Description                     string
@@ -164,5 +165,7 @@ type CustomerSession struct {
 }
 
 type CustomerNotification struct {
-	Title, Body, Date string
+	ID                      int64
+	Title, Body, Date, Link string
+	Unread                  bool
 }

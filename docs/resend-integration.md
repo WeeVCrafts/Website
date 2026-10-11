@@ -29,3 +29,6 @@ The dashboard confirmed all three test messages delivered: Hello from MCP, Verif
 Evidence: `docs/qa/resend/domain-verified.png`, `docs/qa/resend/secure-delivery.png`, `docs/qa/resend/email-delivery.png`. Check delivery statuses in the Resend dashboard rather than inferring inbox receipt from an HTTP success. Mailpit remains available locally but messages use Resend while its key is configured.
 
 References: [Firebase Admin email action links](https://firebase.google.com/docs/auth/admin/email-action-links), [Resend domain verification](https://resend.com/docs/dashboard/domains/introduction).
+
+
+2026-10-12 deployment update: Resend MCP is exposed in this session and confirmed the verified domain, DKIM/SPF records, enabled sending, and delivered order/verification/reset messages. Railway CLI staged the saved sending-only key through stdin and set the existing verified sender/reply address, without printing the secret. Production uses the sealed server environment variable; local credential-file support remains. The application logs the configured provider, never the key. Order-received, paid confirmation, seller dispatch, verification and recovery use the existing application adapter and retryable delivery paths. Demo paid confirmations explicitly say no money was charged.

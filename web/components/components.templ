@@ -18,6 +18,9 @@ templ Header(p viewmodels.CustomerPage) {
         <div class="search-shell"><form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-push-url="true" hx-trigger="submit" hx-sync="this:replace" hx-indicator="#global-search-indicator"><label class="sr-only" for="global-search">Search products</label><input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-disinherit="hx-select hx-push-url" hx-push-url="false"/><button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button></form><div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div></div>
         <div class="header-actions">
           @WishlistAction(p)
+ if p.Authenticated {
+ @NotificationBell()
+ }
           <a href="/cart" id="cart-count" data-backend-counter title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
           <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
             <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Open profile menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
@@ -40,8 +43,8 @@ templ Header(p viewmodels.CustomerPage) {
                 <p class="profile-panel-title">Your account</p>
                 <a href="/login"><span class="material-symbols-outlined" aria-hidden="true">login</span><span>Sign in</span></a>
               }
-              if p.IsCustomer {
-                <a href="/account/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
+              if p.Authenticated {
+                <a href="/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
                   if p.ProfileIncomplete {
                     <em aria-label="Complete your profile">1</em>
                   }
@@ -86,7 +89,9 @@ templ Header(p viewmodels.CustomerPage) {
     <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
       <div class="mobile-menu-heading"><h2 id="menu-title">Explore the store</h2><button class="mobile-menu-close" type="button" aria-label="Close navigation" autofocus @click="closeMenu()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
       <nav class="menu-section" aria-labelledby="menu-shop"><h3 id="menu-shop">Shop</h3>
-        @MenuLink("/products", "Shop all products", "storefront")
+        @MenuLink("/", "Home", "home")
+ @MenuLink("/account/addresses", "Delivery location", "location_on")
+ @MenuLink("/products", "Shop all products", "storefront")
         @MenuLink("/categories", "Browse categories", "category")
         @MenuLink("/products?category=offers", "Offers", "local_offer")
         @MenuLink("/makers", "Meet the makers", "handyman")
@@ -97,7 +102,7 @@ templ Header(p viewmodels.CustomerPage) {
         @MenuLink("/wishlist", "Wishlist", "favorite")
         @MenuLink("/cart", "Shopping bag", "shopping_bag")
         if p.IsCustomer {
-          @MenuLink("/account/notifications", "Notifications", "notifications")
+          @MenuLink("/notifications", "Notifications", "notifications")
         }
       </nav>
       <nav class="menu-section" aria-labelledby="menu-help"><h3 id="menu-help">Help & about</h3>

@@ -328,6 +328,9 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.serveRetiredPortal(w, r) {
 		return
 	}
+	if h.serveNotifications(w, r) {
+		return
+	}
 	if h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
 		return
 	}

@@ -17,11 +17,12 @@ type OrderConfirmationSource interface {
 }
 
 type OrderConfirmationProcessor struct {
-	events    ports.OutboxStore
-	source    OrderConfirmationSource
-	sender    ports.EmailSender
-	publicURL string
-	eventType string
+	events      ports.OutboxStore
+	source      OrderConfirmationSource
+	sender      ports.EmailSender
+	publicURL   string
+	eventType   string
+	demoPayment bool
 }
 
 func NewOrderConfirmationProcessor(events ports.OutboxStore, source OrderConfirmationSource, sender ports.EmailSender, publicURL string) *OrderConfirmationProcessor {
@@ -32,9 +33,12 @@ type PaidOrderConfirmationSource interface {
 	PreparePaidOrderConfirmation(context.Context, int64, string) (ports.EmailRecipient, bool, error)
 }
 
-func NewPaidOrderConfirmationProcessor(events ports.OutboxStore, source OrderConfirmationSource, sender ports.EmailSender, publicURL string) *OrderConfirmationProcessor {
+func NewPaidOrderConfirmationProcessor(events ports.OutboxStore, source OrderConfirmationSource, sender ports.EmailSender, publicURL string, demo ...bool) *OrderConfirmationProcessor {
 	p := NewOrderConfirmationProcessor(events, source, sender, publicURL)
 	p.eventType = "OrderPaid"
+	if len(demo) > 0 {
+		p.demoPayment = demo[0]
+	}
 	return p
 }
 
@@ -69,6 +73,9 @@ func (p *OrderConfirmationProcessor) Process(ctx context.Context, limit int) (in
 				if p.eventType == "OrderPaid" {
 					subject = "Your Weevcrafts order is confirmed"
 					body = fmt.Sprintf("Payment confirmed for order %s. Your maker can now prepare your pieces.\n\nView your order: %s\n\nTrack delivery: %s\nTracking details will appear when your maker prepares the shipment. Sign in with the account used for this purchase.", event.AggregateID, link, tracking)
+					if p.demoPayment {
+						body = "Demo payment completed. No money has been charged.\n\n" + body
+					}
 					link = tracking
 				}
 				deliveryErr = p.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: subject, ActionURL: link, Body: body})

@@ -313,7 +313,7 @@ templ ReviewPanel() {
 
 templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
   <aside class="account-sidebar">
-    <div class="profile-mini">@CustomerAvatar(p)<b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
+    <div class="profile-mini">@CustomerAvatar(p)<div><b>{ p.UserName }</b><small>{ p.RoleLabel }</small><small class="profile-email" title={ p.UserEmail }>{ p.UserEmail }</small></div></div>
     <details class="account-navigation" data-account-navigation open>
       <summary>Account menu <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>
       <nav aria-label="Account sections">
@@ -325,7 +325,7 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/returns" class={ liveAccountLinkClass(active, "/returns") } aria-current={ liveAccountCurrent(active, "/returns") }><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Returns &amp; refunds</a>
     <a href="/payments" class={ liveAccountLinkClass(active, "/payments") } aria-current={ liveAccountCurrent(active, "/payments") }><span class="material-symbols-outlined" aria-hidden="true">payments</span> Payments</a>
     <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a>
-    <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
+    <a href="/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
     <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
     <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>

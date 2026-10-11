@@ -1,0 +1,24 @@
+package pages
+
+import (
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+ "github.com/wecratfs/commerce/web/components"
+)
+
+templ Notifications(p viewmodels.CustomerPage, workspace string) {
+ @Document(p) {
+  <section class="container notification-inbox">
+   <a class="text-button" href={ workspace }><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to your workspace</a>
+   <header class="notification-heading"><div><p class="eyebrow">YOUR UPDATES</p><h1>Notifications</h1><p>Replies and order updates, with a direct path to the next step.</p></div>
+    <form action="/notifications/read" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="all" value="true"/><button class="outline-button" type="submit">Mark all as read</button></form>
+   </header>
+   if p.IsCustomer {
+ <a class="text-button" href="/account/notifications">Email &amp; notification preferences</a>
+}
+ @components.NotificationList(p.Notifications,p.CSRFToken)
+   if p.NotificationsNextURL!="" {
+ <a class="outline-button" href={ p.NotificationsNextURL }>Older updates</a>
+ }
+  </section>
+ }
+}

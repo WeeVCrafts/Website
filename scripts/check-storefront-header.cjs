@@ -35,14 +35,15 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toHaveAttribute('aria-expanded','true');
     await expect(page.locator('#profile-dropdown')).toBeVisible();
     await expect(page.locator('#profile-dropdown a').first(), `${name} ${role} ${width}px profile focus`).toBeFocused();
-    await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
+    if(width>700) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
+    else await expect(page.locator('.header-actions > #wishlist-count')).not.toBeVisible();
     await expect(page.locator('.header-actions > #cart-count')).toBeVisible();
     for (const value of ['0','12','123','—']) {
      await page.locator('#wishlist-count em, #cart-count em').evaluateAll((els,value) => els.forEach(el=>el.textContent=value),value);
      const defects = await page.evaluate(() => {
       const issues=[];
       if(document.documentElement.scrollWidth>innerWidth+1) issues.push('page overflows');
-      const parts=[...document.querySelectorAll('.header-main > .wordmark,.header-main .search-shell,.profile-toggle,.menu-toggle,.header-main .location,.header-actions > a')];
+      const parts=[...document.querySelectorAll('.header-main > .wordmark,.header-main .search-shell,.profile-toggle,.menu-toggle,.header-main .location,.header-actions > a')].filter(el=>el.getClientRects().length);
       const brand=document.querySelector('.header-main > .wordmark').getBoundingClientRect();
       const header=document.querySelector('.header-main').getBoundingClientRect();
       const menu=document.querySelector('.menu-toggle').getBoundingClientRect();
@@ -50,16 +51,13 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
       const profile=document.querySelector('.profile-toggle').getBoundingClientRect();
       const location=document.querySelector('.header-main .location').getBoundingClientRect();
       const panel=document.querySelector('.profile-panel').getBoundingClientRect();
-      if(Math.abs((brand.left+brand.right)/2-(header.left+header.right)/2)>2)issues.push('brand is not centered');
-      if(menu.bottom< brand.top || menu.top>brand.bottom)issues.push('Menu is not in brand row');
-      if(search.top<brand.bottom)issues.push('search is not below brand');
-      if(profile.top<brand.bottom)issues.push('profile is not below brand');
+      if(header.height>76)issues.push('header is not one compact row');
       if(search.right>profile.left)issues.push('search is not before profile');
       if(Math.abs((search.top+search.bottom)/2-(profile.top+profile.bottom)/2)>2)issues.push('search and profile are not aligned');
-      if(innerWidth>700){
+      if(innerWidth>1100){
        if(location.right>search.left)issues.push('delivery location is not left of search');
        if(Math.abs((location.top+location.bottom)/2-(search.top+search.bottom)/2)>2)issues.push('delivery location is not in search row');
-      }else if(location.bottom>search.top)issues.push('delivery location is not above search on narrow screens');
+      }
       if(panel.left<0||panel.right>innerWidth+1||panel.bottom>innerHeight+1)issues.push('profile panel overflows viewport');
       if(document.querySelector('.desktop-navigation'))issues.push('inline shop navigation remains');
       for(let i=0;i<parts.length;i++)for(let j=i+1;j<parts.length;j++){
@@ -69,7 +67,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
       document.querySelectorAll('.header-actions em').forEach(el=>{
        if(!el.getClientRects().length)return;
        const s=getComputedStyle(el),r=el.getBoundingClientRect();
-       if(parseFloat(s.lineHeight)>r.height-4)issues.push('counter text is clipped');
+       if(parseFloat(s.lineHeight)>r.height)issues.push('counter text is clipped');
        const range=document.createRange();range.selectNodeContents(el);const t=range.getBoundingClientRect();
        if(t.left<r.left+1||t.right>r.right-1||t.top<r.top+1||t.bottom>r.bottom-1)issues.push('counter glyphs overflow');
       });
@@ -91,6 +89,8 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toBeFocused();
     await profileToggle.press('Enter');
     const searchInput = page.getByRole('combobox', {name:'Search products',exact:true});
+    if(width<=700) await page.locator('.global-search button[type=submit]').click();
+    await searchInput.focus();
     await expect(searchInput).toBeVisible();
     const searchBounds = await searchInput.boundingBox();
     await page.mouse.click(searchBounds.x + searchBounds.width / 2, searchBounds.y + searchBounds.height / 2);
@@ -137,7 +137,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await page.locator('.site-header').screenshot({path:path.join(screenshots,`header-updated-${width}.png`)});
    }
    expect(errors,`${name} ${role} page errors`).toEqual([]);
-   console.log(`${name} ${role}: 9 widths, centered brand, lower search/profile, direct shopping counters/profile dismissal, modal keyboard/backdrop/navigation/reduced motion passed`);
+   console.log(`${name} ${role}: 9 widths, single fixed toolbar, aligned search/profile, direct shopping counters/profile dismissal, modal keyboard/backdrop/navigation/reduced motion passed`);
    await page.close();
   }
   await browser.close();

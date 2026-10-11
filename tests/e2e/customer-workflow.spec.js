@@ -36,17 +36,17 @@ async function addressAndReview(page){
  await page.getByRole('button',{name:'Continue to review'}).click();
 }
 async function placeMockOrder(page,result){
+ // Exercise non-success outcomes through the isolated payment API; checkout's
+ // normal user flow completes the mock payment automatically.
+ if(result!=='capture')await page.route('**/dev/payments/*/capture',async route=>{
+  const endpoint=route.request().url().replace(/capture$/,result);
+  const response=await page.request.post(endpoint,{headers:route.request().headers()});
+  await route.fulfill({response});
+ },{times:1});
  await page.getByRole('button',{name:'Place order',exact:true}).click();
- await expect(page.locator('[data-local-payment="capture"]')).toBeVisible();
- const number=await page.locator('[data-local-payment="capture"]').getAttribute('data-order-number');
- if(result==='capture'){
-  let release;const gate=new Promise(resolve=>release=resolve);const endpoint='**/dev/payments/'+number+'/capture';
-  await page.route(endpoint,async route=>{await gate;await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Mock payment temporarily unavailable. Try again.'})});});
-  const button=page.locator('[data-local-payment="capture"]');await button.click();await expect(button).toHaveAttribute('aria-busy','true');await expect(button).toBeDisabled();
-  release();await expect(button).toBeEnabled();await expect(button).not.toHaveAttribute('aria-busy','true');await expect(page.getByRole('status').filter({hasText:'Mock payment temporarily unavailable.'})).toBeVisible();await page.unroute(endpoint);
- }
- await page.locator(`[data-local-payment="${result}"]`).click();
- await expect(page).toHaveURL(new RegExp('/orders/'+number+'$'));
+ await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/,{timeout:30000});
+ const number=decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
+ await page.getByRole('link',{name:'View order details',exact:true}).click();
  return number;
 }
 async function emailFor(request,subject,number){
@@ -86,7 +86,7 @@ test.describe.serial('Professional customer workflow in an isolated local store'
   await summary.press('Enter');await expect(page.getByRole('navigation',{name:'Account sections'})).not.toBeVisible();
   for(const width of [320,390,720,960,1440]){
    await page.setViewportSize({width,height:900});
-   for(const id of ['cart-count','wishlist-count']){const link=page.locator('.header-actions > #'+id);await expect(link).toBeVisible();const b=await link.boundingBox();expect(b.width).toBeGreaterThanOrEqual(44);expect(b.height).toBeGreaterThanOrEqual(44);}
+   for(const id of (width>700?['cart-count','wishlist-count']:['cart-count'])){const link=page.locator('.header-actions > #'+id);await expect(link).toBeVisible();const b=await link.boundingBox();expect(b.width).toBeGreaterThanOrEqual(44);expect(b.height).toBeGreaterThanOrEqual(44);}
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   }
   await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});
@@ -125,8 +125,9 @@ test.describe.serial('Professional customer workflow in an isolated local store'
  });
  test('Pending mock payment resumes the saved order; failure is clearly labelled',async({page})=>{
   await login(page);await addPieces(page);await addressAndReview(page);const pending=await placeMockOrder(page,'pending');
-  await page.getByRole('button',{name:'Continue payment',exact:true}).click();await expect(page.locator('[data-local-payment="capture"]')).toHaveAttribute('data-order-number',pending);
-  await page.locator('[data-local-payment="capture"]').click();await expect(page.locator('.order-detail-status')).toContainText('Confirmed');
+  await page.getByRole('button',{name:'Continue payment',exact:true}).click();
+  await expect(page).toHaveURL(new RegExp('/orders/'+pending+'/confirmation'));
+  await page.getByRole('link',{name:'View order details',exact:true}).click();await expect(page.locator('.order-detail-status')).toContainText('Confirmed');
   await addPieces(page);await addressAndReview(page);await placeMockOrder(page,'fail');await expect(page.locator('.order-detail-status')).toContainText(/failed|not completed/i);
   await expect(page.getByRole('button',{name:'Continue payment',exact:true})).toHaveCount(0);
  });
