@@ -33,7 +33,7 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		set := sitemapURLSet{XMLNS: "https://www.sitemaps.org/schemas/sitemap/0.9"}
+		set := sitemapURLSet{XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9"}
 		for _, path := range []string{"/", "/products", "/categories", "/makers", "/brands", "/our-story", "/contact", "/shipping", "/faq"} {
 			set.URLs = append(set.URLs, sitemapEntry{Loc: base + path})
 		}
