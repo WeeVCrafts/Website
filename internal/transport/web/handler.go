@@ -242,6 +242,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.verifyEmail(w, r)
 	case r.URL.Path == "/account/verify-email":
 		h.requestEmailVerification(w, r)
+	case r.URL.Path == "/account/password":
+		h.changePassword(w, r)
 	case r.URL.Path == "/logout":
 		h.logout(w, r)
 	case r.URL.Path == "/account/sessions" || r.URL.Path == "/account/sessions/revoke":

@@ -286,6 +286,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				return
 			}
 			component = pages.OrderReceipt(page)
+		} else if strings.HasSuffix(r.URL.Path, "/tracking") {
+			component = pages.LiveTracking(page)
 		} else {
 			component = pages.OrderDetail(page)
 		}
@@ -598,6 +600,13 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
+	if len(page.Products) == 0 {
+		var hasPublished bool
+		if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM products WHERE status='approved')`).Scan(&hasPublished); err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
+		page.CatalogueEmpty = !hasPublished
+	}
 	{
 		settings, settingsErr := postgres.ReadStorefrontSettings(r.Context(), h.pool)
 		if settingsErr != nil {
@@ -685,7 +694,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		cookie, _ := r.Cookie("wecratfs_session")
 		for _, session := range sessions {
 			page.Sessions = append(page.Sessions, viewmodels.CustomerSession{
-				ID: session.ID, Browser: session.UserAgent, IPAddress: session.IPAddress,
+				ID: session.ID, Browser: customerDeviceName(session.UserAgent), IPAddress: session.IPAddress,
 				LastSeen: session.LastSeenAt.Format("2 Jan 2006, 15:04 MST"), Expires: session.ExpiresAt.Format("2 Jan 2006, 15:04 MST"),
 				Current: cookie != nil && cookie.Value == session.ID,
 			})
@@ -771,6 +780,7 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 		if strings.HasPrefix(page.Route, "/orders/") {
 			orderNumber := strings.TrimPrefix(page.Route, "/orders/")
 			orderNumber = strings.TrimSuffix(orderNumber, "/invoice")
+			orderNumber = strings.TrimSuffix(orderNumber, "/tracking")
 			if orderNumber == "" || strings.Contains(orderNumber, "/") {
 				return nil
 			}
@@ -1128,7 +1138,8 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	status := displayOrderStatus(order.Status)
 	payment := displayPaymentStatus(order.PaymentStatus, order.Status)
 	view := viewmodels.Order{
-		Number: order.OrderNumber, Status: status, State: order.Status, Payment: payment,
+		Shipments: order.Fulfillments,
+		Number:    order.OrderNumber, Status: status, State: order.Status, Payment: payment,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
 		Subtotal: storefrontMoney(order.SubtotalCents), Shipping: storefrontMoney(order.ShippingCents), Discount: storefrontMoney(order.DiscountCents),
 		CanCancel:        order.Status == "pending_payment",

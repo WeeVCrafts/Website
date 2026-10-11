@@ -3,7 +3,7 @@ set -euo pipefail
 
 sqlc_bin="${SQLC_BIN:-sqlc}"
 if ! command -v "$sqlc_bin" >/dev/null 2>&1 && [ ! -x "$sqlc_bin" ]; then
-  echo "sqlc is required; install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0" >&2
+  echo "sqlc is required; install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0" >&2
   exit 1
 fi
 

@@ -1,32 +1,62 @@
 package components
 
-import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import (
+  "fmt"
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
 
 templ Header(p viewmodels.CustomerPage) {
-  <header class="site-header" x-data="{menu:false, openMenu(){this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.$refs.menuButton.focus()}}">
+  <header class="site-header" x-data="{menu:false, profile:false, openMenu(){this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.$refs.menuButton.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
     <a class="skip-link" href="#page">Skip to content</a>
     <div class="header-main container">
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu()"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
-        <nav class="desktop-navigation" aria-label="Shop navigation"><a href="/products">Shop all</a><a href="/categories">Categories</a><a href="/products?category=offers">Offers</a><a href="/our-story">Our story</a></nav>
-        <a class="location" href="/account/addresses?notice=Delivery+location+opened" aria-label="Delivery location"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><small><b>{ DeliveryLocation(p) }</b></small></a>
       </div>
       <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
       <div class="header-tools">
+        <a class="location" href="/account/addresses?notice=Delivery+location+opened" aria-label="Delivery location"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><small><b>{ DeliveryLocation(p) }</b></small></a>
         <div class="search-shell"><form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-push-url="true" hx-trigger="submit" hx-sync="this:replace" hx-indicator="#global-search-indicator"><label class="sr-only" for="global-search">Search products</label><input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-disinherit="hx-select hx-push-url" hx-push-url="false"/><button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button></form><div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div></div>
-        <nav class="header-actions" aria-label="Account actions"><a href="/account" title="Account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account</span></a>@WishlistAction(p)<a href="/cart" id="cart-count" data-backend-counter title="Cart"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
-          if p.IsCustomer {
-            <a href="/account/notifications" class="notification-action" aria-label="Notifications" title="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Updates</span>
-              if p.ProfileIncomplete {
-                <em aria-label="Complete your profile">1</em>
+        <div class="header-actions">
+          @WishlistAction(p)
+          <a href="/cart" id="cart-count" data-backend-counter title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+          <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
+            <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Open profile menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
+              if p.AvatarURL != "" {
+                <img class="header-avatar" src={ p.AvatarURL } width="36" height="36" alt="Your profile photo"/>
+              } else {
+                <span class="material-symbols-outlined" aria-hidden="true">person</span>
               }
-            </a>
-          }
-          if p.Authenticated {
-            <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Sign out" title="Sign out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
-          }
-        </nav>
+            </button>
+            <nav id="profile-dropdown" class="profile-panel" x-ref="profilePanel" hidden :hidden="!profile" x-cloak aria-label="Profile menu">
+              if p.Authenticated {
+                if p.UserName != "" {
+                  <p class="profile-panel-title">{ p.UserName }</p>
+                } else {
+                  <p class="profile-panel-title">Your account</p>
+                }
+                <a href="/account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account & profile</span></a>
+                <a href="/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Orders & tracking</span></a>
+              } else {
+                <p class="profile-panel-title">Your account</p>
+                <a href="/login"><span class="material-symbols-outlined" aria-hidden="true">login</span><span>Sign in</span></a>
+              }
+              if p.IsCustomer {
+                <a href="/account/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
+                  if p.ProfileIncomplete {
+                    <em aria-label="Complete your profile">1</em>
+                  }
+                </span></a>
+              }
+              if p.Authenticated {
+                <form class="profile-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
+              }
+            </nav>
+          </div>
+        </div>
       </div>
+          if p.Authenticated {
+            <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button></form>
+          }
     </div>
     @CartDrawer(p)
     if p.Category != "" {
@@ -117,7 +147,7 @@ templ MenuLink(href string, label string, icon string) {
 }
 
 templ WishlistAction(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter title="Wishlist"><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
 }
 
 templ DetailWishlistButton(product viewmodels.Product) {
@@ -129,13 +159,13 @@ templ CartMutation(p viewmodels.CustomerPage) {
 }
 
 templ CartMutationMessage(p viewmodels.CustomerPage, message string) {
-  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML" title="Cart"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML" title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
   @WishlistCountMutation(p)
   <div id="ui-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
 }
 
 templ WishlistCountMutation(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML" title="Wishlist"><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML" title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
 }
 
 templ RatingStars(rating string) {

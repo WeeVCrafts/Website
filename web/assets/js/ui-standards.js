@@ -47,7 +47,34 @@
       dialog.showModal(); cancel.focus();
     });
   }
+  function busy(element, active) {
+    if (!element) return;
+    element.classList.toggle("ui-busy", active);
+    if (active) element.setAttribute("aria-busy", "true");
+    else element.removeAttribute("aria-busy");
+  }
   function init(root) {
+    root.querySelectorAll('[data-account-navigation]').forEach(menu => {
+      if (menu.dataset.navigationBound) return;
+      menu.dataset.navigationBound = "true";
+      const mobile = matchMedia('(max-width: 720px)');
+      const update = () => { menu.open = !mobile.matches; };
+      update(); mobile.addEventListener('change', update);
+    });
+    root.querySelectorAll('.role-user-edit-form input[type="password"], .role-user-create-form input[type="password"], [data-customer-password] input[type="password"]').forEach(field => {
+      if (field.dataset.visibilityBound) return;
+      field.dataset.visibilityBound = "true";
+      const toggle = document.createElement("button");
+      toggle.type = "button"; toggle.className = "password-visibility";
+      toggle.textContent = "Show password"; toggle.setAttribute("aria-pressed", "false");
+      toggle.addEventListener("click", () => {
+        const visible = field.type === "password";
+        field.type = visible ? "text" : "password";
+        toggle.textContent = visible ? "Hide password" : "Show password";
+        toggle.setAttribute("aria-pressed", String(visible));
+      });
+      field.insertAdjacentElement("afterend", toggle);
+    });
     root.querySelectorAll("form").forEach(form => {
       if (form.dataset.uiBound) return;
       form.dataset.uiBound = "true"; form.noValidate = true;
@@ -91,7 +118,42 @@
       img.addEventListener("error",fallback,{once:true}); if (img.complete && !img.naturalWidth) fallback();
     });
   }
-  window.WVUI = {validate,confirmAction};
+  window.WVUI = {validate,confirmAction,busy};
+  document.addEventListener('htmx:beforeRequest', event => {
+    const target = event.detail.elt;
+    busy(target, true);
+    if (target.matches('form')) target.querySelectorAll('button[type="submit"]').forEach(button=>busy(button,true));
+  });
+  document.addEventListener('htmx:afterRequest', event => {
+    const target = event.detail.elt;
+    busy(target, false);
+    if (target.matches('form')) target.querySelectorAll('button[type="submit"]').forEach(button=>busy(button,false));
+  });
+  document.addEventListener('submit', async event => {
+    const form = event.target.closest('[data-customer-password]');
+    if (!form) return;
+    event.preventDefault();
+    if (form.dataset.saving || !validate(form)) return;
+    const next=form.elements.namedItem('new_password'), confirmation=form.elements.namedItem('confirm_password');
+    confirmation.setCustomValidity(next.value === confirmation.value ? '' : 'Passwords must match.');
+    if (!validate(form)) return;
+    const button=form.querySelector('[type="submit"]'), message=form.querySelector('[data-password-message]');
+    form.dataset.saving='true'; button.disabled=true; busy(button,true); message.textContent='Changing your password…';
+    const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),30000);
+    try {
+      const response=await fetch(form.action,{method:'POST',credentials:'same-origin',headers:{Accept:'application/json'},body:new URLSearchParams(new FormData(form)),signal:controller.signal});
+      const result=await response.json();
+      if (!response.ok) {
+        if (response.status===401 && result.redirect) {location.assign(result.redirect);return;}
+        throw new Error(result.message || 'Your password could not be changed.');
+      }
+      form.reset(); message.textContent=result.message; location.assign(result.redirect);
+    } catch(error) {
+      message.setAttribute('role','alert'); message.textContent=error instanceof TypeError || error.name==='AbortError' ? 'Connection interrupted. Check whether your password changed before trying again.' : error.message;
+      message.tabIndex=-1; message.focus();
+    } finally {clearTimeout(timeout); delete form.dataset.saving; button.disabled=false; busy(button,false);}
+  });
+  document.addEventListener('input',event=>{if(event.target.name==='confirm_password'||event.target.name==='new_password')event.target.form?.elements.namedItem('confirm_password')?.setCustomValidity('');});
   document.addEventListener("DOMContentLoaded",()=>init(document));
   document.addEventListener("htmx:afterSwap",()=>init(document));
   // Retain typed values on a rejected save, and block repeated POSTs while saving.
@@ -99,7 +161,7 @@
   document.addEventListener("submit",async event=> {
     const form=event.target;
     if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
-    const action=new URL(form.action,location.href);
+    const action=new URL(form.getAttribute("action") || location.href,location.href);
     if(action.origin!==location.origin || !/^\/(seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname)) return;
     event.preventDefault();
     if(form.dataset.saving) return;
@@ -122,9 +184,21 @@
       buttons.forEach(button=>button.disabled=false); delete form.dataset.saving; form.removeAttribute('aria-busy');
     } finally { clearTimeout(timer); }
   });
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('[data-mock-delivery]');
+    if (!button) return;
+    const form=button.form;
+    form.elements.namedItem('carrier').value='Other';
+    form.elements.namedItem('custom_carrier').value='Demo courier';
+    form.elements.namedItem('tracking_number').value='DEMO-'+form.elements.namedItem('order_number').value;
+    form.elements.namedItem('note').value='Local delivery simulation';
+    form.requestSubmit(form.querySelector('[type="submit"]'));
+  });
   document.addEventListener("click",event => {
     const step=event.target.closest("[data-checkout-step]");
     if (!step) return;
-    requestAnimationFrame(()=> { const panel=document.querySelector('.checkout-card[data-step="'+step.dataset.checkoutStep+'"]'); const heading=panel?.querySelector("h2"); if (heading && panel.getClientRects().length) { heading.tabIndex=-1; heading.focus(); } });
+    requestAnimationFrame(()=> { const panel=document.querySelector('.checkout-card[data-step="'+step.dataset.checkoutStep+'"]'); const heading=panel?.querySelector("h2"); if (heading && panel.getClientRects().length) { heading.tabIndex=-1; heading.focus();
+      const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (event.detail>0 && !reduced) { panel.getAnimations().forEach(animation=>animation.cancel()); panel.animate([{opacity:0.65,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'cubic-bezier(0.23,1,0.32,1)'}); } } });
   });
 })();

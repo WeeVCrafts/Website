@@ -69,6 +69,10 @@ func TestVerifiedPaymentWebhookTransitionsOrderOnceAndCommitsReservation(t *test
 	if auditCount != 1 {
 		t.Fatalf("expected one processed-webhook audit record, got %d", auditCount)
 	}
+	var confirmations int
+	if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM outbox_events WHERE event_type='OrderPaid' AND aggregate_id=$1`, order.OrderNumber).Scan(&confirmations); err != nil || confirmations != 1 {
+		t.Fatalf("confirmation events=%d err=%v", confirmations, err)
+	}
 
 	unknownRaw := []byte(fmt.Sprintf(`{"id":"evt_unknown_%d","event":"payment.unknown","payload":{}}`, order.ID))
 	unknownDigest := hmac.New(sha256.New, []byte(secret))

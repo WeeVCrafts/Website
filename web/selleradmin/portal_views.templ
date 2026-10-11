@@ -290,7 +290,11 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 				for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
 					<option value={ carrier } selected?={ p.OrderDetail.Carrier == carrier }>{ carrier }</option>
 				}
-			</select></label><label>Other carrier name<input name="custom_carrier" maxlength="80" placeholder="Used when carrier is Other"/></label><label>Tracking number<input name="tracking_number" maxlength="120" value={ p.OrderDetail.TrackingNumber } placeholder="Required when shipping"/></label><label>Note<input name="note" maxlength="500" value={ p.OrderDetail.Note } placeholder="Optional fulfilment note"/></label><button class="seller-button primary" type="submit">Save fulfilment</button></form>
+			</select></label><label>Other carrier name<input name="custom_carrier" maxlength="80" placeholder="Used when carrier is Other"/></label><label>Tracking number<input name="tracking_number" maxlength="120" value={ p.OrderDetail.TrackingNumber } placeholder="Required when shipping"/></label><label>Note<input name="note" maxlength="500" value={ p.OrderDetail.Note } placeholder="Optional fulfilment note"/></label><button class="seller-button primary" type="submit">Save fulfilment</button>
+          if p.LocalDeliverySimulation {
+            <div class="utility-callout"><p>Local delivery simulation uses a demo courier and records the next permitted shipment step.</p><button class="seller-button outline" type="button" data-mock-delivery>Simulate next delivery update</button></div>
+          }
+        </form>
 		} else {
 			<p>{ p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p>
 		}

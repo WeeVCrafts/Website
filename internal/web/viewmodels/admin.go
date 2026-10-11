@@ -111,6 +111,7 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
+	LocalDeliverySimulation                                                          bool
 	Pagination                                                                       PortalPagination
 	LedgerPagination, SettlementPagination                                           PortalPagination
 	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning       string

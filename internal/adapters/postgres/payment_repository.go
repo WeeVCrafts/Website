@@ -159,6 +159,9 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 			if err := recordSellerSalesLedger(transactionContext, tx, orderID); err != nil {
 				return err
 			}
+			if _, err := tx.Exec(transactionContext, `INSERT INTO outbox_events(event_type,aggregate_type,aggregate_id,payload) SELECT 'OrderPaid','Order',order_number,jsonb_build_object('order_number',order_number) FROM orders WHERE id=$1 AND status='paid' ON CONFLICT(event_type,aggregate_id) WHERE event_type='OrderPaid' DO NOTHING`, orderID); err != nil {
+				return err
+			}
 		} else if webhook.EventType == "payment.failed" {
 			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'failed', updated_at = NOW() WHERE order_id = $2`, webhook.ProviderPaymentID, orderID); err != nil {
 				return err

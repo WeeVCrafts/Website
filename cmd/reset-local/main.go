@@ -2,8 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/redis/go-redis/v9"
+	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
+	"github.com/wecratfs/commerce/internal/ports"
 	"log"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -24,7 +32,9 @@ type localAccount struct {
 }
 
 func main() {
-	if os.Getenv("WECRATFS_RESET_LOCAL") != "true" {
+	reset := os.Getenv("WECRATFS_RESET_LOCAL") == "true"
+	bootstrap := os.Getenv("WECRATFS_SEED_EMPTY") == "true"
+	if !reset && !bootstrap {
 		log.Fatal("refusing to reset: set WECRATFS_RESET_LOCAL=true for an explicit local reset")
 	}
 	if os.Getenv("WECRATFS_LOCAL_MODE") != "true" {
@@ -52,12 +62,34 @@ func main() {
 	if err := postgres.ApplyMigrations(ctx, pool); err != nil {
 		log.Fatal(err)
 	}
+	if bootstrap && !reset {
+		var count int
+		if err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&count); err != nil {
+			log.Fatal(err)
+		}
+		if count > 0 {
+			fmt.Println("Existing accounts preserved; clean bootstrap skipped.")
+			return
+		}
+	}
+	if reset {
+		if err := validateLocalServices(cfg); err != nil {
+			log.Fatal(err)
+		}
+	}
 	password := envOrDefault("WECRATFS_RESET_PASSWORD", defaultLocalPassword)
-	if err := resetAndSeed(ctx, pool, password); err != nil {
+	if len(password) < 12 {
+		log.Fatal("local password must contain at least 12 characters")
+	}
+	if err := resetAndSeed(ctx, pool, password, reset); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Local database reset complete: 3 accounts and 1 local catalog fixture are ready.")
-	fmt.Println("All three accounts use the password:", password)
+	if reset {
+		if err := clearLocalServices(ctx, cfg); err != nil {
+			log.Fatal("Database reset succeeded; finish dependent data cleanup before restarting app: ", err)
+		}
+	}
+	fmt.Println("Local setup complete: 3 active accounts, 1 seller and an empty catalogue.")
 }
 
 func validateLocalDatabase(databaseURL string) error {
@@ -66,7 +98,7 @@ func validateLocalDatabase(databaseURL string) error {
 		return fmt.Errorf("refusing to reset: invalid DATABASE_URL: %w", err)
 	}
 	host := strings.ToLower(parsed.Hostname())
-	if parsed.Scheme != "postgres" || (host != "localhost" && host != "postgres") {
+	if (parsed.Scheme != "postgres" && parsed.Scheme != "postgresql") || (host != "localhost" && host != "127.0.0.1" && host != "::1" && host != "postgres") {
 		return fmt.Errorf("refusing to reset: DATABASE_URL must target local Docker Postgres (localhost or postgres), got %q", parsed.Host)
 	}
 	if strings.Trim(parsed.Path, "/") != "wecratfs" {
@@ -75,21 +107,36 @@ func validateLocalDatabase(databaseURL string) error {
 	return nil
 }
 
-func resetAndSeed(ctx context.Context, pool *pgxpool.Pool, password string) error {
+func resetAndSeed(ctx context.Context, pool *pgxpool.Pool, password string, reset bool) error {
 	hasher := auth.NewArgon2idHasher()
 	passwordHash, err := hasher.Hash(password)
 	if err != nil {
 		return fmt.Errorf("hash local password: %w", err)
 	}
 	accounts := []localAccount{
-		{email: "customer@weevcrafts.local", name: "Local Customer", phone: "+91 98765 43210", role: "customer"},
-		{email: "seller@weevcrafts.local", name: "Local Seller Owner", phone: "+91 98765 43211", role: "seller_owner"},
-		{email: "superadmin@weevcrafts.local", name: "Local Super Admin", phone: "+91 98765 43212", role: "super_admin"},
+		{email: "customer@weevcrafts.local", name: "Local Customer", phone: "", role: "customer"},
+		{email: "seller@weevcrafts.local", name: "Local Seller Owner", phone: "", role: "seller_owner"},
+		{email: "superadmin@weevcrafts.local", name: "Local Super Admin", phone: "", role: "super_admin"},
 	}
 
 	return postgres.WithinTransaction(ctx, pool, func(ctx context.Context, tx pgx.Tx) error {
-		if err := truncateApplicationTables(ctx, tx); err != nil {
+		if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock(816231)"); err != nil {
 			return err
+		}
+		if !reset {
+			var count int
+			if err := tx.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&count); err != nil {
+				return err
+			}
+			if count > 0 {
+				return nil
+			}
+		}
+
+		if reset {
+			if err := truncateApplicationTables(ctx, tx); err != nil {
+				return err
+			}
 		}
 		if err := seedRoles(ctx, tx); err != nil {
 			return err
@@ -102,16 +149,12 @@ func resetAndSeed(ctx context.Context, pool *pgxpool.Pool, password string) erro
 			}
 			ids[account.role] = id
 		}
-		sellerID, err := seedSeller(ctx, tx, ids["seller_owner"])
+		_, err := seedSeller(ctx, tx, ids["seller_owner"])
 		if err != nil {
 			return err
 		}
-		if err := seedCatalogFixture(ctx, tx, sellerID); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO categories (slug,name) VALUES ('textiles','Textiles'),('home','Home and living'),('art','Art'),('accessories','Accessories'),('wellness','Wellness') ON CONFLICT (slug) DO NOTHING; INSERT INTO brands (slug,name) VALUES ('local-studio','Local Studio') ON CONFLICT (slug) DO NOTHING`); err != nil {
 			return err
-		}
-		_, err = tx.Exec(ctx, `INSERT INTO addresses (user_id, recipient_name, phone, line1, city, state, postal_code, country_code) VALUES ($1, 'Local Customer', '+91 98765 43210', '12 Artisan Lane', 'Bengaluru', 'Karnataka', '560001', 'IN')`, ids["customer"])
-		if err != nil {
-			return fmt.Errorf("seed customer address: %w", err)
 		}
 		return nil
 	})
@@ -152,7 +195,7 @@ func seedRoles(ctx context.Context, tx pgx.Tx) error {
 		('super_admin', 'Super admin'),
 		('support_agent', 'Support agent'),
 		('finance_operator', 'Finance operator'),
-		('operations_returns', 'Operations and returns')`)
+		('operations_returns', 'Operations and returns') ON CONFLICT (slug) DO NOTHING`)
 	if err != nil {
 		return fmt.Errorf("seed roles: %w", err)
 	}
@@ -182,30 +225,76 @@ func seedSeller(ctx context.Context, tx pgx.Tx, ownerID int64) (int64, error) {
 	return id, nil
 }
 
-func seedCatalogFixture(ctx context.Context, tx pgx.Tx, sellerID int64) error {
-	if _, err := tx.Exec(ctx, `INSERT INTO brands (slug, name) VALUES ('local-studio', 'Local Studio')`); err != nil {
-		return fmt.Errorf("seed local brand: %w", err)
-	}
-	if _, err := tx.Exec(ctx, `INSERT INTO categories (slug, name) VALUES ('textiles', 'Textiles')`); err != nil {
-		return fmt.Errorf("seed local category: %w", err)
-	}
-	var productID int64
-	if err := tx.QueryRow(ctx, `INSERT INTO products (slug, brand_slug, category_slug, name, description, price_cents, compare_at_cents, delivery_label, image_url, seller_id, status, featured_rank) VALUES ('local-starter-tote', 'local-studio', 'textiles', 'Indigo Everyday Tote', 'A local reset fixture for verifying catalog, cart and checkout flows.', 89900, 119900, 'Delivery in 4 - 6 days', '/assets/images/customer/blue-tote.webp', $1, 'approved', 1) RETURNING id`, sellerID).Scan(&productID); err != nil {
-		return fmt.Errorf("seed local product: %w", err)
-	}
-	var variantID int64
-	if err := tx.QueryRow(ctx, `INSERT INTO product_variants (product_id, sku, name, price_cents, compare_at_cents) VALUES ($1, 'LOCAL-TOTE-001', 'Standard', 89900, 119900) RETURNING id`, productID).Scan(&variantID); err != nil {
-		return fmt.Errorf("seed local variant: %w", err)
-	}
-	if _, err := tx.Exec(ctx, `INSERT INTO inventory_stock (variant_id, available_quantity) VALUES ($1, 25)`, variantID); err != nil {
-		return fmt.Errorf("seed local inventory: %w", err)
-	}
-	return nil
-}
-
 func envOrDefault(key, fallback string) string {
 	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
 		return value
 	}
 	return fallback
+}
+
+// Validate every destructive endpoint before clearing any database rows.
+func localService(address string, aliases ...string) bool {
+	if strings.Contains(address, "://") {
+		u, err := url.Parse(address)
+		if err != nil {
+			return false
+		}
+		address = u.Host
+	}
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return true
+	}
+	for _, alias := range aliases {
+		if host == alias {
+			return true
+		}
+	}
+	return false
+}
+func validateLocalServices(cfg config.Config) error {
+	if cfg.RedisURL != "" || !localService(cfg.RedisAddress, "redis") || !localService(cfg.MeiliAddress, "meilisearch") || !localService(cfg.S3Address, "garage") || cfg.S3Bucket != "wecratfs-media" || cfg.S3Secure {
+		return errors.New("reset requires the local Compose Redis, Meilisearch and wecratfs-media storage bucket")
+	}
+	return nil
+}
+func clearLocalServices(ctx context.Context, cfg config.Config) error {
+	cache := redis.NewClient(&redis.Options{Addr: cfg.RedisAddress})
+	defer cache.Close()
+	if err := cache.FlushDB(ctx).Err(); err != nil {
+		return fmt.Errorf("clear local sessions/cache: %w", err)
+	}
+	if err := meilisearch.NewSearchEngineWithKey(cfg.MeiliAddress, cfg.MeiliAPIKey).Rebuild(ctx, []ports.SearchDocument{}); err != nil {
+		return fmt.Errorf("clear product search: %w", err)
+	}
+	storage, err := minio.New(cfg.S3Address, &minio.Options{Creds: credentials.NewStaticV4(cfg.S3AccessKey, cfg.S3SecretKey, ""), Secure: false, Region: "garage"})
+	if err != nil {
+		return err
+	}
+	for object := range storage.ListObjects(ctx, cfg.S3Bucket, minio.ListObjectsOptions{Recursive: true}) {
+		if object.Err != nil {
+			return object.Err
+		}
+		if err := storage.RemoveObject(ctx, cfg.S3Bucket, object.Key, minio.RemoveObjectOptions{}); err != nil {
+			return err
+		}
+	}
+	// Mailpit is the local development inbox; remove messages containing old user data.
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, "http://localhost:8025/api/v1/messages", nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	response, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("clear local Mailpit inbox: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode >= 300 {
+		return fmt.Errorf("Mailpit cleanup status %d", response.StatusCode)
+	}
+	return nil
 }

@@ -30,8 +30,9 @@ docker compose wait uptime-kuma-setup
 if %errorlevel% neq 0 exit /b 1
 
 echo.
-echo [+] Seeding demo marketplace accounts and products...
-docker compose --profile demo run --rm seed-demo
+echo [+] Preparing the clean three-account application...
+docker compose --profile clean run --build --rm seed-clean
+if %errorlevel% neq 0 exit /b 1
 
 echo.
 echo ========================================================

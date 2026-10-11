@@ -72,7 +72,7 @@ Double-click `start.bat` (or run `./start.sh` inside WSL / Git Bash).
 ### Or manually with Docker / Podman:
 ```sh
 docker compose up -d --build
-docker compose --profile demo run --rm seed-demo
+docker compose --profile clean run --build --rm seed-clean
 ```
 
 Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
@@ -154,7 +154,13 @@ generated sqlc files live in `internal/adapters/postgres/generated/`. After
 changing SQL queries or their schema inputs:
 
 ```sh
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 sqlc generate -f sqlc.yaml
 bash scripts/check-sqlc-generated.sh
 ```
+
+### Clean local accounts
+
+Normal startup bootstraps an empty database with three accounts and no products. Existing accounts are preserved on later starts. See [the clean-start guide](docs/local-clean-start.md) for credentials and the explicit local reset. The larger `seed-demo` profile is opt-in and adds demo data.
+
+See [the customer workflow update](docs/customer-workflow-update.md) for checkout corrections, account security, mock payments, delivery progress, notification setup and isolated regression checks.

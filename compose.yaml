@@ -149,6 +149,20 @@ services:
       adminer:
         condition: service_started
 
+  seed-clean:
+    profiles: ["clean"]
+    build:
+      context: .
+      dockerfile: Dockerfile.clean
+    environment:
+      DATABASE_URL: postgres://wecratfs:wecratfs@postgres:5432/wecratfs?sslmode=disable
+      WECRATFS_ENV: development
+      WECRATFS_LOCAL_MODE: "true"
+      WECRATFS_SEED_EMPTY: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   seed-demo:
     profiles: ["demo"]
     build:

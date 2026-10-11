@@ -217,10 +217,15 @@ func main() {
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
-	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
+	go worker.RunPeriodic(workerContext, 10*time.Second, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 		_, err := orderConfirmationProcessor.Process(processContext, 20)
+		_, paidErr := paidOrderConfirmationProcessor.Process(processContext, 20)
+		if err == nil {
+			err = paidErr
+		}
 		if err != nil {
 			logger.Warn("order confirmations failed", "error", err)
 		}
@@ -325,6 +330,7 @@ func main() {
 		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	}
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
 		"database": pool.Ping,
 		"redis":    func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },

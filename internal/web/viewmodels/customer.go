@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"time"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainprivacy "github.com/wecratfs/commerce/internal/domain/privacy"
 )
 
@@ -84,6 +85,7 @@ type CartItem struct {
 }
 
 type Order struct {
+	Shipments                                     []domaincommerce.OrderFulfillment
 	Number, Status, State, Payment, Date          string
 	ReturnStatus, RefundStatus                    string
 	Total                                         string
@@ -107,6 +109,7 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	CatalogueEmpty                                  bool
 	UserPhone, AvatarURL, ProfileError              string
 	IsCustomer, ProfileIncomplete                   bool
 	SocialLinks                                     []ports.SocialLink

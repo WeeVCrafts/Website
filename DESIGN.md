@@ -53,6 +53,8 @@ Playfair Display headings; DM Sans body and interface text. Controls use 16px, d
 
 Storefront max width remains 1240px with 24px desktop gutters and 16px narrow gutters. The homepage order is hero, shallow category rail, available product selection, makers, curated collections. Avoid repeated mission statements before products. Mobile header keeps 44px controls, a compact brand/action row and prominent search. Details retain the mobile purchase bar without covering focus. Operational dashboards show permitted actions, summaries and bounded previews; full queues own dataset navigation. Document scrolling remains natural; only genuine tables may scroll horizontally.
 
+The shared storefront header places Menu at the top left and centers the logo and branding. The next row runs from delivery location at the left to search near the right and then the profile control. On narrow screens, delivery location sits above the search/profile row, preserving this reading and keyboard order. Wishlist and cart are direct, counted shopping actions alongside the profile control. Account, notifications and sign out remain in the profile disclosure; a direct logout button remains at the top right. Its trigger displays the signed-in customer's existing private photo when available. On narrow account pages, a collapsible Account menu precedes the current section without delaying it behind the full navigation.
+
 ## Elevation & Depth
 
 Keep existing light panel shadows; no new decorative gradients, floating ornaments or animated data rows. Hero photographs have no added tint. Media always reserves its aspect ratio and uses an honest missing-image fallback.
@@ -71,7 +73,7 @@ Controls use the existing 6px radius. Panels use restrained rounding. Hearts ret
 | Native fields and validation | `ui-standards.js` | seller, support, admin and checkout |
 | Canonical media | product database and upload workflow | cards, galleries, seller editor |
 
-Only pointer press feedback is added (120ms); reduced motion disables it. Drawer semantics and focus restoration follow existing shared implementations. Keyboard focus is visible on links, buttons, fields and overflow regions. Global scrollbars stay operable; forced-colors uses system colors.
+Pointer press feedback uses 120ms. Pointer-driven checkout transitions use 160ms opacity/transform feedback; keyboard and reduced-motion transitions are immediate. Pending actions use stable-size busy indicators. Drawer semantics and focus restoration follow existing shared implementations. Keyboard focus is visible on links, buttons, fields and overflow regions. Global scrollbars stay operable; forced-colors uses system colors.
 
 ## Do's and Don'ts
 

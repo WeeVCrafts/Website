@@ -118,3 +118,59 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .seller-callout p strong, .seller-callout p small, .seller-stat-card b { font-size:14px; line-height:1.5; }
 body:is(.seller-body,.admin-body,.support-body) :is(input,select,textarea) { font-size:16px !important; }
 @media(max-width:560px) { .seller-header .seller-wordmark small { display:none; } }
+
+/* Account controls stay compact until a specific record is opened. */
+.account-controls summary, .account-create > summary { cursor:pointer; min-height:44px; padding:12px 0; font-size:16px; font-weight:600; color:var(--ui-ink); }
+.account-create { padding:16px 24px; }
+.account-create .role-create-panel { padding:0; border:0; box-shadow:none; }
+.role-assignment-card { display:block; min-width:0; }
+.role-assignment-user { overflow-wrap:anywhere; }
+.role-assignment-user .ui-status { width:fit-content; margin-top:8px; }
+.role-assignment-actions { margin-top:16px; }
+.role-assignment-list { display:grid; gap:16px; }
+.role-user-edit-form label, .role-user-create-form label, .role-assignment-form label, .role-delete-form label { font-size:14px; line-height:1.5; }
+.password-visibility { min-height:44px; width:fit-content; padding:8px 12px; border:1px solid var(--ui-line); border-radius:6px; color:var(--ui-ink); background:var(--ui-surface); font:inherit; cursor:pointer; }
+.admin-logout button, .seller-header-logout button { min-width:44px; min-height:44px; font-size:14px; }
+@media(max-width:720px) {
+ .seller-header-logout button { width:44px; min-width:44px; min-height:44px; }
+ .seller-user { display:none; }
+ .admin-logout button { min-height:44px; }
+}
+
+.account-role { display:inline-block; padding:6px 10px; border-radius:6px; background:var(--ui-soft,#f4f3ee); color:var(--ui-ink); font-size:14px; }
+
+.role-assignment-search :is(input,button), .role-user-edit-form :is(input,select), .role-user-create-form :is(input,select), .role-assignment-form :is(input,select), .role-delete-form input { min-height:44px; }
+.role-user-edit-form label small, .role-user-create-form label small { font-size:14px; font-weight:400; line-height:1.5; }
+.role-assignment-user strong { font-size:18px; }
+.role-assignment-user > span:not(.ui-status) { font-size:14px; }
+@media(max-width:960px) {
+ .admin-header { display:grid; grid-template-columns:44px minmax(0,1fr) auto; grid-template-areas:"menu brand logout" "search search search"; gap:8px; }
+ .admin-header-brand { display:inline-flex; grid-area:brand; }
+ .admin-menu-button { display:grid; grid-area:menu; width:44px; height:44px; }
+ .admin-header .admin-portal-pill, .admin-header .admin-user { display:none; }
+ .admin-header .admin-search { grid-area:search; min-width:0; width:100%; min-height:44px; }
+ .admin-logout { grid-area:logout; justify-self:end; }
+}
+
+.admin-sidebar > .admin-brand { min-height:100px; padding:16px 12px; align-items:center; }
+.admin-sidebar > .admin-brand small { font-size:12px; line-height:1.5; }
+.role-assignment-card { padding:16px; }
+.role-assignment-user { display:grid; grid-template-columns:minmax(0,1fr) auto auto; column-gap:16px; row-gap:6px; align-items:center; }
+.role-assignment-user > strong { grid-column:1; grid-row:1; }
+.role-assignment-user > span:not(.ui-status) { grid-column:1; grid-row:2; }
+.role-assignment-user > .ui-status { grid-column:2; grid-row:1 / 3; margin:0; }
+.role-assignment-user > .role-badges { grid-column:3; grid-row:1 / 3; margin:0; }
+@media(max-width:720px) {
+ .role-assignment-user { grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+ .role-assignment-user > span:not(.ui-status) { grid-column:1 / -1; }
+ .role-assignment-user > .ui-status { grid-row:1; }
+ .role-assignment-user > .role-badges { grid-column:1 / -1; grid-row:3; }
+}
+
+/* Busy feedback retains the control's geometry and accessible text. */
+button.ui-busy { position: relative; color: transparent !important; pointer-events: none; }
+button.ui-busy > * { visibility: hidden; }
+button.ui-busy::after { content: ''; position: absolute; width: 18px; height: 18px; inset: 0; margin: auto; border: 2px solid var(--forest); border-right-color: transparent; border-radius: 50%; animation: ui-busy-spin 650ms linear infinite; }
+button.primary-button.ui-busy::after { border-color: white; border-right-color: transparent; }
+@keyframes ui-busy-spin { to { transform: rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { button.ui-busy::after { animation: none; border-right-color: var(--forest); } }

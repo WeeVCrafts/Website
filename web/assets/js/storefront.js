@@ -274,8 +274,8 @@
     const cartCount = document.querySelector("#cart-count em");
     const wishlistCount = document.querySelector("#wishlist-count em");
     const totals = cartTotals(cart.items);
-    if (cartCount) cartCount.textContent = String(totals.count);
-    if (wishlistCount) wishlistCount.textContent = String(wishlist.length);
+    if (cartCount) { cartCount.textContent = String(totals.count); cartCount.closest('a').setAttribute('aria-label','Cart, '+totals.count+' items'); }
+    if (wishlistCount) { wishlistCount.textContent = String(wishlist.length); wishlistCount.closest('a').setAttribute('aria-label','Wishlist, '+wishlist.length+' items'); }
     markReady(document.getElementById("cart-count"));
     markReady(document.getElementById("wishlist-count"));
   }
@@ -560,7 +560,7 @@
     if (form.dataset.submitting === "true") return;
     form.dataset.submitting = "true";
     const authButton = form.querySelector('button[type="submit"]');
-    if (authButton) authButton.disabled = true;
+    if (authButton) {authButton.disabled = true; global.WVUI?.busy(authButton,true);}
     const api = ensureBackend();
     const action = form.dataset.backendAuth;
     const values = formData(form);
@@ -591,7 +591,7 @@
       showFormMessage(form, error.message, true);
     } finally {
       form.dataset.submitting = "false";
-      if (authButton) authButton.disabled = false;
+      if (authButton) {authButton.disabled = false; global.WVUI?.busy(authButton,false);}
     }
   }
 
@@ -602,7 +602,7 @@
     const simulator = localSimulator
       ? "<div class=\"payment-simulator\" aria-label=\"Local payment test actions\"><button class=\"primary-button\" type=\"button\" data-local-payment=\"capture\" data-order-number=\"" + esc(orderNumber) + "\">Simulate successful payment</button><button class=\"outline-button\" type=\"button\" data-local-payment=\"fail\" data-order-number=\"" + esc(orderNumber) + "\">Simulate failed payment</button><button class=\"text-button\" type=\"button\" data-local-payment=\"pending\" data-order-number=\"" + esc(orderNumber) + "\">Leave payment pending</button></div>"
       : "";
-    main.innerHTML = "<section class=\"container checkout-complete\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</span><h1>Order " + esc(orderNumber) + "</h1><p>" + esc(message) + "</p>" + simulator + "<a class=\"primary-button\" href=\"/orders/" + encoded + "\">View order details</a></section>";
+    main.innerHTML = "<section class=\"container checkout-complete\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">receipt_long</span><h1>Order " + esc(orderNumber) + "</h1><p>" + esc(message) + "</p>" + simulator + "<a class=\"primary-button\" href=\"/orders/" + encoded + "\">View order details</a><a class=\"outline-button\" href=\"/orders/" + encoded + "/tracking\">Track delivery</a></section>";
   }
 
   function loadRazorpay() {
@@ -624,7 +624,7 @@
     const mode = config && config.dataset.paymentMode;
     const intent = unwrap(await ensureBackend().createPayment(orderNumber)) || {};
     if (mode === "local") {
-      paymentReceipt(orderNumber, "Your order is saved. Choose a local test result to exercise payment confirmation.", true);
+      paymentReceipt(orderNumber, "Your order is saved. No money will be charged. Choose a mock payment result below.", true);
       return;
     }
     const key = config && config.dataset.paymentPublicKey;
@@ -710,7 +710,7 @@
       pending = { fingerprint, key: global.crypto.randomUUID(), cartID: currentQuote.cart_id, quote: currentQuote };
       global.sessionStorage.setItem(CHECKOUT_KEY, JSON.stringify(pending));
     }
-    button.disabled = true;
+    button.disabled = true; global.WVUI?.busy(button,true);
     let orderNumber = "";
     try {
       const addressFormData = new URLSearchParams(address);
@@ -736,7 +736,7 @@
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
-      if (cartBadge) { cartBadge.textContent = "0"; markReady(document.getElementById("cart-count")); }
+      if (cartBadge) { cartBadge.textContent = "0"; cartBadge.closest('a').setAttribute('aria-label','Cart, 0 items'); markReady(document.getElementById("cart-count")); }
       if (noPaymentDemo) {
         paymentReceipt(orderNumber, "Your order is saved with payment pending. No payment was collected.", false);
       } else {
@@ -755,18 +755,26 @@
       }
     } finally {
       if (!orderNumber) {
-        button.disabled = false;
+        button.disabled = false; global.WVUI?.busy(button,false);
       }
     }
   }
 
   function bindActions() {
+    document.addEventListener('click',async event=>{
+      const button=event.target.closest('[data-retry-payment]');
+      if (!button || button.disabled) return;
+      button.disabled=true; global.WVUI?.busy(button,true);
+      try { await beginPayment(button.dataset.retryPayment); }
+      catch(error) { notice(error.message,true); }
+      finally { button.disabled=false; global.WVUI?.busy(button,false); }
+    });
     const quoteButton = document.querySelector("[data-preview-quote]");
     if (quoteButton) quoteButton.addEventListener("click", async function () {
-      quoteButton.disabled = true;
+      quoteButton.disabled = true; global.WVUI?.busy(quoteButton,true);
       try { await previewCheckoutQuote(); notice("Checkout total updated.", false); }
       catch (error) { notice(error.message, true); }
-      finally { quoteButton.disabled = false; }
+      finally { quoteButton.disabled = false; global.WVUI?.busy(quoteButton,false); }
     });
     const checkoutAddressForm = document.getElementById("checkout-address-form");
     if (checkoutAddressForm) {
@@ -877,12 +885,12 @@
       const localPaymentButton = event.target.closest("[data-local-payment]");
       if (localPaymentButton) {
         event.preventDefault();
-        localPaymentButton.disabled = true;
+        localPaymentButton.disabled = true; global.WVUI?.busy(localPaymentButton,true);
         try {
           await ensureBackend().localPayment(localPaymentButton.dataset.orderNumber, localPaymentButton.dataset.localPayment);
           global.location.assign("/orders/" + encodeURIComponent(localPaymentButton.dataset.orderNumber));
         } catch (error) {
-          localPaymentButton.disabled = false;
+          localPaymentButton.disabled = false; global.WVUI?.busy(localPaymentButton,false);
           notice(error.message, true);
         }
         return;
@@ -935,14 +943,14 @@
       if (wishlistToggle && wishlistPending.has(slug)) return;
       if (wishlistToggle) wishlistPending.add(slug);
       element.dataset.pending = "true";
-      element.setAttribute("aria-busy", "true");
+      element.setAttribute("aria-busy", "true"); global.WVUI?.busy(element,true);
       if ("disabled" in element) element.disabled = true;
       try { await runAction(action, slug, delta, selectedVariantId, element); }
       catch (error) { notice(error.message, true); }
       finally {
         if (wishlistToggle) wishlistPending.delete(slug);
         delete element.dataset.pending;
-        element.removeAttribute("aria-busy");
+        element.removeAttribute("aria-busy"); global.WVUI?.busy(element,false);
         if ("disabled" in element) element.disabled = false;
       }
     }, true);

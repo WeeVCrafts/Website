@@ -320,7 +320,11 @@ templ CheckoutItems(items []viewmodels.CartItem) {
 
 templ CheckoutSummaryItems(items []viewmodels.CartItem) {
   for _, item := range items {
-    <p><span>{ item.Product.Name } <small>x { item.Quantity }</small></span><b>{ item.Product.Price }</b></p>
+    <p><span>{ item.Product.Name }
+      if item.VariantName != "" {
+        <small>{ components.CustomerOption(item.VariantName) }</small>
+      }
+      <small>x { item.Quantity }</small></span><b>{ item.Product.Price }</b></p>
   }
 }
 
@@ -488,7 +492,8 @@ templ Listing(p viewmodels.CustomerPage) {
               </select>
             </label>
           </div>
-          <div class="product-grid product-grid--four" data-backend-products="listing">@ListingProducts(p.Products)</div>
+          <div class="product-grid product-grid--four" data-backend-products="listing">@CatalogueResults(p)</div>
+          if p.TotalResults > 0 || len(p.Products) > 0 {
           <nav class="pagination" aria-label="Pagination">
             if p.Page > 1 {
               <a href={ listingURL(p, p.Page-1) } aria-label="Previous page"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></a>
@@ -504,6 +509,7 @@ templ Listing(p viewmodels.CustomerPage) {
               <span aria-hidden="true"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></span>
             }
           </nav>
+          }
         </div>
       </section>
     </form>
@@ -600,7 +606,9 @@ templ ProductDetail(p viewmodels.CustomerPage) {
         </div>
       </section>
     </section>
-    <section class="container section">@SectionHeading("YOU MAY ALSO LIKE", "More made-for-you finds", "Keep exploring the beautiful things our makers make.")<div class="product-grid product-grid--four" data-backend-products="listing">@ProductCards(availableProducts(p.Products, p.Product.Slug, 4), true)</div></section>
+    if len(availableProducts(p.Products, p.Product.Slug, 4)) > 0 {
+      <section class="container section">@SectionHeading("YOU MAY ALSO LIKE", "More made-for-you finds", "Keep exploring the beautiful things our makers make.")<div class="product-grid product-grid--four" data-backend-products="listing">@ProductCards(availableProducts(p.Products, p.Product.Slug, 4), true)</div></section>
+    }
     <div class="mobile-buy-bar"><button class="outline-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }>Add to cart</button><button class="primary-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }>Buy now</button></div>
     <section class="container seller-callout"><img src={ p.Product.ImageURL } alt={ "A piece from " + p.Product.Seller } width="520" height="360"/><div><p class="eyebrow">SELLER</p><h2>{ p.Product.Seller }</h2><p>This product is listed by { p.Product.Seller }.</p><a class="text-link" href={ sellerPath(p.Product) }>Visit the seller&apos;s storefront <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></section>
   }
@@ -702,9 +710,12 @@ templ WishlistGridMutation(p viewmodels.CustomerPage) {
 templ Wishlist(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro wishlist-intro">
-        @Breadcrumb("Home", "My Wishlist")<p class="eyebrow">SAVED WITH LOVE</p><h1>My wishlist</h1><p>Handpicked with love, for a more beautiful tomorrow.</p><p>Your saved treasures from India's finest artisans. Keep them close, move to cart when you are ready.</p></section><section class="container section"><div class="section-head"><div><h2 data-backend-wishlist-count>{ p.WishlistCount } items in your wishlist</h2><p>These are the pieces you chose to keep an eye on.</p></div><a class="outline-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@WishlistGrid(p)</section><section class="container section wishlist-recommendations">
+        @Breadcrumb("Home", "My Wishlist")<p class="eyebrow">SAVED WITH LOVE</p><h1>My wishlist</h1><p>Handpicked with love, for a more beautiful tomorrow.</p><p>Your saved treasures from India's finest artisans. Keep them close, move to cart when you are ready.</p></section><section class="container section"><div class="section-head"><div><h2 data-backend-wishlist-count>{ p.WishlistCount } items in your wishlist</h2><p>These are the pieces you chose to keep an eye on.</p></div><a class="outline-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@WishlistGrid(p)</section>
+      if len(p.Products) > 6 {
+      <section class="container section wishlist-recommendations">
         @SectionHeading("KEEP DISCOVERING", "You may also love", "More beautiful finds from independent makers.")<div class="product-grid product-grid--six" data-backend-products="listing">
         @ProductCards(productSlice(p.Products, 6, len(p.Products)), true)</div></section>
+      }
   }
 }
 
@@ -869,6 +880,8 @@ templ OrderDetail(p viewmodels.CustomerPage) {
     <section class="container order-detail-layout">
       <div class="order-detail-main">
         <div class="order-detail-status"><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>{ orderStatusTitle(p.SelectedOrder) }</h2><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>
+        @OrderPaymentRecovery(p)
+        @OrderShipmentProgress(p.SelectedOrder)
         @OrderDetailRows(p.SelectedOrder.Items)
         if p.SelectedOrder.CanCancel {
           <form class="order-cancel-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/cancel" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Cancel order</button></form>
@@ -939,9 +952,12 @@ templ CartContent(p viewmodels.CustomerPage) {
     if len(p.Cart)>0 {
       <aside class="summary cart-summary"><h2>Order summary</h2><p>Items ({ p.CartCount }) <b>{ p.ItemsTotal }</b></p><p>Delivery charges <b>{ p.ShippingTotal }</b></p><p class="discount">You saved <b>{ p.DiscountTotal }</b></p><hr/><h3>Total amount <strong>{ p.Total }</strong></h3><p>Coupons can be entered and checked at checkout.</p><a class="primary-button full" href="/checkout">Proceed to checkout <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><small class="secure-note"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Safe and secure checkout</small></aside>
     }
-  </section><section class="container section">
+  </section>
+  if len(p.Products) > 6 {
+  <section class="container section">
     @SectionHeading("BEAUTIFUL EXTRAS", "You might also like", "Complete your cart with something made with care.")<div class="product-grid product-grid--four" data-backend-products="listing">
     @ProductCards(productSlice(p.Products, 6, 10), true)</div></section>
+  }
 }
 
 templ CartUpdate(p viewmodels.CustomerPage) {
@@ -988,9 +1004,10 @@ templ Checkout(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="button" data-checkout-step="2" @click="if (WVUI.validate($el.form)) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
         </section>
-        <section class="checkout-card" data-step="2" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ p.CartCount } items from { len(p.Cart) } sellers</span></header>
+        <section class="checkout-card" data-step="2" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
+          <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to address</button>
         @CheckoutItems(p.Cart)<button class="primary-button full" type="button" data-checkout-step="3" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
-        <section class="checkout-card" data-step="3" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
+        <section class="checkout-card" data-step="3" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><button class="text-button checkout-back" type="button" data-checkout-step="2" @click="checkoutStep=2"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to delivery</button><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
           if p.NoPaymentDemo {
             <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div>
             <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
@@ -1010,15 +1027,15 @@ templ Checkout(p viewmodels.CustomerPage) {
             if p.NoPaymentDemo {
               <span class="muted">Demo order · no payment</span>
             } else {
-              <span class="muted">Payment is completed securely next</span>
+          <span class="muted">Payment is completed securely next</span>
             }
-          </header><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Payment</strong><span>
+          </header><button class="text-button checkout-back" type="button" data-checkout-step="3" @click="checkoutStep=3"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to payment</button><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span><button class="text-button" type="button" data-checkout-step="1" @click="checkoutStep=1">Edit address</button></p><p><strong>Payment</strong><span>
             if p.NoPaymentDemo {
               No payment · demo mode
             } else {
               { paymentMethodLabel(p.PaymentMode) }
             }
-          </span></p><p><strong>Total payable</strong><span data-quote-total>{ p.Total }</span></p></div>
+          </span><button class="text-button" type="button" data-checkout-step="3" @click="checkoutStep=3">Edit payment</button></p><p><strong>Total payable</strong><span data-quote-total>{ p.Total }</span></p></div>
           if p.NoPaymentDemo {
             <button class="primary-button full" type="button" data-backend-action="checkout-no-payment">Place demo order <span class="material-symbols-outlined" aria-hidden="true">science</span></button>
           } else if p.PaymentReady {

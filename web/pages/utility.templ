@@ -242,7 +242,7 @@ templ PrivacyCenter(p viewmodels.CustomerPage) {
     <section class="container utility-shell privacy-center-shell">
       <p class="eyebrow">YOUR CONTROLS</p>
       <h1>Privacy center</h1>
-      <p>Account { strconv.FormatInt(p.AccountUserID, 10) } · choices are recorded with a policy version and source.</p>
+      <p>Choose which updates you receive and manage your personal information.</p>
       <div class="account-cards">
         <section class="utility-card account-panel">
           <div class="utility-panel-heading"><div><p class="eyebrow">OPTIONAL CHOICES</p><h2>Privacy choices</h2></div><span class="material-symbols-outlined" aria-hidden="true">tune</span></div>
@@ -314,6 +314,9 @@ templ ReviewPanel() {
 templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
   <aside class="account-sidebar">
     <div class="profile-mini">@CustomerAvatar(p)<b>{ p.UserName }</b><small>{ p.RoleLabel } · { p.UserEmail }</small></div>
+    <details class="account-navigation" data-account-navigation open>
+      <summary>Account menu <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>
+      <nav aria-label="Account sections">
     <a href="/account" class={ liveAccountLinkClass(active, "account") } aria-current={ liveAccountCurrent(active, "account") }><span class="material-symbols-outlined" aria-hidden="true">dashboard</span> My account</a>
     <a href="/account/profile" class={ liveAccountLinkClass(active, "/account/profile") } aria-current={ liveAccountCurrent(active, "/account/profile") }><span class="material-symbols-outlined" aria-hidden="true">person</span> Profile</a>
     <a href="/account/addresses" class={ liveAccountLinkClass(active, "/account/addresses") } aria-current={ liveAccountCurrent(active, "/account/addresses") }><span class="material-symbols-outlined" aria-hidden="true">location_on</span> Addresses</a>
@@ -327,6 +330,8 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
     <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
 
+      </nav>
+    </details>
   </aside>
 }
 
@@ -393,7 +398,7 @@ templ LiveTracking(p viewmodels.CustomerPage) {
     <section class="container tracking-layout"><div class="tracking-main">
       <form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value={ p.SelectedOrder.Number } placeholder="Enter your order number" required/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form>
       if p.SelectedOrder.Number != "" {
-        <article class="tracking-card-main"><header><div><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
+        <article class="tracking-card-main"><header><div><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderShipmentProgress(p.SelectedOrder)@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
       } else {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
       }
@@ -474,7 +479,8 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
       } else if p.Route == "/account/sessions" {
         @LiveSessions(p)
       } else if p.Route == "/account/security" {
-        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>To reset your password, sign out and choose “Forgot password” on the sign-in page.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
+        @CustomerPasswordForm(p)
+        <section class="utility-card account-panel"><div class="utility-panel-heading"><div><p class="eyebrow">KEEP IT SAFE</p><h2>Security and sessions</h2></div><span class="material-symbols-outlined" aria-hidden="true">shield</span></div><div class="security-list"><div><span><b>Password</b><small>Choose a new password to keep your account secure.</small></span></div><div><span><b>Signed-in devices</b><small>Review active sessions and sign out everywhere.</small></span><a href="/account/sessions">Manage sessions</a></div><div><span><b>Email verification</b><small>Request a verification link for your account email.</small></span><a href="/account/sessions">Manage verification</a></div></div><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">info</span><p>Weevcrafts never asks for your password, OTP or full payment details by message.</p></div><form action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Sign out</button></form></section>
       } else if p.Route == "/account/notifications" {
         @FirebasePushPanel()
         <section class="utility-card account-panel"><h2>Your updates</h2>
@@ -498,7 +504,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
             <label><span><b>Maker stories</b><small>New collections and studio updates</small></span><input type="checkbox" name="maker_stories" value="1" checked?={ p.NotificationPreferences.MakerStories }/></label>
             <button class="primary-button" type="submit">Save preferences</button>
           </form>
-          <p class="muted">Account preference storage is active. Email delivery depends on the store email service configuration.</p>
+          <p class="muted">Your preferences apply to future updates. You can always check the latest status in your orders.</p>
           <a class="outline-button" href="/orders">View order updates</a>
         </section>
       } else if p.Route == "/account/support" {

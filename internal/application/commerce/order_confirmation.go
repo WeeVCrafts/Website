@@ -21,27 +21,57 @@ type OrderConfirmationProcessor struct {
 	source    OrderConfirmationSource
 	sender    ports.EmailSender
 	publicURL string
+	eventType string
 }
 
 func NewOrderConfirmationProcessor(events ports.OutboxStore, source OrderConfirmationSource, sender ports.EmailSender, publicURL string) *OrderConfirmationProcessor {
-	return &OrderConfirmationProcessor{events, source, sender, strings.TrimRight(publicURL, "/")}
+	return &OrderConfirmationProcessor{events: events, source: source, sender: sender, publicURL: strings.TrimRight(publicURL, "/"), eventType: "OrderCreated"}
+}
+
+type PaidOrderConfirmationSource interface {
+	PreparePaidOrderConfirmation(context.Context, int64, string) (ports.EmailRecipient, bool, error)
+}
+
+func NewPaidOrderConfirmationProcessor(events ports.OutboxStore, source OrderConfirmationSource, sender ports.EmailSender, publicURL string) *OrderConfirmationProcessor {
+	p := NewOrderConfirmationProcessor(events, source, sender, publicURL)
+	p.eventType = "OrderPaid"
+	return p
 }
 
 func (p *OrderConfirmationProcessor) Process(ctx context.Context, limit int) (int, error) {
-	events, err := p.events.ClaimByType(ctx, "OrderCreated", limit)
+	events, err := p.events.ClaimByType(ctx, p.eventType, limit)
 	if err != nil {
 		return 0, err
 	}
 	processed := 0
 	var firstErr error
 	for _, event := range events {
-		recipient, enabled, deliveryErr := p.source.PrepareOrderConfirmation(ctx, event.ID, event.AggregateID)
+		var recipient ports.EmailRecipient
+		var enabled bool
+		var deliveryErr error
+		if p.eventType == "OrderPaid" {
+			if source, ok := p.source.(PaidOrderConfirmationSource); ok {
+				recipient, enabled, deliveryErr = source.PreparePaidOrderConfirmation(ctx, event.ID, event.AggregateID)
+			} else {
+				deliveryErr = fmt.Errorf("paid order confirmation unavailable")
+			}
+		} else {
+			recipient, enabled, deliveryErr = p.source.PrepareOrderConfirmation(ctx, event.ID, event.AggregateID)
+		}
 		if deliveryErr == nil && enabled {
 			if p.sender == nil {
 				deliveryErr = fmt.Errorf("order confirmation email is not configured")
 			} else {
 				link := p.publicURL + "/orders/" + url.PathEscape(event.AggregateID)
-				deliveryErr = p.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: "Your Weevcrafts order has been received", ActionURL: link, Body: fmt.Sprintf("We received order %s.\n\nYour order is saved. This message does not confirm payment. View its current payment and delivery status: %s", event.AggregateID, link)})
+				tracking := link + "/tracking"
+				subject := "Your Weevcrafts order has been received"
+				body := fmt.Sprintf("We received order %s.\n\nYour order is saved. This message does not confirm payment. View your order and payment status: %s\n\nTrack delivery: %s\nTracking details will appear when your maker prepares the shipment.", event.AggregateID, link, tracking)
+				if p.eventType == "OrderPaid" {
+					subject = "Your Weevcrafts order is confirmed"
+					body = fmt.Sprintf("Payment confirmed for order %s. Your maker can now prepare your pieces.\n\nView your order: %s\n\nTrack delivery: %s\nTracking details will appear when your maker prepares the shipment. Sign in with the account used for this purchase.", event.AggregateID, link, tracking)
+					link = tracking
+				}
+				deliveryErr = p.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: subject, ActionURL: link, Body: body})
 			}
 		}
 		if deliveryErr != nil {

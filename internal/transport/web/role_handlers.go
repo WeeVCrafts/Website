@@ -86,7 +86,7 @@ func (h *Handler) adminRoleUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	h.redirect(w, r, "/admin/roles")
+	h.redirect(w, r, "/super-admin/users?notice=Role+updated")
 }
 
 func (h *Handler) adminRoleUserCreate(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +115,7 @@ func (h *Handler) adminRoleUserCreate(w http.ResponseWriter, r *http.Request) {
 	err := h.roleAdminService.CreateUser(r.Context(), session.UserID, r.FormValue("email"), r.FormValue("display_name"), r.FormValue("password"), r.FormValue("role"), sellerID, r.FormValue("reason"))
 	switch {
 	case err == nil:
-		h.redirect(w, r, "/super-admin/security?notice=User+account+created+and+role+assigned")
+		h.redirect(w, r, "/super-admin/users?notice=User+account+created+and+role+assigned")
 	case errors.Is(err, ports.ErrForbidden):
 		h.renderError(w, http.StatusForbidden, "User management restricted", "Only Super Admin can create operational accounts.")
 	case errors.Is(err, ports.ErrUserAlreadyExists):
@@ -151,7 +151,7 @@ func (h *Handler) adminRoleUserDelete(w http.ResponseWriter, r *http.Request) {
 	err = h.roleAdminService.DeleteUser(r.Context(), session.UserID, userID, r.FormValue("reason"))
 	switch {
 	case err == nil:
-		h.redirect(w, r, "/super-admin/security?notice=User+account+deleted")
+		h.redirect(w, r, "/super-admin/users?notice=User+account+deleted")
 	case errors.Is(err, ports.ErrForbidden):
 		h.renderError(w, http.StatusForbidden, "User management restricted", "Only Super Admin can delete operational accounts.")
 	case errors.Is(err, ports.ErrNotFound):
@@ -185,7 +185,7 @@ func (h *Handler) adminRoleUserUpdate(w http.ResponseWriter, r *http.Request) {
 	err = h.roleAdminService.UpdateUser(r.Context(), session.UserID, userID, r.FormValue("email"), r.FormValue("display_name"), r.FormValue("status"), r.FormValue("password"), r.FormValue("reason"))
 	switch {
 	case err == nil:
-		h.redirect(w, r, "/super-admin/security?notice=Account+updated")
+		h.redirect(w, r, "/super-admin/users?notice=Account+updated")
 	case errors.Is(err, ports.ErrForbidden):
 		h.renderError(w, 403, "User management restricted", "Only Super Admin can edit accounts.")
 	case errors.Is(err, ports.ErrUserAlreadyExists):

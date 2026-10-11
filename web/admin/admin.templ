@@ -183,14 +183,15 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
       <div class="role-assignment-list">
         for _, assignment := range p.RoleAssignments {
           <section class="role-assignment-card">
-            <div class="role-assignment-user"><strong>{ assignment.DisplayName }</strong><span>{ assignment.Email }</span><small>User #{ adminID(assignment.ID) } · { assignment.Status }</small><div class="role-badges">
+            <div class="role-assignment-user"><strong>{ assignment.DisplayName }</strong><span>{ assignment.Email }</span><span class={ "ui-status " + components.StatusTone(assignment.Status) }>{ components.StatusLabel(assignment.Status) }</span><div class="role-badges">
               if len(assignment.Roles) == 0 {
                 <span class="status review">No roles</span>
               }
               for _, assignedRole := range assignment.Roles {
-                <span class="status success">{ assignedRole }</span>
+                <span class="account-role">{ components.StatusLabel(assignedRole) }</span>
               }
             </div></div>
+            <details class="account-controls"><summary>Manage account<span class="sr-only">{ "for " + assignment.Email }</span></summary>
             if assignment.Status != "deleted" {
               <div class="role-assignment-actions">
                 <form class="role-user-edit-form" method="post" action={ p.PortalRoot + "/users/update" }>
@@ -217,12 +218,12 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                 </form>
               </div>
             }
-            if assignment.Status == "active" {
+            if assignment.Status == "active" && !protectedAccount(assignment.Roles) {
               <div class="role-assignment-actions">
-                <form class="role-assignment-form" method="post" action={ p.PortalRoot + "/roles/update" } x-data="{ selectedRole: 'customer' }">
+                <form class="role-assignment-form" method="post" action={ p.PortalRoot + "/roles/update" } x-data={ fmt.Sprintf("{ selectedRole: %q }", accountRole(assignment.Roles)) }>
                   <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
                   <input type="hidden" name="user_id" value={ adminID(assignment.ID) }/>
-                  <label>Role<select name="role" x-model="selectedRole" required><option value="customer">Customer</option><option value="seller_owner">Seller owner</option><option value="seller_staff">Seller staff</option><option value="marketplace_admin">Marketplace admin</option><option value="support_agent">Support agent</option><option value="finance_operator">Finance operator</option><option value="operations_returns">Returns operations</option></select></label>
+                  <label>Role<select name="role" x-model="selectedRole" required><option value="customer" selected?={ accountRole(assignment.Roles) == "customer" }>Customer</option><option value="seller_owner" selected?={ accountRole(assignment.Roles) == "seller_owner" }>Seller owner</option><option value="seller_staff" selected?={ accountRole(assignment.Roles) == "seller_staff" }>Seller staff</option><option value="marketplace_admin" selected?={ accountRole(assignment.Roles) == "marketplace_admin" }>Marketplace admin</option><option value="support_agent" selected?={ accountRole(assignment.Roles) == "support_agent" }>Support agent</option><option value="finance_operator" selected?={ accountRole(assignment.Roles) == "finance_operator" }>Finance operator</option><option value="operations_returns" selected?={ accountRole(assignment.Roles) == "operations_returns" }>Returns operations</option></select></label>
                   <label x-cloak x-show="selectedRole === 'seller_staff'">Seller
                     <select name="seller_id" x-bind:disabled="selectedRole !== 'seller_staff'" x-bind:required="selectedRole === 'seller_staff'"><option value="">Choose active seller</option>
                       for _, seller := range p.Sellers {
@@ -243,7 +244,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
             } else if assignment.Status != "active" {
               <p class="role-assignment-disabled" role="status">This account is { assignment.Status } and cannot receive role changes.</p>
             }
-            if assignment.Status != "deleted" && assignment.ID != p.ActorID {
+            if assignment.Status != "deleted" && assignment.ID != p.ActorID && !protectedAccount(assignment.Roles) {
               <div class="role-assignment-actions">
                 <form class="role-delete-form" method="post" action={ p.PortalRoot + "/users/delete" } data-confirm="Delete this account? Past orders and audit history will be retained.">
                   <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
@@ -253,6 +254,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
                 </form>
               </div>
             }
+            </details>
           </section>
         }
       </div>

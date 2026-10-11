@@ -35,7 +35,7 @@ func navClass(key, current string) string {
 
 func roleManagementHeading(p viewmodels.AdminPage) string {
 	if p.Workspace == "users" {
-		return "User management"
+		return "Accounts"
 	}
 	return "Live role assignments"
 }
@@ -199,4 +199,19 @@ func hasPendingProducts(products []viewmodels.AdminProduct) bool {
 		}
 	}
 	return false
+}
+
+func protectedAccount(roles []string) bool {
+	for _, role := range roles {
+		if role == "super_admin" {
+			return true
+		}
+	}
+	return false
+}
+func accountRole(roles []string) string {
+	if len(roles) > 0 {
+		return roles[0]
+	}
+	return "customer"
 }

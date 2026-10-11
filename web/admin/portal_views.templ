@@ -332,13 +332,20 @@ templ PortalAnalytics(p viewmodels.AdminPage) {
 
 templ PortalSecurity(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
-		@StatGrid(p)
-		if p.Workspace == "users" {
-			<section class="admin-panel security-panel user-management-intro"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>User management</h2><p>Create, search, update, suspend and remove marketplace accounts from one audited workspace.</p></div></div></div></section>
+		if p.Workspace != "users" {
+			@StatGrid(p)
 		}
-		@RoleUserCreateForm(p)
+		if p.Workspace == "users" {
+			<details class="admin-panel account-create"><summary>Create a user account</summary>
+				@RoleUserCreateForm(p)
+			</details>
+		} else {
+			@RoleUserCreateForm(p)
+		}
 		@RoleAssignmentList(p)
-		@PortalAuditList(p)
+		if p.Workspace != "users" {
+			@PortalAuditList(p)
+		}
 	}
 }
 

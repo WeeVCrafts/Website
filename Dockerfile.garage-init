@@ -3,6 +3,6 @@ FROM dxflrs/garage:v2.1.0 AS garage
 FROM alpine:3.22
 COPY --from=garage /garage /usr/local/bin/garage
 COPY scripts/garage-init.sh /usr/local/bin/garage-init.sh
-RUN chmod 0755 /usr/local/bin/garage-init.sh
+RUN sed -i 's/\r$//' /usr/local/bin/garage-init.sh && chmod 0755 /usr/local/bin/garage-init.sh
 
 ENTRYPOINT ["/usr/local/bin/garage-init.sh"]

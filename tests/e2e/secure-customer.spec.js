@@ -33,7 +33,7 @@ test('customer login, wishlist toggle persistence, failure and rapid-click state
   await page.goto('/login');
   await page.locator('#page [name=email]').fill('demo.customer01@weevcrafts.local');
   await page.locator('#page [name=password]').fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.getByRole('button', { name: 'Continue with email', exact: true }).click();
   await page.waitForURL('**/products');
   await expect(page.locator('a[href="/workspaces"]')).toHaveCount(0);
   await page.waitForFunction(() => window.weevcraftsBackend);
@@ -79,6 +79,7 @@ test('private profile upload, preview, persistence, reminder and validation', as
   const identity = await customer(page);
   sql(`UPDATE users SET phone='' WHERE id=${identity.data.id}`);
   await page.goto('/products');
+  await page.getByRole('button', { name: 'Open profile menu', exact: true }).click();
   await expect(page.locator('.notification-action em')).toBeVisible();
   await page.getByRole('link', { name: 'Notifications', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Complete your profile', exact: true })).toBeVisible();
@@ -93,6 +94,8 @@ test('private profile upload, preview, persistence, reminder and validation', as
   expect(photo.status()).toBe(200); expect(photo.headers()['content-type']).toBe('image/jpeg');
   expect(photo.headers()['cache-control']).toBe('private, no-store');
   await page.reload(); await expect(page.locator('[data-photo-preview] img')).toHaveAttribute('src', '/account/profile/photo');
+  await expect(page.locator('.profile-toggle img')).toHaveAttribute('src', '/account/profile/photo');
+  await expect.poll(() => page.locator('.profile-toggle img').evaluate(img => img.complete && img.naturalWidth > 0)).toBeTruthy();
   await page.goto('/account/notifications');
   await expect(page.getByRole('link', { name: 'Complete your profile', exact: true })).toHaveCount(0);
   await expect(page.locator('.notification-action em')).toHaveCount(0);
@@ -114,6 +117,9 @@ test('private profile upload, preview, persistence, reminder and validation', as
   expect(sql(`SELECT count(*) FROM avatar_cleanup WHERE object_key='${before}'`)).toBe('1');
   expect((await page.request.post('/account/profile', { form: { ...fields, remove_photo: '1' }, maxRedirects: 0 })).status()).toBe(303);
   expect((await page.request.get('/account/profile/photo')).status()).toBe(404);
+  await page.reload();
+  await expect(page.locator('.profile-toggle img')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Open profile menu', exact: true })).toBeVisible();
 });
 
 test('social settings are persistent, safe and Super Admin controlled', async ({ page, browser }) => {

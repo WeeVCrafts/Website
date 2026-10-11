@@ -36,6 +36,7 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
+	localMode          bool
 	pool               *pgxpool.Pool
 	sessions           *applicationauth.SessionService
 	roleAdmin          *applicationauth.RoleAdminService
@@ -45,6 +46,8 @@ type LivePortalHandler struct {
 	paymentMode        string
 	runtimeProbes      map[string]func(context.Context) error
 }
+
+func (h *LivePortalHandler) EnableLocalDeliverySimulation(enabled bool) { h.localMode = enabled }
 
 // SetRuntimeProbes connects the runtime status page to the configured adapters.
 func (h *LivePortalHandler) SetRuntimeProbes(paymentMode string, probes map[string]func(context.Context) error) {
@@ -938,6 +941,13 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	if workspace == "users" {
 		page.Title = "User Management"
 		page.Subtitle = "Create, search, update, suspend and remove marketplace accounts with an audited workflow."
+	}
+	if workspace == "users" {
+		page.RoleAssignments = h.adminUsers(r, query)
+		page.Sellers = h.adminSellers(r)
+		page.Pagination = projectionPagination(r, "admin-users")
+		page.DataWarning = projectionWarning(r, page.DataWarning)
+		return page
 	}
 	page.Stats = h.adminStats(r)
 
@@ -2012,7 +2022,7 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		period = "week"
 	}
 	rangeLabel := map[string]string{"day": "Today", "week": "This week", "month": "This month"}[period]
-	page := viewmodels.SellerAdminPage{Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: period, RangeLabel: rangeLabel, Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus, LowStockThreshold: lowStockThreshold}
+	page := viewmodels.SellerAdminPage{LocalDeliverySimulation: h.localMode, Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: period, RangeLabel: rangeLabel, Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus, LowStockThreshold: lowStockThreshold}
 	if sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
 		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
 		if page.Products == nil {

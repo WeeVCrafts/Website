@@ -59,8 +59,8 @@ fi
 echo "[+] Waiting for database to become healthy..."
 sleep 5
 
-echo "[+] Seeding demo marketplace accounts and products..."
-$COMPOSE_CMD --profile demo run --rm seed-demo || true
+echo "[+] Preparing the clean three-account application..."
+$COMPOSE_CMD --profile clean run --build --rm seed-clean || exit 1
 
 echo "========================================================"
 echo " Weevcrafts is LIVE!"
