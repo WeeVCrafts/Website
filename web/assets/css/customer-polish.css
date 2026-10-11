@@ -226,6 +226,10 @@ html:has(.mobile-menu[open]) { scrollbar-gutter: auto; }
 .account-order-priority .compact-order { margin-top: 16px; }
 .account-order-priority > a { min-height: 36px; }
 .account-order-priority .compact-order header > div { min-width: 0; }
+.account-cards {grid-template-columns:repeat(2,minmax(0,1fr));}
+.account-cards > section {min-width:0;overflow-wrap:anywhere;}
+.compact-order-item > span {min-width:0;}
+@media(max-width:720px) {.account-cards {grid-template-columns:minmax(0,1fr);}}
 .footer-bottom nav { display: flex; flex-wrap: wrap; gap: 16px; }
 .footer-bottom nav a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; }
 .seller-card img { object-fit: cover; background: var(--surface-2); }
