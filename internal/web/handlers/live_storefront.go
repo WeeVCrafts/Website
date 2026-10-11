@@ -237,6 +237,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		component = pages.Home(page)
 	case r.URL.Path == "/categories":
 		component = pages.Categories(page)
+	case strings.HasPrefix(r.URL.Path, "/categories/"):
+		component = pages.Listing(page)
 	case r.URL.Path == "/makers":
 		component = pages.Makers(page)
 	case r.URL.Path == "/brands":
@@ -466,7 +468,7 @@ func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *
 }
 
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
-	return path == "/" || path == "/categories" || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+	return path == "/" || path == "/categories" || strings.HasPrefix(path, "/categories/") || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
 }
 
 func isCustomerAccountRoute(path string) bool {
@@ -530,7 +532,23 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	products := make([]viewmodels.Product, 0)
 	totalResults, currentPage, totalPages := 0, 1, 1
 	var err error
-	if r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" {
+	categoryLanding := strings.HasPrefix(r.URL.Path, "/categories/")
+	if categoryLanding {
+		category = strings.Trim(strings.TrimPrefix(r.URL.Path, "/categories/"), "/")
+		category, _ = url.PathUnescape(category)
+		category = categoryForSearch(category)
+		if category == "" {
+			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
+		}
+		var categoryExists bool
+		if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM categories c WHERE c.slug=$1 AND EXISTS(SELECT 1 FROM products p WHERE p.category_slug=c.slug AND p.status='approved'))`, category).Scan(&categoryExists); err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
+		if !categoryExists {
+			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
+		}
+	}
+	if r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" || categoryLanding {
 		currentPage = listingPage(filters.Get("page"))
 		offersOnly := r.URL.Path == "/deals"
 		categories := make([]string, 0, len(filters["category"]))
@@ -545,7 +563,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		}
 		searchSort := map[string]string{"price-asc": applicationcatalog.SearchSortPriceAsc, "price-desc": applicationcatalog.SearchSortPriceDesc, "newest": applicationcatalog.SearchSortNewest}[sortMode]
 		options := ports.ProductSearchOptions{
-			Query: query, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
+			Query: query, CategorySlug: category, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
 			PriceRange: filters.Get("price"), InStock: hasQueryValue(filters["availability"], "in-stock"),
 			OffersOnly: offersOnly, DatabaseOnly: true, Limit: 24, Offset: (currentPage - 1) * 24,
 		}
@@ -599,6 +617,17 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
+	}
+	if categoryLanding {
+		for _, candidate := range page.Categories {
+			if candidate.Slug == category {
+				page.Title = candidate.Name
+				if strings.TrimSpace(candidate.Description) != "" {
+					page.Description = candidate.Description
+				}
+				break
+			}
+		}
 	}
 	if len(page.Products) == 0 {
 		var hasPublished bool

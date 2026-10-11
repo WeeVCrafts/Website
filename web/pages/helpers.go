@@ -58,7 +58,7 @@ func pageIsIndexable(p viewmodels.CustomerPage) bool {
 	switch {
 	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products", p.Route == "/makers", p.Route == "/our-story", p.Route == "/about", p.Route == "/contact", p.Route == "/shipping", p.Route == "/faq":
 		return true
-	case strings.HasPrefix(p.Route, "/products/"), strings.HasPrefix(p.Route, "/brands/"), strings.HasPrefix(p.Route, "/makers/"):
+	case strings.HasPrefix(p.Route, "/products/"), strings.HasPrefix(p.Route, "/categories/"), strings.HasPrefix(p.Route, "/brands/"), strings.HasPrefix(p.Route, "/makers/"):
 		return true
 	default:
 		return false
@@ -66,15 +66,21 @@ func pageIsIndexable(p viewmodels.CustomerPage) bool {
 }
 
 func websiteStructuredData(p viewmodels.CustomerPage) string {
-	if p.Route != "/" { return "" }
+	if p.Route != "/" {
+		return ""
+	}
 	data := map[string]any{
 		"@context": "https://schema.org",
 		"@graph": []any{
-			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p)+"#website", "name": "Weevcrafts", "alternateName": "WeeVCrafts", "url": pageCanonicalURL(p)},
-			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p)+"#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/favicon.svg")},
+			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": "Weevcrafts", "alternateName": "WeeVCrafts", "url": pageCanonicalURL(p)},
+			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/favicon.svg")},
 		},
 	}
-	encoded, err := json.Marshal(data); if err != nil { return "" }; return string(encoded)
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(encoded)
 }
 
 func pageRobots(p viewmodels.CustomerPage) string {
@@ -148,18 +154,18 @@ func productStructuredData(p viewmodels.CustomerPage) string {
 		availability = "https://schema.org/InStock"
 	}
 	data := map[string]any{
-		"@context": "https://schema.org",
-		"@type": "Product",
-		"name": p.Product.Name,
+		"@context":    "https://schema.org",
+		"@type":       "Product",
+		"name":        p.Product.Name,
 		"description": pageOGDescription(p),
-		"image": []string{absolutePageURL(p, p.Product.ImageURL)},
-		"sku": p.Product.SKU,
+		"image":       []string{absolutePageURL(p, p.Product.ImageURL)},
+		"sku":         p.Product.SKU,
 		"offers": map[string]any{
-			"@type": "Offer",
-			"url": pageCanonicalURL(p),
+			"@type":         "Offer",
+			"url":           pageCanonicalURL(p),
 			"priceCurrency": "INR",
-			"price": fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100),
-			"availability": availability,
+			"price":         fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100),
+			"availability":  availability,
 		},
 	}
 	if strings.TrimSpace(p.Product.Seller) != "" {
