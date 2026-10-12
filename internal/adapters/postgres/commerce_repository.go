@@ -1071,12 +1071,17 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 		return domaincommerce.OrderDetail{}, err
 	}
 	fulfillmentRows, err := r.pool.Query(ctx, `
-		SELECT s.display_name, sf.status, sf.carrier, sf.tracking_number,
-		       sf.last_note, sf.updated_at
-		FROM seller_fulfillments sf
-		JOIN sellers s ON s.id = sf.seller_id
-		WHERE sf.order_id = $1
-		ORDER BY sf.updated_at DESC, sf.id DESC`, detail.ID)
+		SELECT s.display_name, COALESCE(sf.status, 'pending'), COALESCE(sf.carrier, ''), COALESCE(sf.tracking_number, ''),
+		       COALESCE(sf.last_note, ''), COALESCE(sf.updated_at, o.created_at), COALESCE(sf.revision, 0)
+		FROM order_items oi
+		JOIN product_variants v ON v.id = oi.variant_id
+		JOIN products p ON p.id = v.product_id
+		JOIN sellers s ON s.id = p.seller_id
+		JOIN orders o ON o.id = oi.order_id
+		LEFT JOIN seller_fulfillments sf ON sf.order_id = oi.order_id AND sf.seller_id = s.id
+		WHERE oi.order_id = $1
+		GROUP BY s.id, s.display_name, sf.status, sf.carrier, sf.tracking_number, sf.last_note, sf.updated_at, sf.revision, o.created_at
+		ORDER BY COALESCE(sf.updated_at, o.created_at) DESC, s.id DESC`, detail.ID)
 	if err != nil {
 		return domaincommerce.OrderDetail{}, err
 	}
@@ -1084,7 +1089,7 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	detail.Fulfillments = make([]domaincommerce.OrderFulfillment, 0)
 	for fulfillmentRows.Next() {
 		var fulfillment domaincommerce.OrderFulfillment
-		if err := fulfillmentRows.Scan(&fulfillment.SellerName, &fulfillment.Status, &fulfillment.Carrier, &fulfillment.TrackingNumber, &fulfillment.LastNote, &fulfillment.UpdatedAt); err != nil {
+		if err := fulfillmentRows.Scan(&fulfillment.SellerName, &fulfillment.Status, &fulfillment.Carrier, &fulfillment.TrackingNumber, &fulfillment.LastNote, &fulfillment.UpdatedAt, &fulfillment.Revision); err != nil {
 			return domaincommerce.OrderDetail{}, err
 		}
 		detail.Fulfillments = append(detail.Fulfillments, fulfillment)

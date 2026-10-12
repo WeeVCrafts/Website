@@ -49,6 +49,13 @@ templ OrderShipmentProgress(order viewmodels.Order) {
   </section>
 }
 
+templ OrderStatusRegion(order viewmodels.Order) {
+  <div data-order-status-region data-order-number={ order.Number }>
+    <div class="order-detail-status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span><h2>{ orderStatusTitle(order) }</h2><p>{ orderStatusCopy(order) }</p></div>
+    @OrderShipmentProgress(order)
+  </div>
+}
+
 templ OrderPaymentRecovery(p viewmodels.CustomerPage) {
   if p.SelectedOrder.State == "pending_payment" && p.PaymentReady {
     <section class="utility-card"><h2>Complete your payment</h2><p>Your order is saved. Continue payment for this order without creating another one.</p>

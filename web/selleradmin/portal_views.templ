@@ -82,7 +82,21 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 		</form>
 		<section class="seller-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">category</span><span><h2>Product catalogue</h2><p>Review listings, pricing, stock and available row actions.</p></span></div></div><div class="seller-table-scroll"><div class="ui-table-region" tabindex="0" role="region" aria-label="Product catalogue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>
 			for _, product := range p.Products {
-				<tr><td data-label="Product"><b title={ product.Name }>{ product.Name }</b></td><td data-label="SKU">{ product.SKU }</td><td data-label="Category">{ product.Category }</td><td data-label="Price">{ product.Price }</td><td data-label="Stock">{ product.Stock }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td><td data-label="Actions" class="row-actions"><details><summary>Manage product</summary>
+				<tr><td data-label="Product"><div class="seller-product-cell">
+					if product.Image != "" {
+						<img class="seller-product-thumb" width="56" height="56" src={ product.Image } alt={ product.Name } loading="lazy"/>
+					} else {
+						<span class="seller-product-thumb seller-product-thumb--empty" role="img" aria-label={ product.Name + " image unavailable" }>No image</span>
+					}
+					<span>
+						if p.CanProductWrite && product.Status != "archived" {
+							<a class="seller-product-link" href={ "/seller-admin/products/" + product.ID + "/edit" }>{ product.Name }</a>
+						} else {
+							<b title={ product.Name }>{ product.Name }</b>
+						}
+						<small>{ components.StatusLabel(product.Status) }</small>
+					</span>
+				</div></td><td data-label="SKU">{ product.SKU }</td><td data-label="Category">{ product.Category }</td><td data-label="Price">{ product.Price }</td><td data-label="Stock">{ product.Stock }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td><td data-label="Actions" class="row-actions"><details><summary>Manage product</summary>
 					if p.CanProductWrite && product.Status != "archived" {
 						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit product</a>
 						<form method="post" action="/seller-admin/products/archive" data-confirm="Archive this product? It will be hidden from customers while past orders remain available."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to archive" required/><button class="seller-button danger" type="submit">Archive</button></form>
@@ -237,9 +251,11 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 templ PortalOrders(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		@SellerOrderStage(p, "new", "New")
-		@SellerOrderStage(p, "processing", "Processing / Packing")
+		@SellerOrderStage(p, "processing", "Processing")
+		@SellerOrderStage(p, "packing", "Packing")
 		@SellerOrderStage(p, "shipped", "Shipped")
-		@SellerOrderStage(p, "delivered", "Delivered / Completed")
+		@SellerOrderStage(p, "out_for_delivery", "Ready to deliver")
+		@SellerOrderStage(p, "delivered", "Delivered")
 	}
 }
 
@@ -285,8 +301,14 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 
 templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 	<article class="seller-panel"><h2>Fulfilment &amp; tracking</h2>
-		if p.CanFulfill && p.OrderDetail.Status != "delivered" {
-			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><label>Status<select name="status"><option value={ sellerNextFulfillmentStatus(p.OrderDetail.Status) }>{ sellerFulfillmentLabel(sellerNextFulfillmentStatus(p.OrderDetail.Status)) }</option></select></label><label>Carrier<select name="carrier" required>
+		if reason := sellerFulfillmentBlockReason(p.OrderDetail.OrderStatus, p.OrderDetail.Payment); reason != "" {
+			<p class="seller-notice" role="alert">{ reason }</p>
+		} else if p.CanFulfill && p.OrderDetail.Status != "delivered" {
+			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill" data-fulfillment-form><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><input type="hidden" name="expected_revision" value={ p.OrderDetail.Revision }/><label>Status<select name="status" aria-describedby="fulfilment-help">
+				for _, option := range sellerFulfillmentOptions(p.OrderDetail.Status) {
+					<option value={ option } selected?={ sellerFulfillmentSelected(p.OrderDetail.Status, option) } disabled?={ sellerFulfillmentDisabled(p.OrderDetail.Status, option) }>{ sellerFulfillmentLabel(option) }</option>
+				}
+			</select></label><p id="fulfilment-help" class="seller-form-note">Choose the next stage. The committed stage is shown here after every save.</p><label>Carrier<select name="carrier" required>
 				for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
 					<option value={ carrier } selected?={ p.OrderDetail.Carrier == carrier }>{ carrier }</option>
 				}

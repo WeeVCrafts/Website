@@ -24,6 +24,9 @@ type AdminPage struct {
 	SupportCases                                                                     []AdminSupportCase
 	Reviews                                                                          []AdminReview
 	Campaigns                                                                        []AdminCampaign
+	PromotionDraft                                                                   PromotionDraft
+	PromotionError                                                                   string
+	PromotionCodeError                                                               bool
 	AuditEntries                                                                     []AdminAuditEntry
 	Configs                                                                          []AdminConfig
 	RoleAssignments                                                                  []domainidentity.RoleAssignment
@@ -71,7 +74,7 @@ type AdminInventory struct {
 }
 
 type AdminOrder struct {
-	Number, Date, Customer, Items, Value, Type, Destination, Fulfillment, Delivery, RTO string
+	Number, Date, Customer, Items, Value, Type, Destination, Status, PaymentStatus, Fulfillment, Delivery, RTO string
 }
 
 type AdminReturn struct {
@@ -99,6 +102,45 @@ type AdminReview struct {
 type AdminCampaign struct {
 	ID, Name, Description, Code, Type, Value, UsageLimit, UsageCount string
 	Start, End, StartsOn, EndsOn, Status, Channel, Reach, Revenue    string
+	TargetingMode                                                    string
+	SelectedProductIDs                                               []string
+}
+
+type PromotionDraft struct {
+	ID, Name, Description, Code, Type, Value, StartsOn, EndsOn, UsageLimit, TargetingMode string
+	SelectedProductIDs                                                                    []string
+}
+
+func (c AdminCampaign) HasProduct(id string) bool {
+	for _, selected := range c.SelectedProductIDs {
+		if selected == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (p PromotionDraft) HasProduct(id string) bool {
+	for _, selected := range p.SelectedProductIDs {
+		if selected == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (p PromotionDraft) DiscountType() string {
+	if p.Type == "" {
+		return "percentage"
+	}
+	return p.Type
+}
+
+func (p PromotionDraft) Targeting() string {
+	if p.TargetingMode == "" {
+		return "all"
+	}
+	return p.TargetingMode
 }
 
 type AdminAuditEntry struct {
@@ -157,14 +199,14 @@ type SellerAdminInventory struct {
 }
 
 type SellerAdminOrder struct {
-	SellerID, Number, Date, Customer, Items, Value, Type, Payment, Status, Destination, Image, NextStatus string
+	SellerID, Number, Date, Customer, Items, Value, Type, Payment, Status, Destination, Image, NextStatus, Revision string
 }
 
 type SellerAdminOrderDetail struct {
-	SellerID, Number, Date, Customer, Status, Payment, Carrier, TrackingNumber, Note string
-	SellerName, RecipientName, Line1, Line2, City, State, PostalCode, CountryCode    string
-	Subtotal, Currency                                                               string
-	Items                                                                            []SellerAdminOrderItem
+	SellerID, Number, Date, Customer, OrderStatus, Status, Payment, Carrier, TrackingNumber, Note, Revision string
+	SellerName, RecipientName, Line1, Line2, City, State, PostalCode, CountryCode                           string
+	Subtotal, Currency                                                                                      string
+	Items                                                                                                   []SellerAdminOrderItem
 }
 
 type SellerAdminOrderItem struct {

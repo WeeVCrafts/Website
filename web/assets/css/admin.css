@@ -270,6 +270,20 @@ select { padding: 0 25px 0 9px; }
 .admin-product-editor-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .admin-product-editor-panel { margin-top: 14px; }
 .admin-product-editor-form select { appearance: auto; }
+.promotion-targeting { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--admin-line); border-radius: 8px; background: #fffdf8; }
+.promotion-targeting legend { padding: 0 5px; color: var(--admin-navy); font-weight: 700; }
+.promotion-choice { display: flex !important; grid-template-columns: auto 1fr; align-items: center; gap: 8px !important; font-weight: 600 !important; }
+.promotion-choice input { width: auto; min-height: auto; accent-color: var(--admin-red); }
+.promotion-product-picker { display: grid; gap: 7px; margin-top: 4px; padding: 10px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; }
+.promotion-product-options { display: grid; gap: 5px; max-height: 260px; overflow: auto; padding-right: 3px; }
+.promotion-product-option { display: grid !important; grid-template-columns: auto 48px minmax(0,1fr); align-items: center; gap: 8px !important; padding: 6px; border: 1px solid transparent; border-radius: 6px; font-weight: 500 !important; }
+.promotion-product-option:hover, .promotion-product-option:focus-within { border-color: var(--admin-line); background: #faf8f4; }
+.promotion-product-option input { width: auto; min-height: auto; accent-color: var(--admin-red); }
+.promotion-product-option img { width: 48px; height: 48px; object-fit: cover; border-radius: 5px; background: #f3efe8; }
+.promotion-product-option span { display: grid; min-width: 0; gap: 2px; }
+.promotion-product-option b, .promotion-product-option small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.promotion-product-option small { color: var(--admin-muted); font-size: 11px; font-weight: 400; }
+.admin-product-editor-form .field-error { color: #9d2e2e; font-size: 11px; font-weight: 700; }
 .product-media-upload { display: grid; gap: 10px; margin-top: 12px; padding: 14px; }
 .product-media-upload legend { padding: 0 5px; font-weight: 700; }
 .product-media-upload label { display: grid; gap: 5px; font-size: 11px; font-weight: 700; }

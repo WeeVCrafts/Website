@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -32,12 +33,16 @@ func checkoutSellerCount(items []viewmodels.CartItem) int {
 type shipmentStep struct{ Label, Class, Icon, State string }
 
 func shipmentSteps(status string) []shipmentStep {
-	current := map[string]int{"pending": 0, "processing": 1, "shipped": 2, "delivered": 3}[status]
-	labels := []string{"Order confirmed", "Preparing your parcel", "Shipped", "Delivered"}
+	stage, ok := domaincommerce.ParseFulfillmentStage(status)
+	if !ok {
+		stage = domaincommerce.FulfillmentPending
+	}
+	current := stage.Index()
+	labels := []string{"Order confirmed", "Processing", "Packing", "Shipped", "Ready to deliver", "Delivered"}
 	steps := make([]shipmentStep, len(labels))
 	for i, label := range labels {
 		steps[i] = shipmentStep{Label: label, Icon: "radio_button_unchecked", State: "Next"}
-		if i < current || status == "delivered" {
+		if i < current || stage == domaincommerce.FulfillmentDelivered {
 			steps[i].Class = "done"
 			steps[i].Icon = "check_circle"
 			steps[i].State = "Complete"

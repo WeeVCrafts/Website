@@ -462,6 +462,12 @@ func firstOrder(orders []viewmodels.Order) viewmodels.Order {
 }
 
 func orderStatusTitle(order viewmodels.Order) string {
+	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
+	case "packing":
+		return "Your maker is packing your order."
+	case "ready_to_deliver":
+		return "Your order is ready to deliver."
+	}
 	switch orderState(order) {
 	case "pending_payment":
 		return "Your order is awaiting payment."
@@ -481,6 +487,12 @@ func orderStatusTitle(order viewmodels.Order) string {
 }
 
 func orderStatusCopy(order viewmodels.Order) string {
+	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
+	case "packing":
+		return "Your maker is preparing the parcel for its next journey."
+	case "ready_to_deliver":
+		return "The parcel is with the delivery route and will arrive soon."
+	}
 	switch orderState(order) {
 	case "pending_payment":
 		return "Your order is saved. Check payment status before placing another order."

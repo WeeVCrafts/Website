@@ -24,16 +24,20 @@ func (r *CommerceRepository) ListAdminOrders(ctx context.Context, actorID int64,
 		       CASE WHEN POSITION('@' IN u.email) > 1
 		            THEN LEFT(u.email, 1) || '***@' || SPLIT_PART(u.email, '@', 2)
 		            ELSE '***' END,
-		       COALESCE(pa.status, 'unrecorded'), COALESCE(sf.status, 'pending'),
+		       COALESCE(pa.status, 'unrecorded'), COALESCE((SELECT CASE
+				WHEN bool_and(COALESCE(sf2.status,'pending')='delivered') THEN 'delivered'
+				WHEN bool_and(COALESCE(sf2.status,'pending') IN ('out_for_delivery','delivered')) THEN 'out_for_delivery'
+				WHEN bool_and(COALESCE(sf2.status,'pending') IN ('shipped','out_for_delivery','delivered')) THEN 'shipped'
+				WHEN bool_or(COALESCE(sf2.status,'pending')='packing') THEN 'packing'
+				WHEN bool_or(COALESCE(sf2.status,'pending')='processing') THEN 'processing'
+				ELSE 'pending' END
+				FROM order_items oi2 JOIN product_variants pv2 ON pv2.id=oi2.variant_id JOIN products p2 ON p2.id=pv2.product_id LEFT JOIN seller_fulfillments sf2 ON sf2.order_id=oi2.order_id AND sf2.seller_id=p2.seller_id WHERE oi2.order_id=o.id), 'pending'),
 		       o.total_cents, o.currency, o.created_at
 		FROM orders o
 		JOIN users u ON u.id = o.user_id
 		LEFT JOIN LATERAL (
 			SELECT status FROM payment_attempts WHERE order_id = o.id ORDER BY id DESC LIMIT 1
 		) pa ON TRUE
-		LEFT JOIN LATERAL (
-			SELECT status FROM seller_fulfillments WHERE order_id = o.id ORDER BY updated_at DESC, id DESC LIMIT 1
-		) sf ON TRUE
 		ORDER BY o.created_at DESC, o.id DESC
 		LIMIT $1`, limit)
 	if err != nil {

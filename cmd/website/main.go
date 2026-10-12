@@ -381,6 +381,7 @@ func main() {
 	mux.Handle("/notifications", portalHandler)
 	mux.Handle("/notifications/read", portalHandler)
 	mux.Handle("/ui/notifications", portalHandler)
+	mux.Handle("/ui/admin/orders/status", portalHandler)
 	mux.Handle("/workspaces", portalHandler)
 	mux.Handle("/admin", portalHandler)
 	mux.Handle("/admin/", portalHandler)

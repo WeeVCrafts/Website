@@ -276,15 +276,27 @@ templ PortalSupport(p viewmodels.AdminPage) {
 templ PortalMarketing(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">campaign</span><div><h2>Create promotion</h2><p>Campaigns start as drafts. Activate a code to make it available at checkout. Fixed discounts are entered in rupees.</p></div></div></div>
-			<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/create" } x-data="{ discountType: 'percentage' }">
+			if p.PromotionError != "" {
+				<div id="promotion-error" class="admin-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span>{ p.PromotionError } Please review the form and try again; your entries are preserved.</div>
+			}
+			<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/create" } x-data="{ discountType: '{ p.PromotionDraft.DiscountType() }', targetingMode: '{ p.PromotionDraft.Targeting() }', productQuery: '' }">
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-				<label>Campaign name<input name="name" required minlength="3" maxlength="100"/></label>
-				<label>Description<textarea name="description" maxlength="2000"></textarea></label>
-				<label>Coupon code<input name="code" required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/></label>
-				<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage">Percent off</option><option value="fixed">Amount off</option><option value="free_shipping">Free shipping</option></select></label>
-				<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'" value="10"/></label>
-				<label>Starts on<input name="starts_on" type="date"/></label><label>Ends on<input name="ends_on" type="date"/></label>
-				<label>Maximum redemptions<input name="usage_limit" type="number" min="1" step="1"/></label>
+				<label>Campaign name<input name="name" value={ p.PromotionDraft.Name } required minlength="3" maxlength="100"/></label>
+				<label>Description<textarea name="description" maxlength="2000">{ p.PromotionDraft.Description }</textarea></label>
+				<label>Coupon code<input name="code" value={ p.PromotionDraft.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/>
+					if p.PromotionCodeError {
+						<small id="promotion-code-error" class="field-error">That coupon code is already in use. Choose a different code.</small>
+					}
+					<small class="form-hint">Customers enter this code at checkout.</small></label>
+				<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage" selected?={ p.PromotionDraft.Type == "" || p.PromotionDraft.Type == "percentage" }>Percent off</option><option value="fixed" selected?={ p.PromotionDraft.Type == "fixed" }>Amount off</option><option value="free_shipping" selected?={ p.PromotionDraft.Type == "free_shipping" }>Free shipping</option></select></label>
+				<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" value={ p.PromotionDraft.Value } type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'"/></label>
+				<label>Starts on<input name="starts_on" value={ p.PromotionDraft.StartsOn } type="date"/></label><label>Ends on<input name="ends_on" value={ p.PromotionDraft.EndsOn } type="date"/></label>
+				<label>Maximum redemptions<input name="usage_limit" value={ p.PromotionDraft.UsageLimit } type="number" min="1" step="1"/></label>
+				<fieldset class="admin-product-editor-wide promotion-targeting"><legend>Eligible products</legend><p class="form-hint">Coupons are entered at checkout. Choose whether the coupon applies to every published product or selected products.</p><label class="promotion-choice"><input type="radio" name="targeting_mode" value="all" checked?={ p.PromotionDraft.TargetingMode == "" || p.PromotionDraft.TargetingMode == "all" } x-model="targetingMode"/>All products</label><label class="promotion-choice"><input type="radio" name="targeting_mode" value="selected" checked?={ p.PromotionDraft.TargetingMode == "selected" } x-model="targetingMode"/>Selected products</label><div class="promotion-product-picker" x-cloak x-show="targetingMode === 'selected'"><label for="promotion-product-search">Search products</label><input id="promotion-product-search" type="search" x-model="productQuery" placeholder="Search name, seller or SKU"/><div class="promotion-product-options">
+					for _, product := range p.Products {
+						<label class="promotion-product-option" x-show="!productQuery || $el.textContent.toLowerCase().includes(productQuery.toLowerCase())"><input type="checkbox" name="product_ids" value={ product.ID } checked?={ p.PromotionDraft.HasProduct(product.ID) }/><img width="48" height="48" src={ product.Image } alt="" loading="lazy"/><span><b>{ product.Name }</b><small>{ product.Seller } · { product.SKU } · { components.StatusLabel(product.Status) }</small></span></label>
+					}
+				</div><small class="form-hint">Showing the current catalogue page. Use the catalogue search to find another product page.</small></div></fieldset>
 				<button class="admin-button primary" type="submit">Create draft</button>
 			</form>
 		</article>
@@ -292,15 +304,24 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 			<div class="admin-campaign-list">
 				for _, item := range p.Campaigns {
 					<details class="admin-campaign-item"><summary><strong>{ item.Name }</strong><code>{ item.Code }</code><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span><span>{ item.Type }</span><span>{ item.UsageCount } used</span></summary>
-						<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/update" } x-data="{ discountType: $el.querySelector('[name=discount_type]').value }">
+						<form class="admin-product-editor-form" method="post" action={ p.PortalRoot + "/marketing/update" } x-data="{ discountType: '{ item.Type }', targetingMode: '{ item.TargetingMode }', productQuery: '' }">
 							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="promotion_id" value={ item.ID }/>
 							<label>Campaign name<input name="name" value={ item.Name } required minlength="3" maxlength="100"/></label>
 							<label>Description<textarea name="description" maxlength="2000">{ item.Description }</textarea></label>
-							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/></label>
+							<label>Coupon code<input name="code" value={ item.Code } required minlength="3" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_\x2D]{2,39}"/>
+								if p.PromotionCodeError && p.PromotionDraft.ID == item.ID {
+									<small id={ "promotion-code-error-" + item.ID } class="field-error">That coupon code is already in use. Choose a different code.</small>
+								}
+							</label>
 							<label>Discount type<select name="discount_type" x-model="discountType"><option value="percentage" selected?={ item.Type == "percentage" }>Percent off</option><option value="fixed" selected?={ item.Type == "fixed" }>Amount off</option><option value="free_shipping" selected?={ item.Type == "free_shipping" }>Free shipping</option></select></label>
 							<label x-cloak x-show="discountType !== 'free_shipping'">Discount value<input name="discount_value" value={ item.Value } type="number" x-bind:min="discountType === 'percentage' ? 1 : 0.01" x-bind:max="discountType === 'percentage' ? 100 : null" x-bind:step="discountType === 'percentage' ? 1 : 0.01" x-bind:required="discountType !== 'free_shipping'" x-bind:disabled="discountType === 'free_shipping'"/></label>
 							<label>Starts on<input name="starts_on" value={ item.StartsOn } type="date"/></label><label>Ends on<input name="ends_on" value={ item.EndsOn } type="date"/></label>
 							<label>Maximum redemptions<input name="usage_limit" value={ item.UsageLimit } type="number" min="1" step="1"/></label>
+							<fieldset class="admin-product-editor-wide promotion-targeting"><legend>Eligible products</legend><p class="form-hint">Changing the campaign name keeps its internal link stable. Customers enter the coupon at checkout.</p><label class="promotion-choice"><input type="radio" name="targeting_mode" value="all" checked?={ item.TargetingMode == "" || item.TargetingMode == "all" } x-model="targetingMode"/>All products</label><label class="promotion-choice"><input type="radio" name="targeting_mode" value="selected" checked?={ item.TargetingMode == "selected" } x-model="targetingMode"/>Selected products</label><div class="promotion-product-picker" x-cloak x-show="targetingMode === 'selected'"><label for={ "promotion-product-search-" + item.ID }>Search products</label><input id={ "promotion-product-search-" + item.ID } type="search" x-model="productQuery" placeholder="Search name, seller or SKU"/><div class="promotion-product-options">
+								for _, product := range p.Products {
+									<label class="promotion-product-option" x-show="!productQuery || $el.textContent.toLowerCase().includes(productQuery.toLowerCase())"><input type="checkbox" name="product_ids" value={ product.ID } checked?={ item.HasProduct(product.ID) }/><img width="48" height="48" src={ product.Image } alt="" loading="lazy"/><span><b>{ product.Name }</b><small>{ product.Seller } · { product.SKU } · { components.StatusLabel(product.Status) }</small></span></label>
+								}
+							</div></div></fieldset>
 							<p>Current schedule: { item.Start } – { item.End }. Applies to: { item.Channel }.</p>
 							<button class="admin-button primary" type="submit">Save changes</button>
 						</form>
@@ -385,15 +406,21 @@ templ PortalSellerList(p viewmodels.AdminPage) {
 
 templ PortalOrderList(p viewmodels.AdminPage) {
 	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><div><h2>Recent orders</h2><p>Marketplace order status and customer totals.</p></div></div></div>
-		<div class="ui-table-region" role="region" tabindex="0" aria-label="Order queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Status</th></tr></thead><tbody>
-			for _, order := range p.Orders {
-				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span></td></tr>
+		@OrderQueueRegion(p.Orders)
+	</article>
+}
+
+templ OrderQueueRegion(orders []viewmodels.AdminOrder) {
+	<div data-admin-orders-region>
+		<div class="ui-table-region" role="region" tabindex="0" aria-label="Order queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Order status</th><th scope="col">Payment status</th><th scope="col">Fulfilment stage</th></tr></thead><tbody>
+			for _, order := range orders {
+				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span></td></tr>
 			}
 		</tbody></table></div>
-			if len(p.Orders) == 0 && p.DataWarning == "" {
-				@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
-			}
-	</article>
+		if len(orders) == 0 {
+			@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
+		}
+	</div>
 }
 
 templ PortalReturnList(p viewmodels.AdminPage) {

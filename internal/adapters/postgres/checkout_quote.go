@@ -35,8 +35,8 @@ func checkoutDiscount(ctx context.Context, q catalogProductQuerier, userID, cart
 		return
 	}
 	var eligible int64
-	err = q.QueryRow(ctx, `SELECT COALESCE(SUM(ci.quantity*pv.price_cents),0) FROM cart_items ci JOIN product_variants pv ON pv.id=ci.variant_id
-	 WHERE ci.cart_id=$1 AND (NOT EXISTS(SELECT 1 FROM promotion_products WHERE promotion_id=$2)
+	err = q.QueryRow(ctx, `SELECT COALESCE(SUM(ci.quantity*pv.price_cents),0) FROM cart_items ci JOIN product_variants pv ON pv.id=ci.variant_id JOIN products p ON p.id=pv.product_id
+	 WHERE ci.cart_id=$1 AND (p.targeting_mode='all'
 	 OR EXISTS(SELECT 1 FROM promotion_products WHERE promotion_id=$2 AND product_id=pv.product_id))`, cartID, promotionID).Scan(&eligible)
 	if err != nil {
 		return

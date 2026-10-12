@@ -462,3 +462,7 @@ html {scroll-padding-block-start:90px;}
 .confirmation-help {margin-top:24px;color:var(--muted);}
 .confirmation-help a {text-decoration:underline;color:var(--forest);}
 @media(max-width:600px) { .order-confirmation {padding-block:28px 40px;} .confirmation-summary {grid-template-columns:1fr;padding:20px;} .confirmation-summary > div + div {border-left:0;border-top:1px solid #d5e4d1;padding:20px 0 0;} .confirmation-progress {gap:12px 4px;} .confirmation-progress strong,.confirmation-progress small {font-size:12px !important;} .confirmation-actions > a {width:100%;} }
+
+.order-refresh-state {display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:28px;margin:8px 0 0;color:var(--muted);font-size:12px;}
+.order-refresh-state.is-error {color:var(--terracotta);}
+.order-refresh-retry {min-height:32px;padding-inline:8px;text-decoration:underline;}

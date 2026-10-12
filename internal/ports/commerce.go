@@ -24,6 +24,7 @@ var (
 	ErrVariantReservedStock = errors.New("cannot archive a variant with reserved stock")
 	ErrCouponInvalid        = errors.New("coupon is invalid or unavailable")
 	ErrQuoteChanged         = errors.New("checkout total changed; review a fresh quote")
+	ErrFulfillmentConflict  = errors.New("fulfilment changed; reload the latest order")
 )
 
 type CatalogManagementRepository interface {
@@ -94,6 +95,12 @@ type InventoryRepository interface {
 type SellerOrderRepository interface {
 	ListSellerOrders(ctx context.Context, userID int64) ([]domaincommerce.SellerOrder, error)
 	UpdateSellerFulfillment(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string) error
+}
+
+// SellerFulfillmentRevisionRepository is optional so older test doubles and
+// adapters remain source-compatible while production uses stale-form guards.
+type SellerFulfillmentRevisionRepository interface {
+	UpdateSellerFulfillmentWithRevision(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string, expectedRevision int64) error
 }
 
 type FinanceRepository interface {

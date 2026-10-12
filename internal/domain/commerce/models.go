@@ -186,6 +186,7 @@ type SellerOrder struct {
 	Carrier             string
 	TrackingNumber      string
 	LastNote            string
+	FulfillmentRevision int64
 	CreatedAt           time.Time
 	Items               []SellerOrderItem
 }
@@ -296,6 +297,7 @@ type OrderFulfillment struct {
 	TrackingNumber string    `json:"tracking_number"`
 	LastNote       string    `json:"last_note"`
 	UpdatedAt      time.Time `json:"updated_at"`
+	Revision       int64     `json:"revision"`
 }
 
 type PaymentIntent struct {

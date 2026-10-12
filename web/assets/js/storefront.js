@@ -1004,6 +1004,58 @@
     }
   }
 
+  function startOrderStatusRefresh() {
+    let region = document.querySelector("[data-order-status-region]");
+    if (!region || !region.dataset.orderNumber) return;
+    let timer = null;
+    let busy = false;
+    const refresh = async () => {
+      if (busy || document.visibilityState !== "visible") return;
+      busy = true;
+      try {
+        const response = await fetch("/ui/orders/status?order=" + encodeURIComponent(region.dataset.orderNumber), { headers: { Accept: "text/html" }, credentials: "same-origin" });
+        if (!response.ok) throw new Error("refresh failed");
+        const html = await response.text();
+        const parsed = document.createRange().createContextualFragment(html);
+        const next = parsed.querySelector("[data-order-status-region]");
+        if (next) {
+          const active = document.activeElement;
+          region.replaceWith(next);
+          region = next;
+          if (active && active.id) document.getElementById(active.id)?.focus({ preventScroll: true });
+        }
+        let state = document.querySelector("[data-order-refresh-state]");
+        if (state) { state.querySelector("[data-order-refresh-message]")?.replaceChildren(document.createTextNode("Updated just now")); state.classList.remove("is-error"); const retry = state.querySelector("[data-order-refresh-retry]"); if (retry) retry.hidden = true; }
+      } catch (_) {
+        const state = document.querySelector("[data-order-refresh-state]");
+        if (state) { state.querySelector("[data-order-refresh-message]")?.replaceChildren(document.createTextNode("Live update unavailable")); state.classList.add("is-error"); const retry = state.querySelector("[data-order-refresh-retry]"); if (retry) retry.hidden = false; }
+      } finally {
+        busy = false;
+      }
+    };
+    const schedule = () => { if (timer) global.clearInterval(timer); timer = global.setInterval(refresh, 15000); };
+    const state = document.createElement("p");
+    state.className = "order-refresh-state";
+    state.dataset.orderRefreshState = "true";
+    state.setAttribute("role", "status");
+    const message = document.createElement("span");
+    message.dataset.orderRefreshMessage = "true";
+    message.textContent = "Live updates every 15 seconds";
+    state.appendChild(message);
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "text-button order-refresh-retry";
+    retry.dataset.orderRefreshRetry = "true";
+    retry.textContent = "Retry";
+    retry.hidden = true;
+    retry.addEventListener("click", refresh);
+    state.appendChild(retry);
+    region.parentElement?.insertBefore(state, region);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+    refresh();
+    schedule();
+  }
+
   async function start() {
     const siteHeader = document.querySelector('.site-header');
     if (siteHeader) {
@@ -1066,6 +1118,7 @@
       // and account state go through the JSON API.
       if (authenticated && ["/cart", "/wishlist"].includes(global.location.pathname)) await hydrateCart();
       if (global.location.pathname === "/orders") await hydrateOrders();
+      startOrderStatusRefresh();
       await refreshCounts();
       try {
         const authNotice = global.sessionStorage.getItem("weevcrafts_auth_notice");

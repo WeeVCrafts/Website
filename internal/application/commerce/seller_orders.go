@@ -11,6 +11,7 @@ import (
 )
 
 var ErrInvalidSellerFulfillment = errors.New("seller fulfillment is invalid")
+var ErrStaleSellerFulfillment = errors.New("seller fulfillment has changed")
 
 type SellerOrderService struct {
 	repository  ports.SellerOrderRepository
@@ -34,6 +35,10 @@ func (s *SellerOrderService) List(ctx context.Context, userID int64) ([]domainco
 }
 
 func (s *SellerOrderService) UpdateFulfillment(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string) error {
+	return s.UpdateFulfillmentWithRevision(ctx, userID, sellerID, orderNumber, status, carrier, trackingNumber, note, -1)
+}
+
+func (s *SellerOrderService) UpdateFulfillmentWithRevision(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string, expectedRevision int64) error {
 	if !s.sellerAllowed(ctx, userID, domaincommerce.SellerPermissionOrderFulfill) {
 		return ports.ErrForbidden
 	}
@@ -45,11 +50,18 @@ func (s *SellerOrderService) UpdateFulfillment(ctx context.Context, userID, sell
 	carrier = strings.TrimSpace(carrier)
 	trackingNumber = strings.TrimSpace(trackingNumber)
 	note = strings.TrimSpace(note)
-	if orderNumber == "" || len(orderNumber) > 120 || (status != "processing" && status != "shipped" && status != "delivered") || len(carrier) > 80 || len(trackingNumber) > 120 || len(note) > 500 {
+	if orderNumber == "" || len(orderNumber) > 120 || len(carrier) > 80 || len(trackingNumber) > 120 || len(note) > 500 {
 		return ErrInvalidSellerFulfillment
 	}
-	if status == "shipped" && len(trackingNumber) < 3 {
+	stage, ok := domaincommerce.ParseFulfillmentStage(status)
+	if !ok || stage == domaincommerce.FulfillmentPending {
 		return ErrInvalidSellerFulfillment
+	}
+	if stage.Index() >= domaincommerce.FulfillmentShipped.Index() && (len(carrier) < 2 || len(trackingNumber) < 3) {
+		return ErrInvalidSellerFulfillment
+	}
+	if revised, ok := s.repository.(ports.SellerFulfillmentRevisionRepository); ok && expectedRevision >= 0 {
+		return revised.UpdateSellerFulfillmentWithRevision(ctx, userID, sellerID, orderNumber, status, carrier, trackingNumber, note, expectedRevision)
 	}
 	return s.repository.UpdateSellerFulfillment(ctx, userID, sellerID, orderNumber, status, carrier, trackingNumber, note)
 }

@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,6 +23,7 @@ import (
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
@@ -262,10 +264,10 @@ func sellerOrderProjectionStatus(r *http.Request) string {
 	case "new":
 		return "pending"
 	case "ready":
-		return "processing"
+		return "out_for_delivery"
 	case "rto":
 		return "rto"
-	case "pending", "processing", "shipped", "delivered":
+	case "pending", "processing", "packing", "shipped", "out_for_delivery", "delivered":
 		return r.URL.Query().Get("tab")
 	}
 	return ""
@@ -314,6 +316,10 @@ func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionS
 
 func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = projectionRequest(r)
+	if r.URL.Path == "/ui/admin/orders/status" && r.Method == http.MethodGet {
+		h.adminOrderStatusRefresh(w, r)
+		return
+	}
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
 		if serveUploadedAsset(w, r) {
 			return
@@ -460,6 +466,28 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *LivePortalHandler) adminOrderStatusRefresh(w http.ResponseWriter, r *http.Request) {
+	session, ok := h.session(r)
+	if !ok {
+		http.Error(w, "Sign in to refresh order status", http.StatusUnauthorized)
+		return
+	}
+	roles := h.userRoles(r, session.UserID)
+	allowed := false
+	for _, role := range roles {
+		if role == domainidentity.RoleAdmin || role == domainidentity.RoleSuperAdmin {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		http.Error(w, "Order status access denied", http.StatusForbidden)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_ = adminpages.OrderQueueRegion(h.adminOrders(r)).Render(r.Context(), w)
+}
+
 // Keep old bookmarks without retaining separate operational identities.
 func (h *LivePortalHandler) serveRetiredPortal(w http.ResponseWriter, r *http.Request) bool {
 	for _, root := range []string{"/marketplace-admin", "/finance-portal", "/operations-portal", "/support-portal", "/support"} {
@@ -558,10 +586,11 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	page.CanFulfill = isOwner
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
 	page.CanManageStore = isOwner
+	page.Notice = r.URL.Query().Get("notice")
 	detail := &viewmodels.SellerAdminOrderDetail{}
 	var created time.Time
 	var subtotal int64
-	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss  WHERE ss.owner_user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 ) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
+	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,o.status,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(sf.revision,0)::text,COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss  WHERE ss.owner_user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 ) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,sf.revision,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.OrderStatus, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.Revision, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)
@@ -1103,7 +1132,7 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 }
 
 func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewmodels.AdminProduct {
-	rows, err := h.projectionRows(r, "admin-products", `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,p.image_url,p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC`, query)
+	rows, err := h.projectionRows(r, "admin-products", `SELECT p.id,p.name,COALESCE(pv.sku,''),COALESCE(s.display_name,''),c.name,COALESCE(pv.price_cents,p.price_cents),p.status,COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),p.created_at,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE WHERE ($1='' OR p.name ILIKE '%'||$1||'%' OR p.slug ILIKE '%'||$1||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$1||'%') OR COALESCE(s.display_name,'') ILIKE '%'||$1||'%' OR c.name ILIKE '%'||$1||'%' OR p.status ILIKE '%'||$1||'%') ORDER BY p.created_at DESC,p.id DESC`, query)
 	if err != nil {
 		return nil
 	}
@@ -1115,9 +1144,10 @@ func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewm
 		var submitted time.Time
 		var price int64
 		if rows.Scan(&id, &name, &sku, &seller, &category, &price, &status, &image, &submitted, &searchSKUs) == nil {
-			if status != "approved" {
-				image = productImagePreviewURL(image)
-			}
+			// Company operators can inspect private product media while a listing
+			// is in draft/review. The preview endpoint still enforces the session
+			// and product ownership/company-role checks.
+			image = productImagePreviewURL(strings.TrimSpace(image))
 			result = append(result, viewmodels.AdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Seller: seller, Category: category, Price: money(price), Status: status, Submitted: submitted.Format("2 Jan 2006"), Image: image})
 		}
 	}
@@ -1128,18 +1158,31 @@ func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewm
 }
 
 func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder {
-	rows, err := h.projectionRows(r, "admin-orders", `SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status FROM orders o JOIN users u ON u.id=o.user_id WHERE ($1='' OR concat_ws(' ',o.order_number,u.display_name,o.status) ILIKE '%'||$1||'%') ORDER BY o.created_at DESC,o.id DESC`, portalQuery(r.URL.Query().Get("q")))
+	rows, err := h.projectionRows(r, "admin-orders", `
+		SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status,
+		       COALESCE(pa.status,'unrecorded'),
+		       COALESCE((SELECT CASE
+				WHEN bool_and(COALESCE(sf.status,'pending')='delivered') THEN 'delivered'
+				WHEN bool_and(COALESCE(sf.status,'pending') IN ('out_for_delivery','delivered')) THEN 'out_for_delivery'
+				WHEN bool_and(COALESCE(sf.status,'pending') IN ('shipped','out_for_delivery','delivered')) THEN 'shipped'
+				WHEN bool_or(COALESCE(sf.status,'pending')='packing') THEN 'packing'
+				WHEN bool_or(COALESCE(sf.status,'pending')='processing') THEN 'processing'
+				ELSE 'pending' END
+				FROM order_items soi JOIN product_variants spv ON spv.id=soi.variant_id JOIN products sp ON sp.id=spv.product_id LEFT JOIN seller_fulfillments sf ON sf.order_id=soi.order_id AND sf.seller_id=sp.seller_id WHERE soi.order_id=o.id),'pending')
+		FROM orders o JOIN users u ON u.id=o.user_id
+		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
+		WHERE ($1='' OR concat_ws(' ',o.order_number,u.display_name,o.status,COALESCE(pa.status,'')) ILIKE '%'||$1||'%') ORDER BY o.created_at DESC,o.id DESC LIMIT 50`, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 	result := make([]viewmodels.AdminOrder, 0)
 	for rows.Next() {
-		var number, customer, status string
+		var number, customer, status, payment, fulfillment string
 		var created time.Time
 		var total int64
-		if rows.Scan(&number, &created, &customer, &total, &status) == nil {
-			result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Fulfillment: status})
+		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &fulfillment) == nil {
+			result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Status: status, PaymentStatus: payment, Fulfillment: fulfillment})
 		}
 	}
 	return result
@@ -1295,28 +1338,57 @@ func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *htt
 		return
 	}
 	if err != nil {
-		status := http.StatusUnprocessableEntity
-		if strings.Contains(strings.ToLower(err.Error()), "duplicate key") || strings.Contains(err.Error(), "already used") {
-			status = http.StatusConflict
-		}
-		http.Error(w, err.Error(), status)
+		log.Printf("promotion mutation failed request_id=%s action=%s actor=%d: %v", requestID(r), action, session.UserID, err)
+		h.renderPromotionFailure(w, r, session.UserID, domainidentity.Role(requiredRole), root, session.CSRFToken, err, promotionFormFromRequest(r), id)
 		return
 	}
-	if idErr == nil && id > 0 && action != "create" {
+	if idErr == nil && id > 0 && action != "create" && action != "update" {
 		_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,$2,'promotion',$3,$4,jsonb_build_object('status',$5::text))`, strconv.FormatInt(session.UserID, 10), "promotion."+action, strconv.FormatInt(id, 10), r.Header.Get("X-Request-ID"), r.Form.Get("status"))
-	} else {
-		_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'promotion.create','promotion','new',$2,'{}'::jsonb)`, strconv.FormatInt(session.UserID, 10), r.Header.Get("X-Request-ID"))
 	}
 	http.Redirect(w, r, root+"/marketing?notice=Promotion+saved", http.StatusSeeOther)
 }
 
 type promotionForm struct {
-	name, description, code, kind, slug, start, end string
-	value, limit                                    int64
+	name, description, code, kind, slug, start, end, targetingMode string
+	value, limit                                                   int64
+	productIDs                                                     []int64
+}
+
+func requestID(r *http.Request) string {
+	if value := strings.TrimSpace(r.Header.Get("X-Request-ID")); value != "" {
+		return value
+	}
+	return "unassigned"
+}
+
+func promotionFormFromRequest(r *http.Request) promotionForm {
+	form := promotionForm{name: strings.TrimSpace(r.Form.Get("name")), description: strings.TrimSpace(r.Form.Get("description")), code: strings.ToUpper(strings.TrimSpace(r.Form.Get("code"))), kind: strings.TrimSpace(r.Form.Get("discount_type")), start: strings.TrimSpace(r.Form.Get("starts_on")), end: strings.TrimSpace(r.Form.Get("ends_on")), targetingMode: strings.TrimSpace(r.Form.Get("targeting_mode"))}
+	for _, raw := range r.Form["product_ids"] {
+		id, err := strconv.ParseInt(strings.TrimSpace(raw), 10, 64)
+		if err == nil && id > 0 && !containsInt64(form.productIDs, id) {
+			form.productIDs = append(form.productIDs, id)
+		}
+	}
+	return form
+}
+
+func containsInt64(values []int64, wanted int64) bool {
+	for _, value := range values {
+		if value == wanted {
+			return true
+		}
+	}
+	return false
 }
 
 func readPromotionForm(r *http.Request) (promotionForm, error) {
-	f := promotionForm{name: strings.TrimSpace(r.Form.Get("name")), description: strings.TrimSpace(r.Form.Get("description")), code: strings.ToUpper(strings.TrimSpace(r.Form.Get("code"))), kind: strings.TrimSpace(r.Form.Get("discount_type")), start: strings.TrimSpace(r.Form.Get("starts_on")), end: strings.TrimSpace(r.Form.Get("ends_on"))}
+	f := promotionFormFromRequest(r)
+	if f.targetingMode == "" {
+		f.targetingMode = "all"
+	}
+	if f.targetingMode != "all" && f.targetingMode != "selected" {
+		return f, fmt.Errorf("choose whether this coupon applies to all products or selected products")
+	}
 	if len([]rune(f.name)) < 3 || len([]rune(f.name)) > 100 || len([]rune(f.description)) > 2000 || !promotionCodePattern.MatchString(f.code) {
 		return f, fmt.Errorf("enter a campaign name, optional description, and valid 3-40 character coupon code")
 	}
@@ -1427,16 +1499,25 @@ func (h *LivePortalHandler) createPromotion(r *http.Request, actorID int64) erro
 	defer tx.Rollback(r.Context())
 	var id int64
 	start, end := promotionDateArgs(f)
-	if err = tx.QueryRow(r.Context(), `INSERT INTO promotions(slug,name,description,discount_type,discount_value,status,starts_at,ends_at,usage_limit,created_by) VALUES($1,$2,$3,$4,$5,'draft',$6,$7,NULLIF($8,0),$9) RETURNING id`, f.slug, f.name, f.description, f.kind, f.value, start, end, f.limit, actorID).Scan(&id); err != nil {
+	// The slug is an internal stable identifier. Names are intentionally
+	// repeatable, so add a monotonic suffix for each new campaign.
+	f.slug = fmt.Sprintf("%s-%d", f.slug, time.Now().UnixNano())
+	if err = tx.QueryRow(r.Context(), `INSERT INTO promotions(slug,name,description,discount_type,discount_value,status,starts_at,ends_at,usage_limit,targeting_mode,created_by) VALUES($1,$2,$3,$4,$5,'draft',$6,$7,NULLIF($8,0),$9,$10) RETURNING id`, f.slug, f.name, f.description, f.kind, f.value, start, end, f.limit, f.targetingMode, actorID).Scan(&id); err != nil {
 		return err
 	}
 	if _, err = tx.Exec(r.Context(), `INSERT INTO coupons(promotion_id,code,usage_limit) VALUES($1,$2,NULLIF($3,0))`, id, f.code, f.limit); err != nil {
 		return err
 	}
+	if err = savePromotionTargeting(r.Context(), tx, id, f); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'promotion.create','promotion',$2,$3,jsonb_build_object('targeting_mode',$4::text))`, strconv.FormatInt(actorID, 10), strconv.FormatInt(id, 10), requestID(r), f.targetingMode); err != nil {
+		return err
+	}
 	return tx.Commit(r.Context())
 }
 
-func (h *LivePortalHandler) updatePromotion(r *http.Request, id, _ int64) error {
+func (h *LivePortalHandler) updatePromotion(r *http.Request, id, actorID int64) error {
 	f, err := readPromotionForm(r)
 	if err != nil {
 		return err
@@ -1447,7 +1528,7 @@ func (h *LivePortalHandler) updatePromotion(r *http.Request, id, _ int64) error 
 	}
 	defer tx.Rollback(r.Context())
 	start, end := promotionDateArgs(f)
-	result, err := tx.Exec(r.Context(), `UPDATE promotions SET name=$1,slug=$2,description=$3,discount_type=$4,discount_value=$5,starts_at=$6,ends_at=$7,usage_limit=NULLIF($8,0),updated_at=NOW() WHERE id=$9`, f.name, f.slug, f.description, f.kind, f.value, start, end, f.limit, id)
+	result, err := tx.Exec(r.Context(), `UPDATE promotions SET name=$1,description=$2,discount_type=$3,discount_value=$4,starts_at=$5,ends_at=$6,usage_limit=NULLIF($7,0),targeting_mode=$8,updated_at=NOW() WHERE id=$9`, f.name, f.description, f.kind, f.value, start, end, f.limit, f.targetingMode, id)
 	if err != nil {
 		return err
 	}
@@ -1463,7 +1544,99 @@ func (h *LivePortalHandler) updatePromotion(r *http.Request, id, _ int64) error 
 			return err
 		}
 	}
+	if err = savePromotionTargeting(r.Context(), tx, id, f); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'promotion.update','promotion',$2,$3,jsonb_build_object('targeting_mode',$4::text))`, strconv.FormatInt(actorID, 10), strconv.FormatInt(id, 10), requestID(r), f.targetingMode); err != nil {
+		return err
+	}
 	return tx.Commit(r.Context())
+}
+
+func savePromotionTargeting(ctx context.Context, tx pgx.Tx, promotionID int64, f promotionForm) error {
+	if _, err := tx.Exec(ctx, `DELETE FROM promotion_products WHERE promotion_id=$1`, promotionID); err != nil {
+		return err
+	}
+	if f.targetingMode != "selected" {
+		return nil
+	}
+	for _, productID := range f.productIDs {
+		result, err := tx.Exec(ctx, `INSERT INTO promotion_products(promotion_id,product_id) SELECT $1,id FROM products WHERE id=$2 ON CONFLICT DO NOTHING`, promotionID, productID)
+		if err != nil {
+			return err
+		}
+		if result.RowsAffected() == 0 {
+			return fmt.Errorf("selected product %d is no longer available", productID)
+		}
+	}
+	return nil
+}
+
+func promotionDraftFromForm(f promotionForm, id int64, r *http.Request) viewmodels.PromotionDraft {
+	value := strings.TrimSpace(r.Form.Get("discount_value"))
+	if value == "" && f.value > 0 {
+		if f.kind == "fixed" {
+			value = strconv.FormatFloat(float64(f.value)/100, 'f', 2, 64)
+		} else {
+			value = strconv.FormatInt(f.value, 10)
+		}
+	}
+	selected := make([]string, 0, len(f.productIDs))
+	for _, id := range f.productIDs {
+		selected = append(selected, strconv.FormatInt(id, 10))
+	}
+	draftID := ""
+	if id > 0 {
+		draftID = strconv.FormatInt(id, 10)
+	}
+	return viewmodels.PromotionDraft{ID: draftID, Name: f.name, Description: f.description, Code: f.code, Type: f.kind, Value: value, StartsOn: f.start, EndsOn: f.end, UsageLimit: strings.TrimSpace(r.Form.Get("usage_limit")), TargetingMode: f.targetingMode, SelectedProductIDs: selected}
+}
+
+func promotionErrorMessage(err error) string {
+	message := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(message, "coupons_code_lower_key"), strings.Contains(message, "coupons_code_key"), strings.Contains(message, "duplicate key") && strings.Contains(message, "code"):
+		return "That coupon code is already in use. Choose a different code."
+	case strings.Contains(message, "promotions_slug_key"):
+		return "This campaign could not be assigned an internal identifier. Try saving again."
+	case strings.Contains(message, "selected product"):
+		return "One of the selected products is no longer available. Refresh the catalogue and try again."
+	default:
+		return "The promotion could not be saved. Check the highlighted values and try again."
+	}
+}
+
+func (h *LivePortalHandler) renderPromotionFailure(w http.ResponseWriter, r *http.Request, actorID int64, role domainidentity.Role, root, csrf string, err error, form promotionForm, id int64) {
+	pageRequest := requestWithPath(r, root+"/marketing")
+	page := h.adminPage(pageRequest, actorID, role)
+	page.PortalRoot, page.SettlementRoot = root, root+"/finance"
+	page.PortalLabel, page.RoleLabel = portalLabel(role), roleLabel(role)
+	page.DisplayName, page.CSRFToken = h.userDisplayName(r, actorID), csrf
+	page.CanFinance, page.CanSecurity, page.CanManageCatalog = role == domainidentity.RoleAdmin || role == domainidentity.RoleSuperAdmin, role == domainidentity.RoleSuperAdmin, domainidentity.CompanyRole(role)
+	page.PromotionError = promotionErrorMessage(err)
+	page.PromotionCodeError = strings.Contains(page.PromotionError, "coupon code")
+	page.PromotionDraft = promotionDraftFromForm(form, id, r)
+	if id > 0 {
+		for index := range page.Campaigns {
+			if page.Campaigns[index].ID != strconv.FormatInt(id, 10) {
+				continue
+			}
+			draft := page.PromotionDraft
+			page.Campaigns[index].Name = draft.Name
+			page.Campaigns[index].Description = draft.Description
+			page.Campaigns[index].Code = draft.Code
+			page.Campaigns[index].Type = draft.Type
+			page.Campaigns[index].Value = draft.Value
+			page.Campaigns[index].StartsOn = draft.StartsOn
+			page.Campaigns[index].EndsOn = draft.EndsOn
+			page.Campaigns[index].UsageLimit = draft.UsageLimit
+			page.Campaigns[index].TargetingMode = draft.TargetingMode
+			page.Campaigns[index].SelectedProductIDs = draft.SelectedProductIDs
+		}
+		page.PromotionDraft = viewmodels.PromotionDraft{}
+	}
+	page.Notice = ""
+	h.renderAdminComponent(w, r, adminpages.PortalMarketing(page), page)
 }
 
 func promotionDateArgs(f promotionForm) (*time.Time, *time.Time) {
@@ -1558,7 +1731,8 @@ func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCa
 		       COALESCE(to_char(p.ends_at AT TIME ZONE 'UTC', 'DD Mon YYYY'), 'No end date'),
 	       COALESCE(to_char(p.starts_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD'),''),
 	       COALESCE(to_char(p.ends_at AT TIME ZONE 'Asia/Kolkata' - INTERVAL '1 day', 'YYYY-MM-DD'),''),
-	       COUNT(pp.product_id),COALESCE(c.usage_limit,p.usage_limit,0),COALESCE(c.usage_count,0)
+	       COUNT(pp.product_id),COALESCE(c.usage_limit,p.usage_limit,0),COALESCE(c.usage_count,0),p.targeting_mode,
+	       COALESCE(string_agg(pp.product_id::text, ',' ORDER BY pp.product_id),'')
 		FROM promotions p LEFT JOIN promotion_products pp ON pp.promotion_id = p.id
 		LEFT JOIN LATERAL (SELECT code,usage_limit,usage_count FROM coupons WHERE promotion_id=p.id ORDER BY id LIMIT 1) c ON TRUE
 		WHERE ($1='' OR concat_ws(' ',p.name,p.description,c.code,p.status) ILIKE '%'||$1||'%')
@@ -1573,9 +1747,16 @@ func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCa
 		var value int64
 		var productCount int64
 		var usageLimit, usageCount int64
-		if rows.Scan(&item.ID, &item.Name, &item.Description, &item.Code, &item.Type, &value, &item.Status, &item.Start, &item.End, &item.StartsOn, &item.EndsOn, &productCount, &usageLimit, &usageCount) == nil {
+		var selectedIDs, targetingMode string
+		if rows.Scan(&item.ID, &item.Name, &item.Description, &item.Code, &item.Type, &value, &item.Status, &item.Start, &item.End, &item.StartsOn, &item.EndsOn, &productCount, &usageLimit, &usageCount, &targetingMode, &selectedIDs) == nil {
+			item.TargetingMode = targetingMode
+			for _, selected := range strings.Split(selectedIDs, ",") {
+				if strings.TrimSpace(selected) != "" {
+					item.SelectedProductIDs = append(item.SelectedProductIDs, strings.TrimSpace(selected))
+				}
+			}
 			appliesTo := "All eligible products"
-			if productCount > 0 {
+			if targetingMode == "selected" {
 				appliesTo = fmt.Sprintf("%d selected products", productCount)
 			}
 			item.Channel = appliesTo
@@ -1877,7 +2058,7 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		var cost *int64
 		var hasCompareAt bool
 		err = h.queryRow(r, `
-			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,v.cost_price_cents,p.image_url,
+			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,v.cost_price_cents,COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents,cost_price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
@@ -2167,7 +2348,7 @@ func joinPortalWarning(current, warning string) string {
 }
 
 func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
-	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),p.image_url,COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(i.available_quantity,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
+	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(i.available_quantity,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
 	if err != nil {
 		return nil
 	}
@@ -2181,6 +2362,7 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image, &searchSKUs) != nil {
 			return nil
 		}
+		image = productImagePreviewURL(strings.TrimSpace(image))
 		result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image})
 	}
 	if rows.Err() != nil {
@@ -2220,7 +2402,7 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []viewmodels.SellerAdminOrder {
 	rows, err := h.projectionRows(r, "seller-orders", `
 		SELECT o.order_number, o.created_at, u.display_name, COALESCE(SUM(oi.line_total_cents),0),
-		       COALESCE(sf.status,'pending'), COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0)
+		       COALESCE(sf.status,'pending'), COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0), COALESCE(sf.revision,0)
 		FROM orders o
 		JOIN users u ON u.id=o.user_id
 		JOIN order_items oi ON oi.order_id=o.id
@@ -2229,7 +2411,7 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
 		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
 		WHERE o.status IN ('paid','processing','shipped','delivered','pending_payment') AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item JOIN product_variants search_variant ON search_variant.id=search_item.variant_id JOIN products search_product ON search_product.id=search_variant.product_id WHERE search_item.order_id=o.id AND search_product.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR COALESCE(sf.status,'pending')=$3)
-		GROUP BY o.id, u.display_name, sf.status, pa.status
+		GROUP BY o.id, u.display_name, sf.status, sf.revision, pa.status
 		ORDER BY o.created_at DESC, o.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerOrderProjectionStatus(r))
 	if err != nil {
 		return nil
@@ -2239,25 +2421,20 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 	for rows.Next() {
 		var number, customer, status, payment string
 		var created time.Time
-		var total, items int64
-		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &items) == nil {
-			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Destination: "India", Status: status, NextStatus: nextFulfillmentStatus(status), Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
+		var total, items, revision int64
+		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &items, &revision) == nil {
+			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Status: status, NextStatus: nextFulfillmentStatus(status), Revision: strconv.FormatInt(revision, 10), Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
 		}
 	}
 	return result
 }
 
 func nextFulfillmentStatus(status string) string {
-	switch status {
-	case "pending":
-		return "processing"
-	case "processing":
-		return "shipped"
-	case "shipped":
-		return "delivered"
-	default:
+	stage, ok := domaincommerce.ParseFulfillmentStage(status)
+	if !ok {
 		return ""
 	}
+	return string(stage.Next())
 }
 
 func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []viewmodels.SellerAdminReturn {

@@ -887,9 +887,8 @@ templ OrderDetail(p viewmodels.CustomerPage) {
     </section>
     <section class="container order-detail-layout">
       <div class="order-detail-main">
-        <div class="order-detail-status"><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>{ orderStatusTitle(p.SelectedOrder) }</h2><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>
+        @OrderStatusRegion(p.SelectedOrder)
         @OrderPaymentRecovery(p)
-        @OrderShipmentProgress(p.SelectedOrder)
         @OrderDetailRows(p.SelectedOrder.Items)
         if p.SelectedOrder.CanCancel {
           <form class="order-cancel-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/cancel" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Cancel order</button></form>

@@ -9,11 +9,13 @@ import (
 
 func TestNextFulfillmentStatusFollowsOrder(t *testing.T) {
 	tests := map[string]string{
-		"pending":    "processing",
-		"processing": "shipped",
-		"shipped":    "delivered",
-		"delivered":  "",
-		"cancelled":  "",
+		"pending":          "processing",
+		"processing":       "packing",
+		"packing":          "shipped",
+		"shipped":          "out_for_delivery",
+		"out_for_delivery": "delivered",
+		"delivered":        "",
+		"cancelled":        "",
 	}
 	for current, want := range tests {
 		if got := nextFulfillmentStatus(current); got != want {
@@ -55,5 +57,40 @@ func TestReadPromotionFormDiscountTypes(t *testing.T) {
 				t.Fatalf("discount value = %d, want %d", got.value, test.wantValue)
 			}
 		})
+	}
+}
+
+func TestReadPromotionFormTargeting(t *testing.T) {
+	form := url.Values{
+		"name":           {"Selected products"},
+		"code":           {"SELECT10"},
+		"discount_type":  {"percentage"},
+		"discount_value": {"10"},
+		"targeting_mode": {"selected"},
+		"product_ids":    {"12", "12", "bad", "19"},
+	}
+	request := httptest.NewRequest("POST", "/marketing/create", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if err := request.ParseForm(); err != nil {
+		t.Fatal(err)
+	}
+	got, err := readPromotionForm(request)
+	if err != nil {
+		t.Fatalf("readPromotionForm() error = %v", err)
+	}
+	if got.targetingMode != "selected" || len(got.productIDs) != 2 || got.productIDs[0] != 12 || got.productIDs[1] != 19 {
+		t.Fatalf("targeting = %q, product IDs = %#v", got.targetingMode, got.productIDs)
+	}
+}
+
+func TestReadPromotionFormRejectsUnknownTargeting(t *testing.T) {
+	form := url.Values{"name": {"QA campaign"}, "code": {"QA-CODE"}, "discount_type": {"percentage"}, "discount_value": {"10"}, "targeting_mode": {"unknown"}}
+	request := httptest.NewRequest("POST", "/marketing/create", strings.NewReader(form.Encode()))
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if err := request.ParseForm(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readPromotionForm(request); err == nil {
+		t.Fatal("expected unknown targeting mode to fail")
 	}
 }

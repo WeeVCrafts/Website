@@ -79,6 +79,10 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/ui/orders/status" && r.Method == http.MethodGet {
+		h.orderStatusRefresh(w, r)
+		return
+	}
 	if r.URL.Path == "/account/profile/photo" {
 		h.profilePhoto(w, r)
 		return
@@ -325,6 +329,44 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 	h.render(w, r, component)
+}
+
+func (h *LiveStorefrontHandler) orderStatusRefresh(w http.ResponseWriter, r *http.Request) {
+	userID, _, authenticated := h.session(r)
+	if !authenticated || h.orders == nil {
+		http.Error(w, "Sign in to refresh order status", http.StatusUnauthorized)
+		return
+	}
+	number := strings.TrimSpace(r.URL.Query().Get("order"))
+	if number == "" || strings.Contains(number, "/") {
+		http.Error(w, "Order number is required", http.StatusBadRequest)
+		return
+	}
+	detail, err := h.orders.Get(r.Context(), userID, number)
+	if errors.Is(err, ports.ErrOrderNotFound) {
+		http.Error(w, "Order not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, "Order status is temporarily unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_ = pages.OrderStatusRegion(refreshOrderView(detail)).Render(r.Context(), w)
+}
+
+func refreshOrderView(detail domaincommerce.OrderDetail) viewmodels.Order {
+	displayStatus := detail.Status
+	if detail.PaymentStatus == "captured" || detail.PaymentStatus == "paid" {
+		if stage := domaincommerce.AggregateFulfillmentStage(detail.Fulfillments); stage != domaincommerce.FulfillmentPending {
+			displayStatus = string(stage)
+		}
+	}
+	view := viewmodels.Order{Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
+	for _, item := range detail.Items {
+		view.Items = append(view.Items, viewmodels.CartItem{Product: viewmodels.Product{Name: item.ProductName, SKU: item.SKU, PriceCents: item.UnitPriceCents, Price: storefrontMoney(item.UnitPriceCents)}, Quantity: item.Quantity})
+	}
+	return view
 }
 
 func (h *LiveStorefrontHandler) ensureAnonymousCSRF(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -1176,7 +1218,13 @@ func filterSupportMessageAttachments(attachments []domaincommerce.SupportAttachm
 }
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
-	status := displayOrderStatus(order.Status)
+	displayStatus := order.Status
+	if order.PaymentStatus == "captured" || order.PaymentStatus == "paid" {
+		if stage := domaincommerce.AggregateFulfillmentStage(order.Fulfillments); stage != domaincommerce.FulfillmentPending {
+			displayStatus = string(stage)
+		}
+	}
+	status := displayOrderStatus(displayStatus)
 	payment := displayPaymentStatus(order.PaymentStatus, order.Status)
 	view := viewmodels.Order{
 		Shipments: order.Fulfillments,
@@ -1304,8 +1352,12 @@ func displayOrderStatus(status string) string {
 		return "Confirmed"
 	case "processing":
 		return "Processing"
+	case "packing":
+		return "Packing"
 	case "shipped":
 		return "Shipped"
+	case "out_for_delivery":
+		return "Ready to deliver"
 	case "delivered":
 		return "Delivered"
 	case "cancelled":

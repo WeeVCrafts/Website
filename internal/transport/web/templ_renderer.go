@@ -262,6 +262,13 @@ func legacyOrders(items []domaincommerce.Order) []viewmodels.Order {
 
 func legacyOrderDetail(detail domaincommerce.OrderDetail) viewmodels.Order {
 	order := legacyOrders([]domaincommerce.Order{detail.Order})[0]
+	if detail.PaymentStatus == "captured" || detail.PaymentStatus == "paid" {
+		if stage := domaincommerce.AggregateFulfillmentStage(detail.Fulfillments); stage != domaincommerce.FulfillmentPending {
+			order.Status = string(stage)
+			order.State = detail.Status
+		}
+	}
+	order.Shipments = detail.Fulfillments
 	for _, item := range detail.Items {
 		order.Items = append(order.Items, viewmodels.CartItem{Product: viewmodels.Product{Name: item.ProductName, SKU: item.SKU, PriceCents: item.UnitPriceCents, Price: legacyMoney(item.UnitPriceCents), Seller: "Independent maker", ImageURL: "/assets/images/mock/hero.webp"}, Quantity: item.Quantity})
 	}

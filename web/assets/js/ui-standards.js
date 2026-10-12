@@ -201,6 +201,34 @@
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (event.detail>0 && !reduced) { panel.getAnimations().forEach(animation=>animation.cancel()); panel.animate([{opacity:0.65,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'cubic-bezier(0.23,1,0.32,1)'}); } } });
   });
+  function startAdminOrderRefresh() {
+    let region = document.querySelector('[data-admin-orders-region]');
+    if (!region) return;
+    let busy = false;
+    const refresh = async () => {
+      if (busy || document.hidden) return;
+      busy = true;
+      try {
+        const response = await fetch('/ui/admin/orders/status', { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
+        if (!response.ok) throw new Error('refresh failed');
+        const parsed = document.createRange().createContextualFragment(await response.text());
+        const next = parsed.querySelector('[data-admin-orders-region]');
+        if (next) {
+          const active = document.activeElement;
+          region.replaceWith(next);
+          region = next;
+          if (active && active.id) document.getElementById(active.id)?.focus({ preventScroll: true });
+        }
+      } catch (_) {
+        // The current queue remains visible when a background refresh fails.
+      } finally {
+        busy = false;
+      }
+    };
+    setInterval(refresh, 15000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  }
+  startAdminOrderRefresh();
   // Refresh badges across all role portals without exposing conversation bodies.
   async function refreshNotifications() {
     if (document.hidden || !document.querySelector('[data-notification-bell]')) return;

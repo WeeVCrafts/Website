@@ -222,6 +222,9 @@ body.seller-body img { display: block; max-width: 100%; }
 .seller-product-cell b, .seller-product-cell small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seller-product-cell b { color: #314053; font-weight: 600; }
 .seller-product-cell small { color: var(--seller-muted); font-size: 11px; }
+.seller-product-cell .seller-product-thumb--empty { display: grid; width: 35px; height: 38px; grid-row: span 2; place-items: center; border: 1px dashed var(--seller-line); border-radius: 3px; color: var(--seller-muted); background: #faf7f1; font-size: 9px; text-align: center; }
+.seller-product-cell .seller-product-link { overflow: hidden; color: #314053; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.seller-product-cell .seller-product-link:focus-visible { outline: 2px solid var(--seller-green); outline-offset: 2px; }
 .orders-mini .seller-table-head, .orders-mini .seller-table-row { grid-template-columns: 1.35fr 1fr 28px 64px 68px; }
 .seller-chip { display: inline-flex; width: fit-content; align-items: center; justify-content: center; min-height: 20px; padding: 3px 8px; border-radius: 99px; color: #364352; background: #eef0f1; font-size: 11px; white-space: nowrap; }
 .seller-chip.success { color: #137244; background: var(--seller-green-soft); }

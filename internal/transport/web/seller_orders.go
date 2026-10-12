@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -60,7 +61,17 @@ func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
 	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) != "" {
 		carrier = strings.TrimSpace(r.FormValue("custom_carrier"))
 	}
-	err = h.sellerOrderService.UpdateFulfillment(r.Context(), session.UserID, sellerID, r.FormValue("order_number"), r.FormValue("status"), carrier, r.FormValue("tracking_number"), r.FormValue("note"))
+	expectedRevision := int64(-1)
+	if rawRevision := strings.TrimSpace(r.FormValue("expected_revision")); rawRevision != "" {
+		if parsed, parseErr := strconv.ParseInt(rawRevision, 10, 64); parseErr != nil || parsed < 0 {
+			h.renderError(w, http.StatusUnprocessableEntity, "Fulfilment details invalid", "Reload the order before saving this update.")
+			return
+		} else {
+			expectedRevision = parsed
+		}
+	}
+	orderNumber := strings.TrimSpace(r.FormValue("order_number"))
+	err = h.sellerOrderService.UpdateFulfillmentWithRevision(r.Context(), session.UserID, sellerID, orderNumber, r.FormValue("status"), carrier, r.FormValue("tracking_number"), r.FormValue("note"), expectedRevision)
 	if err != nil {
 		switch {
 		case errors.Is(err, applicationcommerce.ErrInvalidSellerFulfillment):
@@ -70,11 +81,13 @@ func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ports.ErrOrderNotFound):
 			h.renderError(w, http.StatusNotFound, "Seller order unavailable", "That order is not part of your seller workspace.")
 		case errors.Is(err, ports.ErrInvalidState):
-			h.renderError(w, http.StatusConflict, "Fulfilment state changed", "Reload the seller order queue before applying another transition.")
+			h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("This order can only move to its next fulfilment stage."))
+		case errors.Is(err, ports.ErrFulfillmentConflict), errors.Is(err, applicationcommerce.ErrStaleSellerFulfillment):
+			h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("This order changed in another session. Review the latest stage and try again."))
 		default:
 			h.renderError(w, http.StatusServiceUnavailable, "Fulfilment unavailable", "We could not save that fulfilment update.")
 		}
 		return
 	}
-	h.redirect(w, r, "/seller/orders")
+	h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("Fulfilment update saved."))
 }

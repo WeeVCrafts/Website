@@ -12,7 +12,7 @@ func StatusTone(status string) string {
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(status), " ", "_")) {
 	case "failed", "payment_failed", "cancelled", "canceled", "rejected", "suspended", "closed", "refunded":
 		return "danger"
-	case "pending", "pending_payment", "pending_review", "processing", "in_progress", "waiting_customer", "requested", "under_review":
+	case "pending", "pending_payment", "pending_review", "processing", "packing", "shipped", "out_for_delivery", "ready_to_deliver", "in_progress", "waiting_customer", "requested", "under_review":
 		return "warning"
 	case "paid", "approved", "active", "available", "delivered", "resolved", "completed", "success":
 		return "success"
@@ -22,6 +22,12 @@ func StatusTone(status string) string {
 }
 
 func StatusLabel(status string) string {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "out_for_delivery":
+		return "Ready to deliver"
+	case "pending":
+		return "New"
+	}
 	label := strings.ReplaceAll(strings.TrimSpace(status), "_", " ")
 	if label == "" {
 		return "Not set"

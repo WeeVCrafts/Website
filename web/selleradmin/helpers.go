@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -24,8 +25,12 @@ func sellerOrdersByStage(orders []viewmodels.SellerAdminOrder, stage string) []v
 		switch order.Status {
 		case "processing":
 			current = "processing"
+		case "packing":
+			current = "packing"
 		case "shipped":
 			current = "shipped"
+		case "out_for_delivery":
+			current = "out_for_delivery"
 		case "delivered":
 			current = "delivered"
 		}
@@ -51,28 +56,53 @@ func sellerCarriers(current string) []string {
 }
 
 func sellerNextFulfillmentStatus(current string) string {
-	switch current {
-	case "pending":
-		return "processing"
-	case "processing":
-		return "shipped"
-	case "shipped":
-		return "delivered"
-	default:
+	stage, ok := domaincommerce.ParseFulfillmentStage(current)
+	if !ok {
 		return ""
 	}
+	return string(stage.Next())
 }
 func sellerFulfillmentLabel(status string) string {
-	switch status {
-	case "processing":
-		return "Processing / Packing"
-	case "shipped":
-		return "Shipped"
-	case "delivered":
-		return "Delivered / Completed"
-	default:
+	stage, ok := domaincommerce.ParseFulfillmentStage(status)
+	if !ok {
 		return status
 	}
+	return stage.Label()
+}
+
+func sellerFulfillmentOptions(current string) []string {
+	options := make([]string, 0, len(domaincommerce.FulfillmentStages))
+	for _, stage := range domaincommerce.FulfillmentStages {
+		options = append(options, string(stage))
+	}
+	return options
+}
+
+func sellerFulfillmentSelected(current, option string) bool {
+	return strings.EqualFold(current, option)
+}
+
+func sellerFulfillmentDisabled(current, option string) bool {
+	if sellerFulfillmentSelected(current, option) {
+		return false
+	}
+	return option != sellerNextFulfillmentStatus(current)
+}
+
+func sellerFulfillmentBlockReason(orderStatus, payment string) string {
+	status := strings.ToLower(strings.TrimSpace(orderStatus))
+	payment = strings.ToLower(strings.TrimSpace(payment))
+	switch {
+	case status == "cancelled":
+		return "This order was cancelled, so fulfilment cannot be advanced."
+	case status == "refunded" || payment == "refunded":
+		return "This order has been refunded, so fulfilment cannot be advanced."
+	case status == "payment_failed" || strings.Contains(payment, "fail"):
+		return "Payment failed. Fulfilment becomes available after a successful payment."
+	case status == "pending_payment" || payment == "pending" || payment == "created":
+		return "Payment is still pending. Fulfilment becomes available after capture."
+	}
+	return ""
 }
 
 func firstSellerReturn(returns []viewmodels.SellerAdminReturn) viewmodels.SellerAdminReturn {
@@ -140,7 +170,7 @@ func sellerStatusClass(value string) string {
 		return "success"
 	case strings.Contains(value, "rejected"), strings.Contains(value, "out of stock"), strings.Contains(value, "cancel"):
 		return "danger"
-	case strings.Contains(value, "review"), strings.Contains(value, "processing"), strings.Contains(value, "shipped"), strings.Contains(value, "pending"), strings.Contains(value, "awaiting"), strings.Contains(value, "new"), strings.Contains(value, "ready"):
+	case strings.Contains(value, "review"), strings.Contains(value, "processing"), strings.Contains(value, "packing"), strings.Contains(value, "shipped"), strings.Contains(value, "pending"), strings.Contains(value, "awaiting"), strings.Contains(value, "new"), strings.Contains(value, "ready"):
 		return "warning"
 	default:
 		return "neutral"
