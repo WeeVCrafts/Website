@@ -596,7 +596,8 @@
   }
 
   function paymentReceipt(orderNumber, message, localSimulator) {
-    global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation?notice=" + encodeURIComponent(message.slice(0,300)));
+    // Confirmation always reads the committed payment/order state from the server.
+    global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation");
   }
 
   function loadRazorpay() {
@@ -1009,8 +1010,9 @@
     if (!region || !region.dataset.orderNumber) return;
     let timer = null;
     let busy = false;
+    let paused = false;
     const refresh = async () => {
-      if (busy || document.visibilityState !== "visible") return;
+      if (busy || paused || document.visibilityState !== "visible") return;
       busy = true;
       try {
         const response = await fetch("/ui/orders/status?order=" + encodeURIComponent(region.dataset.orderNumber), { headers: { Accept: "text/html" }, credentials: "same-origin" });
@@ -1020,12 +1022,10 @@
         const next = parsed.querySelector("[data-order-status-region]");
         if (next) {
           const active = document.activeElement;
-          region.replaceWith(next);
-          region = next;
-          if (active && active.id) document.getElementById(active.id)?.focus({ preventScroll: true });
-        }
+          if (!region.contains(active)) { region.replaceWith(next); region = next; }
+        } else throw new Error("refresh failed");
         let state = document.querySelector("[data-order-refresh-state]");
-        if (state) { state.querySelector("[data-order-refresh-message]")?.replaceChildren(document.createTextNode("Updated just now")); state.classList.remove("is-error"); const retry = state.querySelector("[data-order-refresh-retry]"); if (retry) retry.hidden = true; }
+        if (state) { state.querySelector("[data-order-refresh-message]")?.replaceChildren(document.createTextNode("Last updated " + new Date().toLocaleTimeString())); state.classList.remove("is-error"); const retry = state.querySelector("[data-order-refresh-retry]"); if (retry) retry.hidden = true; }
       } catch (_) {
         const state = document.querySelector("[data-order-refresh-state]");
         if (state) { state.querySelector("[data-order-refresh-message]")?.replaceChildren(document.createTextNode("Live update unavailable")); state.classList.add("is-error"); const retry = state.querySelector("[data-order-refresh-retry]"); if (retry) retry.hidden = false; }
@@ -1050,6 +1050,14 @@
     retry.hidden = true;
     retry.addEventListener("click", refresh);
     state.appendChild(retry);
+    const pause = document.createElement("button");
+    pause.type = "button"; pause.className = "text-button"; pause.textContent = "Pause updates";
+    pause.addEventListener("click", () => {
+      paused = !paused; pause.textContent = paused ? "Resume updates" : "Pause updates";
+      message.textContent = paused ? "Live updates paused" : "Live updates every 15 seconds";
+      if (!paused) refresh();
+    });
+    state.appendChild(pause);
     region.parentElement?.insertBefore(state, region);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
     refresh();
@@ -1057,6 +1065,13 @@
   }
 
   async function start() {
+    if (/^\/orders\/[^/]+\/confirmation$/.test(global.location.pathname)) {
+      const url = new URL(global.location.href);
+      if (url.searchParams.has("notice")) {
+        url.searchParams.delete("notice");
+        global.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      }
+    }
     const siteHeader = document.querySelector('.site-header');
     if (siteHeader) {
       const updateHeader = () => {

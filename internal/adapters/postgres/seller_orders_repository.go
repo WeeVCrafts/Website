@@ -88,26 +88,25 @@ func (r *CommerceRepository) UpdateSellerFulfillmentWithRevision(ctx context.Con
 		if err != nil {
 			return err
 		}
-		var lockedRevision int64
-		if lockErr := tx.QueryRow(transactionContext, `SELECT revision FROM seller_fulfillments WHERE seller_id=$1 AND order_id=$2 FOR UPDATE`, sellerID, orderID).Scan(&lockedRevision); lockErr == nil {
-			revision = lockedRevision
-		}
-		if expectedRevision >= 0 && revision != expectedRevision {
-			return ports.ErrFulfillmentConflict
+		var existingCarrier, existingTracking, existingNote string
+		if lockErr := tx.QueryRow(transactionContext, `SELECT status,revision,COALESCE(carrier,''),COALESCE(tracking_number,''),COALESCE(last_note,'') FROM seller_fulfillments WHERE seller_id=$1 AND order_id=$2 FOR UPDATE`, sellerID, orderID).Scan(&currentStatus, &revision, &existingCarrier, &existingTracking, &existingNote); lockErr != nil && !errors.Is(lockErr, pgx.ErrNoRows) {
+			return lockErr
 		}
 		if overallStatus != "paid" && overallStatus != "processing" && overallStatus != "shipped" && overallStatus != "delivered" {
 			return ports.ErrInvalidState
+		}
+		// A replay of an identical committed save succeeds even with the original
+		// revision, without repeating history, notifications or shipping email.
+		if currentStatus == status && revision > 0 && existingCarrier == carrier && existingTracking == trackingNumber && existingNote == note {
+			return nil
+		}
+		if expectedRevision >= 0 && revision != expectedRevision {
+			return ports.ErrFulfillmentConflict
 		}
 		currentStage, currentOK := domaincommerce.ParseFulfillmentStage(currentStatus)
 		nextStage, nextOK := domaincommerce.ParseFulfillmentStage(status)
 		if !currentOK || !nextOK || !currentStage.CanAdvanceTo(nextStage) {
 			return ports.ErrInvalidState
-		}
-		if currentStatus == status {
-			var existingCarrier, existingTracking, existingNote string
-			if err := tx.QueryRow(transactionContext, `SELECT COALESCE(carrier,''),COALESCE(tracking_number,''),COALESCE(last_note,'') FROM seller_fulfillments WHERE seller_id=$1 AND order_id=$2`, sellerID, orderID).Scan(&existingCarrier, &existingTracking, &existingNote); err == nil && existingCarrier == carrier && existingTracking == trackingNumber && existingNote == note {
-				return nil
-			}
 		}
 		if _, err := tx.Exec(transactionContext, `
 			INSERT INTO seller_fulfillments (seller_id, order_id, status, carrier, tracking_number, last_note, updated_by, revision)

@@ -88,7 +88,7 @@ func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, medi
 }
 
 func (r *MediaRepository) GetPublicMedia(ctx context.Context, mediaID int64) (domaincommerce.MediaRecord, error) {
-	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`WHERE pm.id = $1 AND pm.status = 'ready' AND pm.visibility = 'public' AND EXISTS (SELECT 1 FROM products p WHERE p.id = pm.product_id AND p.status = 'approved')`, mediaID))
+	record, err := scanMediaRecord(r.pool.QueryRow(ctx, mediaRecordSelect+`WHERE pm.id = $1 AND pm.status = 'ready' AND pm.visibility = 'public' AND EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id = pm.product_id AND p.status = 'approved' AND s.status='active')`, mediaID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domaincommerce.MediaRecord{}, ports.ErrNotFound
 	}

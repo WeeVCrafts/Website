@@ -288,6 +288,9 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 		if strings.HasSuffix(r.URL.Path, "/confirmation") {
 			page.Title = "Order confirmation"
+			// Payment state is authoritative; never show arbitrary response bodies
+			// from a legacy notice query parameter on this screen.
+			page.Notice = ""
 			component = pages.OrderConfirmation(page)
 		} else if strings.HasSuffix(r.URL.Path, "/invoice") {
 			if r.URL.Query().Get("format") == "pdf" {
@@ -355,11 +358,22 @@ func (h *LiveStorefrontHandler) orderStatusRefresh(w http.ResponseWriter, r *htt
 	_ = pages.OrderStatusRegion(refreshOrderView(detail)).Render(r.Context(), w)
 }
 
+func orderShowsFulfillment(orderStatus, paymentStatus string) bool {
+	if paymentStatus != "captured" && paymentStatus != "paid" {
+		return false
+	}
+	switch orderStatus {
+	case "paid", "processing", "shipped", "delivered":
+		return true
+	}
+	return false
+}
+
 func refreshOrderView(detail domaincommerce.OrderDetail) viewmodels.Order {
 	displayStatus := detail.Status
-	if detail.PaymentStatus == "captured" || detail.PaymentStatus == "paid" {
+	if orderShowsFulfillment(detail.Status, detail.PaymentStatus) {
 		if stage := domaincommerce.AggregateFulfillmentStage(detail.Fulfillments); stage != domaincommerce.FulfillmentPending {
-			displayStatus = string(stage)
+			displayStatus = domaincommerce.FulfillmentProgress(detail.Fulfillments)
 		}
 	}
 	view := viewmodels.Order{Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
@@ -1219,9 +1233,9 @@ func filterSupportMessageAttachments(attachments []domaincommerce.SupportAttachm
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
 	displayStatus := order.Status
-	if order.PaymentStatus == "captured" || order.PaymentStatus == "paid" {
+	if orderShowsFulfillment(order.Status, order.PaymentStatus) {
 		if stage := domaincommerce.AggregateFulfillmentStage(order.Fulfillments); stage != domaincommerce.FulfillmentPending {
-			displayStatus = string(stage)
+			displayStatus = domaincommerce.FulfillmentProgress(order.Fulfillments)
 		}
 	}
 	status := displayOrderStatus(displayStatus)
@@ -1350,6 +1364,10 @@ func displayOrderStatus(status string) string {
 		return "Payment failed"
 	case "paid":
 		return "Confirmed"
+	case "partially_shipped":
+		return "Partially shipped"
+	case "partially_delivered":
+		return "Partially delivered"
 	case "processing":
 		return "Processing"
 	case "packing":

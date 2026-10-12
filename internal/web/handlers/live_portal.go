@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -484,8 +485,14 @@ func (h *LivePortalHandler) adminOrderStatusRefresh(w http.ResponseWriter, r *ht
 		http.Error(w, "Order status access denied", http.StatusForbidden)
 		return
 	}
+	orders := h.adminOrders(r)
+	if projectionWarning(r, "") != "" {
+		http.Error(w, "Order updates are temporarily unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = adminpages.OrderQueueRegion(h.adminOrders(r)).Render(r.Context(), w)
+	_ = adminpages.OrderQueueRegion(orders).Render(r.Context(), w)
 }
 
 // Keep old bookmarks without retaining separate operational identities.
@@ -962,7 +969,7 @@ func (h *LivePortalHandler) adminPage(r *http.Request, actorID int64, role domai
 
 func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, workspace, notice, query string) viewmodels.AdminPage {
 	r = projectionRequest(r)
-	page := viewmodels.AdminPage{ActorID: actorID, Active: active, Workspace: workspace, Title: title(active), Subtitle: "Live marketplace operations backed by PostgreSQL.", Notice: notice, Query: query, Range: "Last 30 Days"}
+	page := viewmodels.AdminPage{ActorID: actorID, Active: active, Workspace: workspace, Title: title(active), Subtitle: "Live marketplace operations backed by PostgreSQL.", Notice: notice, Query: query, Range: "Last 30 Days", OrderStage: orderStageFilter(r)}
 	if workspace == "" {
 		page.Title = "Marketplace dashboard"
 	}
@@ -1161,17 +1168,21 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 	rows, err := h.projectionRows(r, "admin-orders", `
 		SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status,
 		       COALESCE(pa.status,'unrecorded'),
-		       COALESCE((SELECT CASE
+		       COALESCE(parcel.status,'pending'), COALESCE(parcel.details,'[]'::jsonb)
+		FROM orders o JOIN users u ON u.id=o.user_id
+		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
+		LEFT JOIN LATERAL (SELECT CASE
 				WHEN bool_and(COALESCE(sf.status,'pending')='delivered') THEN 'delivered'
 				WHEN bool_and(COALESCE(sf.status,'pending') IN ('out_for_delivery','delivered')) THEN 'out_for_delivery'
 				WHEN bool_and(COALESCE(sf.status,'pending') IN ('shipped','out_for_delivery','delivered')) THEN 'shipped'
 				WHEN bool_or(COALESCE(sf.status,'pending')='packing') THEN 'packing'
-				WHEN bool_or(COALESCE(sf.status,'pending')='processing') THEN 'processing'
-				ELSE 'pending' END
-				FROM order_items soi JOIN product_variants spv ON spv.id=soi.variant_id JOIN products sp ON sp.id=spv.product_id LEFT JOIN seller_fulfillments sf ON sf.order_id=soi.order_id AND sf.seller_id=sp.seller_id WHERE soi.order_id=o.id),'pending')
-		FROM orders o JOIN users u ON u.id=o.user_id
-		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
-		WHERE ($1='' OR concat_ws(' ',o.order_number,u.display_name,o.status,COALESCE(pa.status,'')) ILIKE '%'||$1||'%') ORDER BY o.created_at DESC,o.id DESC LIMIT 50`, portalQuery(r.URL.Query().Get("q")))
+				WHEN bool_or(COALESCE(sf.status,'pending') IN ('processing','shipped','out_for_delivery','delivered')) THEN 'processing'
+				ELSE 'pending' END AS status,
+ jsonb_agg(DISTINCT jsonb_build_object('seller_name',ss.display_name,'status',COALESCE(sf.status,'pending'),'carrier',COALESCE(sf.carrier,''),'tracking_number',COALESCE(sf.tracking_number,''))) AS details
+				FROM order_items soi JOIN product_variants spv ON spv.id=soi.variant_id JOIN products sp ON sp.id=spv.product_id JOIN sellers ss ON ss.id=sp.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=soi.order_id AND sf.seller_id=sp.seller_id WHERE soi.order_id=o.id) parcel ON TRUE
+		WHERE ($1='' OR concat_ws(' ',o.order_number,u.display_name,o.status,COALESCE(pa.status,'')) ILIKE '%'||$1||'%')
+		AND ($2='' OR COALESCE(parcel.status,'pending')=$2)
+		ORDER BY o.created_at DESC,o.id DESC`, portalQuery(r.URL.Query().Get("q")), orderStageFilter(r))
 	if err != nil {
 		return nil
 	}
@@ -1181,8 +1192,14 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 		var number, customer, status, payment, fulfillment string
 		var created time.Time
 		var total int64
-		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &fulfillment) == nil {
-			result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Status: status, PaymentStatus: payment, Fulfillment: fulfillment})
+		var encoded []byte
+		var parcels []domaincommerce.OrderFulfillment
+		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &fulfillment, &encoded) == nil {
+			if json.Unmarshal(encoded, &parcels) != nil {
+				continue
+			}
+			fulfillment = domaincommerce.FulfillmentProgress(parcels)
+			result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Status: status, PaymentStatus: payment, Fulfillment: fulfillment, Parcels: parcels})
 		}
 	}
 	return result

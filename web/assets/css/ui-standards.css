@@ -285,3 +285,16 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
  .admin-logout button > span:last-child {display:none;}
 }
 @media(max-width:600px) {.admin-header-brand > strong {display:none;}}
+.ui-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; font-family: var(--ui-font); }
+.ui-filter-bar select { min-height: 44px; min-width: 0; padding: 10px 32px 10px 12px; border: 1px solid var(--ui-line); border-radius: 6px; background: var(--ui-surface); color: var(--ui-ink); }
+.order-live-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-block: 12px; grid-column: 1 / -1; font: 14px/1.5 var(--ui-font); color: var(--ui-muted); }
+.order-live-controls button { min-height: 44px; padding: 8px; cursor: pointer; }
+@media (max-width: 480px) { .ui-filter-bar label { width: 100%; } .ui-filter-bar select { flex: 1; } }
+@media (max-width: 480px) { .account-intro .tabs { flex-wrap: wrap; } }
+
+.order-parcel-progress { list-style: none; padding: 0; margin: 10px 0 0; }
+.order-parcel-progress li { display: grid; gap: 4px; margin-block: 8px; font-size: 13px; }
+.order-parcel-progress small { overflow-wrap: anywhere; color: var(--ui-muted); }
+.order-card > header > div { min-width: 0; }
+.order-card > header h2 { overflow-wrap: anywhere; }
+.order-card > header > div:nth-child(2) { flex-shrink: 0; }

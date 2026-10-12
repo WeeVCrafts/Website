@@ -224,6 +224,12 @@ templ PortalInventory(p viewmodels.AdminPage) {
 templ PortalOrders(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
+		<form method="get" class="ui-filter-bar" aria-label="Filter orders"><label for="order-stage-filter">Fulfilment stage</label><select id="order-stage-filter" name="stage">
+			<option value="" selected?={ p.OrderStage == "" }>All stages</option>
+			for _, stage := range orderStageOptions() {
+				<option value={ stage.Value } selected?={ p.OrderStage == stage.Value }>{ stage.Label }</option>
+			}
+		</select><input type="hidden" name="q" value={ p.Query }/><button class="admin-button secondary" type="submit">Apply filter</button></form>
 		@PortalOrderList(p)
 	}
 }
@@ -414,7 +420,20 @@ templ OrderQueueRegion(orders []viewmodels.AdminOrder) {
 	<div data-admin-orders-region>
 		<div class="ui-table-region" role="region" tabindex="0" aria-label="Order queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Order status</th><th scope="col">Payment status</th><th scope="col">Fulfilment stage</th></tr></thead><tbody>
 			for _, order := range orders {
-				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span></td></tr>
+				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span>
+
+                  if len(order.Parcels) > 1 {
+                    <ul class="order-parcel-progress" aria-label="Seller parcels">
+                      for _, parcel := range order.Parcels {
+                        <li><strong>{ parcel.SellerName }</strong><span>{ components.StatusLabel(parcel.Status) }</span>
+                          if parcel.Carrier != "" {
+                            <small>{ parcel.Carrier } / { parcel.TrackingNumber }</small>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                  </td></tr>
 			}
 		</tbody></table></div>
 		if len(orders) == 0 {

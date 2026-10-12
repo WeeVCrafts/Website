@@ -352,6 +352,9 @@ func main() {
 	if developmentPaymentHelpersEnabled(cfg) {
 		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	}
+	// The configured demo provider has a capture-only checkout endpoint. Keep
+	// development failure/pending controls disabled in production.
+	registerDemoPaymentCapture(mux, cfg, localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
@@ -443,6 +446,23 @@ func main() {
 
 func developmentPaymentHelpersEnabled(cfg config.Config) bool {
 	return cfg.Environment != "production" && cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local")
+}
+
+func registerDemoPaymentCapture(mux *http.ServeMux, cfg config.Config, capture http.HandlerFunc) {
+	if !strings.EqualFold(cfg.PaymentMode, "local") {
+		return
+	}
+	mux.HandleFunc("/api/v1/payments/demo-capture/", func(w http.ResponseWriter, r *http.Request) {
+		number := strings.TrimPrefix(r.URL.Path, "/api/v1/payments/demo-capture/")
+		if number == "" || strings.ContainsAny(number, "/\\") || number != strings.TrimSpace(number) || len(number) > 120 {
+			writeLocalJSON(w, http.StatusNotFound, map[string]string{"error": "payment_order_not_found"})
+			return
+		}
+		// Reuse the authenticated, CSRF-protected, owner-scoped payment lifecycle.
+		request := r.Clone(r.Context())
+		request.URL.Path = "/dev/payments/" + number + "/capture"
+		capture(w, request)
+	})
 }
 
 func localPaymentHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, service *applicationpayment.Service, gateway *localpayment.Gateway, paymentRepo ports.PaymentWebhookRepository) http.HandlerFunc {

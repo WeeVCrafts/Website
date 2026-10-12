@@ -41,6 +41,10 @@ WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 The current Railway environment uses simulated payments. Set payment mode to
 `razorpay` only after configuring and verifying the live provider. Keep secrets
 in Railway variables, never in this repository.
+The configured demo provider exposes a capture-only checkout action at
+`/api/v1/payments/demo-capture/{order-number}` with session, CSRF and order
+ownership checks. It charges no money; failure/pending development helpers
+remain disabled in production.
 
 For Railway's Postgres SSL template, export the public certificate at
 `/var/lib/postgresql/data/certs/root.crt` from the Postgres service and set
@@ -108,14 +112,15 @@ separate authentication from marketplace roles. They are not deployed by the
 production app Dockerfile. See [`docs/local-tools.md`](docs/local-tools.md)
 for monitor setup, credentials, persistence, and troubleshooting.
 
-Product cover uploads are stored in the `product_uploads` Docker volume, so
-rebuilding or recreating the app preserves the original files. Back up this
-volume together with PostgreSQL. When upgrading an older container without
-this volume, copy `/app/web/assets/images/uploads` out before recreating it,
-then restore those files into the volume with ownership assigned to `app`.
+Product covers and gallery uploads use the configured S3-compatible media
+bucket (Garage locally), with stable `/media/products/{id}` references. Uploads
+are verified before publication and survive application rebuilds/deployments.
 The product editor accepts PNG, JPEG and WebP covers up to 25 MB and reports
-upload failures instead of substituting a stock image. Additional product
-media continues to use the local Garage S3-compatible service.
+storage failures instead of substituting a stock image. Back up the bucket
+together with PostgreSQL. Before upgrading a legacy container, preserve any
+remaining `/app/web/assets/images/uploads` covers and re-upload them through
+the product editor; an ephemeral container filesystem cannot retain these files.
+The local `product_uploads` volume still holds legacy uploads and maker portraits.
 
 Useful endpoints:
 

@@ -240,9 +240,9 @@ func TestPortalAuthorizationOutageReturns503ThroughHTTP(t *testing.T) {
 	// A healthy database distinguishes a genuine permission denial from outage.
 	healthy.AddCookie(&http.Cookie{Name: "wecratfs_session", Value: session.ID})
 	denied := httptest.NewRecorder()
-	h.ServeHTTP(denied, requestWithPath(healthy, "/support-portal/cases"))
+	h.ServeHTTP(denied, requestWithPath(healthy, "/seller-admin/orders"))
 	if denied.Code != http.StatusForbidden {
-		t.Fatalf("genuine missing-role denial returned %d", denied.Code)
+		t.Fatalf("super admin was not denied seller-only access: %d", denied.Code)
 	}
 	pool.Close()
 	for _, path := range []string{"/super-admin/orders", "/admin/orders", "/seller-admin/orders", "/seller/orders", "/support-portal/cases", "/support/cases", "/super-admin/brands", "/seller-admin/support"} {

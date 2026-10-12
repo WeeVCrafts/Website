@@ -701,6 +701,10 @@ func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, updateErr, "We could not update that product draft.")
 		return
 	}
+	if err := h.saveProductCover(r, session.UserID, productID); err != nil {
+		h.renderError(w, http.StatusServiceUnavailable, "Product image not saved", "Product details were saved, but the image upload failed. Open this product's editor and retry the image upload. Your previous cover is preserved.")
+		return
+	}
 	h.redirect(w, r, "/seller-admin/products?notice=Product+details+saved")
 }
 
@@ -764,7 +768,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	if productSlugValue == "" {
 		productSlugValue = productSlug(name) + "-" + strconv.FormatInt(time.Now().UnixNano()%1000000000, 10)
 	}
-	imageURL, err := productImageFromForm(r)
+	imageURL, _, _, err := readProductImage(r)
 	if err != nil {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product image not saved", "Upload a PNG, JPEG or WebP image up to 25 MB. If the problem continues, check image storage and try again.")
 		return
@@ -774,6 +778,10 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
+		return
+	}
+	if err := h.saveProductCover(r, session.UserID, product.ID); err != nil {
+		h.renderError(w, http.StatusServiceUnavailable, "Draft created; image not saved", "The product draft was created, but persistent image storage could not save the cover. Open the draft from Products and retry the image upload rather than creating another product.")
 		return
 	}
 	http.Redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?notice=Product+draft+created", http.StatusSeeOther)
@@ -1017,8 +1025,13 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 			h.renderError(w, http.StatusUnprocessableEntity, "Seller required", "Choose an active seller for this product.")
 			return
 		}
-		if _, err := h.commerceCatalog.CreateAdminProduct(r.Context(), session.UserID, sellerID, input); err != nil {
+		product, err := h.commerceCatalog.CreateAdminProduct(r.Context(), session.UserID, sellerID, input)
+		if err != nil {
 			h.renderCommerceError(w, r, err, "We could not create that product.")
+			return
+		}
+		if err := h.saveProductCover(r, session.UserID, product.ID); err != nil {
+			h.renderError(w, http.StatusServiceUnavailable, "Draft created; image not saved", "The product draft was created, but persistent image storage could not save the cover. Open the draft from Products and retry the image upload rather than creating another product.")
 			return
 		}
 		h.redirect(w, r, "/super-admin/products?notice=Product+created+as+a+draft")
@@ -1031,6 +1044,10 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := h.commerceCatalog.UpdateAdminProduct(r.Context(), session.UserID, productID, input); err != nil {
 		h.renderCommerceError(w, r, err, "We could not update that product.")
+		return
+	}
+	if err := h.saveProductCover(r, session.UserID, productID); err != nil {
+		h.renderError(w, http.StatusServiceUnavailable, "Product image not saved", "Product details were saved, but the image upload failed. Open this product's editor and retry the image upload. Your previous cover is preserved.")
 		return
 	}
 	h.redirect(w, r, "/super-admin/products?notice=Product+details+saved")
@@ -1173,7 +1190,7 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	if deliveryLabel == "" {
 		deliveryLabel = "Delivery to serviceable PIN codes in India"
 	}
-	imageURL, err := productImageFromForm(r)
+	imageURL, _, _, err := readProductImage(r)
 	if err != nil {
 		return domaincommerce.ProductDraftInput{}, err
 	}

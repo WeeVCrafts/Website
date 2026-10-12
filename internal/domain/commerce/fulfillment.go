@@ -105,9 +105,32 @@ func AggregateFulfillmentStage(fulfillments []OrderFulfillment) FulfillmentStage
 	}
 	for _, fulfillment := range fulfillments {
 		stage, ok := ParseFulfillmentStage(fulfillment.Status)
-		if ok && stage == FulfillmentProcessing {
+		if ok && stage.Index() >= FulfillmentProcessing.Index() {
 			return FulfillmentProcessing
 		}
 	}
 	return FulfillmentPending
+}
+
+// FulfillmentProgress preserves the six editable parcel stages and describes
+// mixed shipment/delivery progress without promoting the financial lifecycle.
+func FulfillmentProgress(parcels []OrderFulfillment) string {
+	stage := AggregateFulfillmentStage(parcels)
+	shipped, delivered := 0, 0
+	for _, parcel := range parcels {
+		value, ok := ParseFulfillmentStage(parcel.Status)
+		if ok && value.Index() >= FulfillmentShipped.Index() {
+			shipped++
+		}
+		if value == FulfillmentDelivered {
+			delivered++
+		}
+	}
+	if delivered > 0 && delivered < len(parcels) {
+		return "partially_delivered"
+	}
+	if shipped > 0 && shipped < len(parcels) {
+		return "partially_shipped"
+	}
+	return string(stage)
 }

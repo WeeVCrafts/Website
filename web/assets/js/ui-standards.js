@@ -201,34 +201,100 @@
       const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (event.detail>0 && !reduced) { panel.getAnimations().forEach(animation=>animation.cancel()); panel.animate([{opacity:0.65,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'cubic-bezier(0.23,1,0.32,1)'}); } } });
   });
+  function orderRefreshControls(region, refresh) {
+    const controls = document.createElement('div'); controls.className = 'order-live-controls';
+    const state = document.createElement('span'); state.role = 'status'; state.className = 'order-refresh-state';
+    const pause = document.createElement('button'); pause.type = 'button'; pause.className = 'text-button'; pause.textContent = 'Pause updates';
+    const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-button'; retry.textContent = 'Retry update'; retry.hidden = true;
+    controls.append(state, pause, retry);
+    // Keep the controls outside the seller detail's two-column layout.
+    const anchor = region.matches('[data-seller-order-detail]') ? region.parentElement : region;
+    anchor.before(controls); state.textContent = 'Live updates every 15 seconds';
+    const result = { state, retry, paused: false, lastSuccess: "Not refreshed yet" };
+    pause.addEventListener('click', () => {
+      result.paused = !result.paused;
+      pause.textContent = result.paused ? 'Resume updates' : 'Pause updates';
+      state.textContent = result.paused ? 'Live updates paused' : 'Live updates every 15 seconds';
+      if (!result.paused) refresh();
+    });
+    retry.addEventListener('click', refresh);
+    return result;
+  }
+  function refreshTime() { return 'Last updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
   function startAdminOrderRefresh() {
     let region = document.querySelector('[data-admin-orders-region]');
     if (!region) return;
     let busy = false;
     const refresh = async () => {
-      if (busy || document.hidden) return;
+      if (busy || document.hidden || controls.paused) return;
       busy = true;
       try {
-        const response = await fetch('/ui/admin/orders/status', { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
+        const response = await fetch('/ui/admin/orders/status' + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
         if (!response.ok) throw new Error('refresh failed');
         const parsed = document.createRange().createContextualFragment(await response.text());
         const next = parsed.querySelector('[data-admin-orders-region]');
         if (next) {
           const active = document.activeElement;
-          region.replaceWith(next);
-          region = next;
-          if (active && active.id) document.getElementById(active.id)?.focus({ preventScroll: true });
-        }
+          if (!region.contains(active)) { region.replaceWith(next); region = next; }
+        } else throw new Error('refresh failed');
+        controls.lastSuccess = refreshTime(); controls.state.textContent = controls.lastSuccess;
+        controls.retry.hidden = true;
       } catch (_) {
-        // The current queue remains visible when a background refresh fails.
+        controls.state.textContent = 'Live update unavailable. ' + controls.lastSuccess + '. The last saved queue is shown.';
+        controls.retry.hidden = false;
       } finally {
         busy = false;
       }
     };
+    const controls = orderRefreshControls(region, refresh);
     setInterval(refresh, 15000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
   }
   startAdminOrderRefresh();
+  function startLiveOrderView() {
+    const sellerList = location.pathname === '/seller-admin/orders';
+    const sellerDetail = /^\/seller-admin\/orders\/[^/]+$/.test(location.pathname);
+    const customerList = location.pathname === '/orders';
+    const selector = sellerList ? '[data-seller-orders-region]' : sellerDetail ? '[data-seller-order-detail]' : customerList ? '.orders-list[data-server-orders]' : '';
+    let region = selector && document.querySelector(selector);
+    if (!region) return;
+    let busy = false;
+    const refresh = async () => {
+      if (busy || document.hidden || controls.paused) return;
+      busy = true;
+      try {
+        const response = await fetch(location.pathname + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
+        if (!response.ok || response.redirected) throw new Error('refresh failed');
+        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const next = doc.querySelector(selector);
+        if (!next) throw new Error('refresh failed');
+        const active = document.activeElement;
+        // Preserve a focused button/link until the next refresh opportunity.
+        if (!region.contains(active)) { region.replaceWith(next); region = next; }
+        if (customerList) {
+          const counts = document.querySelector('.account-intro .tabs');
+          const nextCounts = doc.querySelector('.account-intro .tabs');
+          if (counts && nextCounts && !counts.contains(active)) counts.replaceWith(nextCounts);
+        }
+        if (sellerDetail) {
+          const form = document.querySelector('[data-fulfillment-form]');
+          const latestRevision = doc.querySelector('[name="expected_revision"]')?.value;
+          const currentRevision = form?.elements.namedItem('expected_revision')?.value;
+          if (form && latestRevision !== undefined && latestRevision !== currentRevision && !form.querySelector('[data-order-conflict]')) {
+            const conflict = document.createElement('p'); conflict.dataset.orderConflict = 'true'; conflict.role = 'alert'; conflict.className = 'ui-form-error';
+            conflict.append('Another session updated this order. Your entered details are preserved. ');
+            const link = document.createElement('a'); link.href = location.pathname; link.textContent = 'Reload the latest stage before saving'; conflict.append(link); form.prepend(conflict);
+          }
+        }
+        controls.lastSuccess = refreshTime(); controls.state.textContent = controls.lastSuccess; controls.retry.hidden = true;
+      } catch (_) { controls.state.textContent = 'Live update unavailable. ' + controls.lastSuccess + '. The last saved orders are shown.'; controls.retry.hidden = false; }
+      finally { busy = false; }
+    };
+    const controls = orderRefreshControls(region, refresh);
+    setInterval(refresh, 15000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  }
+  startLiveOrderView();
   // Refresh badges across all role portals without exposing conversation bodies.
   async function refreshNotifications() {
     if (document.hidden || !document.querySelector('[data-notification-bell]')) return;

@@ -1,6 +1,7 @@
 package viewmodels
 
 import domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
@@ -9,6 +10,7 @@ type AdminPage struct {
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                                  string
 	SettlementRoot                                                                   string
+	OrderStage                                                                       string
 	CSRFToken                                                                        string
 	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog               bool
 	Stats                                                                            []AdminStat
@@ -74,6 +76,7 @@ type AdminInventory struct {
 }
 
 type AdminOrder struct {
+	Parcels                                                                                                    []domaincommerce.OrderFulfillment
 	Number, Date, Customer, Items, Value, Type, Destination, Status, PaymentStatus, Fulfillment, Delivery, RTO string
 }
 

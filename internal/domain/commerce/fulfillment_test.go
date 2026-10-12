@@ -36,3 +36,27 @@ func TestFulfillmentStageOnlyAdvancesOneStep(t *testing.T) {
 		t.Fatal("delivered must be terminal")
 	}
 }
+
+func TestMixedParcelProgress(t *testing.T) {
+	for _, test := range []struct {
+		stages []string
+		want   string
+	}{
+		{[]string{"shipped", "pending"}, "partially_shipped"},
+		{[]string{"delivered", "packing"}, "partially_delivered"},
+		{[]string{"delivered", "out_for_delivery"}, "partially_delivered"},
+		{[]string{"shipped", "out_for_delivery"}, "shipped"},
+		{[]string{"delivered", "delivered"}, "delivered"},
+	} {
+		parcels := make([]OrderFulfillment, len(test.stages))
+		for i, stage := range test.stages {
+			parcels[i].Status = stage
+		}
+		if got := FulfillmentProgress(parcels); got != test.want {
+			t.Fatalf("%v = %s want %s", test.stages, got, test.want)
+		}
+		if len(parcels) == 2 && parcels[1].Status == "pending" && AggregateFulfillmentStage(parcels) != FulfillmentProcessing {
+			t.Fatal("partly shipped must remain processing")
+		}
+	}
+}

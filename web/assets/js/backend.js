@@ -4,7 +4,7 @@
   const ROOT = "/api/v1";
 
   function messageFrom(response, payload) {
-    if (typeof payload === "string" && payload) return payload;
+    if (typeof payload === "string" && payload && !/[<>]/.test(payload)) return payload;
     const detail = payload && payload.error;
     return (payload && (payload.message || payload.msg || payload.error_description || (typeof detail === "string" ? detail : detail && detail.message))) ||
       (response && response.statusText) || "The request could not be completed.";
@@ -14,7 +14,9 @@
     const text = await response.text();
     let body = {};
     if (text) {
-      try { body = JSON.parse(text); } catch (_) { body = { message: text }; }
+      try { body = JSON.parse(text); } catch (_) {
+        throw new Error("The service could not complete this request. Please check the current status and try again.");
+      }
     }
     if (!response.ok) {
       const error = new Error(messageFrom(response, body.error || body));
@@ -264,7 +266,8 @@
 
     async localPayment(orderNumber, action) {
       if (!["capture", "fail", "pending"].includes(action)) throw new Error("Unknown local payment action.");
-      const response = await fetch("/dev/payments/" + encodeURIComponent(orderNumber) + "/" + action, {
+      const path = action === "capture" ? "/api/v1/payments/demo-capture/" + encodeURIComponent(orderNumber) : "/dev/payments/" + encodeURIComponent(orderNumber) + "/" + action;
+      const response = await fetch(path, {
         method: "POST", credentials: "include", headers: { "X-CSRF-Token": this.csrf }
       });
       return readJSON(response);

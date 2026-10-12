@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -71,6 +72,15 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if _, err := pool.Exec(ctx, `UPDATE products SET status='approved' WHERE id=$1`, fixture.productID); err != nil {
 		t.Fatalf("republish fixture product: %v", err)
 	}
+	if _, err := pool.Exec(ctx, `UPDATE sellers SET status='suspended' WHERE owner_user_id=$1`, fixture.ownerID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repository.GetPublicMedia(ctx, mediaID); !errors.Is(err, ports.ErrNotFound) {
+		t.Fatalf("suspended seller media must not be public: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE sellers SET status='active' WHERE owner_user_id=$1`, fixture.ownerID); err != nil {
+		t.Fatal(err)
+	}
 	var productSlug string
 	if err := pool.QueryRow(ctx, `SELECT slug FROM products WHERE id = $1`, fixture.productID).Scan(&productSlug); err != nil {
 		t.Fatalf("read product slug: %v", err)
@@ -112,6 +122,23 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	}
 	if err := repository.MarkMediaDeleted(ctx, videoMediaID); err != nil {
 		t.Fatalf("mark video deleted: %v", err)
+	}
+	// Editing metadata/cover must not rewrite every ready gallery object's URL.
+	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'admin')`, fixture.userIDs[0]); err != nil {
+		t.Fatal(err)
+	}
+	adminCatalog := NewCommerceRepository(pool)
+	var sku string
+	if err := pool.QueryRow(ctx, `SELECT sku FROM product_variants WHERE id=$1`, fixture.variantID).Scan(&sku); err != nil {
+		t.Fatal(err)
+	}
+	_, err = adminCatalog.UpdateAdminProduct(ctx, fixture.userIDs[0], fixture.productID, domaincommerce.ProductDraftInput{Slug: productSlug, Name: "Fixture Product", Description: "Updated metadata", BrandSlug: fixture.brandSlug, BrandName: "Fixture Brand", CategorySlug: fixture.category, CategoryName: "Fixture Category", PriceCents: 1000, SKU: sku, ImageURL: latestPath})
+	if err != nil {
+		t.Fatalf("edit product with persistent cover: %v", err)
+	}
+	prior, err := repository.GetPublicMedia(ctx, mediaID)
+	if err != nil || prior.PublicPath != ready.PublicPath {
+		t.Fatalf("editing product corrupted earlier gallery URL: %+v %v", prior, err)
 	}
 
 	replayed, err := repository.FinalizeMedia(ctx, fixture.ownerID, mediaID, "/media/products/ignored", "image/png", 12)

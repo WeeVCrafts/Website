@@ -250,12 +250,19 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 
 templ PortalOrders(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		<form method="get" class="seller-form-grid" aria-label="Filter seller orders"><label for="seller-order-stage">Fulfilment stage<select id="seller-order-stage" name="tab"><option value="">All stages</option>
+			for _, stage := range sellerFulfillmentOptions("") {
+				<option value={ stage } selected?={ p.Tab == stage }>{ sellerFulfillmentLabel(stage) }</option>
+			}
+		</select></label><input type="hidden" name="q" value={ p.Query }/><button class="seller-button outline" type="submit">Apply filter</button></form>
+		<div data-seller-orders-region>
 		@SellerOrderStage(p, "new", "New")
 		@SellerOrderStage(p, "processing", "Processing")
 		@SellerOrderStage(p, "packing", "Packing")
 		@SellerOrderStage(p, "shipped", "Shipped")
 		@SellerOrderStage(p, "out_for_delivery", "Ready to deliver")
 		@SellerOrderStage(p, "delivered", "Delivered")
+		</div>
 	}
 }
 
@@ -277,7 +284,7 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		if p.OrderDetail != nil {
 			<div class="seller-order-actions"><a class="seller-button outline" href="/seller-admin/orders">Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
-			<section class="seller-two-grid"><article class="seller-panel"><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ p.OrderDetail.Status }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Qty</span><span>Unit price</span><span>Total</span></div>
+			<section class="seller-two-grid"><article class="seller-panel" data-seller-order-detail><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Qty</span><span>Unit price</span><span>Total</span></div>
 				for _, item := range p.OrderDetail.Items {
 					<div class="seller-table-row"><b>{ item.Name }</b><span>{ item.SKU }</span><span>{ item.Quantity }</span><span>{ item.UnitPrice }</span><strong>{ item.LineTotal }</strong></div>
 				}
@@ -308,7 +315,8 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 				for _, option := range sellerFulfillmentOptions(p.OrderDetail.Status) {
 					<option value={ option } selected?={ sellerFulfillmentSelected(p.OrderDetail.Status, option) } disabled?={ sellerFulfillmentDisabled(p.OrderDetail.Status, option) }>{ sellerFulfillmentLabel(option) }</option>
 				}
-			</select></label><p id="fulfilment-help" class="seller-form-note">Choose the next stage. The committed stage is shown here after every save.</p><label>Carrier<select name="carrier" required>
+			</select></label><p id="fulfilment-help" class="seller-form-note">Choose the next stage. The committed stage is shown here after every save.</p><label>Carrier<select name="carrier">
+				<option value="" selected?={ p.OrderDetail.Carrier == "" }>Choose a carrier before shipping</option>
 				for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
 					<option value={ carrier } selected?={ p.OrderDetail.Carrier == carrier }>{ carrier }</option>
 				}
