@@ -1,60 +1,6 @@
-/* Self-hosted UI fonts keep the preview usable when third-party font requests are blocked. */
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/assets/fonts/dm-sans-400.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/assets/fonts/dm-sans-500.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/assets/fonts/dm-sans-600.ttf") format("truetype");
-}
-@font-face {
-  font-family: "DM Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/assets/fonts/dm-sans-700.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Playfair Display";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/assets/fonts/playfair-display-500.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Playfair Display";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/assets/fonts/playfair-display-600.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Playfair Display";
-  font-style: italic;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/assets/fonts/playfair-display-italic-500.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Playfair Display";
-  font-style: italic;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/assets/fonts/playfair-display-italic-600.ttf") format("truetype");
-}
+/* Self-hosted text fonts: Inter for UI and Roboto for headings. */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/assets/fonts/inter-variable.ttf") format("truetype"); }
+@font-face { font-family: "Roboto"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("/assets/fonts/roboto-variable.ttf") format("truetype"); }
 @font-face {
   font-family: "Material Symbols Outlined";
   font-style: normal;

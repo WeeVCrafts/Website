@@ -12,7 +12,8 @@ module.exports = {
         line: '#cdd3dc',
       },
       fontFamily: {
-        display: ['Georgia', 'serif'],
+        sans: ['Inter', 'Arial', 'sans-serif'],
+        display: ['Roboto', 'Arial', 'sans-serif'],
       },
     },
   },

@@ -23,13 +23,13 @@ html { scrollbar-gutter: stable; scroll-padding-block: 24px 96px; }
 textarea { resize: none; min-height: 120px; line-height: 1.6; }
 button:disabled { cursor: not-allowed; opacity: .65; }
 [aria-busy=true] { cursor: wait; }
-.ui-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font: 600 14px/1.5 "DM Sans",Arial,sans-serif; white-space: normal; }
+.ui-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font: 600 14px/1.5 "Inter",Arial,sans-serif; white-space: normal; }
 .ui-status.success { color: var(--ui-success); background: var(--ui-success-soft); }
 .ui-status.warning { color: var(--ui-warning); background: var(--ui-warning-soft); }
 .ui-status.danger { color: var(--ui-danger); background: var(--ui-danger-soft); }
 .ui-status.neutral { color: var(--ui-neutral); background: var(--ui-neutral-soft); }
 .ui-table-region { max-width: 100%; min-width: 0; overflow: auto; margin-top: 16px; border: 1px solid var(--ui-line); border-radius: 8px; }
-.ui-table { width: 100%; border-collapse: collapse; color: var(--ui-ink); font: 400 14px/1.5 "DM Sans",Arial,sans-serif; }
+.ui-table { width: 100%; border-collapse: collapse; color: var(--ui-ink); font: 400 14px/1.5 "Inter",Arial,sans-serif; }
 .ui-table th { font-weight: 600; background: var(--ui-surface); color: var(--ui-muted); text-align: left; }
 .ui-table :is(th,td) { padding: 12px 14px; border-bottom: 1px solid var(--ui-line); vertical-align: top; overflow-wrap: anywhere; }
 .ui-table tbody tr:last-child :is(th,td) { border-bottom: 0; }
@@ -44,14 +44,14 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .ui-field-error { color: var(--ui-danger); font-size: 14px; line-height: 1.5; display: block; margin: 6px 0; }
 .ui-form-error { padding: 14px 16px; border-left: 3px solid var(--ui-danger); background: var(--ui-danger-soft); color: var(--ui-danger); margin: 12px 0; grid-column: 1 / -1; }
 [aria-invalid=true] { border-color: var(--ui-danger) !important; }
-.ui-confirm { width: min(440px, calc(100vw - 32px)); padding: 24px; border: 1px solid var(--ui-line); border-radius: 12px; background: var(--ui-surface); color: var(--ui-ink); font: 16px/1.6 "DM Sans",Arial,sans-serif; }
+.ui-confirm { width: min(440px, calc(100vw - 32px)); padding: 24px; border: 1px solid var(--ui-line); border-radius: 12px; background: var(--ui-surface); color: var(--ui-ink); font: 16px/1.6 "Inter",Arial,sans-serif; }
 .ui-confirm::backdrop { background: rgb(18 24 20 / 50%); }
 .ui-confirm h2 { margin-top: 0; font-size: 24px; }
 .ui-confirm-actions { display: flex; justify-content: end; gap: 12px; margin-top: 24px; }
 .ui-confirm button { min-height: 44px; padding: 10px 18px; border: 1px solid var(--ui-line); border-radius: 6px; color: var(--ui-ink); background: var(--ui-surface); cursor: pointer; font: inherit; }
 .ui-confirm [data-confirm-accept] { color: #fff; background: var(--ui-danger); border-color: var(--ui-danger); }
 .ui-form-section { grid-column: 1 / -1; border: 0; padding: 24px 0; margin: 0; min-width: 0; border-top: 1px solid var(--ui-line); display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 24px; }
-.ui-form-section legend { font: 500 24px/1.4 "Playfair Display",Georgia,serif; padding: 0 0 8px; color: var(--ui-ink); }
+.ui-form-section legend { font: 500 24px/1.4 "Roboto",Arial,sans-serif; padding: 0 0 8px; color: var(--ui-ink); }
 .ui-form-section > p { grid-column: 1 / -1; margin: 0; color: var(--ui-muted); }
 .ui-form-section:first-of-type { border-top: 0; }
 .ui-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }

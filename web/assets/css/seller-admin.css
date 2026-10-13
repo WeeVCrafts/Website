@@ -65,8 +65,8 @@
   --seller-green-soft: #e2f1e5;
   --seller-gold: #c2862a;
   --seller-gold-soft: #fff0ca;
-  --seller-serif: "Playfair Display", Georgia, serif;
-  --seller-sans: "DM Sans", Arial, sans-serif;
+  --seller-serif: "Roboto", Arial, sans-serif;
+  --seller-sans: "Inter", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -351,7 +351,7 @@ body.seller-body img { display: block; max-width: 100%; }
 .portal-inventory-row { min-height: 56px; border-top: 1px solid #eee9e2; color: #49586a; font-size: 12px; }
 .portal-inventory-row:hover { background: #faf8f5; }
 .inventory-stock-num { font-size: 13px; font-weight: 700; color: #273547; }
-.inventory-sku-cell { font-family: monospace; font-size: 11px; color: var(--seller-muted); }
+.inventory-sku-cell { font-family: var(--seller-sans); font-size: 11px; color: var(--seller-muted); }
 
 .portal-product-row > span, .portal-product-head > span,
 .portal-inventory-row > span, .portal-inventory-head > span,

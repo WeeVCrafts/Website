@@ -466,3 +466,8 @@ html {scroll-padding-block-start:90px;}
 .order-refresh-state {display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:28px;margin:8px 0 0;color:var(--muted);font-size:12px;}
 .order-refresh-state.is-error {color:var(--terracotta);}
 .order-refresh-retry {min-height:32px;padding-inline:8px;text-decoration:underline;}
+
+/* Use the viewport for storefront content while keeping comfortable edge gutters. */
+.container { width: calc(100% - 48px); max-width: none; }
+@media (min-width: 1800px) { .product-grid--four { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .container { width: calc(100% - 32px); } }

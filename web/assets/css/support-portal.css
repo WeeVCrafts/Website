@@ -12,8 +12,8 @@
   --support-gold: #c88927;
   --support-gold-soft: #fff0cc;
   --support-blue-soft: #e9f0fc;
-  --support-serif: "Playfair Display", Georgia, serif;
-  --support-sans: "DM Sans", Arial, sans-serif;
+  --support-serif: "Roboto", Arial, sans-serif;
+  --support-sans: "Inter", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }

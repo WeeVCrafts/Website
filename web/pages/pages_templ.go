@@ -216,7 +216,7 @@ func Document(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " - Weevcrafts</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/images/favicon.svg\"><link rel=\"preload\" href=\"/assets/fonts/dm-sans-400.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/playfair-display-500.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " - Weevcrafts</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/images/favicon.svg\"><link rel=\"preload\" href=\"/assets/fonts/inter-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/roboto-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2336,7 +2336,7 @@ func Home(p viewmodels.CustomerPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = ProductCards(availableProducts(p.Products, "", 4), true).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = ProductCards(availableProducts(p.Products, "", 8), true).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

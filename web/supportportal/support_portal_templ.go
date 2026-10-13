@@ -47,7 +47,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts Support Portal</title><link rel=\"preload\" href=\"/assets/fonts/dm-sans-400.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/playfair-display-500.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts Support Portal</title><link rel=\"preload\" href=\"/assets/fonts/inter-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/roboto-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

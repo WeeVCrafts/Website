@@ -5,9 +5,27 @@
   const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
   let backend = null;
   let backendError = null;
-  let authenticated = false;
+  let authenticated = Boolean(document.querySelector('form[action="/logout"]'));
   let razorpayLoader = null;
   let drawerRestoreFocus = null;
+
+  function promptLogin(destination) {
+    let dialog = document.getElementById("guest-login-dialog");
+    if (!dialog) {
+      dialog = document.createElement("dialog");
+      dialog.id = "guest-login-dialog";
+      dialog.className = "cart-drawer";
+      dialog.setAttribute("aria-labelledby", "guest-login-title");
+      dialog.innerHTML = '<div class="cart-drawer-shell"><header class="cart-drawer-header"><div><p class="eyebrow">YOUR ACCOUNT</p><h2 id="guest-login-title">Log in to continue</h2></div></header><div class="empty-state"><p>Please log in to browse products, view details and place orders.</p><a class="primary-button" data-login-continue>Log in</a></div></div>';
+      document.body.appendChild(dialog);
+      dialog.addEventListener("cancel", (event) => event.preventDefault());
+    }
+    dialog.querySelector("[data-login-continue]").href = "/login?next=" + encodeURIComponent(destination);
+    const menu = document.getElementById("mobile-menu");
+    if (menu?.open) menu.close();
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector("[data-login-continue]").focus();
+  }
 
   const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
@@ -844,6 +862,16 @@
       });
     }
     document.addEventListener("click", async function (event) {
+      const link = event.target.closest("a[href]");
+      if (!authenticated && link && !link.closest("#guest-login-dialog")) {
+        const target = new URL(link.href, global.location.href);
+        if (target.origin === global.location.origin && (target.pathname === "/" || /^\/(products|category|categories|search|deals|brands|makers|cart|checkout|orders|wishlist)(\/|$)/.test(target.pathname))) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          promptLogin(target.pathname + target.search);
+          return;
+        }
+      }
       const cartDrawerClose = event.target.closest("[data-cart-drawer-close]");
       if (cartDrawerClose) {
         event.preventDefault();
@@ -894,6 +922,7 @@
       const checkoutButton = event.target.closest('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
       if (checkoutButton) {
         event.preventDefault();
+        if (!authenticated) { event.stopImmediatePropagation(); promptLogin("/checkout"); return; }
         try { await checkout(); } catch (error) { notice(error.message, true); }
         return;
       }
@@ -919,10 +948,12 @@
           action = action || (extras.source === "cart" ? "wishlist-move" : extras.source === "wishlist" ? "wishlist-remove" : "wishlist-add");
         }
       }
-      // The server-rendered storefront owns guest cart mutations. Let HTMX
-      // submit them with the anonymous CSRF token instead of requiring the
-      // account-only JSON API.
-      if (!authenticated && (action === "cart-add" || action === "cart-buy" || action === "cart-change" || action === "cart-remove")) return;
+      if (!authenticated) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart");
+        return;
+      }
       if (backendError) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -1065,6 +1096,13 @@
   }
 
   async function start() {
+    if (!authenticated && (global.location.pathname === "/" || /^\/(products|category|categories|search|deals|brands|makers|cart|checkout|orders|wishlist)(\/|$)/.test(global.location.pathname))) {
+      promptLogin(global.location.pathname + global.location.search);
+    }
+    const loginQuery = new URLSearchParams(global.location.search);
+    if (global.location.pathname === "/login" && loginQuery.get("login_required") === "1") {
+      promptLogin(loginQuery.get("next") || "/products");
+    }
     if (/^\/orders\/[^/]+\/confirmation$/.test(global.location.pathname)) {
       const url = new URL(global.location.href);
       if (url.searchParams.has("notice")) {
@@ -1116,6 +1154,7 @@
       backend = await create();
       global.weevcraftsBackend = backend;
       authenticated = Boolean(await backend.currentUser());
+      if (!authenticated && /^\/products\/[^/]+\/?$/.test(global.location.pathname)) promptLogin(global.location.pathname + global.location.search);
       if (global.location.pathname === "/deals") {
         const offerBadge = document.querySelector(".deals-banner .badge");
         if (offerBadge) offerBadge.textContent = "Current catalog offers";

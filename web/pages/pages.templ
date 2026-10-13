@@ -38,8 +38,8 @@ templ Document(p viewmodels.CustomerPage) {
       }
       <title>{ p.Title } - Weevcrafts</title>
       <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
-      <link rel="preload" href="/assets/fonts/dm-sans-400.ttf" as="font" type="font/ttf" crossorigin/>
-      <link rel="preload" href="/assets/fonts/playfair-display-500.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="preload" href="/assets/fonts/inter-variable.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="preload" href="/assets/fonts/roboto-variable.ttf" as="font" type="font/ttf" crossorigin/>
       <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
       <link rel="stylesheet" href={ assets.URL("css/theme.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/utility.css") }/>
@@ -346,7 +346,7 @@ templ Home(p viewmodels.CustomerPage) {
         if len(p.Products) == 0 {
           <div class="empty-state"><h2>No products published yet</h2><p>Closer to nature, made with care. Published products will appear here.</p></div>
         } else {
-          @ProductCards(availableProducts(p.Products, "", 4), true)
+          @ProductCards(availableProducts(p.Products, "", 8), true)
         }</div></section>
     <section class="container section">
         @MakerHeading()
