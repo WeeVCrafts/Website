@@ -21,6 +21,21 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
    await page.goto(baseURL + '/products', {waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>!!document.querySelector('.site-header')._x_dataStack);
    await page.waitForFunction(()=>document.fonts.status === 'loaded', null, {timeout:30000});
+   if (role === 'guest') {
+    // Current shopping policy requires sign-in. Do not test profile/drawer
+    // activation behind the mandatory account dialog as if it were interactive.
+    await expect(page.locator('#guest-login-dialog')).toBeVisible();
+    for (const width of [320,390,560,768,820,960,1024,1280,1440]) {
+     await page.setViewportSize({width,height:900});
+     expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+     await expect(page.locator('[data-login-continue]')).toBeFocused();
+    }
+    await page.locator('[data-login-continue]').press('Enter');
+    await expect(page).toHaveURL(/\/login\?next=/);
+    expect(errors).toEqual([]);
+    console.log(`${name} guest: required account dialog and sign-in destination passed at 9 widths`);
+    await page.close();continue;
+   }
    await page.evaluate(()=>window.scrollTo(0,Math.min(500,document.body.scrollHeight)));
    const stickyState=await page.locator('.site-header').evaluate(el=>({position:getComputedStyle(el).position,top:Math.round(el.getBoundingClientRect().top)}));
    expect(stickyState.position,`${name} ${role} header position`).toBe('sticky');

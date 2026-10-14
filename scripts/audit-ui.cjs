@@ -6,7 +6,7 @@ const path = require('node:path');
 
 const baseURL = process.env.WEEVCRAFTS_BASE_URL || 'http://127.0.0.1:8080';
 const output = path.resolve(process.argv[2] || 'docs/qa/UI-20261009');
-const axePath = path.resolve(process.argv[3] || 'tmp/ui-audit/package/axe.min.js');
+const axePath = path.resolve(process.argv[3] || require.resolve('axe-core/axe.min.js'));
 const roles = [
   { name: 'guest', root: '/', paths: ['/', '/products', '/products/blue-tote', '/products?category=offers', '/products?category=arts', '/search?q=tote', '/search?q=ui-audit-no-such-product', '/categories', '/category/natural-care', '/brands', '/makers/mithila-arts', '/deals', '/about', '/contact', '/faq', '/shipping', '/size-guide', '/terms', '/privacy', '/sustainability', '/press', '/careers', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email'] },
   { name: 'customer', email: 'customer01', root: '/account', paths: ['/account', '/account/profile', '/account/addresses', '/account/notifications', '/account/security', '/account/privacy', '/account/reviews', '/wishlist', '/cart', '/checkout', '/orders', '/tracking', '/returns', '/payments', '/support'] },

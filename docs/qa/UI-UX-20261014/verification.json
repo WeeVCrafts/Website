@@ -1,0 +1,4685 @@
+{
+  "target": "http://127.0.0.1:18080",
+  "browsers": {
+    "chromium": [
+      {
+        "name": "manual hero: controls, inert slides, no autoplay",
+        "pass": true
+      },
+      {
+        "name": "mobile filter: closed inert, continuous selection, Escape focus",
+        "pass": true
+      },
+      {
+        "name": "failed filter preserves query and offers in-sheet retry",
+        "pass": true
+      },
+      {
+        "name": "local facet search: no-match and clear",
+        "pass": true
+      },
+      {
+        "name": "gallery lightbox and keyboard tabs",
+        "pass": true
+      },
+      {
+        "name": "real options: selected price/SKU, unavailable controls and missing media",
+        "pass": true
+      },
+      {
+        "name": "keyboard policy focus is clear of sticky bars",
+        "pass": true
+      },
+      {
+        "name": "search clear and IME submission guard",
+        "pass": true
+      },
+      {
+        "name": "checkout: inline error, retained address, step focus and Back",
+        "pass": true
+      },
+      {
+        "name": "no uncaught storefront errors",
+        "pass": true
+      },
+      {
+        "name": "seller navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "admin navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "super navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "seller rejected save preserves fields and unsaved navigation is cancel-safe",
+        "pass": true
+      },
+      {
+        "name": "current role boundaries remain unchanged",
+        "pass": true
+      },
+      {
+        "name": "customer route / reflow / axe matrix",
+        "pass": true
+      },
+      {
+        "name": "seller route / reflow / axe matrix",
+        "pass": true
+      },
+      {
+        "name": "admin route / reflow / axe matrix",
+        "pass": true
+      },
+      {
+        "name": "super route / reflow / axe matrix",
+        "pass": true
+      },
+      {
+        "name": "guest route / reflow / axe matrix",
+        "pass": true
+      }
+    ],
+    "firefox": [
+      {
+        "name": "manual hero: controls, inert slides, no autoplay",
+        "pass": true
+      },
+      {
+        "name": "mobile filter: closed inert, continuous selection, Escape focus",
+        "pass": true
+      },
+      {
+        "name": "failed filter preserves query and offers in-sheet retry",
+        "pass": true
+      },
+      {
+        "name": "local facet search: no-match and clear",
+        "pass": true
+      },
+      {
+        "name": "gallery lightbox and keyboard tabs",
+        "pass": true
+      },
+      {
+        "name": "real options: selected price/SKU, unavailable controls and missing media",
+        "pass": true
+      },
+      {
+        "name": "keyboard policy focus is clear of sticky bars",
+        "pass": true
+      },
+      {
+        "name": "search clear and IME submission guard",
+        "pass": true
+      },
+      {
+        "name": "checkout: inline error, retained address, step focus and Back",
+        "pass": true
+      },
+      {
+        "name": "no uncaught storefront errors",
+        "pass": true
+      },
+      {
+        "name": "seller navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "admin navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "super navigation inert, trap, close and desktop restoration",
+        "pass": true
+      }
+    ],
+    "webkit": [
+      {
+        "name": "manual hero: controls, inert slides, no autoplay",
+        "pass": true
+      },
+      {
+        "name": "mobile filter: closed inert, continuous selection, Escape focus",
+        "pass": true
+      },
+      {
+        "name": "failed filter preserves query and offers in-sheet retry",
+        "pass": true
+      },
+      {
+        "name": "local facet search: no-match and clear",
+        "pass": true
+      },
+      {
+        "name": "gallery lightbox and keyboard tabs",
+        "pass": true
+      },
+      {
+        "name": "real options: selected price/SKU, unavailable controls and missing media",
+        "pass": true
+      },
+      {
+        "name": "keyboard policy focus is clear of sticky bars",
+        "pass": true
+      },
+      {
+        "name": "search clear and IME submission guard",
+        "pass": true
+      },
+      {
+        "name": "checkout: inline error, retained address, step focus and Back",
+        "pass": true
+      },
+      {
+        "name": "no uncaught storefront errors",
+        "pass": true
+      },
+      {
+        "name": "seller navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "admin navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "super navigation inert, trap, close and desktop restoration",
+        "pass": true
+      }
+    ]
+  },
+  "coverage": "Dedicated demo fixtures only; no physical-phone or screen-reader certification.",
+  "customerMatrix": [
+    {
+      "route": "/",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/products",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/products/blue-tote",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/categories",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/categories/arts",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/makers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/brands",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/deals",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/search?q=tote",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/cart",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/checkout",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/wishlist",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/profile",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/addresses",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/security",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/sessions",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/privacy",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/reviews",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/account/support",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/orders",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/tracking",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/returns",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/payments",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/payments/success",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/payments/pending",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/payments/failed",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/contact",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/faq",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/shipping",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/size-guide",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/terms",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/privacy",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/about",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/our-story",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/sustainability",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/press",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/careers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/privacy/center",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/makers/craftvilla",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/brands/bamboo-root",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/orders/WCDEMO1001",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    }
+  ],
+  "sellerMatrix": [
+    {
+      "route": "/seller-admin",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/products",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/products/new",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/inventory",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/orders",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/returns",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/earnings",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/analytics",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/settings",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/onboarding",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/support",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/terms",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/seller-admin/products/14/edit",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    }
+  ],
+  "adminMatrix": [
+    {
+      "route": "/admin",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/dashboard",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/products",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/products/new",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/orders",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/inventory",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/support",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/sellers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/seller-approvals",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/seller-suspensions",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/returns",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/finance",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/brands",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/customers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/category-management",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/commission-rules",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/reviews",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/marketing",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/analytics",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/payments",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/failed-payments",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/refunds",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/settlements",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/finance-reconciliation",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/products/14/edit",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/admin/support?ticket_id=3&q=",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    }
+  ],
+  "superMatrix": [
+    {
+      "route": "/super-admin",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/dashboard",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/products",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/products/new",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/orders",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/inventory",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/support",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/sellers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/seller-approvals",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/seller-suspensions",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/returns",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/finance",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/brands",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/customers",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/category-management",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/commission-rules",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/reviews",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/marketing",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/analytics",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/payments",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/failed-payments",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/refunds",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/settlements",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/finance-reconciliation",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/users",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/roles",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/security",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/settings",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/audit-logs",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/security-events",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/system-health",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/search-indexing-health",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/worker-queue-health",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/products/14/edit",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/super-admin/support?ticket_id=3&q=",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    }
+  ],
+  "guestMatrix": [
+    {
+      "route": "/login",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/register",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/forgot-password",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/reset-password",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/verify-email",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    },
+    {
+      "route": "/notifications",
+      "status": 200,
+      "widths": [
+        {
+          "width": 320,
+          "overflow": false
+        },
+        {
+          "width": 360,
+          "overflow": false
+        },
+        {
+          "width": 390,
+          "overflow": false
+        },
+        {
+          "width": 430,
+          "overflow": false
+        },
+        {
+          "width": 768,
+          "overflow": false
+        },
+        {
+          "width": 1024,
+          "overflow": false
+        },
+        {
+          "width": 1440,
+          "overflow": false
+        }
+      ],
+      "violations": []
+    }
+  ],
+  "reruns": [
+    {
+      "engine": "firefox",
+      "reason": "Late recovery timeout interrupted following navigation checks; repeated engine alone on the same preview without source changes.",
+      "earlierFailedChecks": [
+        {
+          "name": "failed filter preserves query and offers in-sheet retry",
+          "error": "page.waitForURL: Timeout 8000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+        },
+        {
+          "name": "local facet search: no-match and clear",
+          "error": "page.goto: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:18080/products\", waiting until \"load\"\u001b[22m\n"
+        },
+        {
+          "name": "gallery lightbox and keyboard tabs",
+          "error": "page.goto: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:18080/products/blue-tote\", waiting until \"load\"\u001b[22m\n"
+        },
+        {
+          "name": "real options: selected price/SKU, unavailable controls and missing media",
+          "error": "page.goto: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:18080/products/blue-tote\", waiting until \"load\"\u001b[22m\n"
+        },
+        {
+          "name": "keyboard policy focus is clear of sticky bars",
+          "error": "page.goto: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:18080/products/blue-tote\", waiting until \"load\"\u001b[22m\n"
+        },
+        {
+          "name": "search clear and IME submission guard",
+          "error": "page.goto: Navigation to \"http://127.0.0.1:18080/products\" is interrupted by another navigation to \"http://127.0.0.1:18080/products/blue-tote\"\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:18080/products\", waiting until \"load\"\u001b[22m\n"
+        }
+      ],
+      "initialEvidence": "verification-initial.json",
+      "repeatEvidence": "verification-firefox-repeat.json"
+    }
+  ]
+}

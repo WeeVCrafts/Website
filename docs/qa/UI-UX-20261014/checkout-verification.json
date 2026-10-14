@@ -1,0 +1,8 @@
+{
+  "pass": true,
+  "orderURL": "http://127.0.0.1:18080/orders/WC-20261014-064459.370888200-7/confirmation",
+  "recoveredOrderURL": "http://127.0.0.1:18080/orders/WC-20261014-064507.578219400-7/confirmation",
+  "creations": 2,
+  "errors": [],
+  "checks": "local payment only; duplicate activation, retained address, authoritative confirmation, refresh, failed capture stays pending and retry reuses saved order"
+}

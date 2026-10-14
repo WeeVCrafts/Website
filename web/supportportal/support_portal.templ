@@ -13,12 +13,12 @@ templ SupportDocument(p viewmodels.SupportPortalPage) {
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="robots" content="noindex,nofollow"/>
       <title>{ p.Title } - Weevcrafts Support Portal</title>
-      <link rel="preload" href="/assets/fonts/inter-variable.ttf" as="font" type="font/ttf" crossorigin/>
-      <link rel="preload" href="/assets/fonts/roboto-variable.ttf" as="font" type="font/ttf" crossorigin/>
-      <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
+      <link rel="preload" href={ assets.URL("fonts/inter-latin.woff2") } as="font" type="font/woff2" crossorigin/>
+      <link rel="preload" href={ assets.URL("fonts/roboto-latin.woff2") } as="font" type="font/woff2" crossorigin/>
+      <link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/support-portal.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
-      <script defer src={ assets.URL("js/ui-standards.js") }></script>
+      <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/alpine.min.js"></script>
     </head>

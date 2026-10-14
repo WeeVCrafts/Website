@@ -95,13 +95,29 @@
       catch (_) { pageCSRF = ""; }
       this.base = "";
       this.csrf = pageCSRF;
+      this.readController = new AbortController();
+      // Cancel startup reads before navigation tears down the old document.
+      // Writes remain untouched; the server owns every mutation outcome.
+      global.addEventListener('beforeunload',()=>this.readController.abort());
+      global.addEventListener('pagehide',()=>this.readController.abort());
+      global.addEventListener('pageshow',event=>{if(event.persisted)this.readController=new AbortController();});
+      const resumeRead = () => { if (!document.hidden && this.readController.signal.aborted) this.readController=new AbortController(); };
+      // A cancelled unsaved-changes navigation can leave this document active.
+      global.addEventListener('pointerdown',resumeRead);
+      global.addEventListener('keydown',resumeRead);
     }
     async call(path, options) {
       const opts = options || {};
+      // Async startup can resume after pagehide. Do not start another read in a
+      // discarded document (WebKit reports it as an access-control failure).
+      if ((opts.method || 'GET') === 'GET' && this.readController.signal.aborted) {
+        throw new DOMException('Page navigation cancelled the read.', 'AbortError');
+      }
       const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
       if (opts.authenticated) headers["X-CSRF-Token"] = this.csrf;
       const response = await fetch(this.base + path, {
         method: opts.method || "GET", headers, credentials: "include",
+        signal: opts.signal || ((opts.method || 'GET') === 'GET' ? this.readController.signal : undefined),
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       });
       return readJSON(response);
@@ -135,7 +151,7 @@
 
     async currentUser() {
       try { return Boolean(unwrap(await this.call(ROOT + "/auth/session"))); }
-      catch (_) { return null; }
+      catch (error) { if(error.name==='AbortError')throw error;return null; }
     }
 
     async products(filters) {
@@ -156,8 +172,9 @@
 
     async product(slug) { return normalizeProduct(unwrap(await this.call(ROOT + "/products/" + encodeURIComponent(slug)))); }
 
-    async cart() {
+    async cart(options) {
       const payload = unwrap(await this.call(ROOT + "/cart"));
+      if(options?.countsOnly)return {id:payload?.id,items:(payload?.items||[]).map(normalizeCartItem)};
       const items = [];
       for (const item of (payload && payload.items) || []) {
         const product = await this.product(item.product_slug);

@@ -47,46 +47,85 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts Support Portal</title><link rel=\"preload\" href=\"/assets/fonts/inter-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"preload\" href=\"/assets/fonts/roboto-variable.ttf\" as=\"font\" type=\"font/ttf\" crossorigin><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts Support Portal</title><link rel=\"preload\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 templ.SafeURL
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/support-portal.min.css"))
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("fonts/inter-latin.woff2"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 19, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 16, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" as=\"font\" type=\"font/woff2\" crossorigin><link rel=\"preload\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 templ.SafeURL
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/ui-standards.min.css"))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("fonts/roboto-latin.woff2"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 20, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 17, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><script defer src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" as=\"font\" type=\"font/woff2\" crossorigin><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(assets.URL("js/ui-standards.js"))
+		var templ_7745c5c3_Var5 templ.SafeURL
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/fonts.min.css"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 21, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 18, Col: 67}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></script><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/alpine.min.js\"></script></head><body class=\"support-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#support-sidebar a, #support-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"support-skip-link\" href=\"#support-main\">Skip to main content</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 templ.SafeURL
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/support-portal.min.css"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 19, Col: 76}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><link rel=\"stylesheet\" href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 templ.SafeURL
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(assets.URL("css/ui-standards.min.css"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 20, Col: 74}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"><script defer src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(assets.URL("js/ui-standards.min.js"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 21, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></script><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/alpine.min.js\"></script></head><body class=\"support-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#support-sidebar a, #support-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"support-skip-link\" href=\"#support-main\">Skip to main content</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -94,7 +133,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"support-app\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"support-app\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -102,7 +141,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<button class=\"support-sidebar-backdrop\" type=\"button\" aria-label=\"Close support navigation\" :class=\"sidebar ? 'is-open' : ''\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"></button><main id=\"support-main\" class=\"support-main\" :inert=\"sidebar\"><div class=\"support-content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button class=\"support-sidebar-backdrop\" type=\"button\" aria-label=\"Close support navigation\" :class=\"sidebar ? 'is-open' : ''\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"></button><main id=\"support-main\" class=\"support-main\" :inert=\"sidebar\"><div class=\"support-content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -111,20 +150,20 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.Notice != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"support-notice\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"support-notice\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 35, Col: 144}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -134,20 +173,20 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if p.DataWarning != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"support-notice\" role=\"alert\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"support-notice\" role=\"alert\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataWarning)
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataWarning)
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 39, Col: 70}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,7 +195,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></main></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></main></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -180,103 +219,103 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<header class=\"support-header\"><div class=\"support-header-main\"><button class=\"support-menu-button\" type=\"button\" x-ref=\"supportMenu\" aria-label=\"Open support navigation\" aria-controls=\"support-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.supportSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"support-wordmark\" href=\"/support-portal\" aria-label=\"Weevcrafts support portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"support-portal-pill\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 54, Col: 53}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</span><form class=\"support-search\" action=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var10 templ.SafeURL
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(supportPath(p.Active))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 55, Col: 65}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" method=\"get\"><label class=\"sr-only\" for=\"support-search\">Search support cases</label> <span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span> <input id=\"support-search\" name=\"q\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 58, Col: 59}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" placeholder=\"Search cases, orders, customers, sellers or anything...\"></form><div class=\"support-user\"><span class=\"support-user-avatar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<header class=\"support-header\"><div class=\"support-header-main\"><button class=\"support-menu-button\" type=\"button\" x-ref=\"supportMenu\" aria-label=\"Open support navigation\" aria-controls=\"support-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.supportSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"support-wordmark\" href=\"/support-portal\" aria-label=\"Weevcrafts support portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"support-portal-pill\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 54, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span><span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span><form class=\"support-search\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
+		var templ_7745c5c3_Var13 templ.SafeURL
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(supportPath(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 55, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" method=\"get\"><label class=\"sr-only\" for=\"support-search\">Search support cases</label> <span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span> <input id=\"support-search\" name=\"q\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 147}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 58, Col: 59}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</small></span></div><form class=\"support-header-logout\" action=\"/logout\" method=\"post\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" placeholder=\"Search cases, orders, customers, sellers or anything...\"></form><div class=\"support-user\"><span class=\"support-user-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 61, Col: 131}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 78}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><button type=\"submit\" aria-label=\"Log out\" title=\"Log out\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></div></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</span><span><strong>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 116}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</strong><small>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 147}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</small></span></div><form class=\"support-header-logout\" action=\"/logout\" method=\"post\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 61, Col: 131}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"><button type=\"submit\" aria-label=\"Log out\" title=\"Log out\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -300,51 +339,51 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<aside id=\"support-sidebar\" class=\"support-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"support-sidebar-close\" type=\"button\" x-ref=\"supportSidebarClose\" aria-label=\"Close support navigation\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"support-profile-mini\"><span class=\"support-profile-avatar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<aside id=\"support-sidebar\" class=\"support-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"support-sidebar-close\" type=\"button\" x-ref=\"supportSidebarClose\" aria-label=\"Close support navigation\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"support-profile-mini\"><span class=\"support-profile-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 87}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</span><span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</span><span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
+		var templ_7745c5c3_Var21 string
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 125}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</strong><small>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 156}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</small></span></div><nav class=\"support-nav\" aria-label=\"Support portal navigation\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</small></span></div><nav class=\"support-nav\" aria-label=\"Support portal navigation\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -364,20 +403,20 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<form method=\"post\" action=\"/logout\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<form method=\"post\" action=\"/logout\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 76, Col: 101}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><button class=\"support-nav-link\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></nav><div class=\"support-impact\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">support_agent</span><p>Resolve customer issues with care and keep every update on the ticket record.</p><a href=\"/support-portal/cases\">Open case queue <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></aside>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\"><button class=\"support-nav-link\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">logout</span><span>Log out</span></button></form></nav><div class=\"support-impact\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">support_agent</span><p>Resolve customer issues with care and keep every update on the ticket record.</p><a href=\"/support-portal/cases\">Open case queue <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></aside>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -401,82 +440,82 @@ func SupportNav(key, label, icon, current, href string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var24 == nil {
+			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var22 = []any{supportNavClass(key, current)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var22...)
+		var templ_7745c5c3_Var25 = []any{supportNavClass(key, current)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var25...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<a class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var22).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" href=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var24 templ.SafeURL
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs(href)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 56}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" aria-current=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 101}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<a class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var25).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 169}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</span><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(label)
+		var templ_7745c5c3_Var27 templ.SafeURL
+		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 191}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</span></a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" aria-current=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 101}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 169}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</span><span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var30 string
+		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(label)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 191}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</span></a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -500,79 +539,79 @@ func SupportPageIntro(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var28 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var28 == nil {
-			templ_7745c5c3_Var28 = templ.NopComponent
+		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var31 == nil {
+			templ_7745c5c3_Var31 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var29 = []any{"support-page-intro intro-" + p.Active}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var29...)
+		var templ_7745c5c3_Var32 = []any{"support-page-intro intro-" + p.Active}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var32...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<section class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var30 string
-		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var29).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if p.Active == "orders" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"support-breadcrumb\"><a href=\"/support-portal\">Home</a><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span><a href=\"/support-portal/orders\">Orders</a><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span><b>Order #WC2504267831</b></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"support-intro-copy\"><h1>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var31 string
-		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 49}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</h1><p>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var32 string
-		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 71}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</p></div><div class=\"support-intro-art\"><img width=\"1254\" height=\"1254\" src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<section class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var33 string
-		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportIntroImage(p.Active))
+		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var32).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 92, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" alt=\"Indian craft detail\"></div><div class=\"support-intro-note\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if p.Active == "orders" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div class=\"support-breadcrumb\"><a href=\"/support-portal\">Home</a><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span><a href=\"/support-portal/orders\">Orders</a><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span><b>Order #WC2504267831</b></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div class=\"support-intro-copy\"><h1>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 49}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</h1><p>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 71}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</p></div><div class=\"support-intro-art\"><img width=\"1254\" height=\"1254\" src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var36 string
+		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportIntroImage(p.Active))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 92, Col: 100}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" alt=\"Indian craft detail\"></div><div class=\"support-intro-note\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -580,7 +619,7 @@ func SupportPageIntro(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -604,9 +643,9 @@ func SupportIntroNote(active string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var34 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var34 == nil {
-			templ_7745c5c3_Var34 = templ.NopComponent
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if active == "customers" {
@@ -647,12 +686,12 @@ func SupportCustomersNote() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var35 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var35 == nil {
-			templ_7745c5c3_Var35 = templ.NopComponent
+		templ_7745c5c3_Var38 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var38 == nil {
+			templ_7745c5c3_Var38 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<span>Two sides.<br>One marketplace.<br><strong>A kinder tomorrow.</strong></span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<span>Two sides.<br>One marketplace.<br><strong>A kinder tomorrow.</strong></span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -676,12 +715,12 @@ func SupportOrdersNote() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var36 == nil {
-			templ_7745c5c3_Var36 = templ.NopComponent
+		templ_7745c5c3_Var39 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var39 == nil {
+			templ_7745c5c3_Var39 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<span>Every order<br>supports a brighter<br><strong>tomorrow.</strong></span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<span>Every order<br>supports a brighter<br><strong>tomorrow.</strong></span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -705,12 +744,12 @@ func SupportDefaultNote() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var37 == nil {
-			templ_7745c5c3_Var37 = templ.NopComponent
+		templ_7745c5c3_Var40 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var40 == nil {
+			templ_7745c5c3_Var40 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<span>Every question<br>is an opportunity<br>to create a better<br><strong>tomorrow.</strong></span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<span>Every question<br>is an opportunity<br>to create a better<br><strong>tomorrow.</strong></span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -734,140 +773,140 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var38 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var38 == nil {
-			templ_7745c5c3_Var38 = templ.NopComponent
+		templ_7745c5c3_Var41 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var41 == nil {
+			templ_7745c5c3_Var41 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<section class=\"support-stat-grid\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<section class=\"support-stat-grid\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, stat := range p.Stats {
-			var templ_7745c5c3_Var39 = []any{"support-stat-card tone-" + supportToneClass(stat.Tone)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var39...)
+			var templ_7745c5c3_Var42 = []any{"support-stat-card tone-" + supportToneClass(stat.Tone)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var42...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<article class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var40 string
-			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var39).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><span class=\"support-stat-icon material-symbols-outlined\" aria-hidden=\"true\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var41 string
-			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(supportStatIcon(stat.Icon))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 186}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</span><div><strong>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var42 string
-			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 220}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</strong><b>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<article class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var43 string
-			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
+			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var42).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 246}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</b>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var43)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var44 = []any{supportTrendClass(stat.Positive)}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var44...)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"><span class=\"support-stat-icon material-symbols-outlined\" aria-hidden=\"true\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<small class=\"")
+			var templ_7745c5c3_Var44 string
+			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(supportStatIcon(stat.Icon))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 186}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</span><div><strong>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var45 string
-			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var44).String())
+			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 220}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var45)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</strong><b>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var46 string
-			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(supportArrowIcon(stat.Positive))
+			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 394}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 246}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</b>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var47 string
-			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 415}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
+			var templ_7745c5c3_Var47 = []any{supportTrendClass(stat.Positive)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var47...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<em>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<small class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var48 string
-			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
+			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var47).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 434}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var48)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</em></small></div></article>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var49 string
+			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(supportArrowIcon(stat.Positive))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 394}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var50 string
+			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 415}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<em>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var51 string
+			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 434}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</em></small></div></article>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -891,12 +930,12 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var49 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var49 == nil {
-			templ_7745c5c3_Var49 = templ.NopComponent
+		templ_7745c5c3_Var52 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var52 == nil {
+			templ_7745c5c3_Var52 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var50 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var53 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -912,46 +951,11 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, " <section class=\"support-dashboard-grid\"><article class=\"support-panel case-queue-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span><span><h2>Case Queue</h2><p>Latest cases across all channels</p></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><nav class=\"support-case-tabs\" aria-label=\"Case queue filter\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, " <section class=\"support-dashboard-grid\"><article class=\"support-panel case-queue-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">headset_mic</span><span><h2>Case Queue</h2><p>Latest cases across all channels</p></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><nav class=\"support-case-tabs\" aria-label=\"Case queue filter\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var51 = []any{supportTabClass(p.Tab, "all")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var51...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<a class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var52 string
-			templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var51).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" aria-current=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var53 string
-			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 533}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var53)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\" href=\"/support-portal\">All (128)</a>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var54 = []any{supportTabClass(p.Tab, "urgent")}
+			var templ_7745c5c3_Var54 = []any{supportTabClass(p.Tab, "all")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var54...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -974,19 +978,19 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var56 string
-			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 671}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 533}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var56)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" href=\"/support-portal/cases?tab=urgent\">Urgent (18)</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" href=\"/support-portal\">All (128)</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var57 = []any{supportTabClass(p.Tab, "pending")}
+			var templ_7745c5c3_Var57 = []any{supportTabClass(p.Tab, "urgent")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var57...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1009,19 +1013,19 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var59 string
-			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
+			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 830}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 671}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\" href=\"/support-portal/cases?tab=pending\">Pending (42)</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\" href=\"/support-portal/cases?tab=urgent\">Urgent (18)</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var60 = []any{supportTabClass(p.Tab, "escalated")}
+			var templ_7745c5c3_Var60 = []any{supportTabClass(p.Tab, "pending")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var60...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1044,40 +1048,24 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var62 string
-			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
+			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 995}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 830}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var62)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" href=\"/support-portal/cases?tab=escalated\">Escalated (7)</a></nav><div class=\"support-table case-table\" tabindex=\"0\" role=\"region\" aria-label=\"Support case queue\"><div class=\"support-table-head\"><span>#</span><span>Case ID</span><span>Subject</span><span>Customer</span><span>Category</span><span>Priority</span><span>Created</span><span>Status</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" href=\"/support-portal/cases?tab=pending\">Pending (42)</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = SupportDashboardCaseRows(p.Cases).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "</div></article><article class=\"support-panel conversation-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">forum</span><span><h2>Live Conversations</h2><p>Recent customer messages</p></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = SupportConversationRows(p.Conversations).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "</article></section><section class=\"support-three-grid\"><article class=\"support-panel issue-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">donut_large</span><span><h2>Issue Breakdown</h2><p>Cases by issue category (Last 30 days)</p></span></div><select aria-label=\"Issue breakdown range\"><option>Last 30 days</option><option>Last 7 days</option></select></div><div class=\"issue-layout\"><div class=\"support-donut\"><strong>426</strong><small>Total Cases</small></div><div class=\"support-legend\"><span><i class=\"dot-order\"></i>Order Issues <b>28% (118)</b></span><span><i class=\"dot-returns\"></i>Returns &amp; Refunds <b>22% (94)</b></span><span><i class=\"dot-shipping\"></i>Shipping &amp; Delivery <b>18% (77)</b></span><span><i class=\"dot-payment\"></i>Payment Issues <b>12% (51)</b></span><span><i class=\"dot-product\"></i>Product Information <b>10% (43)</b></span><span><i class=\"dot-seller\"></i>Seller Related <b>7% (30)</b></span><span><i class=\"dot-other\"></i>Others <b>3% (13)</b></span></div></div></article><article class=\"support-panel sla-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">verified_user</span><span><h2>SLA Compliance</h2><p>Response time performance</p></span></div><select aria-label=\"SLA range\"><option>Last 7 days</option><option>Last 30 days</option></select></div><div class=\"sla-layout\"><div class=\"sla-ring\"><strong>92%</strong><small>Within SLA</small></div><div class=\"support-legend\"><span><i class=\"dot-green\"></i>Within SLA <b>92% (392)</b></span><span><i class=\"dot-red\"></i>Breached <b>8% (34)</b></span></div></div><div class=\"support-success-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">emoji_events</span><p><b>Great work!</b>You're meeting your response time targets.</p></div></article><article class=\"support-panel escalation-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span><span><h2>Escalation Alerts</h2></span></div><a href=\"/support-portal/cases?tab=escalated\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"escalation-list\"><a href=\"/support-portal/cases?notice=Seller+Success+team+escalation+opened\"><i></i><span><b>#WCSP250426821</b><small>Seller not responding for 48+ hours</small><em>Escalate to Seller Success team</em></span><time>21 min ago</time></a><a href=\"/support-portal/cases?notice=Payments+team+escalation+opened\"><i></i><span><b>#WCSP250426778</b><small>High value order refund delay</small><em>Escalate to Payments team</em></span><time>1 hour ago</time></a><a href=\"/support-portal/cases?notice=Team+lead+escalation+opened\"><i></i><span><b>#WCSP250426765</b><small>Customer unhappy – multiple follow-ups</small><em>Escalate to Team Lead</em></span><time>3 hours ago</time></a><a href=\"/support-portal/cases?notice=Risk+team+escalation+opened\"><i></i><span><b>#WCSP250426752</b><small>Potential fraud – unusual order activity</small><em>Escalate to Risk team</em></span><time>4 hours ago</time></a></div></article></section><section class=\"support-two-grid support-bottom-grid\"><article class=\"support-panel workload-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">group</span><span><h2>Agent Workload</h2><p>Today's case assignment and performance</p></span></div><a href=\"/support-portal/cases?notice=Agent+workload+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"support-table workload-table\"><div class=\"support-table-head\"><span>Agent</span><span>Assigned</span><span>Resolved</span><span>Open</span><span>FRT</span><span>SLA %</span><span>Status</span></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"\">Aditi Rao (You)</span><b>22</b><b>18</b><b>4</b><span>2h 18m</span><strong>95%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\">Karan Bhat</span><b>20</b><b>16</b><b>4</b><span>2h 05m</span><strong>90%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\">Meera Kapoor</span><b>18</b><b>12</b><b>6</b><span>2h 40m</span><strong>88%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\">Arjun Nair</span><b>16</b><b>10</b><b>6</b><span>3h 12m</span><strong>84%</strong><em class=\"agent-away\">● Away</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\">Sneha Patel</span><b>14</b><b>9</b><b>5</b><span>2h 55m</span><strong>92%</strong><em class=\"agent-online\">● Online</em></div></div></article><article class=\"support-panel macros-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu_book</span><span><h2>Knowledge Base &amp; Macros</h2><p>Quick access to common responses</p></span></div><a href=\"/support-portal/cases?notice=Knowledge+base+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><nav class=\"macro-tabs\" aria-label=\"Knowledge base category\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var63 = []any{supportTabClass(p.Tab, "popular")}
+			var templ_7745c5c3_Var63 = []any{supportTabClass(p.Tab, "escalated")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var63...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<a class=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<a class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1090,24 +1078,40 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\" aria-current=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\" aria-current=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var65 string
-			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "popular"))
+			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 580}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 995}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var65)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "\" href=\"/support-portal\">Popular</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "\" href=\"/support-portal/cases?tab=escalated\">Escalated (7)</a></nav><div class=\"support-table case-table\" tabindex=\"0\" role=\"region\" aria-label=\"Support case queue\"><div class=\"support-table-head\"><span>#</span><span>Case ID</span><span>Subject</span><span>Customer</span><span>Category</span><span>Priority</span><span>Created</span><span>Status</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var66 = []any{supportTabClass(p.Tab, "shipping")}
+			templ_7745c5c3_Err = SupportDashboardCaseRows(p.Cases).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</div></article><article class=\"support-panel conversation-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">forum</span><span><h2>Live Conversations</h2><p>Recent customer messages</p></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = SupportConversationRows(p.Conversations).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "</article></section><section class=\"support-three-grid\"><article class=\"support-panel issue-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">donut_large</span><span><h2>Issue Breakdown</h2><p>Cases by issue category (Last 30 days)</p></span></div><select aria-label=\"Issue breakdown range\"><option>Last 30 days</option><option>Last 7 days</option></select></div><div class=\"issue-layout\"><div class=\"support-donut\"><strong>426</strong><small>Total Cases</small></div><div class=\"support-legend\"><span><i class=\"dot-order\"></i>Order Issues <b>28% (118)</b></span><span><i class=\"dot-returns\"></i>Returns &amp; Refunds <b>22% (94)</b></span><span><i class=\"dot-shipping\"></i>Shipping &amp; Delivery <b>18% (77)</b></span><span><i class=\"dot-payment\"></i>Payment Issues <b>12% (51)</b></span><span><i class=\"dot-product\"></i>Product Information <b>10% (43)</b></span><span><i class=\"dot-seller\"></i>Seller Related <b>7% (30)</b></span><span><i class=\"dot-other\"></i>Others <b>3% (13)</b></span></div></div></article><article class=\"support-panel sla-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">verified_user</span><span><h2>SLA Compliance</h2><p>Response time performance</p></span></div><select aria-label=\"SLA range\"><option>Last 7 days</option><option>Last 30 days</option></select></div><div class=\"sla-layout\"><div class=\"sla-ring\"><strong>92%</strong><small>Within SLA</small></div><div class=\"support-legend\"><span><i class=\"dot-green\"></i>Within SLA <b>92% (392)</b></span><span><i class=\"dot-red\"></i>Breached <b>8% (34)</b></span></div></div><div class=\"support-success-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">emoji_events</span><p><b>Great work!</b>You're meeting your response time targets.</p></div></article><article class=\"support-panel escalation-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span><span><h2>Escalation Alerts</h2></span></div><a href=\"/support-portal/cases?tab=escalated\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"escalation-list\"><a href=\"/support-portal/cases?notice=Seller+Success+team+escalation+opened\"><i></i><span><b>#WCSP250426821</b><small>Seller not responding for 48+ hours</small><em>Escalate to Seller Success team</em></span><time>21 min ago</time></a><a href=\"/support-portal/cases?notice=Payments+team+escalation+opened\"><i></i><span><b>#WCSP250426778</b><small>High value order refund delay</small><em>Escalate to Payments team</em></span><time>1 hour ago</time></a><a href=\"/support-portal/cases?notice=Team+lead+escalation+opened\"><i></i><span><b>#WCSP250426765</b><small>Customer unhappy – multiple follow-ups</small><em>Escalate to Team Lead</em></span><time>3 hours ago</time></a><a href=\"/support-portal/cases?notice=Risk+team+escalation+opened\"><i></i><span><b>#WCSP250426752</b><small>Potential fraud – unusual order activity</small><em>Escalate to Risk team</em></span><time>4 hours ago</time></a></div></article></section><section class=\"support-two-grid support-bottom-grid\"><article class=\"support-panel workload-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">group</span><span><h2>Agent Workload</h2><p>Today's case assignment and performance</p></span></div><a href=\"/support-portal/cases?notice=Agent+workload+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"support-table workload-table\"><div class=\"support-table-head\"><span>Agent</span><span>Assigned</span><span>Resolved</span><span>Open</span><span>FRT</span><span>SLA %</span><span>Status</span></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"\">Aditi Rao (You)</span><b>22</b><b>18</b><b>4</b><span>2h 18m</span><strong>95%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\">Karan Bhat</span><b>20</b><b>16</b><b>4</b><span>2h 05m</span><strong>90%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-blue.webp\" alt=\"\">Meera Kapoor</span><b>18</b><b>12</b><b>6</b><span>2h 40m</span><strong>88%</strong><em class=\"agent-online\">● Online</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\">Arjun Nair</span><b>16</b><b>10</b><b>6</b><span>3h 12m</span><strong>84%</strong><em class=\"agent-away\">● Away</em></div><div class=\"workload-row\"><span><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\">Sneha Patel</span><b>14</b><b>9</b><b>5</b><span>2h 55m</span><strong>92%</strong><em class=\"agent-online\">● Online</em></div></div></article><article class=\"support-panel macros-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu_book</span><span><h2>Knowledge Base &amp; Macros</h2><p>Quick access to common responses</p></span></div><a href=\"/support-portal/cases?notice=Knowledge+base+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><nav class=\"macro-tabs\" aria-label=\"Knowledge base category\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var66 = []any{supportTabClass(p.Tab, "popular")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var66...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1130,19 +1134,19 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var68 string
-			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
+			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "popular"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 720}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 580}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "\" href=\"/support-portal/cases?tab=shipping\">Order &amp; Shipping</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "\" href=\"/support-portal\">Popular</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var69 = []any{supportTabClass(p.Tab, "returns")}
+			var templ_7745c5c3_Var69 = []any{supportTabClass(p.Tab, "shipping")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var69...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1165,19 +1169,19 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var71 string
-			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
+			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 890}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 720}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "\" href=\"/support-portal/cases?tab=returns\">Returns &amp; Refunds</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "\" href=\"/support-portal/cases?tab=shipping\">Order &amp; Shipping</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var72 = []any{supportTabClass(p.Tab, "payments")}
+			var templ_7745c5c3_Var72 = []any{supportTabClass(p.Tab, "returns")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var72...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1200,19 +1204,19 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var74 string
-			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payments"))
+			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1062}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 890}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var74)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "\" href=\"/support-portal/cases?tab=payments\">Payments</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "\" href=\"/support-portal/cases?tab=returns\">Returns &amp; Refunds</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var75 = []any{supportTabClass(p.Tab, "seller")}
+			var templ_7745c5c3_Var75 = []any{supportTabClass(p.Tab, "payments")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var75...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1235,21 +1239,56 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var77 string
-			templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "seller"))
+			templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payments"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1218}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1062}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var77)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "\" href=\"/support-portal/cases?tab=seller\">Seller Support</a></nav><div class=\"macro-list\"><a href=\"/support-portal/cases?notice=Order+status+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Order delay – customer response template</b><small>Use this macro to respond to delivery delays</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Refund+process+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Refund process explanation</b><small>Explain refund timelines and next steps</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Damaged+item+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Damaged item – next steps</b><small>Guide customer for return or replacement</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Seller+escalation+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Seller not responding – escalation</b><small>Template to escalate to Seller Success team</small></span><em>Use Macro</em></a></div></article></section>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, "\" href=\"/support-portal/cases?tab=payments\">Payments</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var78 = []any{supportTabClass(p.Tab, "seller")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var78...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "<a class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var79 string
+			templ_7745c5c3_Var79, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var78).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var79)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "\" aria-current=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var80 string
+			templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "seller"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1218}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var80)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "\" href=\"/support-portal/cases?tab=seller\">Seller Support</a></nav><div class=\"macro-list\"><a href=\"/support-portal/cases?notice=Order+status+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Order delay – customer response template</b><small>Use this macro to respond to delivery delays</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Refund+process+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Refund process explanation</b><small>Explain refund timelines and next steps</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Damaged+item+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Damaged item – next steps</b><small>Guide customer for return or replacement</small></span><em>Use Macro</em></a><a href=\"/support-portal/cases?notice=Seller+escalation+macro+selected\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><span><b>Seller not responding – escalation</b><small>Template to escalate to Seller Success team</small></span><em>Use Macro</em></a></div></article></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var50), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var53), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1273,12 +1312,12 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var78 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var78 == nil {
-			templ_7745c5c3_Var78 = templ.NopComponent
+		templ_7745c5c3_Var81 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var81 == nil {
+			templ_7745c5c3_Var81 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var79 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var82 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1291,46 +1330,11 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 			}
 			ctx = templ.InitializeContext(ctx)
 			if len(p.Cases) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "<section class=\"support-view-tabs\" aria-label=\"Case status filter\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "<section class=\"support-view-tabs\" aria-label=\"Case status filter\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var80 = []any{supportTabClass(p.Tab, "all")}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var80...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "<a class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var81 string
-				templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var80).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var81)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, "\" aria-current=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var82 string
-				templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 164}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var82)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, "\" href=\"/support-portal/cases\">All (128)</a>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var83 = []any{supportTabClass(p.Tab, "open")}
+				var templ_7745c5c3_Var83 = []any{supportTabClass(p.Tab, "all")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var83...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1353,19 +1357,19 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var85 string
-				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "open"))
+				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 304}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 164}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var85)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "\" href=\"/support-portal/cases?tab=open\">Open (128)</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, "\" href=\"/support-portal/cases\">All (128)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var86 = []any{supportTabClass(p.Tab, "pending")}
+				var templ_7745c5c3_Var86 = []any{supportTabClass(p.Tab, "open")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var86...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1388,19 +1392,19 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var88 string
-				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
+				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "open"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 460}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 304}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var88)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "\" href=\"/support-portal/cases?tab=pending\">Pending (42)</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, "\" href=\"/support-portal/cases?tab=open\">Open (128)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var89 = []any{supportTabClass(p.Tab, "urgent")}
+				var templ_7745c5c3_Var89 = []any{supportTabClass(p.Tab, "pending")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var89...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1423,19 +1427,19 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var91 string
-				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
+				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 619}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 460}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var91)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\" href=\"/support-portal/cases?tab=urgent\">Urgent (18)</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\" href=\"/support-portal/cases?tab=pending\">Pending (42)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var92 = []any{supportTabClass(p.Tab, "escalated")}
+				var templ_7745c5c3_Var92 = []any{supportTabClass(p.Tab, "urgent")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var92...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1458,19 +1462,19 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var94 string
-				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
+				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 782}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 619}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var94)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "\" href=\"/support-portal/cases?tab=escalated\">Escalated (7)</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "\" href=\"/support-portal/cases?tab=urgent\">Urgent (18)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var95 = []any{supportTabClass(p.Tab, "resolved")}
+				var templ_7745c5c3_Var95 = []any{supportTabClass(p.Tab, "escalated")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var95...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1493,15 +1497,50 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var97 string
-				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "resolved"))
+				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 948}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 782}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var97)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "\" href=\"/support-portal/cases?tab=resolved\">Resolved (56)</a><select aria-label=\"Cases range\"><option>Last 30 days</option><option>Last 7 days</option></select></section><section class=\"support-case-workspace\"><aside class=\"support-case-list\"><div class=\"support-case-list-heading\"><h2>Case Queue (128)</h2><select aria-label=\"Case sort\"><option>Newest First</option><option>Oldest First</option></select></div><div class=\"support-case-list-scroll\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "\" href=\"/support-portal/cases?tab=escalated\">Escalated (7)</a>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var98 = []any{supportTabClass(p.Tab, "resolved")}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var98...)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<a class=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var99 string
+				templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var98).String())
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var99)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "\" aria-current=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var100 string
+				templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "resolved"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 948}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var100)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "\" href=\"/support-portal/cases?tab=resolved\">Resolved (56)</a><select aria-label=\"Cases range\"><option>Last 30 days</option><option>Last 7 days</option></select></section><section class=\"support-case-workspace\"><aside class=\"support-case-list\"><div class=\"support-case-list-heading\"><h2>Case Queue (128)</h2><select aria-label=\"Case sort\"><option>Newest First</option><option>Oldest First</option></select></div><div class=\"support-case-list-scroll\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1509,71 +1548,71 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "</div><nav class=\"support-pagination\" aria-label=\"Case pagination\"><a href=\"/support-portal/cases?notice=Previous+case+page+opened\" aria-label=\"Previous case page\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_left</span></a><a class=\"active\" aria-current=\"page\" href=\"/support-portal/cases\">1</a><a href=\"/support-portal/cases?notice=Case+page+2+opened\">2</a><a href=\"/support-portal/cases?notice=Case+page+3+opened\">3</a><a href=\"/support-portal/cases?notice=Case+page+4+opened\">4</a><a href=\"/support-portal/cases?notice=Case+page+5+opened\">5</a><i>...</i><a href=\"/support-portal/cases?notice=Case+page+13+opened\">13</a><a href=\"/support-portal/cases?notice=Next+case+page+opened\" aria-label=\"Next case page\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></a></nav></aside><section class=\"support-case-detail\"><div class=\"support-detail-toolbar\"><a href=\"/support-portal/cases?notice=Case+marked+pending\" class=\"support-button outline\">Mark as Pending <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a><a href=\"/support-portal/cases?notice=Case+actions+opened\" class=\"support-icon-button\" aria-label=\"More case actions\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">more_horiz</span></a></div><div class=\"support-case-heading\"><div><span class=\"support-detail-id\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var98 string
-				templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1708}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var98))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</span><mark class=\"support-status success\">Open</mark><h2>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var99 string
-				templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Subject)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1804}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var99))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "</h2><p>Customer hasn't received the order even after expected delivery date.</p></div><div><b>Priority</b><mark class=\"support-priority priority-high\">High</mark><small>Created: 26 Apr 2024, 10:24 AM</small></div></div><div class=\"support-case-meta\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var100 string
-				templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Customer)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2171}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var100))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, " <mark>Customer</mark></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span>p***a.sharma@gmail.com</span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span>+91 ******5219</span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span>Order <b>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</div><nav class=\"support-pagination\" aria-label=\"Case pagination\"><a href=\"/support-portal/cases?notice=Previous+case+page+opened\" aria-label=\"Previous case page\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_left</span></a><a class=\"active\" aria-current=\"page\" href=\"/support-portal/cases\">1</a><a href=\"/support-portal/cases?notice=Case+page+2+opened\">2</a><a href=\"/support-portal/cases?notice=Case+page+3+opened\">3</a><a href=\"/support-portal/cases?notice=Case+page+4+opened\">4</a><a href=\"/support-portal/cases?notice=Case+page+5+opened\">5</a><i>...</i><a href=\"/support-portal/cases?notice=Case+page+13+opened\">13</a><a href=\"/support-portal/cases?notice=Next+case+page+opened\" aria-label=\"Next case page\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></a></nav></aside><section class=\"support-case-detail\"><div class=\"support-detail-toolbar\"><a href=\"/support-portal/cases?notice=Case+marked+pending\" class=\"support-button outline\">Mark as Pending <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a><a href=\"/support-portal/cases?notice=Case+actions+opened\" class=\"support-icon-button\" aria-label=\"More case actions\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">more_horiz</span></a></div><div class=\"support-case-heading\"><div><span class=\"support-detail-id\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var101 string
-				templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
+				templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2529}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1708}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var101))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span>Bengaluru, KA</span></div><div class=\"support-detail-tabs\"><a class=\"active\" aria-current=\"page\" href=\"/support-portal/cases\">Conversation</a><a href=\"/support-portal/cases?tab=order\">Order Details</a><a href=\"/support-portal/customers\">Customer Info</a><a href=\"/support-portal/cases?tab=notes\">Internal Notes (2)</a><a href=\"/support-portal/cases?tab=related\">Related Cases (0)</a></div><div class=\"support-thread\"><div class=\"support-message customer\"><span class=\"support-message-avatar\">PS</span><div><header><b>Priya Sharma</b><mark>Customer</mark><time>26 Apr 2024, 10:24 AM</time></header><p>Hi, I still haven't received my order. It was supposed to be delivered on 22 Apr. Can you please help me with the status? This is a gift and I really need it soon.</p><div class=\"message-attachments\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"Package evidence\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/blue-tote.webp\" alt=\"Shipping evidence\"><span>+2<br>more</span></div></div></div><div class=\"support-message seller\"><span class=\"support-message-avatar\">SK</span><div><header><b>Sneha Kapoor</b><mark>Seller</mark><time>26 Apr 2024, 11:02 AM</time></header><p>Hi Priya, the order was shipped on 20 Apr via Delhivery. I have shared the tracking details below. It may be delayed due to local courier issues.</p><div class=\"tracking-card\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><span><b>Tracking ID: 149730248756</b><small>Delhivery</small></span><a href=\"/support-portal/orders?notice=Shipment+tracking+opened\">Track Shipment <span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span></a></div></div></div><div class=\"support-message agent\"><span class=\"support-message-avatar\">AR</span><div><header><b>Aditi Rao</b><mark>Company support</mark><time>26 Apr 2024, 11:15 AM</time></header><p>Hi Priya,<br><br>I'm checking this with our logistics team and will get back to you shortly.<br>Thank you for your patience.</p></div></div><div class=\"support-message customer\"><span class=\"support-message-avatar\">PS</span><div><header><b>Priya Sharma</b><mark>Customer</mark><time>26 Apr 2024, 11:30 AM</time></header><p>Thanks! Looking forward to an update.</p></div></div></div><form id=\"reply\" class=\"support-reply\" action=\"/support-portal/cases\" method=\"get\"><div class=\"reply-tabs\"><a class=\"active\" aria-current=\"page\" href=\"#reply\">Reply</a><a href=\"/support-portal/cases?notice=Internal+note+mode+opened\">Internal Note</a><a href=\"/support-portal/cases?notice=Customer+view+opened\">Customer View</a><a href=\"/support-portal/cases?notice=Macro+picker+opened\">Insert Macro</a></div><textarea name=\"reply\" aria-label=\"Reply to customer\" placeholder=\"Type your reply here...\"></textarea><div><a href=\"/support-portal/cases?notice=Attachment+picker+opened\" class=\"support-button outline\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">attach_file</span>Attach Files</a><label><input type=\"checkbox\" name=\"internal\"> Send as internal note</label><button type=\"submit\" class=\"support-button primary\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">send</span>Send Reply</button></div></form><div class=\"support-quick-response\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><span><h2>Quick Responses (Macros)</h2></span></div><a href=\"/support-portal/cases?notice=All+macros+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div><a href=\"/support-portal/cases?notice=Order+status+macro+selected\">Order status update</a><a href=\"/support-portal/cases?notice=Refund+process+macro+selected\">Refund process info</a><a href=\"/support-portal/cases?notice=More+information+macro+selected\">Request more information</a><a href=\"/support-portal/cases?notice=Apology+macro+selected\">Apologize for delay</a><a href=\"/support-portal/cases?notice=Logistics+escalation+macro+selected\">Escalate to logistics</a><a href=\"/support-portal/cases?notice=Close+case+selected\">Close with resolution</a></div></div></section></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</span><mark class=\"support-status success\">Open</mark><h2>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var102 string
+				templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Subject)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1804}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var102))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</h2><p>Customer hasn't received the order even after expected delivery date.</p></div><div><b>Priority</b><mark class=\"support-priority priority-high\">High</mark><small>Created: 26 Apr 2024, 10:24 AM</small></div></div><div class=\"support-case-meta\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var103 string
+				templ_7745c5c3_Var103, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Customer)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2171}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var103))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, " <mark>Customer</mark></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span>p***a.sharma@gmail.com</span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span>+91 ******5219</span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span>Order <b>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var104 string
+				templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2529}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span>Bengaluru, KA</span></div><div class=\"support-detail-tabs\"><a class=\"active\" aria-current=\"page\" href=\"/support-portal/cases\">Conversation</a><a href=\"/support-portal/cases?tab=order\">Order Details</a><a href=\"/support-portal/customers\">Customer Info</a><a href=\"/support-portal/cases?tab=notes\">Internal Notes (2)</a><a href=\"/support-portal/cases?tab=related\">Related Cases (0)</a></div><div class=\"support-thread\"><div class=\"support-message customer\"><span class=\"support-message-avatar\">PS</span><div><header><b>Priya Sharma</b><mark>Customer</mark><time>26 Apr 2024, 10:24 AM</time></header><p>Hi, I still haven't received my order. It was supposed to be delivered on 22 Apr. Can you please help me with the status? This is a gift and I really need it soon.</p><div class=\"message-attachments\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"Package evidence\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/blue-tote.webp\" alt=\"Shipping evidence\"><span>+2<br>more</span></div></div></div><div class=\"support-message seller\"><span class=\"support-message-avatar\">SK</span><div><header><b>Sneha Kapoor</b><mark>Seller</mark><time>26 Apr 2024, 11:02 AM</time></header><p>Hi Priya, the order was shipped on 20 Apr via Delhivery. I have shared the tracking details below. It may be delayed due to local courier issues.</p><div class=\"tracking-card\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><span><b>Tracking ID: 149730248756</b><small>Delhivery</small></span><a href=\"/support-portal/orders?notice=Shipment+tracking+opened\">Track Shipment <span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span></a></div></div></div><div class=\"support-message agent\"><span class=\"support-message-avatar\">AR</span><div><header><b>Aditi Rao</b><mark>Company support</mark><time>26 Apr 2024, 11:15 AM</time></header><p>Hi Priya,<br><br>I'm checking this with our logistics team and will get back to you shortly.<br>Thank you for your patience.</p></div></div><div class=\"support-message customer\"><span class=\"support-message-avatar\">PS</span><div><header><b>Priya Sharma</b><mark>Customer</mark><time>26 Apr 2024, 11:30 AM</time></header><p>Thanks! Looking forward to an update.</p></div></div></div><form id=\"reply\" class=\"support-reply\" action=\"/support-portal/cases\" method=\"get\"><div class=\"reply-tabs\"><a class=\"active\" aria-current=\"page\" href=\"#reply\">Reply</a><a href=\"/support-portal/cases?notice=Internal+note+mode+opened\">Internal Note</a><a href=\"/support-portal/cases?notice=Customer+view+opened\">Customer View</a><a href=\"/support-portal/cases?notice=Macro+picker+opened\">Insert Macro</a></div><textarea name=\"reply\" aria-label=\"Reply to customer\" placeholder=\"Type your reply here...\"></textarea><div><a href=\"/support-portal/cases?notice=Attachment+picker+opened\" class=\"support-button outline\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">attach_file</span>Attach Files</a><label><input type=\"checkbox\" name=\"internal\"> Send as internal note</label><button type=\"submit\" class=\"support-button primary\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">send</span>Send Reply</button></div></form><div class=\"support-quick-response\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><span><h2>Quick Responses (Macros)</h2></span></div><a href=\"/support-portal/cases?notice=All+macros+opened\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div><a href=\"/support-portal/cases?notice=Order+status+macro+selected\">Order status update</a><a href=\"/support-portal/cases?notice=Refund+process+macro+selected\">Refund process info</a><a href=\"/support-portal/cases?notice=More+information+macro+selected\">Request more information</a><a href=\"/support-portal/cases?notice=Apology+macro+selected\">Apologize for delay</a><a href=\"/support-portal/cases?notice=Logistics+escalation+macro+selected\">Escalate to logistics</a><a href=\"/support-portal/cases?notice=Close+case+selected\">Close with resolution</a></div></div></section></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "<div class=\"support-empty-state\" role=\"status\"><h2>No support cases</h2><p>The case queue is currently empty.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "<div class=\"support-empty-state\" role=\"status\"><h2>No support cases</h2><p>The case queue is currently empty.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var79), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var82), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1597,12 +1636,12 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var102 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var102 == nil {
-			templ_7745c5c3_Var102 = templ.NopComponent
+		templ_7745c5c3_Var105 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var105 == nil {
+			templ_7745c5c3_Var105 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var103 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var106 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1615,46 +1654,11 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 			}
 			ctx = templ.InitializeContext(ctx)
 			if len(p.Cases) > 0 && len(p.Directory) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "<section class=\"support-directory-tabs\" aria-label=\"Directory view\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "<section class=\"support-directory-tabs\" aria-label=\"Directory view\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var104 = []any{supportTabClass(p.Tab, "directory")}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var104...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "<a class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var105 string
-				templ_7745c5c3_Var105, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var104).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var105)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "\" aria-current=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var106 string
-				templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "directory"))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 177}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var106)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "\" href=\"/support-portal/customers\">People Directory</a>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var107 = []any{supportTabClass(p.Tab, "participants")}
+				var templ_7745c5c3_Var107 = []any{supportTabClass(p.Tab, "directory")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var107...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1677,28 +1681,63 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var109 string
-				templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "participants"))
+				templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "directory"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 344}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 177}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var109)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "\" href=\"/support-portal/customers?tab=participants\">Case Participants</a></section><form class=\"support-directory-toolbar\" action=\"/support-portal/customers\" method=\"get\"><div class=\"support-filter-search\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span><input id=\"support-customer-search\" name=\"q\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "\" href=\"/support-portal/customers\">People Directory</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var110 string
-				templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
+				var templ_7745c5c3_Var110 = []any{supportTabClass(p.Tab, "participants")}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var110...)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "<a class=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var111 string
+				templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var110).String())
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var111)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "\" aria-current=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var112 string
+				templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "participants"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 344}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var112)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "\" href=\"/support-portal/customers?tab=participants\">Case Participants</a></section><form class=\"support-directory-toolbar\" action=\"/support-portal/customers\" method=\"get\"><div class=\"support-filter-search\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span><input id=\"support-customer-search\" name=\"q\" value=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var113 string
+				templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 683}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var110)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var113)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "\" aria-label=\"Search customers and sellers\" placeholder=\"Search by name, email, phone, order #, store name or user ID...\"></div><select name=\"type\" aria-label=\"User type\"><option value=\"\">All Users</option><option value=\"customer\">Customers</option><option value=\"seller\">Sellers</option></select><button class=\"support-button primary\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span>Search</button><a class=\"support-button outline\" href=\"/support-portal/customers?notice=Advanced+filters+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">filter_alt</span>Advanced Filters</a></form><div class=\"support-directory-table\"><div class=\"directory-head\"><span>Name / Store</span><span>Type</span><span>Location</span><span>Email / Phone</span><span>Orders</span><span>Support Cases</span><span>Status</span><span>Last Active</span><span></span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "\" aria-label=\"Search customers and sellers\" placeholder=\"Search by name, email, phone, order #, store name or user ID...\"></div><select name=\"type\" aria-label=\"User type\"><option value=\"\">All Users</option><option value=\"customer\">Customers</option><option value=\"seller\">Sellers</option></select><button class=\"support-button primary\" type=\"submit\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span>Search</button><a class=\"support-button outline\" href=\"/support-portal/customers?notice=Advanced+filters+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">filter_alt</span>Advanced Filters</a></form><div class=\"support-directory-table\"><div class=\"directory-head\"><span>Name / Store</span><span>Type</span><span>Location</span><span>Email / Phone</span><span>Orders</span><span>Support Cases</span><span>Status</span><span>Last Active</span><span></span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1706,46 +1745,46 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div><section class=\"support-context-heading\"><a href=\"/support-portal/customers\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span> Back to Directory</a><a href=\"/support-portal/cases\">Open in new tab ↗</a><h2>Case Context <span>•</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</div><section class=\"support-context-heading\"><a href=\"/support-portal/customers\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span> Back to Directory</a><a href=\"/support-portal/cases\">Open in new tab ↗</a><h2>Case Context <span>•</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var111 string
-				templ_7745c5c3_Var111, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
+				var templ_7745c5c3_Var114 string
+				templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 1919}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var111))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, " <mark class=\"support-status success\">Open</mark></h2><p>Order not delivered and refund requested</p><small>Customer reports non-delivery of handcrafted saree. Requests refund. Seller confirms dispatch. Need to verify shipment status and resolve with both parties.</small><div class=\"context-actions\"><a href=\"/support-portal/cases?notice=Customer+call+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> Call Customer</a><a href=\"/support-portal/cases?notice=Customer+email+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Email</a><a href=\"/support-portal/cases?notice=Customer+message+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat</span> Message</a><a href=\"/support-portal/cases?notice=Case+note+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Note</a><a href=\"/support-portal/orders\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span> View Orders</a><a href=\"/support-portal/orders\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span> View Transactions</a><a class=\"danger\" href=\"/support-portal/cases?notice=Case+escalated\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span> Escalate Case</a></div></section><section class=\"support-context-grid\"><article class=\"support-panel context-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><span><h2>Customer Details</h2></span></div><a href=\"/support-portal/customers?notice=Full+profile+opened\">View Full Profile <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"context-person\"><img width=\"1254\" height=\"1254\" src=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, " <mark class=\"support-status success\">Open</mark></h2><p>Order not delivered and refund requested</p><small>Customer reports non-delivery of handcrafted saree. Requests refund. Seller confirms dispatch. Need to verify shipment status and resolve with both parties.</small><div class=\"context-actions\"><a href=\"/support-portal/cases?notice=Customer+call+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> Call Customer</a><a href=\"/support-portal/cases?notice=Customer+email+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Email</a><a href=\"/support-portal/cases?notice=Customer+message+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat</span> Message</a><a href=\"/support-portal/cases?notice=Case+note+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Note</a><a href=\"/support-portal/orders\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span> View Orders</a><a href=\"/support-portal/orders\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span> View Transactions</a><a class=\"danger\" href=\"/support-portal/cases?notice=Case+escalated\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span> Escalate Case</a></div></section><section class=\"support-context-grid\"><article class=\"support-panel context-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><span><h2>Customer Details</h2></span></div><a href=\"/support-portal/customers?notice=Full+profile+opened\">View Full Profile <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"context-person\"><img width=\"1254\" height=\"1254\" src=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var112 string
-				templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSupportDirectoryEntry(p.Directory).Image)
+				var templ_7745c5c3_Var115 string
+				templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSupportDirectoryEntry(p.Directory).Image)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 3756}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var112)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var115)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "\" alt=\"\"><div><h3>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "\" alt=\"\"><div><h3>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var113 string
-				templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportDirectoryEntry(p.Directory).Name)
+				var templ_7745c5c3_Var116 string
+				templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportDirectoryEntry(p.Directory).Name)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 3822}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var113))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, " <mark class=\"support-status success\">Verified</mark></h3><p>Customer since Jan 2023</p></div></div><div class=\"context-mini-stats\"><span><b>12</b><small>Total Orders</small></span><span><b>3</b><small>Support Cases</small></span><span><b>4.8<span class=\"star\">★</span></b><small>Avg. Rating</small></span></div><dl class=\"masked-details\"><dt>Email</dt><dd>p***a.sharma@gmail.com</dd><dt>Phone</dt><dd>+91 ******5219</dd><dt>Location</dt><dd>Bengaluru, Karnataka - 560034</dd></dl><h3 class=\"subsection-title\">Addresses (2) <a href=\"/support-portal/customers?notice=Addresses+opened\">View All →</a></h3><div class=\"address-box\"><b>Home <mark>Default</mark></b><span>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</span></div><div class=\"address-box\"><b>Work</b><span>#24, Prestige Tech Park<br>Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka - 560037</span></div><h3 class=\"subsection-title\">Communication Preferences <a href=\"/support-portal/customers?notice=Preferences+opened\">Edit →</a></h3><div class=\"preference-list\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Email Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">sms</span> SMS Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat</span> WhatsApp Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Marketing Communications <b class=\"off\">Off</b></span></div><div class=\"risk-row\"><span><b>●</b>Low Risk</span><span><b>4.8<span class=\"star\">★</span></b>Satisfaction</span><span><b>◎</b>No Abuse History</span></div></article><article class=\"support-panel context-card timeline-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">timeline</span><span><h2>Case Timeline</h2></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"support-case-timeline\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, " <mark class=\"support-status success\">Verified</mark></h3><p>Customer since Jan 2023</p></div></div><div class=\"context-mini-stats\"><span><b>12</b><small>Total Orders</small></span><span><b>3</b><small>Support Cases</small></span><span><b>4.8<span class=\"star\">★</span></b><small>Avg. Rating</small></span></div><dl class=\"masked-details\"><dt>Email</dt><dd>p***a.sharma@gmail.com</dd><dt>Phone</dt><dd>+91 ******5219</dd><dt>Location</dt><dd>Bengaluru, Karnataka - 560034</dd></dl><h3 class=\"subsection-title\">Addresses (2) <a href=\"/support-portal/customers?notice=Addresses+opened\">View All →</a></h3><div class=\"address-box\"><b>Home <mark>Default</mark></b><span>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</span></div><div class=\"address-box\"><b>Work</b><span>#24, Prestige Tech Park<br>Outer Ring Road, Marathahalli<br>Bengaluru, Karnataka - 560037</span></div><h3 class=\"subsection-title\">Communication Preferences <a href=\"/support-portal/customers?notice=Preferences+opened\">Edit →</a></h3><div class=\"preference-list\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Email Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">sms</span> SMS Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chat</span> WhatsApp Notifications <b>On</b></span><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> Marketing Communications <b class=\"off\">Off</b></span></div><div class=\"risk-row\"><span><b>●</b>Low Risk</span><span><b>4.8<span class=\"star\">★</span></b>Satisfaction</span><span><b>◎</b>No Abuse History</span></div></article><article class=\"support-panel context-card timeline-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">timeline</span><span><h2>Case Timeline</h2></span></div><a href=\"/support-portal/cases\">View All <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"support-case-timeline\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1753,32 +1792,32 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "</div><form class=\"context-note-form\" action=\"/support-portal/customers\" method=\"get\"><textarea name=\"note\" aria-label=\"Add an internal note to this case\" placeholder=\"Add a note to this case...\"></textarea><button type=\"submit\" class=\"support-button primary\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Note</button></form><div class=\"linked-order\"><h3>Linked Orders (1) <a href=\"/support-portal/orders\">View Order →</a></h3><div><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Order ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "</div><form class=\"context-note-form\" action=\"/support-portal/customers\" method=\"get\"><textarea name=\"note\" aria-label=\"Add an internal note to this case\" placeholder=\"Add a note to this case...\"></textarea><button type=\"submit\" class=\"support-button primary\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Note</button></form><div class=\"linked-order\"><h3>Linked Orders (1) <a href=\"/support-portal/orders\">View Order →</a></h3><div><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Order ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var114 string
-				templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
+				var templ_7745c5c3_Var117 string
+				templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 6596}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</b><small>Chanderi Silk Cotton Saree - Royal Maroon<br>Qty: 1 | INR 5,999</small></span><mark>Shipped</mark></div></div><div class=\"related-cases\"><h3>Return / Refund History <a href=\"/support-portal/orders\">View All →</a></h3><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">autorenew</span>No returns or refunds for this order yet.</p><h3>Related Cases <a href=\"/support-portal/cases\">View All →</a></h3><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2401189012 <mark>Closed</mark> <small>18 Jan 2024</small></p><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2312056634 <mark>Closed</mark> <small>05 Dec 2023</small></p></div></article><article class=\"support-panel context-card seller-context-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span><h2>Seller / Store Details</h2></span></div><a href=\"/makers/weavers-touch\">View Full Store <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"context-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><div><h3>Weaver's Touch <mark class=\"support-status success\">Verified</mark></h3><p>Individual Proprietor<br>Since 2020</p></div></div><div class=\"context-mini-stats\"><span><b>248</b><small>Total Orders</small></span><span><b>96%</b><small>Response Rate</small></span><span><b>4.7<span class=\"star\">★</span></b><small>Seller Rating</small></span></div><dl class=\"masked-details\"><dt>Email</dt><dd>weaverstouch@gmail.com</dd><dt>Phone</dt><dd>+91 ******5789</dd><dt>Location</dt><dd>#102, Green View Apartments<br>Bengaluru, Karnataka - 560034</dd></dl><h3 class=\"subsection-title\">Business Verification <a href=\"/support-portal/customers?notice=Verification+opened\">View Details →</a></h3><div class=\"verification-grid\"><span>● KYC Verified</span><span>● GST Registered</span><span>● Bank Account Verified</span><span>● Product Quality Approved</span></div><h3 class=\"subsection-title\">Performance (Last 30 days) <a href=\"/support-portal/dashboard?notice=Seller+analytics+opened\">View Analytics →</a></h3><div class=\"performance-grid\"><span><b>96%</b>Response Rate</span><span><b>2.8h</b>Avg. Response Time</span><span><b>1.2%</b>Return Rate</span><span><b>4.6<span class=\"star\">★</span></b>Avg. Rating</span><span><b>248</b>Orders</span><span><b>0</b>Policy Violations</span></div><h3 class=\"subsection-title\">Pickup / Fulfillment Locations <a href=\"/support-portal/customers?notice=Pickup+locations+opened\">Manage →</a></h3><div class=\"pickup-box\"><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span> Main Location <mark>Closed</mark></b><span>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</span></div><h3 class=\"subsection-title\">Recent Products <a href=\"/makers/weavers-touch\">View Store →</a></h3><div class=\"recent-products\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\"><span>+12<br>more</span></div><h3 class=\"subsection-title\">Support History <a href=\"/support-portal/cases\">View All →</a></h3><p class=\"history-line\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP24067821 <mark>Closed</mark><small>12 Feb 2024</small></p><p class=\"history-line\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2311187721 <mark>Closed</mark><small>18 Nov 2023</small></p></article></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</b><small>Chanderi Silk Cotton Saree - Royal Maroon<br>Qty: 1 | INR 5,999</small></span><mark>Shipped</mark></div></div><div class=\"related-cases\"><h3>Return / Refund History <a href=\"/support-portal/orders\">View All →</a></h3><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">autorenew</span>No returns or refunds for this order yet.</p><h3>Related Cases <a href=\"/support-portal/cases\">View All →</a></h3><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2401189012 <mark>Closed</mark> <small>18 Jan 2024</small></p><p><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2312056634 <mark>Closed</mark> <small>05 Dec 2023</small></p></div></article><article class=\"support-panel context-card seller-context-card\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><span><h2>Seller / Store Details</h2></span></div><a href=\"/makers/weavers-touch\">View Full Store <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div><div class=\"context-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><div><h3>Weaver's Touch <mark class=\"support-status success\">Verified</mark></h3><p>Individual Proprietor<br>Since 2020</p></div></div><div class=\"context-mini-stats\"><span><b>248</b><small>Total Orders</small></span><span><b>96%</b><small>Response Rate</small></span><span><b>4.7<span class=\"star\">★</span></b><small>Seller Rating</small></span></div><dl class=\"masked-details\"><dt>Email</dt><dd>weaverstouch@gmail.com</dd><dt>Phone</dt><dd>+91 ******5789</dd><dt>Location</dt><dd>#102, Green View Apartments<br>Bengaluru, Karnataka - 560034</dd></dl><h3 class=\"subsection-title\">Business Verification <a href=\"/support-portal/customers?notice=Verification+opened\">View Details →</a></h3><div class=\"verification-grid\"><span>● KYC Verified</span><span>● GST Registered</span><span>● Bank Account Verified</span><span>● Product Quality Approved</span></div><h3 class=\"subsection-title\">Performance (Last 30 days) <a href=\"/support-portal/dashboard?notice=Seller+analytics+opened\">View Analytics →</a></h3><div class=\"performance-grid\"><span><b>96%</b>Response Rate</span><span><b>2.8h</b>Avg. Response Time</span><span><b>1.2%</b>Return Rate</span><span><b>4.6<span class=\"star\">★</span></b>Avg. Rating</span><span><b>248</b>Orders</span><span><b>0</b>Policy Violations</span></div><h3 class=\"subsection-title\">Pickup / Fulfillment Locations <a href=\"/support-portal/customers?notice=Pickup+locations+opened\">Manage →</a></h3><div class=\"pickup-box\"><b><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span> Main Location <mark>Closed</mark></b><span>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</span></div><h3 class=\"subsection-title\">Recent Products <a href=\"/makers/weavers-touch\">View Store →</a></h3><div class=\"recent-products\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/wooden-box.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/madhubani-tree.webp\" alt=\"\"><span>+12<br>more</span></div><h3 class=\"subsection-title\">Support History <a href=\"/support-portal/cases\">View All →</a></h3><p class=\"history-line\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP24067821 <mark>Closed</mark><small>12 Feb 2024</small></p><p class=\"history-line\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>#WCSP2311187721 <mark>Closed</mark><small>18 Nov 2023</small></p></article></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "<div class=\"support-empty-state\" role=\"status\"><h2>No customer context</h2><p>Select a customer or case to see support details.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "<div class=\"support-empty-state\" role=\"status\"><h2>No customer context</h2><p>Select a customer or case to see support details.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var103), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var106), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1802,12 +1841,12 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var115 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var115 == nil {
-			templ_7745c5c3_Var115 = templ.NopComponent
+		templ_7745c5c3_Var118 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var118 == nil {
+			templ_7745c5c3_Var118 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var116 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var119 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1820,46 +1859,11 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 			}
 			ctx = templ.InitializeContext(ctx)
 			if len(p.Cases) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "<form class=\"support-order-search\" action=\"/support-portal/orders\" method=\"get\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span><input name=\"order\" value=\"#WC2504267831\" aria-label=\"Order ID\"></div><button class=\"support-button primary\" type=\"submit\">View Order</button><a class=\"support-button outline\" href=\"/support-portal/orders?notice=Previous+order+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_left</span> Previous Order</a><a class=\"support-button outline\" href=\"/support-portal/orders?notice=Next+order+opened\">Next Order&nbsp; <span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></a></form><section class=\"support-order-summary\"><div class=\"order-status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><mark class=\"support-status success\">Delivered</mark></div><div><h2>Order #WC2504267831</h2><p>Placed on 26 Apr 2024, 10:24 AM&nbsp; | &nbsp;Paid via UPI&nbsp; | &nbsp;2 items&nbsp; | &nbsp;<b>INR 5,998</b></p></div><div><a href=\"/support-portal/orders?notice=Invoice+opened\">View Invoice</a><a href=\"/makers/weavers-touch\">View in Store</a><a href=\"/support-portal/orders?notice=Order+actions+opened\" class=\"support-button outline\">More Actions <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a></div></section><section class=\"support-order-grid\"><div class=\"support-order-main\"><section class=\"support-order-triple\"><article class=\"support-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><h2>Customer Details</h2></div><a href=\"/support-portal/customers\">View All →</a></div><div class=\"order-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"\"><span><b>Priya Sharma <mark>Repeat Customer</mark></b><small>+91 ******5219<br>p***a.sharma@gmail.com<br><br>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</small></span></div><div class=\"order-mini-stats\"><span><b>12</b><small>Total Orders</small></span><span><b>100%</b><small>Order Success</small></span><span><b>4.8<span class=\"star\">★</span></b><small>Avg. Rating</small></span></div></article><article class=\"support-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><h2>Seller Details</h2></div><a href=\"/makers/weavers-touch\">View Store →</a></div><div class=\"order-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Weaver's Touch</b><small><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span> Matheswar, Madhya Pradesh<br><br><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> +91 ******5789<br><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> weaverstouch@gmail.com</small></span></div><div class=\"order-mini-stats\"><span><b>124</b><small>Products</small></span><span><b>4.7<span class=\"star\">★</span></b><small>Seller Rating</small></span><span><b>98%</b><small>On-time Shipping</small></span></div></article><article class=\"support-panel order-summary-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><h2>Order Summary</h2></div></div><dl><dt>Order Value</dt><dd>INR 5,998</dd><dt>Item Total</dt><dd>INR 7,298</dd><dt>Shipping Charges</dt><dd>INR 70</dd><dt>Discount</dt><dd>- INR 1,300</dd><dt class=\"total\">Total Paid</dt><dd class=\"total\">INR 5,998</dd></dl><div class=\"order-payment\"><span>Payment Method</span><b>UPI (PhonePe)</b><span>Payment Status</span><mark class=\"support-status success\">Paid</mark><span>Order Type</span><b>Domestic</b><span>Placed On</span><b>26 Apr 2024, 10:24 AM</b><span>Last Updated</span><b>30 Apr 2024, 09:15 PM</b></div></article></section><section class=\"support-order-tabs\" aria-label=\"Order detail view\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "<form class=\"support-order-search\" action=\"/support-portal/orders\" method=\"get\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">search</span><input name=\"order\" value=\"#WC2504267831\" aria-label=\"Order ID\"></div><button class=\"support-button primary\" type=\"submit\">View Order</button><a class=\"support-button outline\" href=\"/support-portal/orders?notice=Previous+order+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_left</span> Previous Order</a><a class=\"support-button outline\" href=\"/support-portal/orders?notice=Next+order+opened\">Next Order&nbsp; <span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></a></form><section class=\"support-order-summary\"><div class=\"order-status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><mark class=\"support-status success\">Delivered</mark></div><div><h2>Order #WC2504267831</h2><p>Placed on 26 Apr 2024, 10:24 AM&nbsp; | &nbsp;Paid via UPI&nbsp; | &nbsp;2 items&nbsp; | &nbsp;<b>INR 5,998</b></p></div><div><a href=\"/support-portal/orders?notice=Invoice+opened\">View Invoice</a><a href=\"/makers/weavers-touch\">View in Store</a><a href=\"/support-portal/orders?notice=Order+actions+opened\" class=\"support-button outline\">More Actions <span class=\"material-symbols-outlined\" aria-hidden=\"true\">expand_more</span></a></div></section><section class=\"support-order-grid\"><div class=\"support-order-main\"><section class=\"support-order-triple\"><article class=\"support-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">person</span><h2>Customer Details</h2></div><a href=\"/support-portal/customers\">View All →</a></div><div class=\"order-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/maker-mithila.webp\" alt=\"\"><span><b>Priya Sharma <mark>Repeat Customer</mark></b><small>+91 ******5219<br>p***a.sharma@gmail.com<br><br>#102, Green View Apartments<br>12th Main Road, Koramangala<br>Bengaluru, Karnataka - 560034</small></span></div><div class=\"order-mini-stats\"><span><b>12</b><small>Total Orders</small></span><span><b>100%</b><small>Order Success</small></span><span><b>4.8<span class=\"star\">★</span></b><small>Avg. Rating</small></span></div></article><article class=\"support-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><h2>Seller Details</h2></div><a href=\"/makers/weavers-touch\">View Store →</a></div><div class=\"order-person\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Weaver's Touch</b><small><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span> Matheswar, Madhya Pradesh<br><br><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> +91 ******5789<br><span class=\"material-symbols-outlined\" aria-hidden=\"true\">mail</span> weaverstouch@gmail.com</small></span></div><div class=\"order-mini-stats\"><span><b>124</b><small>Products</small></span><span><b>4.7<span class=\"star\">★</span></b><small>Seller Rating</small></span><span><b>98%</b><small>On-time Shipping</small></span></div></article><article class=\"support-panel order-summary-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span><h2>Order Summary</h2></div></div><dl><dt>Order Value</dt><dd>INR 5,998</dd><dt>Item Total</dt><dd>INR 7,298</dd><dt>Shipping Charges</dt><dd>INR 70</dd><dt>Discount</dt><dd>- INR 1,300</dd><dt class=\"total\">Total Paid</dt><dd class=\"total\">INR 5,998</dd></dl><div class=\"order-payment\"><span>Payment Method</span><b>UPI (PhonePe)</b><span>Payment Status</span><mark class=\"support-status success\">Paid</mark><span>Order Type</span><b>Domestic</b><span>Placed On</span><b>26 Apr 2024, 10:24 AM</b><span>Last Updated</span><b>30 Apr 2024, 09:15 PM</b></div></article></section><section class=\"support-order-tabs\" aria-label=\"Order detail view\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var117 = []any{supportTabClass(p.Tab, "items")}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var117...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "<a class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var118 string
-				templ_7745c5c3_Var118, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var117).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var118)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "\" aria-current=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var119 string
-				templ_7745c5c3_Var119, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "items"))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4115}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var119)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "\" href=\"/support-portal/orders\">Order Items (2)</a>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var120 = []any{supportTabClass(p.Tab, "payment")}
+				var templ_7745c5c3_Var120 = []any{supportTabClass(p.Tab, "items")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var120...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1882,19 +1886,19 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var122 string
-				templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payment"))
+				templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "items"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4268}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var122)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "\" href=\"/support-portal/orders?tab=payment\">Payment</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "\" href=\"/support-portal/orders\">Order Items (2)</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var123 = []any{supportTabClass(p.Tab, "shipping")}
+				var templ_7745c5c3_Var123 = []any{supportTabClass(p.Tab, "payment")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var123...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1917,19 +1921,19 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var125 string
-				templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
+				templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payment"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4427}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4268}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var125)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "\" href=\"/support-portal/orders?tab=shipping\">Shipping &amp; Tracking</a>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "\" href=\"/support-portal/orders?tab=payment\">Payment</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var126 = []any{supportTabClass(p.Tab, "returns")}
+				var templ_7745c5c3_Var126 = []any{supportTabClass(p.Tab, "shipping")}
 				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var126...)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -1952,28 +1956,63 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var128 string
-				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
+				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4601}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4427}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var128)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "\" href=\"/support-portal/orders?tab=returns\">Returns &amp; Refunds</a><a href=\"/support-portal/cases\">Cases (1)</a></section><article class=\"support-panel order-items-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><h2>Items from Weaver's Touch <small>(2 items)</small></h2></div><b>Total: INR 5,998</b></div><div class=\"order-item\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Chanderi Silk Cotton Saree - Royal Maroon</b><small>SKU: CSC-001 &nbsp;|&nbsp; Qty: 1</small><strong>INR 5,999</strong></span><mark class=\"support-status success\">Delivered</mark><div><a href=\"/support-portal/cases?notice=Product+opened\">View Product</a><a href=\"/support-portal/cases?notice=Product+added+to+case\">Add to Case</a></div></div><div class=\"order-item\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><span><b>Handpainted Ceramic Mugs (Set of 2)</b><small>SKU: MUGHP02 &nbsp;|&nbsp; Qty: 1</small><strong>INR 1,299</strong></span><mark class=\"support-status success\">Delivered</mark><div><a href=\"/support-portal/cases?notice=Product+opened\">View Product</a><a href=\"/support-portal/cases?notice=Product+added+to+case\">Add to Case</a></div></div></article><section class=\"support-order-two-grid\"><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span><h2>Payment Details</h2></div><mark class=\"support-status success\">Paid</mark></div><dl><dt>Payment Method</dt><dd>UPI (PhonePe)</dd><dt>Transaction ID</dt><dd>T240426102458778</dd><dt>Amount</dt><dd>INR 5,998</dd><dt>Payment Status</dt><dd><mark class=\"support-status success\">Captured</mark></dd><dt>Paid On</dt><dd>26 Apr 2024, 10:24 AM</dd><dt>Bank Reference No.</dt><dd>UPI/412358778</dd><dt>Invoice</dt><dd><a href=\"/support-portal/orders?notice=Invoice+opened\">View Invoice →</a></dd></dl></article><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><h2>Shipping &amp; Delivery</h2></div><mark class=\"support-status success\">Delivered</mark></div><dl><dt>Courier Partner</dt><dd>Shiprocket</dd><dt>AWB / Tracking No.</dt><dd>SHPRK2504189921</dd><dt>Shipment Created</dt><dd>26 Apr 2024, 04:15 PM</dd><dt>Picked Up</dt><dd>27 Apr 2024, 10:30 AM</dd><dt>In Transit</dt><dd>28 Apr 2024 – 29 Apr 2024</dd><dt>Delivered</dt><dd>30 Apr 2024, 09:15 AM</dd><dt>Delivery To</dt><dd>Bengaluru, Karnataka</dd><dt>Tracking</dt><dd><a href=\"/support-portal/orders?notice=Tracking+details+opened\">View Tracking Details →</a></dd></dl></article></section><section class=\"support-order-two-grid\"><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">autorenew</span><h2>Return &amp; Refund Details</h2></div><mark class=\"support-status warning\">Refund Completed</mark></div><dl><dt>Return Request</dt><dd>#RTN250427001</dd><dt>Requested On</dt><dd>05 May 2024, 11:12 AM</dd><dt>Reason</dt><dd>Received a different item</dd><dt>Status</dt><dd><mark class=\"support-status success\">Refunded</mark></dd><dt>Refund Amount</dt><dd>INR 5,998</dd><dt>Initiated On</dt><dd>08 May 2024, 04:20 PM</dd><dt>Completed On</dt><dd>10 May 2024, 11:30 AM</dd><dt>Refund Reference</dt><dd>RFND2505087721</dd></dl></article><article class=\"support-panel detail-list internal-support\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><h2>Internal Support</h2></div><mark class=\"support-status success\">Resolved</mark></div><dl><dt>Assigned To</dt><dd>Aditi Rao</dd><dt>Priority</dt><dd><mark class=\"support-priority priority-high\">High</mark></dd><dt>Status</dt><dd><mark class=\"support-status success\">Resolved</mark></dd><dt>Case ID</dt><dd>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "\" href=\"/support-portal/orders?tab=shipping\">Shipping &amp; Tracking</a>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var129 string
-				templ_7745c5c3_Var129, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
+				var templ_7745c5c3_Var129 = []any{supportTabClass(p.Tab, "returns")}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var129...)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "<a class=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var130 string
+				templ_7745c5c3_Var130, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var129).String())
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 1, Col: 0}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var130)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "\" aria-current=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var131 string
+				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4601}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var131)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "\" href=\"/support-portal/orders?tab=returns\">Returns &amp; Refunds</a><a href=\"/support-portal/cases\">Cases (1)</a></section><article class=\"support-panel order-items-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">inventory_2</span><h2>Items from Weaver's Touch <small>(2 items)</small></h2></div><b>Total: INR 5,998</b></div><div class=\"order-item\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/saree-maroon.webp\" alt=\"\"><span><b>Chanderi Silk Cotton Saree - Royal Maroon</b><small>SKU: CSC-001 &nbsp;|&nbsp; Qty: 1</small><strong>INR 5,999</strong></span><mark class=\"support-status success\">Delivered</mark><div><a href=\"/support-portal/cases?notice=Product+opened\">View Product</a><a href=\"/support-portal/cases?notice=Product+added+to+case\">Add to Case</a></div></div><div class=\"order-item\"><img width=\"1254\" height=\"1254\" src=\"/assets/images/customer/ceramic-mugs.webp\" alt=\"\"><span><b>Handpainted Ceramic Mugs (Set of 2)</b><small>SKU: MUGHP02 &nbsp;|&nbsp; Qty: 1</small><strong>INR 1,299</strong></span><mark class=\"support-status success\">Delivered</mark><div><a href=\"/support-portal/cases?notice=Product+opened\">View Product</a><a href=\"/support-portal/cases?notice=Product+added+to+case\">Add to Case</a></div></div></article><section class=\"support-order-two-grid\"><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span><h2>Payment Details</h2></div><mark class=\"support-status success\">Paid</mark></div><dl><dt>Payment Method</dt><dd>UPI (PhonePe)</dd><dt>Transaction ID</dt><dd>T240426102458778</dd><dt>Amount</dt><dd>INR 5,998</dd><dt>Payment Status</dt><dd><mark class=\"support-status success\">Captured</mark></dd><dt>Paid On</dt><dd>26 Apr 2024, 10:24 AM</dd><dt>Bank Reference No.</dt><dd>UPI/412358778</dd><dt>Invoice</dt><dd><a href=\"/support-portal/orders?notice=Invoice+opened\">View Invoice →</a></dd></dl></article><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><h2>Shipping &amp; Delivery</h2></div><mark class=\"support-status success\">Delivered</mark></div><dl><dt>Courier Partner</dt><dd>Shiprocket</dd><dt>AWB / Tracking No.</dt><dd>SHPRK2504189921</dd><dt>Shipment Created</dt><dd>26 Apr 2024, 04:15 PM</dd><dt>Picked Up</dt><dd>27 Apr 2024, 10:30 AM</dd><dt>In Transit</dt><dd>28 Apr 2024 – 29 Apr 2024</dd><dt>Delivered</dt><dd>30 Apr 2024, 09:15 AM</dd><dt>Delivery To</dt><dd>Bengaluru, Karnataka</dd><dt>Tracking</dt><dd><a href=\"/support-portal/orders?notice=Tracking+details+opened\">View Tracking Details →</a></dd></dl></article></section><section class=\"support-order-two-grid\"><article class=\"support-panel detail-list\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">autorenew</span><h2>Return &amp; Refund Details</h2></div><mark class=\"support-status warning\">Refund Completed</mark></div><dl><dt>Return Request</dt><dd>#RTN250427001</dd><dt>Requested On</dt><dd>05 May 2024, 11:12 AM</dd><dt>Reason</dt><dd>Received a different item</dd><dt>Status</dt><dd><mark class=\"support-status success\">Refunded</mark></dd><dt>Refund Amount</dt><dd>INR 5,998</dd><dt>Initiated On</dt><dd>08 May 2024, 04:20 PM</dd><dt>Completed On</dt><dd>10 May 2024, 11:30 AM</dd><dt>Refund Reference</dt><dd>RFND2505087721</dd></dl></article><article class=\"support-panel detail-list internal-support\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span><h2>Internal Support</h2></div><mark class=\"support-status success\">Resolved</mark></div><dl><dt>Assigned To</dt><dd>Aditi Rao</dd><dt>Priority</dt><dd><mark class=\"support-priority priority-high\">High</mark></dd><dt>Status</dt><dd><mark class=\"support-status success\">Resolved</mark></dd><dt>Case ID</dt><dd>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var132 string
+				templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
 					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 8630}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var129))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</dd><dt>Issue Tags</dt><dd><mark>Wrong Item</mark> <mark>Return</mark> <mark>Refund</mark></dd><dt>Risk &amp; Compliance</dt><dd><mark class=\"support-status warning\">Medium Risk</mark></dd><dt>Notes (Internal)</dt><dd class=\"internal-note\">Customer received different design. Seller confirmed return. Processed full refund as per policy.<br><small>Last updated: 10 May 2024, 11:30 AM</small></dd></dl></article></section></div><aside class=\"support-order-aside\"><article class=\"support-panel order-timeline-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">schedule</span><h2>Order Timeline</h2></div><select aria-label=\"Order event filter\"><option>All Events (12)</option></select></div><div class=\"support-order-timeline\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "</dd><dt>Issue Tags</dt><dd><mark>Wrong Item</mark> <mark>Return</mark> <mark>Refund</mark></dd><dt>Risk &amp; Compliance</dt><dd><mark class=\"support-status warning\">Medium Risk</mark></dd><dt>Notes (Internal)</dt><dd class=\"internal-note\">Customer received different design. Seller confirmed return. Processed full refund as per policy.<br><small>Last updated: 10 May 2024, 11:30 AM</small></dd></dl></article></section></div><aside class=\"support-order-aside\"><article class=\"support-panel order-timeline-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">schedule</span><h2>Order Timeline</h2></div><select aria-label=\"Order event filter\"><option>All Events (12)</option></select></div><div class=\"support-order-timeline\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -1981,19 +2020,19 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "</div></article><article class=\"support-panel order-quick-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><h2>Quick Actions</h2></div></div><div><a href=\"/support-portal/cases?notice=Customer+contact+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> Contact Customer</a><a href=\"/support-portal/cases?notice=Seller+contact+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span> Contact Seller</a><a class=\"green-action\" href=\"/support-portal/orders?notice=Return+approved\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span> Approve Return</a><a class=\"green-action\" href=\"/support-portal/orders?notice=Refund+issued\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span> Issue Refund</a><a class=\"danger-action\" href=\"/support-portal/cases?notice=Senior+support+escalation+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span> Escalate to Senior Support</a><a href=\"/support-portal/cases?notice=Internal+note+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Internal Note</a><a href=\"/support-portal/cases\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span> View Full Case</a></div></article></aside></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "</div></article><article class=\"support-panel order-quick-panel\"><div class=\"support-panel-heading\"><div><span class=\"material-symbols-outlined\" aria-hidden=\"true\">bolt</span><h2>Quick Actions</h2></div></div><div><a href=\"/support-portal/cases?notice=Customer+contact+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">call</span> Contact Customer</a><a href=\"/support-portal/cases?notice=Seller+contact+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span> Contact Seller</a><a class=\"green-action\" href=\"/support-portal/orders?notice=Return+approved\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span> Approve Return</a><a class=\"green-action\" href=\"/support-portal/orders?notice=Refund+issued\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span> Issue Refund</a><a class=\"danger-action\" href=\"/support-portal/cases?notice=Senior+support+escalation+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">warning</span> Escalate to Senior Support</a><a href=\"/support-portal/cases?notice=Internal+note+opened\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">note_add</span> Add Internal Note</a><a href=\"/support-portal/cases\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">open_in_new</span> View Full Case</a></div></article></aside></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "<div class=\"support-empty-state\" role=\"status\"><h2>No order context</h2><p>Search for an order to open its support timeline.</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "<div class=\"support-empty-state\" role=\"status\"><h2>No order context</h2><p>Search for an order to open its support timeline.</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var116), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SupportDocument(p).Render(templ.WithChildren(ctx, templ_7745c5c3_Var119), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2017,12 +2056,12 @@ func SupportFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var130 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var130 == nil {
-			templ_7745c5c3_Var130 = templ.NopComponent
+		templ_7745c5c3_Var133 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var133 == nil {
+			templ_7745c5c3_Var133 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "<footer class=\"support-footer\"><div class=\"support-trust\"><span><b>Crafted in India</b><small>Discover independent makers</small></span><span><b>Customer reviews</b><small>Read published product reviews</small></span><span><b>Artisan craft</b><small>Explore maker collections</small></span><span><b>Secure Payments</b><small>Status shown in your orders</small></span><span><b>Easy Returns</b><small>See the returns policy</small></span><span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></span></div><div class=\"support-footer-main\"><div><a class=\"support-wordmark inverse\" href=\"/support-portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for India's arts, crafts and sarees.<br>Supporting artisans. Preserving traditions.<br>Building a brighter, more inclusive tomorrow.</p><div class=\"support-socials\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">photo_camera</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">language</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">play_circle</span></div></div><div><h3>Support Portal</h3><a href=\"/support-portal\">Dashboard</a><a href=\"/support-portal/cases\">Cases</a><a href=\"/support-portal/customers\">Customers &amp; Sellers</a><a href=\"/support-portal/orders\">Order View</a><a href=\"/support-portal/cases\">Knowledge Base</a></div><div><h3>Help</h3><a href=\"/support-portal/cases\">Help Center</a><a href=\"/support-portal/cases\">Contact Support</a><a href=\"/support-portal/cases\">Report an Issue</a><a href=\"/support-portal/cases\">Community Guidelines</a><a href=\"/support-portal/cases\">Terms of Service</a></div><div><h3>About</h3><a href=\"/account\">Our Story</a><a href=\"/makers/mithila-arts\">Sustainability</a><a href=\"/makers/mithila-arts\">Impact</a><a href=\"/account\">Careers</a><a href=\"/account\">Contact Us</a></div><div><h3>A stronger tomorrow, together.</h3><p>Creating opportunities for artisans, one craft at a time.</p><span class=\"support-footer-leaf material-symbols-outlined\" aria-hidden=\"true\">eco</span></div></div><div class=\"support-footer-bottom\"><span>© 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions &nbsp;|&nbsp; Privacy Policy &nbsp;|&nbsp; Cookie Policy</span><span>Made with ♥ in India &nbsp;|&nbsp; A more handmade tomorrow</span></div></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<footer class=\"support-footer\"><div class=\"support-trust\"><span><b>Crafted in India</b><small>Discover independent makers</small></span><span><b>Customer reviews</b><small>Read published product reviews</small></span><span><b>Artisan craft</b><small>Explore maker collections</small></span><span><b>Secure Payments</b><small>Status shown in your orders</small></span><span><b>Easy Returns</b><small>See the returns policy</small></span><span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></span></div><div class=\"support-footer-main\"><div><a class=\"support-wordmark inverse\" href=\"/support-portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for India's arts, crafts and sarees.<br>Supporting artisans. Preserving traditions.<br>Building a brighter, more inclusive tomorrow.</p><div class=\"support-socials\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">photo_camera</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">language</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">play_circle</span></div></div><div><h3>Support Portal</h3><a href=\"/support-portal\">Dashboard</a><a href=\"/support-portal/cases\">Cases</a><a href=\"/support-portal/customers\">Customers &amp; Sellers</a><a href=\"/support-portal/orders\">Order View</a><a href=\"/support-portal/cases\">Knowledge Base</a></div><div><h3>Help</h3><a href=\"/support-portal/cases\">Help Center</a><a href=\"/support-portal/cases\">Contact Support</a><a href=\"/support-portal/cases\">Report an Issue</a><a href=\"/support-portal/cases\">Community Guidelines</a><a href=\"/support-portal/cases\">Terms of Service</a></div><div><h3>About</h3><a href=\"/account\">Our Story</a><a href=\"/makers/mithila-arts\">Sustainability</a><a href=\"/makers/mithila-arts\">Impact</a><a href=\"/account\">Careers</a><a href=\"/account\">Contact Us</a></div><div><h3>A stronger tomorrow, together.</h3><p>Creating opportunities for artisans, one craft at a time.</p><span class=\"support-footer-leaf material-symbols-outlined\" aria-hidden=\"true\">eco</span></div></div><div class=\"support-footer-bottom\"><span>© 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions &nbsp;|&nbsp; Privacy Policy &nbsp;|&nbsp; Cookie Policy</span><span>Made with ♥ in India &nbsp;|&nbsp; A more handmade tomorrow</span></div></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

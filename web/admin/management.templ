@@ -33,11 +33,11 @@ templ Management(m viewmodels.ManagementPage) {
     <form method="get" action={ m.Action }><label>Search all records<input name="q" value={ m.Query } placeholder="Name, email or slug"/></label><button class="admin-button secondary" type="submit">Search</button><a href={ m.Action }>Clear</a></form>
     <p>{ strconv.Itoa(m.Total) } matching records. Page { strconv.Itoa(m.Page) }.</p>
     if m.Section == "customers" {
-     <div class="admin-table wide"><div class="table-head"><span>Customer</span><span>Email</span><span>Status</span><span>Orders</span></div>
+     <div class="ui-table-region" role="region" tabindex="0" aria-label="Customer directory"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Customer</th><th scope="col">Email</th><th scope="col">Status</th><th scope="col">Orders</th></tr></thead><tbody>
       for _,record := range m.Records {
-       <div class="table-row"><span>{ record.Name }</span><span>{ record.Email }</span><span>{ record.Status }</span><span>{ strconv.FormatInt(record.Orders,10) }</span></div>
+       <tr><th scope="row">{ record.Name }</th><td data-label="Email">{ record.Email }</td><td data-label="Status">{ record.Status }</td><td data-label="Orders" class="numeric">{ strconv.FormatInt(record.Orders,10) }</td></tr>
       }
-     </div>
+     </tbody></table></div>
     } else {
      if m.Section == "commission-rules" {
       <p>100 basis points = 1%. Active category rules override active marketplace rules. Within each scope, newest rule wins. Changes apply to future payment captures; existing ledger entries retain their captured commission.</p>

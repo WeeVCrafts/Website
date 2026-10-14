@@ -193,6 +193,10 @@ func cartRemoveValues(variantID int64) string {
 	return fmt.Sprintf(`{"variant_id":"%d","remove":"true"}`, variantID)
 }
 
+func cartWishlistValues(variantID int64) string {
+	return fmt.Sprintf(`{"variant_id":"%d","source":"cart"}`, variantID)
+}
+
 func customerSupportMessageClass(role string) string {
 	if strings.EqualFold(strings.TrimSpace(role), "support agent") {
 		return "customer-support-message customer-support-message--agent"
@@ -213,17 +217,17 @@ func breadcrumbHref(item string) string {
 	case "search results":
 		return "/products"
 	case "sarees":
-		return "/products?category=sarees"
+		return "/products?category=textiles&q=saree"
 	case "arts":
 		return "/products?category=arts"
 	case "crafts":
 		return "/products?category=crafts"
 	case "home & living":
-		return "/products?category=home-living"
+		return "/products?category=home"
 	case "fashion":
-		return "/products?category=fashion"
+		return "/products?category=textiles"
 	case "gifts":
-		return "/products?category=gifts"
+		return "/products?category=crafts"
 	case "my account":
 		return "/account"
 	case "account":

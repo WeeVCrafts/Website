@@ -20,6 +20,8 @@ templ NotificationList(items []viewmodels.CustomerNotification, csrf string) {
    <div><h2>{ item.Title }</h2><p>{ item.Body }</p><time>{ item.Date }</time>
     if item.Unread {
  <span class="notification-unread">Unread</span>
+ } else {
+ <span class="notification-read">Read</span>
  }
    </div>
    <form action="/notifications/read" method="post"><input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="notification_id" value={ fmt.Sprint(item.ID) }/><button class="outline-button" type="submit">

@@ -25,7 +25,7 @@ async function signIn(page, email, landing) {
   await page.goto("/login");
   await page.locator("#page input[name=\"email\"]").fill(email);
   await page.locator("#page input[name=\"password\"]").fill(password);
-  await page.getByRole("button", { name: /continue with email/i }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === (landing === "/account" ? "/products" : landing).replace(/\/$/, ""), { timeout: 30_000 });
   if (landing === "/account") await page.goto("/account");
 }
@@ -34,6 +34,12 @@ test.describe("role-specific portals", () => {
   for (const account of accounts) {
     test(`${account.id}: landing, boundaries and responsive layouts`, async ({ page }, testInfo) => {
       const browserErrors = [];
+      // The dedicated UI dataset intentionally includes a missing-media item.
+      // Its 404/fallback is verified separately; this suite audits portal routes.
+      if (new URL(testInfo.project.use.baseURL).port === "18080") {
+        await page.route("**/assets/images/ui-qa-image-does-not-exist*.webp", route =>
+          route.fulfill({ path: "web/assets/images/product-unavailable.svg", contentType: "image/svg+xml" }));
+      }
       page.on("pageerror", error => browserErrors.push(error.message));
       page.on("console", message => { if (message.type() === "error") browserErrors.push(message.text()); });
       page.on("response", response => {

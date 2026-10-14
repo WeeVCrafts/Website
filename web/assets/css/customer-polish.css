@@ -467,7 +467,4 @@ html {scroll-padding-block-start:90px;}
 .order-refresh-state.is-error {color:var(--terracotta);}
 .order-refresh-retry {min-height:32px;padding-inline:8px;text-decoration:underline;}
 
-/* Use the viewport for storefront content while keeping comfortable edge gutters. */
-.container { width: calc(100% - 48px); max-width: none; }
-@media (min-width: 1800px) { .product-grid--four { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-@media (max-width: 720px) { .container { width: calc(100% - 32px); } }
+/* Container ownership stays in theme.css (1240px, 24/16px gutters). */

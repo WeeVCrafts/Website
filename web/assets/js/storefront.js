@@ -1,13 +1,14 @@
 (function (global) {
   "use strict";
 
-  const { create, normalizeProduct } = global.WeevcraftsBackend;
+  const { create } = global.WeevcraftsBackend;
   const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
   let backend = null;
   let backendError = null;
   let authenticated = Boolean(document.querySelector('form[action="/logout"]'));
   let razorpayLoader = null;
   let drawerRestoreFocus = null;
+  let checkoutInFlight = false;
 
   function promptLogin(destination) {
     let dialog = document.getElementById("guest-login-dialog");
@@ -18,7 +19,9 @@
       dialog.setAttribute("aria-labelledby", "guest-login-title");
       dialog.innerHTML = '<div class="cart-drawer-shell"><header class="cart-drawer-header"><div><p class="eyebrow">YOUR ACCOUNT</p><h2 id="guest-login-title">Log in to continue</h2></div></header><div class="empty-state"><p>Please log in to browse products, view details and place orders.</p><a class="primary-button" data-login-continue>Log in</a></div></div>';
       document.body.appendChild(dialog);
-      dialog.addEventListener("cancel", (event) => event.preventDefault());
+      // Escape leaves the modal for the existing sign-in form; it never grants
+      // guest shopping access or changes the authentication requirement.
+      dialog.addEventListener("cancel", event => {event.preventDefault();global.location.assign(dialog.querySelector('[data-login-continue]').href);});
     }
     dialog.querySelector("[data-login-continue]").href = "/login?next=" + encodeURIComponent(destination);
     const menu = document.getElementById("mobile-menu");
@@ -67,147 +70,13 @@
       (product.compareAtCents > product.priceCents ? "<del>" + money(product.compareAtCents) + "</del>" : "") + "</div>";
   }
 
-  function cardMarkup(product) {
-    const slug = esc(product.slug);
-    return "<article class=\"product-card\" data-product=\"" + slug + "\"><div class=\"product-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" loading=\"lazy\" width=\"640\" height=\"691\"/></a><button class=\"heart\" type=\"button\" data-backend-action=\"wishlist-add\" data-product-slug=\"" + slug + "\" aria-label=\"Save " + esc(product.name) + "\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span></div><div class=\"product-copy\"><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p><div class=\"rating\"><span>" + (product.rating ? product.rating.toFixed(1) : "New") + " (" + Number(product.reviews || 0) + ")</span></div>" + priceMarkup(product) + "<button class=\"outline-button add-button\" type=\"button\" data-backend-action=\"cart-add\" data-product-slug=\"" + slug + "\" " + (product.available > 0 ? "" : "disabled") + "><span class=\"material-symbols-outlined\" aria-hidden=\"true\">shopping_bag</span> Add to Cart</button></div></article>";
-  }
 
   function savedMarkup(product) {
     const slug = esc(product.slug);
-    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart is-active\" aria-pressed=\"true\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><button class=\"primary-button\" type=\"button\" data-backend-action=\"wishlist-to-cart\" data-product-slug=\"" + slug + "\">Move to cart</button><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
+    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart is-active\" aria-pressed=\"true\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><a class=\"primary-button\" href=\"/products/" + slug + "\">View product</a><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
   }
 
-  async function hydrateCatalog() {
-    const grids = document.querySelectorAll("[data-backend-products]");
-    if (!grids.length) return;
-    const params = new URLSearchParams(global.location.search);
-    for (const grid of grids) {
-      const mode = grid.dataset.backendProducts;
-      const category = grid.dataset.backendCategory || params.get("category") || "";
-      const brand = grid.dataset.backendBrand || params.get("brand") || "";
-      const seller = grid.dataset.backendSeller || "";
-      const rawCategories = params.getAll("category");
-      const rawBrands = params.getAll("brand");
-      const filters = {
-        category: category === "offers" ? "offers" : rawCategories.length === 1 ? rawCategories[0] : "",
-        categories: rawCategories,
-        brand: brand,
-        brands: rawBrands,
-        seller: seller,
-        query: params.get("q") || "",
-        sort: params.get("sort") || "",
-        limit: mode === "featured" ? 6 : 48
-      };
-      if (category === "offers") filters.category = "offers";
-      if (brand) filters.brands = [brand];
-      if (seller) filters.seller = seller;
-      grid.setAttribute("aria-busy", "true");
-      try {
-        let products = await ensureBackend().products(filters);
-        const brands = filters.brands.map((value) => value.toLowerCase());
-        const categories = filters.categories.map((value) => value.toLowerCase());
-        if (brands.length) products = products.filter((product) => brands.some((value) => product.brand.toLowerCase() === value || product.brandSlug.toLowerCase() === value));
-        if (categories.length) products = products.filter((product) => categories.includes(product.categorySlug.toLowerCase()));
-        if (seller) products = products.filter((product) => product.sellerSlug.toLowerCase() === seller.toLowerCase());
-        const price = params.get("price") || "";
-        if (price === "under-1000") products = products.filter((product) => product.priceCents < 100000);
-        if (price === "1000-2500") products = products.filter((product) => product.priceCents >= 100000 && product.priceCents <= 250000);
-        if (price === "2500-5000") products = products.filter((product) => product.priceCents >= 250000 && product.priceCents <= 500000);
-        if (price === "over-5000") products = products.filter((product) => product.priceCents > 500000);
-        if (params.get("availability") === "in-stock") products = products.filter((product) => product.available > 0);
-        grid.innerHTML = products.length ? products.map(cardMarkup).join("") : "<div class=\"empty-state\" role=\"status\"><h2>No products found</h2><p>Try another category or search.</p></div>";
-        const count = document.querySelector("[data-backend-result-count]");
-        if (count && grid.closest("#listing-results")) { count.textContent = products.length + " results"; markReady(count); }
-      } catch (error) {
-        grid.innerHTML = "<div class=\"empty-state\" role=\"alert\"><h2>Catalog is unavailable</h2><p>" + esc(error.message) + "</p></div>";
-      } finally {
-        markReady(grid);
-        const count = document.querySelector("[data-backend-result-count]");
-        if (count && !count.dataset.backendReady) { count.textContent = ""; markReady(count); }
-        grid.removeAttribute("aria-busy");
-      }
-    }
-  }
 
-  async function hydrateProduct() {
-    const root = document.querySelector("[data-backend-product]");
-    if (!root) return;
-    try {
-      const product = await ensureBackend().product(root.dataset.backendProduct);
-      const name = root.querySelector("h1");
-      const description = root.querySelector(".description");
-      const lead = root.querySelector(".lead");
-      const price = root.querySelector(".detail-price");
-      if (name) name.textContent = product.name;
-      if (description && product.description) description.textContent = product.description;
-      if (lead && product.description) lead.textContent = product.description;
-      if (price) price.innerHTML = priceMarkup(product);
-      root.querySelectorAll(".gallery img").forEach((image) => { image.src = product.image; image.alt = product.name; });
-      const optionDetails = root.querySelector(".detail-copy fieldset");
-      if (optionDetails) optionDetails.innerHTML = "<legend>Option: <b>" + esc(product.optionLabel) + "</b></legend>";
-      const specifications = root.querySelector("#product-panel-specs");
-      if (specifications) specifications.innerHTML = "<div class=\"spec-grid\"><span>Category <b>" + esc(product.category || "—") + "</b></span><span>Maker <b>" + esc(product.seller) + "</b></span><span>Brand <b>" + esc(product.brand || "—") + "</b></span><span>Available units <b>" + Number(product.available) + "</b></span></div>";
-      const makerStory = root.querySelector("#product-panel-story");
-      if (makerStory) makerStory.innerHTML = "<p>The maker story is not available for this product yet.</p>";
-      const sellerLine = root.querySelector(".seller-line");
-      if (sellerLine) {
-        sellerLine.href = product.brandSlug ? "/products?brand=" + encodeURIComponent(product.brandSlug) : "/products";
-        const label = sellerLine.querySelector("span");
-        if (label && label.firstChild) label.firstChild.textContent = "By " + product.seller;
-        const location = sellerLine.querySelector("small");
-        if (location && location.lastChild) location.lastChild.textContent = " " + (product.location || "Independent maker");
-      }
-      const caption = root.querySelector(".gallery-caption");
-      if (caption) caption.textContent = product.location ? "Made in " + product.location : "Made by " + product.seller;
-      const makerLink = document.querySelector(".seller-callout a.text-link");
-      if (makerLink) makerLink.href = product.brandSlug ? "/products?brand=" + encodeURIComponent(product.brandSlug) : "/products";
-      const makerSection = document.querySelector(".seller-callout");
-      if (makerSection) {
-        const makerImage = makerSection.querySelector("img");
-        const makerHeading = makerSection.querySelector("h2");
-        const makerCopy = makerSection.querySelector("div > p:not(.eyebrow)");
-        if (makerImage) { makerImage.src = product.image; makerImage.alt = product.name; }
-        if (makerHeading) makerHeading.textContent = "More from " + product.seller;
-        if (makerCopy) makerCopy.textContent = "Explore more live catalog items from this brand.";
-      }
-      const rating = root.querySelector(".stars");
-      if (rating) rating.textContent = "No verified reviews yet.";
-      const reviewPanel = root.querySelector("#product-panel-reviews");
-      if (reviewPanel) reviewPanel.innerHTML = "<p>Verified reviews from delivered purchases will appear here after moderation.</p>";
-      const detailActions = root.querySelectorAll(".detail-actions button");
-      detailActions.forEach((button, index) => {
-        button.dataset.backendAction = index === 1 ? "cart-buy" : "cart-add";
-        button.dataset.productSlug = product.slug;
-      });
-      root.querySelectorAll(".gallery-heart").forEach((button) => {
-        button.dataset.backendAction = "wishlist-add";
-        button.dataset.productSlug = product.slug;
-      });
-      root.querySelectorAll(".detail-actions, .quantity-row").forEach((element) => { element.dataset.productSlug = product.slug; });
-      root.querySelectorAll("[hx-post*='/ui/cart/']").forEach((button) => {
-        button.dataset.productSlug = product.slug;
-        button.dataset.backendAction = button.getAttribute("hx-vals")?.includes("buy") ? "cart-buy" : "cart-add";
-      });
-      document.querySelectorAll(".mobile-buy-bar [hx-post*='/ui/cart/']").forEach((button) => {
-        button.dataset.productSlug = product.slug;
-        button.dataset.backendAction = button.getAttribute("hx-vals")?.includes("buy") ? "cart-buy" : "cart-add";
-      });
-      const stock = root.querySelector(".stock");
-      if (stock) stock.textContent = product.available > 0 ? product.available + " available" : "Currently unavailable";
-      const benefitCopy = [["Delivery", "Shown before order placement"], ["Returns", "See the current returns policy"], ["Payment", "Payment is handled at checkout"], ["Shipping", "Availability is confirmed at checkout"]];
-      root.querySelectorAll(".benefits > span").forEach((benefit, index) => {
-        const title = benefit.querySelector("b");
-        const detail = benefit.querySelector("small");
-        if (title && benefitCopy[index]) title.textContent = benefitCopy[index][0];
-        if (detail && benefitCopy[index]) detail.textContent = benefitCopy[index][1];
-      });
-      if (product.available <= 0) root.querySelectorAll('[data-backend-action="cart-add"], [data-backend-action="cart-buy"]').forEach((button) => { button.disabled = true; });
-    } catch (error) {
-      root.innerHTML = "<div class=\"empty-state\" role=\"alert\"><h1>Product unavailable</h1><p>" + esc(error.message) + "</p><a class=\"primary-button\" href=\"/products\">Browse products</a></div>";
-    } finally {
-      markReady(root);
-    }
-  }
 
   function orderDate(value) {
     const date = new Date(value);
@@ -267,10 +136,6 @@
     }
   }
 
-  function searchToURL(input) {
-    const query = input.value.trim();
-    global.location.assign("/search" + (query ? "?q=" + encodeURIComponent(query) : ""));
-  }
 
   function normalizeCart(payload) {
     const data = unwrap(payload) || {};
@@ -281,18 +146,15 @@
     return { id: data.id, items: items };
   }
 
-  function cartTotals(items) {
-    const subtotal = items.reduce((sum, item) => sum + Number(item.priceCents || 0) * Number(item.quantity || 0), 0);
-    const savings = items.reduce((sum, item) => sum + Math.max(0, Number(item.compareAtCents || 0) - Number(item.priceCents || 0)) * Number(item.quantity || 0), 0);
-    const shipping = subtotal > 0 && subtotal < 99900 ? 9900 : 0;
-    return { subtotal: subtotal, savings: savings, shipping: shipping, total: subtotal + shipping, count: items.reduce((sum, item) => sum + Number(item.quantity || 0), 0) };
+  function cartItemCount(items) {
+    return items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   }
 
   function updateBadges(cart, wishlist) {
     const cartCount = document.querySelector("#cart-count em");
     const wishlistCount = document.querySelector("#wishlist-count em");
-    const totals = cartTotals(cart.items);
-    if (cartCount) { cartCount.textContent = String(totals.count); cartCount.closest('a').setAttribute('aria-label','Cart, '+totals.count+' items'); }
+    const count = cartItemCount(cart.items);
+    if (cartCount) { cartCount.textContent = String(count); cartCount.closest('a').setAttribute('aria-label','Cart, '+count+' items'); }
     if (wishlistCount) { wishlistCount.textContent = String(wishlist.length); wishlistCount.closest('a').setAttribute('aria-label','Wishlist, '+wishlist.length+' items'); }
     markReady(document.getElementById("cart-count"));
     markReady(document.getElementById("wishlist-count"));
@@ -305,8 +167,8 @@
     const summary = drawer.querySelector("[data-cart-drawer-summary]");
     const countLabel = drawer.querySelector("[data-cart-drawer-count]");
     const items = cart.items || [];
-    const totals = cartTotals(items);
-    if (countLabel) countLabel.textContent = totals.count + " item" + (totals.count === 1 ? "" : "s") + " from independent Indian makers";
+    const count = cartItemCount(items);
+    if (countLabel) countLabel.textContent = count + " item" + (count === 1 ? "" : "s") + " from independent Indian makers";
     if (itemsHost) {
       if (!signedIn) {
         itemsHost.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">person</span><h3>Sign in to see your cart</h3><p>Your saved items will follow you across devices.</p><a class="primary-button" href="/login">Sign in</a></div>';
@@ -319,12 +181,6 @@
     }
     if (summary) {
       summary.hidden = !signedIn || !items.length;
-      const subtotal = summary.querySelector("[data-cart-drawer-subtotal]");
-      const shipping = summary.querySelector("[data-cart-drawer-shipping]");
-      const total = summary.querySelector("[data-cart-drawer-total]");
-      if (subtotal) subtotal.textContent = money(totals.subtotal);
-      if (shipping) shipping.textContent = money(totals.shipping);
-      if (total) total.textContent = money(totals.total);
     }
   }
 
@@ -360,6 +216,12 @@
       const line = lines[index];
       if (!line) return;
       const variantID = String(item.variantId || "");
+      // Some cart SSR responses omit media/maker metadata. Enhance only these
+      // fields from the existing product response; never replace price/quantity.
+      const photo=line.querySelector('img');
+      if(photo && item.image) {photo.src=item.image;photo.alt=item.name;}
+      const maker=line.closest('.cart-seller')?.querySelector('.cart-seller-head b');
+      if(maker && item.seller)maker.textContent=item.seller;
       line.querySelectorAll(".quantity-control button").forEach(function (button) { button.dataset.variantId = variantID; });
       const actions = line.querySelectorAll(".cart-line-actions > .text-button");
       if (actions[0]) {
@@ -393,32 +255,41 @@
     }
     const cart = normalizeCart(await backendInstance.cart());
     const wishlist = await backendInstance.wishlist();
+    // Reuse the maintained cart page for authoritative amounts/rows. Do not
+    // reconstruct its payable total or option/availability copy in JavaScript.
+    const cartResponse = await fetch('/cart', {credentials:'same-origin',cache:'no-store'});
+    if (!cartResponse.ok || cartResponse.redirected) throw new Error('Cart updated, but its latest summary could not be loaded. Open your cart to review it.');
+    const cartDocument = new DOMParser().parseFromString(await cartResponse.text(),'text/html');
+    const nextCart = cartDocument.querySelector('[data-backend-cart]');
+    if (!nextCart) throw new Error('Could not load the latest cart. Open your cart to review it.');
     updateBadges(cart, wishlist);
     renderCartDrawer(cart, true);
+    const drawerItems=document.querySelector('[data-cart-drawer-items]');
+    if(drawerItems) {
+      drawerItems.replaceChildren(...Array.from(nextCart.querySelector('.cart-items').childNodes).map(node=>node.cloneNode(true)));
+      wireCartLineActions(drawerItems,cart.items);global.WVUI?.enhance(drawerItems);
+    }
+    const latestSummary = nextCart.querySelector('.cart-summary');
+    if (latestSummary) {
+      const amounts = latestSummary.querySelectorAll('p b');
+      const drawer = document.querySelector('[data-backend-cart-drawer]');
+      if (drawer) {
+        drawer.querySelector('[data-cart-drawer-subtotal]').textContent = amounts[0]?.textContent || 'Review in cart';
+        drawer.querySelector('[data-cart-drawer-shipping]').textContent = amounts[1]?.textContent || 'Review in cart';
+        drawer.querySelector('[data-cart-drawer-total]').textContent = latestSummary.querySelector('h3 strong')?.textContent || 'Review in cart';
+      }
+    }
     if (options.open) openCartDrawer(options.trigger);
     const cartCountLabel = document.querySelector("[data-backend-cart-count]");
-    if (cartCountLabel) { cartCountLabel.textContent = cartTotals(cart.items).count + " items from independent Indian makers"; markReady(cartCountLabel); }
+    if (cartCountLabel) { cartCountLabel.textContent = cartItemCount(cart.items) + " items from independent Indian makers"; markReady(cartCountLabel); }
     const wishlistCountLabel = document.querySelector("[data-backend-wishlist-count]");
     if (wishlistCountLabel) { wishlistCountLabel.textContent = wishlist.length + " items in your wishlist"; markReady(wishlistCountLabel); }
     if (cartRoot) {
-      const host = cartRoot.querySelector(".cart-items");
-      host.innerHTML = cart.items.length ? cart.items.map(cartItemMarkup).join("") : "<div class=\"empty-state\"><h2>Your cart is empty</h2><p>Browse handmade treasures and bring a little India home.</p><a class=\"primary-button\" href=\"/products\">Continue shopping</a></div>";
+      cartRoot.className = nextCart.className;
+      cartRoot.replaceChildren(...Array.from(nextCart.childNodes));
+      const host = cartRoot.querySelector('.cart-items');
       wireCartLineActions(host, cart.items);
-      const totals = cartTotals(cart.items);
-      const summary = cartRoot.querySelector(".cart-summary");
-      const layout=document.getElementById("cart-layout");
-      if(layout) { layout.classList.toggle("cart-layout",cart.items.length>0); layout.classList.toggle("cart-layout--empty",cart.items.length===0); }
-      if (summary) {
-        summary.hidden=cart.items.length===0;
-        const values = summary.querySelectorAll("p b");
-        if (values[0]) values[0].textContent = money(totals.subtotal);
-        if (values[1]) values[1].textContent = money(totals.shipping);
-        if (values[2]) values[2].textContent = money(totals.savings);
-        const total = summary.querySelector("h3 strong");
-        if (total) total.textContent = money(totals.total);
-        const heading = summary.querySelector("h2");
-        if (heading) heading.textContent = "Order summary (" + totals.count + " items)";
-      }
+      global.htmx?.process(cartRoot); global.WVUI?.enhance(cartRoot);
       markReady(cartRoot);
     }
     if (wishlistRoot) {
@@ -431,7 +302,7 @@
     const user = await ensureBackend().currentUser();
     authenticated = Boolean(user);
     if (!user) return;
-    const cart = normalizeCart(await backend.cart());
+    const cart = normalizeCart(await backend.cart({countsOnly:true}));
     const wishlist = await backend.wishlist();
     updateBadges(cart, wishlist);
   }
@@ -459,6 +330,7 @@
   }
 
   const wishlistPending = new Set();
+  const cartPending = new Set();
   async function runAction(action, slug, delta, selectedVariantId, triggerElement) {
     const api = ensureBackend();
     if (action === "cart-add") {
@@ -466,7 +338,6 @@
       const quantity = Number(delta || document.getElementById("detail-quantity")?.value || 1);
       await api.addCart(slug, quantity, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
-      await refreshCounts();
       await hydrateCart({ open: true, trigger: triggerElement });
       notice("Added to your cart.", false);
       return;
@@ -496,14 +367,7 @@
     if (action === "wishlist-add") {
       await requireUser();
       const heartBtn = triggerElement ? (triggerElement.closest(".heart, .gallery-heart") || triggerElement) : null;
-      const optimisticallyGlowed = Boolean(heartBtn) && !heartBtn.classList.contains("is-active");
-      if (optimisticallyGlowed) heartBtn.classList.add("is-active");
-      try {
-        await api.addWishlist(slug);
-      } catch (error) {
-        if (optimisticallyGlowed) heartBtn.classList.remove("is-active");
-        throw error;
-      }
+      await api.addWishlist(slug);
       if (heartBtn) {
         heartBtn.classList.add("is-active");
         heartBtn.setAttribute("aria-pressed", "true");
@@ -748,6 +612,7 @@
       const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
+      button.dataset.orderCreated='true';
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
       if (cartBadge) { cartBadge.textContent = "0"; cartBadge.closest('a').setAttribute('aria-label','Cart, 0 items'); markReady(document.getElementById("cart-count")); }
@@ -851,17 +716,14 @@
         form.dispatchEvent(new Event("change", {bubbles:true}));
       });
     }
-    const cartDrawer = document.querySelector("[data-backend-cart-drawer]");
-    if (cartDrawer) {
-      cartDrawer.addEventListener("cancel", function (event) {
+    document.addEventListener('cancel',function(event){
+      if(event.target.matches('[data-backend-cart-drawer]')) {
         event.preventDefault();
         closeCartDrawer();
-      });
-      cartDrawer.addEventListener("click", function (event) {
-        if (event.target === cartDrawer) closeCartDrawer();
-      });
-    }
+      }
+    },true);
     document.addEventListener("click", async function (event) {
+      if(event.target.matches('[data-backend-cart-drawer]')) closeCartDrawer();
       const link = event.target.closest("a[href]");
       if (!authenticated && link && !link.closest("#guest-login-dialog")) {
         const target = new URL(link.href, global.location.href);
@@ -923,7 +785,13 @@
       if (checkoutButton) {
         event.preventDefault();
         if (!authenticated) { event.stopImmediatePropagation(); promptLogin("/checkout"); return; }
+        if(checkoutInFlight || checkoutButton.disabled)return;
+        checkoutInFlight=true;checkoutButton.disabled=true;global.WVUI?.busy(checkoutButton,true);
         try { await checkout(); } catch (error) { notice(error.message, true); }
+        finally {
+          checkoutInFlight=false;
+          if(!checkoutButton.dataset.orderCreated){checkoutButton.disabled=false;global.WVUI?.busy(checkoutButton,false);}
+        }
         return;
       }
       const element = event.target.closest("[data-backend-action], [hx-post]");
@@ -968,72 +836,60 @@
       if (element.dataset.pending === "true") return;
       const wishlistToggle = action === "wishlist-add" || action === "wishlist-remove";
       if (wishlistToggle && wishlistPending.has(slug)) return;
+      const cartMutation = ['cart-add','cart-buy','cart-change','cart-remove','wishlist-move','wishlist-to-cart'].includes(action);
+      const cartKey = slug + ':' + (selectedVariantId || 'default');
+      if (cartMutation && cartPending.has(cartKey)) return;
+      if (cartMutation) cartPending.add(cartKey);
       if (wishlistToggle) wishlistPending.add(slug);
+      const row=element.closest('.cart-line');
+      const rowIndex=row?Array.from(document.querySelectorAll('.cart-items .cart-line')).indexOf(row):-1;
+      const affected=row||element.closest('.detail-copy')||element.closest('.mobile-buy-bar');
+      const peers=(detailActions?Array.from(document.querySelectorAll('.detail-actions button,.mobile-buy-bar button')):affected?Array.from(affected.querySelectorAll('button')):[]).filter(button=>!button.disabled);
+      peers.forEach(button=>button.disabled=true);if(row)row.setAttribute('aria-busy','true');
       element.dataset.pending = "true";
       element.setAttribute("aria-busy", "true"); global.WVUI?.busy(element,true);
       if ("disabled" in element) element.disabled = true;
-      try { await runAction(action, slug, delta, selectedVariantId, element); }
+      try {
+        await runAction(action, slug, delta, selectedVariantId, element);
+        if (row && !element.isConnected) {
+          const rows=Array.from(document.querySelectorAll('.cart-items .cart-line'));
+          const same=Array.from(document.querySelectorAll('.cart-items [data-product-slug]')).find(button=>button.dataset.productSlug===slug && (!selectedVariantId || button.dataset.variantId===String(selectedVariantId)) && button.dataset.backendAction===action && (!delta || button.dataset.delta===String(delta)));
+          const destination=same||rows[Math.min(rowIndex,rows.length-1)]?.querySelector('button')||document.querySelector('.cart-items .empty-state a');
+          destination?.focus();
+        }
+        if(action==='cart-change')notice('Cart quantity updated.',false);
+        if(action==='cart-remove')notice('Item removed from your cart.',false);
+      }
       catch (error) { notice(error.message, true); }
       finally {
         if (wishlistToggle) wishlistPending.delete(slug);
+        if (cartMutation) cartPending.delete(cartKey);
+        peers.forEach(button=>{if(button.isConnected)button.disabled=false;});row?.removeAttribute('aria-busy');
         delete element.dataset.pending;
         element.removeAttribute("aria-busy"); global.WVUI?.busy(element,false);
         if ("disabled" in element) element.disabled = false;
+        const variant=document.querySelector('#detail-variant');
+        if (variant) variant.dispatchEvent(new Event('change',{bubbles:true}));
       }
     }, true);
 
     document.addEventListener("submit", function (event) {
       const form = event.target.closest("form[data-backend-auth]");
       if (form) { event.preventDefault(); event.stopImmediatePropagation(); submitAuth(form); return; }
-      const search = event.target.closest("form.global-search");
-      if (search && backend) { event.preventDefault(); searchToURL(search.querySelector("#global-search")); }
-    }, true);
-    document.addEventListener("change", function (event) {
-      const form = event.target.closest("#listing-filters");
-      if (!form || !backend) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const query = new URLSearchParams(new FormData(form));
-      const target = form.action + (query.size ? "?" + query.toString() : "");
-      global.location.assign(target);
-    }, true);
-    document.addEventListener("click", function (event) {
-      if (!backend) return;
-      const anchor = event.target.closest("a[href]");
-      if (!anchor || anchor.target || anchor.hasAttribute("download") || anchor.getAttribute("href").startsWith("#")) return;
-      let target;
-      try { target = new URL(anchor.href, global.location.href); } catch (_) { return; }
-      if (target.origin !== global.location.origin) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      global.location.assign(target.href);
+      // Search/filter GETs are owned by their existing HTMX forms. Ordinary
+      // links stay native, including modified clicks, history and new tabs.
     }, true);
     document.addEventListener("htmx:beforeRequest", function (event) {
       if (!backend || !authenticated) return;
       const target = event.detail && event.detail.target;
       const path = event.detail && event.detail.pathInfo && event.detail.pathInfo.requestPath;
-      if (target && target.id === "search-suggestions") { event.preventDefault(); return; }
       if (path && (path.startsWith("/ui/cart/") || path.startsWith("/ui/wishlist/"))) {
         event.preventDefault();
         notice("This action could not be completed. Please try again.", true);
       }
     });
-    const search = document.getElementById("global-search");
-    if (search) {
-      let suggestionTimer;
-      search.addEventListener("input", function () {
-        global.clearTimeout(suggestionTimer);
-        suggestionTimer = global.setTimeout(async function () {
-          const list = document.getElementById("search-suggestions");
-          const term = search.value.trim();
-          if (!backend || !list || term.length < 2) { if (list) list.innerHTML = ""; return; }
-          try {
-            const products = await backend.products({ query: term, limit: 5 });
-            list.innerHTML = products.map((product, index) => "<a id=\"search-option-" + index + "\" role=\"option\" aria-selected=\"false\" href=\"/products/" + encodeURIComponent(product.slug) + "\">" + esc(product.name) + "</a>").join("");
-          } catch (_) { list.innerHTML = ""; }
-        }, 300);
-      });
-    }
+    // Suggestions likewise use the maintained /ui/search-suggest response,
+    // debounce and latest-request cancellation, not a second JSON renderer.
   }
 
   function startOrderStatusRefresh() {
@@ -1170,7 +1026,11 @@
       // Catalog and product markup is rendered from the Go services before
       // this script runs. Keep that response authoritative; only mutations
       // and account state go through the JSON API.
-      if (authenticated && ["/cart", "/wishlist"].includes(global.location.pathname)) await hydrateCart();
+      // Fresh cart/wishlist pages are already server-rendered. Hydrate only
+      // after a mutation or when opening the drawer; avoid replacing usable
+      // rows (and their focus/geometry) during initial navigation.
+      const initialCart=document.querySelector('[data-backend-cart] .cart-items');
+      if(initialCart) {const mediaCart=await backend.cart();wireCartLineActions(initialCart,mediaCart.items);}
       if (global.location.pathname === "/orders") await hydrateOrders();
       startOrderStatusRefresh();
       await refreshCounts();
@@ -1182,6 +1042,7 @@
         }
       } catch (_) { /* Storage can be disabled by the browser. */ }
     } catch (error) {
+      if(error.name==='AbortError')return;
       backend = null;
       backendError = error;
       global.weevcraftsBackendError = error;
@@ -1189,6 +1050,8 @@
       notice("Some live account counts could not be refreshed. Please try again.", true);
     }
   }
+
+  global.addEventListener('pageshow',event=>{if(event.persisted && backend)refreshCounts().catch(()=>{});});
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();

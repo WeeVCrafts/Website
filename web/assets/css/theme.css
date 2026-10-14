@@ -9,8 +9,8 @@
   --forest-2: #0d3529;
   --terracotta: #9d4031;
   --gold: #906220;
-  --serif: "Roboto", Arial, sans-serif;
-  --sans: "Inter", Arial, sans-serif;
+  --serif: "Playfair Display", Georgia, serif;
+  --sans: "DM Sans", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }

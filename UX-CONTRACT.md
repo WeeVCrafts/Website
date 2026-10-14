@@ -45,3 +45,17 @@ Private confirmations use the shared support shell, semantic statuses, explicit 
 Account updates (2026-10-12): all four roles share a protected notification inbox and unread bell. Opening an update uses an ownership-scoped, CSRF-protected POST and then navigates to its case or order. Company replies notify the case owner; customer/seller replies notify active company operations accounts. Private seller coordination stays separate and never copies message text into notification summaries. Badges refresh every 30 seconds while visible; no browser push permission is required.
 
 Checkout confirmation is an authenticated order-owner page, survives refresh, and uses persisted payment/fulfilment state. In the explicitly configured local payment mode, Place order completes the simulated payment automatically and discloses that no money was charged. Real payments still require verified provider results. Payment retries reuse the saved order; delivery steps are never inferred from order creation. SMTP QA stays isolated from the Resend production sender.
+
+## UI-only implementation, 14 October 2026
+
+The shared UI requirements cover all current role screens. Shopping-specific stories/controls stay in the customer journey; portal screens keep role-aware navigation and task-focused density. HTTP routes, form names, CSRF, permissions, paise arithmetic, stock reservation, payment verification and recorded fulfilment transitions are unchanged.
+
+Search suggestions own their fragment selection (`hx-select="unset"`) rather than inheriting the submitted search form's full-page selector. The existing 300ms debounce, replace/cancellation contract, native submission and IME guards remain. Facet search is local only. Filter queries remain URL state; no authenticated HTMX page snapshots are written to local storage.
+
+Cart rows and amounts are refreshed from existing server-rendered cart HTML after mutations. Client code may enhance the photo from the existing product response, but does not calculate the payable total or assume a variant. Multi-option and unknown-option cards navigate to the detail page. Wishlist removal/saving uses the confirmed response and synchronizes pressed state. Direct Move to cart/Undo, recents and quick view are omitted where they would add ambiguity or require unsupported behavior.
+
+Read-only startup/badge requests stop before navigation teardown and resume after a cancelled navigation or restored page. Financial and other POST requests are not cancelled by this mechanism. Notifications retain the existing visible-page 30-second polling contract and ownership-scoped POST; Read and Unread are textual states. Existing temporary checkout idempotency metadata remains part of the transaction contract, not a source for displayed prices or payment success.
+
+Media upload feedback describes actual preparation, upload and verification phases, with bounded local previews and retained retry selection. A saved draft is not recreated after a later media failure. Unsupported ordering/cover-selection services are not invented. No new storage bucket, provider integration, analytics, email delivery or infrastructure change is part of this release.
+
+Verification scope and outstanding physical-device, native-zoom, screen-reader, live-provider and storage integration checks are recorded in the implementation ledger. Plain server-owned HTTP error responses and download resources retain their existing transport behavior.

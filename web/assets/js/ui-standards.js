@@ -30,15 +30,16 @@
     if (first) { first.focus(); first.scrollIntoView({block:"center",behavior:"instant"}); }
     return !first;
   }
-  function confirmAction(message, trigger, actionLabel) {
+  function confirmAction(message, trigger, actionLabel, options = {}) {
     return new Promise(resolve => {
       const dialog = document.createElement("dialog");
       dialog.className = "ui-confirm";
+      dialog.dataset.intent = options.intent || "primary";
       dialog.setAttribute("aria-labelledby", "ui-confirm-title");
       const heading = document.createElement("h2"); heading.id = "ui-confirm-title"; heading.textContent = actionLabel || "Confirm action";
       const copy = document.createElement("p"); copy.id = "ui-confirm-copy"; copy.textContent = message; dialog.setAttribute("aria-describedby",copy.id);
       const actions = document.createElement("div"); actions.className = "ui-confirm-actions";
-      const cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = "Cancel"; cancel.autofocus = true;
+      const cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = options.cancelLabel || "Cancel"; cancel.autofocus = true;
       const accept = document.createElement("button"); accept.type = "button"; accept.textContent = actionLabel || "Continue"; accept.dataset.confirmAccept = "";
       actions.append(cancel, accept); dialog.append(heading, copy, actions); document.body.append(dialog);
       function finish(accepted) { dialog.close(); dialog.remove(); trigger?.focus(); resolve(accepted); }
@@ -53,7 +54,87 @@
     if (active) element.setAttribute("aria-busy", "true");
     else element.removeAttribute("aria-busy");
   }
+  // The existing Alpine state owns opening/closing; this adapter owns modal
+  // accessibility only. Closed off-canvas links must never remain tabbable.
+  function initRoleNavigation(root) {
+    root.querySelectorAll('#seller-sidebar, #admin-sidebar, #support-sidebar').forEach(panel => {
+      if (panel.dataset.modalBound) return;
+      panel.dataset.modalBound = 'true';
+      const kind = panel.id.replace('-sidebar', '');
+      const trigger = document.querySelector('.' + kind + '-menu-button');
+      const close = panel.querySelector('.' + kind + '-sidebar-close');
+      const backdrop = document.querySelector('.' + kind + '-sidebar-backdrop');
+      if (!trigger || !close) return;
+      let blocked = [], oldOverflow = '', open = false;
+      const small = () => getComputedStyle(trigger).display !== 'none';
+      function restore() {
+        blocked.forEach(([element, inert]) => { element.inert = inert; });
+        blocked = []; document.body.style.overflow = oldOverflow;
+      }
+      function sync() {
+        const next = small() && panel.classList.contains('is-open');
+        if (open && !next) { restore(); if (small()) requestAnimationFrame(() => trigger.focus({preventScroll:true})); }
+        panel.inert = small() && !next;
+        if (backdrop) { backdrop.tabIndex = -1; backdrop.setAttribute('aria-hidden', 'true'); }
+        if (next && !open) {
+          let branch = panel;
+          while (branch.parentElement && branch.parentElement !== document.documentElement) {
+            for (const sibling of branch.parentElement.children) {
+              if (sibling === branch || sibling === backdrop || sibling.tagName === 'SCRIPT' || sibling.hasAttribute(':inert')) continue;
+              blocked.push([sibling, sibling.inert]); sibling.inert = true;
+            }
+            branch = branch.parentElement;
+          }
+          oldOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+          close.focus({preventScroll:true});
+        }
+        if (next) {
+          panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true');
+          panel.setAttribute('aria-label', kind[0].toUpperCase() + kind.slice(1) + ' navigation');
+        } else {
+          panel.removeAttribute('role'); panel.removeAttribute('aria-modal'); panel.removeAttribute('aria-label');
+        }
+        open = next;
+      }
+      panel.addEventListener('keydown', event => {
+        if (!open) return;
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close.click(); return; }
+        if (event.key !== 'Tab') return;
+        event.stopPropagation();
+        const items = Array.from(panel.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled)')).filter(item => item.getClientRects().length && !item.closest('[inert]'));
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      });
+      new MutationObserver(sync).observe(panel, {attributes:true,attributeFilter:['class']});
+      window.addEventListener('resize', () => { if (!small() && open) close.click(); sync(); });
+      sync();
+    });
+  }
   function init(root) {
+    initRoleNavigation(root);
+    // Persistent data-entry labels; placeholders remain examples, not labels.
+    root.querySelectorAll('input,select,textarea').forEach(field=>{
+      if(field.closest('label') || field.labels?.length || !field.name || field.name==='q' || ['hidden','submit','button','checkbox','radio'].includes(field.type))return;
+      const names={delta:'Quantity change',reason:'Reason',note:'Note',message:'Message',amount_rupees:'Amount (INR)'};
+      const label=document.createElement('label');label.className='ui-labelled-field';
+      label.append(field.getAttribute('aria-label')||names[field.name]||field.name.replace(/_/g,' ').replace(/^./,letter=>letter.toUpperCase()));
+      field.before(label);label.append(field);
+    });
+    root.querySelectorAll('.seller-search input[name="q"], .admin-search input[name="q"], .support-search input[name="q"]').forEach(field => {
+      if (field.dataset.clearBound) return;
+      field.dataset.clearBound = 'true';
+      const clear = document.createElement('button'); clear.type = 'button'; clear.className = 'ui-search-clear';
+      clear.textContent = '×'; clear.setAttribute('aria-label', 'Clear search');
+      field.after(clear);
+      const update = () => { clear.hidden = !field.value; };
+      field.addEventListener('input', update);
+      clear.addEventListener('click', () => {
+        window.htmx?.trigger(field, 'htmx:abort');
+        field.value = ''; field.dispatchEvent(new Event('input', {bubbles:true})); field.focus(); update();
+      });
+      update();
+    });
     root.querySelectorAll('[data-account-navigation]').forEach(menu => {
       if (menu.dataset.navigationBound) return;
       menu.dataset.navigationBound = "true";
@@ -84,7 +165,8 @@
         if (form.dataset.confirm && !form.dataset.confirmed) {
           event.preventDefault(); event.stopImmediatePropagation();
           const submitter = event.submitter || form.querySelector('[type="submit"]');
-          if (await confirmAction(form.dataset.confirm, submitter, submitter?.textContent.trim())) {
+          const intent = /\/delete$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
+          if (await confirmAction(form.dataset.confirm, submitter, submitter?.textContent.trim(), {intent})) {
             form.dataset.confirmed = "true"; form.requestSubmit(submitter); delete form.dataset.confirmed;
           }
         }
@@ -115,10 +197,51 @@
       if (img.dataset.fallbackBound) return;
       img.dataset.fallbackBound="true";
       const fallback=()=> { if (!img.src.endsWith("/product-unavailable.svg")) { img.removeAttribute("srcset"); img.src="/assets/images/product-unavailable.svg"; } };
-      img.addEventListener("error",fallback,{once:true}); if (img.complete && !img.naturalWidth) fallback();
+      img.addEventListener("error",fallback); if (img.complete && !img.naturalWidth && !img.hasAttribute('data-src')) fallback();
     });
   }
-  window.WVUI = {validate,confirmAction,busy};
+  window.WVUI = {validate,confirmAction,busy,enhance:root=>init(root||document)};
+  document.addEventListener('keydown',()=>{document.body.dataset.keyboardInput='true';},true);
+  document.addEventListener('pointerdown',()=>{delete document.body.dataset.keyboardInput;},true);
+  // Protect long edits in memory. Do not persist account/product form values locally.
+  const dirtyForms = new Set();
+  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form';
+  function dirtyForm() {
+    for (const form of dirtyForms) {
+      if (!form.isConnected) { dirtyForms.delete(form); continue; }
+      if (form.dataset.saving !== 'true' && !form.dataset.discarded) return form;
+    }
+    return null;
+  }
+  document.addEventListener('input', event => {
+    const form = event.target.closest(dirtySelector);
+    if (form && event.isTrusted) dirtyForms.add(form);
+  });
+  document.addEventListener('change', event => {
+    const form = event.target.closest(dirtySelector);
+    if (form && event.isTrusted) dirtyForms.add(form);
+  });
+  let discardPending = false;
+  document.addEventListener('click', async event => {
+    const link = event.target.closest('a[href]');
+    const form = dirtyForm();
+    if (!link || !form || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || link.target === '_blank' || link.hasAttribute('download')) return;
+    const destination = new URL(link.href, location.href);
+    if (destination.pathname === location.pathname && destination.search === location.search && destination.hash) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (discardPending) return;
+    discardPending = true;
+    try {
+      if (await confirmAction('You have unsaved changes. Discard them before leaving this page?', link, 'Discard changes', {cancelLabel:'Keep editing',intent:'warning'})) {
+        dirtyForms.forEach(item => { item.dataset.discarded = 'true'; });
+        location.assign(destination.href);
+      }
+    } finally { discardPending = false; }
+  }, true);
+  window.addEventListener('beforeunload', event => {
+    if (!dirtyForm()) return;
+    event.preventDefault(); event.returnValue = '';
+  });
   document.addEventListener('htmx:beforeRequest', event => {
     const target = event.detail.elt;
     busy(target, true);
@@ -156,6 +279,7 @@
   document.addEventListener('input',event=>{if(event.target.name==='confirm_password'||event.target.name==='new_password')event.target.form?.elements.namedItem('confirm_password')?.setCustomValidity('');});
   document.addEventListener("DOMContentLoaded",()=>init(document));
   document.addEventListener("htmx:afterSwap",()=>init(document));
+  document.addEventListener('htmx:historyRestore',()=>init(document));
   // Retain typed values on a rejected save, and block repeated POSTs while saving.
   // Do not automatically retry a request whose completion is uncertain.
   document.addEventListener("submit",async event=> {
@@ -296,10 +420,14 @@
   }
   startLiveOrderView();
   // Refresh badges across all role portals without exposing conversation bodies.
+  let notificationRead = null;
+  let notificationPageActive = true;
   async function refreshNotifications() {
-    if (document.hidden || !document.querySelector('[data-notification-bell]')) return;
+    if (!notificationPageActive || notificationRead || document.hidden || !document.querySelector('[data-notification-bell]')) return;
+    const controller = new AbortController();
+    notificationRead = controller;
     try {
-      const response=await fetch('/ui/notifications',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
+      const response=await fetch('/ui/notifications',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'},signal:controller.signal});
       if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) return;
       const data=await response.json();
       document.querySelectorAll('[data-notification-bell]').forEach(bell=> {
@@ -309,7 +437,14 @@
         bell.setAttribute('aria-label',data.unread?'Notifications, '+data.unread+' unread':'Notifications');
       });
     } catch (_) { /* The inbox remains usable when a badge refresh fails. */ }
+    finally { if (notificationRead === controller) notificationRead = null; }
   }
+  window.addEventListener('pagehide', () => { notificationPageActive = false; notificationRead?.abort(); });
+  window.addEventListener('beforeunload', () => { notificationPageActive = false; notificationRead?.abort(); });
+  const resumeNotifications=()=>{ if(!document.hidden) notificationPageActive=true; };
+  window.addEventListener('pointerdown',resumeNotifications);
+  window.addEventListener('keydown',resumeNotifications);
+  window.addEventListener('pageshow', event => { notificationPageActive = true; if (event.persisted) refreshNotifications(); });
   refreshNotifications();
   setInterval(refreshNotifications,30000);
   document.addEventListener('visibilitychange',refreshNotifications);

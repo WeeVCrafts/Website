@@ -32,11 +32,11 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
       <title>{ p.Title } - Weevcrafts { p.PortalLabel }</title>
 
-      <link rel="preload" href="/assets/fonts/inter-variable.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="preload" href={ assets.URL("fonts/inter-latin.woff2") } as="font" type="font/woff2" crossorigin/>
 
-      <link rel="preload" href="/assets/fonts/roboto-variable.ttf" as="font" type="font/ttf" crossorigin/>
+      <link rel="preload" href={ assets.URL("fonts/roboto-latin.woff2") } as="font" type="font/woff2" crossorigin/>
 
-      <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
+      <link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
 
       <link rel="stylesheet" href={ assets.URL("css/admin.min.css") }/>
 
@@ -48,7 +48,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
       <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
 
-      <script defer src={ assets.URL("js/ui-standards.js") }></script>
+      <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
 
       <style>[x-cloak]{display:none!important}</style>
 
@@ -56,7 +56,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
       <script defer src="/assets/js/htmx.min.js"></script>
 
-      <script defer src="/assets/js/product-media.js"></script>
+      <script defer src={ assets.URL("js/product-media.min.js") }></script>
 
       <script>
 
@@ -269,7 +269,7 @@ templ Security(p viewmodels.AdminPage) {
 
           <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span><div><h2>Role and permission matrix</h2><p>Least-privilege access across marketplace teams.</p></div></div><a class="panel-link" href="/admin/security?notice=Permission+matrix+export+queued">Export <span class="material-symbols-outlined" aria-hidden="true">download</span></a></div>
 
-          <div class="admin-table wide security-table" tabindex="0" role="region" aria-label="Role and permission matrix"><div class="table-head"><span>Role</span><span>Customer data</span><span>Catalog</span><span>Orders</span><span>Finance</span><span>Security</span><span>State</span></div><div class="table-row"><strong>Customer</strong><span>Own account</span><span>Browse</span><span>Own orders</span><span>Own payments</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Seller</strong><span>Own orders</span><span>Own business</span><span>Own fulfilment</span><span>Own earnings</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Admin</strong><span>Company support</span><span>Manage</span><span>Manage</span><span>Manage</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Super Admin</strong><span>Company operations</span><span>Manage</span><span>Manage</span><span>Manage</span><span>Manage</span><mark class="status review">Audited</mark></div></div>
+          @RolePermissionMatrix()
 
         </article>
 
@@ -655,7 +655,7 @@ templ Workspace(p viewmodels.AdminPage) {
 
           <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span><div><h2>Role Management</h2><p>Assign least-privilege access and keep every sensitive action reviewable.</p></div></div><a class="admin-button primary" href="/super-admin/users">Manage accounts</a></div>
 
-          <div class="admin-table wide security-table" tabindex="0" role="region" aria-label="Role and permission matrix"><div class="table-head"><span>Role</span><span>Customer data</span><span>Catalog</span><span>Orders</span><span>Finance</span><span>Security</span><span>State</span></div><div class="table-row"><strong>Customer</strong><span>Own account</span><span>Browse</span><span>Own orders</span><span>Own payments</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Seller</strong><span>Own orders</span><span>Own business</span><span>Own fulfilment</span><span>Own earnings</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Admin</strong><span>Company support</span><span>Manage</span><span>Manage</span><span>Manage</span><span>None</span><mark class="status success">Active</mark></div><div class="table-row"><strong>Super Admin</strong><span>Company operations</span><span>Manage</span><span>Manage</span><span>Manage</span><span>Manage</span><mark class="status review">Audited</mark></div></div>
+          @RolePermissionMatrix()
 
           <div class="workspace-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p><strong>Protected action policy</strong><small>Role changes require an incident reason and appear in the privileged access audit trail.</small></p></div>
 

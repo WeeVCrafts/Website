@@ -13,16 +13,16 @@ templ Document(p viewmodels.SellerAdminPage) {
       <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="robots" content="noindex,nofollow"/>
       <title>{ p.Title } - Weevcrafts Seller Portal</title>
-      <link rel="preload" href="/assets/fonts/inter-variable.ttf" as="font" type="font/ttf" crossorigin/>
-      <link rel="preload" href="/assets/fonts/roboto-variable.ttf" as="font" type="font/ttf" crossorigin/>
-      <link rel="stylesheet" href="/assets/css/fonts.min.css"/>
+      <link rel="preload" href={ assets.URL("fonts/inter-latin.woff2") } as="font" type="font/woff2" crossorigin/>
+      <link rel="preload" href={ assets.URL("fonts/roboto-latin.woff2") } as="font" type="font/woff2" crossorigin/>
+      <link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/seller-admin.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
-      <script defer src={ assets.URL("js/ui-standards.js") }></script>
+      <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/htmx.min.js"></script>
       <script defer src="/assets/js/alpine.min.js"></script>
-      <script defer src="/assets/js/product-media.js"></script>
+      <script defer src={ assets.URL("js/product-media.min.js") }></script>
     </head>
     <body class="seller-body" x-data="{sidebar:false}" @keydown.escape.window="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
       <a class="seller-skip-link" href="#seller-main">Skip to main content</a>

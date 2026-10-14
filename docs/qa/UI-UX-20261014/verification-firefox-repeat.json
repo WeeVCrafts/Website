@@ -1,0 +1,60 @@
+{
+  "target": "http://127.0.0.1:18080",
+  "browsers": {
+    "firefox": [
+      {
+        "name": "manual hero: controls, inert slides, no autoplay",
+        "pass": true
+      },
+      {
+        "name": "mobile filter: closed inert, continuous selection, Escape focus",
+        "pass": true
+      },
+      {
+        "name": "failed filter preserves query and offers in-sheet retry",
+        "pass": true
+      },
+      {
+        "name": "local facet search: no-match and clear",
+        "pass": true
+      },
+      {
+        "name": "gallery lightbox and keyboard tabs",
+        "pass": true
+      },
+      {
+        "name": "real options: selected price/SKU, unavailable controls and missing media",
+        "pass": true
+      },
+      {
+        "name": "keyboard policy focus is clear of sticky bars",
+        "pass": true
+      },
+      {
+        "name": "search clear and IME submission guard",
+        "pass": true
+      },
+      {
+        "name": "checkout: inline error, retained address, step focus and Back",
+        "pass": true
+      },
+      {
+        "name": "no uncaught storefront errors",
+        "pass": true
+      },
+      {
+        "name": "seller navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "admin navigation inert, trap, close and desktop restoration",
+        "pass": true
+      },
+      {
+        "name": "super navigation inert, trap, close and desktop restoration",
+        "pass": true
+      }
+    ]
+  },
+  "coverage": "Dedicated demo fixtures only; no physical-phone or screen-reader certification."
+}

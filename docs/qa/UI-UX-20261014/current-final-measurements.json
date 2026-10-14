@@ -1,0 +1,2059 @@
+{
+  "profile": "390x844, 150ms latency, 1.6Mbps down, 4x CPU; single lab navigation, not field p75/INP",
+  "target": "http://127.0.0.1:18080",
+  "measures": [
+    {
+      "route": "/",
+      "cache": "cold",
+      "lcp": 2216,
+      "cls": 0.03053453313536424,
+      "longTasks": 3,
+      "longTaskMs": 370,
+      "eventMaxMs": 96,
+      "lcpElement": "<img src=\"/assets/images/customer/hero-studio.webp\" srcset=\"/assets/images/customer/responsive/hero-studio-320.webp?v=73c517ea1adce151 320w, /assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e 480w, /assets/images/customer/responsive/hero-studio-640.webp?v=d8cc8a409d7bcd54 640w, /assets/",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+      "ttfb": 361.80000001192093,
+      "bytes": 671801,
+      "resources": 34,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 19464,
+          "start": 521,
+          "end": 1170.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 45252,
+          "start": 521.8000000119209,
+          "end": 1813
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 3049,
+          "start": 521.9000000059605,
+          "end": 794.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 75887,
+          "start": 522.6000000238419,
+          "end": 2003.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 9708,
+          "start": 522.9000000059605,
+          "end": 965.3000000119209
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 32056,
+          "start": 523.2000000178814,
+          "end": 1646.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 27331,
+          "start": 523.3000000119209,
+          "end": 1709.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 17334,
+          "start": 523.6000000238419,
+          "end": 1615.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 19559,
+          "start": 523.9000000059605,
+          "end": 2127.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 15772,
+          "start": 524.1000000238419,
+          "end": 2522.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 51217,
+          "start": 524.3000000119209,
+          "end": 3425.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 45058,
+          "start": 524.7000000178814,
+          "end": 3332.600000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 9855,
+          "start": 524.9000000059605,
+          "end": 2471.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 9607,
+          "start": 525.1000000238419,
+          "end": 2439.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 36508,
+          "start": 525.3000000119209,
+          "end": 3270.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 804,
+          "start": 525.4000000059605,
+          "end": 3450.100000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+          "bytes": 22718,
+          "start": 525.7000000178814,
+          "end": 1860.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 19788,
+          "start": 2107.600000023842,
+          "end": 3181.100000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 31216,
+          "start": 2110.300000011921,
+          "end": 3419.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 19492,
+          "start": 2112.4000000059605,
+          "end": 3286.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 29294,
+          "start": 2199.600000023842,
+          "end": 4083.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/wooden-box-320.webp?v=04cad855c85244d1",
+          "bytes": 16624,
+          "start": 2200,
+          "end": 3988
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 18186,
+          "start": 2200.5,
+          "end": 3789.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+          "bytes": 14158,
+          "start": 2521.7000000178814,
+          "end": 3943
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/ceramic-mugs-320.webp?v=0d98c33c6f8bc466",
+          "bytes": 14558,
+          "start": 2521.9000000059605,
+          "end": 4187.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/product-unavailable.svg",
+          "bytes": 755,
+          "start": 2522.100000023842,
+          "end": 4020.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 18002,
+          "start": 2522.5,
+          "end": 4251.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 45676,
+          "start": 2545.7000000178814,
+          "end": 4135
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 2563.600000023842,
+          "end": 3642.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3640.7000000178814,
+          "end": 3829.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3955.300000011921,
+          "end": 4168.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 4172,
+          "end": 4351.200000017881
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 4362.9000000059605,
+          "end": 4539.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 4542.4000000059605,
+          "end": 4713.100000023842
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "cache": "warm",
+      "lcp": 440,
+      "cls": 0.02610418937994689,
+      "longTasks": 1,
+      "longTaskMs": 50,
+      "eventMaxMs": 72,
+      "lcpElement": "<img src=\"/assets/images/customer/hero-studio.webp\" srcset=\"/assets/images/customer/responsive/hero-studio-320.webp?v=73c517ea1adce151 320w, /assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e 480w, /assets/images/customer/responsive/hero-studio-640.webp?v=d8cc8a409d7bcd54 640w, /assets/",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+      "ttfb": 103.09999999403954,
+      "bytes": 2873,
+      "resources": 35,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 0,
+          "start": 303.2999999821186,
+          "end": 303.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 0,
+          "start": 304.5,
+          "end": 304.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 0,
+          "start": 305.5,
+          "end": 305.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 0,
+          "start": 306.19999998807907,
+          "end": 306.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 0,
+          "start": 306.69999998807907,
+          "end": 306.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 0,
+          "start": 307.09999999403954,
+          "end": 307.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 0,
+          "start": 307.2999999821186,
+          "end": 307.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 0,
+          "start": 307.69999998807907,
+          "end": 307.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 0,
+          "start": 308,
+          "end": 308
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 0,
+          "start": 308.19999998807907,
+          "end": 308.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 0,
+          "start": 308.59999999403954,
+          "end": 308.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 0,
+          "start": 309.09999999403954,
+          "end": 309.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 0,
+          "start": 309.40000000596046,
+          "end": 309.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 0,
+          "start": 309.7999999821186,
+          "end": 309.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 0,
+          "start": 310.90000000596046,
+          "end": 310.90000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 0,
+          "start": 311.7999999821186,
+          "end": 311.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+          "bytes": 0,
+          "start": 312.59999999403954,
+          "end": 312.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 0,
+          "start": 332.40000000596046,
+          "end": 332.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/wooden-box-320.webp?v=04cad855c85244d1",
+          "bytes": 0,
+          "start": 333.19999998807907,
+          "end": 333.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 0,
+          "start": 335.69999998807907,
+          "end": 335.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+          "bytes": 0,
+          "start": 337.59999999403954,
+          "end": 337.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 0,
+          "start": 340.09999999403954,
+          "end": 340.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 0,
+          "start": 341.19999998807907,
+          "end": 341.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 0,
+          "start": 342.19999998807907,
+          "end": 342.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 0,
+          "start": 342.5,
+          "end": 342.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 0,
+          "start": 342.90000000596046,
+          "end": 342.90000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/ceramic-mugs-320.webp?v=0d98c33c6f8bc466",
+          "bytes": 0,
+          "start": 404.2999999821186,
+          "end": 404.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/product-unavailable.svg",
+          "bytes": 0,
+          "start": 405.09999999403954,
+          "end": 405.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 0,
+          "start": 407,
+          "end": 407
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 545.5,
+          "end": 714.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 602.4000000059605,
+          "end": 781.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 788.2999999821186,
+          "end": 987.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 991.4000000059605,
+          "end": 1220.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 1229.7999999821186,
+          "end": 1409.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1421,
+          "end": 1601.4000000059605
+        }
+      ]
+    },
+    {
+      "route": "/products",
+      "cache": "cold",
+      "lcp": 2140,
+      "cls": 0.0028761390746026507,
+      "longTasks": 1,
+      "longTaskMs": 54,
+      "eventMaxMs": 96,
+      "lcpElement": "<img src=\"/assets/images/customer/blue-tote.webp\" alt=\"Indigo Everyday Tote\" loading=\"eager\" fetchpriority=\"high\" width=\"640\" height=\"800\" srcset=\"/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009 320w, /assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa 480w, /asset",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+      "ttfb": 76.59999999403954,
+      "bytes": 668795,
+      "resources": 34,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 19464,
+          "start": 316.5,
+          "end": 912.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 45252,
+          "start": 319,
+          "end": 1685
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 3049,
+          "start": 319.59999999403954,
+          "end": 708.1999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 75887,
+          "start": 320,
+          "end": 1920.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 9708,
+          "start": 320.5,
+          "end": 849.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 32056,
+          "start": 323.89999997615814,
+          "end": 1497.3999999761581
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 27331,
+          "start": 324.2999999821186,
+          "end": 1622.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 17334,
+          "start": 324.7999999821186,
+          "end": 1521.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 19559,
+          "start": 325.19999998807907,
+          "end": 2203.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 15772,
+          "start": 325.69999998807907,
+          "end": 2479.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 51217,
+          "start": 330,
+          "end": 3286.899999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 45058,
+          "start": 330.2999999821186,
+          "end": 3244.899999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 9855,
+          "start": 330.5,
+          "end": 2376.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 9607,
+          "start": 330.69999998807907,
+          "end": 2361
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 36508,
+          "start": 330.7999999821186,
+          "end": 4213.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 804,
+          "start": 330.89999997615814,
+          "end": 3386.399999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+          "bytes": 14158,
+          "start": 382.89999997615814,
+          "end": 1513.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/wooden-box-320.webp?v=04cad855c85244d1",
+          "bytes": 16624,
+          "start": 468.7999999821186,
+          "end": 1841.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 31216,
+          "start": 2009,
+          "end": 3179.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 19492,
+          "start": 2010.7999999821186,
+          "end": 3103.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 19712,
+          "start": 2013.2999999821186,
+          "end": 3163.399999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 19788,
+          "start": 2014,
+          "end": 3211.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/ceramic-mugs-320.webp?v=0d98c33c6f8bc466",
+          "bytes": 14558,
+          "start": 2084.5,
+          "end": 3630.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/product-unavailable.svg",
+          "bytes": 755,
+          "start": 2085.399999976158,
+          "end": 3436.399999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 18002,
+          "start": 2085.7999999821186,
+          "end": 4016.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 45676,
+          "start": 2110.899999976158,
+          "end": 4197.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 29294,
+          "start": 2200.0999999940395,
+          "end": 4229.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 18186,
+          "start": 2203.0999999940395,
+          "end": 4277.399999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 2221.199999988079,
+          "end": 3839.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 4262.799999982119,
+          "end": 4554.799999982119
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 4576,
+          "end": 4852.799999982119
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 4875.0999999940395,
+          "end": 5057.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 5064.5999999940395,
+          "end": 5244.899999976158
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 5255.299999982119,
+          "end": 5433
+        }
+      ]
+    },
+    {
+      "route": "/products",
+      "cache": "warm",
+      "lcp": 596,
+      "cls": 0,
+      "longTasks": 3,
+      "longTaskMs": 259,
+      "eventMaxMs": 48,
+      "lcpElement": "<img src=\"/assets/images/customer/blue-tote.webp\" alt=\"Indigo Everyday Tote\" loading=\"eager\" fetchpriority=\"high\" width=\"640\" height=\"800\" srcset=\"/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009 320w, /assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa 480w, /asset",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+      "ttfb": 181.69999998807907,
+      "bytes": 2873,
+      "resources": 34,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 0,
+          "start": 379.69999998807907,
+          "end": 379.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 0,
+          "start": 381.80000001192093,
+          "end": 381.80000001192093
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 0,
+          "start": 383.69999998807907,
+          "end": 383.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 0,
+          "start": 385.69999998807907,
+          "end": 385.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 0,
+          "start": 388.19999998807907,
+          "end": 388.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 0,
+          "start": 390,
+          "end": 390
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 0,
+          "start": 392.5,
+          "end": 392.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 0,
+          "start": 394.80000001192093,
+          "end": 394.80000001192093
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 0,
+          "start": 397.09999999403954,
+          "end": 397.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 0,
+          "start": 398.80000001192093,
+          "end": 398.80000001192093
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 0,
+          "start": 400.5,
+          "end": 400.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 0,
+          "start": 402.5,
+          "end": 402.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 0,
+          "start": 405,
+          "end": 405
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 0,
+          "start": 407,
+          "end": 407
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 0,
+          "start": 408.69999998807907,
+          "end": 408.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 0,
+          "start": 412,
+          "end": 412
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+          "bytes": 0,
+          "start": 414.5,
+          "end": 414.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/wooden-box-320.webp?v=04cad855c85244d1",
+          "bytes": 0,
+          "start": 416.19999998807907,
+          "end": 416.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/ceramic-mugs-320.webp?v=0d98c33c6f8bc466",
+          "bytes": 0,
+          "start": 456,
+          "end": 456
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/product-unavailable.svg",
+          "bytes": 0,
+          "start": 459.69999998807907,
+          "end": 459.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 0,
+          "start": 470.5,
+          "end": 470.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 0,
+          "start": 472.69999998807907,
+          "end": 472.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 0,
+          "start": 474.40000000596046,
+          "end": 474.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 0,
+          "start": 476.09999999403954,
+          "end": 476.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 0,
+          "start": 478,
+          "end": 478
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 0,
+          "start": 565.3000000119209,
+          "end": 565.3000000119209
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 0,
+          "start": 565.8000000119209,
+          "end": 565.8000000119209
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 0,
+          "start": 566.4000000059605,
+          "end": 566.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 636.5,
+          "end": 837.1999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 743.5999999940395,
+          "end": 947.1999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 952.9000000059605,
+          "end": 1135.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 1142.4000000059605,
+          "end": 1329.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 1335.699999988079,
+          "end": 1514.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1520.199999988079,
+          "end": 1704.4000000059605
+        }
+      ]
+    },
+    {
+      "route": "/products/blue-tote",
+      "cache": "cold",
+      "lcp": 2116,
+      "cls": 0.004034187680230419,
+      "longTasks": 3,
+      "longTaskMs": 345,
+      "eventMaxMs": 88,
+      "lcpElement": "<img data-gallery-media=\"\" src=\"/assets/images/customer/blue-tote.webp\" alt=\"Indigo Everyday Tote\" width=\"800\" height=\"896\" srcset=\"/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009 320w, /assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa 480w, /assets/images/custom",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+      "ttfb": 283.40000000596046,
+      "bytes": 577134,
+      "resources": 28,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 19464,
+          "start": 409.2000000178814,
+          "end": 993.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 45252,
+          "start": 411.40000000596046,
+          "end": 1692.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 3049,
+          "start": 411.7000000178814,
+          "end": 711.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 75887,
+          "start": 411.80000001192093,
+          "end": 1882.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 9708,
+          "start": 412,
+          "end": 852.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 32056,
+          "start": 412.10000002384186,
+          "end": 1534.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 27331,
+          "start": 412.30000001192093,
+          "end": 1628.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 17334,
+          "start": 412.5,
+          "end": 1517.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 19559,
+          "start": 412.60000002384186,
+          "end": 1986.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 15772,
+          "start": 412.80000001192093,
+          "end": 2416.600000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 51217,
+          "start": 412.90000000596046,
+          "end": 3290
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 45058,
+          "start": 413,
+          "end": 3217.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 9855,
+          "start": 413.2000000178814,
+          "end": 2345.600000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 9607,
+          "start": 419.40000000596046,
+          "end": 2344.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 36508,
+          "start": 419.80000001192093,
+          "end": 3135.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 804,
+          "start": 420.30000001192093,
+          "end": 3311.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+          "bytes": 21442,
+          "start": 442,
+          "end": 1707.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 31216,
+          "start": 1984.800000011921,
+          "end": 3277.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 19492,
+          "start": 1986.1000000238419,
+          "end": 3092.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 19788,
+          "start": 1986.9000000059605,
+          "end": 3170
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 45676,
+          "start": 2139.800000011921,
+          "end": 3653.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 18186,
+          "start": 2276.800000011921,
+          "end": 3570.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 2282,
+          "end": 3352.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3425.9000000059605,
+          "end": 3602.100000023842
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3769.9000000059605,
+          "end": 3937.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 3946.4000000059605,
+          "end": 4128.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 4139.700000017881,
+          "end": 4313.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 4327.700000017881,
+          "end": 4517.4000000059605
+        }
+      ]
+    },
+    {
+      "route": "/products/blue-tote",
+      "cache": "warm",
+      "lcp": 548,
+      "cls": 0,
+      "longTasks": 2,
+      "longTaskMs": 335,
+      "eventMaxMs": 80,
+      "lcpElement": "<img data-gallery-media=\"\" src=\"/assets/images/customer/blue-tote.webp\" alt=\"Indigo Everyday Tote\" width=\"800\" height=\"896\" srcset=\"/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009 320w, /assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa 480w, /assets/images/custom",
+      "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+      "ttfb": 156.90000000596046,
+      "bytes": 2873,
+      "resources": 29,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 0,
+          "start": 349.7999999821186,
+          "end": 349.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 0,
+          "start": 352.69999998807907,
+          "end": 352.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 0,
+          "start": 354.7999999821186,
+          "end": 354.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 0,
+          "start": 356.7999999821186,
+          "end": 356.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 0,
+          "start": 359.40000000596046,
+          "end": 359.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 0,
+          "start": 361.59999999403954,
+          "end": 361.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 0,
+          "start": 363.90000000596046,
+          "end": 363.90000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 0,
+          "start": 365.90000000596046,
+          "end": 365.90000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 0,
+          "start": 367.7999999821186,
+          "end": 367.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 0,
+          "start": 369.7999999821186,
+          "end": 369.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 0,
+          "start": 371.7999999821186,
+          "end": 371.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 0,
+          "start": 374,
+          "end": 374
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 0,
+          "start": 376.40000000596046,
+          "end": 376.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 0,
+          "start": 378.2999999821186,
+          "end": 378.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 0,
+          "start": 380.40000000596046,
+          "end": 380.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 0,
+          "start": 382.19999998807907,
+          "end": 382.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+          "bytes": 0,
+          "start": 383.7999999821186,
+          "end": 383.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 0,
+          "start": 439.40000000596046,
+          "end": 439.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 0,
+          "start": 441.59999999403954,
+          "end": 441.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 0,
+          "start": 443.7999999821186,
+          "end": 443.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 0,
+          "start": 445.5,
+          "end": 445.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 0,
+          "start": 447.40000000596046,
+          "end": 447.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 0,
+          "start": 508.59999999403954,
+          "end": 508.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 511.5,
+          "end": 687.1999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 578.5999999940395,
+          "end": 751.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 935,
+          "end": 1114.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 1122.699999988079,
+          "end": 1304.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 1314.2999999821186,
+          "end": 1492.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1500.7999999821186,
+          "end": 1675.199999988079
+        }
+      ]
+    },
+    {
+      "route": "/cart",
+      "cache": "cold",
+      "lcp": 2216,
+      "cls": 0.09037078274724072,
+      "longTasks": 3,
+      "longTaskMs": 285,
+      "eventMaxMs": 56,
+      "lcpElement": "<small>Every order helps preserve a living craft tradition.</small>",
+      "lcpURL": "",
+      "ttfb": 74.80000001192093,
+      "bytes": 604466,
+      "resources": 31,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 19464,
+          "start": 344.80000001192093,
+          "end": 1040.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 45252,
+          "start": 345.7000000178814,
+          "end": 1705.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 3049,
+          "start": 345.90000000596046,
+          "end": 681.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 75887,
+          "start": 346.09999999403954,
+          "end": 1898.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 9708,
+          "start": 346.30000001192093,
+          "end": 834.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 32056,
+          "start": 346.5,
+          "end": 1469.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 27331,
+          "start": 346.7000000178814,
+          "end": 1579.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 17334,
+          "start": 347.2000000178814,
+          "end": 1485.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 19559,
+          "start": 347.59999999403954,
+          "end": 2071.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 15772,
+          "start": 347.80000001192093,
+          "end": 2441.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 51217,
+          "start": 347.90000000596046,
+          "end": 3326.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 45058,
+          "start": 348.09999999403954,
+          "end": 3245.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 9855,
+          "start": 348.2000000178814,
+          "end": 2334.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 9607,
+          "start": 348.40000000596046,
+          "end": 2357
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 36508,
+          "start": 348.5,
+          "end": 3197.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 804,
+          "start": 348.7000000178814,
+          "end": 3357.7000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 29294,
+          "start": 348.80000001192093,
+          "end": 1784.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 19788,
+          "start": 1998.4000000059605,
+          "end": 3090
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 31216,
+          "start": 2007.2000000178814,
+          "end": 3327.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 19492,
+          "start": 2008.800000011921,
+          "end": 3210.2000000178814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 45676,
+          "start": 2011.4000000059605,
+          "end": 3760.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 18002,
+          "start": 2199.5,
+          "end": 3659.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 18186,
+          "start": 2271.300000011921,
+          "end": 3742.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 2376.5999999940395,
+          "end": 3388.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3510.5,
+          "end": 3728.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 3765.800000011921,
+          "end": 4005
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 4015.800000011921,
+          "end": 4205.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 4212.0999999940395,
+          "end": 4393.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 4405.0999999940395,
+          "end": 4581.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 4591.4000000059605,
+          "end": 4769.700000017881
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 4778.200000017881,
+          "end": 4990.800000011921
+        }
+      ]
+    },
+    {
+      "route": "/cart",
+      "cache": "warm",
+      "lcp": 520,
+      "cls": 0.00013772907027020955,
+      "longTasks": 3,
+      "longTaskMs": 244,
+      "eventMaxMs": 88,
+      "lcpElement": "<small>Every order helps preserve a living craft tradition.</small>",
+      "lcpURL": "",
+      "ttfb": 79.59999999403954,
+      "bytes": 4351,
+      "resources": 32,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 0,
+          "start": 318.7999999821186,
+          "end": 318.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 0,
+          "start": 321.39999997615814,
+          "end": 321.39999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 0,
+          "start": 323.39999997615814,
+          "end": 323.39999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 0,
+          "start": 325.2999999821186,
+          "end": 325.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 0,
+          "start": 327.69999998807907,
+          "end": 327.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 0,
+          "start": 330.09999999403954,
+          "end": 330.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 0,
+          "start": 332.19999998807907,
+          "end": 332.19999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 0,
+          "start": 333.7999999821186,
+          "end": 333.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 0,
+          "start": 335.2999999821186,
+          "end": 335.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 0,
+          "start": 337.2999999821186,
+          "end": 337.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 0,
+          "start": 338.69999998807907,
+          "end": 338.69999998807907
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 0,
+          "start": 340.59999999403954,
+          "end": 340.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 0,
+          "start": 342.2999999821186,
+          "end": 342.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 0,
+          "start": 343.39999997615814,
+          "end": 343.39999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 0,
+          "start": 344.39999997615814,
+          "end": 344.39999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 0,
+          "start": 344.89999997615814,
+          "end": 344.89999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 0,
+          "start": 346,
+          "end": 346
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/brass-elephant-320.webp?v=5eb6a3091c2d9600",
+          "bytes": 0,
+          "start": 381,
+          "end": 381
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 0,
+          "start": 392.59999999403954,
+          "end": 392.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 0,
+          "start": 394.59999999403954,
+          "end": 394.59999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 0,
+          "start": 396.09999999403954,
+          "end": 396.09999999403954
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 0,
+          "start": 397.7999999821186,
+          "end": 397.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 0,
+          "start": 399.5,
+          "end": 399.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/saree-maroon-320.webp?v=b162932ee1967948",
+          "bytes": 0,
+          "start": 495.39999997615814,
+          "end": 495.39999997615814
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 498.09999999403954,
+          "end": 679.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 693.8999999761581,
+          "end": 866.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 871.0999999940395,
+          "end": 1051
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1064,
+          "end": 1247.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 1258.699999988079,
+          "end": 1437.3999999761581
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 1443.699999988079,
+          "end": 1625.8999999761581
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 1635.0999999940395,
+          "end": 1811.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1818.7999999821186,
+          "end": 2000.7999999821186
+        }
+      ]
+    },
+    {
+      "route": "/checkout",
+      "cache": "cold",
+      "lcp": 1968,
+      "cls": 0.01018566905224501,
+      "longTasks": 3,
+      "longTaskMs": 284,
+      "eventMaxMs": 40,
+      "lcpElement": "<p>One step closer to bringing home something beautiful.</p>",
+      "lcpURL": "",
+      "ttfb": 93.5,
+      "bytes": 566800,
+      "resources": 27,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 19464,
+          "start": 228,
+          "end": 846
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 45252,
+          "start": 231.5,
+          "end": 1528.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 3049,
+          "start": 232.30000001192093,
+          "end": 488.40000000596046
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 75887,
+          "start": 232.5,
+          "end": 1752.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 9708,
+          "start": 232.69999998807907,
+          "end": 646.1999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 32056,
+          "start": 233.30000001192093,
+          "end": 1400.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 27331,
+          "start": 234.30000001192093,
+          "end": 1416.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 17334,
+          "start": 234.5,
+          "end": 1289.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 19559,
+          "start": 234.80000001192093,
+          "end": 1877.300000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 15772,
+          "start": 235.09999999403954,
+          "end": 2305.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 51217,
+          "start": 235.59999999403954,
+          "end": 3160.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 45058,
+          "start": 236.40000000596046,
+          "end": 3094.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 9855,
+          "start": 237.40000000596046,
+          "end": 2194.5
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 9607,
+          "start": 237.59999999403954,
+          "end": 2205.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 36508,
+          "start": 237.80000001192093,
+          "end": 3021.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 804,
+          "start": 297.09999999403954,
+          "end": 3191.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 29294,
+          "start": 315.80000001192093,
+          "end": 1607.800000011921
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 31216,
+          "start": 1845.800000011921,
+          "end": 3140.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 19492,
+          "start": 1847.800000011921,
+          "end": 2975
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 19788,
+          "start": 1848.199999988079,
+          "end": 3063.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 45676,
+          "start": 1974.199999988079,
+          "end": 3391.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 2114.300000011921,
+          "end": 3229.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3369.5,
+          "end": 3549.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 3593.800000011921,
+          "end": 3769.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 3773.199999988079,
+          "end": 3944.199999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 3947.5999999940395,
+          "end": 4131.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 4140.699999988079,
+          "end": 4326
+        }
+      ]
+    },
+    {
+      "route": "/checkout",
+      "cache": "warm",
+      "lcp": 792,
+      "cls": 0,
+      "longTasks": 3,
+      "longTaskMs": 247,
+      "eventMaxMs": 64,
+      "lcpElement": "<p>One step closer to bringing home something beautiful.</p>",
+      "lcpURL": "",
+      "ttfb": 459.19999998807907,
+      "bytes": 2873,
+      "resources": 28,
+      "overflow": false,
+      "font": "\"DM Sans\", Arial, sans-serif",
+      "resourceDetails": [
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-400.woff2?v=2ea1bf6e4127eebf",
+          "bytes": 0,
+          "start": 577.0999999940395,
+          "end": 577.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-500.woff2?v=d66df20589a3cab8",
+          "bytes": 0,
+          "start": 579.0999999940395,
+          "end": 579.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/fonts.min.css?v=ba8bbbb4cf7d14ed",
+          "bytes": 0,
+          "start": 580.7999999821186,
+          "end": 580.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/theme.min.css?v=2f7b9c704827bf7e",
+          "bytes": 0,
+          "start": 582.5999999940395,
+          "end": 582.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/utility.min.css?v=0877148fc4a5b981",
+          "bytes": 0,
+          "start": 584.5999999940395,
+          "end": 584.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/customer-polish.min.css?v=bcb946ffc7a34645",
+          "bytes": 0,
+          "start": 586.4000000059605,
+          "end": 586.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/ui-standards.min.css?v=3fa20f968fb1c875",
+          "bytes": 0,
+          "start": 587.7999999821186,
+          "end": 587.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/css/experience.min.css?v=0ce65b6386fadc92",
+          "bytes": 0,
+          "start": 588.6999999880791,
+          "end": 588.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/ui-standards.min.js?v=355cf5963ca9bb47",
+          "bytes": 0,
+          "start": 591.2999999821186,
+          "end": 591.2999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/experience.min.js?v=9504e0ba45d5ec15",
+          "bytes": 0,
+          "start": 593.0999999940395,
+          "end": 593.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/htmx.min.js",
+          "bytes": 0,
+          "start": 594.9000000059605,
+          "end": 594.9000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/alpine.min.js",
+          "bytes": 0,
+          "start": 597,
+          "end": 597
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/backend.min.js?v=a3b60f567cb1c2bc",
+          "bytes": 0,
+          "start": 598.5999999940395,
+          "end": 598.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/firebase-client.min.js?v=414ea87bb79c5ca7",
+          "bytes": 0,
+          "start": 600.0999999940395,
+          "end": 600.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/js/storefront.min.js?v=589e4b10f5bf04fe",
+          "bytes": 0,
+          "start": 602.0999999940395,
+          "end": 602.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/favicon.svg",
+          "bytes": 0,
+          "start": 604.0999999940395,
+          "end": 604.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/images/customer/responsive/madhubani-tree-320.webp?v=6cb787baed1d3ed9",
+          "bytes": 0,
+          "start": 669,
+          "end": 669
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-500.woff2?v=5db7ec8890b78af7",
+          "bytes": 0,
+          "start": 679.7999999821186,
+          "end": 679.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-600.woff2?v=fd6f63245e24082f",
+          "bytes": 0,
+          "start": 681.6999999880791,
+          "end": 681.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/dm-sans-700.woff2?v=9b1a44756787bbc9",
+          "bytes": 0,
+          "start": 683.7999999821186,
+          "end": 683.7999999821186
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/playfair-display-600.woff2?v=3735317b4a512e66",
+          "bytes": 0,
+          "start": 685.5999999940395,
+          "end": 685.5999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/assets/fonts/material-symbols-ui.woff2?v=b4b1ee771af17755",
+          "bytes": 0,
+          "start": 686.6999999880791,
+          "end": 686.6999999880791
+        },
+        {
+          "url": "http://127.0.0.1:18080/ui/notifications",
+          "bytes": 313,
+          "start": 783,
+          "end": 961.0999999940395
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 975.2999999821186,
+          "end": 1159.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/auth/session",
+          "bytes": 314,
+          "start": 1165.5,
+          "end": 1335.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/cart",
+          "bytes": 663,
+          "start": 1345.0999999940395,
+          "end": 1525.4000000059605
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/wishlist",
+          "bytes": 454,
+          "start": 1532.5,
+          "end": 1713.699999988079
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/products/madhubani-tree",
+          "bytes": 815,
+          "start": 1721.0999999940395,
+          "end": 1901.5
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

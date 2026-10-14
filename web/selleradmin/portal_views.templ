@@ -172,6 +172,9 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 							} else {
 							<img class="product-media-square" src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
 							}
+							if media.URL == form.Image {
+                <strong class="status">Current product photo</strong>
+              }
 							<p>{ media.ContentType } · { media.Size } bytes</p><button class="seller-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
 						</article>
 					}
@@ -231,20 +234,21 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 			</ul></section>
 		}
 		<form class="seller-toolbar" action="/seller-admin/inventory" method="get"><label class="sr-only" for="portal-inventory-query">Search inventory</label><input id="portal-inventory-query" name="q" value={ p.Query } placeholder="Search product, variant or SKU"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/inventory">Clear</a></form>
-		<section class="seller-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span><h2>Inventory</h2><p>Adjust available stock per variant.</p></span></div></div><div class="seller-table-scroll"><div class="portal-inventory-table"><div class="portal-inventory-head"><span>Product</span><span>SKU</span><span>Variant</span><span>Available</span><span>Reserved</span><span>Stock action</span></div>
+		<section class="seller-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span><h2>Inventory</h2><p>Adjust available stock per variant.</p></span></div></div><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller inventory"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Variant</th><th scope="col">Available</th><th scope="col">Reserved</th><th scope="col">Stock action</th></tr></thead><tbody>
 			for _, item := range p.Inventory {
-				<div class="portal-inventory-row"><span class="seller-product-cell"><b title={ item.Name }>{ item.Name }</b></span><span class="inventory-sku-cell" data-label="SKU">{ item.SKU }</span><span data-label="Variant">{ item.Variant }</span><strong class="inventory-stock-num" data-label="Available">{ item.Available }</strong><span data-label="Reserved">{ item.Reserved }</span><span class="inventory-action-cell">
+				<tr><th scope="row" class="record-title">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Variant">{ item.Variant }</td><td class="numeric" data-label="Available">{ item.Available }</td><td class="numeric" data-label="Reserved">{ item.Reserved }</td><td data-label="Stock action" class="row-actions">
 					if p.CanInventoryWrite {
 						<form class="seller-inline-form" method="post" action="/seller-admin/inventory/adjust"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/><label class="sr-only" for={ "stock-delta-" + item.VariantID }>Stock change for { item.Name }</label><input id={ "stock-delta-" + item.VariantID } type="number" name="delta" required placeholder="+/- qty"/><input name="reason" required minlength="3" maxlength="500" placeholder="Reason"/><button class="seller-button primary" type="submit">Save</button></form>
 					} else {
 						<span>Read only</span>
 					}
-				</span></div>
+				</td></tr>
 			}
+		</tbody></table></div>
 			if len(p.Inventory) == 0 && p.DataWarning == "" {
 				@SellerTableEmpty("No inventory found", "Inventory records appear when a product variant is created.")
 			}
-		</div></div></section>
+		</section>
 	}
 }
 
@@ -284,11 +288,11 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		if p.OrderDetail != nil {
 			<div class="seller-order-actions"><a class="seller-button outline" href="/seller-admin/orders">Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
-			<section class="seller-two-grid"><article class="seller-panel" data-seller-order-detail><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Qty</span><span>Unit price</span><span>Total</span></div>
+			<section class="seller-two-grid"><article class="seller-panel" data-seller-order-detail><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller order items"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Total</th></tr></thead><tbody>
 				for _, item := range p.OrderDetail.Items {
-					<div class="seller-table-row"><b>{ item.Name }</b><span>{ item.SKU }</span><span>{ item.Quantity }</span><span>{ item.UnitPrice }</span><strong>{ item.LineTotal }</strong></div>
+					<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Qty" class="numeric">{ item.Quantity }</td><td data-label="Unit price" class="numeric">{ item.UnitPrice }</td><td data-label="Total" class="numeric">{ item.LineTotal }</td></tr>
 				}
-				</div><p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p></article>
+				</tbody></table></div><p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p></article>
 				@SellerOrderFulfillment(p)
 			</section>
 			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>WeevCrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
@@ -333,14 +337,15 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 
 templ PortalReturns(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel"><div class="seller-table-scroll"><div class="seller-product-table"><div class="seller-product-head"><span>Return</span><span>Order</span><span>Customer</span><span>Item</span><span>Reason</span><span>Requested</span><span>Status</span></div>
+		<section class="seller-panel"><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller returns"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Return</th><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Item</th><th scope="col">Reason</th><th scope="col">Requested</th><th scope="col">Status</th></tr></thead><tbody>
 			for _, item := range p.Returns {
-				<div class="seller-product-row"><b>{ item.Number }</b><span>{ item.Order }</span><span>{ item.Customer }</span><span>{ item.Product }</span><span>{ item.Reason }</span><span>{ item.Date }</span><span>{ item.Status }</span></div>
+				<tr><th scope="row">{ item.Number }</th><td data-label="Order">{ item.Order }</td><td data-label="Customer">{ item.Customer }</td><td data-label="Item">{ item.Product }</td><td data-label="Reason">{ item.Reason }</td><td data-label="Requested">{ item.Date }</td><td data-label="Status">{ item.Status }</td></tr>
 			}
+		</tbody></table></div>
 			if len(p.Returns) == 0 && p.DataWarning == "" {
 				@SellerTableEmpty("No return requests", "Customer return requests that include your products appear here.")
 			}
-		</div></div></section>
+		</section>
 	}
 }
 
@@ -352,7 +357,11 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 			if len(p.Ledger) == 0 && p.DataWarning == "" {
 				@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
 			} else {
-				<div class="seller-table-scroll"><div class="seller-mini-table"><div class="seller-table-head"><span>Reference</span><span>Date</span><span>Sale</span><span>Commission</span><span>Net</span><span>Status</span></div>@LedgerRows(p.Ledger)</div></div>
+				<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller ledger"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Sale</th><th scope="col">Commission</th><th scope="col">Adjustments</th><th scope="col">Net</th><th scope="col">Status</th></tr></thead><tbody>
+					for _, row := range p.Ledger {
+						<tr><th scope="row">{ row.Number }</th><td data-label="Date">{ row.Date }</td><td data-label="Sale" class="numeric">{ row.Sale }</td><td data-label="Commission" class="numeric">{ row.Commission }</td><td data-label="Adjustments" class="numeric">{ row.Adjustments }</td><td data-label="Net" class="numeric">{ row.Net }</td><td data-label="Status">{ row.Status }</td></tr>
+					}
+				</tbody></table></div>
 			}
 			@components.PortalPagination(p.LedgerPagination)
 		</article><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div></div>
@@ -374,11 +383,11 @@ templ PortalAnalytics(p viewmodels.SellerAdminPage) {
 		if len(p.TopProducts) == 0 && p.DataWarning == "" {
 			@SellerTableEmpty("No sales in this period", "Paid orders will appear here as customers buy your products.")
 		} else {
-			<div class="seller-mini-table"><div class="seller-table-head"><span>Product</span><span>SKU</span><span>Units</span><span>Revenue</span><span>Unit cost</span><span>Unit profit</span><span>Margin</span></div>
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Top selling products"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Units</th><th scope="col">Revenue</th><th scope="col">Unit cost</th><th scope="col">Unit profit</th><th scope="col">Margin</th></tr></thead><tbody>
 				for _, item := range p.TopProducts {
-					<div class="seller-table-row"><b>{ item.Name }</b><span>{ item.SKU }</span><span>{ item.Units }</span><strong>{ item.Revenue }</strong><span>{ sellerOptional(item.UnitCost,item.HasCost) }</span><span>{ sellerOptional(item.UnitProfit,item.HasCost) }</span><span>{ sellerOptional(item.Margin,item.HasCost) }</span></div>
+					<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Units" class="numeric">{ item.Units }</td><td data-label="Revenue" class="numeric">{ item.Revenue }</td><td data-label="Unit cost" class="numeric">{ sellerOptional(item.UnitCost,item.HasCost) }</td><td data-label="Unit profit" class="numeric">{ sellerOptional(item.UnitProfit,item.HasCost) }</td><td data-label="Margin" class="numeric">{ sellerOptional(item.Margin,item.HasCost) }</td></tr>
 				}
-			</div>
+			</tbody></table></div>
 		}
 		</section>
 	}

@@ -219,10 +219,10 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/", want: []string{"Pieces to make your own", "Stories behind the craft", "/assets/images/customer/hero-studio.webp"}},
 		{route: "/categories", want: []string{"Browse by craft", "Shop by craft", "Gifts that feel personal"}},
 		{route: "/brands", want: []string{"Explore brands with a story", "Mithila Arts", "Weaver&#39;s Touch"}},
-		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Verified maker brand", "Pieces from Mithila Arts"}},
-		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "handloom sarees", "Add to cart"}},
-		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More made-for-you finds"}},
-		{route: "/wishlist", want: []string{"items in your wishlist", "Move to cart", "You may also love"}},
+		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Independent maker brand", "Pieces from Mithila Arts"}},
+		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "handloom sarees", `class="product-card"`}},
+		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More to explore"}},
+		{route: "/wishlist", want: []string{"items in your wishlist", "View product", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},
 		{route: "/checkout", want: []string{"Delivery address", "Payment method", "Place order"}},
 		{route: "/orders", want: []string{"View order", "Past orders", "Orders"}},
@@ -231,7 +231,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/payments/success", want: []string{"Payment successful", "Payment captured", "#PAY25603421"}},
 		{route: "/payments/pending", want: []string{"Payment pending", "Reconciliation in progress", "#PAY25602912"}},
 		{route: "/payments/failed", want: []string{"Payment failed", "Action needed", "#PAY25601432"}},
-		{route: "/deals", want: []string{"Handmade deals", "Offers with a purpose", "Limited-time edit"}},
+		{route: "/deals", want: []string{"Handmade deals", "Offers with a purpose", "Current offers"}},
 		{route: "/returns", want: []string{"Current", "Return in Progress"}},
 		{route: "/account", want: []string{"Profile information", "Security &amp; sessions", "Need a hand?"}},
 		{route: "/login", want: []string{"Sign in to Weevcrafts", "Keep me signed in"}},
@@ -637,7 +637,7 @@ func TestMockSearchSuggestions(t *testing.T) {
 	header := httptest.NewRecorder()
 	h.ServeHTTP(header, httptest.NewRequest(http.MethodGet, "/", nil))
 	headerBody := header.Body.String()
-	for _, want := range []string{`role="combobox"`, `aria-expanded="false"`, `aria-controls="search-suggestions"`, `hx-disinherit="hx-select hx-push-url"`, `hx-push-url="false"`, `initSearchSuggestions`} {
+	for _, want := range []string{`role="combobox"`, `aria-expanded="false"`, `aria-controls="search-suggestions"`, `hx-select="unset"`, `hx-push-url="false"`, `initSearchSuggestions`} {
 		if !strings.Contains(headerBody, want) {
 			t.Errorf("search input is missing accessible combobox contract %q", want)
 		}

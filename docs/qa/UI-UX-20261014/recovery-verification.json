@@ -1,0 +1,74 @@
+{
+  "target": "http://127.0.0.1:18080",
+  "checks": [
+    {
+      "name": "search no matches, error, retained query, keyboard selection",
+      "pass": true
+    },
+    {
+      "name": "text-spacing override, enlarged text, landscape and 400% reflow equivalent",
+      "pass": true,
+      "evidence": {
+        "samples": [
+          "/products",
+          "/products/blue-tote",
+          "/cart",
+          "/checkout",
+          "/account/profile"
+        ],
+        "method": "CSS text-only 200% and 640px reflow equivalent to 400% of a 2560px desktop; not physical browser zoom certification"
+      }
+    },
+    {
+      "name": "short viewport: filter internal scrolling, reachable field and focus",
+      "pass": true,
+      "evidence": "390x360 browser viewport; real on-screen keyboard remains a device check"
+    },
+    {
+      "name": "forced colors and reduced motion retain active controls",
+      "pass": true
+    },
+    {
+      "name": "no-JS first story, native filtering and direct links",
+      "pass": true
+    },
+    {
+      "name": "multi-media gallery: button, keyboard, swipe alternative and deferred video",
+      "pass": true,
+      "evidence": {
+        "videoRequests": 2,
+        "fixture": "browser-only media plus maintained local video test file"
+      }
+    },
+    {
+      "name": "seller file preview, invalid type, failure retains retry selection",
+      "pass": true,
+      "evidence": "No real storage upload or product mutation; prepare failure intercepted"
+    },
+    {
+      "name": "current role fields, permission summary and audit table keep native semantics",
+      "pass": true
+    },
+    {
+      "name": "owned seller order detail, print actions, reflow and full font fallback",
+      "pass": true,
+      "evidence": {
+        "widths": 7,
+        "print": "controls present; native print dialog not driven",
+        "font": "Latin fast path plus full supported-character fallback"
+      }
+    },
+    {
+      "name": "notification read/unread text, scoped action and foreign-owner rejection",
+      "pass": true
+    },
+    {
+      "name": "failed purchase retains option/quantity and clears local busy state",
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "No physical phones, browser zoom or screen reader",
+    "Configured QA storage unavailable; recovery tested with intercepted responses"
+  ]
+}

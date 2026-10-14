@@ -69,6 +69,7 @@ Controls use the existing 6px radius. Panels use restrained rounding. Hearts ret
 | --- | --- | --- |
 | Paper/ink/brand/type | `theme.css` root variables | shared header, footer, product cards, pages |
 | Storefront refinements | `customer-polish.css` | compact header, hero, facets, account |
+| Shopping experience / responsive media | `experience.css`, `experience.js`, shared templ components | manual hero, filters, gallery, mobile purchase controls |
 | Semantic status and operational tables | `ui-standards.css`, `components/presentation.go` | all role portals and order history |
 | Native fields and validation | `ui-standards.js` | seller, support, admin and checkout |
 | Canonical media | product database and upload workflow | cards, galleries, seller editor |
@@ -80,3 +81,15 @@ Pointer press feedback uses 120ms. Pointer-driven checkout transitions use 160ms
 Keep the real logo, catalogue values, seller permissions and lifecycle rules. Use verified content and customer-facing option names. Do not replace Go/templ with another framework or turn generated concept product names/photos into real catalogue data. Generated references guide composition; maintained data and existing accepted assets override their illustrative content.
 
 Header update: the storefront uses one sticky toolbar at every scroll position. Menu, wordmark, delivery, search and account actions share one row. At narrow widths delivery and Wishlist move to the drawer; search expands across the toolbar with Escape restoring focus. Account sidebars use compact identity panels and 44px navigation rows.
+
+## 14 October 2026 implementation contract
+
+The foundation, focus, feedback, form and reflow rules apply to all four current roles and their detail screens. Shared badges, tables, dialogs and labels inherit the document's interface family: DM Sans in the storefront, Inter in operational portals. Storefront headings remain Playfair Display; operational headings remain Roboto. Font preloads and CSS use the same WOFF2 URLs. Original TTFs and licences remain maintained sources. The Material Symbols subset preserves the required ligature feature and referenced glyphs.
+
+Controls use 44px comfort targets, 16px entry text, visible 2px focus outlines, 6px corners and a meaningful control border (#8e7d6b); decorative dividers keep the lighter border. Hero navigation is manual, three stories maximum, 250ms opacity only, with inactive links inert. Later images/video are deferred. Product media reserves a square frame and uses contain rather than cropping the object. Product photography, real choices and current prices override generated composition references.
+
+Listing updates preserve the open sheet, facet searches, scroll, expanded groups and active control through HTMX settlement. Hidden mobile sheets are inert immediately, including before enhancement. Drawer/sheet motion is 180ms; keyboard and reduced-motion access is immediate. One contextual purchase region is visible; it yields to inline controls, policy links and text-entry focus. No bottom navigation or promotional layer is added.
+
+Operational data uses native tables with scoped column/row headers and named, focusable overflow regions. Narrow summaries retain every value/action and explicit cell labels. Private conversations, internal notes and seller confirmations keep their established boundaries. Busy controls retain their text and geometry; success styling waits for the actual response. Archive/restoration confirmations use consequence-specific intent, cancel-first focus and Escape. An unsaved editor stays in memory and offers Keep editing before navigation.
+
+See the dated implementation ledger for actual route/state coverage and limitations. Physical devices, browser-native zoom and screen readers remain release checks; a browser score is not certification.
