@@ -15,14 +15,15 @@ const base=(process.env.WEEVCRAFTS_BASE_URL||'http://localhost:8080').replace(/\
    await page.screenshot({path:process.env.WEEVCRAFTS_FIREBASE_SCREENSHOTS+'/'+name+'-login.png',fullPage:true});
    await page.setViewportSize({width:390,height:844});
   }
-  const googleButton=google.getByRole('button',{name:'Continue with Google'});
+  const googleButton=google.locator('[data-google-signin]');
   if(firebaseConfig.enabled){
    await expect(googleButton).toBeEnabled();
    await googleButton.click();
    await expect(google.getByRole('status')).toContainText('Accept the privacy notice');
   }else{
    await expect(googleButton).toBeDisabled();
-   await expect(google.getByRole('status')).toContainText('not configured in this local workspace');
+   await expect(googleButton).toBeHidden();
+   await expect(google.getByRole('status')).toContainText('Google sign-in is unavailable');
   }
   await page.locator('form[data-backend-auth=login] input[name=email]').fill('not-a-customer@example.invalid');
   await page.locator('form[data-backend-auth=login] input[name=password]').fill('invalid-fixture-password');

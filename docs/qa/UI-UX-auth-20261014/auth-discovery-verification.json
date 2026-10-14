@@ -1,0 +1,104 @@
+{
+  "target": "http://127.0.0.1:18080",
+  "browsers": {
+    "chromium": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": true
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": true
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": true
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": true
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      },
+      {
+        "name": "native signup succeeds on one isolated demo account and keeps return path",
+        "pass": true
+      },
+      {
+        "name": "no-JS discovery and native account forms remain available",
+        "pass": true
+      }
+    ],
+    "firefox": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": true
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": true
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": true
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": true
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      }
+    ],
+    "webkit": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": true
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": true
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": true
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": true
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      }
+    ]
+  },
+  "scope": "Public discovery and existing protected actions; demo fixtures/intercepted failures only."
+}

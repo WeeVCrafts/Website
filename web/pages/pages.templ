@@ -46,7 +46,7 @@ templ Document(p viewmodels.CustomerPage) {
       <link rel="stylesheet" href={ assets.URL("css/customer-polish.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/experience.min.css") }/>
-      <noscript><style>@media(max-width:800px){.storefront-body .filter-sidebar:not(.is-open){display:block}.storefront-body .mobile-filter-toggle{display:none}}</style></noscript>
+      <noscript><style>/* Optional provider controls need JavaScript; native forms remain usable. */[data-firebase-google-panel],[data-firebase-link]{display:none!important}@media(max-width:800px){.storefront-body .filter-sidebar:not(.is-open){display:block}.storefront-body .mobile-filter-toggle{display:none}}</style></noscript>
       <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
       <script defer src={ assets.URL("js/experience.min.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
@@ -189,7 +189,11 @@ templ Document(p viewmodels.CustomerPage) {
         }
         { children... }
       </main>
-      @components.Footer(p)
+      if isAuthPage(p.Route) {
+        @AuthFooter()
+      } else {
+        @components.Footer(p)
+      }
     </body>
   </html>
 }

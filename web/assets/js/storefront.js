@@ -10,24 +10,39 @@
   let drawerRestoreFocus = null;
   let checkoutInFlight = false;
 
-  function promptLogin(destination) {
+  function promptLogin(destination, trigger) {
     let dialog = document.getElementById("guest-login-dialog");
     if (!dialog) {
       dialog = document.createElement("dialog");
       dialog.id = "guest-login-dialog";
       dialog.className = "cart-drawer";
       dialog.setAttribute("aria-labelledby", "guest-login-title");
-      dialog.innerHTML = '<div class="cart-drawer-shell"><header class="cart-drawer-header"><div><p class="eyebrow">YOUR ACCOUNT</p><h2 id="guest-login-title">Log in to continue</h2></div></header><div class="empty-state"><p>Please log in to browse products, view details and place orders.</p><a class="primary-button" data-login-continue>Log in</a></div></div>';
+      const shell = document.createElement('div'); shell.className='cart-drawer-shell';
+      const header = document.createElement('header'); header.className='cart-drawer-header';
+      const title = document.createElement('h2'); title.id='guest-login-title'; title.textContent='Sign in to continue';
+      const close = document.createElement('button'); close.type='button'; close.className='outline-button'; close.textContent='Close'; close.setAttribute('aria-label','Close sign-in prompt');
+      const content = document.createElement('div'); content.className='empty-state';
+      const copy = document.createElement('p'); copy.id='guest-login-copy'; copy.textContent='Sign in to save pieces or continue with your purchase. You can explore the store without an account.';
+      const signIn = document.createElement('a'); signIn.className='primary-button'; signIn.dataset.loginContinue=''; signIn.textContent='Sign in';
+      const browse = document.createElement('button'); browse.type='button'; browse.className='outline-button'; browse.textContent='Keep browsing';
+      close.addEventListener('click',()=>dialog.close()); browse.addEventListener('click',()=>dialog.close());
+      header.append(title,close); content.append(copy,signIn,browse); shell.append(header,content); dialog.append(shell);
+      dialog.setAttribute('aria-describedby','guest-login-copy');
       document.body.appendChild(dialog);
-      // Escape leaves the modal for the existing sign-in form; it never grants
-      // guest shopping access or changes the authentication requirement.
-      dialog.addEventListener("cancel", event => {event.preventDefault();global.location.assign(dialog.querySelector('[data-login-continue]').href);});
+      // Native Escape/backdrop dismissal never performs a protected action.
+      dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+      dialog.addEventListener('close',()=>{
+        const origin=dialog._restoreFocus;
+        if(origin?.isConnected && origin.getClientRects().length && !origin.closest('[inert]'))origin.focus({preventScroll:true});
+        else document.querySelector('.menu-toggle')?.focus({preventScroll:true});
+      });
     }
+    dialog._restoreFocus=trigger || document.activeElement;
     dialog.querySelector("[data-login-continue]").href = "/login?next=" + encodeURIComponent(destination);
     const menu = document.getElementById("mobile-menu");
     if (menu?.open) menu.close();
     if (!dialog.open) dialog.showModal();
-    dialog.querySelector("[data-login-continue]").focus();
+    dialog.querySelector('[aria-label="Close sign-in prompt"]').focus();
   }
 
   const esc = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (char) => ({
@@ -431,22 +446,29 @@
     if (!target) {
       target = document.createElement("p");
       target.dataset.backendFormMessage = "true";
-      target.setAttribute("role", "status");
+      target.setAttribute("role", "status"); target.tabIndex=-1;
       form.appendChild(target);
     }
     target.textContent = text;
+    target.hidden = false;
+    target.setAttribute('role',error?'alert':'status');
     target.classList.toggle("is-error", Boolean(error));
+    if(error){target.focus({preventScroll:true});target.scrollIntoView({block:'nearest'});}
   }
 
   async function submitAuth(form) {
     if (form.dataset.submitting === "true") return;
+    if (global.WVUI && !global.WVUI.validate(form)) return;
     form.dataset.submitting = "true";
     const authButton = form.querySelector('button[type="submit"]');
     if (authButton) {authButton.disabled = true; global.WVUI?.busy(authButton,true);}
-    const api = ensureBackend();
     const action = form.dataset.backendAuth;
     const values = formData(form);
+    const message=form.querySelector('[data-backend-form-message]');
+    if(message){message.hidden=true;message.textContent='';}
     try {
+      const api = backend || await create();
+      if(!backend){backend=api;global.weevcraftsBackend=api;backendError=null;}
       if (action === "login") {
         const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "" });
         global.location.assign(result.redirect_to || "/products");
@@ -725,12 +747,12 @@
     document.addEventListener("click", async function (event) {
       if(event.target.matches('[data-backend-cart-drawer]')) closeCartDrawer();
       const link = event.target.closest("a[href]");
-      if (!authenticated && link && !link.closest("#guest-login-dialog")) {
+      if (!authenticated && link && !link.closest("#guest-login-dialog") && event.button===0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && link.target!=='_blank' && !link.hasAttribute('download')) {
         const target = new URL(link.href, global.location.href);
-        if (target.origin === global.location.origin && (target.pathname === "/" || /^\/(products|category|categories|search|deals|brands|makers|cart|checkout|orders|wishlist)(\/|$)/.test(target.pathname))) {
+        if (target.origin === global.location.origin && /^\/(cart|checkout|orders|wishlist|account|tracking|returns|payments|notifications)(\/|$)/.test(target.pathname)) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          promptLogin(target.pathname + target.search);
+          promptLogin(target.pathname + target.search,link);
           return;
         }
       }
@@ -762,7 +784,7 @@
         const visible = input.type === "password";
         input.type = visible ? "text" : "password";
         passwordToggle.setAttribute("aria-pressed", String(visible));
-        passwordToggle.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+        passwordToggle.setAttribute("aria-label", (visible ? "Hide " : "Show ") + (passwordToggle.dataset.passwordLabel || "password"));
         const icon = passwordToggle.querySelector(".material-symbols-outlined");
         if (icon) icon.textContent = visible ? "visibility_off" : "visibility";
         input.focus({ preventScroll: true });
@@ -784,7 +806,7 @@
       const checkoutButton = event.target.closest('[data-backend-action="checkout"], [data-backend-action="checkout-no-payment"]');
       if (checkoutButton) {
         event.preventDefault();
-        if (!authenticated) { event.stopImmediatePropagation(); promptLogin("/checkout"); return; }
+        if (!authenticated) { event.stopImmediatePropagation(); promptLogin("/checkout",checkoutButton); return; }
         if(checkoutInFlight || checkoutButton.disabled)return;
         checkoutInFlight=true;checkoutButton.disabled=true;global.WVUI?.busy(checkoutButton,true);
         try { await checkout(); } catch (error) { notice(error.message, true); }
@@ -819,7 +841,7 @@
       if (!authenticated) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart");
+        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart",event.target.closest('button,a'));
         return;
       }
       if (backendError) {
@@ -952,13 +974,6 @@
   }
 
   async function start() {
-    if (!authenticated && (global.location.pathname === "/" || /^\/(products|category|categories|search|deals|brands|makers|cart|checkout|orders|wishlist)(\/|$)/.test(global.location.pathname))) {
-      promptLogin(global.location.pathname + global.location.search);
-    }
-    const loginQuery = new URLSearchParams(global.location.search);
-    if (global.location.pathname === "/login" && loginQuery.get("login_required") === "1") {
-      promptLogin(loginQuery.get("next") || "/products");
-    }
     if (/^\/orders\/[^/]+\/confirmation$/.test(global.location.pathname)) {
       const url = new URL(global.location.href);
       if (url.searchParams.has("notice")) {
@@ -1010,7 +1025,6 @@
       backend = await create();
       global.weevcraftsBackend = backend;
       authenticated = Boolean(await backend.currentUser());
-      if (!authenticated && /^\/products\/[^/]+\/?$/.test(global.location.pathname)) promptLogin(global.location.pathname + global.location.search);
       if (global.location.pathname === "/deals") {
         const offerBadge = document.querySelector(".deals-banner .badge");
         if (offerBadge) offerBadge.textContent = "Current catalog offers";

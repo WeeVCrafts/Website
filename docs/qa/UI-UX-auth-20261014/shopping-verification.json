@@ -1,0 +1,23 @@
+[
+  {
+    "engine": "chromium",
+    "pass": true,
+    "durationSeconds": 13.39,
+    "timing": "automated task run, not a participant-study time",
+    "checks": "chosen option, cart drawer/Escape, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget"
+  },
+  {
+    "engine": "firefox",
+    "pass": true,
+    "durationSeconds": 38.437,
+    "timing": "automated task run, not a participant-study time",
+    "checks": "chosen option, cart drawer/Escape, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget"
+  },
+  {
+    "engine": "webkit",
+    "pass": true,
+    "durationSeconds": 19.528,
+    "timing": "automated task run, not a participant-study time",
+    "checks": "chosen option, cart drawer/Escape, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget"
+  }
+]

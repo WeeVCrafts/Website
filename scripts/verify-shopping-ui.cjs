@@ -53,7 +53,11 @@ async function main(){
    const prices=await page.locator('.product-card .price strong').allTextContents();assert(prices.length>0);assert(prices.every(price=>{const amount=Number(price.replace(/[^0-9.]/g,''));return amount>=1000&&amount<=2500;}));
    results.push({engine,pass:true,durationSeconds:(Date.now()-started)/1000,timing:'automated task run, not a participant-study time',checks:'chosen option, cart drawer/Escape, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget'});
    console.log(engine+' shopping interactions PASS');
-  }catch(error){results.push({engine,pass:false,error:error.message});console.log(engine+' FAIL '+error.message);}
+  }catch(error){
+   const state=await page.evaluate(()=>({url:location.pathname,dialogs:Array.from(document.querySelectorAll('dialog[open]')).map(element=>element.id),heartDisabled:document.querySelector('.gallery-heart')?.disabled})).catch(()=>null);
+   await page.screenshot({path:output+'/shopping-failed-'+engine+'.png'}).catch(()=>{});
+   results.push({engine,pass:false,error:error.message,state});console.log(engine+' FAIL '+error.message);
+  }
   finally{await context.close();await browser.close();}
  }
  await fs.writeFile(output+'/shopping-verification.json',JSON.stringify(results,null,2));process.exitCode=results.some(result=>!result.pass)?1:0;

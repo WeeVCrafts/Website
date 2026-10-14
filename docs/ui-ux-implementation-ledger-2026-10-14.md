@@ -2,6 +2,8 @@
 
 Plan: [140-task roadmap](ui-ux-implementation-plan-2026-10-14.md). Started 14 October 2026.
 
+The initial-release evidence below is a historical snapshot. The user-approved [public discovery/account access follow-up](ui-ux-auth-followup-2026-10-14.md) supersedes its mandatory-login presentation statements, including K10 and the earlier guest header checks. Catalogue browsing is now public without a frontend gate; protected server actions remain protected.
+
 Changes are restricted to presentation assets/templates, generated presentation output, UI verification and design documentation. Existing service/API/database code remains unchanged. Existing knowledge-graph files are unrelated in-progress changes.
 
 ## Design reference and constraints

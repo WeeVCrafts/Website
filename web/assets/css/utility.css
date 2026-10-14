@@ -2,6 +2,47 @@
 .auth-shell { display: flex; justify-content: center; background: radial-gradient(circle at 50% 8%, #ead9ca, transparent 46%); }
 .utility-card { background: var(--surface); border: 1px solid var(--line); padding: 30px; }
 .auth-card { width: min(100%, 520px); }
+/* Account access is a short, optional task, not a storefront landing page. */
+.storefront-body .auth-shell { flex-direction:column; align-items:center; gap:16px; padding-block:24px 32px; background:none; }
+.storefront-body .auth-browse { display:inline-flex; align-items:center; align-self:center; min-height:44px; padding:8px 12px; color:var(--forest); text-decoration:underline; text-underline-offset:4px; }
+.storefront-body .auth-card { width:min(100%,540px); padding:28px; border-radius:12px; }
+.storefront-body .auth-card h1 { font-size:clamp(30px,4vw,40px); line-height:1.15; }
+.storefront-body .auth-access-nav { display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--line); }
+.storefront-body .auth-access-nav a { display:flex; flex:1; align-items:center; justify-content:center; min-height:44px; padding:8px; color:var(--muted); border-bottom:3px solid transparent; }
+.storefront-body .auth-access-nav a[aria-current="page"] { color:var(--forest); border-color:var(--forest); font-weight:700; }
+.storefront-body .auth-card .utility-lead { margin-bottom:20px; line-height:1.5; }
+.storefront-body .auth-context { margin:0 0 20px; color:var(--muted); }
+.storefront-body .auth-card .utility-form { gap:18px; }
+.storefront-body .auth-field { display:grid; gap:6px; }
+.storefront-body .auth-field > label { margin:0; }
+.storefront-body .auth-card .password-field { display:block; }
+.storefront-body .auth-card input:not([type="checkbox"]) { min-height:48px; padding:10px 12px; border-radius:6px; border-color:var(--ui-control-border,var(--line)); font:400 16px/1.5 var(--sans); }
+.storefront-body .auth-card .password-field input { padding-right:52px; }
+.storefront-body .auth-card .password-toggle { top:2px; right:2px; width:44px; height:44px; border-radius:6px; }
+.storefront-body .auth-card .password-toggle:hover { background:var(--paper); }
+.storefront-body .auth-field-hint { display:block; color:var(--muted); font-weight:400; line-height:1.5; }
+.storefront-body .auth-field-hint:empty { display:none; }
+.storefront-body .auth-options { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 16px; }
+.storefront-body .auth-options a,.storefront-body .auth-card .check-line { min-height:44px; }
+.storefront-body .auth-options a { display:inline-flex; align-items:center; color:var(--forest); text-decoration:underline; text-underline-offset:3px; }
+.storefront-body .auth-card .check-line input { flex:0 0 auto; width:18px; height:18px; margin:0; }
+.storefront-body .auth-card .auth-consent { align-items:flex-start; }
+.storefront-body .auth-card .auth-consent input { margin-top:4px; }
+.storefront-body .auth-card .auth-consent a { color:var(--forest); text-decoration:underline; text-underline-offset:3px; }
+.storefront-body .auth-feedback { margin:0; padding:12px; border:1px solid var(--line); border-radius:6px; }
+.storefront-body .auth-feedback.is-error { color:var(--terracotta); border-color:var(--terracotta); }
+.storefront-body .auth-card .auth-links { justify-content:center; text-align:center; }
+.storefront-body .auth-card .auth-links a { display:inline-flex; align-items:center; min-height:44px; }
+.storefront-body .auth-card .preview-disclaimer { justify-content:center; text-align:center; margin-top:20px; }
+.storefront-body .auth-card .firebase-google-panel { margin-top:16px; }
+.storefront-body .auth-card .auth-method-divider { margin:8px 0; }
+.storefront-body .auth-card .google-button { margin-top:0; }
+/* Native hidden state must win over provider/control display recipes. */
+.storefront-body .firebase-google-panel [hidden] { display:none!important; }
+.storefront-body .auth-footer { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:8px 24px; padding-block:8px 24px; color:var(--muted); }
+.storefront-body .auth-footer nav { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 16px; }
+.storefront-body .auth-footer a { display:inline-flex; align-items:center; min-height:44px; color:var(--forest); }
+@media(max-width:540px) { .storefront-body .auth-card { padding:20px; } .storefront-body .auth-shell { padding-top:12px; gap:8px; } }
 .auth-card h1, .info-hero h1, .story-layout h1 { margin-bottom: 10px; font-size: clamp(36px, 5vw, 52px); line-height: 1.03; }
 .utility-lead { max-width: 560px; margin-bottom: 22px; color: var(--muted); font-size: 14px; }
 .utility-notice { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; padding: 11px 13px; color: var(--forest); background: #e9f0e8; border: 1px solid #c8dac8; font-size: 14px; }

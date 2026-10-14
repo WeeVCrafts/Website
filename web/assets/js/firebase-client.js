@@ -114,7 +114,9 @@
     const button=panel.querySelector("[data-google-signin]");
     const terms=panel.querySelector(".google-terms-label");
     const note=panel.querySelector("[data-firebase-config-note]");
-    if (button) {button.disabled=!enabled;button.setAttribute("aria-disabled",String(!enabled));}
+    if (button) {button.disabled=!enabled;button.hidden=!enabled;button.setAttribute("aria-disabled",String(!enabled));}
+    const divider=panel.querySelector('[data-google-divider]');
+    if(divider)divider.hidden=!enabled;
     if (terms) terms.hidden=!enabled;
     if (note) {note.hidden=enabled;note.textContent=text||"";}
   }
@@ -140,7 +142,7 @@
       const googlePanels=document.querySelectorAll("[data-firebase-google-panel]");
       const f=await ready();
       if(!f) {
-        googlePanels.forEach(panel=>setGoogleAvailability(panel,false,"Google sign-in is not configured in this local workspace. Continue with email to use the local accounts."));
+        googlePanels.forEach(panel=>setGoogleAvailability(panel,false,"Google sign-in is unavailable. Use the account form above."));
         return;
       }
       googlePanels.forEach(panel=>{setGoogleAvailability(panel,true,"");panel.querySelector("[data-google-signin]").addEventListener("click",event=>google(event.currentTarget));});

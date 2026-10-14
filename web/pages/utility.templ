@@ -4,6 +4,7 @@ import "github.com/wecratfs/commerce/web/components"
 
 import (
   "strconv"
+  "strings"
 
   "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
@@ -11,41 +12,56 @@ import (
 templ Auth(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container utility-shell auth-shell">
+      <a class="auth-browse" href="/">Continue browsing</a>
       <div class="utility-card auth-card">
+        if p.Route == "/login" || p.Route == "/register" {
+          <nav class="auth-access-nav" aria-label="Account access">
+            if p.Route == "/login" {
+              <a href={ authRouteURL("/login",p.Filters) } aria-current="page">Sign in</a><a href={ authRouteURL("/register",p.Filters) }>Create account</a>
+            } else {
+              <a href={ authRouteURL("/login",p.Filters) }>Sign in</a><a href={ authRouteURL("/register",p.Filters) } aria-current="page">Create account</a>
+            }
+          </nav>
+        }
         if p.Notice != "" {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
         if p.Route == "/login" {
-          @AuthHeading("WELCOME BACK", "Sign in to Weevcrafts", "Keep your saved pieces, orders and maker stories close.")
-          @FirebaseGoogle()
-          <div class="auth-method-divider" role="separator"><span>or use your account</span></div>
-          <form class="utility-form" action="/login" method="post" data-backend-auth="login">
+          @AuthHeading("WELCOME BACK", "Sign in to Weevcrafts", "Access your saved pieces, orders and account.")
+          if authNext(p.Filters) != "" {
+            <p class="auth-context">Sign in to continue. You will return to your chosen page.</p>
+          }
+          <form class="utility-form" action="/login" method="post" data-backend-auth="login" novalidate>
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <label>Username or email<input name="email" type="text" autocomplete="username" required/></label>
-            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="current-password" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
-            <label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in on this device</label>
+            <div class="auth-field"><label for="login-email">Username or email</label><input id="login-email" name="email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required/></div>
+            @AuthPasswordField("login-password","password","Password","current-password",0,"")
+            <div class="auth-options"><label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in</label><a href={ authRouteURL("/forgot-password",p.Filters) }>Forgot password?</a></div>
+            <p class="auth-feedback" data-backend-form-message role="alert" tabindex="-1" hidden></p>
             <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
-          <div class="auth-links"><a href="/forgot-password">Forgot your password?</a><span>New here? <a href="/register">Create an account</a></span></div>
+          <div class="auth-links"><span>New here? <a href={ authRouteURL("/register",p.Filters) }>Create an account</a></span></div>
+          @FirebaseGoogle()
         } else if p.Route == "/register" {
-          @AuthHeading("JOIN THE COMMUNITY", "Create your account", "Save favourites, follow makers and keep every order in one place.")
-          <form class="utility-form" action="/register" method="post" data-backend-auth="register">
+          @AuthHeading("MAKE IT YOURS", "Create your account", "Save favourite pieces and keep your orders in one place.")
+          <p class="auth-context">All fields below are required. Browsing does not need an account.</p>
+          <form class="utility-form" action="/register" method="post" data-backend-auth="register" novalidate>
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <label>Full name<input name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></label>
-            <label>Email address<input name="email" type="email" required/></label>
-            <label>Phone number<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/></label>
-            <label>Password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
-            <label class="check-line"><input type="checkbox" name="consent" required/> I agree to the privacy notice and account terms</label>
+            <div class="auth-field"><label for="register-name">Full name</label><input id="register-name" name="display_name" autocomplete="name" minlength="2" maxlength="120" required/></div>
+            <div class="auth-field"><label for="register-email">Email address</label><input id="register-email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required/></div>
+            <div class="auth-field"><label for="register-phone">Phone number</label><input id="register-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" aria-describedby="register-phone-hint" maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed" required/><small id="register-phone-hint" class="auth-field-hint">Used for your account and delivery contact.</small></div>
+            @AuthPasswordField("register-password","password","Password","new-password",12,"Use at least 12 characters. Choose a password you do not use elsewhere.")
+            <label class="check-line auth-consent"><input type="checkbox" name="consent" required/><span>I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">account terms</a>.</span></label>
+            <p class="auth-feedback" data-backend-form-message role="alert" tabindex="-1" hidden></p>
             <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
-          <div class="auth-links"><span>Already have an account? <a href="/login">Sign in</a></span></div>
+          <div class="auth-links"><span>Already have an account? <a href={ authRouteURL("/login",p.Filters) }>Sign in</a></span></div>
           @FirebaseGoogle()
         } else if p.Route == "/forgot-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Reset your password", "Enter your email and we will guide you through the next step.")
           <form class="utility-form" action="/forgot-password" method="post" data-backend-auth="recover">
-            <label>Email address<input name="email" type="email" required/></label>
+            <div class="auth-field"><label for="recover-email">Email address</label><input id="recover-email" name="email" type="email" autocomplete="email" autocapitalize="none" spellcheck="false" required/></div>
             <button class="primary-button full" type="submit">Send recovery link <span class="material-symbols-outlined" aria-hidden="true">mail</span></button>
           </form>
           <div class="auth-links"><a href="/login">Return to sign in</a></div>
@@ -53,8 +69,8 @@ templ Auth(p viewmodels.CustomerPage) {
           @AuthHeading("ACCOUNT RECOVERY", "Choose a new password", "Use a long, unique password to keep your account safe.")
           <form class="utility-form" action="/reset-password" method="post" data-backend-auth="reset">
             <input type="hidden" name="token" value={ authToken(p.Filters) }/>
-            <label>New password<div class="password-field"><input name="password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
-            <label>Confirm password<div class="password-field"><input name="confirm_password" type="password" autocomplete="new-password" minlength="12" required/><button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div></label>
+            @AuthPasswordField("reset-password","password","New password","new-password",12,"Use at least 12 characters.")
+            @AuthPasswordField("confirm-password","confirm_password","Confirm password","new-password",12,"")
             <button class="primary-button full" type="submit">Update password <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span></button>
           </form>
         } else {
@@ -66,10 +82,18 @@ templ Auth(p viewmodels.CustomerPage) {
           </form>
           <a class="auth-back-link" href="/login">Continue to sign in</a>
         }
-        <p class="preview-disclaimer" data-backend-auth-note><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Your account and recovery requests are handled securely by Weevcrafts.</p>
+        <p class="preview-disclaimer" data-backend-auth-note>You can explore products and makers before signing in.</p>
       </div>
     </section>
   }
+}
+
+templ AuthPasswordField(id, name, label, autocomplete string, minimum int, hint string) {
+  <div class="auth-field"><label for={ id }>{ label }</label><div class="password-field"><input id={ id } name={ name } type="password" autocomplete={ autocomplete } minlength={ strconv.Itoa(minimum) } aria-describedby={ id+"-hint" } required/><button class="password-toggle" type="button" data-password-toggle data-password-label={ strings.ToLower(label) } aria-label={ "Show "+strings.ToLower(label) } aria-controls={ id } aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">visibility</span></button></div><small id={ id+"-hint" } class="auth-field-hint">{ hint }</small></div>
+}
+
+templ AuthFooter() {
+  <footer class="container auth-footer"><span>Weevcrafts · Crafted in India</span><nav aria-label="Account help and policies"><a href="/contact">Help</a><a href="/privacy">Privacy notice</a><a href="/terms">Terms</a></nav></footer>
 }
 
 templ AuthHeading(kicker, title, copy string) {
@@ -80,13 +104,14 @@ templ AuthHeading(kicker, title, copy string) {
 
 templ FirebaseGoogle() {
   <div class="firebase-google-panel" data-firebase-google-panel>
-    <button class="outline-button full google-button" type="button" data-google-signin><span class="google-mark" aria-hidden="true">G</span> Continue with Google</button>
-    <label class="check-line google-terms-label"><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
+    <div class="auth-method-divider" data-google-divider hidden><span>Or continue with Google</span></div>
+    <button class="outline-button full google-button" type="button" data-google-signin disabled aria-disabled="true" hidden><span class="google-mark" aria-hidden="true">G</span> Continue with Google</button>
+    <label class="check-line google-terms-label" hidden><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
     <p class="auth-provider-note" data-firebase-config-note role="status" aria-live="polite">Checking Google sign-in availability…</p>
   </div>
   <form class="utility-form firebase-link-panel" data-firebase-link hidden>
     <h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
-    <label>Current Weevcrafts password<input type="password" autocomplete="current-password" required/></label>
+    @AuthPasswordField("link-password","link_password","Current Weevcrafts password","current-password",0,"")
     <button class="primary-button full" type="submit">Connect account securely</button>
   </form>
 }

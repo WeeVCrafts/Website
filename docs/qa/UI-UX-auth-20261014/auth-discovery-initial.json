@@ -1,0 +1,117 @@
+{
+  "target": "http://127.0.0.1:18080",
+  "browsers": {
+    "chromium": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": false,
+        "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.product-card a[href^=\"/products/\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <a tabindex=\"-1\" aria-hidden=\"true\" href=\"/products/blue-pottery\">…</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  6 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  2 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": false,
+        "error": "locator.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Username or email', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": false,
+        "error": "locator.getAttribute: Error: strict mode violation: locator('input[type=password]') resolved to 2 elements:\n    1) <input required=\"\" minlength=\"0\" name=\"password\" type=\"password\" id=\"login-password\" autocomplete=\"current-password\" aria-describedby=\"login-password-hint\"/> aka getByRole('textbox', { name: 'Password' })\n    2) <input required=\"\" type=\"password\" autocomplete=\"current-password\"/> aka getByLabel('Current Weevcrafts password')\n\nCall log:\n\u001b[2m  - waiting for locator('input[type=password]')\u001b[22m\n"
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": false,
+        "error": "page.waitForURL: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"http://127.0.0.1:18080/products/blue-tote\" until \"load\"\n============================================================"
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      },
+      {
+        "name": "native signup succeeds on one isolated demo account and keeps return path",
+        "pass": false,
+        "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Phone number', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "no-JS discovery and native account forms remain available",
+        "pass": true
+      }
+    ],
+    "firefox": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": false,
+        "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.product-card a[href^=\"/products/\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <a tabindex=\"-1\" aria-hidden=\"true\" href=\"/products/blue-pottery\">…</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  6 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": false,
+        "error": "locator.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Username or email', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": false,
+        "error": "locator.getAttribute: Error: strict mode violation: locator('input[type=password]') resolved to 2 elements:\n    1) <input required=\"\" minlength=\"0\" name=\"password\" type=\"password\" id=\"login-password\" autocomplete=\"current-password\" aria-describedby=\"login-password-hint\"/> aka getByRole('textbox', { name: 'Password' })\n    2) <input required=\"\" type=\"password\" autocomplete=\"current-password\"/> aka getByLabel('Current Weevcrafts password')\n\nCall log:\n\u001b[2m  - waiting for locator('input[type=password]')\u001b[22m\n"
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": false,
+        "error": "page.waitForURL: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"http://127.0.0.1:18080/products/blue-tote\" until \"load\"\n============================================================"
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      }
+    ],
+    "webkit": [
+      {
+        "name": "guest discovery stays public; filters and native navigation work",
+        "pass": false,
+        "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.product-card a[href^=\"/products/\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <a tabindex=\"-1\" aria-hidden=\"true\" href=\"/products/blue-pottery\">…</a>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not stable\u001b[22m\n\u001b[2m  5 × retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <label>…</label> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 500ms\u001b[22m\n\u001b[2m      - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is visible, enabled and stable\u001b[22m\n\u001b[2m      - scrolling into view if needed\u001b[22m\n\u001b[2m      - done scrolling\u001b[22m\n\u001b[2m      - <button type=\"button\" data-filter-close=\"\" class=\"mobile-filter-close\">Close filters</button> from <aside role=\"dialog\" aria-modal=\"true\" data-filter-panel=\"\" id=\"listing-filter-sidebar\" aria-label=\"Product filters\" class=\"filter-sidebar is-open\" aria-labelledby=\"filter-title\">…</aside> subtree intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "name": "protected action asks only on intent; close/Escape restore focus without a write",
+        "pass": true
+      },
+      {
+        "name": "login/signup navigation keeps return path; account exit never gates browsing",
+        "pass": true
+      },
+      {
+        "name": "auth forms: labelled errors, reveal, pending/duplicate guard and failed-input recovery",
+        "pass": false,
+        "error": "locator.fill: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Username or email', { exact: true })\u001b[22m\n"
+      },
+      {
+        "name": "auth viewport/keyboard/accessibility matrix and unavailable-provider fallback",
+        "pass": false,
+        "error": "locator.getAttribute: Error: strict mode violation: locator('input[type=password]') resolved to 2 elements:\n    1) <input required=\"\" minlength=\"0\" name=\"password\" type=\"password\" id=\"login-password\" autocomplete=\"current-password\" aria-describedby=\"login-password-hint\"/> aka getByRole('textbox', { name: 'Password' })\n    2) <input required=\"\" type=\"password\" autocomplete=\"current-password\"/> aka getByLabel('Current Weevcrafts password')\n\nCall log:\n\u001b[2m  - waiting for locator('input[type=password]')\u001b[22m\n"
+      },
+      {
+        "name": "existing customer sign-in returns to selected public product",
+        "pass": false,
+        "error": "page.waitForURL: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"http://127.0.0.1:18080/products/blue-tote\" until \"load\"\n============================================================"
+      },
+      {
+        "name": "no uncaught errors",
+        "pass": true
+      }
+    ]
+  },
+  "scope": "Public discovery and existing protected actions; demo fixtures/intercepted failures only."
+}

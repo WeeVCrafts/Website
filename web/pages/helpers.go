@@ -265,6 +265,21 @@ func authNext(filters url.Values) string {
 
 func authToken(filters url.Values) string { return filters.Get("token") }
 
+func authRouteURL(route string, filters url.Values) string {
+	if next := authNext(filters); next != "" {
+		return route + "?" + url.Values{"next": {next}}.Encode()
+	}
+	return route
+}
+
+func isAuthPage(route string) bool {
+	switch route {
+	case "/login", "/register", "/forgot-password", "/reset-password", "/verify-email":
+		return true
+	}
+	return false
+}
+
 func customerInitials(name string) string {
 	parts := strings.Fields(strings.TrimSpace(name))
 	if len(parts) == 0 {

@@ -22,18 +22,26 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
    await page.waitForFunction(()=>!!document.querySelector('.site-header')._x_dataStack);
    await page.waitForFunction(()=>document.fonts.status === 'loaded', null, {timeout:30000});
    if (role === 'guest') {
-    // Current shopping policy requires sign-in. Do not test profile/drawer
-    // activation behind the mandatory account dialog as if it were interactive.
-    await expect(page.locator('#guest-login-dialog')).toBeVisible();
+    // Discovery is public. Only protected actions request account access.
+    await expect(page.locator('#guest-login-dialog')).toHaveCount(0);
     for (const width of [320,390,560,768,820,960,1024,1280,1440]) {
      await page.setViewportSize({width,height:900});
      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
-     await expect(page.locator('[data-login-continue]')).toBeFocused();
+     await page.locator('.menu-toggle').press('Enter');
+     await expect(page.locator('#mobile-menu')).toBeVisible();
+     await page.keyboard.press('Escape');
+     await expect(page.locator('.menu-toggle')).toBeFocused();
     }
-    await page.locator('[data-login-continue]').press('Enter');
+    await page.locator('#cart-count').click();
+    await expect(page.locator('#guest-login-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#guest-login-dialog')).not.toBeVisible();
+    await expect(page.locator('#cart-count')).toBeFocused();
+    await page.locator('#cart-count').click();
+    await page.locator('[data-login-continue]').click();
     await expect(page).toHaveURL(/\/login\?next=/);
     expect(errors).toEqual([]);
-    console.log(`${name} guest: required account dialog and sign-in destination passed at 9 widths`);
+    console.log(`${name} guest: public browsing, navigation and optional protected-action prompt passed at 9 widths`);
     await page.close();continue;
    }
    await page.evaluate(()=>window.scrollTo(0,Math.min(500,document.body.scrollHeight)));
