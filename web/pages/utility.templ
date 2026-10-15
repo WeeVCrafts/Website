@@ -11,38 +11,21 @@ import (
 
 templ Auth(p viewmodels.CustomerPage) {
   @Document(p) {
+    if p.Route == "/login" {
+      @LoginGallery(p)
+    } else {
     <section class="container utility-shell auth-shell">
       <a class="auth-browse" href="/">Continue browsing</a>
-      <div class="utility-card auth-card">
-        if p.Route == "/login" || p.Route == "/register" {
+      <div class="utility-card auth-card" data-auth-surface>
+        if p.Route == "/register" {
           <nav class="auth-access-nav" aria-label="Account access">
-            if p.Route == "/login" {
-              <a href={ authRouteURL("/login",p.Filters) } aria-current="page">Sign in</a><a href={ authRouteURL("/register",p.Filters) }>Create account</a>
-            } else {
-              <a href={ authRouteURL("/login",p.Filters) }>Sign in</a><a href={ authRouteURL("/register",p.Filters) } aria-current="page">Create account</a>
-            }
+            <a href={ authRouteURL("/login",p.Filters) }>Sign in</a><a href={ authRouteURL("/register",p.Filters) } aria-current="page">Create account</a>
           </nav>
         }
         if p.Notice != "" {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
-        if p.Route == "/login" {
-          @AuthHeading("WELCOME BACK", "Sign in to WeeVCrafts", "Access your saved pieces, orders and account.")
-          if authNext(p.Filters) != "" {
-            <p class="auth-context">Sign in to continue. You will return to your chosen page.</p>
-          }
-          <form class="utility-form" action="/login" method="post" data-backend-auth="login" novalidate>
-            <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-            <input type="hidden" name="next" value={ authNext(p.Filters) }/>
-            <div class="auth-field"><label for="login-email">Username or email</label><input id="login-email" name="email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required/></div>
-            @AuthPasswordField("login-password","password","Password","current-password",0,"")
-            <div class="auth-options"><label class="check-line"><input type="checkbox" name="remember"/> Keep me signed in</label><a href={ authRouteURL("/forgot-password",p.Filters) }>Forgot password?</a></div>
-            <p class="auth-feedback" data-backend-form-message role="alert" tabindex="-1" hidden></p>
-            <button class="primary-button full" type="submit">Sign in <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
-          </form>
-          <div class="auth-links"><span>New here? <a href={ authRouteURL("/register",p.Filters) }>Create an account</a></span></div>
-          @FirebaseGoogle()
-        } else if p.Route == "/register" {
+        if p.Route == "/register" {
           @AuthHeading("MAKE IT YOURS", "Create your account", "Save favourite pieces and keep your orders in one place.")
           <p class="auth-context">All fields below are required. Browsing does not need an account.</p>
           <form class="utility-form" action="/register" method="post" data-backend-auth="register" novalidate>
@@ -57,7 +40,7 @@ templ Auth(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="submit">Create account <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
           <div class="auth-links"><span>Already have an account? <a href={ authRouteURL("/login",p.Filters) }>Sign in</a></span></div>
-          @FirebaseGoogle()
+          @FirebaseGoogle("register", authNext(p.Filters))
         } else if p.Route == "/forgot-password" {
           @AuthHeading("ACCOUNT RECOVERY", "Reset your password", "Enter your email and we will guide you through the next step.")
           <form class="utility-form" action="/forgot-password" method="post" data-backend-auth="recover">
@@ -85,6 +68,7 @@ templ Auth(p viewmodels.CustomerPage) {
         <p class="preview-disclaimer" data-backend-auth-note>You can explore products and makers before signing in.</p>
       </div>
     </section>
+    }
   }
 }
 
@@ -100,20 +84,6 @@ templ AuthHeading(kicker, title, copy string) {
   <p class="eyebrow">{ kicker }</p>
   <h1>{ title }</h1>
   <p class="utility-lead">{ copy }</p>
-}
-
-templ FirebaseGoogle() {
-  <div class="firebase-google-panel" data-firebase-google-panel>
-    <div class="auth-method-divider" data-google-divider hidden><span>Or continue with Google</span></div>
-    <button class="outline-button full google-button" type="button" data-google-signin disabled aria-disabled="true" hidden><span class="google-mark" aria-hidden="true">G</span> Continue with Google</button>
-    <label class="check-line google-terms-label" hidden><input type="checkbox" data-google-terms/> I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</label>
-    <p class="auth-provider-note" data-firebase-config-note role="status" aria-live="polite">Checking Google sign-in availability…</p>
-  </div>
-  <form class="utility-form firebase-link-panel" data-firebase-link hidden>
-    <h2>Connect your existing account</h2><p>Confirm your current WeeVCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
-    @AuthPasswordField("link-password","link_password","Current WeeVCrafts password","current-password",0,"")
-    <button class="primary-button full" type="submit">Connect account securely</button>
-  </form>
 }
 
 templ InfoPage(p viewmodels.CustomerPage) {

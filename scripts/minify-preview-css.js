@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const files = [
   "fonts.css",
   "brand.css",
+  "auth-gallery.css",
   "ui-standards.css",
   "theme.css",
   "utility.css",

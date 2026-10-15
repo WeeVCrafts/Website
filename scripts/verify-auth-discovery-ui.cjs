@@ -8,7 +8,7 @@ if(target!=='http://127.0.0.1:18080')throw new Error('Auth checks require the is
 const report={target,browsers:{},scope:'Public discovery and existing protected actions; demo fixtures/intercepted failures only.'};
 async function main(){
  await fs.mkdir(output,{recursive:true});
- for(const [engine,type]of Object.entries({chromium,firefox,webkit})){
+ for(const [engine,type]of Object.entries({chromium,firefox,webkit}).filter(([name])=>(process.env.WEEVCRAFTS_UI_ENGINES||'chromium,firefox,webkit').split(',').includes(name))){
   const browser=await type.launch();const context=await browser.newContext({baseURL:target,viewport:{width:390,height:844}});
   const page=await context.newPage();page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(30000);
   const errors=[];page.on('pageerror',error=>errors.push(error.message));const checks=[];report.browsers[engine]=checks;
@@ -33,8 +33,12 @@ async function main(){
    await expect(page.getByRole('button',{name:'Close sign-in prompt'})).toBeFocused();
    await page.keyboard.press('Escape');await expect(page.locator('#guest-login-dialog')).not.toBeVisible();await expect(buy).toBeFocused();
    await buy.click();await page.getByRole('button',{name:'Keep browsing'}).click();await expect(buy).toBeFocused();assert.equal(writes,0);page.off('request',count);
-   await buy.click();await page.locator('[data-login-continue]').click();
-   await page.waitForURL(/\/login\?next=/);assert.equal(new URL(page.url()).searchParams.get('next'),'/products/blue-tote');
+   await buy.click();const prompt=page.locator('#guest-login-dialog');
+   await expect(prompt.getByLabel('Username or email',{exact:true})).toBeVisible();
+   await expect(prompt.getByLabel('Password',{exact:true})).toBeVisible();
+   assert.equal(await prompt.locator('[name=next]').inputValue(),'/products/blue-tote');
+   await prompt.getByRole('link',{name:'Create account',exact:true}).click();
+   await page.waitForURL(/\/register\?next=/);assert.equal(new URL(page.url()).searchParams.get('next'),'/products/blue-tote');
    for(const protectedRoute of ['/account','/orders','/checkout','/wishlist']){
     const response=await context.request.get(protectedRoute,{maxRedirects:0});assert.equal(response.status(),303);
    }
@@ -81,7 +85,7 @@ async function main(){
     if(route==='/login'||route==='/register'){
      assert.equal(await page.locator('.site-footer').count(),0);
      assert.equal(await page.locator('[data-backend-auth] input[name=password]').getAttribute('autocomplete'),route==='/login'?'current-password':'new-password');
-     await expect(page.locator('[data-google-signin]')).toBeHidden();await expect(page.locator('[data-firebase-config-note]')).toContainText('Google sign-in is unavailable');
+     await expect(page.locator('[data-google-signin]')).toBeVisible();await expect(page.locator('[data-google-signin]')).toBeDisabled();await expect(page.locator('[data-firebase-config-note]')).toContainText('Google sign-in is unavailable');
      await page.locator('[data-backend-auth] input:not([type=hidden])').first().focus();await page.keyboard.press('Tab');assert(await page.evaluate(()=>document.activeElement!==document.body));
     }
     if(engine==='chromium'){

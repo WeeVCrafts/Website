@@ -48,6 +48,7 @@ templ Document(p viewmodels.CustomerPage) {
       <link rel="stylesheet" href={ assets.URL("css/experience.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/storefront-reference.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/auth-gallery.min.css") }/>
       <noscript><style>/* Optional provider controls need JavaScript; native forms remain usable. */[data-firebase-google-panel],[data-firebase-link]{display:none!important}@media(max-width:800px){.storefront-body .filter-sidebar:not(.is-open){display:block}.storefront-body .mobile-filter-toggle{display:none}}</style></noscript>
       <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
       <script defer src={ assets.URL("js/experience.min.js") }></script>
@@ -181,19 +182,28 @@ templ Document(p viewmodels.CustomerPage) {
         });
       </script>
     </head>
-    <body class="storefront-body" hx-boost="false" hx-history="false" hx-indicator="#ui-loading" hx-headers={ "{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}" }>
+    <body class={ "storefront-body", templ.KV("auth-gallery-page", p.Route == "/login") } hx-boost="false" hx-history="false" hx-indicator="#ui-loading" hx-headers={ "{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}" }>
       <a class="ui-skip-link" href="#page">Skip to main content</a>
       <div id="ui-loading" class="htmx-indicator" role="status" aria-live="polite">Updating…</div>
       <div id="ui-toast" role="status" aria-live="polite"></div>
-      @components.Header(p)
+      if p.Route == "/login" {
+        @LoginGalleryHeader()
+      } else {
+        @components.Header(p)
+      }
+      if !p.Authenticated && !isAuthPage(p.Route) {
+        @GuestLoginDialog(p)
+      }
       @QuickViewDialog()
-      <main id="page" class={ templ.KV("home-page", p.Route == "/") } tabindex="-1" x-data="{checkoutStep:1,payment:'upi',detailQuantity:1}">
+      <main id="page" class={ templ.KV("home-page", p.Route == "/"), templ.KV("login-page", p.Route == "/login") } tabindex="-1" x-data="{checkoutStep:1,payment:'upi',detailQuantity:1}">
         if p.Route == "/payments" {
           <nav class="payment-state-links container" aria-label="Payment status views"><span>Reconciliation views</span><a href="/payments/success">Success</a><a href="/payments/pending">Pending</a><a href="/payments/failed">Failed</a></nav>
         }
         { children... }
       </main>
-      if isAuthPage(p.Route) {
+      if p.Route == "/login" {
+        @LoginGalleryFooter()
+      } else if isAuthPage(p.Route) {
         @AuthFooter()
       } else {
         @components.Footer(p)

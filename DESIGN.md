@@ -37,6 +37,12 @@ components:
 
 # WeeVCrafts visual standards
 
+## 15 October 2026 Woven Gallery sign-in
+
+The approved C concept replaces the `/login` card with an open form and decorative pottery, textile and brass still life. Keep the woven mark larger than the restrained wordmark. Mobile uses a shallow photography strip and natural page scrolling. Login and the protected-action prompt share credential fields, 50px controls, Playfair headings, DM Sans interface text, 8px control corners and the existing forest/ivory tokens. `auth-gallery.css` owns this bounded surface after shared brand styles.
+
+The user's approved amendment adds Continue with Google and puts username/password fields directly inside the mobile prompt. The phone prompt is a centred native dialog over a translucent, blurred backdrop, with an opaque readable surface and bounded vertical scrolling. Desktop retains a right-side prompt. Keep close/Escape/backdrop dismissal, focus trapping/restoration, password clearing, explicit Google consent, provider fallback and existing-account proof. Public browsing never opens it automatically. Decorative generated artwork is not catalogue inventory or a maker identity.
+
 ## Overview
 
 Preserve the accepted Indian craft exhibition identity: ivory paper, forest green, terracotta accents, restrained serif headings and genuine object photography. The memorable element is the relationship between a maker and the object. Never manufacture maker biographies, product specifications or portraits to fill a layout. Storefront expression gives way to task clarity in seller, admin, finance, operations and support workspaces.

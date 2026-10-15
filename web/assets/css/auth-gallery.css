@@ -1,0 +1,119 @@
+/* Woven Gallery: approved open layout, with one shared credential surface. */
+.storefront-body.auth-gallery-page { position:relative; isolation:isolate; min-height:100svh; background:var(--brand-surface); }
+.auth-gallery-page .login-page { position:static; }
+.gallery-header,.gallery-footer { position:relative; z-index:1; }
+.gallery-header-inner { min-height:104px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.gallery-wordmark { display:inline-flex; align-items:center; gap:12px; color:var(--brand-primary); }
+.gallery-wordmark img { width:64px; height:64px; object-fit:contain; }
+.gallery-wordmark span { font:500 30px/1.2 var(--serif); letter-spacing:-1px; }
+.gallery-browse { display:inline-flex; align-items:center; gap:10px; min-height:44px; font:500 14px/1.4 var(--sans); color:var(--brand-primary); }
+.gallery-browse:hover { text-decoration:underline; text-underline-offset:4px; }
+.login-gallery { min-height:calc(100svh - 176px); }
+.gallery-artwork { position:absolute; z-index:-1; inset:0 0 0 auto; width:58%; height:100%; object-fit:cover; object-position:55% 50%; mask-image:linear-gradient(to right,transparent,black 22%); }
+.gallery-layout { display:grid; grid-template-columns:1fr 1fr; min-height:inherit; align-items:center; }
+.gallery-form { width:min(100%,440px); padding-block:16px; }
+.storefront-body .gallery-form h1 { margin:0 0 12px; font:500 clamp(48px,5vw,64px)/1.08 var(--serif); letter-spacing:-1.6px; color:var(--brand-primary); }
+.storefront-body .gallery-lead { margin:0 0 24px; font:400 17px/1.6 var(--sans); color:var(--brand-ink); }
+.gallery-form .auth-context { margin:-16px 0 24px; font-size:14px; color:var(--brand-muted); }
+.storefront-body :is(.gallery-form,.auth-dialog) .gallery-credentials { gap:16px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-field { display:grid; gap:7px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-field > label { margin:0; font:600 14px/1.5 var(--sans); color:var(--brand-ink); }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-field input { display:block; width:100%; height:50px; min-height:50px; margin:0; padding:11px 14px; border:1px solid #7d8d80; border-radius:8px; background:var(--brand-surface); color:var(--brand-ink); font:400 16px/1.5 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-field input:focus { outline:none; border-color:var(--brand-primary); box-shadow:0 0 0 3px #123f3226; }
+.storefront-body :is(.gallery-form,.auth-dialog) .password-field { position:relative; display:block; }
+.storefront-body :is(.gallery-form,.auth-dialog) .password-field input { padding-right:52px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .password-toggle { position:absolute; inset:3px 3px auto auto; display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; border-radius:6px; color:var(--brand-ink); background:transparent; }
+.storefront-body :is(.gallery-form,.auth-dialog) .password-toggle:hover { background:var(--brand-paper); }
+.gallery-recovery { display:flex; justify-content:flex-end; margin-top:-14px; }
+.gallery-recovery a { display:inline-flex; align-items:center; min-height:44px; color:var(--brand-primary); text-decoration:underline; text-underline-offset:3px; font:500 14px/1.4 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) :is(.primary-button,.google-button) { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:50px; padding:12px 16px; border-radius:8px; font:600 16px/1.5 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) .primary-button { background:var(--brand-primary); border:1px solid var(--brand-primary); color:var(--brand-surface); }
+.storefront-body :is(.gallery-form,.auth-dialog) .primary-button:hover { background:var(--brand-hover); }
+.storefront-body .google-button { display:flex; align-items:center; justify-content:center; gap:12px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-button { margin:0; background:var(--brand-surface); color:var(--brand-ink); border:1px solid var(--brand-primary); }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-button:hover:enabled { background:var(--brand-paper); }
+.storefront-body .google-button:disabled { opacity:.65; cursor:not-allowed; }
+.storefront-body svg.google-mark { flex:none; width:20px; height:20px; padding:0; border:0; border-radius:0; background:none; }
+.storefront-body :is(.gallery-form,.auth-dialog) .firebase-google-panel { display:block; margin:0; padding:0; border:0; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider { display:flex; align-items:center; gap:12px; margin:14px 0; color:var(--brand-muted); font:400 14px/1.4 var(--sans); text-transform:none; letter-spacing:0; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider::before,.storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider::after { content:""; flex:1; height:1px; background:var(--brand-line); }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label { display:flex; align-items:flex-start; gap:10px; margin:10px 0 0; min-height:44px; padding-block:8px; color:var(--brand-muted); font:400 13px/1.6 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label input { flex:none; width:18px; height:18px; margin:1px 0 0; accent-color:var(--brand-primary); }
+.google-terms-label a { color:var(--brand-primary); text-decoration:underline; text-underline-offset:3px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-provider-note { margin:10px 0; color:var(--brand-muted); font:400 13px/1.5 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) .gallery-account-links { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:0 6px; margin-top:14px; padding-top:12px; border-top:1px solid var(--brand-line); font:400 14px/1.5 var(--sans); }
+.gallery-account-links a,.auth-keep-browsing { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 0; }
+.gallery-account-links a { color:var(--brand-terracotta); font-weight:600; }
+.gallery-account-links a:hover { text-decoration:underline; text-underline-offset:4px; }
+.gallery-footer { min-height:72px; padding-block:12px; }
+.gallery-footer nav { display:flex; gap:24px; }
+.gallery-footer a { display:inline-flex; align-items:center; min-height:44px; color:var(--brand-muted); font:400 13px/1.4 var(--sans); }
+.gallery-footer a:hover { color:var(--brand-primary); text-decoration:underline; text-underline-offset:3px; }
+.storefront-body :is(.gallery-form,.auth-dialog) :is(.auth-feedback,.form-message) { margin:8px 0; padding:10px 12px; border:1px solid var(--brand-line); border-radius:6px; background:var(--brand-paper); color:var(--brand-ink); font:400 14px/1.5 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) :is(.auth-feedback.is-error,.form-message.error) { color:var(--brand-terracotta); border-color:var(--brand-terracotta); }
+.storefront-body :is(.gallery-form,.auth-dialog) .firebase-link-panel { margin-top:20px; padding-top:16px; border-top:1px solid var(--brand-line); }
+.storefront-body :is(.gallery-form,.auth-dialog) .firebase-link-panel h2 { font:500 24px/1.3 var(--serif); }
+.storefront-body :is(.gallery-form,.auth-dialog) .firebase-link-panel p { font-size:14px; }
+.storefront-body :is(.gallery-form,.auth-dialog) [hidden] { display:none!important; }
+.storefront-body .auth-dialog { position:fixed; inset:0; width:min(100%,460px); max-width:none; height:100dvh; max-height:100dvh; margin:0 0 0 auto; padding:0; overflow:auto; overscroll-behavior:contain; border:0; border-left:1px solid var(--brand-line); border-radius:0; color:var(--brand-ink); background:var(--brand-surface); box-shadow:-12px 0 48px #10281d24; }
+.storefront-body .auth-dialog::backdrop { background:#0c231b80; backdrop-filter:blur(3px); }
+.auth-dialog-content { position:relative; min-height:100%; padding:64px 32px 24px; }
+.auth-dialog-close { position:absolute; top:12px; right:12px; z-index:1; display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--brand-line); border-radius:50%; background:var(--brand-surface); color:var(--brand-ink); }
+.auth-dialog-close:hover { background:var(--brand-paper); }
+.auth-dialog-heading { position:relative; min-height:88px; padding:8px 80px 8px 0; }
+.auth-dialog-heading img { position:absolute; right:-12px; top:-18px; width:104px; height:112px; object-fit:cover; object-position:50% 44%; border-radius:8px; mask-image:linear-gradient(to right,transparent,black 35%); }
+.storefront-body .auth-dialog h2#guest-login-title { position:relative; margin:0; max-width:250px; color:var(--brand-primary); font:500 32px/1.14 var(--serif); letter-spacing:-.8px; }
+.storefront-body .auth-dialog .gallery-lead { margin:8px 0 22px; font-size:14px; }
+.storefront-body .auth-dialog .gallery-credentials { gap:14px; }
+.storefront-body .auth-dialog .gallery-account-links { flex-direction:column; }
+.auth-keep-browsing { color:var(--brand-primary); background:transparent; font:500 14px/1.4 var(--sans); }
+/* Legacy theme rules force 11px metadata with !important outside #page.
+   Keep the new page and body-level dialog on their explicit readable scale. */
+.storefront-body :is(.gallery-form,.auth-dialog) :is(input,button) { font-size:16px!important; }
+.storefront-body :is(.gallery-form,.auth-dialog) :is(label,a,p,.ui-field-error) { font-size:14px!important; }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label { font-size:13px!important; }
+.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label a { font-size:inherit!important; }
+.storefront-body .gallery-form .gallery-lead { font-size:17px!important; }
+.storefront-body .gallery-browse { font-size:14px!important; }
+.storefront-body .gallery-footer a { font-size:13px!important; }
+.storefront-body .auth-dialog .auth-keep-browsing { font-size:14px!important; }
+body:has(.auth-dialog[open]) { overflow:hidden; }
+@media(max-width:800px) {
+  .gallery-header { background:var(--brand-surface); }
+  .storefront-body .gallery-header-inner { width:calc(100% - 32px); min-height:78px; gap:12px; }
+  .gallery-wordmark { gap:7px; }
+  .gallery-wordmark img { width:46px; height:46px; }
+  .gallery-wordmark span { font-size:23px; letter-spacing:-.8px; }
+  .storefront-body .gallery-browse { gap:4px; font-size:12px!important; }
+  .gallery-browse .material-symbols-outlined { font-size:17px; }
+  .login-gallery { min-height:0; }
+  .gallery-artwork { position:static; display:block; width:100%; height:144px; object-fit:cover; object-position:50% 37%; mask-image:none; }
+  .storefront-body .gallery-layout { display:block; width:calc(100% - 48px); max-width:440px; }
+  .gallery-form { width:100%; padding:26px 0 16px; }
+  .storefront-body .gallery-form h1 { font-size:44px; letter-spacing:-1px; margin-bottom:10px; }
+  .storefront-body .gallery-form .gallery-lead { margin-bottom:24px; font-size:15px!important; }
+  .storefront-body .gallery-form .gallery-credentials { gap:16px; }
+  .storefront-body .gallery-footer { width:calc(100% - 48px); max-width:440px; padding-top:0; }
+  .gallery-footer nav { justify-content:center; }
+  .storefront-body .auth-dialog { inset:0; width:min(calc(100% - 32px),400px); height:fit-content; max-height:calc(100dvh - 32px); margin:auto; border:1px solid var(--brand-line); border-radius:16px; box-shadow:0 20px 64px #0d201e40; }
+  .auth-dialog-content { min-height:0; padding:28px 24px 16px; }
+  .auth-dialog-heading { padding-top:12px; min-height:90px; }
+  .auth-dialog-heading img { top:-28px; right:-24px; width:116px; height:126px; border-top-right-radius:16px; }
+  .storefront-body .auth-dialog h2#guest-login-title { font-size:29px; }
+}
+@media(max-width:360px) {
+  .storefront-body .gallery-header-inner { width:calc(100% - 24px); gap:8px; }
+  .gallery-wordmark img { width:38px; height:38px; }
+  .gallery-wordmark span { font-size:20px; }
+  .storefront-body .gallery-browse { font-size:11px!important; }
+  .gallery-browse .material-symbols-outlined { display:none; }
+  .storefront-body .gallery-layout,.storefront-body .gallery-footer { width:calc(100% - 32px); }
+  .gallery-artwork { height:120px; }
+  .auth-dialog-content { padding-inline:18px; }
+  .auth-dialog-heading img { right:-18px; width:94px; }
+  .storefront-body .auth-dialog h2#guest-login-title { font-size:27px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  .auth-dialog[open] .auth-dialog-content { animation:auth-dialog-enter .18s ease-out; }
+  @keyframes auth-dialog-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+}

@@ -234,7 +234,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/deals", want: []string{"Handmade deals", "Offers with a purpose", "Current offers"}},
 		{route: "/returns", want: []string{"Current", "Return in Progress"}},
 		{route: "/account", want: []string{"Profile information", "Security &amp; sessions", "Need a hand?"}},
-		{route: "/login", want: []string{"Sign in to WeeVCrafts", "Keep me signed in"}},
+		{route: "/login", want: []string{"Sign in", "Your saved pieces and orders, in one place.", "Continue with Google", "Username or email", "current-password"}},
 		{route: "/faq", want: []string{"Frequently asked questions", "How do I know a product is handmade?"}},
 		{route: "/contact", want: []string{"Contact WeeVCrafts", "Send us a note"}},
 		{route: "/account/security", want: []string{"Security and sessions", "Two-step verification"}},

@@ -30,7 +30,7 @@ func TestAccountScreensUseCompactAccessiblePresentation(t *testing.T) {
 			t.Fatal(err)
 		}
 		body := output.String()
-		for _, want := range []string{`class="auth-browse" href="/"`, `aria-label="Account access"`, `aria-label="Account help and policies"`, `novalidate`, `data-backend-form-message`, `aria-controls="` + strings.TrimPrefix(route, "/") + `-password"`} {
+		for _, want := range []string{`Continue browsing`, `aria-label="Account access"`, `aria-label="Account help and policies"`, `novalidate`, `data-backend-form-message`, `aria-controls="` + strings.TrimPrefix(route, "/") + `-password"`, `Continue with Google`} {
 			if !strings.Contains(body, want) {
 				t.Errorf("%s missing %s", route, want)
 			}

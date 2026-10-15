@@ -125,7 +125,7 @@
 
     async signIn(input) {
       if (global.WeevcraftsFirebase && !input.nativeOnly) return global.WeevcraftsFirebase.signIn(this, input, () => this.signIn(Object.assign({},input,{nativeOnly:true})));
-      const { nativeOnly, ...credentials } = input;
+      const { nativeOnly, authRoot, ...credentials } = input;
       const result = await this.call(ROOT + "/auth/login", { method: "POST", body: credentials });
       this.csrf = result.csrf_token || "";
       return result;

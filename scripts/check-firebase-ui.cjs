@@ -22,7 +22,7 @@ const base=(process.env.WEEVCRAFTS_BASE_URL||'http://localhost:8080').replace(/\
    await expect(google.getByRole('status')).toContainText('Accept the privacy notice');
   }else{
    await expect(googleButton).toBeDisabled();
-   await expect(googleButton).toBeHidden();
+   await expect(googleButton).toBeVisible();
    await expect(google.getByRole('status')).toContainText('Google sign-in is unavailable');
   }
   await page.locator('form[data-backend-auth=login] input[name=email]').fill('not-a-customer@example.invalid');

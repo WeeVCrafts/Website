@@ -44,7 +44,7 @@
           throw new Error("Verify your email using the link in your inbox, then sign in again to connect your existing account securely.");
         }
         pendingLink = {user, input};
-        const panel = document.querySelector("[data-firebase-link]");
+        const panel = (input.authRoot || document).querySelector("[data-firebase-link]");
         if (panel) {panel.hidden = false; panel.querySelector("input").focus();}
       }
       throw error;
@@ -108,51 +108,77 @@
   function message(container,text,error) {
     let status = container.querySelector("[data-firebase-status]");
     if (!status) {status=document.createElement("p");status.dataset.firebaseStatus="";status.setAttribute("role","status");status.setAttribute("aria-live","polite");container.append(status);}
-    status.textContent=text; status.className=error?"form-message error":"form-message";
+    status.hidden=false;status.textContent=text; status.className=error?"form-message error":"form-message";
   }
   function setGoogleAvailability(panel,enabled,text) {
     const button=panel.querySelector("[data-google-signin]");
     const terms=panel.querySelector(".google-terms-label");
     const note=panel.querySelector("[data-firebase-config-note]");
-    if (button) {button.disabled=!enabled;button.hidden=!enabled;button.setAttribute("aria-disabled",String(!enabled));}
+    if (button) {button.disabled=!enabled;button.hidden=false;button.setAttribute("aria-disabled",String(!enabled));}
     const divider=panel.querySelector('[data-google-divider]');
-    if(divider)divider.hidden=!enabled;
+    if(divider)divider.hidden=false;
     if (terms) terms.hidden=!enabled;
     if (note) {note.hidden=enabled;note.textContent=text||"";}
+    if(button && note){if(enabled)button.removeAttribute('aria-describedby');else button.setAttribute('aria-describedby',note.id);}
   }
   async function google(button) {
     const panel=button.closest("[data-firebase-google-panel]");
-    const terms=panel.querySelector("[data-google-terms]").checked;
+    const consent=panel.querySelector("[data-google-terms]");
+    const terms=consent.checked;
     // Show terms before contacting Google rather than auto-granting consent.
-    if (!terms) {message(panel,"Accept the privacy notice and terms before continuing.",true);return;}
+    if (!terms) {consent.setAttribute('aria-invalid','true');message(panel,"Accept the privacy notice and terms before continuing.",true);consent.focus();return;}
+    consent.removeAttribute('aria-invalid');
     button.disabled=true;
     try {
       const f=await ready();if(!f)throw new Error("Google sign-in is unavailable.");
       const provider=new f.authSDK.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
       const user=(await f.authSDK.signInWithPopup(f.auth,provider)).user;
       const api=global.weevcraftsBackend || await global.WeevcraftsBackend.create();
-      const result=await exchange(api,user,{acceptedTerms:terms,next:new URLSearchParams(global.location.search).get("next")||""});
+      const result=await exchange(api,user,{acceptedTerms:terms,next:panel.dataset.authNext||new URLSearchParams(global.location.search).get("next")||"",authRoot:panel.closest('[data-auth-surface]')});
       global.location.assign(result.redirect_to||"/products");
     } catch(error) {message(panel,safeError(error).message,true);} finally {button.disabled=false;}
   }
-  async function start() {
-    const panels=document.querySelectorAll("[data-firebase-google-panel], [data-firebase-push-panel], [data-firebase-diagnostics]");
-    if (!panels.length) return;
-    try {
-      const googlePanels=document.querySelectorAll("[data-firebase-google-panel]");
-      const f=await ready();
-      if(!f) {
-        googlePanels.forEach(panel=>setGoogleAvailability(panel,false,"Google sign-in is unavailable. Use the account form above."));
-        return;
-      }
-      googlePanels.forEach(panel=>{setGoogleAvailability(panel,true,"");panel.querySelector("[data-google-signin]").addEventListener("click",event=>google(event.currentTarget));});
-      const link=document.querySelector("[data-firebase-link]");
-      if (link)link.addEventListener("submit",async event=>{
+  function bindLink(root) {
+    root.querySelectorAll('[data-firebase-link]').forEach(link=>{
+      if(link.dataset.linkBound)return;
+      link.dataset.linkBound='true';
+      link.addEventListener("submit",async event=>{
         event.preventDefault(); if(!pendingLink)return;
-        const button=link.querySelector("button");button.disabled=true;
+        if(link.dataset.submitting==='true')return;
+        if(pendingLink.input.authRoot && !pendingLink.input.authRoot.contains(link))return;
+        if(global.WVUI && !global.WVUI.validate(link))return;
+        link.dataset.submitting='true';
+        const button=link.querySelector('button[type="submit"]');button.disabled=true;
         try{const api=global.weevcraftsBackend || await global.WeevcraftsBackend.create();const result=await exchange(api,pendingLink.user,{...pendingLink.input,linkPassword:link.querySelector("input").value});global.location.assign(result.redirect_to||"/products");}
-        catch(error){message(link,safeError(error).message,true);}finally{link.querySelector("input").value="";button.disabled=false;}
+        catch(error){message(link,safeError(error).message,true);}finally{link.querySelector("input").value="";button.disabled=false;delete link.dataset.submitting;}
       });
+    });
+  }
+  async function enhanceGoogle(root) {
+    bindLink(root);
+    const panels=Array.from(root.querySelectorAll('[data-firebase-google-panel]')).filter(panel=>!panel.dataset.googleBound);
+    if(!panels.length)return;
+    panels.forEach(panel=>{panel.dataset.googleBound='true';});
+    try {
+      const f=await ready();
+      panels.forEach(panel=>{
+        setGoogleAvailability(panel,Boolean(f),f?'':'Google sign-in is unavailable. Use your username or email and password.');
+        if(f)panel.querySelector('[data-google-signin]').addEventListener('click',event=>google(event.currentTarget));
+      });
+    } catch(_) {
+      panels.forEach(panel=>{
+        delete panel.dataset.googleBound;
+        setGoogleAvailability(panel,false,'Google sign-in could not be loaded. Continue with email or try again later.');
+      });
+    }
+  }
+  async function start() {
+    // A closed shopping prompt must not load the Google SDK before user intent.
+    const googlePanels=Array.from(document.querySelectorAll('[data-firebase-google-panel]')).filter(panel=>!panel.closest('[data-auth-dialog]'));
+    await Promise.all(googlePanels.map(panel=>enhanceGoogle(panel.closest('[data-auth-surface]')||panel.parentElement)));
+    if(!document.querySelector('[data-firebase-push-panel], [data-firebase-diagnostics]'))return;
+    try {
+      const f=await ready();if(!f)return;
       await setupPush(f);
       document.querySelectorAll("[data-firebase-diagnostics]").forEach(panel=>{
         panel.hidden=false;
@@ -197,7 +223,7 @@
       catch(_){message(panel,"Test delivery failed. Please try again.",true);}finally{test.disabled=false;}
     });
   }
-  global.WeevcraftsFirebase={signIn,signUp,recover,action};
+  global.WeevcraftsFirebase={signIn,signUp,recover,action,enhanceGoogle,cancelLink(root){if(pendingLink && root.contains(pendingLink.input.authRoot))pendingLink=undefined;}};
   // The Firebase service worker forwards foreground messages to visible tabs.
   // Handle its public message event without loading auth or analytics on every
   // shopping page. The payload body is deliberately never rendered.

@@ -11,37 +11,53 @@
   let checkoutInFlight = false;
 
   function promptLogin(destination, trigger) {
-    let dialog = document.getElementById("guest-login-dialog");
-    if (!dialog) {
-      dialog = document.createElement("dialog");
-      dialog.id = "guest-login-dialog";
-      dialog.className = "cart-drawer";
-      dialog.setAttribute("aria-labelledby", "guest-login-title");
-      const shell = document.createElement('div'); shell.className='cart-drawer-shell';
-      const header = document.createElement('header'); header.className='cart-drawer-header';
-      const title = document.createElement('h2'); title.id='guest-login-title'; title.textContent='Sign in to continue';
-      const close = document.createElement('button'); close.type='button'; close.className='outline-button'; close.textContent='Close'; close.setAttribute('aria-label','Close sign-in prompt');
-      const content = document.createElement('div'); content.className='empty-state';
-      const copy = document.createElement('p'); copy.id='guest-login-copy'; copy.textContent='Sign in to save pieces or continue with your purchase. You can explore the store without an account.';
-      const signIn = document.createElement('a'); signIn.className='primary-button'; signIn.dataset.loginContinue=''; signIn.textContent='Sign in';
-      const browse = document.createElement('button'); browse.type='button'; browse.className='outline-button'; browse.textContent='Keep browsing';
-      close.addEventListener('click',()=>dialog.close()); browse.addEventListener('click',()=>dialog.close());
-      header.append(title,close); content.append(copy,signIn,browse); shell.append(header,content); dialog.append(shell);
-      dialog.setAttribute('aria-describedby','guest-login-copy');
-      document.body.appendChild(dialog);
+    const dialog = document.getElementById("guest-login-dialog");
+    const next = typeof destination === "string" && destination.startsWith("/") && !destination.startsWith("//") && !destination.includes("\\") ? destination : "/products";
+    if (!dialog) { global.location.assign("/login?next=" + encodeURIComponent(next)); return; }
+    if (!dialog.dataset.authBound) {
+      dialog.dataset.authBound = "true";
+      dialog.querySelectorAll('[data-auth-close]').forEach(button=>button.addEventListener('click',()=>dialog.close()));
+      dialog.addEventListener('keydown',event=>{
+        if(event.key!=='Tab')return;
+        const controls=Array.from(dialog.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),[tabindex="0"]')).filter(element=>element.getClientRects().length && !element.closest('[hidden]'));
+        const first=controls[0],last=controls[controls.length-1];
+        if(event.shiftKey && document.activeElement===first){event.preventDefault();last?.focus();}
+        else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
+      });
       // Native Escape/backdrop dismissal never performs a protected action.
       dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
       dialog.addEventListener('close',()=>{
+        // Dismissed credentials and linking proof never linger in a hidden modal.
+        dialog.querySelectorAll('form').forEach(form=>form.reset());
+        dialog.querySelectorAll('[data-password-toggle]').forEach(button=>{
+          const input=document.getElementById(button.getAttribute('aria-controls'));
+          if(input)input.type='password';
+          button.setAttribute('aria-pressed','false');button.setAttribute('aria-label','Show '+(button.dataset.passwordLabel||'password'));
+          button.querySelector('.material-symbols-outlined').textContent='visibility';
+        });
+        dialog.querySelectorAll('[data-backend-form-message],[data-firebase-status],[data-firebase-link]').forEach(element=>{element.hidden=true;});
+        dialog.querySelectorAll('[data-ui-error]').forEach(field=>{
+          const id=field.dataset.uiError;document.getElementById(id)?.remove();
+          const descriptions=(field.getAttribute('aria-describedby')||'').split(' ').filter(value=>value && value!==id);
+          if(descriptions.length)field.setAttribute('aria-describedby',descriptions.join(' '));else field.removeAttribute('aria-describedby');
+          field.removeAttribute('aria-invalid');delete field.dataset.uiError;
+        });
+        const consent=dialog.querySelector('[data-google-terms]');
+        if(consent){consent.checked=false;consent.removeAttribute('aria-invalid');}
+        global.WeevcraftsFirebase?.cancelLink(dialog);
         const origin=dialog._restoreFocus;
         if(origin?.isConnected && origin.getClientRects().length && !origin.closest('[inert]'))origin.focus({preventScroll:true});
         else document.querySelector('.menu-toggle')?.focus({preventScroll:true});
       });
     }
     dialog._restoreFocus=trigger || document.activeElement;
-    dialog.querySelector("[data-login-continue]").href = "/login?next=" + encodeURIComponent(destination);
+    dialog.querySelector('[name="next"]').value=next;
+    dialog.querySelector('[data-firebase-google-panel]').dataset.authNext=next;
+    dialog.querySelectorAll('[data-auth-route]').forEach(link=>{link.href=link.dataset.authRoute+'?next='+encodeURIComponent(next);});
     const menu = document.getElementById("mobile-menu");
     if (menu?.open) menu.close();
     if (!dialog.open) dialog.showModal();
+    global.WeevcraftsFirebase?.enhanceGoogle(dialog);
     dialog.querySelector('[aria-label="Close sign-in prompt"]').focus();
   }
 
@@ -471,7 +487,7 @@
       const api = backend || await create();
       if(!backend){backend=api;global.weevcraftsBackend=api;backendError=null;}
       if (action === "login") {
-        const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "" });
+        const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "", authRoot: form.closest('[data-auth-surface]') });
         global.location.assign(result.redirect_to || "/products");
       } else if (action === "register") {
         const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, phone: values.phone, acceptedTerms: values.consent === "on", next: values.next || "" });

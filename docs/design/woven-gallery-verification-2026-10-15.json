@@ -1,0 +1,96 @@
+{
+  "base": "http://localhost:8090",
+  "dataWrites": 0,
+  "widths": [
+    {
+      "width": 320,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 20,
+      "mark": 38
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 23,
+      "mark": 46
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 23,
+      "mark": 46
+    },
+    {
+      "width": 800,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 23,
+      "mark": 46
+    },
+    {
+      "width": 801,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 30,
+      "mark": 64
+    },
+    {
+      "width": 1120,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 30,
+      "mark": 64
+    },
+    {
+      "width": 1365,
+      "overflow": false,
+      "field": 16,
+      "h1": "Sign in",
+      "wordmark": 30,
+      "mark": 64
+    }
+  ],
+  "axe": [
+    {
+      "surface": "login-390",
+      "violations": []
+    },
+    {
+      "surface": "login-1120",
+      "violations": []
+    },
+    {
+      "surface": "popup-390",
+      "violations": []
+    }
+  ],
+  "errors": [],
+  "screenshots": [
+    "woven-gallery-login-320-2026-10-15.png",
+    "woven-gallery-login-390-2026-10-15.png",
+    "woven-gallery-login-1120-2026-10-15.png",
+    "woven-gallery-login-1365-2026-10-15.png",
+    "woven-gallery-popup-390-2026-10-15.png",
+    "woven-gallery-popup-320-2026-10-15.png",
+    "woven-gallery-popup-768-2026-10-15.png",
+    "woven-gallery-popup-801-2026-10-15.png",
+    "woven-gallery-popup-1365-2026-10-15.png"
+  ],
+  "googleConsentGuard": true,
+  "popupTypography": {
+    "button": 16,
+    "label": 14
+  },
+  "shortViewportScroll": true,
+  "reducedMotion": true,
+  "pass": true
+}
