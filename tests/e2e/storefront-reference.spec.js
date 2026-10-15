@@ -20,36 +20,34 @@ async function ready(page) {
   await page.waitForFunction(() => !!document.querySelector('.site-header')?._x_dataStack);
 }
 
-test('five slides advance every four seconds and pause accessibly', async ({ page }) => {
+test('five slides remain manual with accessible controls and deferred images', async ({ page }) => {
   const instant = new Date('2026-10-15T08:00:00Z');
   await page.clock.install({ time: instant });
   await page.clock.pauseAt(new Date(instant.getTime() + 1000));
   await page.goto('/'); await ready(page);
   await expect(page.locator('[data-hero-slide]')).toHaveCount(5);
-  await expect(page.locator('[data-hero-autoplay]')).toHaveAccessibleName('Pause slideshow');
-  await page.clock.runFor(3999);
+  await expect(page.locator('[data-hero-autoplay]')).toHaveCount(0);
+  await expect(page.locator('.header-main .location, .artisan-link')).toHaveCount(0);
+  await expect(page.locator('[data-hero-slide] img[data-src]')).toHaveCount(4);
+  await page.clock.runFor(30000);
   await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
-  await page.clock.runFor(1);
-  await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
-  for (const count of [3, 4, 5, 1]) {
-    await page.clock.runFor(4000);
-    await expect(page.locator('[data-hero-count]')).toHaveText(`${count} / 5`);
-  }
-  await page.locator('[data-hero-autoplay]').press('Enter');
-  await page.clock.runFor(8000);
-  await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
-  await page.locator('[data-hero-autoplay]').click();
-  await page.clock.runFor(4000);
-  await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
+  await page.locator('[data-hero-prev]').press('Enter');
+  await expect(page.locator('[data-hero-count]')).toHaveText('5 / 5');
+  await expect(page.locator('[data-hero-status]')).toContainText('Collection 5 of 5');
   await page.locator('[data-hero-next]').press('Enter');
-  await page.clock.runFor(8000);
-  await expect(page.locator('[data-hero-count]')).toHaveText('3 / 5');
-  await expect(page.locator('[data-hero-autoplay]')).toHaveAccessibleName('Play slideshow');
+  await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
+  for (let index = 0; index < 5; index++) {
+    await page.locator(`[data-hero-select="${index}"]`).press('Enter');
+    await expect(page.locator('[data-hero-count]')).toHaveText(`${index + 1} / 5`);
+    await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);
+    await expect(page.locator('[data-hero-slide][inert]')).toHaveCount(4);
+  }
+  await page.clock.runFor(30000);
+  await expect(page.locator('[data-hero-count]')).toHaveText('5 / 5');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload(); await ready(page);
-  await page.clock.runFor(8000);
+  await page.clock.runFor(30000);
   await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
-  await expect(page.locator('[data-hero-autoplay]')).toHaveAccessibleName('Play slideshow');
 });
 
 test('reference layouts reflow and retain accessible navigation', async ({ page }) => {
@@ -62,6 +60,15 @@ test('reference layouts reflow and retain accessible navigation', async ({ page 
     for (const route of ['/', '/products?category=home', '/products']) {
       await page.goto(route); await ready(page);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${route} overflow at ${width}`).toBeTruthy();
+      if (route === '/' && width > 800) {
+        expect(await page.locator('[data-hero-slide]:not([hidden])').evaluate(slide => {
+          const frame = slide.getBoundingClientRect();
+          return [...slide.querySelectorAll('.hero-actions a')].every(action => {
+            const bounds = action.getBoundingClientRect();
+            return bounds.top >= frame.top && bounds.bottom <= frame.bottom && bounds.right <= frame.right;
+          });
+        }), `Hero actions must fit at ${width}px`).toBeTruthy();
+      }
       const label = route === '/' ? 'home' : route.includes('home') ? 'home-living' : 'catalog';
       await page.screenshot({ path: path.join(output, `${label}-${width}.png`), fullPage: true });
     }
@@ -70,6 +77,7 @@ test('reference layouts reflow and retain accessible navigation', async ({ page 
     await page.keyboard.press('Escape'); await expect(menu).toBeFocused();
   }
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/'); await ready(page);
   await page.locator('[data-hero-next]').press('Enter');
   await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
@@ -170,4 +178,70 @@ test('all customer route families use the reference shell without overflow', asy
       if (['/account', '/account/support', '/cart', '/products/blue-tote', '/orders'].includes(route)) await page.screenshot({ path: path.join(output, route.replaceAll('/', '-') + `-${width}.png`), fullPage: true });
     }
   }
+});
+
+
+test('mobile homepage is a compact composition at the same root URL', async ({ page }) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/'); await ready(page);
+    await expect(page).toHaveURL(base + '/');
+    await expect(page.locator('.mobile-home-intro')).toBeVisible();
+    await expect(page.locator('.desktop-home-intro')).not.toBeVisible();
+    await expect(page.getByRole('heading', {level:1})).toHaveCount(1);
+    await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search handmade crafts...');
+    expect(await page.locator('.global-search').evaluate(element=>element.getBoundingClientRect().width)).toBeGreaterThan(width - 50);
+    expect(await page.locator('.mobile-home-hero').evaluate(element=>element.getBoundingClientRect().height)).toBeLessThan(300);
+    expect(await page.locator('.home-product-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2);
+    expect(await page.locator('.home-featured .product-card').first().evaluate(element=>element.getBoundingClientRect().top)).toBeLessThan(844);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+    await page.screenshot({path:path.join(output,`mobile-home-${width}.png`),fullPage:true});
+  }
+  await page.setViewportSize({width:1440,height:1000});
+  await expect(page.locator('.desktop-home-intro')).toBeVisible();
+  await expect(page.locator('.mobile-home-intro')).not.toBeVisible();
+  await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search for sarees, home decor, gifts and more...');
+  await expect(page).toHaveURL(base + '/');
+});
+
+
+test('seller and admin branding preserves role typography and semantic states', async ({ browser }) => {
+  for (const [account,route] of [['owner01','/seller-admin'],['marketplace01','/admin'],['super01','/super-admin']]) {
+    const context=await browser.newContext({baseURL:base});
+    const login=await context.request.post('/api/v1/auth/login',{data:{email:`demo.${account}@weevcrafts.local`,password:'WeeVCrafts-Demo-2026!'}});
+    expect(login.ok()).toBeTruthy();
+    const page=await context.newPage();
+    for (const width of [1440,390,320]) {
+      await page.setViewportSize({width,height:width>800?1000:844});
+      expect((await page.goto(route)).ok()).toBeTruthy();
+      await page.evaluate(()=>document.fonts.ready);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+      expect(await page.locator('body').evaluate(element=>getComputedStyle(element).fontFamily)).toContain('Inter');
+      await expect(page.locator('h1').first()).toHaveCSS('color','rgb(18, 63, 50)');
+      const wordmark=page.locator('.seller-header-main .seller-wordmark strong,.admin-sidebar .admin-brand strong').first();
+      if(width===1440) await expect(wordmark).toHaveCSS('color','rgb(18, 63, 50)');
+      const primary=page.locator('.admin-button.primary:not(.danger),.seller-button.primary:not(.danger)').first();
+      if(await primary.count()) await expect(primary).toHaveCSS('background-color','rgb(18, 63, 50)');
+      const danger=page.locator('.ui-status.danger,.status.danger,.admin-button.danger').first();
+      if(await danger.count()) expect(await danger.evaluate(element=>getComputedStyle(element).color)).not.toBe('rgb(18, 63, 50)');
+      await page.screenshot({path:path.join(output,`${account}-${width}.png`)});
+    }
+    await context.close();
+  }
+});
+
+test('homepage search replaces the page without retaining homepage styles', async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/'); await ready(page);
+  await page.getByRole('combobox',{name:'Search products',exact:true}).fill('tote');
+  await page.getByRole('combobox',{name:'Search products',exact:true}).press('Enter');
+  await expect(page).toHaveURL(/\/search\?q=tote$/);
+  await expect(page.locator('#page')).toHaveCount(1);
+  await expect(page.locator('.home-page,.mobile-home-intro')).toHaveCount(0);
+  await expect(page.locator('[data-product="blue-tote"]')).toBeVisible();
+  await expect(page.getByRole('combobox',{name:'Search products',exact:true})).toHaveValue('tote');
+  await page.goBack();
+  await expect(page).toHaveURL(base+'/');
+  await expect(page.locator('#page')).toHaveCount(1);
+  await expect(page.locator('.mobile-home-intro')).toBeVisible();
 });

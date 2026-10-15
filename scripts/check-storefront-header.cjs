@@ -24,14 +24,26 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
    if (role === 'guest') {
     // Discovery is public. Only protected actions request account access.
     await expect(page.locator('#guest-login-dialog')).toHaveCount(0);
+    await expect(page.locator('#profile-dropdown')).toHaveCount(0);
+    const signIn=page.getByRole('link',{name:'Sign in',exact:true});
+    await expect(signIn).toHaveAttribute('href','/login');
     for (const width of [320,390,560,768,820,960,1024,1280,1440]) {
      await page.setViewportSize({width,height:900});
      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+     await expect(signIn).toBeVisible();
+     await signIn.focus();
+     await expect(signIn).toBeFocused();
+     const signInSize=await signIn.boundingBox();
+     expect(signInSize.width).toBeGreaterThanOrEqual(44);
+     expect(signInSize.height).toBeGreaterThanOrEqual(44);
      await page.locator(width<=800?'.menu-toggle':'.all-categories').press('Enter');
      await expect(page.locator('#mobile-menu')).toBeVisible();
      await page.keyboard.press('Escape');
      await expect(page.locator(width<=800?'.menu-toggle':'.all-categories')).toBeFocused();
     }
+    await signIn.press('Enter');
+    await expect(page).toHaveURL(baseURL+'/login');
+    await page.goto(baseURL+'/products');
     await page.locator('#cart-count').click();
     await expect(page.locator('#guest-login-dialog')).toBeVisible();
     await page.keyboard.press('Escape');
@@ -58,7 +70,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toHaveAttribute('aria-expanded','true');
     await expect(page.locator('#profile-dropdown')).toBeVisible();
     await expect(page.locator('#profile-dropdown a').first(), `${name} ${role} ${width}px profile focus`).toBeFocused();
-    if(width>360) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
+    if(width>800) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
     else await expect(page.locator('.header-actions > #wishlist-count')).not.toBeVisible();
     await expect(page.locator('.header-actions > #cart-count')).toBeVisible();
     for (const value of ['0','12','123','—']) {
@@ -72,15 +84,13 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
       const menu=document.querySelector('.menu-toggle').getBoundingClientRect();
       const search=document.querySelector('.search-shell').getBoundingClientRect();
       const profile=document.querySelector('.profile-toggle').getBoundingClientRect();
-      const location=document.querySelector('.header-main .location').getBoundingClientRect();
+      if(document.querySelector('.header-main .location'))issues.push('removed delivery shortcut is present');
       const panel=document.querySelector('.profile-panel').getBoundingClientRect();
-      if(header.height>(innerWidth<=800?130:76))issues.push('header exceeds reference height');
-      if(search.right>profile.left)issues.push('search is not before profile');
-      if(Math.abs((search.top+search.bottom)/2-(profile.top+profile.bottom)/2)>2)issues.push('search and profile are not aligned');
-      if(innerWidth>1100){
-       if(location.right>search.left)issues.push('delivery location is not left of search');
-       if(Math.abs((location.top+location.bottom)/2-(search.top+search.bottom)/2)>2)issues.push('delivery location is not in search row');
-      }
+      if(header.height>(innerWidth<=800?140:120))issues.push('header exceeds reference height');
+      if(innerWidth>800 && search.right>profile.left)issues.push('search is not before profile');
+      if(innerWidth>800 && Math.abs((search.top+search.bottom)/2-(profile.top+profile.bottom)/2)>2)issues.push('search and profile are not aligned');
+      if(innerWidth<=800 && search.width<innerWidth-40)issues.push('mobile search does not fill its row');
+
       if(panel.left<0||panel.right>innerWidth+1||panel.bottom>innerHeight+1)issues.push('profile panel overflows viewport');
       if(innerWidth>800 && !document.querySelector('.storefront-nav').getClientRects().length)issues.push('desktop category navigation is hidden');
       if(innerWidth<=800 && search.width<100)issues.push('mobile search is collapsed');

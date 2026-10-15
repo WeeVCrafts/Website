@@ -11,6 +11,14 @@
   const focusable = "button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex='0']";
   const visible = element => !element.hidden && !element.closest("[inert]") && element.getClientRects().length > 0;
 
+  function updateSearchPlaceholder() {
+    const input = document.getElementById("global-search");
+    if (!input) return;
+    input.dataset.desktopPlaceholder ||= input.placeholder;
+    input.placeholder = mobileFilters.matches ? "Search handmade crafts..." : input.dataset.desktopPlaceholder;
+  }
+  mobileFilters.addEventListener("change", updateSearchPlaceholder);
+
   function loadMedia(element) {
     if (!element) return;
     // Install responsive candidates before src so activation cannot start an
@@ -37,32 +45,6 @@
       const controls = hero.querySelector("[data-hero-controls]");
       const selectors = Array.from(hero.querySelectorAll("[data-hero-select]"));
       let active = 0;
-      let playing = !reducedMotion.matches;
-      let timer;
-      const playback = hero.querySelector("[data-hero-autoplay]");
-      const listeners = new AbortController();
-      function pause() {
-        playing = false;
-        clearTimeout(timer);
-        playback.textContent = "Play";
-        playback.setAttribute("aria-label", "Play slideshow");
-      }
-      function schedule() {
-        clearTimeout(timer);
-        if (!playing || document.hidden) return;
-        timer = setTimeout(() => {
-          if (!hero.isConnected) { pause(); listeners.abort(); return; }
-          show(active + 1);
-          schedule();
-        }, 4000);
-      }
-      function play() {
-        playing = true;
-        playback.textContent = "Pause";
-        playback.setAttribute("aria-label", "Pause slideshow");
-        schedule();
-      }
-      function choose(index, event) { pause(); show(index, event); }
       function show(index, event) {
         active = (index + slides.length) % slides.length;
         slides.forEach((slide, i) => {
@@ -80,20 +62,10 @@
         }
       }
       controls.hidden = false;
-      hero.querySelector("[data-hero-prev]").addEventListener("click", event => choose(active - 1, event));
-      hero.querySelector("[data-hero-next]").addEventListener("click", event => choose(active + 1, event));
-      selectors.forEach((button, i) => button.addEventListener("click", event => choose(i, event)));
+      hero.querySelector("[data-hero-prev]").addEventListener("click", event => show(active - 1, event));
+      hero.querySelector("[data-hero-next]").addEventListener("click", event => show(active + 1, event));
+      selectors.forEach((button, i) => button.addEventListener("click", event => show(i, event)));
       show(0);
-      playback.addEventListener("click", () => playing ? pause() : play());
-      hero.addEventListener("pointerenter", pause);
-      hero.addEventListener("focusin", event => { if (event.target !== playback) pause(); });
-      document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); }, {signal:listeners.signal});
-      reducedMotion.addEventListener("change", event => { if (event.matches) pause(); }, {signal:listeners.signal});
-      document.addEventListener("htmx:beforeCleanupElement", event => {
-        if (event.target === hero || event.target.contains(hero)) { pause(); listeners.abort(); }
-      }, {signal:listeners.signal});
-      window.addEventListener("pagehide", pause, {once:true,signal:listeners.signal});
-      if (playing) play(); else pause();
     });
   }
 
@@ -427,6 +399,7 @@
     });
   });
   document.addEventListener("DOMContentLoaded",()=>{
+    updateSearchPlaceholder();
     init();
     const header=document.querySelector(".site-header");
     if(header) new ResizeObserver(()=>document.documentElement.style.setProperty("--ui-header-height",header.getBoundingClientRect().height+"px")).observe(header);

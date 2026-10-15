@@ -2,3 +2,11 @@ package pages
 
 // Home is composed in pages.templ so the generated storefront stays easy to scan.
 templ homeBoundary() { <span hidden>home</span> }
+
+// Responsive introductions share the catalogue rendered once by Home.
+templ DesktopHomeIntro() {
+  <div class="desktop-home-intro">
+    @HomeHero()
+    @HomeCategoryRail()
+  </div>
+}

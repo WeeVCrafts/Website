@@ -26,6 +26,7 @@ import (
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/components"
@@ -188,8 +189,8 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 		page = viewmodels.CustomerPage{
-			Route: r.URL.Path, Title: "We are having a little trouble", Brand: "Weevcrafts",
-			Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Please try again in a moment.",
+			Route: r.URL.Path, Title: "We are having a little trouble", Brand: identity.Name,
+			Tagline: identity.Tagline, Description: "Please try again in a moment.",
 			Notice: "We could not load this page right now. Please try again in a moment.",
 		}
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -687,8 +688,8 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 	page := viewmodels.CustomerPage{
 		Route: r.URL.Path, Title: liveTitle(r.URL.Path), Query: query, Category: category, Sort: sortMode,
 		CouponCode: strings.ToUpper(strings.TrimSpace(filters.Get("coupon"))),
-		Notice:     filters.Get("notice"), Filters: filters, Brand: "Weevcrafts",
-		Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.",
+		Notice:     filters.Get("notice"), Filters: filters, Brand: identity.Name,
+		Tagline: identity.Tagline, Description: identity.Description,
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
@@ -1879,7 +1880,7 @@ func (h *LiveStorefrontHandler) brands(ctx context.Context) []viewmodels.Brand {
 		var item viewmodels.Brand
 		if rows.Scan(&item.Slug, &item.Name, &item.Products, &item.ImageURL) == nil {
 			item.Tagline = "Made by independent Indian makers"
-			item.Description = "A live maker brand on Weevcrafts."
+			item.Description = "A live maker brand on WeeVCrafts."
 			item.Location = "India"
 			result = append(result, item)
 		}

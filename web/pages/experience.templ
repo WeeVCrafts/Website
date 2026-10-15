@@ -19,7 +19,6 @@ templ HomeHero() {
         <button type="button" data-hero-select="3" aria-label="Show gifts collection" aria-pressed="false"></button>
         <button type="button" data-hero-select="4" aria-label="Show metalwork collection" aria-pressed="false"></button>
       </div>
-      <button type="button" data-hero-autoplay aria-label="Pause slideshow">Pause</button>
       <button type="button" data-hero-prev aria-label="Previous collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button>
       <output data-hero-count aria-label="Current collection" aria-live="off">1 / 5</output>
       <button type="button" data-hero-next aria-label="Next collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
@@ -44,7 +43,10 @@ templ HeroSlide(title, copy, image, alt, href, action string, first bool) {
 
     <div class="hero-image">
       if first {
-    <img src={ image } srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1536" height="1024" loading="eager" fetchpriority="high"/>
+    <picture>
+      <source media="(max-width: 800px)" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/craft-mobile-banner.webp", "") } sizes="100vw"/>
+      <img src={ image } srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1536" height="1024" loading="eager" fetchpriority="high"/>
+    </picture>
       } else {
         <img data-src={ image } data-srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1254" height="1254" loading="lazy" decoding="async"/>
     }

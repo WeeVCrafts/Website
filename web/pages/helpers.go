@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -72,8 +73,8 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 	data := map[string]any{
 		"@context": "https://schema.org",
 		"@graph": []any{
-			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": "Weevcrafts", "alternateName": "WeeVCrafts", "url": pageCanonicalURL(p)},
-			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
+			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": []string{"Weevcrafts", "WeevCrafts", "weevcrafts.com"}, "url": pageCanonicalURL(p)},
+			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": identity.Name, "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
 		},
 	}
 	encoded, err := json.Marshal(data)
@@ -105,18 +106,36 @@ func pageCanonicalURL(p viewmodels.CustomerPage) string {
 	return base + path
 }
 
-func pageOGTitle(p viewmodels.CustomerPage) string {
-	if strings.TrimSpace(p.Title) != "" {
-		return p.Title
+func pageDocumentTitle(p viewmodels.CustomerPage) string {
+	if p.Route == "/" {
+		return identity.HomeTitle
 	}
-	return "Weevcrafts"
+	title := strings.TrimSpace(p.Title)
+	if title == "" {
+		return identity.Name
+	}
+	if strings.Contains(strings.ToLower(title), strings.ToLower(identity.Name)) {
+		return title
+	}
+	return title + " - " + identity.Name
+}
+
+func pageOGTitle(p viewmodels.CustomerPage) string {
+	return pageDocumentTitle(p)
+}
+
+func pageDescription(p viewmodels.CustomerPage) string {
+	if p.Route == "/" {
+		return identity.Description
+	}
+	return p.Description
 }
 
 func pageOGDescription(p viewmodels.CustomerPage) string {
 	if strings.TrimSpace(p.Product.Description) != "" && strings.HasPrefix(p.Route, "/products/") {
 		return p.Product.Description
 	}
-	return p.Description
+	return pageDescription(p)
 }
 
 func pageOGType(p viewmodels.CustomerPage) string {

@@ -1,0 +1,75 @@
+{
+  "base": "http://localhost:8090",
+  "fixtureWrites": 0,
+  "screens": [
+    {
+      "route": "/",
+      "width": 1680
+    },
+    {
+      "route": "/products?category=home",
+      "width": 1680
+    },
+    {
+      "route": "/",
+      "width": 1448
+    },
+    {
+      "route": "/products?category=home",
+      "width": 1448
+    },
+    {
+      "route": "/",
+      "width": 1440
+    },
+    {
+      "route": "/products?category=home",
+      "width": 1440
+    },
+    {
+      "route": "/",
+      "width": 1024
+    },
+    {
+      "route": "/products?category=home",
+      "width": 1024
+    },
+    {
+      "route": "/",
+      "width": 390
+    },
+    {
+      "route": "/products?category=home",
+      "width": 390
+    },
+    {
+      "route": "/",
+      "width": 320
+    },
+    {
+      "route": "/products?category=home",
+      "width": 320
+    }
+  ],
+  "errors": [],
+  "axe": [
+    {
+      "route": "/",
+      "violations": []
+    },
+    {
+      "route": "/products?category=home",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "violations": []
+    },
+    {
+      "route": "/contact",
+      "violations": []
+    }
+  ],
+  "filters": "live URL update, preserved open sheet and restored focus",
+  "pass": true
+}

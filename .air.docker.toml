@@ -2,7 +2,7 @@
 root = "."
 tmp_dir = "tmp/air-docker"
 [build]
-cmd = "docker compose up -d --build --wait app"
+cmd = "node scripts/dev-docker-build.cjs"
 entrypoint = ["node", "scripts/preview-idle.cjs"]
 include_dir = ["cmd", "internal", "web", "scripts"]
 include_file = ["Dockerfile", "compose.yaml", "go.mod", "go.sum", "package.json", "package-lock.json", "tailwind.config.js"]

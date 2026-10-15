@@ -1,0 +1,18 @@
+package pages
+
+import "github.com/wecratfs/commerce/web/components"
+
+// The mobile composition uses the same root URL, catalogue and shopping routes.
+templ MobileHomeIntro() {
+  <div class="mobile-home-intro">
+    <section class="mobile-home-hero" aria-label="Handmade Indian craft">
+      <img class="mobile-home-art" src="/assets/images/customer/craft-mobile-banner.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/craft-mobile-banner.webp", "") } sizes="100vw" alt="Indian artisan painting a handmade pottery vase" width="1536" height="1024" loading="lazy" decoding="async"/>
+      <div class="mobile-home-copy">
+        <h1><span>Crafted in India.</span><span>Made to be<br/>cherished.</span></h1>
+        <a class="primary-button" href="/products">Shop collections <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+        <a class="mobile-maker-link" href="/makers">Meet the makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+      </div>
+    </section>
+    @HomeCategoryRail()
+  </div>
+}

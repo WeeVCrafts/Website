@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -18,6 +19,8 @@ func TestCustomerPageSEOIndexingPolicy(t *testing.T) {
 		{route: "/", want: "index,follow"},
 		{route: "/products/blue-bowl", want: "index,follow"},
 		{route: "/account", want: "noindex,nofollow"},
+		{route: "/checkout", want: "noindex,nofollow"},
+		{route: "/admin", want: "noindex,nofollow"},
 		{route: "/faq", want: "index,follow"},
 	} {
 		if got := pageRobots(viewmodels.CustomerPage{Route: test.route}); got != test.want {
@@ -26,11 +29,68 @@ func TestCustomerPageSEOIndexingPolicy(t *testing.T) {
 	}
 }
 
+func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
+	page := viewmodels.CustomerPage{Route: "/", Title: "Handmade Today", PublicURL: "https://weevcrafts.com", Description: "Old description"}
+	var body bytes.Buffer
+	if err := Document(page).Render(t.Context(), &body); err != nil {
+		t.Fatal(err)
+	}
+	html := body.String()
+	for _, want := range []string{
+		`<title>WeeVCrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>`,
+		`property="og:title" content="WeeVCrafts | Handmade Indian Arts, Crafts &amp; Sarees"`,
+		`property="og:site_name" content="WeeVCrafts"`,
+		`name="description" content="` + identity.Description + `"`,
+		`rel="canonical" href="https://weevcrafts.com/"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing brand metadata: %s", want)
+		}
+	}
+	if strings.Count(html, `id="website-schema"`) != 1 {
+		t.Fatal("homepage must render exactly one website schema block")
+	}
+	var data struct {
+		Graph []struct {
+			Type          string   `json:"@type"`
+			Name          string   `json:"name"`
+			URL           string   `json:"url"`
+			Logo          string   `json:"logo"`
+			AlternateName []string `json:"alternateName"`
+		} `json:"@graph"`
+	}
+	if err := json.Unmarshal([]byte(websiteStructuredData(page)), &data); err != nil {
+		t.Fatal(err)
+	}
+	if len(data.Graph) != 2 || data.Graph[0].Type != "WebSite" || data.Graph[1].Type != "Organization" {
+		t.Fatalf("expected one website and one organization: %+v", data.Graph)
+	}
+	for _, node := range data.Graph {
+		if node.Name != identity.Name || node.URL != "https://weevcrafts.com/" {
+			t.Errorf("inconsistent brand identity: %+v", node)
+		}
+	}
+	if len(data.Graph[0].AlternateName) == 0 || data.Graph[1].Logo != "https://weevcrafts.com/assets/images/brand/weevcrafts-logo.png" {
+		t.Fatal("brand aliases and supplied logo must be preserved")
+	}
+	if websiteStructuredData(viewmodels.CustomerPage{Route: "/login"}) != "" {
+		t.Fatal("website identity schema belongs on the homepage")
+	}
+}
+
+func TestPageTitleDoesNotDuplicateBrand(t *testing.T) {
+	for _, title := range []string{"Account · WeeVCrafts", "Sign in - WeeVCrafts"} {
+		if got := pageDocumentTitle(viewmodels.CustomerPage{Route: "/login", Title: title}); got != title {
+			t.Errorf("title = %q, want %q", got, title)
+		}
+	}
+}
+
 func TestProductStructuredDataIsValidAndComplete(t *testing.T) {
 	page := viewmodels.CustomerPage{
-		Route:     "/products/blue-bowl",
-		PublicURL: "https://weevcrafts.example",
-		Title:     "Blue Bowl",
+		Route:       "/products/blue-bowl",
+		PublicURL:   "https://weevcrafts.example",
+		Title:       "Blue Bowl",
 		Description: "Handmade blue bowl",
 		Product: viewmodels.Product{
 			Name: "Blue Bowl", Description: "Handmade blue bowl", ImageURL: "/assets/bowl.webp",
@@ -56,10 +116,10 @@ func TestProductStructuredDataIsValidAndComplete(t *testing.T) {
 
 func TestDocumentRendersEscapedSEOMetadata(t *testing.T) {
 	page := viewmodels.CustomerPage{
-		Route: "/products/safe",
-		Title: "A & B",
+		Route:       "/products/safe",
+		Title:       "A & B",
 		Description: `A < handmade product`,
-		Product: viewmodels.Product{Name: "A & B", Description: `A < handmade product`, ImageURL: "/safe.webp", PriceCents: 100},
+		Product:     viewmodels.Product{Name: "A & B", Description: `A < handmade product`, ImageURL: "/safe.webp", PriceCents: 100},
 	}
 	var body bytes.Buffer
 	if err := Document(page).Render(t.Context(), &body); err != nil {

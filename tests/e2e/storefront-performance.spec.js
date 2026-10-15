@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 
-test('hero controls reserve space and secondary media waits for selection',async({page})=>{
-  await page.setViewportSize({width:390,height:844});
+test('desktop hero controls reserve space and secondary media waits for selection',async({page})=>{
+  await page.setViewportSize({width:1440,height:1000});
   let release;
   const scriptsReady=new Promise(resolve=>{release=resolve;});
   await page.route('**/assets/js/*.js*',async route=>{await scriptsReady;await route.continue();});
@@ -23,14 +23,29 @@ test('hero controls reserve space and secondary media waits for selection',async
     expect(after.height).toBe(before.height);
     expect(Math.abs(after.y-before.y)).toBeLessThan(1);
     expect(images.some(url=>new URL(url).pathname.includes('textiles-banner'))).toBe(false);
+    expect(images.some(url=>new URL(url).pathname.includes('craft-mobile-banner'))).toBe(false);
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.locator('[data-hero-next]').press('Enter');
     await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
     const second=page.locator('[data-hero-slide] img').nth(1);
     await expect.poll(()=>second.evaluate(image=>image.complete&&image.naturalWidth>0&&image.currentSrc)).toBeTruthy();
-    expect(await second.evaluate(image=>new URL(image.currentSrc).pathname)).toMatch(/textiles-banner-(320|640|960)\.webp$/);
+    expect(await second.evaluate(image=>new URL(image.currentSrc).pathname)).toMatch(/textiles-banner(?:-(320|640|960))?\.webp$/);
     expect(await page.locator('[data-hero-slide]').nth(1).evaluate(slide=>slide.getAnimations().length)).toBe(0);
   } finally {release();}
+});
+
+test('mobile homepage loads its own banner without also loading the desktop photograph',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  const banners=new Set();
+  page.on('request',request=>{
+    const pathname=new URL(request.url()).pathname;
+    if(request.resourceType()==='image' && /craft-(?:mobile-)?banner/.test(pathname))banners.add(pathname);
+  });
+  await page.goto('/');
+  await expect(page.locator('.mobile-home-intro')).toBeVisible();
+  await expect.poll(()=>page.locator('.mobile-home-art').evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
+  expect([...banners]).toHaveLength(1);
+  expect([...banners][0]).toContain('craft-mobile-banner');
 });
 
 test('delayed product media keeps its frame at supported viewport widths',async({page})=>{

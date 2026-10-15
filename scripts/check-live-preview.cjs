@@ -16,14 +16,25 @@ const output=process.env.WEEVCRAFTS_UI_ARTIFACTS||path.join(os.tmpdir(),'weevcra
   const context=await browser.newContext({baseURL:base,reducedMotion:'reduce'});
   const page=await context.newPage();
   page.on('pageerror',error=>report.errors.push(error.message));
-  for(const width of [1448,1440,1024,390,320]){
-   await page.setViewportSize({width,height:width>800?1086:844});
+  for(const width of [1680,1448,1440,1024,390,320]){
+   await page.setViewportSize({width,height:width===1680?936:width>800?1086:844});
    for(const [name,route] of [['home','/'],['home-living','/products?category=home']]){
     const response=await page.goto(route);assert(response.ok(),route);
     await page.evaluate(()=>document.fonts.ready);
     await page.waitForFunction(()=>!!document.querySelector('.site-header')?._x_dataStack);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${route} overflow ${width}`);
     assert(await page.locator('.wordmark-mark').first().evaluate(image=>image.complete&&image.naturalWidth>0),'Supplied logo failed to load');
+    assert.equal(await page.locator('.header-main .location,.artisan-link,[data-hero-autoplay]').count(),0,'Removed controls must not remain in the document');
+    assert.equal(await page.locator('.wordmark strong').first().textContent(),'WeeVCrafts');
+    if(route==='/') {
+     assert.equal(await page.title(),'WeeVCrafts | Handmade Indian Arts, Crafts & Sarees');
+     const heroAction = width > 800
+      ? page.locator('.desktop-home-intro [data-hero-slide]:not([hidden]) .primary-button')
+      : page.locator('.mobile-home-copy .primary-button');
+     assert.equal(await heroAction.evaluate(element=>getComputedStyle(element).backgroundColor),'rgb(18, 63, 50)');
+     if(width>800) assert(await page.locator('.wordmark-mark').first().evaluate(element=>element.getBoundingClientRect().width>=48),'Desktop logo must remain prominent');
+     await page.screenshot({path:path.join(output,`home-${width}-viewport.png`)});
+    }
     await page.screenshot({path:path.join(output,`${name}-${width}.png`),fullPage:true});
     report.screens.push({route,width});
    }
@@ -47,6 +58,7 @@ const output=process.env.WEEVCRAFTS_UI_ARTIFACTS||path.join(os.tmpdir(),'weevcra
    const violations=await page.evaluate(async()=> (await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}})).violations.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)})));
    report.axe.push({route,violations});assert.equal(violations.length,0,JSON.stringify({route,violations}));
   }
+  await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
   assert.equal(await page.locator('[data-hero-slide]').count(),5);
   for(let index=0;index<5;index++){

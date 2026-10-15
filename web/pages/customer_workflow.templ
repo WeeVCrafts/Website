@@ -7,7 +7,7 @@ templ CatalogueResults(p viewmodels.CustomerPage) {
   if len(p.Products) > 0 {
     @ProductCards(p.Products, true, true)
   } else if p.CatalogueEmpty {
-    <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class="outline-button" href="/">Explore Weevcrafts</a></div>
+    <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class="outline-button" href="/">Explore WeeVCrafts</a></div>
   } else {
     <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">search_off</span><h2>No matching pieces</h2><p>Try a different search or remove a filter to see more.</p><a class="outline-button" href="/products">Browse all products</a></div>
   }

@@ -454,7 +454,7 @@ func (h *MockHandler) page(r *http.Request, w http.ResponseWriter) viewmodels.Cu
 	if notice == "" && r.URL.Query().Get("coupon") != "" {
 		notice = "Coupon preview applied: " + r.URL.Query().Get("coupon")
 	}
-	return viewmodels.CustomerPage{Route: r.URL.Path, Title: titleFor(r.URL.Path), Query: query, Sort: sortMode, Notice: notice, Category: category, Filters: r.URL.Query(), Brand: "Weevcrafts", Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.", Product: detailProduct, SavedProducts: wishlistProducts, Products: products, FilterCounts: filterCounts, Categories: mockCategories, Sellers: mockSellers, Brands: mockBrands, Cart: snapshot.cart, Orders: snapshot.orders, PaymentActivity: previewPaymentActivity(snapshot.orders), SelectedOrder: selectedOrder, Returns: mockReturns(), CartCount: cartCount(snapshot.cart), WishlistCount: len(wishlistProducts), ItemsTotal: itemsTotal, ShippingTotal: shippingTotal, DiscountTotal: discountTotal, Total: total, Page: pageNumber, Pages: pageCount, Mock: true, Authenticated: true, Now: time.Now()}
+	return viewmodels.CustomerPage{Route: r.URL.Path, Title: titleFor(r.URL.Path), Query: query, Sort: sortMode, Notice: notice, Category: category, Filters: r.URL.Query(), Brand: "WeeVCrafts", Tagline: "Handmade Today. A Kinder Tomorrow.", Description: "Authentic Indian arts, crafts and sarees, made with care.", Product: detailProduct, SavedProducts: wishlistProducts, Products: products, FilterCounts: filterCounts, Categories: mockCategories, Sellers: mockSellers, Brands: mockBrands, Cart: snapshot.cart, Orders: snapshot.orders, PaymentActivity: previewPaymentActivity(snapshot.orders), SelectedOrder: selectedOrder, Returns: mockReturns(), CartCount: cartCount(snapshot.cart), WishlistCount: len(wishlistProducts), ItemsTotal: itemsTotal, ShippingTotal: shippingTotal, DiscountTotal: discountTotal, Total: total, Page: pageNumber, Pages: pageCount, Mock: true, Authenticated: true, Now: time.Now()}
 }
 
 func previewPaymentActivity(orders []viewmodels.Order) []viewmodels.PaymentActivity {
@@ -750,7 +750,7 @@ func titleFor(path string) string {
 	case "/faq":
 		return "Frequently asked questions"
 	case "/contact":
-		return "Contact Weevcrafts"
+		return "Contact WeeVCrafts"
 	case "/shipping":
 		return "Shipping information"
 	case "/size-guide":
@@ -768,7 +768,7 @@ func titleFor(path string) string {
 	case "/careers":
 		return "Careers"
 	default:
-		return "Weevcrafts"
+		return "WeeVCrafts"
 	}
 }
 

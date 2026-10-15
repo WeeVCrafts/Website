@@ -1,17 +1,21 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
+# Keep Unicode variant names intact when piping SQL through Windows PowerShell.
+$OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 # UI-only fixture preparation, never the active application's database.
 $qaContainer = 'weev-ui-qa-20261014-postgres'
 $qaDatabase = 'weev_qa_ui_20261014'
-$qaPort = docker inspect --format '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}' $qaContainer
+$qaDetails = docker inspect $qaContainer | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the isolated QA container.' }
+$qaPort = $qaDetails.NetworkSettings.Ports.'5432/tcp'[0].HostPort
 if ($qaPort -ne '15432') { throw 'Unexpected QA database port; no fixtures changed.' }
 $fixtureSQL = @'
 BEGIN;
 INSERT INTO product_variants(product_id,sku,name,price_cents,compare_at_cents)
 SELECT id,'UI-QA-TOTE-LARGE','Large · natural cotton',104900,124900 FROM products WHERE slug='blue-tote'
-ON CONFLICT (sku) DO NOTHING;
+ON CONFLICT (sku) DO UPDATE SET name=EXCLUDED.name;
 INSERT INTO product_variants(product_id,sku,name,price_cents)
 SELECT id,'UI-QA-TOTE-SOLDOUT','Extra large · unavailable',129900 FROM products WHERE slug='blue-tote'
-ON CONFLICT (sku) DO NOTHING;
+ON CONFLICT (sku) DO UPDATE SET name=EXCLUDED.name;
 INSERT INTO inventory_stock(variant_id,available_quantity)
 SELECT id,CASE WHEN sku='UI-QA-TOTE-SOLDOUT' THEN 0 ELSE 6 END FROM product_variants WHERE sku IN ('UI-QA-TOTE-LARGE','UI-QA-TOTE-SOLDOUT')
 ON CONFLICT (variant_id) DO NOTHING;

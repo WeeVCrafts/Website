@@ -58,14 +58,14 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 templ PortalTerms(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		<article class="seller-panel seller-terms-panel">
-			<p>These requirements apply to sellers using the Weevcrafts marketplace. Review the</p>
+			<p>These requirements apply to sellers using the WeeVCrafts marketplace. Review the</p>
 			<p>Privacy information is available from the Privacy Policy link below.</p>
 			<section><h2>1. Account eligibility &amp; registration</h2><ul><li>Provide accurate business information, applicable tax registration details, bank account credentials, and valid identity verification.</li><li>Keep dashboard credentials confidential. Sellers are responsible for activity carried out using their account credentials.</li></ul></section>
 			<section><h2>2. Product listings &amp; compliance</h2><ul><li>Do not list counterfeit, illegal, stolen, dangerous, or third-party rights-infringing items.</li><li>Keep product titles, descriptions, categories, images, stock quantities, and specifications accurate. Misleading information is prohibited.</li><li>Only upload images, text, brand names, and logos that you own or are authorized to use.</li></ul></section>
 			<section><h2>3. Order processing &amp; fulfillment</h2><ul><li>Pack and dispatch orders within the applicable processing timelines shown for your seller account or order.</li><li>Keep inventory accurate and update stock promptly to prevent orders being cancelled because an item is unavailable.</li><li>Use the applicable logistics providers and attach valid tracking details when dispatching an order.</li></ul></section>
 			<section><h2>4. Commission, fees &amp; payouts</h2><ul><li>Applicable commissions, platform fees, subscription charges, and payment processing charges are disclosed through the relevant seller and settlement records.</li><li>Payout timing follows the schedule shown in your seller account and applicable settlement terms.</li><li>Funds may be held or adjusted for returns, refunds, customer disputes, or active chargebacks.</li></ul></section>
 			<section><h2>5. Returns, refunds &amp; customer service</h2><ul><li>Follow the marketplace return and refund policy that applies to each order.</li><li>Respond to customer complaints, refund requests, and platform support inquiries within the applicable response window shown in the seller workflow.</li></ul></section>
-			<section><h2>6. Code of conduct &amp; account termination</h2><ul><li>Do not move marketplace transactions off-platform to avoid fees, create fake customer reviews, or manipulate reviews.</li><li>Weevcrafts may suspend or terminate seller accounts for policy breaches, counterfeit sales, high order cancellation rates, or persistently low performance ratings.</li></ul></section>
+			<section><h2>6. Code of conduct &amp; account termination</h2><ul><li>Do not move marketplace transactions off-platform to avoid fees, create fake customer reviews, or manipulate reviews.</li><li>WeeVCrafts may suspend or terminate seller accounts for policy breaches, counterfeit sales, high order cancellation rates, or persistently low performance ratings.</li></ul></section>
 		</article>
 	}
 }
@@ -295,7 +295,7 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 				</tbody></table></div><p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p></article>
 				@SellerOrderFulfillment(p)
 			</section>
-			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>WeevCrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
+			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>WeeVCrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
 			<div class="seller-print-document" data-print-document="packing-slip"><h1>Packing slip · { p.OrderDetail.Number }</h1>
 				for _, item := range p.OrderDetail.Items {
 					<p>{ item.Quantity } × { item.Name } · SKU { item.SKU }</p>

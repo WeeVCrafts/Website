@@ -3,13 +3,13 @@ version: alpha
 name: WeeVCrafts
 description: An Indian craft marketplace with an editorial storefront and calm operational workspaces.
 colors:
-  primary: "#ad3619"
-  background: "#fcfbf8"
-  surface: "#fffefa"
-  ink: "#2c2923"
-  muted: "#625e54"
-  accent: "#ad3619"
-  border: "#e9e2d7"
+  primary: "#123f32"
+  background: "#fffdf8"
+  surface: "#fffdf8"
+  ink: "#20362d"
+  muted: "#56665d"
+  accent: "#9d4031"
+  border: "#dfd8ca"
 typography:
   heading:
     fontFamily: "Playfair Display, Georgia, serif"
@@ -24,7 +24,7 @@ spacing:
 components:
   button:
     height: "44px"
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.primary}"
     textColor: "{colors.surface}"
   input:
     typography: "{typography.body}"
@@ -107,3 +107,27 @@ Homepage order: panoramic five-slide craft hero, seven circular category links, 
 All customer task surfaces adopt these materials and controls through the shared shell and scoped styles while retaining their current layout and workflow. Auth keeps its compact help/policy footer. Quick view is a native modal with real product/variant data and existing cart behavior. Editorial banner artwork is illustrative; it is never used as a maker portrait or product record. The footer links to existing notification preferences rather than introducing newsletter delivery.
 
 The supplied teal-and-gold logo is used in storefront and operational branding and favicons; its cream background and proportions are retained. This explicitly requested brand update does not restyle operational layouts.
+
+
+## Approved brand theme — 15 October 2026
+
+The approved `docs/design/brand-theme-concept-2026-10-15.png` supersedes the earlier terracotta-primary palette and automatic carousel descriptions. This change applies shared branding to all application roles while retaining their layouts and typography.
+
+`brand.css` owns common identity tokens: primary #123f32, hover #0d3529, ivory #f8f2e8, warm white #fffdf8, terracotta #9d4031, gold #906220, and ink #20362d. Storefront paper is warm white; ivory appears in search and supporting surfaces. Role aliases map navigation, surfaces, focus and primary actions to these tokens. Success, warning, failed-payment and destructive-action styles remain distinct.
+
+Use the supplied woven artwork with live WeeVCrafts wordmark text. Following the user's final size correction, the desktop logo mark remains 52–70px while the wordmark scales 32–44px. Phone branding keeps its 32–38px mark and 22–30px wordmark. Storefront typography stays Playfair Display and DM Sans; operational typography stays Roboto and Inter. No hero photograph tint is added.
+
+Shared navigation omits the delivery shortcut and Support Artisan Livelihoods link. Account address management and checkout delivery remain available. The five-slide hero is manual: arrows, slide selectors, inert inactive slides, announcements and deferred photographs remain; playback buttons and timers are removed.
+
+Guests use a direct Sign in link in the header, with no account chevron or profile dropdown. Authenticated customers retain the existing profile disclosure, private avatar, account links, notifications and sign out.
+
+The homepage document and social title is WeeVCrafts | Handmade Indian Arts, Crafts & Sarees. Existing WebSite/Organization schema uses the same name, canonical URL and supplied logo, with historic spelling aliases. Private routes retain their indexing restrictions. Google recrawl requests follow production release, not a local preview.
+
+
+### Approved mobile homepage — 15 October 2026
+
+The user approved `docs/design/brand-theme-mobile-concept-2026-10-15.png` after requesting a distinct mobile composition. DesktopHomeIntro and MobileHomeIntro share the `/` URL; CSS selects the introduction at 800px. The product, maker and collection sections render once from the same catalogue. No device redirect, device URL, user-agent gate or additional backend endpoint is introduced.
+
+The mobile shared header places menu/brand/cart/account on the first row and full-width search on the second. Wishlist stays in the navigation drawer; sign out stays in profile and drawer controls. The mobile homepage uses a compact photographic hero with the approved headline, Shop collections and Meet the makers; desktop eyebrow, paragraph, quote and carousel controls are omitted. Its category rail uses 64px photographs, and featured products remain two columns even at 320px. The desktop five-slide hero retains manual arrows/selectors. Product names, prices, images and empty states remain real catalogue data.
+
+The mobile editorial banner is a text-free recomposition of the existing craft hero, generated against the approved mobile concept. It is illustrative craft artwork, never a product photograph or maker identity. Its clear wall preserves headline contrast without a CSS tint. Responsive picture sources prevent the hidden desktop introduction from downloading a second hero photograph on phones.
