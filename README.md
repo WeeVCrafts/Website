@@ -1,5 +1,24 @@
 # Weevcrafts
 
+## Local development with Air
+
+Run `npm install`, ensure Go and `templ` are on PATH, then run `npm run dev:setup`
+once to install pinned Air v1.67.4. Start the existing local PostgreSQL/Redis
+services and run `npm run dev`. Open **http://localhost:8090** for automatic
+browser refresh. Port 8080 serves the underlying application directly.
+This command does not seed or reset data.
+
+The launcher reads an optional `.env`, retains existing environment settings,
+and supplies missing local defaults from `.env.example`. It sets the local app
+address to port 8080 and defaults its public URL to the Air proxy on 8090.
+Keep a custom public URL in `.env` if needed. Stop with Ctrl+C.
+
+Air watches Go, templ, styles, scripts and source images. Before each restart it
+regenerates templ, builds Tailwind, and minifies CSS/JavaScript so embedded assets
+match source. Responsive photographs rebuild when their sources change. Generated
+outputs and temporary binaries are excluded to avoid restart loops.
+See [.air.toml](.air.toml) and the [official Air documentation](https://github.com/air-verse/air).
+
 Weevcrafts is a handmade and organic marketplace. The production app is a single
 Go service: it serves the storefront and role portals, exposes the `/api/v1`
 JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
@@ -33,18 +52,14 @@ S3_SECURE=true
 WECRATFS_ENV=production
 WECRATFS_SECURE_COOKIES=true
 WECRATFS_LOCAL_MODE=false
-WECRATFS_PAYMENT_MODE=local
-WECRATFS_LOCAL_PAYMENT_SECRET=<unique secret stored in Railway>
+WECRATFS_PAYMENT_MODE=razorpay
 WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
 ```
 
-The current Railway environment uses simulated payments. Set payment mode to
-`razorpay` only after configuring and verifying the live provider. Keep secrets
-in Railway variables, never in this repository.
-The configured demo provider exposes a capture-only checkout action at
-`/api/v1/payments/demo-capture/{order-number}` with session, CSRF and order
-ownership checks. It charges no money; failure/pending development helpers
-remain disabled in production.
+Normal startup uses the existing Razorpay integration. Configure its real credentials
+and verified webhook before accepting payments. Missing credentials leave checkout
+unavailable; the app does not substitute simulated payment success. Keep secrets in
+Railway variables or the private local environment, never in this repository.
 
 For Railway's Postgres SSL template, export the public certificate at
 `/var/lib/postgresql/data/certs/root.crt` from the Postgres service and set
@@ -92,12 +107,14 @@ Double-click `start.bat` (or run `./start.sh` inside WSL / Git Bash).
 ### Or manually with Docker / Podman:
 ```sh
 docker compose up -d --build
-docker compose --profile clean run --build --rm seed-clean
 ```
 
-Open <http://localhost:8080>. The local stack includes PostgreSQL, Redis,
-Meilisearch, Garage S3 storage, Mailpit, Adminer, and Uptime Kuma. Demo accounts and local payment scenarios are
-documented in [`docs/demo-accounts.md`](docs/demo-accounts.md).
+Open <http://localhost:8080>. The default stack includes the real application,
+PostgreSQL, Redis, Meilisearch and Garage storage, using persistent named volumes.
+It neither inserts demo records nor provisions local accounts. Existing accounts,
+products and orders are retained. Optional operator tools use the `tools` profile:
+`docker compose --profile tools up -d`. Mailpit is an optional developer inbox and
+is not used as the application's transactional sender by default.
 
 Local tools:
 
@@ -189,3 +206,21 @@ See [the customer workflow update](docs/customer-workflow-update.md) for checkou
 ## Current account and operations model
 
 WeeVCrafts uses Customer, Seller, Admin and Super Admin, with one role per account. See [four-role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.
+
+## Docker preview with Air
+
+Run `npm run dev:docker` to keep the real Docker application running behind Air's
+browser-refresh proxy at **http://localhost:8090**. Source changes rebuild the
+application container and refresh the connected browser after Compose reports it
+healthy. `npm run dev` remains available for a native Go development process; stop
+the Compose app before using that alternative because both use port 8080.
+
+The Dockerfile regenerates responsive images, Tailwind/minified assets and templ
+outputs during the image build. It includes the supplied PNG logo. The final image
+runs the compiled Go application as an unprivileged user without Node or Air.
+
+Local HTTP viewing uses development transport settings with demo switches disabled.
+An internet production deployment still requires HTTPS, secure cookies, PostgreSQL
+TLS with dedicated credentials, TLS object storage and configured payment providers;
+the server's production validation remains enabled. No remote deployment is implied
+by a successful local container build.

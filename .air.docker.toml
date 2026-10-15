@@ -1,0 +1,25 @@
+# Air rebuilds the real Compose application and refreshes its browser proxy.
+root = "."
+tmp_dir = "tmp/air-docker"
+[build]
+cmd = "docker compose up -d --build --wait app"
+entrypoint = ["node", "scripts/preview-idle.cjs"]
+include_dir = ["cmd", "internal", "web", "scripts"]
+include_file = ["Dockerfile", "compose.yaml", "go.mod", "go.sum", "package.json", "package-lock.json", "tailwind.config.js"]
+include_ext = ["go", "templ", "css", "js", "cjs", "json", "webp", "png", "jpg", "jpeg", "svg", "woff2"]
+exclude_dir = ["node_modules", "tmp", "bin", "web/assets/images/customer/responsive"]
+exclude_file = ["web/components/image_variants_generated.go", "internal/transport/web/static/app.css"]
+exclude_regex = ["_templ\\.go$", "_test\\.go$", "\\.min\\.(css|js)$"]
+exclude_unchanged = true
+delay = 900
+stop_on_error = false
+[proxy]
+enabled = true
+proxy_port = 8090
+app_port = 8080
+app_start_timeout = 60000
+[log]
+time = true
+[screen]
+clear_on_rebuild = false
+keep_scroll = true

@@ -1,10 +1,14 @@
+name: weevcrafts
+
 services:
   app:
+    image: weevcrafts-app:local
     build: .
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      WECRATFS_ENV: development
+      WECRATFS_ENV: ${WECRATFS_ENV:-development}
       WECRATFS_ADDR: ":8080"
       DATABASE_URL: postgres://wecratfs:wecratfs@postgres:5432/wecratfs?sslmode=disable
       REDIS_ADDR: redis:6379
@@ -13,13 +17,32 @@ services:
       S3_ACCESS_KEY: GK0123456789abcdef01234567
       S3_SECRET_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       S3_BUCKET: wecratfs-media
-      WECRATFS_LOCAL_MODE: "true"
-      WECRATFS_PAYMENT_MODE: local
-      WECRATFS_LOCAL_PAYMENT_SECRET: wecratfs-local-payment
-      WECRATFS_SMTP_ADDR: mailpit:1025
-      WECRATFS_SMTP_FROM: demo@weevcrafts.local
+      WECRATFS_PUBLIC_URL: ${WECRATFS_PUBLIC_URL:-http://localhost:8080}
+      WECRATFS_LOCAL_MODE: "false"
+      WECRATFS_NO_PAYMENT_DEMO: "false"
+      WECRATFS_PAYMENT_MODE: razorpay
+      WECRATFS_SECURE_COOKIES: ${WECRATFS_SECURE_COOKIES:-false}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      WECRATFS_SMTP_ADDR: ${WECRATFS_SMTP_ADDR:-}
+      WECRATFS_SMTP_USERNAME: ${WECRATFS_SMTP_USERNAME:-}
+      WECRATFS_SMTP_PASSWORD: ${WECRATFS_SMTP_PASSWORD:-}
+      WECRATFS_SMTP_FROM: ${WECRATFS_SMTP_FROM:-}
+      WECRATFS_RESEND_API_KEY_FILE: ${WECRATFS_RESEND_API_KEY_FILE:-}
+      WECRATFS_RESEND_FROM: ${WECRATFS_RESEND_FROM:-}
+      WECRATFS_RESEND_REPLY_TO: ${WECRATFS_RESEND_REPLY_TO:-}
+      WECRATFS_FIREBASE_PROJECT_ID: ${WECRATFS_FIREBASE_PROJECT_ID:-}
+      WECRATFS_FIREBASE_API_KEY: ${WECRATFS_FIREBASE_API_KEY:-}
+      WECRATFS_FIREBASE_APP_ID: ${WECRATFS_FIREBASE_APP_ID:-}
+      WECRATFS_FIREBASE_AUTH_DOMAIN: ${WECRATFS_FIREBASE_AUTH_DOMAIN:-}
+      WECRATFS_FIREBASE_SENDER_ID: ${WECRATFS_FIREBASE_SENDER_ID:-}
+      WECRATFS_FIREBASE_MEASUREMENT_ID: ${WECRATFS_FIREBASE_MEASUREMENT_ID:-}
+      WECRATFS_FIREBASE_VAPID_KEY: ${WECRATFS_FIREBASE_VAPID_KEY:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
     volumes:
       - product_uploads:/app/web/assets/images/uploads
+      - firebase_credentials:/run/secrets:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,10 +52,8 @@ services:
         condition: service_started
       garage-init:
         condition: service_completed_successfully
-      mailpit:
-        condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/health/live >/dev/null"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/health/ready >/dev/null"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -98,12 +119,14 @@ services:
         condition: service_started
 
   mailpit:
+    profiles: ["tools"]
     image: axllent/mailpit:v1.21
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
 
   adminer:
+    profiles: ["tools"]
     image: adminer:6.1.1-standalone
     restart: unless-stopped
     environment:
@@ -115,6 +138,7 @@ services:
         condition: service_healthy
 
   uptime-kuma:
+    profiles: ["tools"]
     image: louislam/uptime-kuma:2.5.5-slim
     restart: unless-stopped
     environment:
@@ -131,6 +155,7 @@ services:
       retries: 12
 
   uptime-kuma-setup:
+    profiles: ["tools"]
     image: louislam/uptime-kuma:2.5.5-slim
     restart: "no"
     command: ["node", "/app/extra/weevcrafts-provision.cjs"]
@@ -149,30 +174,6 @@ services:
       adminer:
         condition: service_started
 
-  seed-clean:
-    profiles: ["clean"]
-    build:
-      context: .
-      dockerfile: Dockerfile.clean
-    environment:
-      DATABASE_URL: postgres://wecratfs:wecratfs@postgres:5432/wecratfs?sslmode=disable
-      WECRATFS_ENV: development
-      WECRATFS_LOCAL_MODE: "true"
-      WECRATFS_SEED_EMPTY: "true"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  seed-demo:
-    profiles: ["demo"]
-    build:
-      context: .
-      dockerfile: Dockerfile.seed
-    environment:
-      DATABASE_URL: postgres://wecratfs:wecratfs@postgres:5432/wecratfs?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
 
 volumes:
   product_uploads:
@@ -180,3 +181,6 @@ volumes:
   meilisearch_data:
   garage_data:
   uptime_kuma_data:
+  firebase_credentials:
+    external: true
+    name: weevcrafts_firebase_credentials

@@ -1,3 +1,23 @@
+# Local application startup
+
+Normal startup retains existing data and accounts and does not run a seed command.
+Run `docker compose up -d --build --wait app`, or use `start.bat` / `start.sh`.
+Open http://localhost:8080, or run `npm run dev:docker` and use
+http://localhost:8090 for Air browser refresh. No demo or QA instance is started.
+
+The named PostgreSQL, media and identity-credential volumes persist across image
+and container replacement. Do not use `down --volumes` for routine rebuilds.
+Optional operator tools are under the `tools` profile. Real payments use the
+existing Razorpay provider and remain unavailable while its credentials are absent.
+Private transactional-email and Firebase settings can be supplied in `.env` and the
+existing read-only credentials volume. They are never embedded in the image.
+
+The historical three-account reset/seed procedure below is retained as an explicit
+maintenance reference only. It is not part of startup and was not run for the
+15 October rebuild.
+
+---
+
 # Clean local application
 
 The local app starts with exactly three active accounts, one seller studio and no products, addresses or orders.
@@ -10,7 +30,7 @@ The local app starts with exactly three active accounts, one seller studio and n
 
 All three local accounts use `WeeVCrafts-Local-2026!`. `WECRATFS_RESET_PASSWORD` overrides this development password (minimum 12 characters).
 
-Normal `start.bat` / `start.sh` uses the `clean` Compose profile. It provisions only an empty database and preserves existing accounts on subsequent starts. The old `demo` profile is optional and adds demo accounts/products; do not run it for the clean presentation.
+Historical clean/demo Compose profiles have been removed from normal configuration.
 
 Super Admin has a dedicated **User Management** navigation entry at `/super-admin/users`. Search by name, email or role; expand **Manage account** to edit account details, suspend/reactivate, reset passwords, change roles or delete non-protected accounts. Changes require an audit reason. Password/role changes revoke existing sessions; changing an email clears email verification. Deletion retains order/audit history. Super Admin access remains bootstrap-controlled.
 

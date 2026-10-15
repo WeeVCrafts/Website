@@ -45,29 +45,14 @@ if [ -z "$COMPOSE_CMD" ]; then
     exit 1
 fi
 
-echo "[+] Starting services (PostgreSQL, Redis, Search, Garage S3, Mailpit, Adminer, Uptime Kuma, Web)..."
+echo "[+] Starting services (PostgreSQL, Redis, Search, Garage S3, Web)..."
 $COMPOSE_CMD up -d --build
 
-# The setup service is idempotent; inspect its exit status on Docker/Podman.
-SETUP_CONTAINER="$($COMPOSE_CMD ps -a -q uptime-kuma-setup)"
-SETUP_EXIT="$("$CONTAINER_ENGINE" wait "$SETUP_CONTAINER")"
-if [ "$SETUP_EXIT" != "0" ]; then
-    $COMPOSE_CMD logs uptime-kuma-setup
-    exit 1
-fi
-
-echo "[+] Waiting for database to become healthy..."
-sleep 5
-
-echo "[+] Preparing the clean three-account application..."
-$COMPOSE_CMD --profile clean run --build --rm seed-clean || exit 1
+echo "[+] Existing accounts and catalog retained. No seeding or simulated payments."
 
 echo "========================================================"
 echo " Weevcrafts is LIVE!"
 echo " -> Storefront:     http://localhost:8080"
-echo " -> Mailpit (Email):http://localhost:8025"
-echo " -> Adminer:        http://localhost:8082"
-echo " -> Uptime Kuma:    http://localhost:3001"
 echo " -> Garage S3 API:   http://localhost:3900"
 echo " -> Garage Admin:    http://localhost:3903/health"
 echo "========================================================"

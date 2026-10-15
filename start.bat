@@ -21,24 +21,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [+] Starting services (PostgreSQL, Redis, Search, Garage S3, Mailpit, Adminer, Uptime Kuma, Web)...
+echo [+] Starting services (PostgreSQL, Redis, Search, Garage S3, Web)...
 docker compose up -d --build
 if %errorlevel% neq 0 exit /b 1
 
-echo [+] Waiting for local monitoring setup...
-docker compose wait uptime-kuma-setup
-if %errorlevel% neq 0 exit /b 1
-
-echo.
-echo [+] Preparing the clean three-account application...
-docker compose --profile clean run --build --rm seed-clean
-if %errorlevel% neq 0 exit /b 1
+echo [+] Existing accounts and catalog retained. No seeding or simulated payments.
 
 echo.
 echo ========================================================
 echo  Weevcrafts is LIVE!
-echo  Adminer: http://localhost:8082
-echo  Uptime Kuma: http://localhost:3001
 echo  Opening http://localhost:8080 in your browser...
 echo ========================================================
 start http://localhost:8080
