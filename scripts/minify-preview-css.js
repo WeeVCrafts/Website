@@ -6,11 +6,13 @@ const crypto = require("node:crypto");
 const root = path.resolve(__dirname, "..");
 const files = [
   "fonts.css",
+  "brand.css",
   "ui-standards.css",
   "theme.css",
   "utility.css",
   "customer-polish.css",
   "experience.css",
+  "storefront-reference.css",
   "admin.css",
   "seller-admin.css",
   "support-portal.css",

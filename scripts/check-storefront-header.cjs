@@ -27,10 +27,10 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     for (const width of [320,390,560,768,820,960,1024,1280,1440]) {
      await page.setViewportSize({width,height:900});
      expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
-     await page.locator('.menu-toggle').press('Enter');
+     await page.locator(width<=800?'.menu-toggle':'.all-categories').press('Enter');
      await expect(page.locator('#mobile-menu')).toBeVisible();
      await page.keyboard.press('Escape');
-     await expect(page.locator('.menu-toggle')).toBeFocused();
+     await expect(page.locator(width<=800?'.menu-toggle':'.all-categories')).toBeFocused();
     }
     await page.locator('#cart-count').click();
     await expect(page.locator('#guest-login-dialog')).toBeVisible();
@@ -58,7 +58,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toHaveAttribute('aria-expanded','true');
     await expect(page.locator('#profile-dropdown')).toBeVisible();
     await expect(page.locator('#profile-dropdown a').first(), `${name} ${role} ${width}px profile focus`).toBeFocused();
-    if(width>700) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
+    if(width>360) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
     else await expect(page.locator('.header-actions > #wishlist-count')).not.toBeVisible();
     await expect(page.locator('.header-actions > #cart-count')).toBeVisible();
     for (const value of ['0','12','123','—']) {
@@ -74,7 +74,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
       const profile=document.querySelector('.profile-toggle').getBoundingClientRect();
       const location=document.querySelector('.header-main .location').getBoundingClientRect();
       const panel=document.querySelector('.profile-panel').getBoundingClientRect();
-      if(header.height>76)issues.push('header is not one compact row');
+      if(header.height>(innerWidth<=800?130:76))issues.push('header exceeds reference height');
       if(search.right>profile.left)issues.push('search is not before profile');
       if(Math.abs((search.top+search.bottom)/2-(profile.top+profile.bottom)/2)>2)issues.push('search and profile are not aligned');
       if(innerWidth>1100){
@@ -82,7 +82,8 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
        if(Math.abs((location.top+location.bottom)/2-(search.top+search.bottom)/2)>2)issues.push('delivery location is not in search row');
       }
       if(panel.left<0||panel.right>innerWidth+1||panel.bottom>innerHeight+1)issues.push('profile panel overflows viewport');
-      if(document.querySelector('.desktop-navigation'))issues.push('inline shop navigation remains');
+      if(innerWidth>800 && !document.querySelector('.storefront-nav').getClientRects().length)issues.push('desktop category navigation is hidden');
+      if(innerWidth<=800 && search.width<100)issues.push('mobile search is collapsed');
       for(let i=0;i<parts.length;i++)for(let j=i+1;j<parts.length;j++){
        const a=parts[i].getBoundingClientRect(),b=parts[j].getBoundingClientRect();
        if(Math.min(a.right,b.right)-Math.max(a.left,b.left)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>1)issues.push(parts[i].className+' overlaps '+parts[j].className);
@@ -100,7 +101,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
       document.querySelectorAll('.desktop-navigation a').forEach(el=>{
        if(parseFloat(getComputedStyle(el).fontSize)<15)issues.push('desktop navigation text too small');
       });
-      document.querySelectorAll('.menu-toggle,.header-main .location small').forEach(el=>{
+      document.querySelectorAll('.menu-toggle').forEach(el=>{
        if(parseFloat(getComputedStyle(el).fontSize)<14)issues.push('header text too small');
       });
       return issues;
@@ -112,7 +113,6 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toBeFocused();
     await profileToggle.press('Enter');
     const searchInput = page.getByRole('combobox', {name:'Search products',exact:true});
-    if(width<=700) await page.locator('.global-search button[type=submit]').click();
     await searchInput.focus();
     await expect(searchInput).toBeVisible();
     const searchBounds = await searchInput.boundingBox();
@@ -120,9 +120,10 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(page.locator('#profile-dropdown')).not.toBeVisible();
    }
    const menu = page.getByRole('dialog',{name:'Explore the store'});
-   const toggle=page.locator('.menu-toggle');
+   let toggle;
    for (const width of [390,1440]) {
     await page.setViewportSize({width,height:900});
+    toggle=page.locator(width<=800?'.menu-toggle':'.all-categories');
     await toggle.press('Enter');
     await expect(menu).toBeVisible();
     expect(await menu.locator('a').evaluateAll(els=>els.every(el=>parseFloat(getComputedStyle(el).fontSize)>=16))).toBeTruthy();
@@ -160,7 +161,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await page.locator('.site-header').screenshot({path:path.join(screenshots,`header-updated-${width}.png`)});
    }
    expect(errors,`${name} ${role} page errors`).toEqual([]);
-   console.log(`${name} ${role}: 9 widths, single fixed toolbar, aligned search/profile, direct shopping counters/profile dismissal, modal keyboard/backdrop/navigation/reduced motion passed`);
+   console.log(`${name} ${role}: 9 widths, reference header, aligned search/profile, direct shopping counters/profile dismissal, modal keyboard/backdrop/navigation/reduced motion passed`);
    await page.close();
   }
   await browser.close();

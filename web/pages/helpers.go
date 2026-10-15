@@ -73,7 +73,7 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 		"@context": "https://schema.org",
 		"@graph": []any{
 			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": "Weevcrafts", "alternateName": "WeeVCrafts", "url": pageCanonicalURL(p)},
-			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/favicon.svg")},
+			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": "Weevcrafts", "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
 		},
 	}
 	encoded, err := json.Marshal(data)
@@ -753,6 +753,9 @@ func listingTitle(p viewmodels.CustomerPage) string {
 	if p.Query != "" {
 		return "Search results for “" + p.Query + "”"
 	}
+	if p.Category == "home" {
+		return "Explore Home & Living"
+	}
 	if p.Category != "" {
 		return strings.Title(strings.ReplaceAll(p.Category, "-", " "))
 	}
@@ -762,6 +765,9 @@ func listingTitle(p viewmodels.CustomerPage) string {
 func listingDescription(p viewmodels.CustomerPage) string {
 	if p.Query != "" {
 		return "Thoughtfully made pieces that match your search, from verified Indian makers."
+	}
+	if p.Category == "home" {
+		return "Handcrafted home decor that brings warmth, heritage and meaning to your everyday spaces."
 	}
 	if p.Category != "" {
 		return "Thoughtful pieces from independent Indian makers, made slowly and meant to last."
@@ -861,4 +867,11 @@ func firstProductVariant(product viewmodels.Product) viewmodels.ProductVariant {
 
 func selectedProductVariant(variant viewmodels.ProductVariant, product viewmodels.Product) bool {
 	return variant.ID != "" && variant.ID == strconv.FormatInt(product.VariantID, 10)
+}
+
+func quickViewVariantID(product viewmodels.Product) string {
+	if len(product.Variants) == 1 && !showVariantChoice(product) {
+		return product.Variants[0].ID
+	}
+	return ""
 }

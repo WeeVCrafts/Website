@@ -125,7 +125,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></script><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/alpine.min.js\"></script></head><body class=\"support-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#support-sidebar a, #support-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"support-skip-link\" href=\"#support-main\">Skip to main content</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></script><style>[x-cloak]{display:none!important}</style><script defer src=\"/assets/js/alpine.min.js\"></script><link rel=\"stylesheet\" href=\"/assets/css/brand.min.css\"><link rel=\"icon\" type=\"image/png\" href=\"/assets/images/brand/favicon.png\"></head><body class=\"support-body\" x-data=\"{sidebar:false}\" @keydown.escape.window=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\" @keydown.tab.window=\"if (sidebar) { const focusables = $el.querySelectorAll('#support-sidebar a, #support-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }\"><a class=\"support-skip-link\" href=\"#support-main\">Skip to main content</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -157,7 +157,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 35, Col: 144}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 37, Col: 144}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -180,7 +180,7 @@ func SupportDocument(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(p.DataWarning)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 39, Col: 70}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 41, Col: 70}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -224,14 +224,14 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<header class=\"support-header\"><div class=\"support-header-main\"><button class=\"support-menu-button\" type=\"button\" x-ref=\"supportMenu\" aria-label=\"Open support navigation\" aria-controls=\"support-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.supportSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"support-wordmark\" href=\"/support-portal\" aria-label=\"Weevcrafts support portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"support-portal-pill\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<header class=\"support-header\"><div class=\"support-header-main\"><button class=\"support-menu-button\" type=\"button\" x-ref=\"supportMenu\" aria-label=\"Open support navigation\" aria-controls=\"support-sidebar\" :aria-expanded=\"sidebar\" @click=\"sidebar=true; $nextTick(() => $refs.supportSidebarClose.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span></button> <a class=\"support-wordmark\" href=\"/support-portal\" aria-label=\"Weevcrafts support portal\"><img class=\"support-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a> <span class=\"support-portal-pill\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 54, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 56, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -244,7 +244,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var13 templ.SafeURL
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(supportPath(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 55, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 57, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -257,7 +257,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 58, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
@@ -270,7 +270,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -283,7 +283,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 116}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -296,7 +296,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 60, Col: 147}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 147}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -309,7 +309,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 61, Col: 131}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 63, Col: 131}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 		if templ_7745c5c3_Err != nil {
@@ -351,7 +351,7 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 87}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -364,7 +364,7 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 125}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 125}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -377,7 +377,7 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 69, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 156}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -410,7 +410,7 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 76, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 78, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 		if templ_7745c5c3_Err != nil {
@@ -470,7 +470,7 @@ func SupportNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var27 templ.SafeURL
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 85, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -483,7 +483,7 @@ func SupportNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue(ariaCurrent(key == current))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 85, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
 		if templ_7745c5c3_Err != nil {
@@ -496,7 +496,7 @@ func SupportNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(icon)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 169}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 85, Col: 169}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -509,7 +509,7 @@ func SupportNav(key, label, icon, current, href string) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 83, Col: 191}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 85, Col: 191}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -579,7 +579,7 @@ func SupportPageIntro(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(p.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 93, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -592,7 +592,7 @@ func SupportPageIntro(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(p.Subtitle)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 91, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 93, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
@@ -605,7 +605,7 @@ func SupportPageIntro(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportIntroImage(p.Active))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 92, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 94, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
 		if templ_7745c5c3_Err != nil {
@@ -808,7 +808,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(supportStatIcon(stat.Icon))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 186}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 186}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -821,7 +821,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 220}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 220}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -834,7 +834,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 246}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 246}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -869,7 +869,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var49 string
 			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(supportArrowIcon(stat.Positive))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 394}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 394}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 			if templ_7745c5c3_Err != nil {
@@ -882,7 +882,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var50 string
 			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Delta)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 415}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 415}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 			if templ_7745c5c3_Err != nil {
@@ -895,7 +895,7 @@ func SupportStatGrid(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var51 string
 			templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(stat.Period)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 124, Col: 434}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 126, Col: 434}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 			if templ_7745c5c3_Err != nil {
@@ -980,7 +980,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var56 string
 			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 533}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 135, Col: 533}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var56)
 			if templ_7745c5c3_Err != nil {
@@ -1015,7 +1015,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var59 string
 			templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 671}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 135, Col: 671}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
 			if templ_7745c5c3_Err != nil {
@@ -1050,7 +1050,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var62 string
 			templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 830}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 135, Col: 830}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var62)
 			if templ_7745c5c3_Err != nil {
@@ -1085,7 +1085,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var65 string
 			templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 133, Col: 995}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 135, Col: 995}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var65)
 			if templ_7745c5c3_Err != nil {
@@ -1136,7 +1136,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var68 string
 			templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "popular"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 580}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 145, Col: 580}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 			if templ_7745c5c3_Err != nil {
@@ -1171,7 +1171,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var71 string
 			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 720}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 145, Col: 720}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
 			if templ_7745c5c3_Err != nil {
@@ -1206,7 +1206,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var74 string
 			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 890}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 145, Col: 890}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var74)
 			if templ_7745c5c3_Err != nil {
@@ -1241,7 +1241,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var77 string
 			templ_7745c5c3_Var77, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payments"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1062}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 145, Col: 1062}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var77)
 			if templ_7745c5c3_Err != nil {
@@ -1276,7 +1276,7 @@ func Dashboard(p viewmodels.SupportPortalPage) templ.Component {
 			var templ_7745c5c3_Var80 string
 			templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "seller"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 143, Col: 1218}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 145, Col: 1218}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var80)
 			if templ_7745c5c3_Err != nil {
@@ -1359,7 +1359,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var85 string
 				templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "all"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 164}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 164}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var85)
 				if templ_7745c5c3_Err != nil {
@@ -1394,7 +1394,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var88 string
 				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "open"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 304}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 304}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var88)
 				if templ_7745c5c3_Err != nil {
@@ -1429,7 +1429,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var91 string
 				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "pending"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 460}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 460}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var91)
 				if templ_7745c5c3_Err != nil {
@@ -1464,7 +1464,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var94 string
 				templ_7745c5c3_Var94, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "urgent"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 619}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 619}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var94)
 				if templ_7745c5c3_Err != nil {
@@ -1499,7 +1499,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var97 string
 				templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "escalated"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 782}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 782}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var97)
 				if templ_7745c5c3_Err != nil {
@@ -1534,7 +1534,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var100 string
 				templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "resolved"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 151, Col: 948}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 153, Col: 948}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var100)
 				if templ_7745c5c3_Err != nil {
@@ -1555,7 +1555,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var101 string
 				templ_7745c5c3_Var101, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1708}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 154, Col: 1708}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var101))
 				if templ_7745c5c3_Err != nil {
@@ -1568,7 +1568,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var102 string
 				templ_7745c5c3_Var102, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Subject)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 1804}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 154, Col: 1804}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var102))
 				if templ_7745c5c3_Err != nil {
@@ -1581,7 +1581,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var103 string
 				templ_7745c5c3_Var103, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Customer)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2171}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 154, Col: 2171}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var103))
 				if templ_7745c5c3_Err != nil {
@@ -1594,7 +1594,7 @@ func Cases(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var104 string
 				templ_7745c5c3_Var104, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 152, Col: 2529}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 154, Col: 2529}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var104))
 				if templ_7745c5c3_Err != nil {
@@ -1683,7 +1683,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var109 string
 				templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "directory"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 177}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 177}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var109)
 				if templ_7745c5c3_Err != nil {
@@ -1718,7 +1718,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var112 string
 				templ_7745c5c3_Var112, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "participants"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 344}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 344}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var112)
 				if templ_7745c5c3_Err != nil {
@@ -1731,7 +1731,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var113 string
 				templ_7745c5c3_Var113, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 683}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 683}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var113)
 				if templ_7745c5c3_Err != nil {
@@ -1752,7 +1752,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var114 string
 				templ_7745c5c3_Var114, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 1919}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 1919}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var114))
 				if templ_7745c5c3_Err != nil {
@@ -1765,7 +1765,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var115 string
 				templ_7745c5c3_Var115, templ_7745c5c3_Err = templ.ResolveAttributeValue(firstSupportDirectoryEntry(p.Directory).Image)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 3756}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 3756}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var115)
 				if templ_7745c5c3_Err != nil {
@@ -1778,7 +1778,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var116 string
 				templ_7745c5c3_Var116, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportDirectoryEntry(p.Directory).Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 3822}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 3822}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var116))
 				if templ_7745c5c3_Err != nil {
@@ -1799,7 +1799,7 @@ func Customers(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var117 string
 				templ_7745c5c3_Var117, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).Order)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 162, Col: 6596}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 164, Col: 6596}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var117))
 				if templ_7745c5c3_Err != nil {
@@ -1888,7 +1888,7 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var122 string
 				templ_7745c5c3_Var122, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "items"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 174, Col: 4115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var122)
 				if templ_7745c5c3_Err != nil {
@@ -1923,7 +1923,7 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var125 string
 				templ_7745c5c3_Var125, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "payment"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4268}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 174, Col: 4268}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var125)
 				if templ_7745c5c3_Err != nil {
@@ -1958,7 +1958,7 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var128 string
 				templ_7745c5c3_Var128, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "shipping"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4427}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 174, Col: 4427}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var128)
 				if templ_7745c5c3_Err != nil {
@@ -1993,7 +1993,7 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var131 string
 				templ_7745c5c3_Var131, templ_7745c5c3_Err = templ.ResolveAttributeValue(supportTabAriaCurrent(p.Tab, "returns"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 4601}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 174, Col: 4601}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var131)
 				if templ_7745c5c3_Err != nil {
@@ -2006,7 +2006,7 @@ func Orders(p viewmodels.SupportPortalPage) templ.Component {
 				var templ_7745c5c3_Var132 string
 				templ_7745c5c3_Var132, templ_7745c5c3_Err = templ.JoinStringErrs(firstSupportCase(p.Cases).ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 172, Col: 8630}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 174, Col: 8630}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var132))
 				if templ_7745c5c3_Err != nil {
@@ -2061,7 +2061,7 @@ func SupportFooter() templ.Component {
 			templ_7745c5c3_Var133 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<footer class=\"support-footer\"><div class=\"support-trust\"><span><b>Crafted in India</b><small>Discover independent makers</small></span><span><b>Customer reviews</b><small>Read published product reviews</small></span><span><b>Artisan craft</b><small>Explore maker collections</small></span><span><b>Secure Payments</b><small>Status shown in your orders</small></span><span><b>Easy Returns</b><small>See the returns policy</small></span><span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></span></div><div class=\"support-footer-main\"><div><a class=\"support-wordmark inverse\" href=\"/support-portal\"><img class=\"support-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for India's arts, crafts and sarees.<br>Supporting artisans. Preserving traditions.<br>Building a brighter, more inclusive tomorrow.</p><div class=\"support-socials\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">photo_camera</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">language</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">play_circle</span></div></div><div><h3>Support Portal</h3><a href=\"/support-portal\">Dashboard</a><a href=\"/support-portal/cases\">Cases</a><a href=\"/support-portal/customers\">Customers &amp; Sellers</a><a href=\"/support-portal/orders\">Order View</a><a href=\"/support-portal/cases\">Knowledge Base</a></div><div><h3>Help</h3><a href=\"/support-portal/cases\">Help Center</a><a href=\"/support-portal/cases\">Contact Support</a><a href=\"/support-portal/cases\">Report an Issue</a><a href=\"/support-portal/cases\">Community Guidelines</a><a href=\"/support-portal/cases\">Terms of Service</a></div><div><h3>About</h3><a href=\"/account\">Our Story</a><a href=\"/makers/mithila-arts\">Sustainability</a><a href=\"/makers/mithila-arts\">Impact</a><a href=\"/account\">Careers</a><a href=\"/account\">Contact Us</a></div><div><h3>A stronger tomorrow, together.</h3><p>Creating opportunities for artisans, one craft at a time.</p><span class=\"support-footer-leaf material-symbols-outlined\" aria-hidden=\"true\">eco</span></div></div><div class=\"support-footer-bottom\"><span>© 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions &nbsp;|&nbsp; Privacy Policy &nbsp;|&nbsp; Cookie Policy</span><span>Made with ♥ in India &nbsp;|&nbsp; A more handmade tomorrow</span></div></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<footer class=\"support-footer\"><div class=\"support-trust\"><span><b>Crafted in India</b><small>Discover independent makers</small></span><span><b>Customer reviews</b><small>Read published product reviews</small></span><span><b>Artisan craft</b><small>Explore maker collections</small></span><span><b>Secure Payments</b><small>Status shown in your orders</small></span><span><b>Easy Returns</b><small>See the returns policy</small></span><span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></span></div><div class=\"support-footer-main\"><div><a class=\"support-wordmark inverse\" href=\"/support-portal\"><img class=\"support-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a><p>A marketplace for India's arts, crafts and sarees.<br>Supporting artisans. Preserving traditions.<br>Building a brighter, more inclusive tomorrow.</p><div class=\"support-socials\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">photo_camera</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">language</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">play_circle</span></div></div><div><h3>Support Portal</h3><a href=\"/support-portal\">Dashboard</a><a href=\"/support-portal/cases\">Cases</a><a href=\"/support-portal/customers\">Customers &amp; Sellers</a><a href=\"/support-portal/orders\">Order View</a><a href=\"/support-portal/cases\">Knowledge Base</a></div><div><h3>Help</h3><a href=\"/support-portal/cases\">Help Center</a><a href=\"/support-portal/cases\">Contact Support</a><a href=\"/support-portal/cases\">Report an Issue</a><a href=\"/support-portal/cases\">Community Guidelines</a><a href=\"/support-portal/cases\">Terms of Service</a></div><div><h3>About</h3><a href=\"/account\">Our Story</a><a href=\"/makers/mithila-arts\">Sustainability</a><a href=\"/makers/mithila-arts\">Impact</a><a href=\"/account\">Careers</a><a href=\"/account\">Contact Us</a></div><div><h3>A stronger tomorrow, together.</h3><p>Creating opportunities for artisans, one craft at a time.</p><span class=\"support-footer-leaf material-symbols-outlined\" aria-hidden=\"true\">eco</span></div></div><div class=\"support-footer-bottom\"><span>© 2024 Weevcrafts. All rights reserved.</span><span>Terms &amp; Conditions &nbsp;|&nbsp; Privacy Policy &nbsp;|&nbsp; Cookie Policy</span><span>Made with ♥ in India &nbsp;|&nbsp; A more handmade tomorrow</span></div></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

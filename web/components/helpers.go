@@ -1,10 +1,12 @@
 package components
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/assets"
 )
 
@@ -108,4 +110,29 @@ func ratingStars(rating string) int {
 		return 5
 	}
 	return count
+}
+
+// Named options require explicit selection before purchase.
+func ProductCardCanAdd(product viewmodels.Product) bool {
+	return product.InStock && len(product.Variants) == 1 && product.Variants[0].InStock && strings.EqualFold(product.Variants[0].Name, "Default variant")
+}
+
+// Keep compact homepage cards compact after a wishlist fragment update.
+func productCardWishlistValues(saved, actions bool) string {
+	if saved {
+		return fmt.Sprintf(`{"source":"wishlist","context":"product-card","card_actions":"%t"}`, actions)
+	}
+	return fmt.Sprintf(`{"card_actions":"%t"}`, actions)
+}
+
+func LegacyCategoryLabel(category string) string {
+	switch category {
+	case "natural-care":
+		return "Natural care"
+	case "slow-living":
+		return "Slow living"
+	case "home-wellbeing":
+		return "Home wellbeing"
+	}
+	return "Categories"
 }

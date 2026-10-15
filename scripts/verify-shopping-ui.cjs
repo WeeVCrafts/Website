@@ -5,7 +5,7 @@ const {output}=require('./ui-ux-qa-paths.cjs');
 async function main(){
  await fs.mkdir(output,{recursive:true});
  const results=[];
- for(const [engine,type]of Object.entries({chromium,firefox,webkit})){
+ for(const [engine,type]of Object.entries({chromium,firefox,webkit}).filter(([name])=>(process.env.WEEVCRAFTS_UI_ENGINES||'chromium,firefox,webkit').split(',').includes(name))){
   const browser=await type.launch();const context=await browser.newContext({baseURL:target,viewport:{width:390,height:844}});
   const page=await context.newPage();page.setDefaultTimeout(15000);
   const started=Date.now();

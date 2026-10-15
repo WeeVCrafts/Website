@@ -86,7 +86,9 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
       </script>
 
-    </head>
+    <link rel="stylesheet" href="/assets/css/brand.min.css"/>
+<link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
+</head>
 
     <body class="admin-body">
 
@@ -160,7 +162,7 @@ templ Sidebar(p viewmodels.AdminPage) {
 
     <button class="admin-sidebar-close" type="button" x-ref="adminSidebarClose" aria-label="Close admin navigation" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
 
-    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "Weevcrafts " + p.PortalLabel }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
+    <a class="admin-brand" href={ p.PortalRoot } aria-label={ "Weevcrafts " + p.PortalLabel }><img class="brand-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
 
     <nav class="admin-nav" aria-label="Admin navigation">
 
@@ -228,7 +230,7 @@ templ AdminHeader(p viewmodels.AdminPage) {
 
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
 
-    <a class="admin-header-brand" href={ p.PortalRoot } aria-label="Weevcrafts"><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
+    <a class="admin-header-brand" href={ p.PortalRoot } aria-label="Weevcrafts"><img class="brand-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a>
 
     <span class="admin-portal-pill">{ p.PortalLabel }</span>
 
@@ -683,7 +685,7 @@ templ AdminFooter(p viewmodels.AdminPage) {
 
   <footer class="admin-footer admin-footer-simple">
 
-    <a class="admin-brand inverse" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
+    <a class="admin-brand inverse" href={ p.PortalRoot }><img class="brand-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>{ p.PortalLabel }</small></span></a>
 
     <span>Handmade in India · Delivery to serviceable PIN codes across India</span>
 

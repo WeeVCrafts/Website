@@ -3,13 +3,13 @@ version: alpha
 name: WeeVCrafts
 description: An Indian craft marketplace with an editorial storefront and calm operational workspaces.
 colors:
-  primary: "#124534"
-  background: "#f6f0e6"
-  surface: "#fffdf8"
-  ink: "#2d201b"
-  muted: "#625548"
-  accent: "#9d4031"
-  border: "#dfd3c5"
+  primary: "#ad3619"
+  background: "#fcfbf8"
+  surface: "#fffefa"
+  ink: "#2c2923"
+  muted: "#625e54"
+  accent: "#ad3619"
+  border: "#e9e2d7"
 typography:
   heading:
     fontFamily: "Playfair Display, Georgia, serif"
@@ -51,9 +51,9 @@ Playfair Display headings; DM Sans body and interface text. Controls use 16px, d
 
 ## Layout
 
-Storefront max width remains 1240px with 24px desktop gutters and 16px narrow gutters. The homepage order is hero, shallow category rail, available product selection, makers, curated collections. Avoid repeated mission statements before products. Mobile header keeps 44px controls, a compact brand/action row and prominent search. Details retain the mobile purchase bar without covering focus. Operational dashboards show permitted actions, summaries and bounded previews; full queues own dataset navigation. Document scrolling remains natural; only genuine tables may scroll horizontally.
+Discovery content uses a 1320px maximum width with full-width photographic banners. Forms and task pages retain their established narrower layouts. The homepage order is hero, shallow category rail, available product selection, makers, curated collections. Avoid repeated mission statements before products. Mobile header keeps 44px controls, a compact brand/action row and prominent search. Details retain the mobile purchase bar without covering focus. Operational dashboards show permitted actions, summaries and bounded previews; full queues own dataset navigation. Document scrolling remains natural; only genuine tables may scroll horizontally.
 
-The shared storefront header places Menu at the top left and centers the logo and branding. The next row runs from delivery location at the left to search near the right and then the profile control. On narrow screens, delivery location sits above the search/profile row, preserving this reading and keyboard order. Wishlist and cart are direct, counted shopping actions alongside the profile control. Account, notifications and sign out remain in the profile disclosure; a direct logout button remains at the top right. Its trigger displays the signed-in customer's existing private photo when available. On narrow account pages, a collapsible Account menu precedes the current section without delaying it behind the full navigation.
+The desktop storefront header has a brand, delivery, search and account/actions row above category navigation. The supplied logo accompanies the wordmark. Narrow screens use a compact menu/brand row and prominent search, with delivery available through its established control. Wishlist and cart are direct, counted shopping actions alongside the profile control. Account, notifications and sign out remain in the profile disclosure; a direct logout button remains available. Its trigger displays the signed-in customer's existing private photo when available. On narrow account pages, a collapsible Account menu precedes the current section without delaying it behind the full navigation.
 
 ## Elevation & Depth
 
@@ -69,7 +69,7 @@ Controls use the existing 6px radius. Panels use restrained rounding. Hearts ret
 | --- | --- | --- |
 | Paper/ink/brand/type | `theme.css` root variables | shared header, footer, product cards, pages |
 | Storefront refinements | `customer-polish.css` | compact header, hero, facets, account |
-| Shopping experience / responsive media | `experience.css`, `experience.js`, shared templ components | manual hero, filters, gallery, mobile purchase controls |
+| Shopping experience / responsive media | `experience.css`, `experience.js`, shared templ components | automatic hero, filters, gallery, mobile purchase controls |
 | Semantic status and operational tables | `ui-standards.css`, `components/presentation.go` | all role portals and order history |
 | Native fields and validation | `ui-standards.js` | seller, support, admin and checkout |
 | Canonical media | product database and upload workflow | cards, galleries, seller editor |
@@ -86,7 +86,7 @@ Header update: the storefront uses one sticky toolbar at every scroll position. 
 
 The foundation, focus, feedback, form and reflow rules apply to all four current roles and their detail screens. Shared badges, tables, dialogs and labels inherit the document's interface family: DM Sans in the storefront, Inter in operational portals. Storefront headings remain Playfair Display; operational headings remain Roboto. Font preloads and CSS use the same WOFF2 URLs. Original TTFs and licences remain maintained sources. The Material Symbols subset preserves the required ligature feature and referenced glyphs.
 
-Controls use 44px comfort targets, 16px entry text, visible 2px focus outlines, 6px corners and a meaningful control border (#8e7d6b); decorative dividers keep the lighter border. Hero navigation is manual, three stories maximum, 250ms opacity only, with inactive links inert. Later images/video are deferred. Product media reserves a square frame and uses contain rather than cropping the object. Product photography, real choices and current prices override generated composition references.
+Controls use 44px comfort targets, 16px entry text, visible 2px focus outlines, 6px corners and a meaningful control border (#8e7d6b); decorative dividers keep the lighter border. The homepage has five stories and advances every 4 seconds, with visible Pause/Play and manual navigation. Hover, focus, manual selection and a hidden browser tab pause playback; reduced-motion users start paused. Inactive links remain inert. Later images/video are deferred. Product media reserves a square frame and uses contain rather than cropping the object. Product photography, real choices and current prices override generated composition references.
 
 Listing updates preserve the open sheet, facet searches, scroll, expanded groups and active control through HTMX settlement. Hidden mobile sheets are inert immediately, including before enhancement. Drawer/sheet motion is 180ms; keyboard and reduced-motion access is immediate. One contextual purchase region is visible; it yields to inline controls, policy links and text-entry focus. No bottom navigation or promotional layer is added.
 
@@ -95,3 +95,15 @@ Operational data uses native tables with scoped column/row headers and named, fo
 See the dated implementation ledger for actual route/state coverage and limitations. Physical devices, browser-native zoom and screen readers remain release checks; a browser score is not certification.
 
 Account access is an optional, focused task within the accepted storefront identity. A compact single-column card retains existing paper/forest/terracotta tokens and type families, readable labels, 48px fields and 44px password controls. Public browsing is a visible exit. Account screens replace the discovery/trust footer with small Help/Privacy/Terms links; they do not add hero photography, decorative animation or disabled provider controls above the primary form. This presentation is shared by sign-in, sign-up and account recovery without changing provider or server security policy.
+
+## Approved customer references — 15 October 2026
+
+The two customer-supplied reference images supersede earlier storefront header, footer, discovery density, and card geometry descriptions above. This is an approved customer-only visual evolution; operational portals keep their palettes and typography. `theme.css` owns the palette through `.storefront-body` variables; `storefront-reference.css` owns the reference composition and responsive variants, loaded after existing experience styles. Shared existing interaction owners remain authoritative.
+
+The storefront uses near-white paper (#fcfbf8), warm white surfaces (#fffefa), dark brown headings (#66250f), terracotta actions (#ad3619), light warm dividers (#e9e2d7), and green availability (#245b34). Playfair Display remains the serif display/card-name face; DM Sans remains interface/body type. The wordmark reads WeevCrafts. Discovery containers cap at 1320px with 40px desktop and 16px phone gutters. The desktop shell has a brand/delivery/search/actions row and a category-navigation row. On phones the brand/menu row precedes visible search and shopping actions. Notifications, private avatars, and sign out remain available.
+
+Homepage order: panoramic five-slide craft hero, seven circular category links, six compact live product cards, three horizontal maker cards, five collection links, pale trust band, light compact footer. Listings use a shallow lifestyle banner, existing functional filters, editorial collection links, native sort, removable URL-backed chips, and three wide-desktop product columns. Mobile discovery rails scroll visibly, cards use two columns or one at 360px and below, and filtering retains its accessible sheet. Product images contain the real object without cropping; wide card frames therefore intentionally differ from the sample's staged photographs. Real products and truthful metadata take precedence over sample names, ratings, badges, and counts. Missing maker portraits use text, never a generated identity.
+
+All customer task surfaces adopt these materials and controls through the shared shell and scoped styles while retaining their current layout and workflow. Auth keeps its compact help/policy footer. Quick view is a native modal with real product/variant data and existing cart behavior. Editorial banner artwork is illustrative; it is never used as a maker portrait or product record. The footer links to existing notification preferences rather than introducing newsletter delivery.
+
+The supplied teal-and-gold logo is used in storefront and operational branding and favicons; its cream background and proportions are retained. This explicitly requested brand update does not restyle operational layouts.

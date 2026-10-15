@@ -216,11 +216,11 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		route string
 		want  []string
 	}{
-		{route: "/", want: []string{"Pieces to make your own", "Stories behind the craft", "/assets/images/customer/hero-studio.webp"}},
+		{route: "/", want: []string{"Featured from our makers", "Meet the Makers", "/assets/images/customer/craft-banner.webp"}},
 		{route: "/categories", want: []string{"Browse by craft", "Shop by craft", "Gifts that feel personal"}},
 		{route: "/brands", want: []string{"Explore brands with a story", "Mithila Arts", "Weaver&#39;s Touch"}},
 		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Independent maker brand", "Pieces from Mithila Arts"}},
-		{route: "/search?q=handloom+sarees", want: []string{"Filter by", "handloom sarees", `class="product-card"`}},
+		{route: "/search?q=handloom+sarees", want: []string{"Filters", "handloom sarees", `class="product-card"`}},
 		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More to explore"}},
 		{route: "/wishlist", want: []string{"items in your wishlist", "View product", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},
@@ -605,7 +605,7 @@ func TestMockListingStateAndSafeLinks(t *testing.T) {
 		t.Fatalf("status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	for _, want := range []string{`option value="price-desc" selected`, `name="category" value="sarees" checked`, `name="brand" value="weavers-touch" checked`, `Sarees`, `Weaver&#39;s Touch`, `<span>(1)</span>`, "1 results"} {
+	for _, want := range []string{`option value="price-desc" selected`, `name="category" value="sarees" checked`, `name="brand" value="weavers-touch" checked`, `Sarees`, `Weaver&#39;s Touch`, `<span>(1)</span>`, "1 handmade products"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("listing response is missing %q", want)
 		}

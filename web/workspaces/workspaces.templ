@@ -17,10 +17,12 @@ templ Document(p viewmodels.WorkspacePage) {
 				@media(max-width:480px){.bar{align-items:flex-start}.bar-actions{flex-wrap:wrap;justify-content:flex-end}.choice{min-height:7.5rem}}
 				@media(prefers-reduced-motion:reduce){.choice{transition:none}}
 			</style>
-		</head>
+		<link rel="stylesheet" href="/assets/css/brand.min.css"/>
+<link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
+</head>
 		<body>
 			<header class="bar">
-				<a class="brand" href="/"><img class="brand-mark" src="/assets/images/favicon.svg" alt="" width="36" height="36"/><span>Weevcrafts</span></a>
+				<a class="brand" href="/"><img class="brand-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span>Weevcrafts</span></a>
 				<div class="bar-actions">
 					<span>{ p.DisplayName }</span>
 					<form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit">Sign out</button></form>

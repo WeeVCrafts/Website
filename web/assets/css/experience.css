@@ -80,7 +80,9 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .storefront-body .gallery-main > :is(img,video) { width: 100%; height: 100%; object-fit: contain; }
 .storefront-body [data-gallery-media][hidden] { display: none !important; }
 .storefront-body .gallery-main { touch-action: pan-y pinch-zoom; }
-.storefront-body .hero-controls[hidden], .storefront-body [data-gallery-controls][hidden] { display: none !important; }
+/* Keep the controls' final geometry before enhancement and without scripts. */
+.storefront-body .hero-controls[hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
+.storefront-body [data-gallery-controls][hidden] { display: none !important; }
 .gallery-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
 .gallery-controls button { min-width: 44px; min-height: 44px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); }
 .gallery-controls output { font: 400 14px/1.5 var(--sans); font-variant-numeric: tabular-nums; }

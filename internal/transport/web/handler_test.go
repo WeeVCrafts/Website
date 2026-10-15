@@ -208,7 +208,7 @@ func TestHomeShowsTruthfulEmptyState(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
 	body := recorder.Body.String()
-	for _, expected := range []string{"Weevcrafts", "Closer to nature", "No products published yet", "Published products will appear here"} {
+	for _, expected := range []string{"Weevcrafts", "Our collection is on its way", "New pieces will appear here when our makers publish them"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("expected %q in body", expected)
 		}
@@ -389,7 +389,7 @@ func TestLiveProductImagesExposeIntrinsicSizing(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
 	body := recorder.Body.String()
-	if !strings.Contains(body, `width="640" height="800"`) || !strings.Contains(body, `sizes="(max-width:360px) calc(100vw - 32px)`) {
+	if !strings.Contains(body, `width="640" height="640"`) || !strings.Contains(body, `sizes="(max-width:360px) calc(100vw - 32px)`) {
 		t.Fatal("product cards are missing intrinsic image sizing")
 	}
 }
@@ -878,7 +878,7 @@ func TestUnknownOptionCardsNavigateAndDetailUsesFragmentSafeCartContract(t *test
 		if target == "/" {
 			// Listing responses do not expose the full option set. Keep the
 			// product decision explicit instead of guessing a default option.
-			if !strings.Contains(body, `href="/products/real-product">View product</a>`) {
+			if !strings.Contains(body, `href="/products/real-product">Real product</a>`) {
 				t.Fatal("unknown-option card must navigate to product choices")
 			}
 			continue

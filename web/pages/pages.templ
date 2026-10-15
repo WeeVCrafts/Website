@@ -37,7 +37,7 @@ templ Document(p viewmodels.CustomerPage) {
         @templ.JSONScript("product-schema", json.RawMessage(schema)).WithType("application/ld+json")
       }
       <title>{ p.Title } - Weevcrafts</title>
-      <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
+      <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
       <link rel="preload" href={ assets.URL("fonts/dm-sans-400.woff2") } as="font" type="font/woff2" crossorigin/>
       <link rel="preload" href={ assets.URL("fonts/playfair-display-500.woff2") } as="font" type="font/woff2" crossorigin/>
       <link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
@@ -46,9 +46,12 @@ templ Document(p viewmodels.CustomerPage) {
       <link rel="stylesheet" href={ assets.URL("css/customer-polish.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/ui-standards.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/experience.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/storefront-reference.min.css") }/>
+      <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
       <noscript><style>/* Optional provider controls need JavaScript; native forms remain usable. */[data-firebase-google-panel],[data-firebase-link]{display:none!important}@media(max-width:800px){.storefront-body .filter-sidebar:not(.is-open){display:block}.storefront-body .mobile-filter-toggle{display:none}}</style></noscript>
       <script defer src={ assets.URL("js/ui-standards.min.js") }></script>
       <script defer src={ assets.URL("js/experience.min.js") }></script>
+      <script defer src={ assets.URL("js/quick-view.min.js") }></script>
       <style>[x-cloak]{display:none!important}</style>
       <script defer src="/assets/js/htmx.min.js"></script>
       <script defer src="/assets/js/alpine.min.js"></script>
@@ -183,6 +186,7 @@ templ Document(p viewmodels.CustomerPage) {
       <div id="ui-loading" class="htmx-indicator" role="status" aria-live="polite">Updating…</div>
       <div id="ui-toast" role="status" aria-live="polite"></div>
       @components.Header(p)
+      @QuickViewDialog()
       <main id="page" tabindex="-1" x-data="{checkoutStep:1,payment:'upi',detailQuantity:1}">
         if p.Route == "/payments" {
           <nav class="payment-state-links container" aria-label="Payment status views"><span>Reconciliation views</span><a href="/payments/success">Success</a><a href="/payments/pending">Pending</a><a href="/payments/failed">Failed</a></nav>
@@ -261,7 +265,7 @@ templ SearchSuggestions(products []viewmodels.Product, query string) {
     <p class="search-suggestion-empty">No products match “{ query }”.</p>
   } else {
     for _, product := range productSlice(products, 0, 5) {
-      <a class="search-suggestion" role="option" id={ "search-suggestion-" + product.Slug } aria-selected="false" href={ "/products/" + product.Slug }><img src={ product.ImageURL } alt="" width="40" height="44"/><span><strong>{ product.Name }</strong><small>By { product.Seller } · { product.Price }</small></span></a>
+      <a class="search-suggestion" role="option" id={ "search-suggestion-" + product.Slug } aria-selected="false" href={ "/products/" + product.Slug }><img src={ product.ImageURL } srcset={ components.ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="40px" decoding="async" alt="" width="40" height="44"/><span><strong>{ product.Name }</strong><small>By { product.Seller } · { product.Price }</small></span></a>
     }
     if query != "" {
       <a class="search-suggestion-all" href={ "/search?q=" + url.QueryEscape(query) }>View all results</a>
@@ -289,7 +293,7 @@ templ CategorySidebarLinks(categories []viewmodels.Category) {
 
 templ SellerCards(sellers []viewmodels.Seller) {
   for _, seller := range sellers {
-    <a class="seller-card" href={ "/makers/" + seller.Slug }><img src={ components.ProductImage(seller.ImageURL) } alt={ "Collection from " + seller.Name } loading="lazy" width="320" height="320"/><span class="seller-card-copy"><b>{ seller.Name }</b><small>{ seller.Location }</small><em>{ seller.Description }</em><strong>Explore store <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></strong></span></a>
+    <a class="seller-card" href={ "/makers/" + seller.Slug }><img src={ components.ProductImage(seller.ImageURL) } srcset={ components.ResponsiveImageSrcSet(seller.ImageURL, "") } sizes="(max-width:720px) 45vw, (max-width:1050px) 45vw, 300px" alt={ "Collection from " + seller.Name } loading="lazy" decoding="async" width="320" height="320"/><span class="seller-card-copy"><b>{ seller.Name }</b><small>{ seller.Location }</small><em>{ seller.Description }</em><strong>Explore store <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></strong></span></a>
   }
 }
 
@@ -349,20 +353,25 @@ templ CheckoutSummaryItems(items []viewmodels.CartItem) {
 templ Home(p viewmodels.CustomerPage) {
   @Document(p) {
     @HomeHero()
-    <section class="container category-rail home-rail"><a class="category-card" href="/products?category=arts"><img src="/assets/images/customer/madhubani-tree.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/madhubani-tree.webp", "") } sizes="(max-width:720px) 30vw, 380px" alt="Madhubani painting" loading="lazy" width="1254" height="1254"/><span><strong>Arts</strong><small>Paintings, sculptures, traditional art &amp; more</small><b>Explore Arts <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="category-card" href="/products?category=crafts"><img src="/assets/images/customer/wooden-box.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/wooden-box.webp", "") } sizes="(max-width:720px) 30vw, 380px" alt="Carved wooden jewellery box" loading="lazy" width="1254" height="1254"/><span><strong>Crafts</strong><small>Home decor, handicrafts, lifestyle &amp; gifts</small><b>Explore Crafts <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="category-card" href="/products?category=textiles"><img src="/assets/images/customer/saree-maroon.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/saree-maroon.webp", "") } sizes="(max-width:720px) 30vw, 380px" alt="Handwoven maroon saree" loading="lazy" width="1254" height="1254"/><span><strong>Textiles</strong><small>Handloom, heritage &amp; contemporary</small><b>Explore Textiles <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a></section>
-    <section class="container section">
-        @SectionHeading("SELECTED BY CRAFT", "Pieces to make your own", "Beautiful things, made slowly and thoughtfully.")
-<div class="product-grid product-grid--four" data-backend-products="featured">
-        if len(p.Products) == 0 {
-          <div class="empty-state"><h2>No products published yet</h2><p>Closer to nature, made with care. Published products will appear here.</p></div>
+    @HomeCategoryRail()
+    <section class="container section home-featured">
+      @SectionHeading("", "Featured from our makers", "Handpicked pieces, made with love across India.")
+      <div class="product-grid home-product-grid" data-backend-products="featured">
+        if len(availableProducts(p.Products, "", 6)) == 0 {
+          <div class="empty-state"><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class="outline-button" href="/products">Explore the collection</a></div>
         } else {
-          @ProductCards(availableProducts(p.Products, "", 8), true)
-        }</div></section>
-    <section class="container section">
-        @MakerHeading()
-<div class="seller-grid" data-backend-makers>@SellerCards(p.Sellers)</div></section>
-    <section class="container section collection-section">
-        @SectionHeading("CURATED FOR YOU", "Find your kind of beautiful", "Collections with a little more meaning.")<div class="collection-grid"><a class="collection-card collection-card--large" href="/products?category=textiles"><img src="/assets/images/customer/saree-blue.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/saree-blue.webp", "") } sizes="(max-width:720px) calc(100vw - 32px), 620px" alt="Handloom textile" loading="lazy" width="1254" height="1254"/><span><small>For every occasion</small><strong>The textile edit</strong><b>Shop handlooms <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card" href="/products?category=home"><img src="/assets/images/customer/terracotta-planter.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/terracotta-planter.webp", "") } sizes="(max-width:720px) calc(100vw - 32px), 620px" alt="Terracotta planter" loading="lazy" width="1254" height="1254"/><span><small>For your home</small><strong>Earth &amp; object</strong><b>Explore <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a><a class="collection-card" href="/products?category=crafts"><img src="/assets/images/customer/terracotta-lamp.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/terracotta-lamp.webp", "") } sizes="(max-width:720px) calc(100vw - 32px), 620px" alt="Terracotta diyas" loading="lazy" width="1254" height="1254"/><span><small>For giving</small><strong>Thoughtful gifts</strong><b>Find a gift <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a></div></section>
+          @ProductCards(availableProducts(p.Products, "", 6), false)
+        }
+      </div>
+    </section>
+    <section class="container section home-makers"><div class="section-head"><div><h2>Meet the Makers</h2><p>Incredible people. Timeless skills. Brighter tomorrows.</p></div><a class="text-link" href="/makers">View all makers <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@HomeMakers(p)</section>
+    <section class="container section home-collections"><div class="section-head"><div><h2>Curated Collections</h2><p>Thoughtfully chosen for meaningful living.</p></div></div><div class="home-collection-grid">
+      @CollectionTile("/products?category=textiles", "saree-maroon.webp", "For every occasion", "Handloom pieces to cherish")
+      @CollectionTile("/products?category=home", "living-banner.webp", "For your home", "Decor that tells a story")
+      @CollectionTile("/products?q=gift", "wooden-box.webp", "Thoughtful gifts", "Handmade, heartfelt")
+      @CollectionTile("/products?category=crafts", "terracotta-planter.webp", "Slow living", "Mindful crafts for everyday life")
+      @CollectionTile("/products?q=brass", "brass-elephant.webp", "Festive favourites", "Traditional craft, modern homes")
+    </div></section>
   }
 }
 
@@ -451,19 +460,28 @@ templ SortOption(value, label, current string) {
 
 templ Listing(p viewmodels.CustomerPage) {
   @Document(p) {
-    <section class="container page-intro listing-intro">
-      @Breadcrumb("Home", listingTitle(p))
-      <h1>{ listingTitle(p) }</h1>
-      <p class="listing-description">{ listingDescription(p) }</p>
-    </section>
-    <form id="listing-filters" class="container listing-filter-form" method="get" action="/products" hx-get="/products" hx-select="#page" hx-target="#page" hx-sync="#page:replace" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#ui-loading" data-listing-filters>
+    @ListingContent(p)
+  }
+}
+
+// Filters update their counts, title, controls and results together. Keep the
+// surrounding document and shared scripts out of the swap.
+templ ListingUpdate(p viewmodels.CustomerPage) {
+  <title>{ p.Title } - Weevcrafts</title>
+  @ListingContent(p)
+}
+
+templ ListingContent(p viewmodels.CustomerPage) {
+  <div id="listing-content">
+    @ListingBanner(p)
+    <form id="listing-filters" class="container listing-filter-form" method="get" action="/products" hx-get="/products" hx-select="#listing-content" hx-target="#listing-content" hx-swap="outerHTML" hx-sync="#page:replace" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#ui-loading" data-listing-filters>
       <input type="hidden" name="q" value={ p.Query }/>
       if p.Category == "offers" {
         <input type="hidden" name="category" value={ p.Category }/>
       }
       <section class="listing-layout">
         <aside id="listing-filter-sidebar" class="filter-sidebar" aria-label="Product filters" data-filter-panel><button class="mobile-filter-close" type="button" data-filter-close>Close filters</button>
-          <div class="filter-head"><h2 id="filter-title">Filter by</h2><a href="/products">Clear all</a></div>
+          <div class="filter-head"><h2 id="filter-title">Filters</h2><a href="/products">Clear all</a></div>
           <details open>
             <summary>Categories <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
             <div class="facet-search" x-data="{query:''}"><label class="sr-only" for="facet-category">Search categories</label><input id="facet-category" type="search" placeholder="Find categories" x-model="query"/><button type="button" x-show="query" x-cloak aria-label="Clear categories search" @click="query=''; $el.previousElementSibling.focus()">Clear</button><div class="facet-options">
@@ -495,8 +513,14 @@ templ Listing(p viewmodels.CustomerPage) {
           <noscript><button class="primary-button" type="submit">Apply filters</button></noscript>
         </aside><button class="filter-backdrop" type="button" aria-label="Close filters" data-filter-close tabindex="-1" hidden></button>
         <div id="listing-results" class="listing-results">
+          @ListingCollections()
           <div class="results-toolbar">
-            <b data-backend-result-count>{ listingResultCount(p) } results</b>
+            <b data-backend-result-count>{ listingResultCount(p) } handmade products</b>
+            <span class="filter-chips" role="group" aria-label="Active filters">
+              for _, chip := range activeFilters(p) {
+                <a class="filter-chip" href={ chip.URL } aria-label={ "Remove " + chip.Label }>{ chip.Label } <span aria-hidden="true">×</span></a>
+              }
+            </span>
             <button class="mobile-filter-toggle" type="button" aria-label="Open product filters" aria-controls="listing-filter-sidebar" aria-expanded="false" data-filter-open><span class="material-symbols-outlined" aria-hidden="true">tune</span> Filters</button>
             <label for="listing-sort"><span class="listing-sort-label">Sort by</span>
               <select id="listing-sort" name="sort">
@@ -507,13 +531,8 @@ templ Listing(p viewmodels.CustomerPage) {
               </select>
             </label>
           </div>
-          <span class="filter-chips" role="group" aria-label="Active filters">
-              for _, chip := range activeFilters(p) {
-                <a class="filter-chip" href={ chip.URL } aria-label={ "Remove " + chip.Label }>{ chip.Label } <span aria-hidden="true">×</span></a>
-              }
-          </span>
           <p class="listing-feedback" data-listing-feedback role="status" aria-live="polite"></p>
-          <div class="product-grid product-grid--four" data-backend-products="listing">@CatalogueResults(p)</div>
+          <div class="product-grid listing-product-grid" data-backend-products="listing">@CatalogueResults(p)</div>
           if p.TotalResults > 0 || len(p.Products) > 0 {
           <nav class="pagination" aria-label="Pagination">
             if p.Page > 1 {
@@ -534,8 +553,7 @@ templ Listing(p viewmodels.CustomerPage) {
         </div>
       </section>
     </form>
-    <section class="container domestic-delivery-banner"><div><span class="material-symbols-outlined" aria-hidden="true">public</span><div><p class="eyebrow">INDIAN CRAFT, DELIVERED WITH CARE</p><h2>Delivery across India</h2><p>Carefully packed and delivered to serviceable PIN codes across India.</p></div></div><a class="outline-button" href="/products">Shop handmade in India <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
-  }
+  </div>
 }
 
 
@@ -560,7 +578,7 @@ templ ProductDetail(p viewmodels.CustomerPage) {
             }
           </div>
           <div class="gallery-main">
-            <img data-gallery-media src={ p.Product.ImageURL } alt={ p.Product.Name } width="800" height="896" srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet) } sizes="(max-width: 720px) calc(100vw - 32px), 55vw" fetchpriority="high"/>
+            <img data-gallery-media src={ p.Product.ImageURL } alt={ p.Product.Name } width="800" height="800" srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet) } sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" loading="eager" fetchpriority="high"/>
             for i, media := range p.Product.Media {
               if media.URL != p.Product.ImageURL {
                 if media.IsVideo {
@@ -668,7 +686,7 @@ if seller.Rating != "" {
       </div>
       <div class="seller-actions">
         if p.CanFollowSeller {
-          <form method="post" action={ "/ui/seller-follow/" + seller.Slug } data-seller-follow>
+          <form id="maker-follow" method="post" action={ "/ui/seller-follow/" + seller.Slug } data-seller-follow>
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
             if seller.Following {
               <input type="hidden" name="intent" value="unfollow"/>

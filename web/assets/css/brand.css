@@ -1,0 +1,3 @@
+/* The supplied artwork is shared by the storefront and operational portals. */
+img:is(.wordmark-mark,.brand-mark,.seller-mark,.support-mark) { object-fit:contain; border:0; border-radius:3px; background:#f8f5ed; flex-shrink:0; }
+.storefront-body .site-footer .wordmark { display:flex; align-items:center; gap:8px; }

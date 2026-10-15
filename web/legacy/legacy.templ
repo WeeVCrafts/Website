@@ -15,13 +15,14 @@ templ Document(p viewmodels.LegacyPage) {
 			<meta name="robots" content="noindex,nofollow"/>
 			<meta name="description" content={ p.Description }/>
 			<title>{ p.Title } - Weevcrafts</title>
-			<link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg"/>
+			<link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
 			<link rel="stylesheet" href={ assets.URL("css/fonts.min.css") }/>
 			<link rel="stylesheet" href={ assets.URL("css/theme.css") }/>
 			<link rel="stylesheet" href={ assets.URL("css/utility.css") }/>
-		</head>
+		<link rel="stylesheet" href="/assets/css/brand.min.css"/>
+</head>
 		<body>
-			<header class="site-header"><div class="container"><a class="wordmark" href="/"><strong>Weevcrafts</strong></a></div></header>
+			<header class="site-header"><div class="container"><a class="wordmark" href="/"><img class="wordmark-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><strong>Weevcrafts</strong></a></div></header>
 			<main id="page" class="container utility-shell">
 				<section class="utility-card">
 					<h1>{ p.Title }</h1>

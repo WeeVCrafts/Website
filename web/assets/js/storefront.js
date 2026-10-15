@@ -353,7 +353,8 @@
       const quantity = Number(delta || document.getElementById("detail-quantity")?.value || 1);
       await api.addCart(slug, quantity, selectedVariantId);
       global.sessionStorage.removeItem(CHECKOUT_KEY);
-      await hydrateCart({ open: true, trigger: triggerElement });
+      const cartTrigger = triggerElement?.closest('#product-quick-view') ? global.WVQuickView?.close() : triggerElement;
+      await hydrateCart({ open: true, trigger: cartTrigger || triggerElement });
       notice("Added to your cart.", false);
       return;
     }
@@ -841,7 +842,8 @@
       if (!authenticated) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart",event.target.closest('button,a'));
+        const loginTrigger = element.closest('#product-quick-view') ? global.WVQuickView?.close() : event.target.closest('button,a');
+        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart", loginTrigger);
         return;
       }
       if (backendError) {
@@ -882,7 +884,11 @@
         if(action==='cart-change')notice('Cart quantity updated.',false);
         if(action==='cart-remove')notice('Item removed from your cart.',false);
       }
-      catch (error) { notice(error.message, true); }
+      catch (error) {
+        notice(error.message, true);
+        const quickFeedback = element.closest('[data-quick-product]')?.querySelector('[data-quick-feedback]');
+        if (quickFeedback) quickFeedback.textContent = error.message;
+      }
       finally {
         if (wishlistToggle) wishlistPending.delete(slug);
         if (cartMutation) cartPending.delete(cartKey);

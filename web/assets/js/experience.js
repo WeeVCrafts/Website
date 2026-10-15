@@ -13,6 +13,12 @@
 
   function loadMedia(element) {
     if (!element) return;
+    // Install responsive candidates before src so activation cannot start an
+    // unnecessary original-sized request. Inactive media has neither attribute.
+    if (element.dataset.srcset) {
+      element.srcset = element.dataset.srcset;
+      delete element.dataset.srcset;
+    }
     if (element.dataset.src) {
       element.src = element.dataset.src;
       delete element.dataset.src;
@@ -31,6 +37,32 @@
       const controls = hero.querySelector("[data-hero-controls]");
       const selectors = Array.from(hero.querySelectorAll("[data-hero-select]"));
       let active = 0;
+      let playing = !reducedMotion.matches;
+      let timer;
+      const playback = hero.querySelector("[data-hero-autoplay]");
+      const listeners = new AbortController();
+      function pause() {
+        playing = false;
+        clearTimeout(timer);
+        playback.textContent = "Play";
+        playback.setAttribute("aria-label", "Play slideshow");
+      }
+      function schedule() {
+        clearTimeout(timer);
+        if (!playing || document.hidden) return;
+        timer = setTimeout(() => {
+          if (!hero.isConnected) { pause(); listeners.abort(); return; }
+          show(active + 1);
+          schedule();
+        }, 4000);
+      }
+      function play() {
+        playing = true;
+        playback.textContent = "Pause";
+        playback.setAttribute("aria-label", "Pause slideshow");
+        schedule();
+      }
+      function choose(index, event) { pause(); show(index, event); }
       function show(index, event) {
         active = (index + slides.length) % slides.length;
         slides.forEach((slide, i) => {
@@ -48,11 +80,20 @@
         }
       }
       controls.hidden = false;
-      hero.querySelector("[data-hero-prev]").addEventListener("click", event => show(active - 1, event));
-      hero.querySelector("[data-hero-next]").addEventListener("click", event => show(active + 1, event));
-      selectors.forEach((button, i) => button.addEventListener("click", event => show(i, event)));
+      hero.querySelector("[data-hero-prev]").addEventListener("click", event => choose(active - 1, event));
+      hero.querySelector("[data-hero-next]").addEventListener("click", event => choose(active + 1, event));
+      selectors.forEach((button, i) => button.addEventListener("click", event => choose(i, event)));
       show(0);
-      // Intentionally no autoplay, timer or unnecessary offscreen image requests.
+      playback.addEventListener("click", () => playing ? pause() : play());
+      hero.addEventListener("pointerenter", pause);
+      hero.addEventListener("focusin", event => { if (event.target !== playback) pause(); });
+      document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); }, {signal:listeners.signal});
+      reducedMotion.addEventListener("change", event => { if (event.matches) pause(); }, {signal:listeners.signal});
+      document.addEventListener("htmx:beforeCleanupElement", event => {
+        if (event.target === hero || event.target.contains(hero)) { pause(); listeners.abort(); }
+      }, {signal:listeners.signal});
+      window.addEventListener("pagehide", pause, {once:true,signal:listeners.signal});
+      if (playing) play(); else pause();
     });
   }
 
@@ -229,7 +270,9 @@
         title.id="media-lightbox-title"; title.textContent=gallery.dataset.galleryName;
         dialog.setAttribute("aria-labelledby",title.id);
         close.type="button";close.className="outline-button";close.textContent="Close image";close.autofocus=true;
-        const image=document.createElement("img");image.src=source.currentSrc||source.src;image.alt=source.alt;
+        // Fetch the original only when zoom is requested; the in-page gallery
+        // can use its smaller responsive candidate without reducing zoom detail.
+        const image=document.createElement("img");image.src=source.src;image.alt=source.alt;
         header.append(title,close);dialog.append(header,image);document.body.append(dialog);
         function finish(){dialog.close();dialog.remove();if(zoom.isConnected)zoom.focus({preventScroll:true});}
         close.addEventListener("click",finish);
@@ -297,7 +340,7 @@
     document.body.classList.add("ui-enhanced");
     // HTMX settles incoming class/style attributes after swapping. Restore the
     // sheet only after that step so its open/focus state cannot be overwritten.
-    if (!(event?.type==='htmx:afterSwap' && event.detail.target?.id==='page' && filterSnapshot)) initFilters();
+    if (!(event?.type==='htmx:afterSwap' && ['page','listing-content'].includes(event.detail.target?.id) && filterSnapshot)) initFilters();
     initHero(document);initGallery(document);initSearch();initPurchaseBar();syncPurchase();
     document.querySelectorAll(".facet-search").forEach(facet=>{
       if (facet.dataset.emptyBound) return;
@@ -343,14 +386,14 @@
     if (event.detail.elt.matches('[data-listing-filters]') && originatingEvent?.type==='change' && !originatingEvent.target.name) {event.preventDefault();return;}
     if (event.detail.elt.matches("#global-search") && event.detail.elt.dataset.composing) {event.preventDefault();return;}
     if(event.detail.target?.id==='search-suggestions') document.querySelector('[data-search-feedback]').textContent='Searching products…';
-    if (event.detail.target?.id === "page") pendingPageRequest = {xhr:event.detail.xhr,filters:Boolean(event.detail.elt.closest('[data-listing-filters]'))};
+    if (["page","listing-content"].includes(event.detail.target?.id)) pendingPageRequest = {xhr:event.detail.xhr,filters:Boolean(event.detail.elt.closest('[data-listing-filters]'))};
     if (!event.detail.elt.closest("[data-listing-filters]")) return;
     captureFilters();
     filterController.form.querySelectorAll('[data-listing-feedback]').forEach(feedback=>{feedback.classList.remove('is-error');feedback.textContent='Updating pieces…';});
     filterController.form.querySelector("#listing-results").setAttribute("aria-busy","true");
   });
   document.addEventListener("htmx:beforeSwap",event=>{
-    if (event.detail.target?.id==="page" && event.detail.shouldSwap && filterController) {
+    if (["page","listing-content"].includes(event.detail.target?.id) && event.detail.shouldSwap && filterController) {
       if (pendingPageRequest && pendingPageRequest.xhr !== event.detail.xhr) {event.detail.shouldSwap=false;return;}
       if (pendingPageRequest?.filters) captureFilters();else filterSnapshot=null;
       filterController.close(false);

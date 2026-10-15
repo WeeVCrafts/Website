@@ -235,14 +235,26 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 		page.RefundKey = base64.RawURLEncoding.EncodeToString(key)
 	}
+	if r.URL.Path == "/" && page.CanFollowSeller {
+		for i := range page.Sellers {
+			if i >= 3 {
+				break
+			}
+			page.Sellers[i].Following = h.sellerFollowed(r.Context(), userID, page.Sellers[i].ID)
+		}
+	}
 	var component templ.Component
+	listingComponent := pages.Listing(page)
+	if strings.EqualFold(r.Header.Get("HX-Request"), "true") && r.Header.Get("HX-Target") == "listing-content" {
+		listingComponent = pages.ListingUpdate(page)
+	}
 	switch {
 	case r.URL.Path == "/":
 		component = pages.Home(page)
 	case r.URL.Path == "/categories":
 		component = pages.Categories(page)
 	case strings.HasPrefix(r.URL.Path, "/categories/"):
-		component = pages.Listing(page)
+		component = listingComponent
 	case r.URL.Path == "/makers":
 		component = pages.Makers(page)
 	case r.URL.Path == "/brands":
@@ -250,9 +262,13 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case strings.HasPrefix(r.URL.Path, "/brands/"):
 		component = pages.BrandDetail(page, liveBrand(r.URL.Path, page.Brands))
 	case r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals":
-		component = pages.Listing(page)
+		component = listingComponent
 	case strings.HasPrefix(r.URL.Path, "/products/"):
-		component = pages.ProductDetail(page)
+		if strings.EqualFold(r.Header.Get("HX-Request"), "true") && r.Header.Get("HX-Target") == "product-quick-view-content" {
+			component = pages.QuickView(page)
+		} else {
+			component = pages.ProductDetail(page)
+		}
 	case strings.HasPrefix(r.URL.Path, "/makers/"):
 		seller := liveSeller(r.URL.Path, page.Sellers)
 		if seller.ID == 0 {
@@ -1622,7 +1638,14 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 				product, _ := h.catalog.Get(r.Context(), slug)
 				productView := liveProduct(product, csrf)
 				productView.Saved = false
-				h.render(w, r, components.WishlistMutation(page, productView, false))
+				productView.Seller = h.sellerName(r.Context(), slug)
+				variants, variantsErr := h.customerProductVariants(r, slug)
+				if variantsErr != nil {
+					h.renderError(w, http.StatusServiceUnavailable, "Product options could not be loaded. Refresh to see your saved wishlist.")
+					return
+				}
+				productView.Variants = variants
+				h.render(w, r, components.WishlistMutation(page, productView, false, r.FormValue("card_actions") != "false"))
 				return
 			}
 			h.render(w, r, pages.WishlistGridMutation(page))
@@ -1636,7 +1659,14 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		product, _ := h.catalog.Get(r.Context(), slug)
 		productView := liveProduct(product, csrf)
 		productView.Saved = true
-		h.render(w, r, components.WishlistMutation(page, productView, false))
+		productView.Seller = h.sellerName(r.Context(), slug)
+		variants, variantsErr := h.customerProductVariants(r, slug)
+		if variantsErr != nil {
+			h.renderError(w, http.StatusServiceUnavailable, "Product options could not be loaded. Refresh to see your saved wishlist.")
+			return
+		}
+		productView.Variants = variants
+		h.render(w, r, components.WishlistMutation(page, productView, false, r.FormValue("card_actions") != "false"))
 		return
 	}
 	quantity := int64(1)

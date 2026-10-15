@@ -13,6 +13,19 @@
   --sans: "DM Sans", Arial, sans-serif;
 }
 
+/* Customer palette approved from the supplied storefront references. */
+.storefront-body {
+  --paper: #fcfbf8;
+  --surface: #fffefa;
+  --surface-2: #f3eee4;
+  --ink: #2c2923;
+  --heading: #66250f;
+  --muted: #625e54;
+  --line: #e9e2d7;
+  --terracotta: #ad3619;
+  --forest: #245b34;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; }

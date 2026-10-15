@@ -35,14 +35,15 @@ async function main() {
     const context=await browser.newContext({baseURL:target,storageState:states.customer,viewport:{width:390,height:844},reducedMotion:'reduce'});
     const page=await context.newPage();page.setDefaultTimeout(8000);
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
-    await check('manual hero: controls, inert slides, no autoplay',async()=>{
+    await check('five-slide hero: keyboard controls and reduced-motion pause',async()=>{
       await page.goto('/');await page.locator('[data-hero-next]').click();
-      assert.equal(await page.locator('[data-hero-count]').textContent(),'2 / 3');
+      assert.equal(await page.locator('[data-hero-count]').textContent(),'2 / 5');
       assert.equal(await page.locator('[data-hero-slide]:not([hidden])').count(),1);
-      assert.equal(await page.locator('[data-hero-slide][inert]').count(),2);
-      assert.equal(await page.locator('[data-hero-slide] img').evaluateAll(images=>images.filter(image=>image.hasAttribute('data-src')).length),1);
+      assert.equal(await page.locator('[data-hero-slide][inert]').count(),4);
+      assert.equal(await page.locator('[data-hero-slide] img').evaluateAll(images=>images.filter(image=>image.hasAttribute('data-src')).length),3);
       await page.locator('[data-hero-next]').focus();await page.keyboard.press('Enter');
-      assert.equal(await page.locator('[data-hero-count]').textContent(),'3 / 3');
+      assert.equal(await page.locator('[data-hero-count]').textContent(),'3 / 5');
+      assert.equal(await page.locator('[data-hero-autoplay]').getAttribute('aria-label'),'Play slideshow');
     });
     await check('mobile filter: closed inert, continuous selection, Escape focus',async()=>{
       await page.goto('/products');assert(await page.locator('[data-filter-panel]').evaluate(element=>element.inert));
@@ -171,6 +172,7 @@ async function main() {
       });
     }
     if (engine==='chromium') for(const [role,roleRoutes] of Object.entries(routes)) {
+      if(process.env.WEEVCRAFTS_UI_MATRIX_ROLES && !process.env.WEEVCRAFTS_UI_MATRIX_ROLES.split(',').includes(role)) continue;
       const auditContext=await browser.newContext({baseURL:target,storageState:states[role]});const audit=await auditContext.newPage();
       await check(role+' route / reflow / axe matrix',async()=>{
         const matrix=[];

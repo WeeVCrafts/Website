@@ -33,7 +33,7 @@ func CatalogueResults(p viewmodels.CustomerPage) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(p.Products) > 0 {
-			templ_7745c5c3_Err = ProductCards(p.Products, false, true).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ProductCards(p.Products, true, true).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

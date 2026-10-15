@@ -31,14 +31,14 @@ func Document(p viewmodels.WorkspacePage) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex,nofollow\"><title>Choose workspace · Weevcrafts</title><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><style>\r\n\t\t\t\t:root{font-family:\"Inter\",Arial,sans-serif;color:#222244;background:#f7f7f4;font-synthesis:none;text-rendering:optimizeLegibility}\r\n\t\t\t\t*{box-sizing:border-box}body{margin:0;min-height:100vh}.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.15rem clamp(1.25rem,5vw,4rem);background:#fff;border-bottom:1px solid #e7e6e1}.brand{display:flex;align-items:center;gap:.7rem;color:#222244;text-decoration:none;font-weight:700;font-size:1.15rem}.brand-mark{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;background:#e9edda;color:#526326;font-size:1.3rem}.bar-actions{display:flex;align-items:center;gap:1rem;color:#686879;font-size:.875rem}.bar-actions a{color:#222244}.bar-actions form{margin:0}.bar-actions button{border:0;background:none;color:#8b3138;text-decoration:underline;font:inherit;cursor:pointer}.wrap{width:min(100% - 2rem,56rem);margin:clamp(3rem,8vh,6rem) auto}.intro{margin-bottom:2rem}.eyebrow{margin:0 0 .6rem;color:#8b3138;font-size:.78rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}.intro h1{margin:0;font-family:\"Roboto\",Arial,sans-serif;font-size:clamp(2.2rem,6vw,3.6rem);font-weight:500;line-height:1.05}.intro p{max-width:38rem;margin:1rem 0 0;color:#656574;line-height:1.65}.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}.choice{display:flex;min-height:9rem;flex-direction:column;justify-content:space-between;padding:1.35rem;border:1px solid #e1dfd7;border-radius:1rem;background:#fff;color:#222244;text-decoration:none;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.choice:hover,.choice:focus-visible{transform:translateY(-2px);border-color:#8b3138;box-shadow:0 12px 28px #20204012;outline:none}.choice span{color:#8b3138;font-size:.77rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.choice strong{font-family:\"Roboto\",Arial,sans-serif;font-size:1.55rem;font-weight:500}.choice i{align-self:flex-end;color:#8b3138;font-style:normal;font-size:1.3rem}.empty{padding:1.5rem;border:1px solid #e1dfd7;border-radius:1rem;background:#fff;color:#656574}.footer{margin-top:2rem;color:#777786;font-size:.85rem}\r\n\t\t\t\t@media(max-width:480px){.bar{align-items:flex-start}.bar-actions{flex-wrap:wrap;justify-content:flex-end}.choice{min-height:7.5rem}}\r\n\t\t\t\t@media(prefers-reduced-motion:reduce){.choice{transition:none}}\r\n\t\t\t</style></head><body><header class=\"bar\"><a class=\"brand\" href=\"/\"><img class=\"brand-mark\" src=\"/assets/images/favicon.svg\" alt=\"\" width=\"36\" height=\"36\"><span>Weevcrafts</span></a><div class=\"bar-actions\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex,nofollow\"><title>Choose workspace · Weevcrafts</title><link rel=\"stylesheet\" href=\"/assets/css/fonts.min.css\"><style>\r\n\t\t\t\t:root{font-family:\"Inter\",Arial,sans-serif;color:#222244;background:#f7f7f4;font-synthesis:none;text-rendering:optimizeLegibility}\r\n\t\t\t\t*{box-sizing:border-box}body{margin:0;min-height:100vh}.bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.15rem clamp(1.25rem,5vw,4rem);background:#fff;border-bottom:1px solid #e7e6e1}.brand{display:flex;align-items:center;gap:.7rem;color:#222244;text-decoration:none;font-weight:700;font-size:1.15rem}.brand-mark{display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;background:#e9edda;color:#526326;font-size:1.3rem}.bar-actions{display:flex;align-items:center;gap:1rem;color:#686879;font-size:.875rem}.bar-actions a{color:#222244}.bar-actions form{margin:0}.bar-actions button{border:0;background:none;color:#8b3138;text-decoration:underline;font:inherit;cursor:pointer}.wrap{width:min(100% - 2rem,56rem);margin:clamp(3rem,8vh,6rem) auto}.intro{margin-bottom:2rem}.eyebrow{margin:0 0 .6rem;color:#8b3138;font-size:.78rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}.intro h1{margin:0;font-family:\"Roboto\",Arial,sans-serif;font-size:clamp(2.2rem,6vw,3.6rem);font-weight:500;line-height:1.05}.intro p{max-width:38rem;margin:1rem 0 0;color:#656574;line-height:1.65}.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}.choice{display:flex;min-height:9rem;flex-direction:column;justify-content:space-between;padding:1.35rem;border:1px solid #e1dfd7;border-radius:1rem;background:#fff;color:#222244;text-decoration:none;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.choice:hover,.choice:focus-visible{transform:translateY(-2px);border-color:#8b3138;box-shadow:0 12px 28px #20204012;outline:none}.choice span{color:#8b3138;font-size:.77rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.choice strong{font-family:\"Roboto\",Arial,sans-serif;font-size:1.55rem;font-weight:500}.choice i{align-self:flex-end;color:#8b3138;font-style:normal;font-size:1.3rem}.empty{padding:1.5rem;border:1px solid #e1dfd7;border-radius:1rem;background:#fff;color:#656574}.footer{margin-top:2rem;color:#777786;font-size:.85rem}\r\n\t\t\t\t@media(max-width:480px){.bar{align-items:flex-start}.bar-actions{flex-wrap:wrap;justify-content:flex-end}.choice{min-height:7.5rem}}\r\n\t\t\t\t@media(prefers-reduced-motion:reduce){.choice{transition:none}}\r\n\t\t\t</style><link rel=\"stylesheet\" href=\"/assets/css/brand.min.css\"><link rel=\"icon\" type=\"image/png\" href=\"/assets/images/brand/favicon.png\"></head><body><header class=\"bar\"><a class=\"brand\" href=\"/\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span>Weevcrafts</span></a><div class=\"bar-actions\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 25, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 27, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -51,7 +51,7 @@ func Document(p viewmodels.WorkspacePage) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 26, Col: 100}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 28, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -79,7 +79,7 @@ func Document(p viewmodels.WorkspacePage) templ.Component {
 				var templ_7745c5c3_Var4 templ.SafeURL
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(workspace.Path)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 36, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 38, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -92,7 +92,7 @@ func Document(p viewmodels.WorkspacePage) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(workspace.Role)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 36, Col: 71}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 38, Col: 71}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -105,7 +105,7 @@ func Document(p viewmodels.WorkspacePage) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(workspace.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 36, Col: 105}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/workspaces/workspaces.templ`, Line: 38, Col: 105}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
