@@ -1,4 +1,4 @@
-# WeeVCrafts UX contract
+# WeevCrafts UX contract
 
 ## Catalog amendment — 16 October 2026
 
@@ -35,7 +35,7 @@ Seller money fields show rupees with two decimals; conversion to integer paise o
 
 Shared form validation uses inline correction text and first-invalid focus, retaining constraint metadata and server validation. Duplicate submissions are blocked; failures keep typed values. Native selects and dates intentionally retain platform popup behavior. Destructive operations keep explicit confirmation and actual server eligibility. Search clear returns focus; no native alert/confirm product dialogs.
 
-Modal navigation and confirmations contain focus, support Escape and restore the trigger. Native textareas retain sufficient height and shared auto-grow. Reduced-motion feedback is immediate. Titles retain the established `{page} - Weevcrafts` convention. Existing 403/access-unavailable and not-found routes remain role-safe; no resource or private data exposure is added.
+Modal navigation and confirmations contain focus, support Escape and restore the trigger. Native textareas retain sufficient height and shared auto-grow. Reduced-motion feedback is immediate. Titles retain the established `{page} - WeevCrafts` convention. Existing 403/access-unavailable and not-found routes remain role-safe; no resource or private data exposure is added.
 
 The shared header's profile disclosure uses a button with an expanded state and ordinary navigation links. Opening moves focus to its first link; Escape closes it and restores the button. Outside clicks and focus leaving the disclosure close it without trapping focus. Opening the navigation drawer closes the disclosure. Wishlist and cart counters retain their existing IDs and live updates as direct header actions. Mobile account navigation collapses into an accessible native disclosure. Checkout includes Back and Edit actions that preserve fields, with focus on the destination heading. Existing private profile-photo access remains session scoped.
 
@@ -88,3 +88,32 @@ startup. Missing provider configuration leaves its existing workflow unavailable
 it never produces invented payment or fulfilment success. Air rebuilds the real
 Docker app before refreshing its local browser proxy. Internet production validation
 still requires HTTPS, secure cookies and the established database/storage TLS rules.
+
+## Storefront editor and publication
+
+Business authority: the accepted Storefront Editor and Super Admin Publishing
+plan, documented in `docs/storefront-editor.md`. Admin prepares drafts; only
+Super Admin publishes or requests changes. Submitted drafts are locked.
+Expected versions reject conflicting saves and publications; proposed form
+values remain available and an explicit reload opens the latest saved draft.
+Publication shows a comparison with the current storefront. Restoration creates
+a new draft and preserves commerce history.
+
+The editor reuses AdminDocument, native selects/dates, ui-standards validation,
+confirmation, busy states, notices and unsaved-change protection. Workspace
+navigation wraps into an accessible horizontal tab navigation on narrow screens;
+settings retain natural document scrolling and preview has its own horizontal
+scroll region. Section dragging has numbered order and Move up/down alternatives.
+Category discovery uses numeric order then stable slug at every surface.
+
+Previews use the customer renderer, require current Admin/Super Admin access,
+are no-store/noindex and accept only GET. Preview scripts disable shopping and
+account mutations and skip account/cart hydration. Cart/checkout previews may
+show a clearly marked read-only example using an available catalog product.
+No inventory, customer history or financial transactions are created for previews.
+
+Category presentation, customer settings and promotion definitions use this
+workflow. Legacy POST routes cannot publish changes. Catalog approval, product
+assignment, seller fulfilment and historical customer data retain their existing
+permissions. Disabled shopping actions are rejected on the server. Checkout
+uses a pinned policy revision and stores the order-time policy snapshot.

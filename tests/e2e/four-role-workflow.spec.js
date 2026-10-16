@@ -128,7 +128,7 @@ test.describe('Four roles and private company coordination', () => {
     const form = page.locator('form[action="/admin/support/confirmations/create"]');
     const csrf = await form.locator('input[name="csrf_token"]').inputValue();
     const key = await form.locator('input[name="request_key"]').inputValue();
-    const firstSeller = sql("SELECT id FROM sellers WHERE display_name='Weevcrafts Seller'");
+    const firstSeller = sql("SELECT id FROM sellers WHERE display_name='WeevCrafts Seller'");
     const secondSeller = sql("SELECT id FROM sellers WHERE display_name='Second independent maker'");
     await page.locator('#confirmation-seller').selectOption(firstSeller);
     await page.locator('#confirmation-question').fill('PRIVATE first maker dispatch check');

@@ -2,7 +2,7 @@
 
 ## Source of visual truth
 
-Reference screens reviewed from `Weevcrafts_Screens/super admin/`:
+Reference screens reviewed from `WeevCrafts_Screens/super admin/`:
 
 - Dashboard
 - Sellers
@@ -51,7 +51,7 @@ Reference screens reviewed from `Weevcrafts_Screens/super admin/`:
 
 ### Reference and scope
 
-- Accepted visual reference set: `Weevcrafts_Screens/seller admin/ChatGPT Image Sep 11, 2026, 07_15_44 AM (1).png` through `(9).png`.
+- Accepted visual reference set: `WeevCrafts_Screens/seller admin/ChatGPT Image Sep 11, 2026, 07_15_44 AM (1).png` through `(9).png`.
 - Reviewed all 9 seller-admin references; each reference is 1055 x 1491.
 - PRD scope reviewed in `Prd.md` and `Phases/Phase-11-seller-admin.md`: seller onboarding, dashboard, products, inventory, order fulfilment, returns, earnings/settlements, analytics, store/account settings, seller isolation, and audit-friendly actions.
 
@@ -71,7 +71,7 @@ Reference screens reviewed from `Weevcrafts_Screens/super admin/`:
 
 | Area | Result | Evidence |
 |---|---|---|
-| Shared Weevcrafts utility bar, public header, seller identity and portal navigation | Pass | `seller-admin-qa-final2/*.png` |
+| Shared WeevCrafts utility bar, public header, seller identity and portal navigation | Pass | `seller-admin-qa-final2/*.png` |
 | Seller-scoped sidebar, active states, store card, seller support and logout affordances | Pass | All 9 final seller captures |
 | Seller onboarding steps, KYC/business/bank/store setup, review status and support | Pass | `seller-admin-qa-final2/onboarding.png` |
 | Dashboard KPIs, sales trend, quick actions, best sellers, recent orders and approval alerts | Pass | `seller-admin-qa-final2/dashboard.png` |
@@ -101,7 +101,7 @@ Final captures: `seller-admin-qa-final2/*.png` at the native 1055 x 1491 viewpor
 
 ## Source of visual truth
 
-All eleven reference screens reviewed from `Weevcrafts_Screens/customer/`:
+All eleven reference screens reviewed from `WeevCrafts_Screens/customer/`:
 
 - Home
 - Categories
@@ -155,7 +155,7 @@ The in-app browser was unavailable in this environment, so final screenshots wer
 
 ## Source of visual truth
 
-Reviewed all four Supporter Portal references from `Weevcrafts_Screens/supporter portal/`, each at the native 1055 x 1491 viewport:
+Reviewed all four Supporter Portal references from `WeevCrafts_Screens/supporter portal/`, each at the native 1055 x 1491 viewport:
 
 - Support Dashboard
 - Cases
@@ -176,7 +176,7 @@ The implementation follows the Support Agent responsibilities in `Prd.md` and th
 
 | Area | Result | Evidence |
 |---|---|---|
-| Shared Weevcrafts support shell, portal identity, search, notification and Aditi Rao profile | Pass | All final Supporter Portal captures |
+| Shared WeevCrafts support shell, portal identity, search, notification and Aditi Rao profile | Pass | All final Supporter Portal captures |
 | Role-specific sidebar and active navigation states | Pass | All four portal routes |
 | Dashboard KPI cards, case queue, live conversations, issue breakdown, SLA, escalations, workload and macros | Pass | `support-portal-qa-final/dashboard.png` |
 | Case queue, filters, customer/seller conversation, masked contact context, reply/internal-note composer and quick macros | Pass | `support-portal-qa-final/cases.png` |

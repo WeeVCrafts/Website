@@ -13,6 +13,9 @@ import (
 // Only maintained static photographs get build-time variants. Existing media
 // service srcsets and seller-uploaded URLs pass through without transformation.
 func ResponsiveImageSrcSet(src, existing string) string {
+	if strings.HasPrefix(src, "/media/storefront/") && existing == "" {
+		return src + "?w=480 480w, " + src + "?w=960 960w, " + src + " 1920w"
+	}
 	variants, ok := maintainedImageVariants[strings.Split(src, "?")[0]]
 	if !ok {
 		return existing
@@ -135,4 +138,18 @@ func LegacyCategoryLabel(category string) string {
 		return "Home wellbeing"
 	}
 	return "Categories"
+}
+
+func storefrontLogo(p viewmodels.CustomerPage) string {
+	if p.Storefront != nil && p.Storefront.Theme.Logo != "" {
+		return p.Storefront.Theme.Logo
+	}
+	return "/assets/images/brand/weevcrafts-logo.png"
+}
+
+func storefrontTrustIcon(title string) string {
+	if icon := map[string]string{"Crafted in India": "handyman", "Secure Payments": "verified_user", "Returns & Refunds": "assignment_return", "Domestic Delivery": "local_shipping", "Artisan made": "groups"}[title]; icon != "" {
+		return icon
+	}
+	return "verified_user"
 }

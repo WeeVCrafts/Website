@@ -47,14 +47,14 @@ func (s *Resend) Send(ctx context.Context, message ports.EmailMessage) error {
 	if err != nil || recipient.Address != message.To || !validHeader(message.To) || !validHeader(message.Subject) || actionErr != nil || action.Host == "" || (action.Scheme != "https" && !(action.Scheme == "http" && (action.Hostname() == "localhost" || action.Hostname() == "127.0.0.1"))) || action.User != nil {
 		return errors.New("email message invalid")
 	}
-	label, intro := "View account update", "An update is available in your Weevcrafts account."
+	label, intro := "View account update", "An update is available in your WeevCrafts account."
 	if strings.Contains(strings.ToLower(message.Subject), "reset") {
 		label = "Reset password"
-		intro = "We received a request to reset your Weevcrafts password. Use the secure link below to choose a new password."
+		intro = "We received a request to reset your WeevCrafts password. Use the secure link below to choose a new password."
 	}
 	if strings.Contains(strings.ToLower(message.Subject), "verify") {
 		label = "Verify email"
-		intro = "Confirm your email address to protect your Weevcrafts account."
+		intro = "Confirm your email address to protect your WeevCrafts account."
 	}
 	if message.Body != "" {
 		intro = message.Body

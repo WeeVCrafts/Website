@@ -31,7 +31,7 @@ func (h *LivePortalHandler) CategoryMedia(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var key string
-	if err := h.pool.QueryRow(r.Context(), `SELECT image_object_key FROM categories WHERE image_url=$1 AND image_object_key<>''`, r.URL.Path).Scan(&key); err != nil {
+	if err := h.pool.QueryRow(r.Context(), `SELECT image_object_key FROM categories WHERE image_url=$1 AND image_object_key<>'' UNION ALL SELECT c->>'object_key' FROM storefront_releases r CROSS JOIN LATERAL jsonb_array_elements(r.config->'categories') c WHERE c->>'image'=$1 AND COALESCE(c->>'object_key','')<>'' LIMIT 1`, r.URL.Path).Scan(&key); err != nil {
 		http.NotFound(w, r)
 		return
 	}

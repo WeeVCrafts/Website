@@ -101,7 +101,7 @@ func Read(source io.Reader) ([]Record, error) {
 		if note == "" {
 			note = "Delivery details at checkout"
 		}
-		records = append(records, Record{Input: commerce.ProductDraftInput{SKU: sku, Slug: slug, Name: cells[2], Description: cells[3], CategorySlug: cells[4], CategorySlugs: categories, PriceCents: price, InitialStock: stock, DeliveryLabel: note, BrandSlug: "weevcrafts", BrandName: "WeeVCrafts"}, ImageFile: cells[8], Line: line})
+		records = append(records, Record{Input: commerce.ProductDraftInput{SKU: sku, Slug: slug, Name: cells[2], Description: cells[3], CategorySlug: cells[4], CategorySlugs: categories, PriceCents: price, InitialStock: stock, DeliveryLabel: note, BrandSlug: "weevcrafts", BrandName: "WeevCrafts"}, ImageFile: cells[8], Line: line})
 		if len(records) > 10000 {
 			return nil, errors.New("import at most 10000 products per CSV")
 		}

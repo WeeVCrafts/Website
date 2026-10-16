@@ -1,7 +1,7 @@
-# WeeVCrafts implementation tracker
+# WeevCrafts implementation tracker
 
 Updated 15 October 2026. Scope: finish the approved customer reference redesign,
-preserve existing marketplace workflows, replace old WeeVCrafts Docker resources,
+preserve existing marketplace workflows, replace old WeevCrafts Docker resources,
 and show a local real-data preview. The user subsequently authorized a safe Git
 push; the changes are being committed to a review branch. Deployment remains out
 of scope.
@@ -21,7 +21,7 @@ of scope.
 
 - [x] Remove demo/simulated defaults and automatic seed commands from normal startup.
 - [x] Preserve database, media and credentials before replacing Docker resources.
-- [x] Remove only WeeVCrafts containers, project images and identifiable project build cache.
+- [x] Remove only WeevCrafts containers, project images and identifiable project build cache.
 - [x] Build fresh images from current source, including regenerated assets/templates and PNG logo.
 - [x] Start one real-data Docker stack and check persistence, health and media.
 - [x] Complete source/handler review of customer route families and fix remaining listing drift.
@@ -57,7 +57,7 @@ report for earlier verification evidence.
 - Backed up both database volumes and both media stores before cleanup. The main
   retained database has four existing accounts and no products/orders. The temporary
   website database was empty. No records were copied from the isolated QA database.
-- Removed 31 WeeVCrafts containers and their project images. Three unrelated
+- Removed 31 WeevCrafts containers and their project images. Three unrelated
   Debian/ISO containers remain. All volumes are retained. The scoped old application
   build-cache cleanup reclaimed 27.42 GB; unidentifiable/shared cache is retained.
 

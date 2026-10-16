@@ -82,6 +82,9 @@ func (r *ManagementRepository) ListManagement(ctx context.Context, actorID int64
 }
 
 func (r *ManagementRepository) MutateManagement(ctx context.Context, actorID int64, m ports.ManagementMutation) error {
+	if m.Section == "settings" || m.Section == "category-management" {
+		return ports.ErrForbidden
+	}
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
 		// Serialize management changes with authorization changes for each actor.
 		if err := tx.QueryRow(ctx, `SELECT id FROM users WHERE id=$1 FOR UPDATE`, actorID).Scan(&actorID); err != nil {

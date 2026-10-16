@@ -4,7 +4,7 @@ The user selected concept C, then explicitly requested username/password fields 
 
 ## Design and implementation
 
-- `/login` uses the approved open form at left, decorative still life at right, a restrained WeeVCrafts wordmark with the large supplied woven mark, a browsing exit and Help/Privacy/Terms footer. Mobile uses a shallow photo strip and natural page scrolling.
+- `/login` uses the approved open form at left, decorative still life at right, a restrained WeevCrafts wordmark with the large supplied woven mark, a browsing exit and Help/Privacy/Terms footer. Mobile uses a shallow photo strip and natural page scrolling.
 - The protected-action prompt contains the same labelled username/password fields, password visibility control, recovery link, Sign in and Continue with Google. Mobile is a centred native modal over a translucent green backdrop; desktop retains a right-side panel. Short viewports scroll inside the prompt. Browsing alone does not open it.
 - Shared templates own the credential fields and Google controls. Existing password authentication, Firebase exchange, CSRF, internal return paths, explicit provider consent and existing-account proof remain authoritative. Server authorization and business APIs are unchanged. No migrations or new dependencies.
 - Closing resets form values, password visibility, validation feedback, Google consent and pending account-link proof, then returns focus. Tab/Shift+Tab wrap inside; Escape and backdrop dismissal perform no shopping action. Buttons keep existing duplicate-submit and busy handling; account linking now also guards repeats and correctly disables its submit button.
@@ -12,7 +12,7 @@ The user selected concept C, then explicitly requested username/password fields 
 
 Tokens: forest `#123F32`, hover `#0D3529`, warm white `#FFFDF8`, ivory `#F8F2E8`, terracotta `#9D4031`, gold `#906220`, ink `#20362D`, muted `#56665D`. Input boundaries use `#7D8D80` for sufficient contrast. Labels use 14px DM Sans; inputs and primary/provider buttons use 16px; controls are 50px high. The phone prompt has a 16px radius and at least 16px outer margins. Native icons are close, eye/reveal and browsing arrow; Google uses its multicolour G. The small popup image is decorative and cannot intercept controls.
 
-Allowed copy includes Sign in; Your saved pieces and orders, in one place.; Username or email; Password; Forgot password?; Continue with Google; the existing privacy/terms agreement; New to WeeVCrafts? Create account; Continue browsing; Help; Privacy; Terms. The prompt additionally uses Sign in to continue; Save your favourite pieces and keep your orders together.; Keep browsing. Existing errors, notices, account-link proof and return-context messages appear only when relevant. No unsupported provider, OTP, testimonials or trust claims were added.
+Allowed copy includes Sign in; Your saved pieces and orders, in one place.; Username or email; Password; Forgot password?; Continue with Google; the existing privacy/terms agreement; New to WeevCrafts? Create account; Continue browsing; Help; Privacy; Terms. The prompt additionally uses Sign in to continue; Save your favourite pieces and keep your orders together.; Keep browsing. Existing errors, notices, account-link proof and return-context messages appear only when relevant. No unsupported provider, OTP, testimonials or trust claims were added.
 
 ## Visual comparison
 
@@ -22,7 +22,7 @@ The reference and rendered screenshots were inspected directly with `view_image`
 | --- | --- |
 | Composition | Open desktop form, still life at right, compact brand/header and small footer; no nested form card. |
 | Artwork | A standalone text-free still life reproduces the ceramic vase, burgundy weave, brass object, ivory plinths and restrained gold edge motif. It is a separately generated decorative asset rather than a screenshot used as UI. |
-| Typography and identity | Playfair headings, readable DM Sans controls, supplied woven artwork, consistent WeeVCrafts casing and smaller wordmark. An inherited 11px important rule was discovered in screenshot review; bounded overrides restore 14px popup labels and 16px controls, with regression assertions. |
+| Typography and identity | Playfair headings, readable DM Sans controls, supplied woven artwork, consistent WeevCrafts casing and smaller wordmark. An inherited 11px important rule was discovered in screenshot review; bounded overrides restore 14px popup labels and 16px controls, with regression assertions. |
 | Palette and controls | Existing forest/ivory tokens, dark green primary button, outlined Google button, persistent labels, visible keyboard focus and 50px controls. Input borders were darkened after contrast measurement. |
 | Mobile | Shallow photo strip on the full page; centred popup, visible shopping context, close control, inline fields and both sign-in methods. |
 | Copy | Matches the approved C direction plus the user's explicitly requested inline fields and Google additions. Existing consent/proof/error messages are preserved. |

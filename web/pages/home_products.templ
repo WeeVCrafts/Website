@@ -5,8 +5,10 @@ import (
  "github.com/wecratfs/commerce/web/components"
 )
 
-templ HomeSectionHeader(id,title,copy,href string) {
- <div class="section-head"><div><h2 id={ id }>{ title }</h2><p>{ copy }</p></div><a class="text-link" href={ href }>View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+templ HomeSectionHeader(id,title,copy,href string,action ...string) {
+ <div class="section-head"><div><h2 id={ id }>{ title }</h2><p>{ copy }</p></div>if href!="" {
+ <a class="text-link" href={ href }>{ storefrontActionLabel(action) } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+ }</div>
 }
 
 templ HomeSectionEmpty(copy string) {

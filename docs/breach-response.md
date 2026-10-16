@@ -1,4 +1,4 @@
-# Weevcrafts breach response runbook
+# WeevCrafts breach response runbook
 
 This runbook is an operational baseline and requires owner/security/legal review
 before production use.

@@ -1,4 +1,4 @@
-# WeeVCrafts UI/UX implementation plan
+# WeevCrafts UI/UX implementation plan
 
 Planning baseline: 14 October 2026, India time. This document proposes work; it does not record completed implementation or a full accessibility audit.
 
@@ -31,9 +31,9 @@ The local catalogue is empty. Populated product detail, cart, order and checkout
 | The checked-in Material Symbols TTF is 995,576 bytes. | A small verified icon subset or consistent SVG set. | Raw file size, not compressed transfer size or a measured LCP problem. Measure the real request before choosing the implementation. |
 | Existing code already has server-rendered products, media, variant selection, mobile purchase controls, filter URL state, shared form handling and cart feedback. | Refine these components and their edge states. | Source evidence; do not create duplicate competing implementations. |
 
-[Vastramay](https://vastramay.com/) provides useful examples of category/occasion discovery, campaign imagery, product rails and quick-view entry. [Jaypore](https://www.jaypore.com/) provides useful examples of broad category navigation, a craft-focused shopping identity and image-led collections. These observations are references, not evidence that either site meets accessibility or performance targets. Their entire UI, promotional density and assets are not a specification for WeeVCrafts.
+[Vastramay](https://vastramay.com/) provides useful examples of category/occasion discovery, campaign imagery, product rails and quick-view entry. [Jaypore](https://www.jaypore.com/) provides useful examples of broad category navigation, a craft-focused shopping identity and image-led collections. These observations are references, not evidence that either site meets accessibility or performance targets. Their entire UI, promotional density and assets are not a specification for WeevCrafts.
 
-WeeVCrafts keeps its accepted ivory, forest green and terracotta identity, serif display headings, legible interface type and maker-to-object storytelling. Concepts will use the real logo and maintained content. Text and shopping controls remain HTML, rather than being baked into banner images. Hero photography retains its existing untinted treatment.
+WeevCrafts keeps its accepted ivory, forest green and terracotta identity, serif display headings, legible interface type and maker-to-object storytelling. Concepts will use the real logo and maintained content. Text and shopping controls remain HTML, rather than being baked into banner images. Hero photography retains its existing untinted treatment.
 
 ## Detailed implementation backlog
 

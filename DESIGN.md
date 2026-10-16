@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: WeeVCrafts
+name: WeevCrafts
 description: An Indian craft marketplace with an editorial storefront and calm operational workspaces.
 colors:
   primary: "#123f32"
@@ -35,7 +35,7 @@ components:
     backgroundColor: "{colors.border}"
 ---
 
-# WeeVCrafts visual standards
+# WeevCrafts visual standards
 
 ## 15 October 2026 Woven Gallery sign-in
 
@@ -121,13 +121,13 @@ The approved `docs/design/brand-theme-concept-2026-10-15.png` supersedes the ear
 
 `brand.css` owns common identity tokens: primary #123f32, hover #0d3529, ivory #f8f2e8, warm white #fffdf8, terracotta #9d4031, gold #906220, and ink #20362d. Storefront paper is warm white; ivory appears in search and supporting surfaces. Role aliases map navigation, surfaces, focus and primary actions to these tokens. Success, warning, failed-payment and destructive-action styles remain distinct.
 
-Use the supplied woven artwork with live WeeVCrafts wordmark text. Following the user's final size correction, the desktop logo mark remains 52–70px while the wordmark scales 32–44px. Phone branding keeps its 32–38px mark and 22–30px wordmark. Storefront typography stays Playfair Display and DM Sans; operational typography stays Roboto and Inter. No hero photograph tint is added.
+Use the supplied woven artwork with live WeevCrafts wordmark text. Following the user's final size correction, the desktop logo mark remains 52–70px while the wordmark scales 32–44px. Phone branding keeps its 32–38px mark and 22–30px wordmark. Storefront typography stays Playfair Display and DM Sans; operational typography stays Roboto and Inter. No hero photograph tint is added.
 
 Shared navigation omits the delivery shortcut and Support Artisan Livelihoods link. Account address management and checkout delivery remain available. The five-slide hero is manual: arrows, slide selectors, inert inactive slides, announcements and deferred photographs remain; playback buttons and timers are removed.
 
 Guests use a direct Sign in link in the header, with no account chevron or profile dropdown. Authenticated customers retain the existing profile disclosure, private avatar, account links, notifications and sign out.
 
-The homepage document and social title is WeeVCrafts | Handmade Indian Arts, Crafts & Sarees. Existing WebSite/Organization schema uses the same name, canonical URL and supplied logo, with historic spelling aliases. Private routes retain their indexing restrictions. Google recrawl requests follow production release, not a local preview.
+The homepage document and social title is WeevCrafts | Handmade Indian Arts, Crafts & Sarees. Existing WebSite/Organization schema uses the same name, canonical URL and supplied logo, with historic spelling aliases. Private routes retain their indexing restrictions. Google recrawl requests follow production release, not a local preview.
 
 
 ### Approved mobile homepage — 15 October 2026
@@ -143,3 +143,14 @@ The mobile editorial banner is a text-free recomposition of the existing craft h
 This amendment supersedes the manual-only desktop hero and static mobile introduction above. One responsive five-slide carousel preserves the accepted photographs and compact mobile composition. Autoplay advances every four seconds. The user's explicit follow-up removes Pause/Play buttons; retain arrows, selectors and swipe. Hover, keyboard focus, hidden tabs, offscreen viewing and reduced motion pause automatic rotation. Inactive slides remain inert and later images are deferred.
 
 Keep the current shared palette, typography and product-card family. Homepage order is hero, administrator-managed circular category links, Featured compact grid, New arrivals scrolling rail, Shop by category editorial selection, Gifts under ₹1,500 background band, makers, then existing collections. Category photographs reserve their circular frames. Product sections show real approved availability, with honest empty states until inventory is supplied. Mobile cards retain two columns. Operational category management reuses existing portal forms, native selects, checkboxes, notices and tables; no new design system is introduced.
+
+## Storefront editor
+
+The Storefront workspace extends the established AdminDocument shell and shared
+forms. It uses a section list, a settings panel and the same customer renderer
+in a responsive preview. Native selects and date inputs remain platform-owned.
+The public design is initialized from the accepted hero compositions, category
+photographs, cards, makers, collections, navigation and footer. Theme overrides
+are validated data: supported self-hosted fonts and readable hex colors. The
+published configuration supplies body CSS variables; no arbitrary CSS, HTML or
+JavaScript is accepted. Existing product facts and photographs remain catalog data.

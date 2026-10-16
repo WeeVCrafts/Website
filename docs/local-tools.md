@@ -31,9 +31,9 @@ creates an administrator on a fresh installation and adds these monitors:
 
 | Monitor | Target inside Docker | What it establishes |
 | --- | --- | --- |
-| WeeVCrafts storefront | `http://app:8080/` | Home page responds with HTTP 2xx. |
-| WeeVCrafts readiness | `http://app:8080/health/ready` | App responds ready, including PostgreSQL/Redis probes. |
-| WeeVCrafts liveness | `http://app:8080/health/live` | App process responds with HTTP 2xx. |
+| WeevCrafts storefront | `http://app:8080/` | Home page responds with HTTP 2xx. |
+| WeevCrafts readiness | `http://app:8080/health/ready` | App responds ready, including PostgreSQL/Redis probes. |
+| WeevCrafts liveness | `http://app:8080/health/live` | App process responds with HTTP 2xx. |
 | PostgreSQL connection | `postgres:5432` | TCP connections are accepted. |
 | Redis connection | `redis:6379` | TCP connections are accepted. |
 | Meilisearch health | `http://meilisearch:7700/health` | Search health responds with HTTP 2xx. |

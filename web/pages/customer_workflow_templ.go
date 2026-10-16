@@ -38,7 +38,7 @@ func CatalogueResults(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else if p.CatalogueEmpty {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"empty-state\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class=\"outline-button\" href=\"/\">Explore WeeVCrafts</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"empty-state\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">storefront</span><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class=\"outline-button\" href=\"/\">Explore WeevCrafts</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

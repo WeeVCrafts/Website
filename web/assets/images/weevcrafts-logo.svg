@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 316 72" role="img" aria-labelledby="title desc">
-  <title id="title">Weevcrafts</title>
-  <desc id="desc">A handwoven W mark beside the Weevcrafts wordmark</desc>
+  <title id="title">WeevCrafts</title>
+  <desc id="desc">A handwoven W mark beside the WeevCrafts wordmark</desc>
   <rect x="2" y="4" width="64" height="64" rx="20" fill="#123f32"/>
   <path d="m15 22 10 30 9-20 9 20 10-30" fill="none" stroke="#f8f2e8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="M17 18c5 0 8 3 8 8M51 18c-5 0-8 3-8 8" fill="none" stroke="#c35b42" stroke-width="3" stroke-linecap="round"/>
   <circle cx="34" cy="20" r="3" fill="#c35b42"/>
-  <text x="78" y="45" fill="#123f32" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" letter-spacing="-1">Weevcrafts</text>
+  <text x="78" y="45" fill="#123f32" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" letter-spacing="-1">WeevCrafts</text>
 </svg>

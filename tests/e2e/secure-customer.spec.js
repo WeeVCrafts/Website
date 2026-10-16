@@ -128,8 +128,8 @@ test('social settings are persistent, safe and Super Admin controlled', async ({
   const form = { csrf_token: admin.csrf_token, support_email: 'support@example.invalid', shipping_information: 'Delivery options appear at checkout.', reason: 'Isolated secure settings verification', save_social_links: '1', instagram_url: 'https://www.instagram.com/weevcrafts', facebook_url: '', youtube_url: 'https://www.youtube.com/@weevcrafts', x_url: '', whatsapp_url: '' };
   expect((await page.request.post('/super-admin/settings/save', { form, maxRedirects: 0 })).status()).toBe(303);
   await page.goto('/products');
-  await expect(page.getByRole('link', { name: 'Weevcrafts on Instagram' })).toHaveAttribute('href', form.instagram_url);
-  await expect(page.getByRole('link', { name: 'Weevcrafts on Facebook' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'WeevCrafts on Instagram' })).toHaveAttribute('href', form.instagram_url);
+  await expect(page.getByRole('link', { name: 'WeevCrafts on Facebook' })).toHaveCount(0);
   expect((await page.request.post('/super-admin/settings/save', { form: { ...form, instagram_url: 'javascript:alert(1)' }, maxRedirects: 0 })).status()).toBe(400);
   const context = await browser.newContext();
   try {
@@ -138,7 +138,7 @@ test('social settings are persistent, safe and Super Admin controlled', async ({
     const { save_social_links, instagram_url, ...otherFields } = form;
     expect((await marketplace.request.post('/marketplace-admin/settings/save', { form: { ...otherFields, csrf_token: actor.csrf_token }, maxRedirects: 0 })).status()).toBe(303);
   } finally { await context.close(); }
-  await page.reload(); await expect(page.getByRole('link', { name: 'Weevcrafts on Instagram' })).toHaveAttribute('href', form.instagram_url);
+  await page.reload(); await expect(page.getByRole('link', { name: 'WeevCrafts on Instagram' })).toHaveAttribute('href', form.instagram_url);
 });
 
 test('role replacement removes prior privileges and revokes existing sessions', async ({ page, browser }) => {

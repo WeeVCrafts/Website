@@ -19,6 +19,7 @@ import (
 	applicationpayment "github.com/wecratfs/commerce/internal/application/payment"
 	applicationprivacy "github.com/wecratfs/commerce/internal/application/privacy"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -287,6 +288,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		CartID         int64                       `json:"cart_id"`
 		IdempotencyKey string                      `json:"idempotency_key"`
 		CouponCode     string                      `json:"coupon_code"`
+		ExpectedPolicy *int64                      `json:"expected_policy_revision"`
 		ExpectedTotal  *int64                      `json:"expected_total_cents"`
 		Address        domaincommerce.AddressInput `json:"address"`
 	}
@@ -305,6 +307,15 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	if len(strings.TrimSpace(input.IdempotencyKey)) < 16 {
 		input.IdempotencyKey = fmt.Sprintf("order-%d-%d", session.UserID, time.Now().UnixNano())
 	}
+	if input.ExpectedTotal != nil && input.ExpectedPolicy == nil {
+		if rev, ok := storefront.Current(r.Context()); ok && rev.ID > 0 {
+			missing := int64(-1)
+			input.ExpectedPolicy = &missing
+		}
+	}
+	if input.ExpectedPolicy != nil {
+		r = r.WithContext(storefront.WithExpectedPolicy(r.Context(), *input.ExpectedPolicy))
+	}
 	var order domaincommerce.Order
 	var err error
 	if input.ExpectedTotal != nil {
@@ -314,7 +325,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	}
 	if err != nil {
 		if errors.Is(err, ports.ErrQuoteChanged) {
-			writeError(w, http.StatusConflict, "QUOTE_CHANGED", "Prices changed. Refresh the quote and confirm the new total.")
+			writeError(w, http.StatusConflict, "QUOTE_CHANGED", "Prices or store policies changed. Refresh the quote and confirm the current total.")
 			return
 		}
 		if errors.Is(err, ports.ErrIdempotencyConflict) {
@@ -331,6 +342,10 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		}
 		if errors.Is(err, ports.ErrInsufficientStock) {
 			writeError(w, http.StatusUnprocessableEntity, "INSUFFICIENT_STOCK", "One or more items in your cart are currently out of stock.")
+			return
+		}
+		if errors.Is(err, ports.ErrDeliveryUnavailable) {
+			writeError(w, http.StatusUnprocessableEntity, "DELIVERY_UNAVAILABLE", "Delivery is unavailable for this PIN code. Choose another Indian delivery address.")
 			return
 		}
 		if errors.Is(err, ports.ErrInvalidState) {

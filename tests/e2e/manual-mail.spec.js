@@ -10,7 +10,7 @@ test('INT-014--qa-and-technical-operator', async ({ request }, testInfo) => {
   const order = JSON.parse(raw);
   testInfo.annotations.push({ type: 'account', description: `customer=${order.email}; order_number=${order.order_number}` });
   const mailbox = await (await request.get('http://127.0.0.1:8025/api/v1/messages?limit=500')).json();
-  for (const subject of ['Your Weevcrafts order has been received', 'Your Weevcrafts order has shipped']) {
+  for (const subject of ['Your WeevCrafts order has been received', 'Your WeevCrafts order has shipped']) {
     const candidates = (mailbox.messages || []).filter(message => message.Subject === subject && (message.To || []).some(recipient => recipient.Address === order.email));
     let found = false;
     for (const candidate of candidates) {

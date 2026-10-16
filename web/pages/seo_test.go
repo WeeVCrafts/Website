@@ -37,9 +37,9 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 	}
 	html := body.String()
 	for _, want := range []string{
-		`<title>WeeVCrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>`,
-		`property="og:title" content="WeeVCrafts | Handmade Indian Arts, Crafts &amp; Sarees"`,
-		`property="og:site_name" content="WeeVCrafts"`,
+		`<title>WeevCrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>`,
+		`property="og:title" content="WeevCrafts | Handmade Indian Arts, Crafts &amp; Sarees"`,
+		`property="og:site_name" content="WeevCrafts"`,
 		`name="description" content="` + identity.Description + `"`,
 		`rel="canonical" href="https://weevcrafts.com/"`,
 	} {
@@ -79,7 +79,7 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 }
 
 func TestPageTitleDoesNotDuplicateBrand(t *testing.T) {
-	for _, title := range []string{"Account · WeeVCrafts", "Sign in - WeeVCrafts"} {
+	for _, title := range []string{"Account · WeevCrafts", "Sign in - WeevCrafts"} {
 		if got := pageDocumentTitle(viewmodels.CustomerPage{Route: "/login", Title: title}); got != title {
 			t.Errorf("title = %q, want %q", got, title)
 		}

@@ -130,15 +130,15 @@ test('Google linking proof stays in the active popup and is cleared on dismissal
   await dialog.locator('[data-google-signin]').click();
   const link = dialog.locator('[data-firebase-link]');
   await expect(link).toBeVisible();
-  await expect(link.getByLabel('Current WeeVCrafts password', { exact: true })).toBeFocused();
-  await link.getByLabel('Current WeeVCrafts password', { exact: true }).fill('qa-existing-proof');
+  await expect(link.getByLabel('Current WeevCrafts password', { exact: true })).toBeFocused();
+  await link.getByLabel('Current WeevCrafts password', { exact: true }).fill('qa-existing-proof');
   await page.keyboard.press('Escape');
   await page.locator('#cart-count').click();
   await expect(link).toBeHidden();
   await expect(dialog.locator('[data-google-terms]')).not.toBeChecked();
   await dialog.locator('[data-google-terms]').check();
   await dialog.locator('[data-google-signin]').click();
-  await link.getByLabel('Current WeeVCrafts password', { exact: true }).fill('qa-existing-proof');
+  await link.getByLabel('Current WeevCrafts password', { exact: true }).fill('qa-existing-proof');
   await link.getByRole('button', { name: 'Connect account securely' }).click();
   await expect(page).toHaveURL(/\/cart$/);
   expect(mock.exchanges.at(-1).link_password).toBe('qa-existing-proof');

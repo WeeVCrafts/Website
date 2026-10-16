@@ -25,9 +25,9 @@ const output=process.env.WEEVCRAFTS_UI_ARTIFACTS||path.join(os.tmpdir(),'weevcra
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${route} overflow ${width}`);
     assert(await page.locator('.wordmark-mark').first().evaluate(image=>image.complete&&image.naturalWidth>0),'Supplied logo failed to load');
     assert.equal(await page.locator('.header-main .location,.artisan-link,[data-hero-autoplay]').count(),0,'Removed controls must not remain in the document');
-    assert.equal(await page.locator('.wordmark strong').first().textContent(),'WeeVCrafts');
+    assert.equal(await page.locator('.wordmark strong').first().textContent(),'WeevCrafts');
     if(route==='/') {
-     assert.equal(await page.title(),'WeeVCrafts | Handmade Indian Arts, Crafts & Sarees');
+     assert.equal(await page.title(),'WeevCrafts | Handmade Indian Arts, Crafts & Sarees');
      const heroAction = width > 800
       ? page.locator('.desktop-home-intro [data-hero-slide]:not([hidden]) .primary-button')
       : page.locator('.mobile-home-copy .primary-button');

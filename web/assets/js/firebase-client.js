@@ -133,7 +133,7 @@
       const f=await ready();if(!f)throw new Error("Google sign-in is unavailable.");
       const provider=new f.authSDK.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
       const user=(await f.authSDK.signInWithPopup(f.auth,provider)).user;
-      const api=global.weevcraftsBackend || await global.WeevcraftsBackend.create();
+      const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();
       const result=await exchange(api,user,{acceptedTerms:terms,next:panel.dataset.authNext||new URLSearchParams(global.location.search).get("next")||"",authRoot:panel.closest('[data-auth-surface]')});
       global.location.assign(result.redirect_to||"/products");
     } catch(error) {message(panel,safeError(error).message,true);} finally {button.disabled=false;}
@@ -149,7 +149,7 @@
         if(global.WVUI && !global.WVUI.validate(link))return;
         link.dataset.submitting='true';
         const button=link.querySelector('button[type="submit"]');button.disabled=true;
-        try{const api=global.weevcraftsBackend || await global.WeevcraftsBackend.create();const result=await exchange(api,pendingLink.user,{...pendingLink.input,linkPassword:link.querySelector("input").value});global.location.assign(result.redirect_to||"/products");}
+        try{const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();const result=await exchange(api,pendingLink.user,{...pendingLink.input,linkPassword:link.querySelector("input").value});global.location.assign(result.redirect_to||"/products");}
         catch(error){message(link,safeError(error).message,true);}finally{link.querySelector("input").value="";button.disabled=false;delete link.dataset.submitting;}
       });
     });
@@ -196,7 +196,7 @@
     const panel=document.querySelector("[data-firebase-push-panel]");if(!panel||!f.settings.vapidKey)return;
     panel.hidden=false;
     const enable=panel.querySelector("[data-push-enable]"),disable=panel.querySelector("[data-push-disable]"),test=panel.querySelector("[data-push-test]");
-    const api=global.weevcraftsBackend || await global.WeevcraftsBackend.create();
+    const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();
     const update=async()=>{const state=await api.call("/api/v1/customer/push");enable.hidden=state.enabled;disable.hidden=!state.enabled;test.hidden=!state.enabled;};
     await update();
     enable.addEventListener("click",async()=>{
@@ -223,7 +223,7 @@
       catch(_){message(panel,"Test delivery failed. Please try again.",true);}finally{test.disabled=false;}
     });
   }
-  global.WeevcraftsFirebase={signIn,signUp,recover,action,enhanceGoogle,cancelLink(root){if(pendingLink && root.contains(pendingLink.input.authRoot))pendingLink=undefined;}};
+  global.WeevCraftsFirebase={signIn,signUp,recover,action,enhanceGoogle,cancelLink(root){if(pendingLink && root.contains(pendingLink.input.authRoot))pendingLink=undefined;}};
   // The Firebase service worker forwards foreground messages to visible tabs.
   // Handle its public message event without loading auth or analytics on every
   // shopping page. The payload body is deliberately never rendered.

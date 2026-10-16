@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,6 +25,7 @@ import (
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
@@ -40,6 +40,7 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
+	storefrontPreview  *LiveStorefrontHandler
 	categoryStorage    ports.ObjectStorage
 	localMode          bool
 	pool               *pgxpool.Pool
@@ -340,7 +341,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.serveNotifications(w, r) {
 		return
 	}
-	if h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
+	if h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
 		return
 	}
 	session, ok := h.session(r)
@@ -718,13 +719,13 @@ func (h *LivePortalHandler) userRoles(r *http.Request, userID int64) []domainide
 
 func (h *LivePortalHandler) userDisplayName(r *http.Request, userID int64) string {
 	if h.pool == nil || userID <= 0 {
-		return "Weevcrafts account"
+		return "WeevCrafts account"
 	}
 	var name string
 	if err := h.queryRow(r, `SELECT display_name FROM users WHERE id=$1`, userID).Scan(&name); err != nil || strings.TrimSpace(name) == "" {
-		return "Weevcrafts account"
+		return "WeevCrafts account"
 	}
-	return name
+	return identity.DisplayName(name)
 }
 
 func (h *LivePortalHandler) userEmail(r *http.Request, userID int64) string {
@@ -1329,9 +1330,9 @@ func isPromotionMutationPath(path string) bool {
 }
 
 func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *http.Request) {
-	root, requiredRole := "/admin", "admin"
+	requiredRole := "admin"
 	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
-		root, requiredRole = "/super-admin", "super_admin"
+		requiredRole = "super_admin"
 	}
 	session, ok := h.session(r)
 	if !ok {
@@ -1350,48 +1351,8 @@ func (h *LivePortalHandler) adminPromotionMutation(w http.ResponseWriter, r *htt
 		denyPortalAccess(w, r)
 		return
 	}
-	action := strings.TrimPrefix(r.URL.Path, root+"/marketing/")
-	id, idErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("promotion_id")), 10, 64)
-	var err error
-	switch action {
-	case "create":
-		err = h.createPromotion(r, session.UserID)
-	case "update":
-		if idErr != nil || id <= 0 {
-			err = fmt.Errorf("invalid campaign id")
-		} else {
-			err = h.updatePromotion(r, id, session.UserID)
-		}
-	case "status":
-		status := strings.TrimSpace(r.Form.Get("status"))
-		if idErr != nil || id <= 0 || (status != "active" && status != "draft" && status != "archived") {
-			err = fmt.Errorf("invalid campaign status")
-		} else {
-			result, execErr := h.pool.Exec(r.Context(), `UPDATE promotions SET status=$1,updated_at=NOW() WHERE id=$2`, status, id)
-			err = execErr
-			if err == nil && result.RowsAffected() == 0 {
-				err = fmt.Errorf("campaign not found")
-			}
-		}
-	case "delete":
-		if idErr != nil || id <= 0 {
-			err = fmt.Errorf("invalid campaign id")
-		} else {
-			err = h.deletePromotion(r, id)
-		}
-	default:
-		http.NotFound(w, r)
-		return
-	}
-	if err != nil {
-		log.Printf("promotion mutation failed request_id=%s action=%s actor=%d: %v", requestID(r), action, session.UserID, err)
-		h.renderPromotionFailure(w, r, session.UserID, domainidentity.Role(requiredRole), root, session.CSRFToken, err, promotionFormFromRequest(r), id)
-		return
-	}
-	if idErr == nil && id > 0 && action != "create" && action != "update" {
-		_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,$2,'promotion',$3,$4,jsonb_build_object('status',$5::text))`, strconv.FormatInt(session.UserID, 10), "promotion."+action, strconv.FormatInt(id, 10), r.Header.Get("X-Request-ID"), r.Form.Get("status"))
-	}
-	http.Redirect(w, r, root+"/marketing?notice=Promotion+saved", http.StatusSeeOther)
+	http.Error(w, "Promotion publication required. Manage coupon definitions in Storefront → Promotions and submit for Super Admin review.", http.StatusConflict)
+
 }
 
 type promotionForm struct {

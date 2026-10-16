@@ -6,10 +6,10 @@ import (
   "github.com/wecratfs/commerce/web/components"
 )
 
-templ LoginGalleryHeader() {
+templ LoginGalleryHeader(p ...viewmodels.CustomerPage) {
   <header class="gallery-header">
     <div class="container gallery-header-inner">
-      <a class="gallery-wordmark" href="/" aria-label="WeeVCrafts home"><img src="/assets/images/brand/weevcrafts-logo.png" alt="" width="64" height="64"/><span>WeeVCrafts</span></a>
+      <a class="gallery-wordmark" href="/" aria-label="WeevCrafts home"><img src={ galleryStorefrontLogo(p) } alt="" width="64" height="64"/><span>WeevCrafts</span></a>
       <a class="gallery-browse" href="/"><span>Continue browsing</span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
     </div>
   </header>
@@ -17,20 +17,20 @@ templ LoginGalleryHeader() {
 
 templ LoginGallery(p viewmodels.CustomerPage) {
   <section class="login-gallery" aria-labelledby="login-title">
-    <img class="gallery-artwork" src="/assets/images/customer/woven-gallery-auth.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/woven-gallery-auth.webp", "") } sizes="(max-width:800px) 100vw, 58vw" width="1086" height="1448" alt="" decoding="async" fetchpriority="high"/>
+    <img class="gallery-artwork" src={ storefrontTemplateImage(p,"/assets/images/customer/woven-gallery-auth.webp") } srcset={ components.ResponsiveImageSrcSet(storefrontTemplateImage(p,"/assets/images/customer/woven-gallery-auth.webp"), "") } sizes="(max-width:800px) 100vw, 58vw" width="1086" height="1448" alt="" decoding="async" fetchpriority="high"/>
     <div class="container gallery-layout">
       <div class="gallery-form" data-auth-surface>
         if p.Notice != "" {
           <div class="utility-notice" role="status">{ p.Notice }</div>
         }
-        <h1 id="login-title">Sign in</h1>
-        <p class="gallery-lead">Your saved pieces and orders, in one place.</p>
+        <h1 id="login-title">{ storefrontNativeHeading(p,"Sign in") }</h1>
+        <p class="gallery-lead">{ storefrontNativeDescription(p,"Your saved pieces and orders, in one place.") }</p>
         if authNext(p.Filters) != "" {
           <p class="auth-context">You will return to your chosen page after signing in.</p>
         }
         @LoginFields(p.CSRFToken, authNext(p.Filters), "login")
         @FirebaseGoogle("login", authNext(p.Filters))
-        <nav class="gallery-account-links" aria-label="Account access"><span>New to WeeVCrafts?</span><a href={ authRouteURL("/register", p.Filters) }>Create account</a></nav>
+        <nav class="gallery-account-links" aria-label="Account access"><span>New to WeevCrafts?</span><a href={ authRouteURL("/register", p.Filters) }>Create account</a></nav>
       </div>
     </div>
   </section>
@@ -61,8 +61,8 @@ templ FirebaseGoogle(prefix, next string) {
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>
   </div>
   <form class="utility-form firebase-link-panel" data-firebase-link hidden>
-    <h2>Connect your existing account</h2><p>Confirm your current WeeVCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
-    @AuthPasswordField(prefix+"-link-password", "link_password", "Current WeeVCrafts password", "current-password", 0, "")
+    <h2>Connect your existing account</h2><p>Confirm your current WeevCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
+    @AuthPasswordField(prefix+"-link-password", "link_password", "Current WeevCrafts password", "current-password", 0, "")
     <button class="primary-button full" type="submit">Connect account securely</button>
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>
   </form>

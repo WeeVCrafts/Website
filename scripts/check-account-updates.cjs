@@ -107,7 +107,7 @@ async function checkout(page,fail=false){
  await expect.poll(async()=>{
   const list=await (await customer.request.get('http://127.0.0.1:8025/api/v1/messages?limit=100')).json();
   for(const message of list.messages||[]){
-   if(message.Subject!=='Your Weevcrafts order is confirmed')continue;
+   if(message.Subject!=='Your WeevCrafts order is confirmed')continue;
    const detail=await (await customer.request.get('http://127.0.0.1:8025/api/v1/message/'+message.ID)).json();
    if((detail.Text||'').includes(number)&&detail.Text.includes(baseURL+'/orders/'+number+'/tracking'))return true;
   }return false;

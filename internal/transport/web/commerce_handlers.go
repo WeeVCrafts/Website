@@ -1171,7 +1171,7 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	}
 	brandName := strings.TrimSpace(r.FormValue("brand_name"))
 	if brandName == "" {
-		brandName = "Weevcrafts"
+		brandName = "WeevCrafts"
 	}
 	brandSlug := toSlug(r.FormValue("brand_slug"))
 	if brandSlug == "" || len(brandSlug) < 2 {

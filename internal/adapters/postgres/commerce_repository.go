@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -703,6 +704,13 @@ func (r *CommerceRepository) RemoveCartItem(ctx context.Context, cartID, variant
 }
 
 func (r *CommerceRepository) MoveCartItemToWishlist(ctx context.Context, cartID, userID, variantID, productID int64) error {
+	revision, e := ReadPublishedStorefront(ctx, r.pool)
+	if e != nil {
+		return e
+	}
+	if !revision.Config.Settings.Features.Wishlist {
+		return ports.ErrForbidden
+	}
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var cartProductID int64
 		err := tx.QueryRow(transactionContext, `
@@ -797,6 +805,13 @@ func (r *CommerceRepository) GetCart(ctx context.Context, cartID int64) (domainc
 }
 
 func (r *CommerceRepository) AddWishlist(ctx context.Context, userID, productID int64) error {
+	revision, e := ReadPublishedStorefront(ctx, r.pool)
+	if e != nil {
+		return e
+	}
+	if !revision.Config.Settings.Features.Wishlist {
+		return ports.ErrForbidden
+	}
 	var exists bool
 	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' WHERE p.id = $1 AND p.status = 'approved')`, productID).Scan(&exists); err != nil {
 		return err
@@ -963,7 +978,20 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return ports.ErrInvalidState
 		}
 		orderNumber := newOrderNumber(userID)
-		shipping := domaincommerce.CheckoutShipping(subtotal)
+		revision, policyErr := readPlacementPolicy(transactionContext, tx)
+		if policyErr != nil {
+			return policyErr
+		}
+		if wanted, ok := storefront.ExpectedPolicy(transactionContext); ok && wanted != revision.ID {
+			return ports.ErrQuoteChanged
+		}
+		if !revision.Config.Settings.Policy.Serves(address.PostalCode) {
+			return fmt.Errorf("%w: %w", ports.ErrInvalidState, ports.ErrDeliveryUnavailable)
+		}
+		if couponCode != "" && !revision.Config.Settings.Features.Coupons {
+			return ports.ErrCouponInvalid
+		}
+		shipping := revision.Config.Settings.Policy.Shipping(subtotal)
 		couponID, promotionID, discount, err := checkoutDiscount(transactionContext, tx, userID, cartID, shipping, couponCode, true)
 		if err != nil {
 			return err
@@ -985,6 +1013,10 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if err != nil {
 			return mapCommerceError(err)
+		}
+		policyJSON, _ := json.Marshal(revision.Config.Settings.Policy)
+		if _, err = tx.Exec(transactionContext, `UPDATE orders SET policy_revision=NULLIF($2,0),policy_snapshot=$3 WHERE id=$1 AND policy_snapshot IS NULL`, order.ID, revision.ID, policyJSON); err != nil {
+			return err
 		}
 		if couponID != 0 {
 			if _, err := tx.Exec(transactionContext, `INSERT INTO promotion_usages (promotion_id,coupon_id,user_id,order_id,amount_cents) VALUES ($1,$2,$3,$4,$5)`, promotionID, couponID, userID, order.ID, discount); err != nil {

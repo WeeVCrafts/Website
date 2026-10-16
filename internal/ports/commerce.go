@@ -23,6 +23,7 @@ var (
 	ErrFinalActiveVariant   = errors.New("cannot archive the final active product variant")
 	ErrVariantReservedStock = errors.New("cannot archive a variant with reserved stock")
 	ErrCouponInvalid        = errors.New("coupon is invalid or unavailable")
+	ErrDeliveryUnavailable  = errors.New("delivery is unavailable for this PIN code")
 	ErrQuoteChanged         = errors.New("checkout total changed; review a fresh quote")
 	ErrFulfillmentConflict  = errors.New("fulfilment changed; reload the latest order")
 )

@@ -205,7 +205,7 @@
   document.addEventListener('pointerdown',()=>{delete document.body.dataset.keyboardInput;},true);
   // Protect long edits in memory. Do not persist account/product form values locally.
   const dirtyForms = new Set();
-  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form';
+  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty]';
   function dirtyForm() {
     for (const form of dirtyForms) {
       if (!form.isConnected) { dirtyForms.delete(form); continue; }
@@ -285,7 +285,7 @@
   document.addEventListener("submit",async event=> {
     const form=event.target;
     if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
-    const action=new URL(form.getAttribute("action") || location.href,location.href);
+    const action=new URL(event.submitter?.getAttribute("formaction") || form.getAttribute("action") || location.href,location.href);
     if(action.origin!==location.origin || !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname)) return;
     event.preventDefault();
     if(form.dataset.saving) return;
@@ -299,11 +299,14 @@
       const response=await fetch(action.href,{method:'POST',credentials:'same-origin',body:payload,signal:controller.signal});
       if(response.ok && response.redirected) { location.assign(response.url); return; }
       const html=await response.text(); const doc=new DOMParser().parseFromString(html,'text/html');
-      const message=(doc.querySelector('.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
+      const storefrontSummary=doc.querySelector('.sf-error');
+      if(storefrontSummary){const error=new Error(storefrontSummary.textContent.trim());error.storefrontSummary=storefrontSummary;throw error;}
+      const message=response.headers.get('Content-Type')?.includes('text/plain') ? html.trim().slice(0,1000) : (doc.querySelector('.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
       throw new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
     } catch(error) {
       const banner=document.createElement('div'); banner.className='ui-form-error'; banner.role='alert'; banner.tabIndex=-1;
       banner.textContent=error.name==='AbortError' || error instanceof TypeError ? 'Could not confirm whether your changes were saved. Check the record before trying again.' : error.message;
+      if(error.storefrontSummary)banner.replaceChildren(...Array.from(error.storefrontSummary.childNodes).map(node=>node.cloneNode(true)));
       form.prepend(banner); banner.focus();
       buttons.forEach(button=>button.disabled=false); delete form.dataset.saving; form.removeAttribute('aria-busy');
     } finally { clearTimeout(timer); }

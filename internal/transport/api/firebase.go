@@ -35,7 +35,7 @@ func (h *Handler) FirebaseSession(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, applicationauth.ErrFirebaseLinkRequired):
-			writeError(w, 409, "LINK_REQUIRED", "Confirm your existing Weevcrafts password to securely connect this account.")
+			writeError(w, 409, "LINK_REQUIRED", "Confirm your existing WeevCrafts password to securely connect this account.")
 		case errors.Is(err, applicationauth.ErrFirebaseTerms):
 			writeError(w, 422, "TERMS_REQUIRED", "Accept the privacy notice and terms to create your account.")
 		case errors.Is(err, applicationauth.ErrFirebaseRole):

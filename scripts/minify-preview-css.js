@@ -15,6 +15,7 @@ const files = [
   "experience.css",
   "storefront-reference.css",
   "admin.css",
+  "storefront-editor.css",
   "seller-admin.css",
   "support-portal.css",
 ];

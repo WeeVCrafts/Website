@@ -61,7 +61,7 @@ func Document(p viewmodels.LegacyPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " - WeeVCrafts</title><link rel=\"icon\" type=\"image/png\" href=\"/assets/images/brand/favicon.png\"><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " - WeevCrafts</title><link rel=\"icon\" type=\"image/png\" href=\"/assets/images/brand/favicon.png\"><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -113,7 +113,7 @@ func Document(p viewmodels.LegacyPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></head><body><header class=\"site-header\"><div class=\"container\"><a class=\"wordmark\" href=\"/\"><img class=\"wordmark-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><strong>WeeVCrafts</strong></a></div></header><main id=\"page\" class=\"container utility-shell\"><section class=\"utility-card\"><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></head><body><header class=\"site-header\"><div class=\"container\"><a class=\"wordmark\" href=\"/\"><img class=\"wordmark-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><strong>WeevCrafts</strong></a></div></header><main id=\"page\" class=\"container utility-shell\"><section class=\"utility-card\"><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

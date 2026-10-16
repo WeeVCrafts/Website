@@ -1,0 +1,49 @@
+package admin
+
+import (
+	"fmt"
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ StorefrontProductSearch(m viewmodels.StorefrontEditor) {
+	<details>
+		<summary>Find products</summary>
+		<p>Save selection changes before searching another page. Previously selected products remain in the list.</p>
+		<form method="get" action={ m.Admin.PortalRoot + "/storefront" }><input type="hidden" name="draft" value={ fmt.Sprint(m.Draft.ID) }/><input type="hidden" name="tab" value={ m.Tab }/><input type="hidden" name="section" value={ m.Selected }/><label>Search catalog<input name="product_q" value={ m.ProductQuery }/></label><button class="admin-button secondary" type="submit">Find products</button></form>
+		<p>{ fmt.Sprint(m.ProductTotal) } matching products · Page { fmt.Sprint(m.ProductPage) }</p>
+		<nav aria-label="Product picker pages">
+			if m.PreviousProducts!="" {
+				<a href={ m.PreviousProducts }>Previous products</a>
+			}
+			if m.NextProducts!="" {
+				<a href={ m.NextProducts }>Next products</a>
+			}
+		</nav>
+	</details>
+}
+
+templ StorefrontProductChoices(m viewmodels.StorefrontEditor) {
+	<fieldset class="sf-product-picker">
+		<legend>Selected products</legend>
+		<p>Used by “selected” product sections and promotions limited to selected products. Choose up to 24 pieces.</p>
+		for _,p:=range m.ProductChoices {
+			<label class="sf-check">
+				<input type="checkbox" name="product_id" value={ fmt.Sprint(p.ID) } checked?={ p.Selected }/>
+				<span>
+					<strong>{ p.Name }</strong>
+					<small>
+						{ p.Price } · { p.Status }
+						if p.InStock {
+							· In stock
+						} else {
+							· Unavailable
+						}
+					</small>
+				</span>
+			</label>
+		}
+		if len(m.ProductChoices)==0 {
+			<p>No products match this search. Try a different name, or approve catalog listings before selecting them.</p>
+		}
+	</fieldset>
+}

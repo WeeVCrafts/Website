@@ -1,0 +1,18 @@
+package admin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ StorefrontComparison(m viewmodels.StorefrontEditor) {
+ <details class="sf-comparison"><summary>Review changes against the published storefront</summary>
+  if len(m.Differences)==0 {
+   <p>This draft matches the current published configuration.</p>
+  } else {
+   <p>Review these changes before publishing. For a stale save, reload the latest saved draft before applying your proposal again.</p>
+   <div class="ui-table-region" role="region" tabindex="0" aria-label="Storefront changes"><table class="ui-table"><thead><tr><th scope="col">Setting</th><th scope="col">Published</th><th scope="col">Draft</th></tr></thead><tbody>
+    for _,change:=range m.Differences {
+     <tr><th scope="row">{ change.Field }</th><td><pre>{ change.Saved }</pre></td><td><pre>{ change.Proposed }</pre></td></tr>
+    }
+   </tbody></table></div>
+  }
+ </details>
+}

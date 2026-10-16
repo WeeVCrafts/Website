@@ -82,6 +82,7 @@ type Category struct {
 	ImageObjectKey   string             `json:"image_object_key"`
 	DisplayOrder     int32              `json:"display_order"`
 	ShowInNavigation bool               `json:"show_in_navigation"`
+	Description      string             `json:"description"`
 }
 
 type ConsentRecord struct {
@@ -161,6 +162,9 @@ type Order struct {
 	CreatedAt              pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt              pgtype.Timestamptz `json:"updated_at"`
 	IdempotencyRequestHash pgtype.Text        `json:"idempotency_request_hash"`
+	PolicyRevision         pgtype.Int8        `json:"policy_revision"`
+	PolicySnapshot         []byte             `json:"policy_snapshot"`
+	DeliveredAt            pgtype.Timestamptz `json:"delivered_at"`
 }
 
 type OrderItem struct {
@@ -323,6 +327,45 @@ type SessionsMetadatum struct {
 	LastSeenAt pgtype.Timestamptz `json:"last_seen_at"`
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+}
+
+type StorefrontDraft struct {
+	ID               int64              `json:"id"`
+	Version          int64              `json:"version"`
+	BaseRelease      int64              `json:"base_release"`
+	Config           []byte             `json:"config"`
+	State            string             `json:"state"`
+	CreatedBy        int64              `json:"created_by"`
+	UpdatedBy        int64              `json:"updated_by"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ReviewNote       string             `json:"review_note"`
+	PublishedRelease pgtype.Int8        `json:"published_release"`
+}
+
+type StorefrontHead struct {
+	Singleton bool  `json:"singleton"`
+	ReleaseID int64 `json:"release_id"`
+}
+
+type StorefrontMedium struct {
+	ID          string             `json:"id"`
+	ObjectKey   string             `json:"object_key"`
+	ContentType string             `json:"content_type"`
+	ByteSize    int64              `json:"byte_size"`
+	Alt         string             `json:"alt"`
+	FocalX      int32              `json:"focal_x"`
+	FocalY      int32              `json:"focal_y"`
+	Variants    []byte             `json:"variants"`
+	CreatedBy   int64              `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type StorefrontRelease struct {
+	ID          int64              `json:"id"`
+	Config      []byte             `json:"config"`
+	PublishedBy pgtype.Int8        `json:"published_by"`
+	PublishedAt pgtype.Timestamptz `json:"published_at"`
+	Note        string             `json:"note"`
 }
 
 type User struct {

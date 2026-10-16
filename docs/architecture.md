@@ -1,6 +1,6 @@
-# Weevcrafts architecture boundary
+# WeevCrafts architecture boundary
 
-Weevcrafts is a Go modular monolith. PostgreSQL owns authoritative business
+WeevCrafts is a Go modular monolith. PostgreSQL owns authoritative business
 state; Redis, Meilisearch, S3-compatible storage, and payment providers are
 replaceable infrastructure behind ports.
 

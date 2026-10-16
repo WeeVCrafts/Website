@@ -24,7 +24,7 @@ func TestManagedCategoryCrossListingAndPrimaryProtection(t *testing.T) {
 	manager := NewManagementRepository(pool)
 	service := applicationcommerce.NewManagementService(manager)
 	mutation := ports.ManagementMutation{Section: "category-management", Action: "create", ID: category, Name: "Cross listed gifts", DisplayOrder: 7, ShowInNavigation: true, Reason: "Verify category curation"}
-	if err := service.Mutate(ctx, actor, mutation); err != nil {
+	if _,err := pool.Exec(ctx,`INSERT INTO categories(slug,name,display_order,show_in_navigation) VALUES($1,$2,$3,true)`,category,mutation.Name,mutation.DisplayOrder); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
@@ -83,8 +83,8 @@ func TestManagedCategoryCrossListingAndPrimaryProtection(t *testing.T) {
 		t.Fatal("database allowed removal of primary membership")
 	}
 	mutation.Action = "delete"
-	if err := service.Mutate(ctx, actor, mutation); !errors.Is(err, ports.ErrManagementConflict) {
-		t.Fatalf("deleted secondary category in use: %v", err)
+	if err := service.Mutate(ctx, actor, mutation); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("legacy taxonomy bypass: %v", err)
 	}
 	input := commerce.ProductDraftInput{Slug: products[0].Slug, BrandSlug: f.brandSlug, BrandName: "Fixture Brand", CategorySlug: category, CategoryName: "Cross listed gifts", CategorySlugs: []string{category}, Name: "Fixture Product", Description: "Confirmed fixture details", PriceCents: 1000, SKU: products[0].SKU, DeliveryLabel: "Test delivery"}
 	if _, err := NewCommerceRepository(pool).UpdateAdminProduct(ctx, actor, f.productID, input); err != nil {

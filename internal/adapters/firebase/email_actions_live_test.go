@@ -68,8 +68,8 @@ func TestLiveFirebaseEmailActions(t *testing.T) {
 		if e != nil {
 			t.Fatal("test mail credential unavailable")
 		}
-		sender, e = emailadapter.NewResend(string(key), "Weevcrafts <no-reply@mail.weevcrafts.com>", "weevcrafts@gmail.com")
-		if e != nil || sender.Send(ctx, ports.EmailMessage{To: inbox, DisplayName: "Email integration test", Subject: "Verify your Weevcrafts email", ActionURL: verification}) != nil {
+		sender, e = emailadapter.NewResend(string(key), "WeevCrafts <no-reply@mail.weevcrafts.com>", "weevcrafts@gmail.com")
+		if e != nil || sender.Send(ctx, ports.EmailMessage{To: inbox, DisplayName: "Email integration test", Subject: "Verify your WeevCrafts email", ActionURL: verification}) != nil {
 			t.Fatal("branded verification delivery rejected")
 		}
 	}
@@ -88,7 +88,7 @@ func TestLiveFirebaseEmailActions(t *testing.T) {
 	if err != nil {
 		t.Fatal("reset link generation rejected")
 	}
-	if sender != nil && sender.Send(ctx, ports.EmailMessage{To: os.Getenv("WECRATFS_RESEND_TEST_INBOX"), DisplayName: "Email integration test", Subject: "Reset your Weevcrafts password", ActionURL: reset}) != nil {
+	if sender != nil && sender.Send(ctx, ports.EmailMessage{To: os.Getenv("WECRATFS_RESEND_TEST_INBOX"), DisplayName: "Email integration test", Subject: "Reset your WeevCrafts password", ActionURL: reset}) != nil {
 		t.Fatal("branded reset delivery rejected")
 	}
 	link, err = url.Parse(reset)

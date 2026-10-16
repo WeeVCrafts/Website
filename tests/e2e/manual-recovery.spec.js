@@ -53,7 +53,7 @@ async function mailLink(request, email) {
     const response = await request.get('http://127.0.0.1:8025/api/v1/messages?limit=500');
     expect(response.status()).toBe(200);
     const messages = (await response.json()).messages || [];
-    message = messages.find(item => item.Subject?.includes('Reset your Weevcrafts password') && (item.To || []).some(to => to.Address === email));
+    message = messages.find(item => item.Subject?.includes('Reset your WeevCrafts password') && (item.To || []).some(to => to.Address === email));
     return !!message;
   }, { timeout: 15000 }).toBe(true);
   const detail = await (await request.get(`http://127.0.0.1:8025/api/v1/message/${message.ID}`)).json();

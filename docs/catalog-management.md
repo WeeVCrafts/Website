@@ -1,18 +1,24 @@
 # Homepage and category management
 
-Admin and Super Admin manage categories in **Products → Categories** (or
-`/admin/category-management` and `/super-admin/category-management`). Category
-names, pictures, numeric display order and navigation visibility are saved in
-PostgreSQL. Lower order numbers appear first; slugs break ties and remain fixed.
-Hiding a category removes its discovery links, without unpublishing products.
-JPEG, PNG and WebP uploads accept up to 5 MiB / 16 megapixels and are normalized
-to JPEG in the configured persistent object store. A failed upload preserves the
-previous image and reports an error; it never substitutes a product photograph.
+Admin and Super Admin prepare category names, pictures, numeric display order
+and discovery visibility in **Storefront → Categories**. Admin submits drafts;
+Super Admin reviews and publishes them. Customers see the published category
+presentation across navigation, discovery, listings and filters. Lower order
+numbers appear first; slugs break ties and remain fixed. Hiding a category
+removes discovery links without unpublishing products.
+
+Use **Storefront → Media** for JPEG, PNG and WebP uploads up to 8 MiB /
+16 megapixels, then copy the permanent image URL into the category draft.
+The persistent object store retains normalized JPEGs and responsive variants
+for previews and release history. Upload failures report actionable errors and
+preserve the current published image. See [the editor guide](storefront-editor.md).
 
 Products have one primary category and any number of additional categories.
 The primary continues to control existing reporting and commission calculations.
-Company administrators edit assignments in the product editor or use **Manage
-products** to add/remove a selection of up to 25 products. Removing a primary
+Company administrators edit assignments in the product editor or use
+**Products → Categories → Manage products** (`/admin/category-management` or
+`/super-admin/category-management`) to add/remove up to 25 selected products.
+Publish new categories before assigning products. Removing a primary
 membership requires choosing its replacement in the editor first. Categories
 referenced by any product or commission rule cannot be deleted. Sellers choose
 existing categories and cannot create taxonomy or submit cross-listing fields.

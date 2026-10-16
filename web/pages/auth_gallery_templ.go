@@ -14,7 +14,7 @@ import (
 	"net/url"
 )
 
-func LoginGalleryHeader() templ.Component {
+func LoginGalleryHeader(p ...viewmodels.CustomerPage) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -35,7 +35,20 @@ func LoginGalleryHeader() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"gallery-header\"><div class=\"container gallery-header-inner\"><a class=\"gallery-wordmark\" href=\"/\" aria-label=\"WeeVCrafts home\"><img src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"64\" height=\"64\"><span>WeeVCrafts</span></a> <a class=\"gallery-browse\" href=\"/\"><span>Continue browsing</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"gallery-header\"><div class=\"container gallery-header-inner\"><a class=\"gallery-wordmark\" href=\"/\" aria-label=\"WeevCrafts home\"><img src=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(galleryStorefrontLogo(p))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 12, Col: 107}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" alt=\"\" width=\"64\" height=\"64\"><span>WeevCrafts</span></a> <a class=\"gallery-browse\" href=\"/\"><span>Continue browsing</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -59,53 +72,92 @@ func LoginGallery(p viewmodels.CustomerPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<section class=\"login-gallery\" aria-labelledby=\"login-title\"><img class=\"gallery-artwork\" src=\"/assets/images/customer/woven-gallery-auth.webp\" srcset=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<section class=\"login-gallery\" aria-labelledby=\"login-title\"><img class=\"gallery-artwork\" src=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet("/assets/images/customer/woven-gallery-auth.webp", ""))
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(storefrontTemplateImage(p, "/assets/images/customer/woven-gallery-auth.webp"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 20, Col: 183}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 20, Col: 115}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" sizes=\"(max-width:800px) 100vw, 58vw\" width=\"1086\" height=\"1448\" alt=\"\" decoding=\"async\" fetchpriority=\"high\"><div class=\"container gallery-layout\"><div class=\"gallery-form\" data-auth-surface>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" srcset=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(storefrontTemplateImage(p, "/assets/images/customer/woven-gallery-auth.webp"), ""))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 20, Col: 241}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" sizes=\"(max-width:800px) 100vw, 58vw\" width=\"1086\" height=\"1448\" alt=\"\" decoding=\"async\" fetchpriority=\"high\"><div class=\"container gallery-layout\"><div class=\"gallery-form\" data-auth-surface>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if p.Notice != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"utility-notice\" role=\"status\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"utility-notice\" role=\"status\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(p.Notice)
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 24, Col: 62}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<h1 id=\"login-title\">Sign in</h1><p class=\"gallery-lead\">Your saved pieces and orders, in one place.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<h1 id=\"login-title\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(storefrontNativeHeading(p, "Sign in"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 26, Col: 67}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</h1><p class=\"gallery-lead\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(storefrontNativeDescription(p, "Your saved pieces and orders, in one place."))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 27, Col: 110}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if authNext(p.Filters) != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p class=\"auth-context\">You will return to your chosen page after signing in.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p class=\"auth-context\">You will return to your chosen page after signing in.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -118,20 +170,20 @@ func LoginGallery(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><span>New to WeeVCrafts?</span><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><span>New to WeevCrafts?</span><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 templ.SafeURL
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(authRouteURL("/register", p.Filters))
+		var templ_7745c5c3_Var9 templ.SafeURL
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(authRouteURL("/register", p.Filters))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 33, Col: 148}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">Create account</a></nav></div></div></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\">Create account</a></nav></div></div></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -155,12 +207,12 @@ func LoginGalleryFooter() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<footer class=\"gallery-footer container\"><nav aria-label=\"Account help and policies\"><a href=\"/contact\">Help</a><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a></nav></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<footer class=\"gallery-footer container\"><nav aria-label=\"Account help and policies\"><a href=\"/contact\">Help</a><a href=\"/privacy\">Privacy</a><a href=\"/terms\">Terms</a></nav></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -184,64 +236,64 @@ func LoginFields(csrf, next, prefix string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<form class=\"utility-form gallery-credentials\" action=\"/login\" method=\"post\" data-backend-auth=\"login\" novalidate><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<form class=\"utility-form gallery-credentials\" action=\"/login\" method=\"post\" data-backend-auth=\"login\" novalidate><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrf)
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrf)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 45, Col: 55}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"> <input type=\"hidden\" name=\"next\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"> <input type=\"hidden\" name=\"next\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(next)
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(next)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 46, Col: 49}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><div class=\"auth-field\"><label for=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><div class=\"auth-field\"><label for=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-email")
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-email")
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 47, Col: 56}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\">Username or email</label><input id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">Username or email</label><input id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-email")
+		var templ_7745c5c3_Var15 string
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-email")
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 47, Col: 111}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" name=\"email\" type=\"text\" autocomplete=\"username\" autocapitalize=\"none\" spellcheck=\"false\" required></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" name=\"email\" type=\"text\" autocomplete=\"username\" autocapitalize=\"none\" spellcheck=\"false\" required></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -249,20 +301,20 @@ func LoginFields(csrf, next, prefix string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"gallery-recovery\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"gallery-recovery\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var12 templ.SafeURL
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs(authRouteURL("/forgot-password", url.Values{"next": {next}}))
+		var templ_7745c5c3_Var16 templ.SafeURL
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(authRouteURL("/forgot-password", url.Values{"next": {next}}))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 49, Col: 104}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" data-auth-route=\"/forgot-password\">Forgot password?</a></div><p class=\"auth-feedback\" data-backend-form-message role=\"alert\" tabindex=\"-1\" hidden></p><button class=\"primary-button full\" type=\"submit\">Sign in</button></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" data-auth-route=\"/forgot-password\">Forgot password?</a></div><p class=\"auth-feedback\" data-backend-form-message role=\"alert\" tabindex=\"-1\" hidden></p><button class=\"primary-button full\" type=\"submit\">Sign in</button></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -286,38 +338,38 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"firebase-google-panel\" data-firebase-google-panel data-auth-next=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"firebase-google-panel\" data-firebase-google-panel data-auth-next=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(next)
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(next)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 56, Col: 85}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"><div class=\"auth-method-divider\" data-google-divider><span>or</span></div><button class=\"outline-button full google-button\" type=\"button\" data-google-signin disabled aria-disabled=\"true\" aria-describedby=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"><div class=\"auth-method-divider\" data-google-divider><span>or</span></div><button class=\"outline-button full google-button\" type=\"button\" data-google-signin disabled aria-disabled=\"true\" aria-describedby=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-google-note")
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-google-note")
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 58, Col: 157}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -325,28 +377,28 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span>Continue with Google</span></button> <label class=\"check-line google-terms-label\" hidden><input type=\"checkbox\" data-google-terms><span>I agree to the <a href=\"/privacy\">privacy notice</a> and <a href=\"/terms\">terms</a>.</span></label><p id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<span>Continue with Google</span></button> <label class=\"check-line google-terms-label\" hidden><input type=\"checkbox\" data-google-terms><span>I agree to the <a href=\"/privacy\">privacy notice</a> and <a href=\"/terms\">terms</a>.</span></label><p id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-google-note")
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-google-note")
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 60, Col: 33}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Confirm your current WeeVCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Confirm your current WeevCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = AuthPasswordField(prefix+"-link-password", "link_password", "Current WeeVCrafts password", "current-password", 0, "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = AuthPasswordField(prefix+"-link-password", "link_password", "Current WeevCrafts password", "current-password", 0, "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<button class=\"primary-button full\" type=\"submit\">Connect account securely</button><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<button class=\"primary-button full\" type=\"submit\">Connect account securely</button><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -370,12 +422,12 @@ func GoogleMark() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var17 == nil {
-			templ_7745c5c3_Var17 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<svg class=\"google-mark\" aria-hidden=\"true\" viewBox=\"0 0 48 48\" width=\"20\" height=\"20\"><path fill=\"#4285F4\" d=\"M43.61 24.46c0-1.36-.12-2.66-.35-3.92H24v7.42h11c-.48 2.4-1.86 4.44-3.92 5.8v4.82h6.36c3.72-3.43 6.17-8.5 6.17-14.12Z\"></path><path fill=\"#34A853\" d=\"M24 44c5.4 0 9.94-1.79 13.25-4.86l-6.36-4.82c-1.77 1.19-4.04 1.9-6.89 1.9-5.21 0-9.63-3.52-11.21-8.26H6.22v4.97A20 20 0 0 0 24 44Z\"></path><path fill=\"#FBBC05\" d=\"M12.79 27.96A12 12 0 0 1 12.16 24c0-1.38.23-2.71.63-3.96v-4.97H6.22A20 20 0 0 0 4 24c0 3.23.78 6.28 2.22 8.93Z\"></path><path fill=\"#EA4335\" d=\"M24 11.78c2.97 0 5.63 1.02 7.73 3.03l5.8-5.8C34 5.77 29.4 4 24 4A20 20 0 0 0 6.22 15.07l6.57 4.97c1.58-4.74 6-8.26 11.21-8.26Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<svg class=\"google-mark\" aria-hidden=\"true\" viewBox=\"0 0 48 48\" width=\"20\" height=\"20\"><path fill=\"#4285F4\" d=\"M43.61 24.46c0-1.36-.12-2.66-.35-3.92H24v7.42h11c-.48 2.4-1.86 4.44-3.92 5.8v4.82h6.36c3.72-3.43 6.17-8.5 6.17-14.12Z\"></path><path fill=\"#34A853\" d=\"M24 44c5.4 0 9.94-1.79 13.25-4.86l-6.36-4.82c-1.77 1.19-4.04 1.9-6.89 1.9-5.21 0-9.63-3.52-11.21-8.26H6.22v4.97A20 20 0 0 0 24 44Z\"></path><path fill=\"#FBBC05\" d=\"M12.79 27.96A12 12 0 0 1 12.16 24c0-1.38.23-2.71.63-3.96v-4.97H6.22A20 20 0 0 0 4 24c0 3.23.78 6.28 2.22 8.93Z\"></path><path fill=\"#EA4335\" d=\"M24 11.78c2.97 0 5.63 1.02 7.73 3.03l5.8-5.8C34 5.77 29.4 4 24 4A20 20 0 0 0 6.22 15.07l6.57 4.97c1.58-4.74 6-8.26 11.21-8.26Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -399,12 +451,12 @@ func GuestLoginDialog(p viewmodels.CustomerPage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<dialog id=\"guest-login-dialog\" class=\"auth-dialog\" data-auth-dialog aria-labelledby=\"guest-login-title\" aria-describedby=\"guest-login-copy\"><div class=\"auth-dialog-content\" data-auth-surface><button class=\"auth-dialog-close\" type=\"button\" data-auth-close aria-label=\"Close sign-in prompt\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"auth-dialog-heading\"><img src=\"/assets/images/customer/woven-gallery-auth.webp\" alt=\"\" width=\"1086\" height=\"1448\" loading=\"lazy\" decoding=\"async\"><h2 id=\"guest-login-title\">Sign in to continue</h2></div><p id=\"guest-login-copy\" class=\"gallery-lead\">Save your favourite pieces and keep your orders together.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<dialog id=\"guest-login-dialog\" class=\"auth-dialog\" data-auth-dialog aria-labelledby=\"guest-login-title\" aria-describedby=\"guest-login-copy\"><div class=\"auth-dialog-content\" data-auth-surface><button class=\"auth-dialog-close\" type=\"button\" data-auth-close aria-label=\"Close sign-in prompt\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"auth-dialog-heading\"><img src=\"/assets/images/customer/woven-gallery-auth.webp\" alt=\"\" width=\"1086\" height=\"1448\" loading=\"lazy\" decoding=\"async\"><h2 id=\"guest-login-title\">Sign in to continue</h2></div><p id=\"guest-login-copy\" class=\"gallery-lead\">Save your favourite pieces and keep your orders together.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -416,7 +468,7 @@ func GuestLoginDialog(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><a href=\"/register\" data-auth-route=\"/register\">Create account</a><button class=\"auth-keep-browsing\" type=\"button\" data-auth-close>Keep browsing</button></nav></div></dialog>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><a href=\"/register\" data-auth-route=\"/register\">Create account</a><button class=\"auth-keep-browsing\" type=\"button\" data-auth-close>Keep browsing</button></nav></div></dialog>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

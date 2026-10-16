@@ -208,7 +208,7 @@ func TestHomeShowsTruthfulEmptyState(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
 	body := recorder.Body.String()
-	for _, expected := range []string{"WeeVCrafts", "Our collection is on its way", "New pieces will appear here when our makers publish them"} {
+	for _, expected := range []string{"WeevCrafts", "Our collection is on its way", "New pieces will appear here when our makers publish them"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("expected %q in body", expected)
 		}

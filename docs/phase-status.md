@@ -1,6 +1,6 @@
 > Current role contract: [four-role operations](four-role-workflow.md). Role findings below describe the earlier audited release.
 
-# Weevcrafts phase status
+# WeevCrafts phase status
 
 **Current status:** The local live demo runs from `cmd/website` with PostgreSQL-backed customer, seller, marketplace-admin, super-admin, and support workflows. The responsive storefront UI is retained, while local integrations remain deterministic and production integrations are opt-in.
 
@@ -109,7 +109,7 @@
 
 ## Architecture changes
 
-- The public product name and runtime wordmark are exactly `Weevcrafts`.
+- The public product name and runtime wordmark are exactly `WeevCrafts`.
 - PostgreSQL is the only authoritative source for identity, catalog, stock,
   carts, orders, payments, privacy records, and media metadata. The local
   database contains only records created by smoke rehearsals, never runtime

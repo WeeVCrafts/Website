@@ -187,19 +187,19 @@ test('mobile homepage is a compact composition at the same root URL', async ({ p
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/'); await ready(page);
     await expect(page).toHaveURL(base + '/');
-    await expect(page.locator('.responsive-home-intro')).toBeVisible();
+    await expect(page.locator('[data-storefront-section=hero]')).toBeVisible();
     await expect(page.locator('[data-hero-slide]')).toHaveCount(5);
     await expect(page.getByRole('heading', {level:1})).toHaveCount(1);
     await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search handmade crafts...');
     expect(await page.locator('.global-search').evaluate(element=>element.getBoundingClientRect().width)).toBeGreaterThan(width - 50);
     expect(await page.locator('[data-hero-slide]:not([hidden])').evaluate(element=>element.getBoundingClientRect().height)).toBeLessThan(300);
-    expect(await page.locator('.home-product-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2);
-    expect(await page.locator('.home-featured .product-card').first().evaluate(element=>element.getBoundingClientRect().top)).toBeLessThan(844);
+    expect(await page.locator('[data-storefront-section=featured] .home-product-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2);
+    expect(await page.locator('[data-storefront-section=featured] .product-card').first().evaluate(element=>element.getBoundingClientRect().top)).toBeLessThan(844);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
     await page.screenshot({path:path.join(output,`mobile-home-${width}.png`),fullPage:true});
   }
   await page.setViewportSize({width:1440,height:1000});
-  await expect(page.locator('.responsive-home-intro')).toBeVisible();
+  await expect(page.locator('[data-storefront-section=hero]')).toBeVisible();
   await expect(page.locator('[data-hero-controls]')).toBeVisible();
   await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search for sarees, home decor, gifts and more...');
   await expect(page).toHaveURL(base + '/');
@@ -244,5 +244,5 @@ test('homepage search replaces the page without retaining homepage styles', asyn
   await page.goBack();
   await expect(page).toHaveURL(base+'/');
   await expect(page.locator('#page')).toHaveCount(1);
-  await expect(page.locator('.responsive-home-intro')).toBeVisible();
+  await expect(page.locator('[data-storefront-section=hero]')).toBeVisible();
 });

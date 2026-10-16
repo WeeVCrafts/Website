@@ -15,7 +15,7 @@
 .storefront-body .header-main > .wordmark { display:flex; grid-area:brand; gap:8px; position:static; transform:none; width:auto; }
 .storefront-body .header-main > .wordmark .wordmark-mark { display:block; flex:0 0 clamp(52px,4.1vw,70px); width:clamp(52px,4.1vw,70px); height:clamp(52px,4.1vw,70px); }
 .storefront-body .header-main > .wordmark > span { display:block; }
-.storefront-body .wordmark strong,.storefront-body .header-main > .wordmark strong { color:var(--brand-primary); font:600 clamp(2rem,2.65vw,2.75rem)/1.1 var(--serif); letter-spacing:-.02em; }
+.storefront-body .wordmark strong,.storefront-body .header-main > .wordmark strong { color:var(--brand-primary); font:600 clamp(2rem,2.65vw,2.75rem)/1.15 var(--brand-wordmark-font); letter-spacing:-.02em; }
 .storefront-body .wordmark small,.storefront-body .header-main > .wordmark small { display:block; color:var(--muted); font:400 12px/1.4 var(--sans); letter-spacing:.02em; }
 .storefront-body .header-tools,.storefront-body .header-main.is-compact .header-tools { display:grid; grid-template-columns:minmax(160px,1fr) auto; grid-area:tools; gap:20px; align-items:center; }
 .storefront-body .header-main .search-shell { width:100%; position:relative; inset:auto; background:transparent; }
@@ -512,3 +512,33 @@
  .storefront-body .responsive-home-intro .discovery-categories { display:flex; overflow-x:auto; scroll-snap-type:x proximity; }
  .storefront-body .responsive-home-intro .discovery-category { flex:0 0 calc((100% - 144px)/7); min-width:130px; scroll-snap-align:start; }
 }
+
+/* Storefront editor uses existing cards and typography; only validated data controls layout. */
+.sf-section .sf-product-section,.sf-section .sf-content-section{padding-block:var(--sf-spacing,24px)}
+.sf-section .sf-product-grid:not(.home-category-editorial){display:grid;grid-template-columns:repeat(var(--sf-columns,6),minmax(0,1fr))}
+.sf-content-section>picture img{width:100%;max-height:480px;object-fit:cover}
+.sf-content-section>div>p{white-space:pre-line;max-width:76ch}
+.sf-image-text{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.sf-tile-grid{display:grid;grid-template-columns:repeat(var(--sf-columns,5),minmax(0,1fr));gap:16px}
+.sf-tile-grid img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px}
+.sf-tile-grid h3{margin:12px 0 4px;font:500 20px/1.3 var(--serif)}
+.sf-tile-grid p{margin:0;font-size:14px;color:var(--muted)}
+.sf-content-section details{padding:16px;border-bottom:1px solid var(--line)}
+.sf-content-section summary{cursor:pointer;font-weight:600;min-height:44px}
+.sf-preview-banner{padding:10px 16px;background:var(--brand-primary);color:white;font:500 14px/1.5 var(--sans);text-align:center}
+@media(min-width:1025px){.sf-hide-desktop{display:none}}
+@media(min-width:721px) and (max-width:1024px){.sf-hide-tablet{display:none}.sf-section .sf-product-grid:not(.home-category-editorial),.sf-tile-grid{grid-template-columns:repeat(var(--sf-tablet-columns,3),minmax(0,1fr))}}
+@media(max-width:720px){.sf-hide-mobile{display:none}.sf-section .sf-product-section,.sf-section .sf-content-section{padding-block:var(--sf-mobile-spacing,20px)}.sf-section .sf-product-grid:not(.home-category-editorial),.sf-tile-grid{grid-template-columns:repeat(var(--sf-mobile-columns,2),minmax(0,1fr))}.sf-image-text{grid-template-columns:1fr}}
+
+.storefront-body[data-wishlist-enabled=false] :is(a[href="/wishlist"],[hx-post^="/ui/wishlist/"],[data-wishlist-action]),.storefront-body[data-quick-view-enabled=false] [data-quick-view],.storefront-body[data-reviews-enabled=false] form[action*="/reviews"],.storefront-body[data-coupons-enabled=false] :is([name="coupon_code"],[for="checkout-coupon-code"],[data-preview-quote]){display:none!important}
+
+.storefront-body[data-default-intro-hidden=true] :is(.page-intro,.account-intro,.info-hero){display:none}
+
+@media(min-width:801px){.storefront-body .reference-hero .hero{height:auto;min-height:clamp(360px,21.8vw,400px)}}
+.sf-section :is(h1,h2,h3,p){overflow-wrap:anywhere}
+
+@media(max-width:800px){.sf-section img{--sf-media-current:var(--sf-media-mobile)}}
+
+@media(min-width:801px){.storefront-body .sf-collection-grid{grid-template-columns:repeat(var(--sf-columns,5),minmax(0,1fr))}}
+
+.storefront-body .wordmark-mark{object-fit:contain}.storefront-body[data-wishlist-enabled=false] [data-backend-action^="wishlist-"],.storefront-body[data-reviews-enabled=false] :is(.rating,.product-review-empty){display:none!important}

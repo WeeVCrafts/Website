@@ -21,7 +21,7 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	pdf.SetAutoPageBreak(true, 18)
 	pdf.AddPage()
 	pdf.SetFont("DM", "", 22)
-	pdf.MultiCell(0, 12, "Weevcrafts — Order receipt", "", "L", false)
+	pdf.MultiCell(0, 12, "WeevCrafts — Order receipt", "", "L", false)
 	pdf.SetFont("DM", "", 11)
 	for _, line := range []string{"Order: " + order.Number, "Placed: " + order.Date, "Order status: " + order.Status, "Payment status: " + order.Payment, ""} {
 		pdf.MultiCell(0, 7, line, "", "L", false)

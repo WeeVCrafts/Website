@@ -12,7 +12,7 @@ templ Header(p viewmodels.CustomerPage) {
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
-      <a class="wordmark" href="/" aria-label="WeeVCrafts home"><img class="wordmark-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>WeeVCrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      <a class="wordmark" href="/" aria-label="WeevCrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade by India’s Makers</small></span></a>
       <div class="header-tools">
         <div class="search-shell">
           <form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit" hx-sync="#page:replace" hx-indicator="#global-search-indicator">
@@ -77,7 +77,13 @@ templ Header(p viewmodels.CustomerPage) {
       for _, category := range NavigationCategories(p) {
         <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
       }
-      <a href="/makers">Meet the Makers</a>
+      if p.Storefront != nil {
+        for _,link:=range p.Storefront.Navigation {
+          <a href={ link.URL }>{ link.Label }</a>
+        }
+      } else {
+        <a href="/makers">Meet the Makers</a>
+      }
     </div></nav>
     <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
       <div class="mobile-menu-heading"><h2 id="menu-title">Explore the store</h2><button class="mobile-menu-close" type="button" aria-label="Close navigation" autofocus @click="closeMenu()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
@@ -89,7 +95,13 @@ templ Header(p viewmodels.CustomerPage) {
  @MenuLink("/products?category="+category.Slug,category.Name,"category")
  }
         @MenuLink("/products?category=offers", "Offers", "local_offer")
-        @MenuLink("/makers", "Meet the makers", "handyman")
+        if p.Storefront != nil {
+          for _,link:=range p.Storefront.Navigation {
+            @MenuLink(link.URL,link.Label,"arrow_forward")
+          }
+        } else {
+          @MenuLink("/makers", "Meet the makers", "handyman")
+        }
       </nav>
       <nav class="menu-section" aria-labelledby="menu-account"><h3 id="menu-account">Your account</h3>
         @MenuLink("/account", "Account & profile", "person")
@@ -105,7 +117,7 @@ templ Header(p viewmodels.CustomerPage) {
         @MenuLink("/returns", "Returns & refunds", "assignment_return")
         @MenuLink("/our-story", "Our story", "auto_stories")
         if !p.Authenticated {
-          @MenuLink("/seller", "Sell on WeeVCrafts", "store")
+          @MenuLink("/seller", "Sell on WeevCrafts", "store")
         }
       </nav>
       if p.Authenticated {
@@ -194,17 +206,33 @@ templ WishlistMutation(p viewmodels.CustomerPage, product viewmodels.Product, re
 
 
 templ Footer(p viewmodels.CustomerPage) {
-  <section class="trust-strip" aria-label="Shopping with WeeVCrafts"><div><span class="material-symbols-outlined" aria-hidden="true">handyman</span><b>Crafted in India</b><small>Independent Indian makers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>Status shown in your orders</small></div><div><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><b>Returns &amp; Refunds</b><small>See our returns policy</small></div><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Artisan made</b><small>Discover the people behind each piece</small></div></section>
+  if p.Storefront!=nil {
+   @StorefrontTrust(p.Storefront.Trust)
+  } else {
+  <section class="trust-strip" aria-label="Shopping with WeevCrafts"><div><span class="material-symbols-outlined" aria-hidden="true">handyman</span><b>Crafted in India</b><small>Independent Indian makers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>Status shown in your orders</small></div><div><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><b>Returns &amp; Refunds</b><small>See our returns policy</small></div><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Artisan made</b><small>Discover the people behind each piece</small></div></section>
+  }
   <footer class="site-footer"><div class="container footer-grid">
-    <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>WeeVCrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {
-    <a href={ link.URL } target="_blank" rel="noopener noreferrer" aria-label={ "WeeVCrafts on " + link.Name }>{ link.Name }</a>
+    <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {
+    <a href={ link.URL } target="_blank" rel="noopener noreferrer" aria-label={ "WeevCrafts on " + link.Name }>{ link.Name }</a>
     }
 </nav></div>
+    if p.Storefront != nil {
+      @StorefrontFooterGroups(p.Storefront.FooterGroups)
+    } else {
     <div><h3>Shop</h3><a href="/categories">All Categories</a><a href="/products?sort=newest">New Arrivals</a><a href="/products?category=home">Home &amp; Living</a><a href="/products?q=gift">Thoughtful Gifts</a></div>
     <div><h3>Help</h3><a href="/orders">Track Order</a><a href="/returns">Returns &amp; Refunds</a><a href="/shipping">Shipping Information</a><a href="/faq">FAQs</a></div>
     <div><h3>About</h3><a href="/our-story">Our Story</a><a href="/makers">Meet the Makers</a><a href="/sustainability">Sustainability</a><a href="/contact">Contact Us</a></div>
     <div class="newsletter"><h3>A little more handmade in your inbox</h3><p>Choose updates on new collections, maker stories and offers.</p><a class="outline-button newsletter-preferences" href="/account/notifications">Manage email preferences <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
-  </div><div class="container footer-bottom"><span>© { p.Now.Year() } WeeVCrafts. All rights reserved.</span><nav aria-label="Policies"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a></nav></div></footer>
+    }
+  </div><div class="container footer-bottom"><span>© { p.Now.Year() } WeevCrafts. All rights reserved.</span><nav aria-label="Policies">
+ if p.Storefront!=nil {
+  for _,link:=range p.Storefront.PolicyLinks {
+   <a href={ link.URL }>{ link.Label }</a>
+  }
+ } else {
+  <a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a>
+ }
+ </nav></div></footer>
     }
 
 
@@ -252,5 +280,5 @@ templ ProductCard(product viewmodels.Product, showAction bool, priority ...bool)
 
 
 templ CategoryCard(category viewmodels.Category) {
-  <a class="category-card" href={ "/products?category=" + category.Slug }><img src={ category.ImageURL } srcset={ ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:720px) 45vw, 320px" alt="" loading="lazy" decoding="async" width="320" height="320"/><span><strong>{ category.Name }</strong><small>{ category.Description }</small><b>Explore { category.Name } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a>
+  <a class="category-card" href={ "/products?category=" + category.Slug }><img style={ "object-position:"+category.ImagePosition } src={ category.ImageURL } srcset={ ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:720px) 45vw, 320px" alt="" loading="lazy" decoding="async" width="320" height="320"/><span><strong>{ category.Name }</strong><small>{ category.Description }</small><b>Explore { category.Name } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a>
     }

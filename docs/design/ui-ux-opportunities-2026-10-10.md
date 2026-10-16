@@ -1,4 +1,4 @@
-# WeeVCrafts UI/UX opportunities — 10 October 2026
+# WeevCrafts UI/UX opportunities — 10 October 2026
 
 This is a recommendation report, not an implementation or release approval. Application code and business records were not changed. Local demo sign-in sessions were used to inspect authenticated screens.
 

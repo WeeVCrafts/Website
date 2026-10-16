@@ -46,6 +46,9 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 	case "newest":
 		orderBy = "p.created_at DESC, p.id DESC"
 	}
+	if options.SelectedOnly {
+		orderBy = "array_position($11::bigint[],p.id),p.id"
+	}
 	var total int
 	if err := r.pool.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT p.id)
@@ -70,8 +73,8 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
 		  AND (NOT $5::boolean OR COALESCE(i.available_quantity, 0) > 0)
-		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents)`,
-		query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly).Scan(&total); err != nil {
+		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents) AND $7::int>0 AND $8::int>=0 AND pv.price_cents >= $9::bigint AND ($10::bigint=0 OR pv.price_cents <= $10) AND (NOT $12::boolean OR p.id=ANY($11::bigint[]))`,
+		query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly, limit, offset, options.MinPriceCents, options.MaxPriceCents, options.ProductIDs, options.SelectedOnly).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count product search: %w", err)
 	}
 	rows, err := r.pool.Query(ctx, `
@@ -101,9 +104,9 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
 		  AND (NOT $5::boolean OR COALESCE(i.available_quantity, 0) > 0)
-		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents)
+		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents) AND $7::int>0 AND $8::int>=0 AND pv.price_cents >= $9::bigint AND ($10::bigint=0 OR pv.price_cents <= $10) AND (NOT $12::boolean OR p.id=ANY($11::bigint[]))
 		ORDER BY `+orderBy+`
-		LIMIT $7 OFFSET $8`, query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly, limit, offset)
+		LIMIT $7 OFFSET $8`, query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly, limit, offset, options.MinPriceCents, options.MaxPriceCents, options.ProductIDs, options.SelectedOnly)
 	if err != nil {
 		return nil, 0, fmt.Errorf("search products: %w", err)
 	}
@@ -153,10 +156,10 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
 		  AND (NOT $5::boolean OR COALESCE(i.available_quantity, 0) > 0)
-		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents)
+		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents) AND pv.price_cents >= $7::bigint AND ($8::bigint=0 OR pv.price_cents <= $8) AND (NOT $10::boolean OR p.id=ANY($9::bigint[]))
 		GROUP BY membership.category_slug, c.name
 		ORDER BY COUNT(DISTINCT p.id) DESC, membership.category_slug
-		LIMIT 24`, query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly)
+		LIMIT 24`, query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly, options.MinPriceCents, options.MaxPriceCents, options.ProductIDs, options.SelectedOnly)
 	if err != nil {
 		return nil, fmt.Errorf("search product facets: %w", err)
 	}

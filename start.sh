@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # ==============================================================================
-# Weevcrafts - 1-Click Startup for Linux / RHEL 9 & 10 (Docker / Podman)
+# WeevCrafts - 1-Click Startup for Linux / RHEL 9 & 10 (Docker / Podman)
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "========================================================"
-echo " Starting Weevcrafts Marketplace (RHEL / Linux)"
+echo " Starting WeevCrafts Marketplace (RHEL / Linux)"
 echo "========================================================"
 
 # 1. Ensure .env exists
@@ -51,7 +51,7 @@ $COMPOSE_CMD up -d --build
 echo "[+] Existing accounts and catalog retained. No seeding or simulated payments."
 
 echo "========================================================"
-echo " Weevcrafts is LIVE!"
+echo " WeevCrafts is LIVE!"
 echo " -> Storefront:     http://localhost:8080"
 echo " -> Garage S3 API:   http://localhost:3900"
 echo " -> Garage Admin:    http://localhost:3903/health"

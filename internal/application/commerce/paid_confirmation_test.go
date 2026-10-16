@@ -30,7 +30,7 @@ func TestPaidConfirmationIncludesAuthenticatedTrackingLink(t *testing.T) {
 	if err != nil || n != 1 || len(events.acked) != 1 {
 		t.Fatalf("n=%d err=%v ack=%v", n, err, events.acked)
 	}
-	if sender.message.Subject != "Your Weevcrafts order is confirmed" || sender.message.ActionURL != "https://shop.example.test/orders/WC-42/tracking" || !strings.Contains(sender.message.Body, "Payment confirmed") {
+	if sender.message.Subject != "Your WeevCrafts order is confirmed" || sender.message.ActionURL != "https://shop.example.test/orders/WC-42/tracking" || !strings.Contains(sender.message.Body, "Payment confirmed") {
 		t.Fatalf("unexpected message: %+v", sender.message)
 	}
 }

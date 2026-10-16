@@ -2,7 +2,7 @@
 setlocal
 
 echo ========================================================
-echo  Starting Weevcrafts Marketplace (Windows)
+echo  Starting WeevCrafts Marketplace (Windows)
 echo ========================================================
 
 cd /d "%~dp0"
@@ -29,7 +29,7 @@ echo [+] Existing accounts and catalog retained. No seeding or simulated payment
 
 echo.
 echo ========================================================
-echo  Weevcrafts is LIVE!
+echo  WeevCrafts is LIVE!
 echo  Opening http://localhost:8080 in your browser...
 echo ========================================================
 start http://localhost:8080

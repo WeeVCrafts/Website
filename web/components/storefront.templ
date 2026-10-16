@@ -1,0 +1,35 @@
+package components
+
+import "github.com/wecratfs/commerce/internal/domain/storefront"
+
+templ StorefrontFooterGroups(groups []storefront.LinkGroup) {
+	for _,group:=range groups {
+		<div>
+			<h3>{ group.Title }</h3>
+			if group.Text!="" {
+				<p>{ group.Text }</p>
+			}
+			for _,link:=range group.Links {
+				<a href={ link.URL }>{ link.Label }</a>
+			}
+		</div>
+	}
+}
+
+templ StorefrontTrust(items []storefront.Tile) {
+	<section class="trust-strip" aria-label="Shopping with WeevCrafts">
+		for _,item:=range items {
+			<div>
+				if item.Image!="" {
+					<img src={ item.Image } alt={ item.Alt } width="32" height="32" loading="lazy"/>
+				} else {
+					<span class="material-symbols-outlined" aria-hidden="true">{ storefrontTrustIcon(item.Title) }</span>
+				}
+				<b>{ item.Title }</b><small>{ item.Text }</small>
+				if item.URL!="" {
+					<a href={ item.URL }>Learn more<span class="sr-only">about { item.Title }</span></a>
+				}
+			</div>
+		}
+	</section>
+}

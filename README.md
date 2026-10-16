@@ -1,4 +1,4 @@
-# Weevcrafts
+# WeevCrafts
 
 ## Local development with Air
 
@@ -19,7 +19,7 @@ match source. Responsive photographs rebuild when their sources change. Generate
 outputs and temporary binaries are excluded to avoid restart loops.
 See [.air.toml](.air.toml) and the [official Air documentation](https://github.com/air-verse/air).
 
-Weevcrafts is a handmade and organic marketplace. The production app is a single
+WeevCrafts is a handmade and organic marketplace. The production app is a single
 Go service: it serves the storefront and role portals, exposes the `/api/v1`
 JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
 rate limits. Both the browser and the server-side pages use this application as
@@ -210,7 +210,7 @@ category photographs/order, product cross-listing, the four homepage product
 sections and the opt-in `cmd/import-catalog` workflow. Its default is read-only
 validation; actual merchant inventory and photographs are required for listings.
 
-WeeVCrafts uses Customer, Seller, Admin and Super Admin, with one role per account. See [four-role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.
+WeevCrafts uses Customer, Seller, Admin and Super Admin, with one role per account. See [four-role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.
 
 ## Docker preview with Air
 
@@ -229,3 +229,13 @@ An internet production deployment still requires HTTPS, secure cookies, PostgreS
 TLS with dedicated credentials, TLS object storage and configured payment providers;
 the server's production validation remains enabled. No remote deployment is implied
 by a successful local container build.
+
+## Storefront editor
+
+Open **Storefront** in the Admin or Super Admin portal. Admins create drafts,
+preview them and submit them for review. Super Admins publish reviewed changes
+or request corrections. Customers see only the published release. Routine
+content and shopping-setting changes do not require a deployment.
+
+See [Storefront editor and publishing](docs/storefront-editor.md) for controls,
+permissions, media retention, checkout policies and rollout verification.

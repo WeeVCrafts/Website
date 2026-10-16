@@ -109,7 +109,7 @@ func main() {
 			}
 			accountIDs[item.key] = id
 			if item.key == "seller" {
-				if err := tx.QueryRow(ctx, `INSERT INTO sellers (owner_user_id,display_name,status) VALUES ($1,'Weevcrafts Seller','active') ON CONFLICT (owner_user_id) DO UPDATE SET status='active' RETURNING id`, id).Scan(&sellerID); err != nil {
+				if err := tx.QueryRow(ctx, `INSERT INTO sellers (owner_user_id,display_name,status) VALUES ($1,'WeevCrafts Seller','active') ON CONFLICT (owner_user_id) DO UPDATE SET status='active' RETURNING id`, id).Scan(&sellerID); err != nil {
 					return fmt.Errorf("seller: %w", err)
 				}
 			}
@@ -121,7 +121,7 @@ func main() {
 			if _, err := tx.Exec(ctx, `INSERT INTO categories (slug,name) VALUES ($1,initcap($1)) ON CONFLICT DO NOTHING`, item.category); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, `INSERT INTO brands (slug,name) VALUES ('weevcrafts','Weevcrafts') ON CONFLICT DO NOTHING`); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO brands (slug,name) VALUES ('weevcrafts','WeevCrafts') ON CONFLICT DO NOTHING`); err != nil {
 				return err
 			}
 			var productID int64

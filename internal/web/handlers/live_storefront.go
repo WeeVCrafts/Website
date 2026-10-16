@@ -26,6 +26,7 @@ import (
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -146,7 +147,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
-	if requiresCustomerSession(r.URL.Path) && !authenticated {
+	if requiresCustomerSession(r.URL.Path) && !authenticated && !isDraftPreview(r) {
 		next := r.URL.RequestURI()
 		http.Redirect(w, r, "/login?next="+url.QueryEscape(next), http.StatusSeeOther)
 		return
@@ -161,7 +162,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			r.AddCookie(&http.Cookie{Name: guestCartCookieName, Value: guestToken})
 		}
 	}
-	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) {
+	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) && !isDraftPreview(r) {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
 		if destination == "/products" {
@@ -170,7 +171,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
 	}
-	if (r.URL.Path == "/login" || r.URL.Path == "/register") && authenticated {
+	if (r.URL.Path == "/login" || r.URL.Path == "/register") && authenticated && !isDraftPreview(r) {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
 		if destination == "/products" {
@@ -199,6 +200,12 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	if !authenticated {
 		page.CSRFToken = csrf
+	}
+	for key, products := range page.SectionProducts {
+		for i := range products {
+			products[i].CSRFToken = page.CSRFToken
+		}
+		page.SectionProducts[key] = products
 	}
 	for _, products := range [][]viewmodels.Product{page.Products, page.HomeNewArrivals, page.HomeCategoryProducts, page.HomeGifts} {
 		for i := range products {
@@ -256,6 +263,15 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		listingComponent = pages.ListingUpdate(page)
 	}
 	switch {
+	case page.StorefrontPage != nil && !page.StorefrontPage.Legacy:
+		component = pages.StorefrontContentPage(page)
+	case page.StorefrontPage != nil && page.StorefrontPage.Legacy && strings.HasPrefix(r.URL.Path, "/pages/"):
+		copy := page
+		copy.Route = "/" + page.StorefrontPage.Slug
+		component = pages.InfoPage(copy)
+	case strings.HasPrefix(r.URL.Path, "/pages/"):
+		http.NotFound(w, r)
+		return
 	case r.URL.Path == "/":
 		component = pages.Home(page)
 	case r.URL.Path == "/categories":
@@ -552,7 +568,7 @@ func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *
 }
 
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
-	return path == "/" || path == "/categories" || strings.HasPrefix(path, "/categories/") || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+	return strings.HasPrefix(path, "/pages/") || path == "/" || path == "/categories" || strings.HasPrefix(path, "/categories/") || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
 }
 
 func isCustomerAccountRoute(path string) bool {
@@ -605,6 +621,11 @@ func firstFormValue(values url.Values, names ...string) string {
 
 func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, error) {
 	userID, csrf, authenticated := h.session(r)
+	if isDraftPreview(r) {
+		userID = 0
+		csrf = ""
+		authenticated = false
+	}
 	filters := r.URL.Query()
 	query := strings.TrimSpace(filters.Get("q"))
 	category := strings.TrimSpace(filters.Get("category"))
@@ -625,9 +646,17 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
 		}
 		var categoryExists bool
-		if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM categories c WHERE c.slug=$1 AND EXISTS(SELECT 1 FROM products p WHERE EXISTS(SELECT 1 FROM product_categories pc WHERE pc.product_id=p.id AND pc.category_slug=c.slug) AND p.status='approved'))`, category).Scan(&categoryExists); err != nil {
-			return viewmodels.CustomerPage{}, err
+		if rev, ok := storefront.Current(r.Context()); ok && len(rev.Config.Categories) > 0 {
+			for _, c := range rev.Config.Categories {
+				if c.Slug == category {
+					categoryExists = true
+					break
+				}
+			}
+		} else if e := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM categories WHERE slug=$1)`, category).Scan(&categoryExists); e != nil {
+			return viewmodels.CustomerPage{}, e
 		}
+
 		if !categoryExists {
 			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
 		}
@@ -650,6 +679,44 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			Query: query, CategorySlug: category, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
 			PriceRange: filters.Get("price"), InStock: hasQueryValue(filters["availability"], "in-stock"),
 			OffersOnly: offersOnly, DatabaseOnly: true, Limit: 24, Offset: (currentPage - 1) * 24,
+		}
+		if sectionID := filters.Get("storefront_section"); sectionID != "" {
+			rev, e := postgres.ReadPublishedStorefront(r.Context(), h.pool)
+			if e != nil {
+				return viewmodels.CustomerPage{}, e
+			}
+			sections := rev.Config.Homepage
+			if id := filters.Get("storefront_template"); id != "" {
+				sections = nil
+				for _, template := range rev.Config.Templates {
+					if template.ID == id {
+						sections = template.Sections
+					}
+				}
+			} else if slug := filters.Get("storefront_page"); slug != "" {
+				sections = nil
+				for _, page := range rev.Config.Pages {
+					if page.Slug == slug && !page.Hidden {
+						sections = page.Sections
+					}
+				}
+			}
+			for _, section := range sections {
+				if section.ID == sectionID && section.Type == "products" && !section.Hidden {
+					selection := section.Selection
+					options.MinPriceCents = selection.MinPrice
+					options.MaxPriceCents = selection.MaxPrice
+					options.ProductIDs = selection.Products
+					options.SelectedOnly = selection.Mode == "selected"
+					options.InStock = selection.Available
+					if selection.Category != "" {
+						options.CategorySlug = selection.Category
+					}
+					if selection.Mode == "newest" {
+						options.Sort = "newest"
+					}
+				}
+			}
 		}
 		source, total, _, searchErr := h.search.SearchWithFilters(r.Context(), options)
 		if searchErr != nil {
@@ -702,6 +769,9 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
+	if err := h.configureStorefrontPage(r, &page); err != nil {
+		return viewmodels.CustomerPage{}, err
+	}
 	if r.URL.Path == "/" {
 		if err := h.loadHomeCatalog(r, &page); err != nil {
 			return viewmodels.CustomerPage{}, err
@@ -724,15 +794,6 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, err
 		}
 		page.CatalogueEmpty = !hasPublished
-	}
-	{
-		settings, settingsErr := postgres.ReadStorefrontSettings(r.Context(), h.pool)
-		if settingsErr != nil {
-			return viewmodels.CustomerPage{}, settingsErr
-		}
-		page.SupportEmail = settings.SupportEmail
-		page.ShippingInformation = settings.ShippingInformation
-		page.SocialLinks = settings.SocialLinks()
 	}
 	if authenticated && h.customerRole(userID, r) {
 		var hasPhoto bool
@@ -761,6 +822,13 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, productErr
 		}
 		page.Product = liveProduct(product, csrf)
+		page.Category = product.CategorySlug
+		for _, c := range page.Categories {
+			if c.Slug == product.CategorySlug {
+				page.Product.Category = c.Name
+				break
+			}
+		}
 		page.Product.Seller = h.sellerName(r.Context(), product.Slug)
 		page.Product.SellerSlug = liveSlug(page.Product.Seller)
 		page.Title = page.Product.Name
@@ -787,7 +855,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, err
 		}
 	}
-	if h.cart != nil && (authenticated || guestCartHash(r) != "") {
+	if !isDraftPreview(r) && h.cart != nil && (authenticated || guestCartHash(r) != "") {
 		cart, cartErr := h.liveCart(r.Context(), userID, guestCartHash(r), csrf)
 		if cartErr != nil {
 			return viewmodels.CustomerPage{}, cartErr
@@ -801,14 +869,14 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			page.SavedProducts, page.WishlistCount = wishlist, len(wishlist)
 			markSavedProducts(&page)
 		}
-		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotals(page.Cart)
+		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotalsWithPolicy(page.Cart, page.Storefront.Settings.Policy)
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
 		if err := h.loadCustomerData(r.Context(), userID, &page, r.URL.Query().Get("ticket_id")); err != nil {
 			return viewmodels.CustomerPage{}, err
 		}
 	}
-	if r.URL.Path == "/account/sessions" {
+	if r.URL.Path == "/account/sessions" && !isDraftPreview(r) {
 		sessions, err := h.sessions.List(r.Context(), userID)
 		if err != nil {
 			return viewmodels.CustomerPage{}, err
@@ -823,6 +891,23 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		}
 		if r.URL.Query().Get("verification") == "sent" {
 			page.Notice = "Verification email requested. Check your inbox for the link."
+		}
+	}
+	if page.Storefront != nil && r.URL.Path != "/" {
+		page.StorefrontTemplate = page.Storefront.Template(templateKind(page.Route), page.Category, page.Product.Slug)
+		if page.StorefrontTemplate.Title != "" {
+			page.Title = page.StorefrontTemplate.Title
+		}
+		if page.StorefrontTemplate.Description != "" {
+			page.Description = page.StorefrontTemplate.Description
+		}
+		if e := h.loadConfiguredSections(r, &page); e != nil {
+			return viewmodels.CustomerPage{}, e
+		}
+	}
+	if isDraftPreview(r) {
+		if e := h.prepareReadOnlyPreview(r, &page); e != nil {
+			return viewmodels.CustomerPage{}, e
 		}
 	}
 	return page, nil
@@ -1281,6 +1366,13 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
 		return viewmodels.Order{}, err
 	}
+	if view.CanRequestReturn {
+		var eligible bool
+		if e := h.pool.QueryRow(ctx, `SELECT COALESCE((policy_snapshot->>'return_days')::int,0)=0 OR delivered_at IS NULL OR delivered_at + make_interval(days=>COALESCE((policy_snapshot->>'return_days')::int,0))>=now() FROM orders WHERE id=$1`, order.ID).Scan(&eligible); e != nil {
+			return viewmodels.Order{}, e
+		}
+		view.CanRequestReturn = eligible
+	}
 	if view.ReturnStatus != "" {
 		view.CanRequestReturn = false
 	}
@@ -1464,8 +1556,16 @@ func (h *LiveStorefrontHandler) productViews(ctx context.Context, source []domai
 	sellerNames := h.sellerNames(ctx, source)
 	for _, product := range source {
 		view := liveProduct(product, "")
+		if rev, ok := storefront.Current(ctx); ok {
+			for _, c := range rev.Config.Categories {
+				if c.Slug == product.CategorySlug {
+					view.Category = c.Name
+					break
+				}
+			}
+		}
 		if seller := sellerNames[product.Slug]; seller != "" {
-			view.Seller = seller
+			view.Seller = identity.DisplayName(seller)
 			view.SellerSlug = liveSlug(seller)
 		}
 		result = append(result, view)
@@ -1880,7 +1980,7 @@ func (h *LiveStorefrontHandler) sellers(ctx context.Context) []viewmodels.Seller
 		var name, status, rating, image, location, story, technique, portrait string
 		var count int
 		if rows.Scan(&id, &name, &status, &count, &rating, &image, &location, &story, &technique, &portrait) == nil {
-			result = append(result, viewmodels.Seller{ID: id, Slug: liveSlug(name), Name: name, Status: status, Rating: rating, ImageURL: image, Products: count, Location: location, Description: story, Technique: technique, PortraitURL: portrait})
+			result = append(result, viewmodels.Seller{ID: id, Slug: liveSlug(name), Name: identity.DisplayName(name), Status: status, Rating: rating, ImageURL: image, Products: count, Location: location, Description: identity.DisplayName(story), Technique: technique, PortraitURL: portrait})
 		}
 	}
 	return result
@@ -1896,8 +1996,9 @@ func (h *LiveStorefrontHandler) brands(ctx context.Context) []viewmodels.Brand {
 	for rows.Next() {
 		var item viewmodels.Brand
 		if rows.Scan(&item.Slug, &item.Name, &item.Products, &item.ImageURL) == nil {
+			item.Name = identity.DisplayName(item.Name)
 			item.Tagline = "Made by independent Indian makers"
-			item.Description = "A live maker brand on WeeVCrafts."
+			item.Description = "A live maker brand on WeevCrafts."
 			item.Location = "India"
 			result = append(result, item)
 		}
@@ -1932,7 +2033,7 @@ func (h *LiveStorefrontHandler) sellerNames(ctx context.Context, products []doma
 func (h *LiveStorefrontHandler) sellerName(ctx context.Context, slug string) string {
 	var seller string
 	_ = h.pool.QueryRow(ctx, `SELECT COALESCE(s.display_name,'') FROM products p LEFT JOIN sellers s ON s.id=p.seller_id WHERE p.slug=$1`, slug).Scan(&seller)
-	return seller
+	return identity.DisplayName(seller)
 }
 
 func (h *LiveStorefrontHandler) productsForBrand(ctx context.Context, slug, csrf string) ([]viewmodels.Product, error) {
@@ -2029,7 +2130,7 @@ func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product 
 	if product.Rating > 0 {
 		rating = strconv.FormatFloat(product.Rating, 'f', 1, 64)
 	}
-	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, SKU: product.SKU, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: product.Brand, BrandName: product.Brand, Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
+	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, SKU: product.SKU, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: identity.DisplayName(product.Brand), BrandName: identity.DisplayName(product.Brand), Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
 }
 
 func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug string) ([]viewmodels.ProductVariant, error) {

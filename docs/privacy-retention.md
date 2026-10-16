@@ -1,4 +1,4 @@
-# Weevcrafts privacy retention matrix
+# WeevCrafts privacy retention matrix
 
 Version: `privacy-2026-09`  
 Status: implementation baseline; legal review is required before release.

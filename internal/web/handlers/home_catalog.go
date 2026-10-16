@@ -18,6 +18,9 @@ func (h *LiveStorefrontHandler) loadHomeCatalog(r *http.Request, p *viewmodels.C
 			}
 		}
 	}
+	if p.Storefront != nil {
+		return h.loadConfiguredSections(r, p)
+	}
 	sections := []struct {
 		options ports.ProductSearchOptions
 		target  *[]viewmodels.Product

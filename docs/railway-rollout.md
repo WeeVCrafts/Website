@@ -1,6 +1,6 @@
 # Railway release procedure
 
-The Website service deploys `main` from `WeeVCrafts/Website`. Its Dockerfile cache mounts require IDs scoped to that service. A build failure before compilation was traced to mounts without those IDs and corrected.
+The Website service deploys `main` from `WeevCrafts/Website`. Its Dockerfile cache mounts require IDs scoped to that service. A build failure before compilation was traced to mounts without those IDs and corrected.
 
 Production database connections require `sslmode=verify-full`. Set the managed Postgres public root CA in `DATABASE_CA_CERT`; do not copy private certificate keys. The app configures pgx trust while preserving hostname verification. Set the canonical app URL explicitly when Railway advertises a custom domain whose DNS points to another site.
 

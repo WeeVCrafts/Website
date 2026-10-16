@@ -31,6 +31,9 @@ type ProductSearchFacetsRepository interface {
 }
 
 type ProductSearchOptions struct {
+ MinPriceCents, MaxPriceCents int64
+ ProductIDs []int64
+ SelectedOnly bool
 	Query         string
 	CategorySlug  string
 	CategorySlugs []string

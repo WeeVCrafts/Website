@@ -18,7 +18,7 @@ func TestMockCustomerRoutes(t *testing.T) {
 			if res.Code != http.StatusOK {
 				t.Fatalf("status = %d, want 200", res.Code)
 			}
-			if !strings.Contains(res.Body.String(), "WeeVCrafts") {
+			if !strings.Contains(res.Body.String(), "WeevCrafts") {
 				t.Fatal("response does not contain public brand")
 			}
 		})
@@ -143,7 +143,7 @@ func TestMockPRDScreenRouteMatrix(t *testing.T) {
 		prefix string
 		paths  []string
 	}{
-		{name: "customer", prefix: "WeeVCrafts", paths: []string{
+		{name: "customer", prefix: "WeevCrafts", paths: []string{
 			"/", "/search?q=saree", "/products?category=sarees", "/categories", "/brands", "/brands/mithila-arts", "/products/chanderi-royal", "/makers/mithila-arts", "/deals", "/about", "/contact", "/faq", "/privacy", "/terms", "/returns", "/shipping",
 			"/register", "/login", "/forgot-password", "/reset-password", "/verify-email", "/account/security", "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/privacy", "/account/reviews", "/orders", "/orders/WC2504267819", "/tracking", "/returns/RET123456/label", "/wishlist", "/cart", "/checkout", "/payments", "/payments/success", "/payments/failed", "/payments/pending",
 		}},
@@ -236,7 +236,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/account", want: []string{"Profile information", "Security &amp; sessions", "Need a hand?"}},
 		{route: "/login", want: []string{"Sign in", "Your saved pieces and orders, in one place.", "Continue with Google", "Username or email", "current-password"}},
 		{route: "/faq", want: []string{"Frequently asked questions", "How do I know a product is handmade?"}},
-		{route: "/contact", want: []string{"Contact WeeVCrafts", "Send us a note"}},
+		{route: "/contact", want: []string{"Contact WeevCrafts", "Send us a note"}},
 		{route: "/account/security", want: []string{"Security and sessions", "Two-step verification"}},
 		{route: "/account/privacy", want: []string{"Privacy preferences", "Data access request"}},
 		{route: "/account/reviews", want: []string{"Reviews to write", "Publish review"}},

@@ -262,7 +262,7 @@ test("registration, email verification, password recovery and login complete end
     await page.goto("/account/sessions");
     await page.getByRole("button", { name: "Send verification link" }).click();
     await expect(page).toHaveURL(/verification=sent/);
-    const verification = await waitForMail(request, email, "Verify your Weevcrafts email");
+    const verification = await waitForMail(request, email, "Verify your WeevCrafts email");
     await page.goto(emailActionURL(verification));
     await page.getByRole("button", { name: "Verify email" }).click();
     await expect(page.locator('[data-backend-form-message]')).toContainText("Your email has been verified");
@@ -275,7 +275,7 @@ test("registration, email verification, password recovery and login complete end
     await page.locator('#page input[name="email"]').fill(email);
     await page.getByRole("button", { name: "Send recovery link" }).click();
     await expect(page.locator('[data-backend-form-message]')).toContainText("recovery instructions have been sent");
-    const reset = await waitForMail(request, email, "Reset your Weevcrafts password");
+    const reset = await waitForMail(request, email, "Reset your WeevCrafts password");
     await page.goto(emailActionURL(reset));
     await page.locator('#page input[name="password"]').fill(recoveredPassword);
     await page.locator('#page input[name="confirm_password"]').fill(recoveredPassword);
@@ -962,7 +962,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await sellerProductForm.locator('input[name="compare_at_rupees"]').fill("2999.00");
     await sellerProductForm.locator('input[name="initial_stock"]').fill("5");
     await sellerProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
-    await sellerProductForm.locator('textarea[name="description"]').fill("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
+    await sellerProductForm.locator('textarea[name="description"]').fill("A locally created browser test listing used to verify the WeevCrafts cross-role order flow.");
     await sellerProductForm.getByRole("button", { name: "Save product draft" }).click();
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
@@ -980,7 +980,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(editForm.locator('input[name="price_rupees"]')).toHaveValue("2499.00");
     await expect(editForm.locator('input[name="compare_at_rupees"]')).toHaveValue("2999.00");
     await expect(editForm.locator('input[name="delivery_label"]')).toHaveValue("Delivery to serviceable PIN codes in India");
-    await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
+    await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the WeevCrafts cross-role order flow.");
     await editForm.locator('input[name="price_rupees"]').fill("2599.00");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
     await editForm.getByRole("button", { name: "Save product draft" }).click();

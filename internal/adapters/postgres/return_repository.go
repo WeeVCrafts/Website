@@ -20,6 +20,7 @@ func (r *CommerceRepository) CreateReturnRequest(ctx context.Context, userID int
 			SELECT id, total_cents, currency
 			FROM orders
 			WHERE user_id = $1 AND order_number = $2 AND status = 'delivered'
+ AND (COALESCE((policy_snapshot->>'return_days')::int,0)=0 OR delivered_at IS NULL OR delivered_at + make_interval(days=>COALESCE((policy_snapshot->>'return_days')::int,0)) >= now())
 			FOR UPDATE`, userID, orderNumber).Scan(&orderID, &request.AmountCents, &request.Currency); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrReturnNotFound

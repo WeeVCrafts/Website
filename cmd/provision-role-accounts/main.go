@@ -102,7 +102,7 @@ func main() {
 		var sellerID int64
 		err := tx.QueryRow(ctx, `
 			INSERT INTO sellers (owner_user_id, display_name, status)
-			VALUES ($1, 'Weevcrafts QA Seller', 'active')
+			VALUES ($1, 'WeevCrafts QA Seller', 'active')
 			ON CONFLICT (owner_user_id) DO NOTHING
 			RETURNING id`, ids["seller"]).Scan(&sellerID)
 		if errors.Is(err, pgx.ErrNoRows) {

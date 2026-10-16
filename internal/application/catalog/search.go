@@ -11,6 +11,7 @@ import (
 
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
 	"github.com/wecratfs/commerce/internal/ports"
+ "github.com/wecratfs/commerce/internal/domain/storefront"
 )
 
 type SearchService struct {
@@ -80,7 +81,8 @@ func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.Pro
 			return nil, 0, nil, err
 		}
 	}
-	cacheKey := fmt.Sprintf("catalog:search:%d:%x", revision, sha256.Sum256(cacheKeyBytes))
+	rev,_:=storefront.Current(ctx)
+ cacheKey := fmt.Sprintf("catalog:search:%d:%d:%x", rev.ID,revision, sha256.Sum256(cacheKeyBytes))
 	if s.cache != nil && !options.DatabaseOnly && !options.InStock {
 		if value, err := s.cache.Get(ctx, cacheKey); err == nil {
 			var cached searchResult
@@ -151,7 +153,7 @@ func (s *SearchService) searchBackend(ctx context.Context, options ports.Product
 
 func requiresDatabaseSearch(options ports.ProductSearchOptions) bool {
 	return options.CategorySlug != "" || len(options.CategorySlugs) > 0 || len(options.BrandSlugs) > 0 ||
-		options.PriceRange != "" || options.InStock || options.OffersOnly || options.DatabaseOnly || options.Sort != "" || options.Offset > 0
+		options.SelectedOnly || options.MinPriceCents>0 || options.MaxPriceCents>0 || options.PriceRange != "" || options.InStock || options.OffersOnly || options.DatabaseOnly || options.Sort != "" || options.Offset > 0
 }
 
 func (s *SearchService) searchFacets(ctx context.Context, options ports.ProductSearchOptions) []ports.SearchFacet {

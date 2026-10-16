@@ -1,4 +1,4 @@
-/* First-party frontend adapter for the Weevcrafts Go API. */
+/* First-party frontend adapter for the WeevCrafts Go API. */
 (function (global) {
   "use strict";
   const ROOT = "/api/v1";
@@ -124,7 +124,7 @@
     }
 
     async signIn(input) {
-      if (global.WeevcraftsFirebase && !input.nativeOnly) return global.WeevcraftsFirebase.signIn(this, input, () => this.signIn(Object.assign({},input,{nativeOnly:true})));
+      if (global.WeevCraftsFirebase && !input.nativeOnly) return global.WeevCraftsFirebase.signIn(this, input, () => this.signIn(Object.assign({},input,{nativeOnly:true})));
       const { nativeOnly, authRoot, ...credentials } = input;
       const result = await this.call(ROOT + "/auth/login", { method: "POST", body: credentials });
       this.csrf = result.csrf_token || "";
@@ -132,7 +132,7 @@
     }
 
     async signUp(input) {
-      if (global.WeevcraftsFirebase && !input.nativeOnly) return global.WeevcraftsFirebase.signUp(this, input, () => this.signUp(Object.assign({},input,{nativeOnly:true})));
+      if (global.WeevCraftsFirebase && !input.nativeOnly) return global.WeevCraftsFirebase.signUp(this, input, () => this.signUp(Object.assign({},input,{nativeOnly:true})));
       const result = await this.call(ROOT + "/auth/register", {
         method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true, next: input.next || "" }
       });
@@ -140,9 +140,9 @@
       return result;
     }
 
-    async recover(email) { const legacy=()=>this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.recover(email,legacy) : legacy(); }
-    async updatePassword(password, token) { const legacy=()=>this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.action(password,legacy) : legacy(); }
-    async verifyEmail(token) { const legacy=()=>this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); return global.WeevcraftsFirebase ? global.WeevcraftsFirebase.action(null,legacy) : legacy(); }
+    async recover(email) { const legacy=()=>this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.recover(email,legacy) : legacy(); }
+    async updatePassword(password, token) { const legacy=()=>this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.action(password,legacy) : legacy(); }
+    async verifyEmail(token) { const legacy=()=>this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.action(null,legacy) : legacy(); }
 
     async signOut() {
       await this.call(ROOT + "/auth/logout", { method: "POST", authenticated: true, body: {} });
@@ -246,13 +246,13 @@
       await this.call(ROOT + "/wishlist/" + product.id, { method: "DELETE", authenticated: true });
     }
 
-    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID) {
-		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID);
+    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
 	}
-    async checkoutNoPayment(address, idempotencyKey, couponCode) {
-		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode);
+    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
 	}
-    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID) {
+    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
       if (!cartID) cartID = unwrap(await this.call(ROOT + "/cart")).id;
 	  return this.call(ROOT + path, {
         method: "POST", authenticated: true,
@@ -261,7 +261,7 @@
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal }
+        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal, expected_policy_revision: policyRevision }
       });
     }
 
@@ -297,5 +297,5 @@
     return new CustomBackend();
   }
 
-  global.WeevcraftsBackend = { create: create, normalizeProduct: normalizeProduct, normalizeCartItem: normalizeCartItem };
+  global.WeevCraftsBackend = { create: create, normalizeProduct: normalizeProduct, normalizeCartItem: normalizeCartItem };
 })(window);

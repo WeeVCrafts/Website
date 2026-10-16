@@ -79,6 +79,10 @@ func main() {
 		logger.Error("apply PostgreSQL migrations", "error", err)
 		os.Exit(1)
 	}
+	if err := postgres.NewStorefrontRepository(pool).Bootstrap(startupContext); err != nil {
+		logger.Error("initialize storefront", "error", err)
+		os.Exit(1)
+	}
 	redisOptions := &redisclient.Options{Addr: cfg.RedisAddress}
 	if cfg.RedisURL != "" {
 		redisOptions, err = redisclient.ParseURL(cfg.RedisURL)
@@ -359,6 +363,8 @@ func main() {
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetCategoryStorage(mediaStorage)
 	mux.HandleFunc("/media/categories/", portalHandler.CategoryMedia)
+	mux.HandleFunc("/media/storefront/", portalHandler.StorefrontMedia)
+	mux.HandleFunc("/storefront/preview/", portalHandler.StorefrontPreview)
 	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
 		"database": pool.Ping,
 		"redis":    func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },
@@ -369,6 +375,7 @@ func main() {
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
 	storefrontHandler.SetProfileStorage(mediaStorage)
+	portalHandler.SetStorefrontPreview(storefrontHandler)
 	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
@@ -412,7 +419,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           requestID(authRateLimit(accountSecurity(canonicalHostRedirect(mux, cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)),
+		Handler:           requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,
@@ -421,7 +428,7 @@ func main() {
 
 	serverError := make(chan error, 1)
 	go func() {
-		logger.Info("Weevcrafts server listening", "address", cfg.Address)
+		logger.Info("WeevCrafts server listening", "address", cfg.Address)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverError <- err
 		}

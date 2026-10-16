@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
 
-  const { create } = global.WeevcraftsBackend;
+  const { create } = global.WeevCraftsBackend;
   const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
   let backend = null;
   let backendError = null;
@@ -44,7 +44,7 @@
         });
         const consent=dialog.querySelector('[data-google-terms]');
         if(consent){consent.checked=false;consent.removeAttribute('aria-invalid');}
-        global.WeevcraftsFirebase?.cancelLink(dialog);
+        global.WeevCraftsFirebase?.cancelLink(dialog);
         const origin=dialog._restoreFocus;
         if(origin?.isConnected && origin.getClientRects().length && !origin.closest('[inert]'))origin.focus({preventScroll:true});
         else document.querySelector('.menu-toggle')?.focus({preventScroll:true});
@@ -57,7 +57,7 @@
     const menu = document.getElementById("mobile-menu");
     if (menu?.open) menu.close();
     if (!dialog.open) dialog.showModal();
-    global.WeevcraftsFirebase?.enhanceGoogle(dialog);
+    global.WeevCraftsFirebase?.enhanceGoogle(dialog);
     dialog.querySelector('[aria-label="Close sign-in prompt"]').focus();
   }
 
@@ -172,7 +172,7 @@
     const data = unwrap(payload) || {};
     const items = (data.items || []).map((item) => {
       if (item.slug && item.name) return item;
-      return global.WeevcraftsBackend.normalizeCartItem(item);
+      return global.WeevCraftsBackend.normalizeCartItem(item);
     }).filter((item) => item && item.slug);
     return { id: data.id, items: items };
   }
@@ -334,7 +334,7 @@
     authenticated = Boolean(user);
     if (!user) return;
     const cart = normalizeCart(await backend.cart({countsOnly:true}));
-    const wishlist = await backend.wishlist();
+    const wishlist = document.body.dataset.wishlistEnabled==="false" ? [] : await backend.wishlist();
     updateBadges(cart, wishlist);
   }
 
@@ -553,7 +553,7 @@
       key: key,
       amount: Number(intent.amount_cents),
       currency: intent.currency,
-      name: "Weevcrafts",
+      name: "WeevCrafts",
       description: "Handmade goods from independent makers",
       order_id: intent.provider_order_id,
       theme: { color: "#1f4b3a" },
@@ -579,6 +579,7 @@
     const body = await response.json();
     if (!response.ok) throw new Error(body.error?.message || "Could not preview checkout. Please try again.");
     const quote = unwrap(body);
+    global.weevcraftsPolicyRevision=quote.policy_revision;
     for (const field of ["subtotal", "shipping", "discount", "total"]) {
       const elements = document.querySelectorAll("[data-quote-" + field + "]");
       elements.forEach((element) => { element.textContent = money(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
@@ -648,7 +649,7 @@
       }
       const couponCode = acceptedCoupon;
       const key = pending.key;
-      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim()) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID))) || {};
+      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       button.dataset.orderCreated='true';
@@ -996,6 +997,7 @@
   }
 
   async function start() {
+    if(document.body.dataset.storefrontPreviewId)return;
     if (/^\/orders\/[^/]+\/confirmation$/.test(global.location.pathname)) {
       const url = new URL(global.location.href);
       if (url.searchParams.has("notice")) {

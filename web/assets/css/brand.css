@@ -1,5 +1,6 @@
 /* Shared identity. Semantic status and destructive-action tokens stay independent. */
 :root {
+  --brand-wordmark-font: "Cormorant Garamond", Georgia, serif;
   --brand-primary: #123f32;
   --brand-hover: #0d3529;
   --brand-paper: #f8f2e8;
@@ -62,6 +63,19 @@ body:is(.storefront-body,.admin-body,.seller-body,.support-body) {
   --support-line: var(--brand-line);
 }
 img:is(.wordmark-mark,.brand-mark,.seller-mark,.support-mark) { object-fit:contain; border:0; border-radius:3px; background:#f8f5ed; flex-shrink:0; }
+/* The wordmark stays consistent when merchants change page typography. */
+.storefront-body .wordmark strong,
+.storefront-body .gallery-wordmark > span,
+.admin-body :is(.admin-brand,.admin-header-brand) strong,
+.seller-body .seller-wordmark strong,
+.support-body .support-wordmark strong,
+.bar .brand {
+  font-family: var(--brand-wordmark-font);
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
 .storefront-body .site-footer .wordmark { display:flex; align-items:center; gap:10px; }
 .admin-body :is(.admin-brand,.admin-header-brand), .seller-body .seller-wordmark, .support-body .support-wordmark { color:var(--brand-primary); }
 .admin-body :is(.admin-brand,.admin-header-brand) strong { color:var(--brand-primary); }
@@ -87,6 +101,8 @@ img:is(.wordmark-mark,.brand-mark,.seller-mark,.support-mark) { object-fit:conta
 /* Brand links remain readable on the established dark portal footers. */
 .admin-body .admin-brand.inverse,.seller-body .seller-wordmark.inverse,.support-body .support-wordmark.inverse { color:var(--brand-surface); }
 .admin-body .admin-brand.inverse strong { color:var(--brand-surface); }
+.admin-body .admin-footer-simple .admin-brand,
+.admin-body .admin-footer-simple .admin-brand strong { color:var(--brand-primary); }
 .seller-body .seller-wordmark.inverse small,.support-body .support-wordmark.inverse small { color:#d6e2d8; }
 .bar .brand { color:var(--brand-primary); }
 .bar { background:var(--brand-surface); border-color:var(--brand-line); }

@@ -1,17 +1,17 @@
-# WeeVCrafts branding and responsive homepage — 15 October 2026
+# WeevCrafts branding and responsive homepage — 15 October 2026
 
 Implementation on `main`, fast-forwarded from `020f058` to the approved existing `b4968a7`. No additional branch, database migration or business API change. Existing local volumes and catalogue were retained. The user subsequently authorized publishing the branding/header update through GitHub's existing Railway integration. New login and guest-popup redesigns require separate concept approval and are outside this release.
 
 ## Accepted references and implementation
 
-- [Desktop concept](brand-theme-concept-2026-10-15.png): enlarged supplied woven mark and live WeeVCrafts wordmark, forest controls, warm white/ivory surfaces, restrained terracotta/gold.
+- [Desktop concept](brand-theme-concept-2026-10-15.png): enlarged supplied woven mark and live WeevCrafts wordmark, forest controls, warm white/ivory surfaces, restrained terracotta/gold.
 - [Mobile concept](brand-theme-mobile-concept-2026-10-15.png): explicitly approved after the desktop plan. Separate responsive introduction on the same `/` URL, with shared products, makers and collections rendered once.
 - `brand.css` owns shared colour tokens and role aliases. Typography and operational layouts are retained. Semantic success, warning and destructive colours stay independent; legacy red tokens were not globally rebound to green.
 - Removed the shared delivery shortcut, artisan-livelihood nav link, hero playback controls and automatic advancement. Address management and checkout delivery remain. The desktop hero retains five manual slides, arrows, selectors, announcements, inactive-slide inertness and deferred secondary media.
 - Mobile uses a compact craft hero, full-width search, scrollable categories and two product columns at 390px and 320px. The editorial mobile banner was generated from the existing craft artwork against the approved composition. It is not a maker portrait or product record. Responsive picture sources avoid downloading both hero photographs on phones.
 - Corrected homepage search to replace the main page, preventing nested `#page` elements and stale homepage styles after an HTMX search.
 - Guests use a direct Sign in header link. The authenticated account dropdown and its private avatar, account links, notifications and sign out remain.
-- Homepage title, description, Open Graph identity and the existing WebSite/Organization graph consistently use WeeVCrafts. Canonicals, robots/sitemap handling, product schema and private-page restrictions are retained.
+- Homepage title, description, Open Graph identity and the existing WebSite/Organization graph consistently use WeevCrafts. Canonicals, robots/sitemap handling, product schema and private-page restrictions are retained.
 
 ## Visual fidelity ledger
 

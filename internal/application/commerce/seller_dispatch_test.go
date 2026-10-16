@@ -59,7 +59,7 @@ func TestSellerDispatchProcessorSendsTrackingEmailAndAcknowledgesOnce(t *testing
 	if processed != 1 || len(events.acked) != 1 || events.failures != 0 {
 		t.Fatalf("processed=%d acked=%v failures=%d", processed, events.acked, events.failures)
 	}
-	if sender.message.To != "customer@example.test" || sender.message.Subject != "Your Weevcrafts order has shipped" || sender.message.ActionURL != "https://shop.example.test/orders/WC-42/tracking" {
+	if sender.message.To != "customer@example.test" || sender.message.Subject != "Your WeevCrafts order has shipped" || sender.message.ActionURL != "https://shop.example.test/orders/WC-42/tracking" {
 		t.Fatalf("unexpected dispatch email: %#v", sender.message)
 	}
 	if sender.message.Body == "" {

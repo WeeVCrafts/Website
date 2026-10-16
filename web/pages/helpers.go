@@ -73,7 +73,7 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 	data := map[string]any{
 		"@context": "https://schema.org",
 		"@graph": []any{
-			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": []string{"Weevcrafts", "WeevCrafts", "weevcrafts.com"}, "url": pageCanonicalURL(p)},
+			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": []string{"WeevCrafts", "WeevCrafts", "weevcrafts.com"}, "url": pageCanonicalURL(p)},
 			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": identity.Name, "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
 		},
 	}
@@ -85,6 +85,9 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 }
 
 func pageRobots(p viewmodels.CustomerPage) string {
+	if p.StorefrontPreview {
+		return "noindex,nofollow,noarchive"
+	}
 	if pageIsIndexable(p) {
 		return "index,follow"
 	}
@@ -146,6 +149,12 @@ func pageOGType(p viewmodels.CustomerPage) string {
 }
 
 func pageOGImage(p viewmodels.CustomerPage) string {
+	if p.StorefrontPage != nil && p.StorefrontPage.SharingImage != "" {
+		return p.StorefrontPage.SharingImage
+	}
+	if p.StorefrontTemplate.Image != "" {
+		return p.StorefrontTemplate.Image
+	}
 	if strings.TrimSpace(p.Product.ImageURL) != "" && strings.HasPrefix(p.Route, "/products/") {
 		return absolutePageURL(p, p.Product.ImageURL)
 	}
@@ -716,7 +725,7 @@ func paymentStateHeading(state string) string {
 func paymentStateCopy(state string) string {
 	switch state {
 	case "success":
-		return "The payment gateway confirmed the transaction and Weevcrafts has recorded it against your order."
+		return "The payment gateway confirmed the transaction and WeevCrafts has recorded it against your order."
 	case "failed":
 		return "You can retry with another method or contact support with the reference below. No duplicate order will be created."
 	default:
@@ -769,6 +778,9 @@ func paymentActivityClass(status string) string {
 }
 
 func listingTitle(p viewmodels.CustomerPage) string {
+	if p.StorefrontTemplate.Title != "" {
+		return p.StorefrontTemplate.Title
+	}
 	if p.Query != "" {
 		return "Search results for “" + p.Query + "”"
 	}
@@ -782,6 +794,9 @@ func listingTitle(p viewmodels.CustomerPage) string {
 }
 
 func listingDescription(p viewmodels.CustomerPage) string {
+	if p.StorefrontTemplate.Description != "" {
+		return p.StorefrontTemplate.Description
+	}
 	if p.Query != "" {
 		return "Thoughtfully made pieces that match your search, from verified Indian makers."
 	}

@@ -12,7 +12,7 @@ The user-approved Cloudflare Domain Connect action added only these three record
 
 Both CNAME records are DNS only. Cloudflare's one-time authorization grants no ongoing DNS access. Resend verified the domain, DKIM and sending records. Receiving remains disabled and existing website/mailbox records were not changed. Domain click/open tracking is unconfigured; TLS is enforced, so receiving servers without TLS cannot receive these emails.
 
-The local sender is `Weevcrafts <no-reply@mail.weevcrafts.com>` with reply-to `weevcrafts@gmail.com`. The sending-only API key is outside the checkout at `%LOCALAPPDATA%/Weevcrafts/resend-api-key`, with restricted Windows ACLs. A copy is owned by the non-root app user, mode 0400, inside the read-only external secret volume. The ignored `.env` selects `WECRATFS_RESEND_API_KEY_FILE=/run/secrets/resend-api-key` and the sender/reply address. No private key is embedded in source, images, browser configuration, logs or screenshots. Production must use an independently provisioned managed secret and HTTPS public URL.
+The local sender is `WeevCrafts <no-reply@mail.weevcrafts.com>` with reply-to `weevcrafts@gmail.com`. The sending-only API key is outside the checkout at `%LOCALAPPDATA%/WeevCrafts/resend-api-key`, with restricted Windows ACLs. A copy is owned by the non-root app user, mode 0400, inside the read-only external secret volume. The ignored `.env` selects `WECRATFS_RESEND_API_KEY_FILE=/run/secrets/resend-api-key` and the sender/reply address. No private key is embedded in source, images, browser configuration, logs or screenshots. Production must use an independently provisioned managed secret and HTTPS public URL.
 
 Configuration fields: `WECRATFS_RESEND_API_KEY_FILE` (preferred), `WECRATFS_RESEND_API_KEY` (server environment alternative), `WECRATFS_RESEND_FROM` and optional `WECRATFS_RESEND_REPLY_TO`. With neither key setting, the existing SMTP adapter remains active. A configured but unreadable key or invalid sender fails startup; a delivery failure does not silently downgrade to a different sender.
 
@@ -24,7 +24,7 @@ Focused checks cover template escaping, unsafe headers/URLs, provider-error reda
 
 Actual human Google popup completion and human registration/reset through the UI remain separate from automated provider checks. The browser policy requires the user to enter and submit new passwords. Do not report those human steps as passed until observed.
 
-The dashboard confirmed all three test messages delivered: Hello from MCP, Verify your Weevcrafts email and Reset your Weevcrafts password. This is receiving-mail-server confirmation, not proof the user opened the inbox or completed the UI flow.
+The dashboard confirmed all three test messages delivered: Hello from MCP, Verify your WeevCrafts email and Reset your WeevCrafts password. This is receiving-mail-server confirmation, not proof the user opened the inbox or completed the UI flow.
 
 Evidence: `docs/qa/resend/domain-verified.png`, `docs/qa/resend/secure-delivery.png`, `docs/qa/resend/email-delivery.png`. Check delivery statuses in the Resend dashboard rather than inferring inbox receipt from an HTTP success. Mailpit remains available locally but messages use Resend while its key is configured.
 

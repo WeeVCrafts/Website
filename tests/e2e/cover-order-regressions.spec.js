@@ -10,7 +10,7 @@ test('HTML payment errors never become customer-facing code', async ({ page }) =
   await page.goto(target.origin + '/login');
   await page.route('**/api/v1/payments/demo-capture/*', route => route.fulfill({ status: 404, contentType: 'text/html', body: '<!doctype html><html>Internal error page</html>' }));
   const message = await page.evaluate(async () => {
-    const backend = await window.WeevcraftsBackend.create();
+    const backend = await window.WeevCraftsBackend.create();
     try { await backend.localPayment('test-order', 'capture'); } catch (error) { return error.message; }
   });
   expect(message).toContain('try again');
@@ -33,7 +33,7 @@ test('persistent covers, clean demo confirmation and synchronized fulfilment', a
   try {
     const created = await seller.context.request.post('/seller-admin/products', {
       maxRedirects: 0,
-      multipart: { csrf_token: seller.token, name: 'Persistent cover QA', slug, brand_name: 'Weevcrafts', brand_slug: 'weevcrafts', category_name: 'Crafts', category_slug: 'crafts', description: 'A product used only in the isolated image persistence test.', sku: 'COVER-' + suffix, price_rupees: '199.00', initial_stock: '10', image_url: '', image_file: { name: 'cover.png', mimeType: 'image/png', buffer: png } }
+      multipart: { csrf_token: seller.token, name: 'Persistent cover QA', slug, brand_name: 'WeevCrafts', brand_slug: 'weevcrafts', category_name: 'Crafts', category_slug: 'crafts', description: 'A product used only in the isolated image persistence test.', sku: 'COVER-' + suffix, price_rupees: '199.00', initial_stock: '10', image_url: '', image_file: { name: 'cover.png', mimeType: 'image/png', buffer: png } }
     });
     expect(created.status(), await created.text()).toBe(303);
     const editURL = created.headers().location;

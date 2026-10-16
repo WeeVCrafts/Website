@@ -103,7 +103,7 @@ func formatMessage(from, recipient *mail.Address, message ports.EmailMessage) []
 	}
 	body := message.Body
 	if body == "" {
-		body = fmt.Sprintf("Weevcrafts account action\r\n\r\nOpen this link to continue:\r\n%s\r\n\r\nIf you did not request this, you can ignore this email.\r\n", message.ActionURL)
+		body = fmt.Sprintf("WeevCrafts account action\r\n\r\nOpen this link to continue:\r\n%s\r\n\r\nIf you did not request this, you can ignore this email.\r\n", message.ActionURL)
 	}
 	return []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s\r\n", fromHeader, recipientHeader, mime.QEncoding.Encode("UTF-8", message.Subject), body))
 }

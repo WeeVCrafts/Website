@@ -1,4 +1,4 @@
-# WeeVCrafts UI/UX review — 9 October 2026
+# WeevCrafts UI/UX review — 9 October 2026
 
 ## Implementation integrity verdict
 

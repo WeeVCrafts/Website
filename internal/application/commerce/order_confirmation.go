@@ -68,10 +68,10 @@ func (p *OrderConfirmationProcessor) Process(ctx context.Context, limit int) (in
 			} else {
 				link := p.publicURL + "/orders/" + url.PathEscape(event.AggregateID)
 				tracking := link + "/tracking"
-				subject := "Your Weevcrafts order has been received"
+				subject := "Your WeevCrafts order has been received"
 				body := fmt.Sprintf("We received order %s.\n\nYour order is saved. This message does not confirm payment. View your order and payment status: %s\n\nTrack delivery: %s\nTracking details will appear when your maker prepares the shipment.", event.AggregateID, link, tracking)
 				if p.eventType == "OrderPaid" {
-					subject = "Your Weevcrafts order is confirmed"
+					subject = "Your WeevCrafts order is confirmed"
 					body = fmt.Sprintf("Payment confirmed for order %s. Your maker can now prepare your pieces.\n\nView your order: %s\n\nTrack delivery: %s\nTracking details will appear when your maker prepares the shipment. Sign in with the account used for this purchase.", event.AggregateID, link, tracking)
 					if p.demoPayment {
 						body = "Demo payment completed. No money has been charged.\n\n" + body

@@ -72,9 +72,9 @@ func TestManagementCRUDSearchAuthorizationAuditAndCommissionLedger(t *testing.T)
 	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "brands", Action: "delete", ID: fixture.brandSlug, Reason: "Reject in-use brand"}); !errors.Is(err, ports.ErrManagementConflict) {
 		t.Fatalf("in-use brand deleted: %v", err)
 	}
-	mutate(ports.ManagementMutation{Section: "category-management", Action: "update", ID: fixture.category, Name: "Renamed category"})
-	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "category-management", Action: "delete", ID: fixture.category, Reason: "Reject in-use category"}); !errors.Is(err, ports.ErrManagementConflict) {
-		t.Fatalf("in-use category deleted: %v", err)
+	if e:=service.Mutate(ctx,actorID,ports.ManagementMutation{Section:"category-management",Action:"update",ID:fixture.category,Name:"Renamed category",Reason:"Requires publication"});!errors.Is(e,ports.ErrForbidden){t.Fatalf("taxonomy bypass: %v",e)}
+	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "category-management", Action: "delete", ID: fixture.category, Reason: "Reject in-use category"}); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("legacy category bypass: %v", err)
 	}
 	var customerEmail string
 	if err := pool.QueryRow(ctx, `SELECT email FROM users WHERE id=$1`, fixture.userIDs[0]).Scan(&customerEmail); err != nil {
@@ -118,76 +118,16 @@ func TestManagementCRUDSearchAuthorizationAuditAndCommissionLedger(t *testing.T)
 		t.Fatalf("historic ledger changed: %d %v", commission, err)
 	}
 	mutate(ports.ManagementMutation{Section: "commission-rules", Action: "delete", ID: strconv.FormatInt(ruleID, 10)})
-	unusedCategory := "management-category-" + suffix
-	mutate(ports.ManagementMutation{Section: "category-management", Action: "create", ID: unusedCategory, Name: "Unused category"})
-	t.Cleanup(func() { _, _ = pool.Exec(ctx, `DELETE FROM categories WHERE slug=$1`, unusedCategory) })
-	mutate(ports.ManagementMutation{Section: "commission-rules", Action: "create", Name: "Category reference " + suffix, Category: unusedCategory, BasisPoints: 500, Active: false})
-	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "category-management", Action: "delete", ID: unusedCategory, Reason: "Reject commission reference"}); !errors.Is(err, ports.ErrManagementConflict) {
-		t.Fatalf("category deletion would silently broaden commission scope: %v", err)
-	}
-	if err := pool.QueryRow(ctx, `SELECT id FROM commission_rules WHERE name=$1`, "Category reference "+suffix).Scan(&ruleID); err != nil {
-		t.Fatal(err)
-	}
-	mutate(ports.ManagementMutation{Section: "commission-rules", Action: "delete", ID: strconv.FormatInt(ruleID, 10)})
-	mutate(ports.ManagementMutation{Section: "category-management", Action: "delete", ID: unusedCategory})
+
 	var auditCount int
-	if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM audit_logs WHERE actor_id=$1 AND action LIKE 'management.%'`, fmt.Sprint(actorID)).Scan(&auditCount); err != nil || auditCount != 41 {
+	if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM audit_logs WHERE actor_id=$1 AND action LIKE 'management.%'`, fmt.Sprint(actorID)).Scan(&auditCount); err != nil || auditCount != 36 {
 		t.Fatalf("successful mutations audited atomically: %d %v", auditCount, err)
 	}
 }
 
-func TestManagementSettingsReachRuntimeReader(t *testing.T) {
-	pool := openIntegrationPool(t)
-	ctx := context.Background()
-	suffix := fmt.Sprint(time.Now().UnixNano())
-	var actorID int64
-	if err := pool.QueryRow(ctx, `INSERT INTO users(email,status) VALUES($1,'active') RETURNING id`, "settings-"+suffix+"@example.invalid").Scan(&actorID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'super_admin')`, actorID); err != nil {
-		t.Fatal(err)
-	}
-	type settingBackup struct {
-		key     string
-		value   []byte
-		actor   *int64
-		updated time.Time
-	}
-	var backups []settingBackup
-	rows, err := pool.Query(ctx, `SELECT setting_key,setting_value,updated_by,updated_at FROM system_settings WHERE setting_key IN('support_email','shipping_information')`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for rows.Next() {
-		var b settingBackup
-		if err := rows.Scan(&b.key, &b.value, &b.actor, &b.updated); err != nil {
-			t.Fatal(err)
-		}
-		backups = append(backups, b)
-	}
-	rows.Close()
-	t.Cleanup(func() {
-		_, _ = pool.Exec(ctx, `DELETE FROM system_settings WHERE setting_key IN('support_email','shipping_information')`)
-		for _, b := range backups {
-			_, _ = pool.Exec(ctx, `INSERT INTO system_settings(setting_key,setting_value,updated_by,updated_at) VALUES($1,$2,$3,$4)`, b.key, b.value, b.actor, b.updated)
-		}
-		_, _ = pool.Exec(ctx, `DELETE FROM audit_logs WHERE actor_id=$1`, fmt.Sprint(actorID))
-		_, _ = pool.Exec(ctx, `DELETE FROM users WHERE id=$1`, actorID)
-	})
-	settings := ports.StorefrontSettings{SupportEmail: "support-" + suffix + "@example.invalid", ShippingInformation: "Shipping information from the live settings integration test."}
-	service := applicationcommerce.NewManagementService(NewManagementRepository(pool))
-	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "settings", Action: "save", Reason: "Runtime settings verification", Settings: settings}); err != nil {
-		t.Fatal(err)
-	}
-	actual, err := ReadStorefrontSettings(ctx, pool)
-	if err != nil || actual != settings {
-		t.Fatalf("runtime reader did not use settings: %+v %v", actual, err)
-	}
-	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "settings", Action: "save", Reason: "Invalid settings rejection", Settings: ports.StorefrontSettings{SupportEmail: "invalid", ShippingInformation: "short"}}); !errors.Is(err, ports.ErrManagementValidation) {
-		t.Fatalf("invalid settings saved: %v", err)
-	}
-	actual, err = ReadStorefrontSettings(ctx, pool)
-	if err != nil || actual != settings {
-		t.Fatalf("invalid save changed persisted settings: %+v %v", actual, err)
-	}
+func TestLegacyManagementSettingsRequirePublication(t *testing.T) {
+ pool:=openIntegrationPool(t);ctx:=context.Background();actor:=roleFixture(t,pool,"super_admin");before,e:=ReadStorefrontSettings(ctx,pool);if e!=nil{t.Fatal(e)}
+ service:=applicationcommerce.NewManagementService(NewManagementRepository(pool))
+ e=service.Mutate(ctx,actor,ports.ManagementMutation{Section:"settings",Action:"save",Reason:"Reject legacy settings bypass",Settings:ports.StorefrontSettings{SupportEmail:"draft@example.invalid",ShippingInformation:"This must not publish immediately."}})
+ if !errors.Is(e,ports.ErrForbidden){t.Fatalf("legacy settings bypass: %v",e)};after,e:=ReadStorefrontSettings(ctx,pool);if e!=nil||before!=after{t.Fatalf("legacy save changed live settings: %+v %v",after,e)}
 }

@@ -107,7 +107,7 @@ test.describe.serial('Professional customer workflow in an isolated local store'
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();await expect(page.getByRole('button',{name:'Edit address',exact:true})).toBeVisible();
   if(process.env.WEEVCRAFTS_REVIEW_DIR)await page.screenshot({path:path.join(process.env.WEEVCRAFTS_REVIEW_DIR,'customer-checkout-mobile.png')});await page.setViewportSize({width:1440,height:1000});
   const number=await placeMockOrder(page,'capture');await expect(page.locator('.order-detail-status')).toContainText('Confirmed');
-  await emailFor(request,'Your Weevcrafts order has been received',number);await emailFor(request,'Your Weevcrafts order is confirmed',number);
+  await emailFor(request,'Your WeevCrafts order has been received',number);await emailFor(request,'Your WeevCrafts order is confirmed',number);
   expect(sql(`SELECT COUNT(*) FROM outbox_events WHERE event_type='OrderPaid' AND aggregate_id='${number}'`)).toBe('1');
   const seller=await browser.newPage();await login(seller,'seller');await seller.goto('/seller-admin/orders/'+number);
   for(const status of ['processing','shipped','delivered']){
@@ -121,7 +121,7 @@ test.describe.serial('Professional customer workflow in an isolated local store'
   await expect(page.locator('.shipment-timeline .done')).toHaveCount(4);await expect(page.locator('.shipment-card')).toContainText('DEMO-'+number);
   if(process.env.WEEVCRAFTS_REVIEW_DIR)await page.screenshot({path:path.join(process.env.WEEVCRAFTS_REVIEW_DIR,'customer-tracking-after.png')});
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();if(process.env.WEEVCRAFTS_REVIEW_DIR)await page.screenshot({path:path.join(process.env.WEEVCRAFTS_REVIEW_DIR,'customer-tracking-mobile.png')});
-  await emailFor(request,'Your Weevcrafts order has shipped',number);
+  await emailFor(request,'Your WeevCrafts order has shipped',number);
  });
  test('Pending mock payment resumes the saved order; failure is clearly labelled',async({page})=>{
   await login(page);await addPieces(page);await addressAndReview(page);const pending=await placeMockOrder(page,'pending');

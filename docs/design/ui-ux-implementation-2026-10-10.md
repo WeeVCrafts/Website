@@ -1,4 +1,4 @@
-# WeeVCrafts UI/UX implementation — 10 October 2026
+# WeevCrafts UI/UX implementation — 10 October 2026
 
 The recommended improvements are implemented in the existing Go, templ, JavaScript and Tailwind application. The storefront keeps its established ivory, forest-green and terracotta identity. Operational pages prioritize actions, readable records and recovery. Existing unrelated working-tree changes were preserved; a before-implementation snapshot is available in the local visualization directory.
 

@@ -15,7 +15,7 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
   for _, category := range components.NavigationCategories(p) {
    <a class="discovery-category" href={ "/products?category=" + category.Slug }>
     if category.ImageURL != "" {
-     <img src={ category.ImageURL } srcset={ components.ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:800px) 64px, 130px" alt="" width="110" height="110" loading="lazy"/>
+     <img style={ "object-position:"+category.ImagePosition } src={ category.ImageURL } srcset={ components.ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:800px) 64px, 130px" alt="" width="110" height="110" loading="lazy"/>
     } else {
      <span class="category-no-image" aria-hidden="true"><span class="material-symbols-outlined">category</span></span>
     }
@@ -26,7 +26,7 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
 }
 
 templ CollectionTile(href, image, title, copy string) {
-	<a class="reference-collection" href={ href }><img src={ "/assets/images/customer/" + image } srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/"+image, "") } sizes="(max-width:720px) 240px, 260px" alt="" width="320" height="160" loading="lazy"/><span><strong>{ title }</strong><small>{ copy }</small></span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+	<a class="reference-collection" href={ href }><img src={ storefrontCollectionImage(image) } srcset={ components.ResponsiveImageSrcSet(storefrontCollectionImage(image), "") } sizes="(max-width:720px) 240px, 260px" alt="" width="320" height="160" loading="lazy"/><span><strong>{ title }</strong><small>{ copy }</small></span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
 }
 
 templ HomeMakers(p viewmodels.CustomerPage) {
@@ -75,7 +75,7 @@ templ HomeMakers(p viewmodels.CustomerPage) {
 
 templ ListingBanner(p viewmodels.CustomerPage) {
 	<section class="listing-banner">
-		<img class="listing-banner-art" src="/assets/images/customer/living-banner.webp" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/living-banner.webp", "") } sizes="100vw" alt="" width="1983" height="793" fetchpriority="high"/>
+		<img class="listing-banner-art" src={ storefrontTemplateImage(p,"/assets/images/customer/living-banner.webp") } srcset={ components.ResponsiveImageSrcSet(storefrontTemplateImage(p,"/assets/images/customer/living-banner.webp"), "") } sizes="100vw" alt="" width="1983" height="793" fetchpriority="high"/>
 		<div class="container listing-banner-copy">@Breadcrumb("Home", listingTitle(p))
 <h1>{ listingTitle(p) }</h1><p>{ listingDescription(p) }</p><div class="listing-promises"><span><span class="material-symbols-outlined" aria-hidden="true">handyman</span>Authentic handmade<br/>pieces</span><span><span class="material-symbols-outlined" aria-hidden="true">verified_user</span>From independent<br/>Indian makers</span><span><span class="material-symbols-outlined" aria-hidden="true">home</span>Thoughtful designs<br/>{ "for everyday living" }</span></div></div>
 	</section>

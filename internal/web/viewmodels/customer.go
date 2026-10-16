@@ -1,6 +1,7 @@
 package viewmodels
 
 import (
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
 	"net/url"
 	"time"
@@ -73,6 +74,7 @@ type Brand struct {
 }
 
 type Category struct {
+	ImagePosition                     string
 	Assigned                          bool
 	DisplayOrder                      int
 	ShowInNavigation                  bool
@@ -112,6 +114,14 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	MediaPositions                                   map[string]string
+	MediaAlt                                         map[string]string
+	Storefront                                       *storefront.Config
+	StorefrontRevision                               int64
+	StorefrontPreview                                bool
+	StorefrontTemplate                               storefront.Template
+	StorefrontPage                                   *storefront.Page
+	SectionProducts                                  map[string][]Product
 	HomeNewArrivals, HomeCategoryProducts, HomeGifts []Product
 	HomeSelectedCategory                             string
 	CatalogueEmpty                                   bool

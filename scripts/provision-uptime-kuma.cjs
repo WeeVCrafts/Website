@@ -6,9 +6,9 @@ const fs = require('node:fs');
 
 const credentialsPath = '/app/data/weevcrafts-local-access.json';
 const desiredMonitors = [
-  { name: 'WeeVCrafts storefront', type: 'http', url: 'http://app:8080/' },
-  { name: 'WeeVCrafts readiness', type: 'http', url: 'http://app:8080/health/ready' },
-  { name: 'WeeVCrafts liveness', type: 'http', url: 'http://app:8080/health/live' },
+  { name: 'WeevCrafts storefront', type: 'http', url: 'http://app:8080/' },
+  { name: 'WeevCrafts readiness', type: 'http', url: 'http://app:8080/health/ready' },
+  { name: 'WeevCrafts liveness', type: 'http', url: 'http://app:8080/health/live' },
   { name: 'PostgreSQL connection', type: 'port', hostname: 'postgres', port: 5432 },
   { name: 'Redis connection', type: 'port', hostname: 'redis', port: 6379 },
   { name: 'Meilisearch health', type: 'http', url: 'http://meilisearch:7700/health' },

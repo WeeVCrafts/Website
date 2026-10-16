@@ -1,8 +1,8 @@
-# WeeVCrafts agent guidance
+# WeevCrafts agent guidance
 
 ## Project context
 
-Read README.md and the relevant docs before changing behavior. WeeVCrafts is a Go marketplace with server-rendered templ pages, JavaScript, Tailwind CSS, PostgreSQL, and Redis. Preserve this stack and existing shared UI conventions. Inspect the working tree first and preserve unrelated in-progress changes.
+Read README.md and the relevant docs before changing behavior. WeevCrafts is a Go marketplace with server-rendered templ pages, JavaScript, Tailwind CSS, PostgreSQL, and Redis. Preserve this stack and existing shared UI conventions. Inspect the working tree first and preserve unrelated in-progress changes.
 
 ## Required skill selection
 

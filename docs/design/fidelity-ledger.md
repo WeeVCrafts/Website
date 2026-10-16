@@ -1,4 +1,4 @@
-# Weevcrafts visual fidelity ledger
+# WeevCrafts visual fidelity ledger
 
 The generated concept image at
 [`wecratfs-storefront-concept.png`](wecratfs-storefront-concept.png) is a
@@ -13,7 +13,7 @@ truthfulness while avoiding invented catalogue imagery.
 | Editorial, spacious storefront composition | Responsive two-column hero, wide content container, restrained cards | Matched |
 | Natural-material visual language | Material-first hero panel and no-placeholder product media state | Matched without fake product photography |
 | Nature-inspired botanical artwork | CSS-native hero panel instead of a product or brand image | Intentional deviation until approved brand artwork exists |
-| Wordmark shown in generated concept | Runtime wordmark is the exact user-provided name `Weevcrafts` | Corrected; generated concept text is not authoritative |
+| Wordmark shown in generated concept | Runtime wordmark is the exact user-provided name `WeevCrafts` | Corrected; generated concept text is not authoritative |
 | Catalogue cards in the concept | Cards render only approved PostgreSQL records; empty database shows an explicit state | Corrected for real-data requirement |
 
 ## Capture evidence

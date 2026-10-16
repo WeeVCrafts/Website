@@ -1,4 +1,5 @@
 /* Storefront craft typography; operational documents keep their own families. */
+@font-face { font-family: "Cormorant Garamond"; font-style: normal; font-weight: 600; font-display: swap; src: url("/assets/fonts/cormorant-garamond-600.woff2") format("woff2"); }
 @font-face { font-family: "DM Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("/assets/fonts/dm-sans-400.woff2") format("woff2"); }
 @font-face { font-family: "DM Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("/assets/fonts/dm-sans-500.woff2") format("woff2"); }
 @font-face { font-family: "DM Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("/assets/fonts/dm-sans-600.woff2") format("woff2"); }

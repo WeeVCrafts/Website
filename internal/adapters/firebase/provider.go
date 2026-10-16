@@ -91,7 +91,7 @@ func (p *Provider) DeleteIdentity(ctx context.Context, uid string) error {
 	return nil
 }
 func (p *Provider) SendPush(ctx context.Context, token string) error {
-	_, err := p.messaging.Send(ctx, &messaging.Message{Token: token, Data: map[string]string{"title": "Weevcrafts", "body": "You have a new account update. Open Weevcrafts to view it securely.", "url": "/account/notifications"}, Webpush: &messaging.WebpushConfig{Headers: map[string]string{"TTL": "300"}}})
+	_, err := p.messaging.Send(ctx, &messaging.Message{Token: token, Data: map[string]string{"title": "WeevCrafts", "body": "You have a new account update. Open WeevCrafts to view it securely.", "url": "/account/notifications"}, Webpush: &messaging.WebpushConfig{Headers: map[string]string{"TTL": "300"}}})
 	if messaging.IsUnregistered(err) {
 		return ports.ErrCredentialsNotFound
 	}

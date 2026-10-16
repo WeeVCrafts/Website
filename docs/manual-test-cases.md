@@ -1,4 +1,4 @@
-# Weevcrafts manual test cases
+# WeevCrafts manual test cases
 
 Prepared on 9 October 2026 from source revision `e853611798973f9197efc007357f19b1bbc5e261`.
 

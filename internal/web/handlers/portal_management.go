@@ -67,6 +67,14 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 	if h.hasRole(r, session.UserID, "super_admin") {
 		role = domainidentity.RoleSuperAdmin
 	}
+	if section == "settings" || (section == "category-management" && action != "" && action != "assign-products") {
+		if r.Method == http.MethodGet {
+			http.Redirect(w, r, root+"/storefront?tab="+map[string]string{"settings": "settings", "category-management": "categories"}[section], http.StatusSeeOther)
+		} else {
+			http.Error(w, "Storefront publication required. Create or edit a draft in Storefront; Super Admin publishes it after review.", http.StatusConflict)
+		}
+		return true
+	}
 	if role == domainidentity.RoleAdmin && (section == "settings" || (section == "customers" && action != "")) {
 		http.Error(w, "Super Admin access required", http.StatusForbidden)
 		return true

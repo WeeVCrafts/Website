@@ -34,14 +34,7 @@ templ CategoryManager(m viewmodels.CategoryManagerPage) {
     }
    </section>
   }
-  <section class="admin-panel"><details open?={ m.Total==0 }><summary>Create category</summary>
-   <form class="admin-product-editor-form" novalidate method="post" action={ m.Action+"/create" } enctype="multipart/form-data">
-    @ManagementToken(m.Admin.CSRFToken)
-    @CategoryFields(ports.ManagementRecord{DisplayOrder:1000,ShowInNavigation:true},true)
-    @ManagementReason()
-    <button class="admin-button primary" type="submit">Create category</button>
-   </form>
-  </details></section>
+  <section class="admin-panel"><h2>Storefront presentation</h2><p>Category names, images, numbering and visibility are managed through drafts and Super Admin publication.</p><a class="admin-button primary" href={ m.Admin.PortalRoot+"/storefront?tab=categories" }>Manage category presentation in Storefront</a></section>
   <section class="admin-panel">
    <form class="category-search" method="get" action={ m.Action }><label>Search categories<input name="q" value={ m.Query }/></label><button class="admin-button secondary" type="submit">Search</button><a href={ m.Action }>Clear</a></form>
    <p>{ strconv.Itoa(m.Total) } matching categories · Page { strconv.Itoa(m.Page) }</p>
@@ -61,17 +54,7 @@ templ CategoryManager(m viewmodels.CategoryManagerPage) {
       </p></div>
       <a class="admin-button secondary" href={ m.Action+"?category="+c.ID+"#category-products" }>Manage products</a>
      </div>
-     <details><summary>Edit category</summary>
-      <form class="admin-product-editor-form" novalidate method="post" action={ m.Action+"/update" } enctype="multipart/form-data">
-       @ManagementToken(m.Admin.CSRFToken)
-       @CategoryFields(c,false)
-       @ManagementReason()
-       <button class="admin-button primary" type="submit">Save category</button>
-      </form>
-     </details>
-     <details><summary>Delete category</summary><form method="post" novalidate action={ m.Action+"/delete" } data-confirm="Delete this category? This is allowed only when no products or commission rules use it.">
-      @ManagementToken(m.Admin.CSRFToken)<input type="hidden" name="id" value={ c.ID }/>@ManagementReason()<button class="admin-button danger" type="submit">Delete category</button>
-     </form></details>
+
     </article>
    }
    if len(m.Records)==0 {

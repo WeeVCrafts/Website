@@ -38,7 +38,7 @@ func activeFilters(p viewmodels.CustomerPage) []activeFilter {
 				}
 				label = "Maker: " + label
 			case "price":
-				if name := map[string]string{"under-1500":"Under INR 1,500", "under-1000": "Under INR 1,000", "1000-2500": "INR 1,000–2,500", "2500-5000": "INR 2,500–5,000", "over-5000": "Above INR 5,000"}[value]; name != "" {
+				if name := map[string]string{"under-1500": "Under INR 1,500", "under-1000": "Under INR 1,000", "1000-2500": "INR 1,000–2,500", "2500-5000": "INR 2,500–5,000", "over-5000": "Above INR 5,000"}[value]; name != "" {
 					label = name
 				}
 			case "availability":
