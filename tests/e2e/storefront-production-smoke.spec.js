@@ -1,11 +1,11 @@
 const {test,expect}=require('@playwright/test');
 const path=require('node:path');
 const os=require('node:os');
+test.use({baseURL:'https://weevcrafts.com',trace:'off',screenshot:'off'});
 
 // Explicit opt-in, public GETs only. All mutation suites keep their local guards.
 test.describe('Published storefront deployment smoke',()=>{
  test.skip(process.env.WEEVCRAFTS_LIVE_SMOKE!=='1','Enable explicitly after deployment.');
- test.use({baseURL:'https://weevcrafts.com',trace:'off',screenshot:'off'});
  test('published identity, responsive layout and public policy content',async({page})=>{
   test.setTimeout(120000);
   for(const width of [1440,390]){
