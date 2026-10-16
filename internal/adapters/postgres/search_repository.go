@@ -63,9 +63,9 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		WHERE p.status = 'approved'
 		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
 		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
-		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
+		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
-		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
+		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
 		       OR ($4 = '1000-2500' AND pv.price_cents >= 100000 AND pv.price_cents < 250000)
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
@@ -77,7 +77,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
-		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '/assets/images/customer/saree-maroon.webp'), p.swatches,
+		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
@@ -94,9 +94,9 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		WHERE p.status = 'approved'
 		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
 		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
-		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
+		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
-		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
+		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
 		       OR ($4 = '1000-2500' AND pv.price_cents >= 100000 AND pv.price_cents < 250000)
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
@@ -129,10 +129,11 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		categories = append(categories, options.CategorySlug)
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT p.category_slug, c.name, COUNT(DISTINCT p.id)
+		SELECT membership.category_slug, c.name, COUNT(DISTINCT p.id)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
-		JOIN categories c ON c.slug = p.category_slug
+		JOIN product_categories membership ON membership.product_id=p.id
+		JOIN categories c ON c.slug=membership.category_slug AND c.show_in_navigation
 		JOIN LATERAL (
 			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
 			FROM product_variants candidate
@@ -145,16 +146,16 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		WHERE p.status = 'approved'
 		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
 		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
-		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR p.category_slug = ANY($2::text[]))
+		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
-		  AND ($4 = '' OR ($4 = 'under-1000' AND pv.price_cents < 100000)
+		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
 		       OR ($4 = '1000-2500' AND pv.price_cents >= 100000 AND pv.price_cents < 250000)
 		       OR ($4 = '2500-5000' AND pv.price_cents >= 250000 AND pv.price_cents < 500000)
 		       OR ($4 = 'over-5000' AND pv.price_cents >= 500000))
 		  AND (NOT $5::boolean OR COALESCE(i.available_quantity, 0) > 0)
 		  AND (NOT $6::boolean OR pv.compare_at_cents > pv.price_cents)
-		GROUP BY p.category_slug, c.name
-		ORDER BY COUNT(DISTINCT p.id) DESC, p.category_slug
+		GROUP BY membership.category_slug, c.name
+		ORDER BY COUNT(DISTINCT p.id) DESC, membership.category_slug
 		LIMIT 24`, query, categories, options.BrandSlugs, options.PriceRange, options.InStock, options.OffersOnly)
 	if err != nil {
 		return nil, fmt.Errorf("search product facets: %w", err)
@@ -178,7 +179,7 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 	rows, err := r.pool.Query(ctx, `
 		SELECT p.id, p.slug, b.name, p.name, p.description, p.category_slug, c.name,
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), (pv.compare_at_cents IS NOT NULL),
-		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '/assets/images/customer/saree-maroon.webp'), p.swatches,
+		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'

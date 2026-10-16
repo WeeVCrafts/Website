@@ -200,6 +200,12 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if !authenticated {
 		page.CSRFToken = csrf
 	}
+	for _, products := range [][]viewmodels.Product{page.Products, page.HomeNewArrivals, page.HomeCategoryProducts, page.HomeGifts} {
+		for i := range products {
+			products[i].CSRFToken = page.CSRFToken
+		}
+	}
+
 	if isAuthRoute(r.URL.Path) && !page.Authenticated {
 		page.CSRFToken = csrf
 	}
@@ -253,7 +259,9 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case r.URL.Path == "/":
 		component = pages.Home(page)
 	case r.URL.Path == "/categories":
-		component = pages.Categories(page)
+		directory := page
+		directory.Categories = components.NavigationCategories(page)
+		component = pages.Categories(directory)
 	case strings.HasPrefix(r.URL.Path, "/categories/"):
 		component = listingComponent
 	case r.URL.Path == "/makers":
@@ -617,7 +625,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
 		}
 		var categoryExists bool
-		if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM categories c WHERE c.slug=$1 AND EXISTS(SELECT 1 FROM products p WHERE p.category_slug=c.slug AND p.status='approved'))`, category).Scan(&categoryExists); err != nil {
+		if err := h.pool.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM categories c WHERE c.slug=$1 AND EXISTS(SELECT 1 FROM products p WHERE EXISTS(SELECT 1 FROM product_categories pc WHERE pc.product_id=p.id AND pc.category_slug=c.slug) AND p.status='approved'))`, category).Scan(&categoryExists); err != nil {
 			return viewmodels.CustomerPage{}, err
 		}
 		if !categoryExists {
@@ -661,7 +669,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			}
 		}
 		products = h.productViews(r.Context(), source)
-	} else {
+	} else if r.URL.Path != "/" {
 		products, err = h.products(r.Context(), r.URL.Path, query, category, sortMode)
 		if err != nil {
 			return viewmodels.CustomerPage{}, err
@@ -693,6 +701,11 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
+	}
+	if r.URL.Path == "/" {
+		if err := h.loadHomeCatalog(r, &page); err != nil {
+			return viewmodels.CustomerPage{}, err
+		}
 	}
 	if categoryLanding {
 		for _, candidate := range page.Categories {
@@ -1778,8 +1791,10 @@ func markSavedProducts(page *viewmodels.CustomerPage) {
 	for _, product := range page.SavedProducts {
 		saved[product.Slug] = struct{}{}
 	}
-	for index := range page.Products {
-		_, page.Products[index].Saved = saved[page.Products[index].Slug]
+	for _, products := range [][]viewmodels.Product{page.Products, page.HomeNewArrivals, page.HomeCategoryProducts, page.HomeGifts} {
+		for index := range products {
+			_, products[index].Saved = saved[products[index].Slug]
+		}
 	}
 	if page.Product.Slug != "" {
 		_, page.Product.Saved = saved[page.Product.Slug]
@@ -1830,18 +1845,20 @@ func (h *LiveStorefrontHandler) userRoles(r *http.Request, userID int64) []domai
 }
 
 func (h *LiveStorefrontHandler) categories(ctx context.Context) []viewmodels.Category {
-	rows, err := h.pool.Query(ctx, `SELECT c.slug,c.name,COUNT(p.id),COALESCE((SELECT image_url FROM products WHERE category_slug=c.slug ORDER BY id LIMIT 1),'') FROM categories c LEFT JOIN products p ON p.category_slug=c.slug AND p.status='approved' GROUP BY c.slug,c.name ORDER BY c.name`)
+	rows, err := h.pool.Query(ctx, `SELECT c.slug,c.name,c.image_url,c.display_order,c.show_in_navigation,
+ (SELECT COUNT(DISTINCT p.id) FROM product_categories pc JOIN products p ON p.id=pc.product_id JOIN sellers s ON s.id=p.seller_id AND s.status='active' WHERE pc.category_slug=c.slug AND p.status='approved')
+ FROM categories c ORDER BY c.display_order,c.slug`)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	result := make([]viewmodels.Category, 0)
+	result := []viewmodels.Category{}
 	for rows.Next() {
-		var item viewmodels.Category
-		if rows.Scan(&item.Slug, &item.Name, &item.Products, &item.ImageURL) == nil {
-			item.Description = "Indian craft, home, textile and wellness pieces"
-			result = append(result, item)
+		var c viewmodels.Category
+		if err := rows.Scan(&c.Slug, &c.Name, &c.ImageURL, &c.DisplayOrder, &c.ShowInNavigation, &c.Products); err != nil {
+			return nil
 		}
+		result = append(result, c)
 	}
 	return result
 }

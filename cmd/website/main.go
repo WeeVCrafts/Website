@@ -357,6 +357,8 @@ func main() {
 	registerDemoPaymentCapture(mux, cfg, localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
+	portalHandler.SetCategoryStorage(mediaStorage)
+	mux.HandleFunc("/media/categories/", portalHandler.CategoryMedia)
 	portalHandler.SetRuntimeProbes(cfg.PaymentMode, map[string]func(context.Context) error{
 		"database": pool.Ping,
 		"redis":    func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },

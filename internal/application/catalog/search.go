@@ -70,8 +70,18 @@ func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.Pro
 	options.CategorySlugs = normalizeSlugs(options.CategorySlugs)
 	options.BrandSlugs = normalizeSlugs(options.BrandSlugs)
 	cacheKeyBytes, _ := json.Marshal(options)
-	cacheKey := fmt.Sprintf("catalog:search:%x", sha256.Sum256(cacheKeyBytes))
-	if s.cache != nil {
+	var revision int64
+	if source, ok := s.repository.(interface {
+		CatalogRevision(context.Context) (int64, error)
+	}); ok {
+		var err error
+		revision, err = source.CatalogRevision(ctx)
+		if err != nil {
+			return nil, 0, nil, err
+		}
+	}
+	cacheKey := fmt.Sprintf("catalog:search:%d:%x", revision, sha256.Sum256(cacheKeyBytes))
+	if s.cache != nil && !options.DatabaseOnly && !options.InStock {
 		if value, err := s.cache.Get(ctx, cacheKey); err == nil {
 			var cached searchResult
 			if json.Unmarshal(value, &cached) == nil {
@@ -106,12 +116,11 @@ func (s *SearchService) searchBackend(ctx context.Context, options ports.Product
 			indexed.ProductSlugs = normalizeSearchSlugs(indexed.ProductSlugs)
 			products, hydrateErr := s.repository.SearchBySlugs(ctx, indexed.ProductSlugs)
 			if hydrateErr == nil {
-				facets := indexed.Facets
-				if len(facets) == 0 {
-					facets = s.searchFacets(ctx, options)
-				}
+				// Memberships, labels and discovery visibility are managed in
+				// PostgreSQL; index facets still describe primary categories.
+				facets := s.searchFacets(ctx, options)
 				result := searchResult{Products: products, Total: indexed.Total, Facets: facets, Backend: "index"}
-				if s.cache != nil {
+				if s.cache != nil && !options.DatabaseOnly && !options.InStock {
 					if value, marshalErr := json.Marshal(result); marshalErr == nil {
 						_ = s.cache.Set(ctx, cacheKey, value, 30)
 					}
@@ -132,7 +141,7 @@ func (s *SearchService) searchBackend(ctx context.Context, options ports.Product
 		return searchResult{}, err
 	}
 	result := searchResult{Products: products, Total: total, Facets: s.searchFacets(ctx, options), Backend: "postgresql"}
-	if s.cache != nil {
+	if s.cache != nil && !options.DatabaseOnly && !options.InStock {
 		if value, marshalErr := json.Marshal(result); marshalErr == nil {
 			_ = s.cache.Set(ctx, cacheKey, value, 30)
 		}
@@ -159,7 +168,7 @@ func (s *SearchService) searchFacets(ctx context.Context, options ports.ProductS
 
 func normalizePriceRange(value string) string {
 	switch value {
-	case "under-1000", "1000-2500", "2500-5000", "over-5000":
+	case "under-1500", "under-1000", "1000-2500", "2500-5000", "over-5000":
 		return value
 	default:
 		return ""

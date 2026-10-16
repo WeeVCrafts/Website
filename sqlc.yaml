@@ -22,6 +22,7 @@ sql:
       - internal/adapters/postgres/migrations/0013_product_media_deletion_claim.sql
       - internal/adapters/postgres/migrations/0014_payment_refunds.sql
       - internal/adapters/postgres/migrations/0015_auth_action_tokens.sql
+      - internal/adapters/postgres/migrations/0048_catalog_categories.sql
     gen:
       go:
         package: generated

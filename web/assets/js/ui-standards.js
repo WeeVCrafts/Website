@@ -299,7 +299,7 @@
       const response=await fetch(action.href,{method:'POST',credentials:'same-origin',body:payload,signal:controller.signal});
       if(response.ok && response.redirected) { location.assign(response.url); return; }
       const html=await response.text(); const doc=new DOMParser().parseFromString(html,'text/html');
-      const message=doc.querySelector('.error-message,.error-state p,main p')?.textContent?.trim();
+      const message=(doc.querySelector('.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
       throw new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
     } catch(error) {
       const banner=document.createElement('div'); banner.className='ui-form-error'; banner.role='alert'; banner.tabIndex=-1;

@@ -32,7 +32,12 @@ func ensureCatalogName(ctx context.Context, tx pgx.Tx, table, slug, name string)
 	case "brands":
 		insert, selectName = `INSERT INTO brands(slug,name) VALUES($1,$2) ON CONFLICT(slug) DO NOTHING`, `SELECT name FROM brands WHERE slug=$1`
 	case "categories":
-		insert, selectName = `INSERT INTO categories(slug,name) VALUES($1,$2) ON CONFLICT(slug) DO NOTHING`, `SELECT name FROM categories WHERE slug=$1`
+		var existing string
+		if err := tx.QueryRow(ctx, `SELECT slug FROM categories WHERE slug=$1`, slug).Scan(&existing); errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrCatalogConflict
+		} else {
+			return err
+		}
 	default:
 		return errors.New("unsupported catalog name table")
 	}
@@ -119,10 +124,12 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		imgURL := input.ImageURL
-		if imgURL == "" {
-			imgURL = "/assets/images/customer/saree-maroon.webp"
+		if err := tx.QueryRow(transactionContext, `SELECT name FROM categories WHERE slug=$1`, input.CategorySlug).Scan(&input.CategoryName); err != nil {
+			return err
 		}
+
+		imgURL := input.ImageURL
+
 		var productID int64
 		if err := tx.QueryRow(transactionContext, `
 			INSERT INTO products (slug, brand_slug, category_slug, name, description, price_cents, compare_at_cents, delivery_label, image_url, seller_id, status)
@@ -194,6 +201,10 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
+		if err := tx.QueryRow(transactionContext, `SELECT name FROM categories WHERE slug=$1`, input.CategorySlug).Scan(&input.CategoryName); err != nil {
+			return err
+		}
+
 		if input.ImageURL != "" {
 			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug = $1, brand_slug = $2, category_slug = $3, name = $4, description = $5, price_cents = $6, compare_at_cents = $7, delivery_label = $8, image_url = $9, status = CASE WHEN status = 'rejected' THEN 'draft' WHEN status = 'approved' THEN 'pending_review' ELSE status END, updated_at = NOW() WHERE id = $10 AND seller_id = $11 AND status <> 'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, input.ImageURL, productID, current.SellerID); err != nil {
 				return mapCommerceError(err)
@@ -265,10 +276,12 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
-		imgURL := input.ImageURL
-		if imgURL == "" {
-			imgURL = "/assets/images/customer/saree-maroon.webp"
+		if err := tx.QueryRow(transactionContext, `SELECT name FROM categories WHERE slug=$1`, input.CategorySlug).Scan(&input.CategoryName); err != nil {
+			return err
 		}
+
+		imgURL := input.ImageURL
+
 		if err := tx.QueryRow(transactionContext, `INSERT INTO products (slug,brand_slug,category_slug,name,description,price_cents,compare_at_cents,delivery_label,image_url,seller_id,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'draft') RETURNING id`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, imgURL, sellerID).Scan(&product.ID); err != nil {
 			return mapCommerceError(err)
 		}
@@ -295,6 +308,9 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 		product.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			product.CompareAtCents = *input.CompareAtCents
+		}
+		if err := applyAdminCategories(transactionContext, tx, product.ID, input); err != nil {
+			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"source": "super_admin", "seller_id": sellerID})
 		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_created','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(product.ID), ports.RequestID(transactionContext), metadata); err != nil {
@@ -348,6 +364,10 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 		if err := ensureCatalogName(transactionContext, tx, "categories", input.CategorySlug, input.CategoryName); err != nil {
 			return err
 		}
+		if err := tx.QueryRow(transactionContext, `SELECT name FROM categories WHERE slug=$1`, input.CategorySlug).Scan(&input.CategoryName); err != nil {
+			return err
+		}
+
 		if input.ImageURL != "" {
 			if _, err := tx.Exec(transactionContext, `UPDATE products SET slug=$1,brand_slug=$2,category_slug=$3,name=$4,description=$5,price_cents=$6,compare_at_cents=$7,delivery_label=$8,image_url=$9,updated_at=NOW() WHERE id=$10 AND status<>'archived'`, input.Slug, input.BrandSlug, input.CategorySlug, input.Name, input.Description, input.PriceCents, input.CompareAtCents, input.DeliveryLabel, input.ImageURL, productID); err != nil {
 				return mapCommerceError(err)
@@ -359,6 +379,9 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 		}
 		if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET sku=$1,price_cents=$2,compare_at_cents=$3,cost_price_cents=$4,updated_at=NOW() WHERE id=$5 AND product_id=$6 AND status='active'`, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, current.VariantID, productID); err != nil {
 			return mapCommerceError(err)
+		}
+		if err := applyAdminCategories(transactionContext, tx, productID, input); err != nil {
+			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"source": "super_admin", "previous_status": current.Status})
 		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id,action,resource_type,resource_id,request_id,metadata) VALUES ($1,'catalog.product_updated','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(productID), ports.RequestID(transactionContext), metadata); err != nil {

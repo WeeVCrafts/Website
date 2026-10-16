@@ -9,6 +9,9 @@ var ErrManagementValidation = errors.New("invalid management input")
 var ErrManagementConflict = errors.New("record already exists or is still in use")
 
 type ManagementRecord struct {
+	ImageURL, ImageObjectKey          string
+	DisplayOrder                      int
+	ShowInNavigation                  bool
 	ID, Name, Email, Status, Category string
 	BasisPoints                       int
 	Active                            bool
@@ -21,11 +24,21 @@ type ManagementResult struct {
 }
 
 type ManagementMutation struct {
+	ImageURL, ImageObjectKey                    string
+	ReplaceImage                                bool
+	DisplayOrder                                int
+	ShowInNavigation                            bool
 	Section, Action, ID, Name, Category, Reason string
 	BasisPoints                                 int
 	Active                                      bool
 	Settings                                    StorefrontSettings
 	SaveSocialLinks                             bool
+}
+
+type CategoryProduct struct {
+	ID                            int64
+	Name, Seller, PrimaryCategory string
+	Assigned                      bool
 }
 
 type StorefrontSettings struct {

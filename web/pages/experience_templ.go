@@ -47,11 +47,11 @@ func HomeHero() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = HeroSlide("Gifts with a handmade heart.", "Find thoughtful pieces to mark the moments that matter.", "/assets/images/customer/gifts-banner.webp", "Wrapped gifts, ceramics and a wooden keepsake box", "/products?q=gifts", "Discover gifts", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = HeroSlide("Gifts with a handmade heart.", "Find thoughtful pieces to mark the moments that matter.", "/assets/images/customer/gifts-banner.webp", "Wrapped gifts, ceramics and a wooden keepsake box", "/products?category=gifts", "Discover gifts", false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = HeroSlide("Traditions that shine.", "Discover brass and metalwork made for meaningful spaces.", "/assets/images/customer/metalwork-banner.webp", "Brass lamps and metalwork in a sunlit interior", "/products?q=brass", "Explore metalwork", false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = HeroSlide("Traditions that shine.", "Discover brass and metalwork made for meaningful spaces.", "/assets/images/customer/metalwork-banner.webp", "Brass lamps and metalwork in a sunlit interior", "/products?category=brass-metalwork", "Explore metalwork", false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

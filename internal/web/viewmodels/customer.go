@@ -73,6 +73,9 @@ type Brand struct {
 }
 
 type Category struct {
+	Assigned                          bool
+	DisplayOrder                      int
+	ShowInNavigation                  bool
 	Slug, Name, Description, ImageURL string
 	Products                          int
 }
@@ -109,54 +112,56 @@ type Address struct {
 }
 
 type CustomerPage struct {
-	CatalogueEmpty                                  bool
-	UserPhone, AvatarURL, ProfileError              string
-	IsCustomer, ProfileIncomplete                   bool
-	SocialLinks                                     []ports.SocialLink
-	SupportEmail, ShippingInformation               string
-	Sessions                                        []CustomerSession
-	Notifications                                   []CustomerNotification
-	NotificationsNextURL                            string
-	Route, Title, Query, Category, Sort, Notice     string
-	CouponCode                                      string
-	Brand, Tagline, Description                     string
-	UserName, UserEmail, MemberSince                string
-	RoleLabel, PortalLabel                          string
-	PublicURL                                       string
-	PaymentMode, PaymentPublicKey                   string
-	AccountUserID                                   int64
-	PaymentReady                                    bool
-	NoPaymentDemo                                   bool
-	CanCreateSupport, CanFollowSeller               bool
-	CSRFToken                                       string
-	RefundKey                                       string
-	Filters                                         url.Values
-	Product                                         Product
-	OrderCount                                      int
-	SavedProducts                                   []Product
-	ItemsTotal, ShippingTotal, DiscountTotal, Total string
-	Products                                        []Product
-	FilterCounts                                    map[string]int
-	Categories                                      []Category
-	Sellers                                         []Seller
-	Brands                                          []Brand
-	Cart                                            []CartItem
-	Orders                                          []Order
-	PaymentActivity                                 []PaymentActivity
-	SelectedOrder                                   Order
-	Returns                                         []Return
-	SupportTickets                                  []CustomerSupportTicket
-	NotificationPreferences                         NotificationPreferences
-	PrivacyCenter                                   domainprivacy.Center
-	PendingReviews, WrittenReviews, ProductReviews  []ProductReview
-	ReviewCount                                     int
-	Address                                         Address
-	Addresses                                       []Address
-	CartCount, WishlistCount                        int
-	Page, Pages, TotalResults                       int
-	CheckoutStep                                    int
-	Authenticated, Mock                             bool
-	Now                                             time.Time
+	HomeNewArrivals, HomeCategoryProducts, HomeGifts []Product
+	HomeSelectedCategory                             string
+	CatalogueEmpty                                   bool
+	UserPhone, AvatarURL, ProfileError               string
+	IsCustomer, ProfileIncomplete                    bool
+	SocialLinks                                      []ports.SocialLink
+	SupportEmail, ShippingInformation                string
+	Sessions                                         []CustomerSession
+	Notifications                                    []CustomerNotification
+	NotificationsNextURL                             string
+	Route, Title, Query, Category, Sort, Notice      string
+	CouponCode                                       string
+	Brand, Tagline, Description                      string
+	UserName, UserEmail, MemberSince                 string
+	RoleLabel, PortalLabel                           string
+	PublicURL                                        string
+	PaymentMode, PaymentPublicKey                    string
+	AccountUserID                                    int64
+	PaymentReady                                     bool
+	NoPaymentDemo                                    bool
+	CanCreateSupport, CanFollowSeller                bool
+	CSRFToken                                        string
+	RefundKey                                        string
+	Filters                                          url.Values
+	Product                                          Product
+	OrderCount                                       int
+	SavedProducts                                    []Product
+	ItemsTotal, ShippingTotal, DiscountTotal, Total  string
+	Products                                         []Product
+	FilterCounts                                     map[string]int
+	Categories                                       []Category
+	Sellers                                          []Seller
+	Brands                                           []Brand
+	Cart                                             []CartItem
+	Orders                                           []Order
+	PaymentActivity                                  []PaymentActivity
+	SelectedOrder                                    Order
+	Returns                                          []Return
+	SupportTickets                                   []CustomerSupportTicket
+	NotificationPreferences                          NotificationPreferences
+	PrivacyCenter                                    domainprivacy.Center
+	PendingReviews, WrittenReviews, ProductReviews   []ProductReview
+	ReviewCount                                      int
+	Address                                          Address
+	Addresses                                        []Address
+	CartCount, WishlistCount                         int
+	Page, Pages, TotalResults                        int
+	CheckoutStep                                     int
+	Authenticated, Mock                              bool
+	Now                                              time.Time
 }
 
 type CustomerSession struct {

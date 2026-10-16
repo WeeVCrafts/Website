@@ -26,6 +26,7 @@ import (
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
 	"github.com/wecratfs/commerce/web/assets"
@@ -39,6 +40,7 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
+	categoryStorage    ports.ObjectStorage
 	localMode          bool
 	pool               *pgxpool.Pool
 	sessions           *applicationauth.SessionService
@@ -929,6 +931,33 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		form.Image = productImagePreviewURL(form.Image)
 		page.Title = "Edit product"
 		page.Subtitle = "Update all listing details. Stock remains in the permission-scoped Inventory workflow."
+	}
+	form.FeaturedRank = "1000"
+	if form.ID != "" {
+		if err := h.queryRow(r, `SELECT featured_rank::text FROM products WHERE id=$1`, form.ID).Scan(&form.FeaturedRank); err != nil {
+			http.Error(w, "Product curation unavailable", 503)
+			return
+		}
+	}
+	categoryRows, err := h.query(r, `SELECT c.slug,c.name,EXISTS(SELECT 1 FROM product_categories pc WHERE pc.category_slug=c.slug AND pc.product_id=NULLIF($1,'')::bigint) FROM categories c ORDER BY c.display_order,c.slug`, form.ID)
+	if err != nil {
+		http.Error(w, "Categories unavailable", 503)
+		return
+	}
+	for categoryRows.Next() {
+		var category viewmodels.Category
+		if err := categoryRows.Scan(&category.Slug, &category.Name, &category.Assigned); err != nil {
+			categoryRows.Close()
+			http.Error(w, "Categories unavailable", 503)
+			return
+		}
+		form.Categories = append(form.Categories, category)
+	}
+	err = categoryRows.Err()
+	categoryRows.Close()
+	if err != nil {
+		http.Error(w, "Categories unavailable", 503)
+		return
 	}
 	h.render(w, r, adminpages.ProductEditor(page, form))
 }

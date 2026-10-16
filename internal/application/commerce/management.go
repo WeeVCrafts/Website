@@ -73,5 +73,8 @@ func (s *ManagementService) Mutate(ctx context.Context, actorID int64, m ports.M
 			return ports.ErrManagementValidation
 		}
 	}
+	if m.Section == "category-management" && (m.DisplayOrder < 0 || m.DisplayOrder > 1000000 || len(m.ImageURL) > 2048) {
+		return ports.ErrManagementValidation
+	}
 	return s.repository.MutateManagement(ctx, actorID, m)
 }

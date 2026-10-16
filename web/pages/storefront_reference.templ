@@ -10,16 +10,19 @@ templ DiscoveryCategory(href, image, name string) {
 	<a class="discovery-category" href={ href }><img src={ "/assets/images/customer/" + image } srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/"+image, "") } sizes="110px" alt="" width="110" height="88" loading="lazy"/><span>{ name }</span></a>
 }
 
-templ HomeCategoryRail() {
-	<nav class="container discovery-categories" aria-label="Shop by craft">
-		@DiscoveryCategory("/products?category=arts", "madhubani-tree.webp", "Arts")
-		@DiscoveryCategory("/products?category=home", "black-cushion.webp", "Home & Living")
-		@DiscoveryCategory("/products?category=textiles", "saree-maroon.webp", "Textiles")
-		@DiscoveryCategory("/products?q=gift", "wooden-box.webp", "Gifts")
-		@DiscoveryCategory("/products?q=ceramic", "ceramic-mugs.webp", "Pottery & Ceramics")
-		@DiscoveryCategory("/products?category=textiles&q=saree", "saree-blue.webp", "Handloom Sarees")
-		@DiscoveryCategory("/products?q=brass", "brass-elephant.webp", "Brass & Metalwork")
-	</nav>
+templ HomeCategoryRail(p viewmodels.CustomerPage) {
+ <nav class="container discovery-categories" aria-label="Shop by craft">
+  for _, category := range components.NavigationCategories(p) {
+   <a class="discovery-category" href={ "/products?category=" + category.Slug }>
+    if category.ImageURL != "" {
+     <img src={ category.ImageURL } srcset={ components.ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:800px) 64px, 130px" alt="" width="110" height="110" loading="lazy"/>
+    } else {
+     <span class="category-no-image" aria-hidden="true"><span class="material-symbols-outlined">category</span></span>
+    }
+    <span>{ category.Name }</span>
+   </a>
+  }
+ </nav>
 }
 
 templ CollectionTile(href, image, title, copy string) {

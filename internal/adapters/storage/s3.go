@@ -126,9 +126,10 @@ func validProductObjectKey(value string) bool {
 
 var supportObjectKeyPattern = regexp.MustCompile(`^support/[1-9][0-9]*/[a-f0-9]{32}$`)
 var avatarObjectKeyPattern = regexp.MustCompile(`^avatars/[1-9][0-9]*/[a-f0-9]{32}$`)
+var categoryObjectKeyPattern = regexp.MustCompile(`^categories/[a-f0-9]{32}\.jpg$`)
 
 // Private support files are streamed through an ownership-checked application
 // endpoint. Product presigned upload/download endpoints remain product-only.
 func validStoredObjectKey(value string) bool {
-	return validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value)
+	return validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value)
 }

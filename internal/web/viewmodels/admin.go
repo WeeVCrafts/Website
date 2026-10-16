@@ -59,6 +59,8 @@ type AdminProduct struct {
 }
 
 type AdminProductEditor struct {
+	Categories                                                                               []Category
+	FeaturedRank                                                                             string
 	ID, SellerID, SellerName, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName   string
 	Description, SKU, PriceCents, CompareAtCents, InitialStock, DeliveryLabel, Action, Image string
 	Variants                                                                                 []ProductVariant

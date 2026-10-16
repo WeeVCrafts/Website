@@ -63,6 +63,9 @@ func (s *CatalogService) UpdateSellerProfile(ctx context.Context, ownerUserID in
 }
 
 func (s *CatalogService) CreateDraft(ctx context.Context, ownerUserID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	if input.CategorySlugs != nil || input.FeaturedRank != nil {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
 	if !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
@@ -88,6 +91,9 @@ func (s *CatalogService) GetSellerProduct(ctx context.Context, ownerUserID, prod
 }
 
 func (s *CatalogService) UpdateDraft(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
+	if input.CategorySlugs != nil || input.FeaturedRank != nil {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
 	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
@@ -326,6 +332,18 @@ func validSlug(value string) bool {
 }
 
 func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.ProductDraftInput, error) {
+	if input.FeaturedRank != nil && (*input.FeaturedRank < 0 || *input.FeaturedRank > 1000000) {
+		return input, ErrInvalidProduct
+	}
+	if len(input.CategorySlugs) > 100 {
+		return input, ErrInvalidProduct
+	}
+	for _, slug := range input.CategorySlugs {
+		if !validSlug(slug) {
+			return input, ErrInvalidProduct
+		}
+	}
+
 	input.Slug = strings.TrimSpace(strings.ToLower(input.Slug))
 	input.BrandSlug = strings.TrimSpace(strings.ToLower(input.BrandSlug))
 	input.BrandName = strings.TrimSpace(input.BrandName)

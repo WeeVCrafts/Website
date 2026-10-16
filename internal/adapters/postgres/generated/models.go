@@ -69,10 +69,19 @@ type CartItem struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type CatalogRevision struct {
+	Singleton bool  `json:"singleton"`
+	Revision  int64 `json:"revision"`
+}
+
 type Category struct {
-	Slug      string             `json:"slug"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Slug             string             `json:"slug"`
+	Name             string             `json:"name"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	ImageUrl         string             `json:"image_url"`
+	ImageObjectKey   string             `json:"image_object_key"`
+	DisplayOrder     int32              `json:"display_order"`
+	ShowInNavigation bool               `json:"show_in_navigation"`
 }
 
 type ConsentRecord struct {
@@ -129,6 +138,12 @@ type MarketingPreference struct {
 	UserID         int64              `json:"user_id"`
 	EmailMarketing bool               `json:"email_marketing"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MerchantCatalogImport struct {
+	SellerID  int64  `json:"seller_id"`
+	Sku       string `json:"sku"`
+	ProductID int64  `json:"product_id"`
 }
 
 type Order struct {
@@ -250,6 +265,11 @@ type Product struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	SellerID       pgtype.Int8        `json:"seller_id"`
+}
+
+type ProductCategory struct {
+	ProductID    int64  `json:"product_id"`
+	CategorySlug string `json:"category_slug"`
 }
 
 type ProductMedium struct {

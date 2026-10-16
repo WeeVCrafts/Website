@@ -54,7 +54,7 @@ func (r *ManagementRepository) ListManagement(ctx context.Context, actorID int64
 	case "brands":
 		projection = `SELECT b.slug AS id,b.name,''::text AS email,''::text AS status,''::text AS category,0 AS basis_points,false AS active,(SELECT COUNT(*) FROM products p WHERE p.brand_slug=b.slug) AS products,0::bigint AS orders FROM brands b`
 	case "category-management":
-		projection = `SELECT c.slug AS id,c.name,''::text AS email,''::text AS status,''::text AS category,0 AS basis_points,false AS active,(SELECT COUNT(*) FROM products p WHERE p.category_slug=c.slug) AS products,0::bigint AS orders FROM categories c`
+		return r.listManagedCategories(ctx, query, limit, offset)
 	case "commission-rules":
 		projection = `SELECT cr.id::text AS id,cr.name,''::text AS email,''::text AS status,COALESCE(cr.category_slug,'') AS category,cr.percentage_basis_points AS basis_points,cr.active,0::bigint AS products,0::bigint AS orders FROM commission_rules cr`
 	case "settings":
@@ -98,6 +98,14 @@ func (r *ManagementRepository) MutateManagement(ctx context.Context, actorID int
 			if m.Section == "category-management" {
 				table, column = "categories", "category_slug"
 			}
+			if m.Section == "category-management" && m.Action != "delete" {
+				if m.Action == "create" {
+					result, err = tx.Exec(ctx, `INSERT INTO categories(slug,name,image_url,image_object_key,display_order,show_in_navigation) VALUES($1,$2,$3,$4,$5,$6)`, m.ID, m.Name, m.ImageURL, m.ImageObjectKey, m.DisplayOrder, m.ShowInNavigation)
+				} else {
+					result, err = tx.Exec(ctx, `UPDATE categories SET name=$2,display_order=$3,show_in_navigation=$4,image_url=CASE WHEN $5 THEN $6 ELSE image_url END,image_object_key=CASE WHEN $5 THEN $7 ELSE image_object_key END WHERE slug=$1`, m.ID, m.Name, m.DisplayOrder, m.ShowInNavigation, m.ReplaceImage, m.ImageURL, m.ImageObjectKey)
+				}
+				break
+			}
 			switch m.Action {
 			case "create":
 				result, err = tx.Exec(ctx, `INSERT INTO `+table+`(slug,name) VALUES($1,$2)`, m.ID, m.Name)
@@ -113,7 +121,7 @@ func (r *ManagementRepository) MutateManagement(ctx context.Context, actorID int
 				var used bool
 				usage := `SELECT EXISTS(SELECT 1 FROM products WHERE ` + column + `=$1)`
 				if table == "categories" {
-					usage += ` OR EXISTS(SELECT 1 FROM commission_rules WHERE category_slug=$1)`
+					usage += ` OR EXISTS(SELECT 1 FROM commission_rules WHERE category_slug=$1) OR EXISTS(SELECT 1 FROM product_categories WHERE category_slug=$1)`
 				}
 				if err = tx.QueryRow(ctx, usage, m.ID).Scan(&used); err != nil {
 					return err

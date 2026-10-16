@@ -1,0 +1,125 @@
+package admin
+
+import (
+ "strconv"
+ "github.com/wecratfs/commerce/internal/ports"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ CategoryFields(c ports.ManagementRecord,create bool) {
+ <label>Category name<input name="name" value={ c.Name } required maxlength="120"/></label>
+ if create {
+  <label>URL slug<input name="id" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="120" value={ c.ID } placeholder="e.g. pottery-ceramics"/></label>
+ } else {
+
+  <input type="hidden" name="id" value={ c.ID }/>
+ }
+ <label>Display order<input name="display_order" type="number" min="0" max="1000000" step="1" value={ strconv.Itoa(c.DisplayOrder) } required/><small>Lower numbers display first. Ties use the URL slug.</small></label>
+ <label class="category-checkbox"><input name="show_in_navigation" type="checkbox" value="true" checked?={ c.ShowInNavigation }/>Show in storefront navigation</label>
+ <label>Category image<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp"/><small>JPEG, PNG or WebP, up to 5 MiB and 16 megapixels. Leave empty to keep the current image.</small></label>
+}
+
+templ CategoryManager(m viewmodels.CategoryManagerPage) {
+ @AdminDocument(m.Admin) {
+  <section class="admin-panel category-introduction"><h2>Organize your storefront</h2><p>Choose category names, photographs and order. Products can appear in several categories while keeping their primary category for reporting.</p><p>Hiding a navigation link keeps its products and existing links available. Slugs stay fixed; categories in use cannot be deleted.</p></section>
+  if m.Error!="" {
+   <section class="admin-panel category-error ui-error-summary" role="alert" tabindex="-1"><h2>Changes need attention</h2><p>{ m.Error }</p>
+    if m.EditorAction=="create" || m.EditorAction=="update" {
+     <form class="admin-product-editor-form" novalidate method="post" action={ m.Action+"/"+m.EditorAction } enctype="multipart/form-data">
+      @ManagementToken(m.Admin.CSRFToken)
+      @CategoryFields(m.Editor,m.EditorAction=="create")
+      <label>Audit reason<input name="reason" required minlength="4" maxlength="1000" value={ m.EditorReason }/></label>
+      <button class="admin-button primary" type="submit">Retry saving category</button>
+     </form>
+    }
+   </section>
+  }
+  <section class="admin-panel"><details open?={ m.Total==0 }><summary>Create category</summary>
+   <form class="admin-product-editor-form" novalidate method="post" action={ m.Action+"/create" } enctype="multipart/form-data">
+    @ManagementToken(m.Admin.CSRFToken)
+    @CategoryFields(ports.ManagementRecord{DisplayOrder:1000,ShowInNavigation:true},true)
+    @ManagementReason()
+    <button class="admin-button primary" type="submit">Create category</button>
+   </form>
+  </details></section>
+  <section class="admin-panel">
+   <form class="category-search" method="get" action={ m.Action }><label>Search categories<input name="q" value={ m.Query }/></label><button class="admin-button secondary" type="submit">Search</button><a href={ m.Action }>Clear</a></form>
+   <p>{ strconv.Itoa(m.Total) } matching categories · Page { strconv.Itoa(m.Page) }</p>
+   for _,c:=range m.Records {
+    <article class="category-management-record">
+     <div class="category-record-heading">
+      if c.ImageURL!="" {
+ <img src={ c.ImageURL } alt={ "Category image for "+c.Name } width="88" height="88" loading="lazy"/>
+ }
+      <div><h3>{ c.Name }</h3><p>{ c.ID } · { strconv.FormatInt(c.Products,10) } products · Order { strconv.Itoa(c.DisplayOrder) }</p><p>
+       if c.ShowInNavigation {
+ <span class="ui-status">Visible in navigation</span>
+ } else {
+
+ <span class="ui-status">Hidden from navigation</span>
+ }
+      </p></div>
+      <a class="admin-button secondary" href={ m.Action+"?category="+c.ID+"#category-products" }>Manage products</a>
+     </div>
+     <details><summary>Edit category</summary>
+      <form class="admin-product-editor-form" novalidate method="post" action={ m.Action+"/update" } enctype="multipart/form-data">
+       @ManagementToken(m.Admin.CSRFToken)
+       @CategoryFields(c,false)
+       @ManagementReason()
+       <button class="admin-button primary" type="submit">Save category</button>
+      </form>
+     </details>
+     <details><summary>Delete category</summary><form method="post" novalidate action={ m.Action+"/delete" } data-confirm="Delete this category? This is allowed only when no products or commission rules use it.">
+      @ManagementToken(m.Admin.CSRFToken)<input type="hidden" name="id" value={ c.ID }/>@ManagementReason()<button class="admin-button danger" type="submit">Delete category</button>
+     </form></details>
+    </article>
+   }
+   if len(m.Records)==0 {
+ <p>No categories match this search.</p>
+ }
+   <nav class="action-row" aria-label="Category pages">
+    if m.PreviousURL!="" {
+ <a class="admin-button secondary" href={ m.PreviousURL }>Previous categories</a>
+ }
+    if m.NextURL!="" {
+ <a class="admin-button secondary" href={ m.NextURL }>Next categories</a>
+ }
+   </nav>
+  </section>
+  if m.SelectedCategory!="" {
+   <section id="category-products" class="admin-panel"><h2>Products in { m.SelectedCategory }</h2><p>Select up to 25 products on this page to add or remove category membership. To remove a primary assignment, first select a replacement primary category in the product editor.</p>
+    <form class="category-search" method="get" action={ m.Action }><input type="hidden" name="category" value={ m.SelectedCategory }/><label>Find products<input name="product_q" value={ m.ProductQuery } placeholder="Product name or SKU"/></label><button class="admin-button secondary" type="submit">Find products</button><a href={ m.Action+"?category="+m.SelectedCategory+"#category-products" }>Clear</a></form>
+    <p>{ strconv.Itoa(m.ProductTotal) } matching products</p>
+    <form method="post" novalidate action={ m.Action+"/assign-products" }>
+     @ManagementToken(m.Admin.CSRFToken)<input type="hidden" name="id" value={ m.SelectedCategory }/>
+     <input type="hidden" name="product_q" value={ m.ProductQuery }/><input type="hidden" name="product_page" value={ strconv.Itoa(m.ProductPage) }/>
+     <div class="ui-table-region" role="region" aria-label="Category product assignments" tabindex="0"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Select</th><th scope="col">Product</th><th scope="col">Seller</th><th scope="col">Primary category</th><th scope="col">Membership</th><th scope="col">Edit</th></tr></thead><tbody>
+      for _,p:=range m.Products {
+       <tr><td data-label="Select"><input aria-label={ "Select "+p.Name } type="checkbox" name="product_id" value={ strconv.FormatInt(p.ID,10) } checked?={ m.SelectedIDs[p.ID] }/></td><th scope="row">{ p.Name }</th><td data-label="Seller">{ p.Seller }</td><td data-label="Primary category">{ p.PrimaryCategory }</td><td data-label="Membership">
+ if p.Assigned {
+ Assigned
+ } else {
+ Not assigned
+ }</td><td data-label="Edit"><a href={ m.Admin.PortalRoot+"/products/"+strconv.FormatInt(p.ID,10)+"/edit" }>Edit product</a></td></tr>
+      }
+     </tbody></table></div>
+     if len(m.Products)>0 {
+      @ManagementReason()
+      <div class="action-row"><button type="submit" class="admin-button primary" name="intent" value="add">Add selected products</button><button type="submit" class="admin-button secondary" name="intent" value="remove">Remove selected products</button></div>
+     } else {
+
+ <p>No products match this search.</p>
+ }
+    </form>
+    <nav class="action-row" aria-label="Product assignment pages">
+     if m.ProductPreviousURL!="" {
+ <a class="admin-button secondary" href={ m.ProductPreviousURL }>Previous products</a>
+ }
+     if m.ProductNextURL!="" {
+ <a class="admin-button secondary" href={ m.ProductNextURL }>Next products</a>
+ }
+    </nav>
+   </section>
+  }
+ }
+}

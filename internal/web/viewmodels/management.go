@@ -9,3 +9,13 @@ type ManagementPage struct {
 	Records                                      []ports.ManagementRecord
 	Settings                                     ports.StorefrontSettings
 }
+
+type CategoryManagerPage struct {
+	SelectedIDs map[int64]bool
+	ProductPage int
+	ManagementPage
+	Error, EditorAction, EditorReason, SelectedCategory, ProductQuery, ProductPreviousURL, ProductNextURL string
+	Editor                                                                                                ports.ManagementRecord
+	Products                                                                                              []ports.CategoryProduct
+	ProductTotal                                                                                          int
+}

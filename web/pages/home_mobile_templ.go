@@ -8,10 +8,8 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/wecratfs/commerce/web/components"
-
-// The mobile composition uses the same root URL, catalogue and shopping routes.
-func MobileHomeIntro() templ.Component {
+// Mobile presentation is owned by the shared responsive HomeHero.
+func homeMobileBoundary() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -32,28 +30,7 @@ func MobileHomeIntro() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mobile-home-intro\"><section class=\"mobile-home-hero\" aria-label=\"Handmade Indian craft\"><img class=\"mobile-home-art\" src=\"/assets/images/customer/craft-mobile-banner.webp\" srcset=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet("/assets/images/customer/craft-mobile-banner.webp", ""))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/home_mobile.templ`, Line: 9, Col: 187}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" sizes=\"100vw\" alt=\"Indian artisan painting a handmade pottery vase\" width=\"1536\" height=\"1024\" loading=\"lazy\" decoding=\"async\"><div class=\"mobile-home-copy\"><h1><span>Crafted in India.</span><span>Made to be<br>cherished.</span></h1><a class=\"primary-button\" href=\"/products\">Shop collections <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a> <a class=\"mobile-maker-link\" href=\"/makers\">Meet the makers <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></section>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = HomeCategoryRail().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<span hidden>mobile presentation</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

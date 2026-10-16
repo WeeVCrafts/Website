@@ -164,7 +164,7 @@ func TestSearchServiceUsesDatabaseForLiveListingFilters(t *testing.T) {
 func TestSearchServiceReturnsFacetsAndObservesBackend(t *testing.T) {
 	repository := &searchRepository{hydrated: []domain.Product{{Slug: "soap"}}, facets: []ports.SearchFacet{{Value: "natural-care", Label: "Natural care", Count: 3}}}
 	observer := &searchObserver{}
-	engine := &searchEngine{result: ports.SearchResult{ProductSlugs: []string{"soap"}, Total: 3}}
+	engine := &searchEngine{result: ports.SearchResult{ProductSlugs: []string{"soap"}, Total: 3, Facets: []ports.SearchFacet{{Value: "stale-primary", Label: "Old name", Count: 1}}}}
 	service := NewSearchServiceWithEngineAndObserver(repository, nil, engine, observer)
 
 	_, total, facets, err := service.SearchWithOptionsAndFacets(context.Background(), "soap", "", "", 24, 0)

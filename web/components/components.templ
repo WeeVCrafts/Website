@@ -74,7 +74,10 @@ templ Header(p viewmodels.CustomerPage) {
       if p.Category == "natural-care" || p.Category == "slow-living" || p.Category == "home-wellbeing" {
         <a href={ "/category/" + p.Category } aria-current="page">{ LegacyCategoryLabel(p.Category) }</a>
       }
-      <a href="/products?category=arts">Arts</a><a href="/products?category=home">Home &amp; Living</a><a href="/products?category=textiles">Textiles</a><a href="/products?q=gift">Gifts</a><a href="/products?q=ceramic">Pottery &amp; Ceramics</a><a href="/products?category=textiles&amp;q=saree">Handloom Sarees</a><a href="/products?q=brass">Brass &amp; Metalwork</a><a href="/makers">Meet the Makers</a>
+      for _, category := range NavigationCategories(p) {
+        <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
+      }
+      <a href="/makers">Meet the Makers</a>
     </div></nav>
     <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
       <div class="mobile-menu-heading"><h2 id="menu-title">Explore the store</h2><button class="mobile-menu-close" type="button" aria-label="Close navigation" autofocus @click="closeMenu()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
@@ -82,6 +85,9 @@ templ Header(p viewmodels.CustomerPage) {
         @MenuLink("/", "Home", "home")
  @MenuLink("/products", "Shop all products", "storefront")
         @MenuLink("/categories", "Browse categories", "category")
+        for _,category:=range NavigationCategories(p) {
+ @MenuLink("/products?category="+category.Slug,category.Name,"category")
+ }
         @MenuLink("/products?category=offers", "Offers", "local_offer")
         @MenuLink("/makers", "Meet the makers", "handyman")
       </nav>

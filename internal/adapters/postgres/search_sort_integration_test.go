@@ -21,7 +21,7 @@ func TestProductSearchOptionsUsesStablePriceOrdering(t *testing.T) {
 	if _, err := pool.Exec(ctx, `INSERT INTO brands (slug, name) VALUES ($1, 'Search Fixture Brand')`, brandSlug); err != nil {
 		t.Fatalf("insert search brand: %v", err)
 	}
-	if _, err := pool.Exec(ctx, `INSERT INTO categories (slug, name) VALUES ($1, 'Search Fixture Category')`, categorySlug); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO categories (slug, name,show_in_navigation) VALUES ($1, 'Search Fixture Category',true)`, categorySlug); err != nil {
 		t.Fatalf("insert search category: %v", err)
 	}
 	var ownerID, sellerID int64

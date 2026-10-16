@@ -1,5 +1,11 @@
 # WeeVCrafts UX contract
 
+## Catalog amendment — 16 October 2026
+
+The homepage uses one responsive five-slide hero with a four-second autoplay interval, arrows, selectors and swipe. Per the owner's follow-up, no Pause/Play buttons appear. Hover and keyboard focus pause rotation; leaving resumes a fresh interval. Manual selection/swipe restarts the interval unless paused. Hidden/offscreen pages stop timers; reduced motion disables autoplay. Image loading failures keep the current slide usable.
+
+Admin/Super Admin own category creation, display names, stored photographs, navigation visibility, ordering and product cross-listing. Sellers choose existing primary categories. Category membership may be multiple, but a product always retains a primary category for existing reporting/commissions. Bulk operations apply only to selected products on the current bounded page and commit atomically; primary removal requires replacement. Category image failures preserve prior media and entered metadata. Changes retain server role checks, CSRF and audit reasons, and refresh category/product projections through the database revision; database-only and in-stock searches read fresh availability. The importer defaults to read-only validation and creates only drafts from actual supplied inventory; repeat runs preserve stock and unrelated records.
+
 Customers browse, choose and track Indian craft purchases; sellers author listings and fulfil orders; operators work within their assigned role. English interface, INR currency and existing server date/time policy. Accessibility target: WCAG 2.2 AA; verification reports state coverage rather than claiming certification.
 
 Authoritative behavior: `docs/role-workflows.md`, `docs/api/openapi.yaml`, `docs/secure-customer-update.md`, server authorization and domain lifecycle services. Visual intent: `DESIGN.md`. No payment, permission or retention rules are changed by visual work.

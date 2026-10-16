@@ -33,7 +33,7 @@ paths:
     get:
       summary: List approved products
       parameters:
-        - {name: category, in: query, schema: {type: string}}
+        - {name: category, in: query, description: Matches primary or additional category membership without duplicate products, schema: {type: string}}
       responses:
         '200': {description: Product list}
   /api/v1/products/{slug}:
@@ -49,7 +49,7 @@ paths:
       summary: Search approved products with PostgreSQL fallback
       parameters:
         - {name: q, in: query, schema: {type: string}}
-        - {name: category, in: query, schema: {type: string}}
+        - {name: category, in: query, description: Matches primary or additional category membership without duplicate products, schema: {type: string}}
         - {name: limit, in: query, schema: {type: integer, maximum: 48}}
         - {name: offset, in: query, schema: {type: integer, minimum: 0}}
         - {name: sort, in: query, schema: {type: string, enum: [price_asc, price_desc, newest]}}

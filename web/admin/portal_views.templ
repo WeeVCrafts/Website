@@ -125,8 +125,19 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 				<label>Product URL slug<input name="slug" value={ form.Slug } placeholder="e.g. handpainted-ceramic-mug"/></label>
 				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
 				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } placeholder="e.g. weaver-crafts"/></label>
-				<label>Category name<input name="category_name" value={ form.CategoryName } required maxlength="120"/></label>
-				<label>Category slug<input name="category_slug" value={ form.CategorySlug } placeholder="e.g. home-decor"/></label>
+                <input type="hidden" name="manage_categories" value="1"/>
+                <label>Primary category<select name="category_slug" required>
+                 <option value="">Choose a category</option>
+                 for _,category:=range form.Categories {
+                  <option value={ category.Slug } selected?={ category.Slug==form.CategorySlug }>{ category.Name }</option>
+                 }
+                </select></label>
+                <fieldset class="admin-product-editor-wide category-memberships"><legend>Additional categories</legend><p>Products can appear in several categories. The primary category remains assigned.</p>
+                 for _,category:=range form.Categories {
+                  <label><input type="checkbox" name="additional_category" value={ category.Slug } checked?={ category.Assigned }/>{ category.Name }</label>
+                 }
+                </fieldset>
+                <label>Featured order<input type="number" name="featured_rank" min="0" max="1000000" value={ form.FeaturedRank } required/><small>Lower numbers appear first in Featured.</small></label>
 				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
 				<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ components.RupeeInput(form.PriceCents) } required/></label>
 				<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ components.RupeeInput(form.CompareAtCents) }/></label>

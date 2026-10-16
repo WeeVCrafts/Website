@@ -20,7 +20,8 @@ async function ready(page) {
   await page.waitForFunction(() => !!document.querySelector('.site-header')?._x_dataStack);
 }
 
-test('five slides remain manual with accessible controls and deferred images', async ({ page }) => {
+test('reduced motion keeps accessible manual controls and deferred images', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const instant = new Date('2026-10-15T08:00:00Z');
   await page.clock.install({ time: instant });
   await page.clock.pauseAt(new Date(instant.getTime() + 1000));
@@ -186,20 +187,20 @@ test('mobile homepage is a compact composition at the same root URL', async ({ p
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/'); await ready(page);
     await expect(page).toHaveURL(base + '/');
-    await expect(page.locator('.mobile-home-intro')).toBeVisible();
-    await expect(page.locator('.desktop-home-intro')).not.toBeVisible();
+    await expect(page.locator('.responsive-home-intro')).toBeVisible();
+    await expect(page.locator('[data-hero-slide]')).toHaveCount(5);
     await expect(page.getByRole('heading', {level:1})).toHaveCount(1);
     await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search handmade crafts...');
     expect(await page.locator('.global-search').evaluate(element=>element.getBoundingClientRect().width)).toBeGreaterThan(width - 50);
-    expect(await page.locator('.mobile-home-hero').evaluate(element=>element.getBoundingClientRect().height)).toBeLessThan(300);
+    expect(await page.locator('[data-hero-slide]:not([hidden])').evaluate(element=>element.getBoundingClientRect().height)).toBeLessThan(300);
     expect(await page.locator('.home-product-grid').evaluate(element=>getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(2);
     expect(await page.locator('.home-featured .product-card').first().evaluate(element=>element.getBoundingClientRect().top)).toBeLessThan(844);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
     await page.screenshot({path:path.join(output,`mobile-home-${width}.png`),fullPage:true});
   }
   await page.setViewportSize({width:1440,height:1000});
-  await expect(page.locator('.desktop-home-intro')).toBeVisible();
-  await expect(page.locator('.mobile-home-intro')).not.toBeVisible();
+  await expect(page.locator('.responsive-home-intro')).toBeVisible();
+  await expect(page.locator('[data-hero-controls]')).toBeVisible();
   await expect(page.locator('#global-search')).toHaveAttribute('placeholder','Search for sarees, home decor, gifts and more...');
   await expect(page).toHaveURL(base + '/');
 });
@@ -243,5 +244,5 @@ test('homepage search replaces the page without retaining homepage styles', asyn
   await page.goBack();
   await expect(page).toHaveURL(base+'/');
   await expect(page.locator('#page')).toHaveCount(1);
-  await expect(page.locator('.mobile-home-intro')).toBeVisible();
+  await expect(page.locator('.responsive-home-intro')).toBeVisible();
 });

@@ -122,7 +122,7 @@ JOIN LATERAL (
 ) pv ON TRUE
 LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 WHERE p.status = 'approved'
-  AND ($1::text = '' OR p.category_slug = $1)
+  AND ($1::text = '' OR EXISTS(SELECT 1 FROM product_categories pc WHERE pc.product_id=p.id AND pc.category_slug = $1::text))
 ORDER BY p.featured_rank ASC, p.id ASC
 LIMIT $2
 `

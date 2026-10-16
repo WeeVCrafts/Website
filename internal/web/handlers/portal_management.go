@@ -36,7 +36,7 @@ func managementPortalPath(path string) (root, section, action string, ok bool) {
 		}
 		if len(parts) == 2 {
 			action = parts[1]
-			if action != "create" && action != "update" && action != "delete" && action != "save" {
+			if action != "create" && action != "update" && action != "delete" && action != "save" && !(section == "category-management" && action == "assign-products") {
 				return "", "", "", false
 			}
 		}
@@ -69,6 +69,10 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 	}
 	if role == domainidentity.RoleAdmin && (section == "settings" || (section == "customers" && action != "")) {
 		http.Error(w, "Super Admin access required", http.StatusForbidden)
+		return true
+	}
+	if section == "category-management" {
+		h.categoryManagement(w, r, session.UserID, session.CSRFToken, root, action, role)
 		return true
 	}
 	service := applicationcommerce.NewManagementService(postgres.NewManagementRepository(h.pool))

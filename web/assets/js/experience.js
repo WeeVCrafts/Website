@@ -37,35 +37,105 @@
     }
   }
 
+  const heroControllers = new Map();
   function initHero(root) {
+    for (const [element, controller] of heroControllers) {
+      if (!element.isConnected) { controller.destroy(); heroControllers.delete(element); }
+    }
     root.querySelectorAll("[data-hero]").forEach(hero => {
-      if (hero.dataset.bound) return;
-      hero.dataset.bound = "true";
+      if (heroControllers.has(hero)) return;
       const slides = Array.from(hero.querySelectorAll("[data-hero-slide]"));
+      if (!slides.length) return;
       const controls = hero.querySelector("[data-hero-controls]");
       const selectors = Array.from(hero.querySelectorAll("[data-hero-select]"));
-      let active = 0;
-      function show(index, event) {
-        active = (index + slides.length) % slides.length;
+      const status = hero.querySelector("[data-hero-status]");
+      const listeners = new AbortController();
+      let active = 0, timer = null, paused = reducedMotion.matches, hovered = false;
+      let inView = false, keyboardFocused = false, request = 0, destroyed = false, touch = null;
+      const clear = () => { clearTimeout(timer); timer = null; };
+      const canPlay = () => !paused && !hovered && !keyboardFocused && inView && !document.hidden && !destroyed && hero.isConnected;
+      const sync = () => {
+        clear();
+        hero.dataset.playing = String(canPlay());
+        if (canPlay() && slides.length > 1) timer = setTimeout(() => show(active + 1, false), 4000);
+      };
+      const ready = img => new Promise(resolve => {
+        if (!img) return resolve(true);
+        // A hidden loading=lazy image will not fetch until displayed. Activate
+        // it eagerly on selection so we can keep the current slide visible.
+        img.loading = "eager";
+        loadMedia(img);
+        let timeout;
+        const done = ok => { clearTimeout(timeout); img.removeEventListener("load", loaded); img.removeEventListener("error", failed); listeners.signal.removeEventListener("abort", failed); resolve(ok); };
+        const loaded = () => { if (img.decode) img.decode().then(() => done(true), () => done(img.naturalWidth > 0)); else done(true); };
+        const failed = () => done(false);
+        if (img.complete) return done(img.naturalWidth > 0);
+        img.addEventListener("load", loaded, {once:true}); img.addEventListener("error", failed, {once:true});
+        listeners.signal.addEventListener("abort", failed, {once:true});
+        timeout = setTimeout(failed, 8000);
+      });
+      async function show(index, manual = true) {
+        clear();
+        const version = ++request;
+        let next = (index + slides.length) % slides.length;
+        let loaded = false;
+        for (let attempts = 0; attempts < (manual ? 1 : slides.length); attempts++) {
+          loaded = await ready(slides[next].querySelector("img"));
+          if (version !== request || destroyed) return;
+          if (loaded) break;
+          next = (next + 1) % slides.length;
+        }
+        if (!loaded) {
+          status.textContent = "This collection image could not load. Your current collection is still available.";
+          sync(); return;
+        }
+        // A hover/focus/visibility change during loading must not advance playback.
+        if (!manual && !canPlay()) { sync(); return; }
+        active = next;
         slides.forEach((slide, i) => {
-          slide.hidden = i !== active;
-          slide.inert = i !== active;
+          slide.hidden = i !== active; slide.inert = i !== active;
           if (i !== active) slide.getAnimations().forEach(animation => animation.cancel());
         });
-        const current = slides[active];
-        loadMedia(current.querySelector("img"));
         selectors.forEach((button, i) => button.setAttribute("aria-pressed", String(i === active)));
         hero.querySelector("[data-hero-count]").textContent = (active + 1) + " / " + slides.length;
-        if (event) {
-          hero.querySelector("[data-hero-status]").textContent = "Collection " + (active + 1) + " of " + slides.length + ": " + current.querySelector("h1").textContent;
-          if (!reducedMotion.matches && event.detail > 0) current.animate([{opacity:.7},{opacity:1}],{duration:250,easing:"ease-out"});
-        }
+        if (manual) status.textContent = "Collection " + (active + 1) + " of " + slides.length + ": " + slides[active].querySelector("h1").textContent;
+        if (!reducedMotion.matches) slides[active].animate([{opacity:.75},{opacity:1}],{duration:200,easing:"ease-out"});
+        sync();
       }
+      const on = (element, type, callback, options = {}) => element.addEventListener(type, callback, {...options, signal:listeners.signal});
       controls.hidden = false;
-      hero.querySelector("[data-hero-prev]").addEventListener("click", event => show(active - 1, event));
-      hero.querySelector("[data-hero-next]").addEventListener("click", event => show(active + 1, event));
-      selectors.forEach((button, i) => button.addEventListener("click", event => show(i, event)));
-      show(0);
+      slides.forEach((slide, i) => { slide.hidden = i !== 0; slide.inert = i !== 0; });
+      on(hero.querySelector("[data-hero-prev]"), "click", () => show(active - 1));
+      on(hero.querySelector("[data-hero-next]"), "click", () => show(active + 1));
+      selectors.forEach((button, i) => on(button, "click", () => show(i)));
+      on(hero, "pointerenter", event => { if (event.pointerType === "mouse") { hovered = true; sync(); } });
+      on(hero, "pointerleave", () => { hovered = false; sync(); });
+      on(hero, "focusin", event => { keyboardFocused = event.target.matches(":focus-visible"); ++request; sync(); });
+      on(hero, "focusout", event => { if (!hero.contains(event.relatedTarget)) { keyboardFocused = false; ++request; sync(); } });
+      on(document, "visibilitychange", () => { ++request; sync(); });
+      on(reducedMotion, "change", () => { paused = reducedMotion.matches; ++request; sync(); });
+      on(hero, "touchstart", event => { if (event.touches.length === 1) touch = {x:event.touches[0].clientX,y:event.touches[0].clientY}; }, {passive:true});
+      on(hero, "touchend", event => {
+        if (!touch || !event.changedTouches.length) return;
+        const dx = event.changedTouches[0].clientX - touch.x, dy = event.changedTouches[0].clientY - touch.y;
+        touch = null;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(active + (dx < 0 ? 1 : -1));
+      }, {passive:true});
+      const observer = new IntersectionObserver(entries => { inView = entries[0].isIntersecting; ++request; sync(); }, {threshold:.1});
+      observer.observe(hero);
+      heroControllers.set(hero, {destroy(){ destroyed = true; ++request; clear(); observer.disconnect(); listeners.abort(); }});
+      sync();
+    });
+  }
+
+  function initProductRails(root) {
+    root.querySelectorAll("[data-product-rail]").forEach(section => {
+      if (section.dataset.bound) return;
+      section.dataset.bound = "true";
+      const rail = section.querySelector("[data-rail-track]");
+      section.querySelectorAll("[data-rail-direction]").forEach(button => button.addEventListener("click", () => {
+        rail.scrollBy({left: Number(button.dataset.railDirection) * rail.clientWidth * .8, behavior:reducedMotion.matches ? "instant" : "smooth"});
+      }));
     });
   }
 
@@ -313,7 +383,8 @@
     // HTMX settles incoming class/style attributes after swapping. Restore the
     // sheet only after that step so its open/focus state cannot be overwritten.
     if (!(event?.type==='htmx:afterSwap' && ['page','listing-content'].includes(event.detail.target?.id) && filterSnapshot)) initFilters();
-    initHero(document);initGallery(document);initSearch();initPurchaseBar();syncPurchase();
+    initHero(document);
+    initProductRails(document);initGallery(document);initSearch();initPurchaseBar();syncPurchase();
     document.querySelectorAll(".facet-search").forEach(facet=>{
       if (facet.dataset.emptyBound) return;
       facet.dataset.emptyBound="true";
@@ -377,7 +448,10 @@
     if (filterController) filterController.form.querySelector("#listing-results").removeAttribute("aria-busy");
   });
   document.addEventListener("htmx:historyRestore",()=>{filterSnapshot=null;init();});
+  window.addEventListener('pageshow',()=>initHero(document));
   window.addEventListener('pagehide',()=>{
+    for(const controller of heroControllers.values()) controller.destroy();
+    heroControllers.clear();
     const search=document.getElementById('global-search');if(search)window.htmx?.trigger(search,'htmx:abort');
     filterController?.close(false);
   });

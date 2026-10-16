@@ -83,6 +83,8 @@ type SellerStaffMember struct {
 }
 
 type ProductDraftInput struct {
+	CategorySlugs  []string
+	FeaturedRank   *int
 	Slug           string
 	BrandSlug      string
 	BrandName      string

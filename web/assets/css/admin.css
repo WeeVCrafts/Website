@@ -445,3 +445,18 @@ body.admin-body { font-size: 14px; line-height: 1.5; }
 /* Keep narrow utility copy legible even when component rules set a smaller size. */
 .admin-body :where(p, li, label, input, select, textarea, button, a, small, time, dt, dd, td, th, summary) { font-size: max(13px, 1em) !important; }
 .admin-body :where(small, .admin-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
+
+.category-search { display:flex; align-items:end; gap:12px; flex-wrap:wrap; }
+.category-search label { flex:1; min-width:180px; }
+.category-management-record { padding:24px 0; border-top:1px solid var(--admin-line,#dfd8ca); }
+.category-record-heading { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+.category-record-heading img { width:88px; height:88px; object-fit:cover; border-radius:50%; }
+.category-record-heading h3,.category-record-heading p { margin:0 0 6px; }
+.category-record-heading > a { margin-left:auto; }
+.category-checkbox,.category-memberships label { display:flex!important; flex-direction:row!important; align-items:center; gap:10px; }
+.category-checkbox input,.category-memberships input { width:22px!important; height:22px!important; min-height:22px!important; }
+.category-memberships { border:1px solid #dfd8ca; padding:16px; border-radius:6px; }
+.category-error { border-left:4px solid #9d4031; }
+#category-products { scroll-margin-top:100px; }
+.category-management-record details { margin-block:12px; }
+@media(max-width:600px) { .category-record-heading > a { margin-left:0; } .category-record-heading { gap:12px; } }

@@ -1,6 +1,7 @@
 const {test,expect}=require('@playwright/test');
 
 test('desktop hero controls reserve space and secondary media waits for selection',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
   await page.setViewportSize({width:1440,height:1000});
   let release;
   const scriptsReady=new Promise(resolve=>{release=resolve;});
@@ -35,6 +36,7 @@ test('desktop hero controls reserve space and secondary media waits for selectio
 });
 
 test('mobile homepage loads its own banner without also loading the desktop photograph',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
   await page.setViewportSize({width:390,height:844});
   const banners=new Set();
   page.on('request',request=>{
@@ -42,8 +44,8 @@ test('mobile homepage loads its own banner without also loading the desktop phot
     if(request.resourceType()==='image' && /craft-(?:mobile-)?banner/.test(pathname))banners.add(pathname);
   });
   await page.goto('/');
-  await expect(page.locator('.mobile-home-intro')).toBeVisible();
-  await expect.poll(()=>page.locator('.mobile-home-art').evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
+  await expect(page.locator('.responsive-home-intro')).toBeVisible();
+  await expect.poll(()=>page.locator('[data-hero-slide] img').first().evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
   expect([...banners]).toHaveLength(1);
   expect([...banners][0]).toContain('craft-mobile-banner');
 });

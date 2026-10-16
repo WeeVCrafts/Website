@@ -1,12 +1,11 @@
 package pages
 
-// Home is composed in pages.templ so the generated storefront stays easy to scan.
-templ homeBoundary() { <span hidden>home</span> }
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
-// Responsive introductions share the catalogue rendered once by Home.
-templ DesktopHomeIntro() {
-  <div class="desktop-home-intro">
-    @HomeHero()
-    @HomeCategoryRail()
-  </div>
+// One responsive introduction shares playback and category state at every width.
+templ HomeIntro(p viewmodels.CustomerPage) {
+ <div class="responsive-home-intro">
+  @HomeHero()
+  @HomeCategoryRail(p)
+ </div>
 }

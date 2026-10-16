@@ -1019,6 +1019,17 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the product details and upload a PNG, JPEG or WebP image up to 25 MB. Image storage must be available.")
 		return
 	}
+	if raw := r.FormValue("featured_rank"); raw != "" {
+		rank, err := strconv.Atoi(raw)
+		if err != nil || rank < 0 || rank > 1000000 {
+			h.renderError(w, 422, "Featured order invalid", "Enter an order number between 0 and 1,000,000.")
+			return
+		}
+		input.FeaturedRank = &rank
+	}
+	if r.FormValue("manage_categories") == "1" {
+		input.CategorySlugs = append([]string{input.CategorySlug}, r.Form["additional_category"]...)
+	}
 	if isCreate {
 		sellerID, parseErr := strconv.ParseInt(r.FormValue("seller_id"), 10, 64)
 		if parseErr != nil || sellerID <= 0 {
@@ -1034,7 +1045,7 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 			h.renderError(w, http.StatusServiceUnavailable, "Draft created; image not saved", "The product draft was created, but persistent image storage could not save the cover. Open the draft from Products and retry the image upload rather than creating another product.")
 			return
 		}
-		h.redirect(w, r, "/super-admin/products?notice=Product+created+as+a+draft")
+		h.redirect(w, r, adminCatalogRoot(r.URL.Path)+"/products?notice=Product+created+as+a+draft")
 		return
 	}
 	productID, err := adminProductID(r.URL.Path)
@@ -1050,7 +1061,7 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusServiceUnavailable, "Product image not saved", "Product details were saved, but the image upload failed. Open this product's editor and retry the image upload. Your previous cover is preserved.")
 		return
 	}
-	h.redirect(w, r, "/super-admin/products?notice=Product+details+saved")
+	h.redirect(w, r, adminCatalogRoot(r.URL.Path)+"/products?notice=Product+details+saved")
 }
 
 func (h *Handler) adminProductArchive(w http.ResponseWriter, r *http.Request) {
@@ -1076,7 +1087,7 @@ func (h *Handler) adminProductArchive(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not archive that product.")
 		return
 	}
-	h.redirect(w, r, "/super-admin/products?notice=Product+archived+and+hidden+from+customers")
+	h.redirect(w, r, adminCatalogRoot(r.URL.Path)+"/products?notice=Product+archived+and+hidden+from+customers")
 }
 
 func toSlug(s string) string {
@@ -1255,7 +1266,7 @@ func (h *Handler) adminProductSubmit(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not submit this product for review.")
 		return
 	}
-	h.redirect(w, r, "/super-admin/products?notice=Product+submitted+for+review")
+	h.redirect(w, r, adminCatalogRoot(r.URL.Path)+"/products?notice=Product+submitted+for+review")
 }
 
 func (h *Handler) adminProductRestore(w http.ResponseWriter, r *http.Request) {
@@ -1281,7 +1292,7 @@ func (h *Handler) adminProductRestore(w http.ResponseWriter, r *http.Request) {
 		h.renderCommerceError(w, r, err, "We could not restore that product.")
 		return
 	}
-	h.redirect(w, r, "/super-admin/products?notice=Product+restored+as+a+private+draft")
+	h.redirect(w, r, adminCatalogRoot(r.URL.Path)+"/products?notice=Product+restored+as+a+private+draft")
 }
 
 func (h *Handler) adminReviewProduct(w http.ResponseWriter, r *http.Request) {
@@ -1402,4 +1413,12 @@ func htmxAnonymousCSRFToken(w http.ResponseWriter, r *http.Request) string {
 		return cookie.Value
 	}
 	return ""
+}
+
+// Keep catalog edits in the company workspace the actor opened.
+func adminCatalogRoot(path string) string {
+	if strings.HasPrefix(path, "/admin/") {
+		return "/admin"
+	}
+	return "/super-admin"
 }
