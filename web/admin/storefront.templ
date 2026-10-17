@@ -44,20 +44,22 @@ templ EditorMedia(image, mobile, alt string) {
 	@EditorInput("Photograph URL", "image", image)
 	@EditorInput("Mobile photograph URL (optional)", "mobile_image", mobile)
 	@EditorInput("Image description", "alt", alt)
-	<small>Upload photographs in Media, then copy their permanent URL here.</small>
+	<small>Describe what the photograph shows. A separate mobile photograph is optional.</small>
 }
 
 templ EditorSave(m viewmodels.StorefrontEditor) {
-	<button class="admin-button primary" type="submit" disabled?={ m.Draft.State!="draft" }>Save draft</button>
+	<button class="admin-button primary" type="submit" data-editor-form-save disabled?={ m.Draft.State!="draft" }>Save draft</button>
 }
 
 templ Storefront(m viewmodels.StorefrontEditor) {
 	@AdminDocument(m.Admin) {
 		<link rel="stylesheet" href="/assets/css/storefront-editor.min.css"/>
 		<script defer src="/assets/js/storefront-editor.min.js"></script>
-		<div class="sf-workspace">
+		<div class="sf-workspace" data-editor-root data-editor-endpoint={ m.Admin.PortalRoot+"/storefront" } data-editor-draft={ fmt.Sprint(m.Draft.ID) } data-editor-tab={ m.Tab } data-editor-selection={ m.Selected } data-editor-state={ m.Draft.State }>
+			@templ.JSONScript("sf-destinations",m.Destinations)
+			@templ.JSONScript("sf-structured-content",editorStructuredContent(m))
 			<header class="sf-heading">
-				<div><h2>Storefront design</h2><p>Admin prepares changes. Super Admin reviews and publishes.</p></div>
+				<div><h2 class="sr-only">Storefront design</h2><p>Choose a page, edit its content, and review your changes before publishing.</p></div>
 				<form method="post" action={ m.Admin.PortalRoot + "/storefront/new" }>
 					@EditorFields(m)
 					<button class="admin-button secondary" type="submit">New draft from published design</button>
@@ -72,7 +74,10 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 				</div>
 			}
 			if m.Draft.ID>0 {
-				<div class="sf-draft-state"><strong>Draft { fmt.Sprint(m.Draft.ID) }</strong><span>{ m.Draft.State } · version { fmt.Sprint(m.Draft.Version) } · based on release { fmt.Sprint(m.Draft.BaseRelease) }</span><a href={ m.PreviewURL } target="_blank" rel="noopener">Open preview <span class="sr-only">in a new tab</span></a></div>
+				<div class="sf-draft-state"><div><strong data-editor-save-state>{ editorDraftState(m.Draft.State) }</strong><small>Draft { fmt.Sprint(m.Draft.ID) } · Saved { m.Draft.Updated.Format("02 Jan, 15:04") } · Version { fmt.Sprint(m.Draft.Version) }</small><span>Customers see published release { fmt.Sprint(m.Published.ID) } until you publish.</span></div><a href={ m.PreviewURL } target="_blank" rel="noopener">Open saved preview <span class="sr-only">in a new tab</span></a><button type="button" class="admin-button primary" data-editor-save hidden disabled?={m.Draft.State!="draft"}>Save draft</button><a class="admin-button secondary" href={editorURL(m,"publishing","")}>Review changes</a></div>
+				if m.Draft.State!="published" && m.Draft.BaseRelease!=m.Published.ID {
+<p class="sf-message">The published storefront changed after this draft began. You can keep editing, but publishing cannot replace the newer release. Start a new draft from the published design and apply the changes you want to keep.</p>
+}
 				if m.Draft.Note!="" {
 					<p class="sf-message">Review note: { m.Draft.Note }</p>
 				}
@@ -80,21 +85,29 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 					<p class="sf-message">This version is locked. Super Admin can request changes, or create a new draft from a published release.</p>
 				}
 			}
-			<nav class="sf-tabs" aria-label="Storefront workspace">
-				for _,tab:=range []struct{ID,Label string}{{"homepage","Homepage"},{"hero","Hero slides"},{"categories","Categories"},{"navigation","Navigation"},{"theme","Theme"},{"media","Media"},{"templates","Page templates"},{"pages","Content pages"},{"settings","Store settings"},{"promotions","Promotions"},{"publishing","Publishing"}} {
-					<a href={ editorURL(m, tab.ID, "") } aria-current={ ariaCurrent(tab.ID == m.Tab) }>{ tab.Label }</a>
-				}
-			</nav>
-			if m.Tab=="publishing" {
+			@StorefrontWorkspaceNavigation(m)
+			if m.Draft.ID>0 {
+ @StorefrontGuide(m)
+}
+			if m.Tab=="overview" {
+				@StorefrontOverview(m)
+			} else if m.Tab=="publishing" {
+				@StorefrontReadiness(m)
 				@StorefrontPublishing(m)
 			} else if m.Draft.ID==0 {
 				<p>Create a draft to begin editing.</p>
 			} else {
 				<div class="sf-mobile-tabs" role="tablist" aria-label="Editor view" hidden>
-					<button type="button" role="tab" id="sf-edit-tab" aria-controls="sf-settings-panel" aria-selected="true" data-editor-pane="edit">Edit content</button>
-					<button type="button" role="tab" id="sf-preview-tab" aria-controls="sf-preview-panel" aria-selected="false" tabindex="-1" data-editor-pane="preview">Preview design</button>
+					if editorHasOutline(m) {
+<button type="button" role="tab" id="sf-sections-tab" aria-controls="sf-outline-panel" aria-selected="false" tabindex="-1" data-editor-pane="sections">Sections</button>
+}
+					<button type="button" role="tab" id="sf-edit-tab" aria-controls="sf-settings-panel" aria-selected="true" data-editor-pane="edit">Edit</button>
+					<button type="button" role="tab" id="sf-preview-tab" aria-controls="sf-preview-panel" aria-selected="false" tabindex="-1" data-editor-pane="preview">Preview</button>
 				</div>
-				<div class="sf-editor-layout">
+				<div class={"sf-editor-layout",templ.KV("sf-has-outline",editorHasOutline(m))}>
+					if editorHasOutline(m) {
+<aside id="sf-outline-panel" class="sf-outline" aria-label="Page sections">@StorefrontOutline(m)</aside>
+}
 					<section id="sf-settings-panel" class="admin-panel sf-settings" aria-label="Draft settings">
 						if m.Tab=="homepage" || m.Tab=="template-sections" || m.Tab=="page-sections" {
 							@StorefrontSections(m)
@@ -107,7 +120,7 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 						}
 						if m.Tab=="navigation" {
 							<h2>Customer navigation</h2>
-							<p>Published categories appear automatically in numbered order. Add other links below. Use one link per line: Label | /destination. Footer groups start with # Heading; optional paragraphs start with >.</p>
+							<p>Published categories appear automatically. Add clearly labelled destinations and arrange the footer groups below.</p>
 							<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
 								@EditorFields(m)
 								<fieldset disabled?={ m.Draft.State!="draft" }>
@@ -156,23 +169,24 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 							@StorefrontSettings(m)
 						}
 					</section>
-					<aside id="sf-preview-panel" class="sf-preview" aria-label="Responsive preview"><div class="sf-preview-toolbar"><strong>Saved draft preview</strong><div role="group" aria-label="Preview size"><button type="button" data-preview-width="320">Mobile</button><button type="button" data-preview-width="768">Tablet</button><button type="button" data-preview-width="1440">Desktop</button></div></div><p>Save changes to update the preview. Shopping actions are disabled.</p><div class="sf-preview-scroll"><iframe title="Private storefront preview" src={ m.PreviewURL } sandbox="allow-scripts allow-same-origin" data-storefront-preview loading="lazy"></iframe></div></aside>
+					<aside id="sf-preview-panel" class="sf-preview" aria-label="Responsive preview"><div class="sf-preview-toolbar"><strong data-editor-preview-state>Saved draft preview</strong><div role="group" aria-label="Preview size"><button type="button" data-preview-width="390" aria-pressed="true">Mobile</button><button type="button" data-preview-width="768" aria-pressed="false">Tablet</button><button type="button" data-preview-width="1440" aria-pressed="false">Desktop</button></div></div><div class="sf-preview-mode" role="group" aria-label="Preview interaction"><button type="button" data-preview-mode="edit" aria-pressed="true">Edit preview</button><button type="button" data-preview-mode="browse" aria-pressed="false">Browse preview</button></div><p data-editor-preview-status role="status" aria-live="polite">Select a section in the preview to edit it. Shopping actions stay disabled.</p><div class="sf-preview-scroll" role="region" tabindex="0" aria-label="Storefront preview viewport"><iframe title="Private storefront preview" src={ m.PreviewURL } sandbox="allow-scripts allow-same-origin" data-storefront-preview loading="lazy"></iframe></div></aside>
 				</div>
 			}
 		</div>
 	}
 }
 
-templ StorefrontSections(m viewmodels.StorefrontEditor) {
-	<h2>Sections</h2>
-	<p>Lower display numbers appear first. Equal numbers use the permanent section ID. Drag to reorder, or use Move up and Move down.</p>
+templ StorefrontOutline(m viewmodels.StorefrontEditor) {
+	<h2>Page sections</h2>
+	<p>Select a section to edit. Drag to reorder, or use Move up and Move down.</p>
+	@StorefrontPresetGallery(m)
 	<ol class="sf-section-list" data-section-list>
 		for _,s:=range storefront.OrderedSections(editorSections(m)) {
 			<li data-section-id={ s.ID } draggable?={ m.Draft.State=="draft" }>
-				<a href={ editorURL(m, m.Tab, editorSectionID(m, s.ID)) }>
-					<span aria-hidden="true">⠿</span><b>{ fmt.Sprint(s.Order) } · { s.Title }</b>
+				<a href={ editorURL(m, m.Tab, editorSectionID(m, s.ID)) } data-editor-target={ "section:"+s.ID } aria-current={ariaCurrent(m.Selected==editorSectionID(m,s.ID))}>
+					<span class="sf-kind-icon material-symbols-outlined" aria-hidden="true">{editorKindIcon(s.Type)}</span><b>{editorSectionName(s)}</b>
 					<small>
-						{ s.Type }
+						{ editorKindName(s.Type) }
 						if s.Hidden {
 							· Hidden
 						}
@@ -198,14 +212,21 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 		<label>
 			Section type
 			<select name="type">
-				for _,kind:=range storefront.SectionTypes {
-					<option value={ kind }>{ kind }</option>
+				for _,kind:=range append([]string{"curated","gifts","story","promotion","questions"}, storefront.SectionTypes...) {
+					<option value={ kind }>{ editorPresetName(kind) }</option>
 				}
 			</select>
 		</label><button type="submit" class="admin-button secondary" disabled?={ m.Draft.State!="draft" }>Add section</button>
 	</form>
+}
+
+templ StorefrontSections(m viewmodels.StorefrontEditor) {
+	if m.Section.ID=="" {
+<div class="sf-editor-empty"><span class="material-symbols-outlined" aria-hidden="true">edit</span><h2>Choose a section to begin</h2><p>Select a section from the outline or click it in the preview. You can change content, photographs, and layout here.</p></div>
+}
+
 	if m.Section.ID!="" {
-		<h3>Edit { m.Section.Type }</h3>
+		<h2 tabindex="-1" data-editor-heading>{editorSectionName(m.Section)}</h2><p>{editorKindHint(m.Section.Type)}</p>
 		if m.Section.Type=="products" {
 			@StorefrontProductSearch(m)
 		}
@@ -271,7 +292,7 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 					@EditorCheck("Hide on mobile", "hide_mobile", m.Section.Responsive.HideMobile)
 				</details>
 				@EditorSave(m)
-				<button type="submit" name="operation" value="remove" class="admin-button secondary">Remove section from draft</button>
+				<button type="submit" name="operation" value="remove" class="admin-button secondary" data-confirm="Remove this content from the draft? Customers will see the change only after publication.">Remove section from draft</button>
 			</fieldset>
 		</form>
 	}
@@ -282,7 +303,7 @@ templ StorefrontHero(m viewmodels.StorefrontEditor) {
 	<p>Slides autoplay every four seconds and support swipe. Numbering controls their order.</p>
 	<ul class="sf-items">
 		for _,s:=range m.Draft.Config.Slides {
-			<li><a href={ editorURL(m, "hero", s.ID) }>{ fmt.Sprint(s.Order) } · { s.Title }</a></li>
+			<li><a href={ editorURL(m, "hero", s.ID) } data-editor-target={"slide:"+s.ID}>{ fmt.Sprint(s.Order) } · { s.Title }</a></li>
 		}
 	</ul>
 	<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
@@ -301,7 +322,7 @@ templ StorefrontHero(m viewmodels.StorefrontEditor) {
 				@EditorLink("button_", m.Slide.Button)
 				<h3>Secondary button</h3>@EditorLink("secondary_", m.Slide.Secondary)
 				@EditorSave(m)
-				<button type="submit" name="operation" value="remove" class="admin-button secondary">Remove slide from draft</button>
+				<button type="submit" name="operation" value="remove" class="admin-button secondary" data-confirm="Remove this content from the draft? Customers will see the change only after publication.">Remove slide from draft</button>
 			</fieldset>
 		</form>
 	}
@@ -313,7 +334,7 @@ templ StorefrontCategories(m viewmodels.StorefrontEditor) {
 	<ul class="sf-items">
 		for _,c:=range m.Draft.Config.OrderedCategories() {
 			<li>
-				<a href={ editorURL(m, "categories", c.Slug) }>
+				<a href={ editorURL(m, "categories", c.Slug) } data-editor-target={"category:"+c.Slug}>
 					{ fmt.Sprint(c.Order) } · { c.Name }
 					if !c.Visible {
 						(hidden)
@@ -427,7 +448,7 @@ templ StorefrontPages(m viewmodels.StorefrontEditor) {
 					@EditorCheck("Replace the default page introduction with configured sections", "hide_default_intro", m.Template.HideDefaultIntro)
 					<label>Introductory banner text<textarea name="text" rows="6">{ editorTemplateText(m.Template) }</textarea></label>@EditorSave(m)
 					if m.Template.Match!="" {
-						<button type="submit" name="operation" value="remove" class="admin-button secondary">Remove template override</button>
+						<button type="submit" name="operation" value="remove" class="admin-button secondary" data-confirm="Remove this content from the draft? Customers will see the change only after publication.">Remove template override</button>
 					}
 				</fieldset>
 			</form>

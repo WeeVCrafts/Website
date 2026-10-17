@@ -2,7 +2,9 @@
   "use strict";
 
   const { create } = global.WeevCraftsBackend;
-  const CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
+  const SHOPPING_CHECKOUT_KEY = "weevcrafts.checkout.idempotency.v1";
+  const checkoutIntent=document.querySelector('[data-checkout-intent]')?.dataset.checkoutIntent||'';
+  const CHECKOUT_KEY=SHOPPING_CHECKOUT_KEY+(checkoutIntent?':'+checkoutIntent:'');
   let backend = null;
   let backendError = null;
   let authenticated = Boolean(document.querySelector('form[action="/logout"]'));
@@ -314,7 +316,7 @@
     const cartCountLabel = document.querySelector("[data-backend-cart-count]");
     if (cartCountLabel) { cartCountLabel.textContent = cartItemCount(cart.items) + " items from independent Indian makers"; markReady(cartCountLabel); }
     const wishlistCountLabel = document.querySelector("[data-backend-wishlist-count]");
-    if (wishlistCountLabel) { wishlistCountLabel.textContent = wishlist.length + " items in your wishlist"; markReady(wishlistCountLabel); }
+    if (wishlistCountLabel) { wishlistCountLabel.textContent = (wishlist.length === 1 ? "1 item" : wishlist.length + " items") + " in your wishlist"; markReady(wishlistCountLabel); }
     if (cartRoot) {
       cartRoot.className = nextCart.className;
       cartRoot.replaceChildren(...Array.from(nextCart.childNodes));
@@ -368,31 +370,34 @@
       await requireUser();
       const quantity = Number(delta || document.getElementById("detail-quantity")?.value || 1);
       await api.addCart(slug, quantity, selectedVariantId);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
-      const cartTrigger = triggerElement?.closest('#product-quick-view') ? global.WVQuickView?.close() : triggerElement;
-      await hydrateCart({ open: true, trigger: cartTrigger || triggerElement });
-      notice("Added to your cart.", false);
+      global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
+      global.WVQuickView?.close();
+      global.location.assign('/cart');
       return;
     }
     if (action === "cart-buy") {
       await requireUser();
-      await api.addCart(slug, Number(delta || document.getElementById("detail-quantity")?.value || 1), selectedVariantId);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
-      await refreshCounts();
-      global.location.assign("/checkout");
+      // Keep this request key on the trigger for uncertain-response retries.
+      const purchaseSelection=JSON.stringify([slug,selectedVariantId,Number(delta || document.getElementById('detail-quantity')?.value || 1)]);
+      if(triggerElement.dataset.purchaseSelection!==purchaseSelection){triggerElement.dataset.purchaseKey=global.crypto.randomUUID();triggerElement.dataset.purchaseSelection=purchaseSelection;}
+      triggerElement.dataset.purchaseKey ||= global.crypto.randomUUID();
+      const intent=await api.buyNow(slug,Number(delta || document.getElementById('detail-quantity')?.value || 1),selectedVariantId,triggerElement.dataset.purchaseKey);
+      global.WVQuickView?.close();
+      delete triggerElement.dataset.purchaseKey;delete triggerElement.dataset.purchaseSelection;
+      global.location.assign(intent.checkout_url);
       return;
     }
     if (action === "cart-change") {
       await requireUser();
       await api.changeCart(slug, Number(delta), selectedVariantId);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
+      global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
       await hydrateCart();
       return;
     }
     if (action === "cart-remove") {
       await requireUser();
       await api.removeCart(slug, selectedVariantId);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
+      global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
       await hydrateCart();
       return;
     }
@@ -439,7 +444,7 @@
     if (action === "wishlist-move") {
       await requireUser();
       await api.moveCartToWishlist(slug, selectedVariantId);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
+      global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
       await hydrateCart();
       notice("Moved to your wishlist.", false);
       return;
@@ -448,9 +453,8 @@
       await requireUser();
       await api.addCart(slug, 1);
       await api.removeWishlist(slug);
-      global.sessionStorage.removeItem(CHECKOUT_KEY);
-      await hydrateCart();
-      notice("Moved to your cart.", false);
+      global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
+      global.location.assign('/cart');
     }
   }
 
@@ -575,7 +579,7 @@
 
   async function previewCheckoutQuote() {
     const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
-    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code), { credentials: "same-origin", cache: "no-store" });
+    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store" });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error?.message || "Could not preview checkout. Please try again.");
     const quote = unwrap(body);
@@ -631,22 +635,7 @@
     button.disabled = true; global.WVUI?.busy(button,true);
     let orderNumber = "";
     try {
-      const addressFormData = new URLSearchParams(address);
-      const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
-      if (savedAddressSelect && savedAddressSelect.value) addressFormData.set("address_id", savedAddressSelect.value);
-      try {
-        const addressResponse = await fetch("/account/addresses", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "X-CSRF-Token": ensureBackend().csrf || form.querySelector('[name="csrf_token"]')?.value || "" },
-          body: addressFormData
-        });
-        if (!addressResponse.ok) {
-          console.warn("Could not save address to address book:", await addressResponse.text().catch(() => ""));
-        }
-      } catch (addressErr) {
-        console.warn("Could not save address to address book:", addressErr);
-      }
+      // The order transaction saves this address once, including idempotent retries.
       const couponCode = acceptedCoupon;
       const key = pending.key;
       const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision))) || {};
@@ -655,7 +644,7 @@
       button.dataset.orderCreated='true';
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
-      if (cartBadge) { cartBadge.textContent = "0"; cartBadge.closest('a').setAttribute('aria-label','Cart, 0 items'); markReady(document.getElementById("cart-count")); }
+      if (cartBadge && !checkoutIntent) { cartBadge.textContent = "0"; cartBadge.closest('a').setAttribute('aria-label','Cart, 0 items'); markReady(document.getElementById("cart-count")); }
       if (noPaymentDemo) {
         paymentReceipt(orderNumber, "Your order is saved with payment pending. No payment was collected.", false);
       } else {
@@ -670,7 +659,7 @@
       if (orderNumber) {
         paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
       } else {
-        notice(error.message, true);
+        notice(error instanceof TypeError ? 'We could not confirm whether your order was saved. Keep this page open and try again; the same request will be checked before creating another order.' : error.message, true);
       }
     } finally {
       if (!orderNumber) {
@@ -859,8 +848,10 @@
       if (!authenticated) {
         event.preventDefault();
         event.stopImmediatePropagation();
+        const detailOption=selectedVariantId||document.querySelector('#detail-variant')?.value||'';
+        const preserved=new URLSearchParams();if(detailOption)preserved.set('variant_id',detailOption);if(delta)preserved.set('quantity',delta);
         const loginTrigger = element.closest('#product-quick-view') ? global.WVQuickView?.close() : event.target.closest('button,a');
-        promptLogin(slug ? "/products/" + encodeURIComponent(slug) : "/cart", loginTrigger);
+        promptLogin(slug ? "/products/" + encodeURIComponent(slug)+(preserved.size?'?'+preserved:'') : "/cart", loginTrigger);
         return;
       }
       if (backendError) {

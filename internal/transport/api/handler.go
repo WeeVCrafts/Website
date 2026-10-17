@@ -286,6 +286,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	}
 	var input struct {
 		CartID         int64                       `json:"cart_id"`
+		IntentID       string                      `json:"checkout_intent_id"`
 		IdempotencyKey string                      `json:"idempotency_key"`
 		CouponCode     string                      `json:"coupon_code"`
 		ExpectedPolicy *int64                      `json:"expected_policy_revision"`
@@ -297,6 +298,14 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	}
 	if headerKey := strings.TrimSpace(r.Header.Get("Idempotency-Key")); headerKey != "" {
 		input.IdempotencyKey = headerKey
+	}
+	if input.IntentID != "" {
+		intent, err := h.cart.CheckoutIntent(r.Context(), session.UserID, input.IntentID)
+		if err != nil || (input.CartID > 0 && input.CartID != intent.CartID) {
+			writeError(w, 404, "CHECKOUT_UNAVAILABLE", "This checkout is unavailable or expired. Return to the product and start again.")
+			return
+		}
+		input.CartID = intent.CartID
 	}
 	if input.CartID <= 0 && h.cart != nil {
 		activeCart, cartErr := h.cart.GetOrCreate(r.Context(), session.UserID, "")

@@ -128,7 +128,7 @@ templ ContactContent(p viewmodels.CustomerPage) {
         <form class="utility-form" action="/support/create" method="post" enctype="multipart/form-data" data-customer-support-create>
           <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
           <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
-          <label>Order number (optional)<input name="order_number" autocomplete="off"/></label>
+          <label>Order number (optional)<input name="order_number" value={ p.SupportOrderNumber } autocomplete="off"/></label>
           <label>Message<textarea name="message" rows="5" minlength="10" maxlength="4000" required></textarea></label>
           <label>Photos (optional)<input name="attachments[]" type="file" accept="image/jpeg,image/png,image/webp" multiple/><small>Up to 3 images, 10 MB each.</small></label>
           <button class="primary-button" type="submit">Send support request <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
@@ -287,7 +287,7 @@ templ PrivacyCenter(p viewmodels.CustomerPage) {
             for _, request := range p.PrivacyCenter.Requests {
               <div class="saved-address"><span>{ request.Type } · { request.Status }<small>Due { privacyDate(request.DueAt) }</small></span>
                 if request.Type == "deletion" && request.Status == "open" {
-                  <form method="post" action="/privacy/delete"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ privacyRequestID(request.ID) }/><button class="outline-button" type="submit">Delete eligible data</button></form>
+                  <form method="post" action="/privacy/delete" data-confirm="Delete eligible account data? This signs you out and removes your profile and saved details. Required order and payment records are retained."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ privacyRequestID(request.ID) }/><button class="outline-button" type="submit">Delete eligible data</button></form>
                 }
               </div>
             }
@@ -320,7 +320,8 @@ templ LiveAccountSidebar(p viewmodels.CustomerPage, active string) {
     <a href="/returns" class={ liveAccountLinkClass(active, "/returns") } aria-current={ liveAccountCurrent(active, "/returns") }><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span> Returns &amp; refunds</a>
     <a href="/payments" class={ liveAccountLinkClass(active, "/payments") } aria-current={ liveAccountCurrent(active, "/payments") }><span class="material-symbols-outlined" aria-hidden="true">payments</span> Payments</a>
     <a href="/wishlist"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Wishlist</a>
-    <a href="/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
+    <a href="/notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span> Notifications</a>
+    <a href="/account/notifications" class={ liveAccountLinkClass(active, "/account/notifications") } aria-current={ liveAccountCurrent(active, "/account/notifications") }><span class="material-symbols-outlined" aria-hidden="true">tune</span> Notification preferences</a>
     <a href="/account/privacy" class={ liveAccountLinkClass(active, "/account/privacy") } aria-current={ liveAccountCurrent(active, "/account/privacy") }><span class="material-symbols-outlined" aria-hidden="true">lock</span> Privacy</a>
     <a href="/account/security" class={ liveAccountLinkClass(active, "/account/security") } aria-current={ liveAccountCurrent(active, "/account/security") }><span class="material-symbols-outlined" aria-hidden="true">shield</span> Security</a>
     <a href="/account/support" class={ liveAccountLinkClass(active, "/account/support") } aria-current={ liveAccountCurrent(active, "/account/support") }><span class="material-symbols-outlined" aria-hidden="true">support_agent</span> Support</a>
@@ -373,17 +374,34 @@ templ LiveOrders(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro account-intro">
       @Breadcrumb("Home", "My Account", "My Orders")<p class="eyebrow">YOUR WEEVCRAFTS JOURNEY</p><h1>My orders</h1><p>Track, manage and view your orders from WeevCrafts.</p>
-      <nav class="tabs" role="tablist" aria-label="Order status"><a role="tab" class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } aria-selected={ tabSelected(orderTabClass(p.Filters, "") == "active") } href="/orders">All orders ({ orderCount(p.Orders, "") })</a><a role="tab" class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } aria-selected={ tabSelected(orderTabClass(p.Filters, "active") == "active") } href="/orders?status=active">Active ({ orderCount(p.Orders, "active") })</a><a role="tab" class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } aria-selected={ tabSelected(orderTabClass(p.Filters, "delivered") == "active") } href="/orders?status=delivered">Delivered ({ orderCount(p.Orders, "delivered") })</a><a role="tab" class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } aria-selected={ tabSelected(orderTabClass(p.Filters, "cancelled") == "active") } href="/orders?status=cancelled">Cancelled ({ orderCount(p.Orders, "cancelled") })</a></nav>
+      <nav class="tabs" aria-label="Order status"><a class={ orderTabClass(p.Filters, "") } aria-current={ orderTabCurrent(p.Filters, "") } href="/orders">All orders ({ customerQueueCount(p, "") })</a><a class={ orderTabClass(p.Filters, "active") } aria-current={ orderTabCurrent(p.Filters, "active") } href="/orders?status=active">Active ({ customerQueueCount(p, "active") })</a><a class={ orderTabClass(p.Filters, "delivered") } aria-current={ orderTabCurrent(p.Filters, "delivered") } href="/orders?status=delivered">Delivered ({ customerQueueCount(p, "delivered") })</a><a class={ orderTabClass(p.Filters, "cancelled") } aria-current={ orderTabCurrent(p.Filters, "cancelled") } href="/orders?status=cancelled">Cancelled ({ customerQueueCount(p, "cancelled") })</a></nav>
     </section>
-    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content orders-list" data-backend-orders data-server-orders>
-      if len(orderSubset(p.Orders, p.Filters.Get("status"))) == 0 {
+    <section class="container account-layout">@LiveAccountSidebar(p, "orders")<div class="account-content customer-order-workspace"><div class="orders-list" data-backend-orders data-server-orders>
+      if p.OrdersPageLoaded {
+        <p class="order-result-summary" role="status">Showing { customerQueueStart(p) }–{ customerQueueEnd(p) } of { p.TotalResults } orders</p>
+      }
+
+      if len(customerQueueOrders(p)) == 0 {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>No orders in this view</h2><p>Try another order status or explore handmade pieces from independent Indian makers.</p><a class="primary-button" href="/products">Browse products <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
       } else {
-        @PrimaryOrder(firstOrder(orderSubset(p.Orders, p.Filters.Get("status"))), p.CSRFToken)
-        <h2 class="order-history-title">Past orders</h2>
-        @HistoryRows(orderSlice(orderSubset(p.Orders, p.Filters.Get("status")), 1))
+        @PrimaryOrder(firstOrder(customerQueueOrders(p)), p.CSRFToken)
+        if len(customerQueueOrders(p)) > 1 {
+          <h2 class="order-history-title">More orders</h2>
+        }
+        @HistoryRows(orderSlice(customerQueueOrders(p), 1))
       }
-    </div></section>
+      if p.Pages > 1 {
+        <nav class="order-pagination" aria-label="Order pages">
+          if p.Page > 1 {
+            <a class="outline-button" href={ customerQueuePageURL(p,p.Page-1) } rel="prev">Previous page</a>
+          }
+          <span>Page { p.Page } of { p.Pages }</span>
+          if p.Page < p.Pages {
+            <a class="outline-button" href={ customerQueuePageURL(p,p.Page+1) } rel="next">Next page</a>
+          }
+        </nav>
+      }
+    </div></div></section>
   }
 }
 
@@ -455,7 +473,7 @@ templ LiveAccountDetail(p viewmodels.CustomerPage) {
                     @AddressFormFields(address, p.CSRFToken)
                     <button class="primary-button" type="submit">Save address</button>
                   </form>
-                  <form action="/account/addresses/delete" method="post" data-address-delete={ address.ID } onsubmit="return confirm('Delete this saved address?');">
+                  <form action="/account/addresses/delete" method="post" data-address-delete={ address.ID } data-confirm="Delete this saved address? Your existing orders keep their delivery details.">
                     <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="address_id" value={ address.ID }/>
                     <button class="outline-button" type="submit">Delete address</button>
                   </form>
@@ -578,7 +596,7 @@ templ CustomerSupportPanel(p viewmodels.CustomerPage) {
   <section class="utility-card account-panel" data-customer-support>
     <div class="utility-panel-heading"><div><p class="eyebrow">WE ARE HERE TO HELP</p><h2>Your support requests</h2></div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span></div>
     <p>Replies from our customer care team and your follow-up messages stay together here.</p>
-    <a class="outline-button" href="/contact"><span class="material-symbols-outlined" aria-hidden="true">add</span>Start a new request</a>
+    <a class="outline-button" href={ customerSupportURL(p.SupportOrderNumber) }><span class="material-symbols-outlined" aria-hidden="true">add</span>Start a new request</a>
     if len(p.SupportTickets) == 0 {
       <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">chat</span><h3>No support requests yet</h3><p>Your requests and replies will appear here.</p></div>
     } else {

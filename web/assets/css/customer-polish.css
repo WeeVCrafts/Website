@@ -468,3 +468,18 @@ html {scroll-padding-block-start:90px;}
 .order-refresh-retry {min-height:32px;padding-inline:8px;text-decoration:underline;}
 
 /* Container ownership stays in theme.css (1240px, 24/16px gutters). */
+
+/* Customer order paging keeps every action reachable in narrow account layouts. */
+.order-result-summary { color: var(--muted); margin: 0 0 16px; }
+.order-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.order-pagination > span { font-variant-numeric: tabular-nums; }
+.order-pagination .outline-button { min-height: 44px; }
+
+/* Wishlist actions wrap within the existing split card instead of widening it. */
+.storefront-body .saved-card { grid-template-columns: minmax(0,43fr) minmax(0,57fr); min-width: 0; }
+.storefront-body .saved-copy { min-width: 0; }
+.storefront-body .saved-copy h3 { overflow-wrap: anywhere; }
+.storefront-body .saved-copy > div:last-child { flex-wrap: wrap; }
+.storefront-body .saved-media img { object-fit: contain; }
+
+.purchase-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}.purchase-facts div{min-width:0}.purchase-facts dt{font-size:13px;color:var(--muted)}.purchase-facts dd{margin:4px 0 0;overflow-wrap:anywhere}.purchase-policy-summary{border-block:1px solid var(--line);padding:14px 0;margin:18px 0}.purchase-policy-summary summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}.purchase-policy-summary p{font-size:14px;line-height:1.7}.purchase-policy-summary a{text-decoration:underline}

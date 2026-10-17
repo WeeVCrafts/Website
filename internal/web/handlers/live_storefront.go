@@ -183,6 +183,21 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		http.Redirect(w, r, destination, http.StatusSeeOther)
 		return
 	}
+	if strings.HasPrefix(r.URL.Path, "/payments/") && !isDraftPreview(r) {
+		h.legacyCustomerPayment(w, r, userID)
+		return
+	}
+	if r.URL.Path == "/checkout" && r.URL.Query().Get("intent") != "" && !isDraftPreview(r) {
+		intent, intentErr := h.cart.CheckoutIntent(r.Context(), userID, r.URL.Query().Get("intent"))
+		if intentErr != nil {
+			h.renderError(w, http.StatusNotFound, "This checkout is unavailable or expired. Your shopping cart is saved. Return to the product to start Buy now again.")
+			return
+		}
+		if intent.OrderNumber != "" {
+			http.Redirect(w, r, "/orders/"+url.PathEscape(intent.OrderNumber)+"/confirmation", 303)
+			return
+		}
+	}
 	page, err := h.page(r)
 	if err != nil {
 		if errors.Is(err, applicationcatalog.ErrProductNotFound) || errors.Is(err, ports.ErrOrderNotFound) {
@@ -225,6 +240,17 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		page.Product.Variants = variants
 		if len(variants) > 0 {
 			first := variants[0]
+			for _, variant := range variants {
+				if variant.ID == r.URL.Query().Get("variant_id") {
+					first = variant
+					break
+				}
+			}
+			page.ProductQuantity = 1
+			if n, err := strconv.Atoi(r.URL.Query().Get("quantity")); err == nil && n >= 1 && n <= 99 {
+				page.ProductQuantity = n
+			}
+
 			page.Product.VariantID, _ = strconv.ParseInt(first.ID, 10, 64)
 			page.Product.PriceCents, _ = strconv.ParseInt(first.PriceCents, 10, 64)
 			page.Product.Price, page.Product.CompareAt, page.Product.Discount = first.Price, first.CompareAt, first.Discount
@@ -869,11 +895,35 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			page.SavedProducts, page.WishlistCount = wishlist, len(wishlist)
 			markSavedProducts(&page)
 		}
+		if r.URL.Path == "/checkout" && r.URL.Query().Get("intent") != "" {
+			page.CheckoutIntentID = r.URL.Query().Get("intent")
+			page.ShoppingCart = page.Cart
+			page.ShoppingCartCount = page.CartCount
+			selected, err := h.cart.GetCheckoutCart(r.Context(), userID, page.CheckoutIntentID)
+			if err != nil {
+				return viewmodels.CustomerPage{}, err
+			}
+			items, err := h.liveCartViews(r.Context(), selected, csrf)
+			if err != nil {
+				return viewmodels.CustomerPage{}, err
+			}
+			page.Cart = items
+			page.CartCount = liveCartCount(items)
+		}
 		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotalsWithPolicy(page.Cart, page.Storefront.Settings.Policy)
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
 		if err := h.loadCustomerData(r.Context(), userID, &page, r.URL.Query().Get("ticket_id")); err != nil {
 			return viewmodels.CustomerPage{}, err
+		}
+	}
+	if authenticated && page.CanCreateSupport && (page.Route == "/contact" || page.Route == "/account/support") {
+		if number := strings.TrimSpace(r.URL.Query().Get("order")); number != "" {
+			detail, err := h.orders.Get(r.Context(), userID, number)
+			if err != nil {
+				return viewmodels.CustomerPage{}, err
+			}
+			page.SupportOrderNumber = detail.OrderNumber
 		}
 	}
 	if r.URL.Path == "/account/sessions" && !isDraftPreview(r) {
@@ -968,7 +1018,12 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 	}
 
 	if h.orders != nil && (page.Route == "/account" || page.Route == "/orders" || strings.HasPrefix(page.Route, "/orders/") || page.Route == "/tracking") {
-		orders, err := h.orders.List(ctx, userID, 20)
+		var orders []domaincommerce.Order
+		if page.Route == "/orders" {
+			orders, err = h.customerOrderPage(ctx, userID, page)
+		} else if page.Route == "/account" || page.Route == "/tracking" && page.Filters.Get("order") == "" {
+			orders, err = h.orders.List(ctx, userID, 3)
+		}
 		if err != nil {
 			return err
 		}
@@ -982,9 +1037,13 @@ func (h *LiveStorefrontHandler) loadCustomerData(ctx context.Context, userID int
 			if err != nil {
 				return err
 			}
+			if page.Route == "/orders" {
+				view.DetailsURL = customerOrderDetailsURL(view.Number, page.Filters)
+			}
 			page.Orders = append(page.Orders, view)
 		}
 		if strings.HasPrefix(page.Route, "/orders/") {
+			page.OrderListURL = customerOrderListURL(page.Filters.Get("from"))
 			orderNumber := strings.TrimPrefix(page.Route, "/orders/")
 			orderNumber = strings.TrimSuffix(orderNumber, "/invoice")
 			orderNumber = strings.TrimSuffix(orderNumber, "/tracking")
@@ -1787,6 +1846,30 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 	if raw := r.FormValue("quantity"); raw != "" {
 		quantity, _ = strconv.ParseInt(raw, 10, 64)
 	}
+	if r.FormValue("intent") == "buy" {
+		if !authenticated {
+			http.Redirect(w, r, "/login?next="+url.QueryEscape("/products/"+slug), 303)
+			return
+		}
+		key := r.Header.Get("Idempotency-Key")
+		if key == "" {
+			key = r.FormValue("idempotency_key")
+		}
+		if key == "" {
+			key = editorID()
+		}
+		intent, err := h.cart.CreateCheckoutIntent(r.Context(), userID, variantID, quantity, key)
+		if err != nil {
+			http.Error(w, "This option is unavailable or exceeds current stock. Check your selection.", 422)
+			return
+		}
+		if r.Header.Get("HX-Request") == "true" {
+			w.Header().Set("HX-Redirect", "/checkout?intent="+intent.ID)
+		} else {
+			http.Redirect(w, r, "/checkout?intent="+intent.ID, 303)
+		}
+		return
+	}
 	if raw := r.FormValue("delta"); raw != "" {
 		delta, _ := strconv.ParseInt(raw, 10, 64)
 		cart, cartErr := h.cart.GetOrCreate(r.Context(), userID, guestHash)
@@ -1814,8 +1897,12 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "cart update failed", http.StatusUnprocessableEntity)
 		return
 	}
-	if r.FormValue("intent") == "buy" {
-		w.Header().Set("HX-Redirect", "/checkout")
+	if r.FormValue("delta") == "" && r.FormValue("remove") != "true" {
+		if r.Header.Get("HX-Request") == "true" {
+			w.Header().Set("HX-Redirect", "/cart")
+		} else {
+			http.Redirect(w, r, "/cart", 303)
+		}
 		return
 	}
 	page, pageErr := h.page(r)
@@ -1835,6 +1922,10 @@ func (h *LiveStorefrontHandler) liveCart(ctx context.Context, userID int64, gues
 	if err != nil {
 		return nil, err
 	}
+	return h.liveCartViews(ctx, cart, csrf)
+}
+
+func (h *LiveStorefrontHandler) liveCartViews(ctx context.Context, cart domaincommerce.Cart, csrf string) ([]viewmodels.CartItem, error) {
 	items := make([]viewmodels.CartItem, 0, len(cart.Items))
 	for _, item := range cart.Items {
 		product, err := h.catalog.Get(ctx, item.ProductSlug)
@@ -2281,7 +2372,7 @@ func liveTitle(path string) string {
 }
 
 func liveSlug(value string) string {
-	return strings.Trim(strings.NewReplacer("&", "and", "'", "", " ", "-").Replace(strings.ToLower(value)), "-")
+	return identity.MakerSlug(value)
 }
 
 func liveBrand(path string, brands []viewmodels.Brand) viewmodels.Brand {

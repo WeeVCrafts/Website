@@ -94,7 +94,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
       <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
 
-      <div class="admin-shell" x-data="{sidebar:false}" @keydown.escape.window="sidebar=false; $nextTick(() => $refs.adminMenu.focus())" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#admin-sidebar a, #admin-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
+      <div class="admin-shell" x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.adminMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#admin-sidebar a, #admin-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
 
         @Sidebar(p)
 

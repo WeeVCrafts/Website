@@ -338,6 +338,7 @@ func main() {
 	mux.HandleFunc("/api/v1/wishlist/", apiHandler.WishlistRemove)
 	mux.HandleFunc("/api/v1/checkout", apiHandler.Checkout)
 	mux.HandleFunc("/api/v1/checkout/quote", apiHandler.CheckoutQuote)
+	mux.HandleFunc("/api/v1/checkout/intents", apiHandler.CheckoutIntent)
 	mux.HandleFunc("/api/v1/checkout/no-payment", apiHandler.NoPaymentCheckout)
 	mux.HandleFunc("/api/v1/orders", apiHandler.Orders)
 	mux.HandleFunc("/api/v1/orders/", apiHandler.Order)

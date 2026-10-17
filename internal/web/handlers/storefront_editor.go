@@ -189,6 +189,18 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 	if super {
 		role = domainidentity.RoleSuperAdmin
 	}
+	if r.Method == http.MethodGet && r.URL.Query().Get("destination") != "" {
+		if destination, err := url.Parse(r.URL.Query().Get("destination")); err == nil && !destination.IsAbs() && destination.Host == "" && destination.Path == root+"/storefront" && !strings.ContainsAny(destination.String(), "\\\r\n") {
+			http.Redirect(w, r, destination.String(), http.StatusSeeOther)
+			return true
+		}
+		http.Error(w, "Choose a storefront page.", 422)
+		return true
+	}
+	if r.Method == http.MethodGet && strings.TrimPrefix(r.URL.Path, root+"/storefront") == "/library" {
+		h.storefrontEditorLibrary(w, r, session.UserID, root)
+		return true
+	}
 	repo := postgres.NewStorefrontRepository(h.pool)
 	m := viewmodels.StorefrontEditor{Tab: r.URL.Query().Get("tab"), Selected: r.URL.Query().Get("section")}
 	if m.Tab == "" {
@@ -245,7 +257,10 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 		} else {
 			m.Draft, err = repo.Draft(r.Context(), session.UserID, id)
 			if err == nil {
-				if action == "/save" {
+				if action == "/render-preview" {
+					h.renderProposedStorefront(w, r, m)
+					return true
+				} else if action == "/save" {
 					err = applyEditorForm(r, &m)
 					if err == nil && m.Tab == "settings" && m.Draft.Config.Settings.Policy.RestrictPayments {
 						for _, mode := range m.Draft.Config.Settings.Policy.Payments {
@@ -276,6 +291,15 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 			}
 			if action == "/request-changes" {
 				notice = "Changes requested. The draft is editable again."
+			}
+			if action == "/save" && r.FormValue("return_to") != "" {
+				if target, e := url.Parse(r.FormValue("return_to")); e == nil && !target.IsAbs() && target.Host == "" && target.Path == root+"/storefront" && target.Query().Get("draft") == fmt.Sprint(id) {
+					q := target.Query()
+					q.Set("notice", notice)
+					target.RawQuery = q.Encode()
+					http.Redirect(w, r, target.String(), 303)
+					return true
+				}
 			}
 			q := url.Values{"draft": {fmt.Sprint(id)}, "tab": {m.Tab}, "section": {m.Selected}, "notice": {notice}}
 			http.Redirect(w, r, root+"/storefront?"+q.Encode(), 303)
@@ -318,7 +342,7 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 		return true
 	}
 	if id == 0 {
-		m.Tab = "publishing"
+		m.Tab = "overview"
 	}
 	if m.Draft.ID > 0 && (m.Tab == "publishing" || strings.Contains(m.Error, "changed")) {
 		live, e := postgres.ReadPublishedStorefront(r.Context(), h.pool)
@@ -327,6 +351,15 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 		}
 	}
 	editorSelection(&m)
+	storefrontGuidance(&m)
+	if len(m.Releases) > 0 {
+		m.Published = m.Releases[0]
+	}
+	if live, e := postgres.ReadPublishedStorefront(r.Context(), h.pool); e == nil {
+		if m.Published.ID != live.ID {
+			m.Published = storefront.Release{ID: live.ID}
+		}
+	}
 	h.storefrontPreviewTarget(r, &m)
 	if m.Section.Type == "products" || (m.Tab == "promotions" && m.Promotion.Key != "") {
 		if e := h.storefrontProductPicker(r, &m); e != nil {
@@ -355,6 +388,9 @@ func applyEditorForm(r *http.Request, m *viewmodels.StorefrontEditor) error {
 }
 func applyEditorFormValues(r *http.Request, m *viewmodels.StorefrontEditor, moneyNormalized bool) error {
 	if !moneyNormalized {
+		if err := editorStructuredRows(r); err != nil {
+			return err
+		}
 		moneyFields := []string{}
 		if m.Tab == "settings" {
 			moneyFields = []string{"shipping_cents", "free_shipping_cents"}
@@ -453,7 +489,16 @@ func applyEditorFormValues(r *http.Request, m *viewmodels.StorefrontEditor, mone
 		}
 		if op == "add" {
 			kind := r.FormValue("type")
-			s := storefront.Section{ID: editorID(), Type: kind, Title: "New section", Order: (len(c.Homepage) + 1) * 10, Style: "grid", Selection: storefront.Selection{Mode: "featured", Limit: 6, Available: true}, Responsive: storefront.Responsive{DesktopColumns: 6, TabletColumns: 3, MobileColumns: 2, Spacing: 24, MobileSpacing: 20}}
+			s := storefrontPreset(kind, (len(c.Homepage)+1)*10)
+			if kind == "edits" {
+				s.Type = "collections"
+				s.Title = "Explore our collections"
+				for _, category := range c.OrderedCategories() {
+					if category.Visible && len(s.Items) < 4 {
+						s.Items = append(s.Items, storefront.Tile{Title: category.Name, Text: category.Description, Image: category.Image, Alt: category.Name, URL: "/products?category=" + url.QueryEscape(category.Slug)})
+					}
+				}
+			}
 			c.Homepage = append(c.Homepage, s)
 			m.Selected = s.ID
 			break
@@ -709,7 +754,7 @@ func applyEditorFormValues(r *http.Request, m *viewmodels.StorefrontEditor, mone
 			}
 		}
 	}
-	return c.Validate()
+	return applyEditorStructuredRows(r, m)
 }
 
 func parseEditorFooter(raw string) ([]storefront.LinkGroup, error) {

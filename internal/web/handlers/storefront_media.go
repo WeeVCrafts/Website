@@ -124,6 +124,12 @@ func (h *LivePortalHandler) storefrontUpload(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "The upload could not be recorded. Try again later.", 503)
 		return
 	}
+	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "private, no-store")
+		_ = json.NewEncoder(w).Encode(viewmodels.StorefrontMedia{ID: id, URL: "/media/storefront/" + id, Alt: alt, FocalX: x, FocalY: y})
+		return
+	}
 	http.Redirect(w, r, root+"/storefront?"+url.Values{"draft": {r.FormValue("draft")}, "tab": {"media"}, "notice": {"Image uploaded. Select its URL in a draft; publishing controls when it appears."}}.Encode(), 303)
 }
 func (h *LivePortalHandler) storefrontMediaList(r *http.Request, m *viewmodels.StorefrontEditor) ([]viewmodels.StorefrontMedia, error) {

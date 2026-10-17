@@ -118,12 +118,34 @@ paths:
       parameters:
         - {name: productId, in: path, required: true, schema: {type: integer, format: int64}}
       responses: {'200': {description: Removed}, '422': {description: Invalid product}}
+  /api/v1/checkout/intents:
+    post:
+      summary: Start a selected-item checkout without changing the shopping cart
+      security: [{cookieSession: [], csrfHeader: []}]
+      parameters:
+        - {name: Idempotency-Key, in: header, required: true, schema: {type: string, minLength: 16, maxLength: 200}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variant_id, quantity]
+              properties:
+                variant_id: {type: integer, format: int64, minimum: 1}
+                quantity: {type: integer, minimum: 1, maximum: 99}
+      responses:
+        '200': {description: Data contains opaque id, cart_id, checkout_url and expires_at. The context lasts 24 hours and reserves no stock.}
+        '403': {description: Customer authentication and CSRF required}
+        '409': {description: Request key already used with a different selection}
+        '422': {description: Selection unavailable or invalid}
   /api/v1/checkout/quote:
     get:
       summary: Preview current stock, prices, shipping and eligible coupon discount
       security: [{cookieSession: []}]
       parameters:
         - {name: coupon_code, in: query, schema: {type: string, maxLength: 40}}
+        - {name: intent, in: query, schema: {type: string, minLength: 48, maxLength: 48}, description: Owned Buy now context; absent uses the normal shopping cart}
       responses:
         '200': {description: Integer minor-unit subtotal_cents, shipping_cents, discount_cents and total_cents with cart_id and policy_revision}
         '403': {description: Authentication required}
@@ -328,6 +350,7 @@ components:
       required: [cart_id, address]
       properties:
         coupon_code: {type: string, maxLength: 40}
+        checkout_intent_id: {type: string, minLength: 48, maxLength: 48, description: Optional owned Buy now context. Its cart must match cart_id when both are supplied.}
         expected_policy_revision: {type: integer, format: int64, minimum: 1, description: Policy revision returned by the reviewed quote; publication invalidates stale quotes even when the total is unchanged}
         expected_total_cents: {type: integer, format: int64, minimum: 0, description: Reviewed quote total; changed totals reject placement without reserving inventory}
         cart_id: {type: integer, format: int64, minimum: 1}

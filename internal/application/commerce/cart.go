@@ -25,6 +25,42 @@ func (s *CartService) GetOrCreate(ctx context.Context, userID int64, guestTokenH
 	return s.repository.GetOrCreateCart(ctx, userID, guestTokenHash)
 }
 
+type checkoutIntentRepository interface {
+	CreateCheckoutIntent(context.Context, int64, int64, int64, string) (domaincommerce.CheckoutIntent, error)
+	GetCheckoutIntent(context.Context, int64, string) (domaincommerce.CheckoutIntent, error)
+}
+
+func (s *CartService) CreateCheckoutIntent(ctx context.Context, userID, variantID, quantity int64, key string) (domaincommerce.CheckoutIntent, error) {
+	if userID <= 0 || variantID <= 0 || len(key) < 16 || len(key) > 200 {
+		return domaincommerce.CheckoutIntent{}, ports.ErrForbidden
+	}
+	if quantity < 1 || quantity > 99 {
+		return domaincommerce.CheckoutIntent{}, ErrInvalidQuantity
+	}
+	repo, ok := s.repository.(checkoutIntentRepository)
+	if !ok {
+		return domaincommerce.CheckoutIntent{}, ports.ErrInvalidState
+	}
+	return repo.CreateCheckoutIntent(ctx, userID, variantID, quantity, key)
+}
+func (s *CartService) CheckoutIntent(ctx context.Context, userID int64, token string) (domaincommerce.CheckoutIntent, error) {
+	if userID <= 0 || len(token) != 48 {
+		return domaincommerce.CheckoutIntent{}, ports.ErrCartNotFound
+	}
+	repo, ok := s.repository.(checkoutIntentRepository)
+	if !ok {
+		return domaincommerce.CheckoutIntent{}, ports.ErrInvalidState
+	}
+	return repo.GetCheckoutIntent(ctx, userID, token)
+}
+func (s *CartService) GetCheckoutCart(ctx context.Context, userID int64, token string) (domaincommerce.Cart, error) {
+	intent, err := s.CheckoutIntent(ctx, userID, token)
+	if err != nil {
+		return domaincommerce.Cart{}, err
+	}
+	return s.repository.GetCart(ctx, intent.CartID)
+}
+
 func (s *CartService) Add(ctx context.Context, userID int64, guestTokenHash string, variantID, quantity int64) (domaincommerce.Cart, error) {
 	if quantity < 1 || quantity > 99 {
 		return domaincommerce.Cart{}, ErrInvalidQuantity

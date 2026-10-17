@@ -70,11 +70,13 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 	if p.Route != "/" {
 		return ""
 	}
+	aliases := []string{"WeeVCrafts", "weevcrafts", "weevcrafts.com"}
+	organizationID := pageCanonicalURL(p) + "#organization"
 	data := map[string]any{
 		"@context": "https://schema.org",
 		"@graph": []any{
-			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": []string{"WeevCrafts", "WeevCrafts", "weevcrafts.com"}, "url": pageCanonicalURL(p)},
-			map[string]any{"@type": "Organization", "@id": pageCanonicalURL(p) + "#organization", "name": identity.Name, "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
+			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": aliases, "url": pageCanonicalURL(p), "description": identity.Description, "publisher": map[string]string{"@id": organizationID}},
+			map[string]any{"@type": "Organization", "@id": organizationID, "name": identity.Name, "alternateName": aliases, "description": identity.Description, "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
 		},
 	}
 	encoded, err := json.Marshal(data)
@@ -157,6 +159,9 @@ func pageOGImage(p viewmodels.CustomerPage) string {
 	}
 	if strings.TrimSpace(p.Product.ImageURL) != "" && strings.HasPrefix(p.Route, "/products/") {
 		return absolutePageURL(p, p.Product.ImageURL)
+	}
+	if p.Route == "/" {
+		return absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")
 	}
 	return ""
 }
@@ -908,4 +913,60 @@ func quickViewVariantID(product viewmodels.Product) string {
 		return product.Variants[0].ID
 	}
 	return ""
+}
+
+// orderDetailsURL retains the server-sanitized queue position when available.
+func orderDetailsURL(order viewmodels.Order) string {
+	if order.DetailsURL != "" {
+		return order.DetailsURL
+	}
+	return orderPath(order.Number)
+}
+
+func customerQueueCount(p viewmodels.CustomerPage, status string) int {
+	if p.OrderTotals != nil {
+		return p.OrderTotals[status]
+	}
+	return orderCount(p.Orders, status)
+}
+
+func customerQueueOrders(p viewmodels.CustomerPage) []viewmodels.Order {
+	if p.OrdersPageLoaded {
+		return p.Orders
+	}
+	return orderSubset(p.Orders, p.Filters.Get("status"))
+}
+
+func customerQueuePageURL(p viewmodels.CustomerPage, page int) string {
+	values := url.Values{}
+	if status := p.Filters.Get("status"); status != "" {
+		values.Set("status", status)
+	}
+	if page > 1 {
+		values.Set("page", strconv.Itoa(page))
+	}
+	if len(values) == 0 {
+		return "/orders"
+	}
+	return "/orders?" + values.Encode()
+}
+
+func customerQueueStart(p viewmodels.CustomerPage) int {
+	if len(p.Orders) == 0 {
+		return 0
+	}
+	return (p.Page-1)*20 + 1
+}
+func customerQueueEnd(p viewmodels.CustomerPage) int { return (p.Page-1)*20 + len(p.Orders) }
+func customerOrderBackURL(p viewmodels.CustomerPage) string {
+	if p.OrderListURL != "" {
+		return p.OrderListURL
+	}
+	return "/orders"
+}
+func customerSupportURL(number string) string {
+	if number == "" {
+		return "/contact"
+	}
+	return "/contact?order=" + url.QueryEscape(number)
 }

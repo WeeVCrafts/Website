@@ -24,6 +24,7 @@ sql:
       - internal/adapters/postgres/migrations/0015_auth_action_tokens.sql
       - internal/adapters/postgres/migrations/0048_catalog_categories.sql
       - internal/adapters/postgres/migrations/0049_storefront_editor.sql
+      - internal/adapters/postgres/migrations/0050_checkout_intents.sql
     gen:
       go:
         package: generated

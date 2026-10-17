@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
@@ -52,7 +53,7 @@ func (h *Handler) sellerInventoryAdjust(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	variantID, variantErr := strconv.ParseInt(r.FormValue("variant_id"), 10, 64)
-	delta, deltaErr := strconv.Atoi(r.FormValue("delta"))
+	delta, deltaErr := inventoryDelta(r)
 	if variantErr != nil || deltaErr != nil {
 		h.renderCommerceError(w, r, applicationcommerce.ErrInvalidInventoryAdjustment, "The stock adjustment is invalid.")
 		return
@@ -66,5 +67,38 @@ func (h *Handler) sellerInventoryAdjust(w http.ResponseWriter, r *http.Request) 
 		h.renderCommerceError(w, r, err, "We could not save that stock adjustment.")
 		return
 	}
-	h.redirect(w, r, "/seller/inventory")
+	query := url.Values{"notice": {"Stock adjustment saved."}}
+	query.Set("variant", strconv.FormatInt(variantID, 10))
+	query.Set("q", r.FormValue("return_query"))
+	query.Set("stock", validInventoryFilter(r.FormValue("return_stock")))
+	if page, err := strconv.Atoi(r.FormValue("return_page")); err == nil && page > 0 && page <= 1000000 {
+		query.Set("page", strconv.Itoa(page))
+	}
+	h.redirect(w, r, "/seller/inventory?"+query.Encode()+"#stock-"+strconv.FormatInt(variantID, 10))
+}
+
+// Explicit direction/quantity is additive; legacy signed deltas remain valid.
+func inventoryDelta(r *http.Request) (int, error) {
+	if r.FormValue("adjustment_type") == "" && r.FormValue("quantity") == "" {
+		return strconv.Atoi(r.FormValue("delta"))
+	}
+	quantity, err := strconv.Atoi(r.FormValue("quantity"))
+	if err != nil || quantity < 1 || quantity > 100000 {
+		return 0, applicationcommerce.ErrInvalidInventoryAdjustment
+	}
+	switch r.FormValue("adjustment_type") {
+	case "add":
+		return quantity, nil
+	case "remove":
+		return -quantity, nil
+	default:
+		return 0, applicationcommerce.ErrInvalidInventoryAdjustment
+	}
+}
+
+func validInventoryFilter(value string) string {
+	if value == "low" || value == "out" {
+		return value
+	}
+	return ""
 }

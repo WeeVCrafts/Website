@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -13,9 +14,15 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "Sign in to preview your checkout.")
 		return
 	}
-	cart, err := h.cart.GetOrCreate(r.Context(), session.UserID, "")
+	var cart domaincommerce.Cart
+	var err error
+	if token := r.URL.Query().Get("intent"); token != "" {
+		cart, err = h.cart.GetCheckoutCart(r.Context(), session.UserID, token)
+	} else {
+		cart, err = h.cart.GetOrCreate(r.Context(), session.UserID, "")
+	}
 	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, "CART_UNAVAILABLE", "Your cart could not be loaded.")
+		writeError(w, http.StatusServiceUnavailable, "CART_UNAVAILABLE", "This checkout is unavailable or expired. Return to the product and start again.")
 		return
 	}
 	quote, err := h.orders.Quote(r.Context(), session.UserID, cart.ID, r.URL.Query().Get("coupon_code"))

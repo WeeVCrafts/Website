@@ -57,6 +57,10 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 			URL           string   `json:"url"`
 			Logo          string   `json:"logo"`
 			AlternateName []string `json:"alternateName"`
+			ID            string   `json:"@id"`
+			Publisher     struct {
+				ID string `json:"@id"`
+			} `json:"publisher"`
 		} `json:"@graph"`
 	}
 	if err := json.Unmarshal([]byte(websiteStructuredData(page)), &data); err != nil {
@@ -72,6 +76,24 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 	}
 	if len(data.Graph[0].AlternateName) == 0 || data.Graph[1].Logo != "https://weevcrafts.com/assets/images/brand/weevcrafts-logo.png" {
 		t.Fatal("brand aliases and supplied logo must be preserved")
+	}
+	for _, node := range data.Graph {
+		seen := map[string]bool{identity.Name: true}
+		for _, alias := range node.AlternateName {
+			if seen[alias] {
+				t.Errorf("duplicate brand alias %q", alias)
+			}
+			seen[alias] = true
+		}
+		if !seen["weevcrafts"] || !seen["weevcrafts.com"] {
+			t.Errorf("missing recognized brand aliases: %v", node.AlternateName)
+		}
+	}
+	if data.Graph[0].Publisher.ID != data.Graph[1].ID {
+		t.Fatal("website publisher must reference the canonical organization")
+	}
+	if pageOGImage(page) != data.Graph[1].Logo {
+		t.Fatal("homepage should share the supplied brand logo when no editorial image is set")
 	}
 	if websiteStructuredData(viewmodels.CustomerPage{Route: "/login"}) != "" {
 		t.Fatal("website identity schema belongs on the homepage")

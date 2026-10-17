@@ -90,6 +90,7 @@ type CartItem struct {
 }
 
 type Order struct {
+	DetailsURL                                         string
 	Shipments                                          []domaincommerce.OrderFulfillment
 	Number, Status, State, Payment, Date, PaymentState string
 	ReturnStatus, RefundStatus                         string
@@ -114,6 +115,13 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	ProductQuantity                                  int
+	CheckoutIntentID                                 string
+	ShoppingCart                                     []CartItem
+	ShoppingCartCount                                int
+	OrderTotals                                      map[string]int
+	OrdersPageLoaded                                 bool
+	OrderListURL, SupportOrderNumber                 string
 	MediaPositions                                   map[string]string
 	MediaAlt                                         map[string]string
 	Storefront                                       *storefront.Config

@@ -1,5 +1,80 @@
 # WeevCrafts UX contract
 
+## Customer workflow refinement — 17 October 2026
+
+Customer order history uses server pagination at 20 records per page. Existing
+All, Active, Delivered and Cancelled filters apply before pagination; their
+counts describe the full owner-scoped history. Empty/out-of-range pages clamp
+to a usable page. Detail links carry only validated order-list filter/page state,
+and Back to orders restores that state. URL-backed order and return filters use
+ordinary navigation semantics.
+
+Legacy payment-state URLs cannot establish payment success. Without an order
+reference they open payment activity; with an owned reference they open the
+persisted order confirmation. Unknown or foreign references return not found.
+Confirmation payment and delivery progress reflect saved financial and parcel
+states, including packing, ready-to-deliver and partial deliveries.
+
+Customer profile, address, preference, review, support and order-action forms
+reuse shared validation, stable busy controls, duplicate submission prevention,
+inline failure recovery and unsaved-change protection. Recoverable failures keep
+entered values and selected files in the current document. A session redirect
+shows an inline reauthentication instruction instead of silently discarding work.
+Nothing saves private form drafts to browser storage. Address deletion and unpaid
+order cancellation use the shared confirmation dialog with focus restoration.
+
+Order help links carry an ownership-validated reference into the support form.
+If support text saves but photo storage fails, open the saved conversation with
+an explicit partial-save notice; do not invite the customer to recreate it.
+Notification inbox and notification preferences have distinct navigation labels.
+Customer order live-update controls stay inside the content column. Refreshed
+forms regain shared validation and confirmation behavior. Privacy requests and
+consent changes retain recoverable input; eligible data deletion requires explicit
+shared confirmation before its existing server-authorized action.
+Unavailable checkout payments explain that the cart is saved and offer a retry
+later without exposing deployment configuration.
+
+## Seller workflow amendment — 17 October 2026
+
+Product entry uses Details, Pricing & stock, Photos and Review steps. Completed
+steps remain revisitable. Validate before advancing, keep entered values in
+memory, reveal the invalid step and focus its first invalid field. Without
+JavaScript, all editable sections remain available in one native form. Optional
+specifications use a native disclosure. Review reflects entered values; Save
+product draft never submits for marketplace approval. Successful create and
+edit return to the saved editor. Gallery media and variants remain attached to
+that product. A cover failure after saving opens the saved product's Photos
+step with retry instructions; it never asks the seller to create another draft.
+Submission for review is a separate action and is disabled while edited product
+fields have unsaved changes. Server validation retains values and identifies
+money/upload corrections when available; session and permission errors remain
+closed to unauthorized users.
+
+Inventory filters (`q`, `stock=low|out`, `page`) are server applied before
+pagination. Product stock summaries sum active variants; archived variants do
+not appear as editable inventory. Adjustments use Add stock or Remove stock,
+positive integer quantity and a required reason. The preview is labelled as an
+estimate; only the server commits availability. Reserved units remain unchanged.
+Legacy signed `delta` submissions remain supported. The selected variant's last
+20 adjustments are seller scoped and show before, change, after and reason.
+Adjustment success preserves list state and reloads committed quantities.
+
+Orders use one bounded queue with URL-backed search and stage filtering. Page
+counts are distinct from matching totals. Opening an order and returning retains
+list state. Order details offer only the next permitted stage action, require
+carrier/tracking before shipping and reveal custom carrier entry for Other.
+Payment eligibility, seller ownership and revision checks remain authoritative.
+Live refresh preserves focused controls and unfinished fulfilment input. Enhanced
+form conflict responses retain entered details and offer an explicit reload.
+Returns navigation remains available on seller order details.
+
+The homepage crossfades outgoing and decoded incoming slides together over
+450ms ease-out. The outgoing slide becomes inert immediately and is hidden when
+the fade ends. Rapid navigation accumulates requested selections, cancels stale
+image work and cleans up animations. Reduced motion switches immediately with
+autoplay disabled. Existing four-second autoplay, visibility/focus/hover pauses,
+swipe, arrows, selectors and deferred media remain. No Pause/Play button is added.
+
 ## Catalog amendment — 16 October 2026
 
 The homepage uses one responsive five-slide hero with a four-second autoplay interval, arrows, selectors and swipe. Per the owner's follow-up, no Pause/Play buttons appear. Hover and keyboard focus pause rotation; leaving resumes a fresh interval. Manual selection/swipe restarts the interval unless paused. Hidden/offscreen pages stop timers; reduced motion disables autoplay. Image loading failures keep the current slide usable.
@@ -117,3 +192,34 @@ workflow. Legacy POST routes cannot publish changes. Catalog approval, product
 assignment, seller fulfilment and historical customer data retain their existing
 permissions. Disabled shopping actions are rejected on the server. Checkout
 uses a pinned policy revision and stores the order-time policy snapshot.
+
+## Guided editor and direct purchase amendment — 17 October 2026
+
+This amendment supersedes earlier Add to cart success destinations. Every
+confirmed product addition navigates to the cart page. Quick view closes before
+navigation. The header cart trigger retains its existing drawer behavior.
+Buy now checks out only the selected option and quantity through a customer-owned
+24-hour context. Normal cart contents and counters remain separate. Starting a
+context never reserves stock. Quotes and placement use existing policy, money,
+coupon, locking and payment services. Uncertain placement retries reuse the
+same context and request key; a completed context opens its saved owned order.
+Sign-in retains product selection without automatically placing an order.
+
+Storefront authoring opens an overview, groups tools and retains existing draft
+URLs. The outline and preview select the same contextual inspector. Guided help
+is dismissible. Live previews debounce 300 ms, ignore obsolete responses, and
+never persist a draft. Save is explicit. Invalid proposals retain the last valid
+preview, and save failures retain inputs. Unsaved navigation offers Save draft
+and continue, Discard changes, or Keep editing through the shared confirmation.
+Structural mutations require resolving pending content changes. Draft review,
+publication, restoration, locking and conflict rules remain authoritative.
+
+Image selection and upload happen within the editor; upload focus controls apply
+to the new asset and do not alter retained release media. Link/content repeaters
+use validated structured data with native legacy form fallback. Destination
+suggestions come from actual published/draft pages, categories, approved products
+and active makers. Presets remain draft presentation data. Empty merchandising
+selections warn without creating inventory. Preview-frame communication checks
+origin, source window and allowed targets. Customer mutations stay disabled in
+previews. Native dialogs contain focus, support Escape and restore their trigger;
+the admin navigation shell does not intercept Escape from an unrelated dialog.

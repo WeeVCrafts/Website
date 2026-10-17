@@ -318,8 +318,8 @@ func TestMockCheckoutDisablesPaymentUntilConfigured(t *testing.T) {
 		t.Fatalf("checkout status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	if !strings.Contains(body, "Online payments are not configured for this deployment") || !strings.Contains(body, `disabled>Payment unavailable`) {
-		t.Fatal("checkout should explain that payment is unavailable until a provider is configured")
+	if !strings.Contains(body, "Payments are temporarily unavailable. Your cart is saved.") || !strings.Contains(body, `disabled>Payment unavailable`) {
+		t.Fatal("checkout should explain payment unavailability and preserve the cart")
 	}
 	if strings.Contains(body, `role="tablist" aria-label="Payment methods"`) {
 		t.Fatal("checkout should not present nonfunctional payment method tabs")

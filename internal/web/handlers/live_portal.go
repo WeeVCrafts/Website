@@ -407,6 +407,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if legacy := canonicalSellerMutationPath(r.URL.Path); legacy != "" {
+				if r.URL.Path == "/seller-admin/products" || isSellerProductEditPath(strings.TrimPrefix(r.URL.Path, "/seller-admin/")) {
+					h.delegateSellerProduct(w, r, legacy, session.UserID, session.CSRFToken)
+					return
+				}
 				h.delegateWithPortalRedirect(w, requestWithPath(r, legacy), "/seller-admin")
 				return
 			}
@@ -591,9 +595,11 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	page.CanProducts = sellerPortalAllowed("/seller-admin/products", isOwner, permissions)
 	page.CanProductWrite = page.SellerStatus == "active" && (isOwner)
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
-	page.CanInventoryWrite = isOwner
+	page.CanInventoryWrite = isOwner && page.SellerStatus == "active"
 	page.CanOrders = true
-	page.CanFulfill = isOwner
+	page.CanReturns = sellerPortalAllowed("/seller-admin/returns", isOwner, permissions)
+	page.UserEmail = h.userEmail(r, userID)
+	page.CanFulfill = isOwner && page.SellerStatus == "active"
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
 	page.CanManageStore = isOwner
 	page.Notice = r.URL.Query().Get("notice")
@@ -629,6 +635,8 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 		}
 	}
 	page.OrderDetail = detail
+	page.OrderReturnPage = page.Pagination.Page
+	page.Pagination = viewmodels.PortalPagination{}
 	h.render(w, r, sellerpages.PortalOrderDetail(page))
 }
 
@@ -1978,9 +1986,9 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 	page.CanProducts = sellerPortalAllowed("/seller-admin/products", isOwner, permissions)
 	page.CanProductWrite = page.SellerStatus == "active" && (isOwner)
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
-	page.CanInventoryWrite = isOwner
+	page.CanInventoryWrite = isOwner && page.SellerStatus == "active"
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
-	page.CanFulfill = isOwner
+	page.CanFulfill = isOwner && page.SellerStatus == "active"
 	page.CanReturns = sellerPortalAllowed("/seller-admin/returns", isOwner, permissions)
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
 	page.CanManageStore = isOwner
@@ -2035,10 +2043,10 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		http.Redirect(w, r, "/seller-admin/onboarding", http.StatusSeeOther)
 		return
 	}
-	page.CanInventoryWrite = isOwner
+	page.CanInventoryWrite = isOwner && page.SellerStatus == "active"
 	page.CanInventory = sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions)
 	page.CanOrders = sellerPortalAllowed("/seller-admin/orders", isOwner, permissions)
-	page.CanFulfill = isOwner
+	page.CanFulfill = isOwner && page.SellerStatus == "active"
 	page.CanReturns = sellerPortalAllowed("/seller-admin/returns", isOwner, permissions)
 	page.CanReports = sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions)
 	page.CanManageStore = isOwner
@@ -2065,13 +2073,13 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		var cost *int64
 		var hasCompareAt bool
 		err = h.queryRow(r, `
-			SELECT p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,v.cost_price_cents,COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),
+			SELECT p.status,p.id::text,p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,v.cost_price_cents,COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),
 			       COALESCE(v.sku,''),COALESCE(i.available_quantity,0),p.delivery_label
 			FROM products p JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents,cost_price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
 			LEFT JOIN inventory_stock i ON i.variant_id=v.id
 			WHERE p.id=$1 AND p.status<>'archived' AND p.seller_id IN (
-				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 )`, id, userID).Scan(&form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &cost, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
+				SELECT s.id FROM sellers s WHERE s.owner_user_id=$2 )`, id, userID).Scan(&form.Status, &form.ID, &form.Name, &form.Slug, &form.BrandSlug, &form.BrandName, &form.CategorySlug, &form.CategoryName, &form.Description, &price, &compareAt, &hasCompareAt, &cost, &form.Image, &form.SKU, &stock, &form.DeliveryLabel)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				http.NotFound(w, r)
@@ -2105,6 +2113,8 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	} else {
 		page.Title = "Create product draft"
 	}
+	applySellerProductInput(r, &form)
+	page.Pagination = viewmodels.PortalPagination{}
 	page.Subtitle = "Save a product draft, then submit it for marketplace review. Products ship to serviceable PIN codes in India."
 	h.render(w, r, sellerpages.ProductForm(page, form))
 }
@@ -2233,6 +2243,13 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 			_ = h.queryRow(r, `SELECT public_location,public_story,public_technique,public_portrait FROM sellers WHERE id=$1`, sellerID).Scan(&page.PublicLocation, &page.PublicStory, &page.PublicTechnique, &page.PublicPortrait)
 		}
 	}
+	page.InventoryFilter = sellerStockFilter(r.URL.Query().Get("stock"))
+	if active == "inventory" {
+		if variantID, err := strconv.ParseInt(r.URL.Query().Get("variant"), 10, 64); err == nil && variantID > 0 {
+			page.SelectedVariant = strconv.FormatInt(variantID, 10)
+			page.InventoryHistory = h.sellerInventoryHistory(r, sellerID, variantID)
+		}
+	}
 	page.Pagination = projectionPagination(r, sellerProjectionKey(active, page.Tab))
 	page.LedgerPagination = projectionPagination(r, "seller-ledger")
 	page.SettlementPagination = projectionPagination(r, "seller-settlements")
@@ -2355,7 +2372,7 @@ func joinPortalWarning(current, warning string) string {
 }
 
 func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
-	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(i.available_quantity,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(i.available_quantity,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
+	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(stock.available,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN LATERAL (SELECT SUM(st.available_quantity) AS available FROM product_variants av JOIN inventory_stock st ON st.variant_id=av.id WHERE av.product_id=p.id AND av.status='active') stock ON TRUE WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(stock.available,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
 	if err != nil {
 		return nil
 	}
@@ -2379,7 +2396,7 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 }
 
 func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, query string, threshold int) []viewmodels.SellerAdminInventory {
-	rows, err := h.projectionRows(r, "seller-inventory", `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR v.sku ILIKE '%'||$2||'%' OR COALESCE(v.name,'') ILIKE '%'||$2||'%') ORDER BY p.id DESC,v.id DESC`, sellerID, query)
+	rows, err := h.projectionRows(r, "seller-inventory", `SELECT v.id,p.name,v.sku,COALESCE(v.name,'Default variant'),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0) FROM products p JOIN product_variants v ON v.product_id=p.id LEFT JOIN inventory_stock i ON i.variant_id=v.id WHERE p.seller_id=$1 AND v.status='active' AND ($3='' OR ($3='low' AND COALESCE(i.available_quantity,0)<$4) OR ($3='out' AND COALESCE(i.available_quantity,0)=0)) AND ($2='' OR p.name ILIKE '%'||$2||'%' OR v.sku ILIKE '%'||$2||'%' OR COALESCE(v.name,'') ILIKE '%'||$2||'%') ORDER BY p.id DESC,v.id DESC`, sellerID, query, sellerStockFilter(r.URL.Query().Get("stock")), threshold)
 	if err != nil {
 		return nil
 	}

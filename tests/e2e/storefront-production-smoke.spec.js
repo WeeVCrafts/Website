@@ -6,6 +6,22 @@ test.use({baseURL:'https://weevcrafts.com',trace:'off',screenshot:'off'});
 // Explicit opt-in, public GETs only. All mutation suites keep their local guards.
 test.describe('Published storefront deployment smoke',()=>{
  test.skip(process.env.WEEVCRAFTS_LIVE_SMOKE!=='1','Enable explicitly after deployment.');
+ test('brand discovery metadata and sitemap resolve on the canonical domain',async({request})=>{
+  test.setTimeout(120000);
+  const home=await request.get('/');expect(home.ok()).toBeTruthy();const html=await home.text();
+  expect(html).toContain('<title>WeevCrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>');
+  expect(html).toContain('rel="canonical" href="https://weevcrafts.com/"');
+  expect(html).toContain('name="robots" content="index,follow"');
+  const schema=JSON.parse(html.match(/<script[^>]*id="website-schema"[^>]*>([\s\S]*?)<\/script>/)[1]);
+  const website=schema['@graph'].find(n=>n['@type']==='WebSite'),organization=schema['@graph'].find(n=>n['@type']==='Organization');
+  expect(website.name).toBe('WeevCrafts');expect(website.alternateName).toContain('weevcrafts');expect(new Set(website.alternateName).size).toBe(website.alternateName.length);expect(website.publisher['@id']).toBe(organization['@id']);
+  const robots=await request.get('/robots.txt');expect(robots.ok()).toBeTruthy();expect(await robots.text()).toContain('Sitemap: https://weevcrafts.com/sitemap.xml');
+  const sitemap=await request.get('/sitemap.xml');expect(sitemap.ok()).toBeTruthy();const xml=await sitemap.text();
+  expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+  const locations=[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1].replaceAll('&amp;','&'));
+  expect(locations.length).toBeGreaterThan(9);expect(locations.some(u=>u.includes('/makers/'))).toBe(true);
+  for(const location of locations){expect(location.startsWith('https://weevcrafts.com/')).toBe(true);const response=await request.get(location);expect(response.status(),location).toBe(200);}
+ });
  test('published identity, responsive layout and public policy content',async({page})=>{
   test.setTimeout(120000);
   for(const width of [1440,390]){

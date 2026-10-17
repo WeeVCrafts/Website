@@ -58,6 +58,10 @@ func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	carrier := strings.TrimSpace(r.FormValue("carrier"))
+	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) == "" {
+		h.renderError(w, http.StatusUnprocessableEntity, "Carrier name required", "Enter the carrier name when choosing Other.")
+		return
+	}
 	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) != "" {
 		carrier = strings.TrimSpace(r.FormValue("custom_carrier"))
 	}
@@ -81,13 +85,35 @@ func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, ports.ErrOrderNotFound):
 			h.renderError(w, http.StatusNotFound, "Seller order unavailable", "That order is not part of your seller workspace.")
 		case errors.Is(err, ports.ErrInvalidState):
-			h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("This order can only move to its next fulfilment stage."))
+			if r.Header.Get("X-UI-Form") == "true" {
+				h.renderError(w, http.StatusConflict, "Order stage changed", "This order can only move to its next fulfilment stage. Your entered details are preserved. Reload the latest order before saving.")
+				return
+			}
+			h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "This order can only move to its next fulfilment stage."))
 		case errors.Is(err, ports.ErrFulfillmentConflict), errors.Is(err, applicationcommerce.ErrStaleSellerFulfillment):
-			h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("This order changed in another session. Review the latest stage and try again."))
+			if r.Header.Get("X-UI-Form") == "true" {
+				h.renderError(w, http.StatusConflict, "Order changed", "This order changed in another session. Your entered details are preserved. Reload the latest order before saving.")
+				return
+			}
+			h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "This order changed in another session. Review the latest stage and try again."))
 		default:
 			h.renderError(w, http.StatusServiceUnavailable, "Fulfilment unavailable", "We could not save that fulfilment update.")
 		}
 		return
 	}
-	h.redirect(w, r, "/seller-admin/orders/"+url.PathEscape(orderNumber)+"?notice="+url.QueryEscape("Fulfilment update saved."))
+	h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "Fulfilment update saved."))
+}
+
+func sellerOrderReturnURL(r *http.Request, number, notice string) string {
+	query := url.Values{"notice": {notice}}
+	if q := r.FormValue("return_query"); len(q) <= 200 {
+		query.Set("q", q)
+	}
+	if tab := r.FormValue("return_tab"); len(tab) <= 30 {
+		query.Set("tab", tab)
+	}
+	if page, err := strconv.Atoi(r.FormValue("return_page")); err == nil && page > 0 && page <= 1000000 {
+		query.Set("page", strconv.Itoa(page))
+	}
+	return "/seller-admin/orders/" + url.PathEscape(number) + "?" + query.Encode()
 }

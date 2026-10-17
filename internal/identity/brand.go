@@ -16,3 +16,9 @@ var brandDisplayNames = strings.NewReplacer("WeeVCrafts", Name, "Weevcrafts", Na
 func DisplayName(value string) string {
 	return brandDisplayNames.Replace(value)
 }
+
+// MakerSlug is the existing public maker URL convention, shared by navigation
+// and the sitemap so discovery links resolve to the same profile.
+func MakerSlug(value string) string {
+	return strings.Trim(strings.NewReplacer("&", "and", "'", "", " ", "-").Replace(strings.ToLower(value)), "-")
+}

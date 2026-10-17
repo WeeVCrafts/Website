@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/wecratfs/commerce/internal/identity"
 )
 
 type sitemapURLSet struct {
@@ -38,23 +39,31 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			set.URLs = append(set.URLs, sitemapEntry{Loc: base + path})
 		}
 		if pool != nil {
-			appendRows := func(query, prefix string) {
+			appendRows := func(query, prefix string, maker bool) error {
 				rows, err := pool.Query(r.Context(), query)
 				if err != nil {
-					return
+					return err
 				}
 				defer rows.Close()
 				for rows.Next() {
 					var slug string
-					if rows.Scan(&slug) == nil {
-						set.URLs = append(set.URLs, sitemapEntry{Loc: base + prefix + url.PathEscape(slug)})
+					if err := rows.Scan(&slug); err != nil {
+						return err
 					}
+					if maker {
+						slug = identity.MakerSlug(slug)
+					}
+					set.URLs = append(set.URLs, sitemapEntry{Loc: base + prefix + url.PathEscape(slug)})
+				}
+				return rows.Err()
+			}
+			for _, source := range sitemapCatalogSources {
+				if err := appendRows(source.query, source.prefix, source.maker); err != nil {
+					w.Header().Set("Retry-After", "300")
+					http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
+					return
 				}
 			}
-			appendRows("SELECT slug FROM products WHERE status='approved' ORDER BY id LIMIT 5000", "/products/")
-			appendRows("SELECT slug FROM sellers WHERE status='active' ORDER BY id LIMIT 5000", "/makers/")
-			appendRows("SELECT slug FROM brands WHERE EXISTS (SELECT 1 FROM products p WHERE p.brand_slug=brands.slug AND p.status='approved') ORDER BY slug LIMIT 5000", "/brands/")
-			appendRows("SELECT slug FROM categories WHERE EXISTS (SELECT 1 FROM products p WHERE p.category_slug=categories.slug AND p.status='approved') ORDER BY slug LIMIT 5000", "/categories/")
 		}
 		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=300")
@@ -64,6 +73,16 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 		_ = xml.NewEncoder(w).Encode(set)
 	}
 	return robots, sitemap
+}
+
+var sitemapCatalogSources = []struct {
+	query, prefix string
+	maker         bool
+}{
+	{`SELECT p.slug FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.status='approved' AND s.status='active' ORDER BY p.id LIMIT 5000`, "/products/", false},
+	{`SELECT DISTINCT s.display_name FROM sellers s WHERE s.status='active' AND EXISTS (SELECT 1 FROM products p WHERE p.seller_id=s.id AND p.status='approved') ORDER BY s.display_name LIMIT 5000`, "/makers/", true},
+	{`SELECT b.slug FROM brands b WHERE EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.brand_slug=b.slug AND p.status='approved' AND s.status='active') ORDER BY b.slug LIMIT 5000`, "/brands/", false},
+	{`SELECT c.slug FROM categories c WHERE EXISTS (SELECT 1 FROM product_categories pc JOIN products p ON p.id=pc.product_id JOIN sellers s ON s.id=p.seller_id WHERE pc.category_slug=c.slug AND p.status='approved' AND s.status='active') ORDER BY c.slug LIMIT 5000`, "/categories/", false},
 }
 
 func canonicalHostRedirect(next http.Handler, canonical string, environment string) http.Handler {

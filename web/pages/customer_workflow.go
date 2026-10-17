@@ -54,3 +54,48 @@ func shipmentSteps(status string) []shipmentStep {
 	}
 	return steps
 }
+
+// Confirmation uses the recorded parcel stages, including partial shipments.
+func confirmationProcessing(order viewmodels.Order) bool {
+	if !confirmationPaymentSettled(order) || order.State == "cancelled" {
+		return false
+	}
+	if len(order.Shipments) > 0 {
+		return domaincommerce.AggregateFulfillmentStage(order.Shipments).Index() >= domaincommerce.FulfillmentProcessing.Index()
+	}
+	switch order.State {
+	case "processing", "packing", "packed", "shipped", "out_for_delivery", "delivered":
+		return true
+	}
+	return false
+}
+func confirmationDelivered(order viewmodels.Order) bool {
+	if !confirmationPaymentSettled(order) || order.State == "cancelled" {
+		return false
+	}
+	if len(order.Shipments) > 0 {
+		return domaincommerce.AggregateFulfillmentStage(order.Shipments) == domaincommerce.FulfillmentDelivered
+	}
+	return order.State == "delivered"
+}
+
+// A recorded refund does not erase the completed shipment history.
+func confirmationPaymentSettled(order viewmodels.Order) bool {
+	return order.PaymentState == "captured" || order.PaymentState == "refunded" || order.State == "refunded" || order.RefundStatus == "processed"
+}
+
+func shoppingShell(p viewmodels.CustomerPage) viewmodels.CustomerPage {
+	if p.CheckoutIntentID != "" {
+		p.Cart = p.ShoppingCart
+		p.CartCount = p.ShoppingCartCount
+		p.CheckoutIntentID = ""
+	}
+	return p
+}
+
+func productInitialQuantity(p viewmodels.CustomerPage) int {
+	if p.ProductQuantity >= 1 && p.ProductQuantity <= 99 {
+		return p.ProductQuantity
+	}
+	return 1
+}

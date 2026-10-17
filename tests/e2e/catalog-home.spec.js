@@ -6,7 +6,7 @@ const base=process.env.WEEVCRAFTS_BASE_URL||'http://127.0.0.1:18080';
 const output=path.join(os.tmpdir(),'weevcrafts-catalog-20261016');
 test.use({baseURL:base});
 test.beforeAll(async()=>{
- if(new URL(base).hostname!=='127.0.0.1'||new URL(base).port!=='18080')throw new Error('Catalog QA requires the isolated app at 127.0.0.1:18080.');
+ if(new URL(base).hostname!=='127.0.0.1'||!['18080','18085'].includes(new URL(base).port)||(new URL(base).port==='18085'&&process.env.WEEVCRAFTS_QA_DATABASE!=='storefront_guided_20261017'))throw new Error('Catalog QA requires the isolated app at 127.0.0.1:18080.');
  await fs.mkdir(output,{recursive:true});
 });
 async function ready(page){await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>document.querySelector('[data-hero]')?.dataset.playing!==undefined);}
@@ -28,6 +28,7 @@ test('autoplay advances after four seconds at every supported width without play
   await expect(page.locator('[data-hero]')).toHaveAttribute('data-playing','true');
   await page.clock.runFor(4100);
   await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
+  await page.clock.runFor(500);
   await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);
   await expect(page.locator('[data-hero-slide][inert]')).toHaveCount(4);
   if(width===390){

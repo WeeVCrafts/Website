@@ -37,6 +37,29 @@ components:
 
 # WeevCrafts visual standards
 
+## Customer workflow refinement — 17 October 2026
+
+Customer task pages retain the approved shared brand, typography, cards and
+responsive account navigation. Order history adds a readable result range and
+wrapping Previous/Next controls with 44px targets. Order and return filters are
+navigation links with the existing active treatment. Customer form failures and
+confirmations reuse ui-standards presentation and behavior; no parallel visual
+system or customer-specific dialog implementation is introduced.
+
+## Seller workflow refinement — 17 October 2026
+
+The seller portal retains its established palette, operational typefaces, sidebar,
+shared validation and button family. Product forms use a four-step navigation
+with a clear current step, compact optional specifications and an editable review.
+Inventory adjustments expand within the relevant record. Orders use one paginated
+table with explicit payment and fulfilment labels. Controls retain 44px targets;
+phone layouts preserve every value and action through existing record-table rules.
+
+Homepage slide changes use a 450ms ease-out opacity crossfade inside a shared grid
+cell. Both images reserve identical hero geometry. No layout property is animated.
+Reduced motion uses an immediate change. Runtime owners remain `experience.js`
+and `experience.css`; seller-specific presentation remains in `seller-admin.css`.
+
 ## 15 October 2026 Woven Gallery sign-in
 
 The approved C concept replaces the `/login` card with an open form and decorative pottery, textile and brass still life. Keep the woven mark larger than the restrained wordmark. Mobile uses a shallow photography strip and natural page scrolling. Login and the protected-action prompt share credential fields, 50px controls, Playfair headings, DM Sans interface text, 8px control corners and the existing forest/ivory tokens. `auth-gallery.css` owns this bounded surface after shared brand styles.
@@ -154,3 +177,21 @@ photographs, cards, makers, collections, navigation and footer. Theme overrides
 are validated data: supported self-hosted fonts and readable hex colors. The
 published configuration supplies body CSS variables; no arbitrary CSS, HTML or
 JavaScript is accepted. Existing product facts and photographs remain catalog data.
+
+## Guided storefront customization — 17 October 2026
+
+The editor retains AdminDocument, Roboto/Inter operational typography and shared
+forest, ivory and semantic tokens. Grouped workspace navigation leads to a page
+selector, compact section outline, contextual inspector and private preview.
+Readable names and existing Material Symbols identify section purpose; no maker
+portraits or catalog photographs are invented. Outline actions appear on the
+selected section. Structured content rows collapse by their own names. Native
+selects remain platform-owned. Phones show Sections, Edit and Preview tabs;
+forms retain natural document scrolling and only the preview scrolls horizontally.
+
+Editor status distinguishes unsaved changes, an unsaved preview, a saved draft,
+submitted review and publication. In-preview edit controls exist only in the
+private authoring preview. Customer pages preserve their approved composition;
+purchase facts and shipping/returns summaries extend existing product controls.
+Runtime owners are storefront-editor.css/js, storefront-preview.js and the shared
+ui-standards controls. Existing tokens and homepage fade remain authoritative.

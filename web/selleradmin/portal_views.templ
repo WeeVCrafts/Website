@@ -1,58 +1,79 @@
 package selleradmin
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
 import "github.com/wecratfs/commerce/web/components"
 
 templ PortalDashboard(p viewmodels.SellerAdminPage) {
- @Document(p) {
-  <nav class="ui-actions" aria-label="Shop actions">
-   if p.CanProductWrite {
-    <a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
-   }
-   if p.CanFulfill {
-    <a class="seller-button outline" href="/seller-admin/orders">Fulfil orders</a>
-   }
-   if p.CanInventory {
-    <a class="seller-button outline" href="/seller-admin/inventory">Manage stock</a>
-   }
-  </nav>
-  @SellerStatGrid(p)
-  if len(p.LowStock) > 0 {
-   <section class="seller-callout" role="status"><p><strong>{ sellerInt(len(p.LowStock)) } products need a stock check</strong><small>Below your { sellerInt(p.LowStockThreshold) } unit threshold. <a href="/seller-admin/inventory">Review stock</a></small></p></section>
-  }
-  <section class="seller-two-grid">
-   <article class="seller-panel"><div class="seller-panel-heading"><div><h2>Products</h2><p>Your latest listings</p></div><a class="seller-panel-link" href="/seller-admin/products">View all products</a></div>
-    if len(p.Products) == 0 && p.DataWarning == "" {
-     @SellerTableEmpty("No products yet", "Create your first draft to start your collection.")
-    } else {
-     <div class="ui-table-region" role="region" aria-label="Latest products" tabindex="0"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col" class="numeric">Price</th><th scope="col" class="numeric">Stock</th><th scope="col">Status</th></tr></thead><tbody>
-      for _, product := range p.Products[:min(6,len(p.Products))] {
-       <tr><th scope="row" class="record-title">
-        if p.CanProductWrite && product.Status != "archived" {
-         <a href={ "/seller-admin/products/" + product.ID + "/edit" }>{ product.Name }</a>
-        } else {
-         { product.Name }
-        }
-       </th><td class="numeric" data-label="Price">{ product.Price }</td><td class="numeric" data-label="Stock">{ product.Stock }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td></tr>
-      }
-     </tbody></table></div>
-    }
-   </article>
-   <article class="seller-panel"><div class="seller-panel-heading"><div><h2>Recent orders</h2><p>Keep customer deliveries moving</p></div>if p.CanOrders {
-<a class="seller-panel-link" href="/seller-admin/orders">View all orders</a>
-}</div>
-    if len(p.Orders) == 0 && p.DataWarning == "" {
-     @SellerTableEmpty("No orders yet", "Paid customer orders will appear here.")
-    } else {
-     <div class="ui-table-region" role="region" aria-label="Recent orders" tabindex="0"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col" class="numeric">Value</th><th scope="col">Status</th></tr></thead><tbody>
-      for _, order := range p.Orders[:min(6,len(p.Orders))] {
-       <tr><th scope="row" class="record-title"><a href={ "/seller-admin/orders/" + order.Number }>{ order.Number }</a></th><td data-label="Customer">{ order.Customer }</td><td class="numeric" data-label="Value">{ order.Value }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td></tr>
-      }
-     </tbody></table></div>
-    }
-   </article>
-  </section>
- }
+	@Document(p) {
+		<nav class="ui-actions" aria-label="Shop actions">
+			if p.CanProductWrite {
+				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
+			}
+			if p.CanFulfill {
+				<a class="seller-button outline" href="/seller-admin/orders">Fulfil orders</a>
+			}
+			if p.CanInventory {
+				<a class="seller-button outline" href="/seller-admin/inventory">Manage stock</a>
+			}
+		</nav>
+		@SellerStatGrid(p)
+		if len(p.LowStock) > 0 {
+			<section class="seller-callout" role="status"><p><strong>{ sellerInt(len(p.LowStock)) } variants on this page need a stock check</strong><small>Below your { sellerInt(p.LowStockThreshold) } unit threshold. <a href="/seller-admin/inventory?stock=low">Review stock</a></small></p></section>
+		}
+		<section class="seller-two-grid">
+			<article class="seller-panel">
+				<div class="seller-panel-heading"><div><h2>Products</h2><p>Your latest listings</p></div><a class="seller-panel-link" href="/seller-admin/products">View all products</a></div>
+				if len(p.Products) == 0 && p.DataWarning == "" {
+					@SellerTableEmpty("No products yet", "Create your first draft to start your collection.")
+				} else {
+					<div class="ui-table-region" role="region" aria-label="Latest products" tabindex="0">
+						<table class="ui-table ui-table--records">
+							<thead><tr><th scope="col">Product</th><th scope="col" class="numeric">Price</th><th scope="col" class="numeric">Stock</th><th scope="col">Status</th></tr></thead>
+							<tbody>
+								for _, product := range p.Products[:min(6,len(p.Products))] {
+									<tr>
+										<th scope="row" class="record-title">
+											if p.CanProductWrite && product.Status != "archived" {
+												<a href={ "/seller-admin/products/" + product.ID + "/edit" }>{ product.Name }</a>
+											} else {
+												{ product.Name }
+											}
+										</th>
+										<td class="numeric" data-label="Price">{ product.Price }</td>
+										<td class="numeric" data-label="Stock">{ product.Stock }</td>
+										<td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				}
+			</article>
+			<article class="seller-panel">
+				<div class="seller-panel-heading">
+					<div><h2>Recent orders</h2><p>Keep customer deliveries moving</p></div>
+					if p.CanOrders {
+						<a class="seller-panel-link" href="/seller-admin/orders">View all orders</a>
+					}
+				</div>
+				if len(p.Orders) == 0 && p.DataWarning == "" {
+					@SellerTableEmpty("No orders yet", "Paid customer orders will appear here.")
+				} else {
+					<div class="ui-table-region" role="region" aria-label="Recent orders" tabindex="0">
+						<table class="ui-table ui-table--records">
+							<thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col" class="numeric">Value</th><th scope="col">Status</th></tr></thead>
+							<tbody>
+								for _, order := range p.Orders[:min(6,len(p.Orders))] {
+									<tr><th scope="row" class="record-title"><a href={ "/seller-admin/orders/" + order.Number }>{ order.Number }</a></th><td data-label="Customer">{ order.Customer }</td><td class="numeric" data-label="Value">{ order.Value }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td></tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				}
+			</article>
+		</section>
+	}
 }
 
 templ PortalTerms(p viewmodels.SellerAdminPage) {
@@ -75,203 +96,336 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 		if p.SellerStatus != "active" {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}
-		<form class="seller-toolbar" action="/seller-admin/products" method="get"><label class="sr-only" for="portal-product-query">Search products</label><input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
+		<form class="seller-toolbar" action="/seller-admin/products" method="get">
+			<label class="sr-only" for="portal-product-query">Search products</label><input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
 				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
 			}
 		</form>
-		<section class="seller-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">category</span><span><h2>Product catalogue</h2><p>Review listings, pricing, stock and available row actions.</p></span></div></div><div class="seller-table-scroll"><div class="ui-table-region" tabindex="0" role="region" aria-label="Product catalogue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>
-			for _, product := range p.Products {
-				<tr><td data-label="Product"><div class="seller-product-cell">
-					if product.Image != "" {
-						<img class="seller-product-thumb" width="56" height="56" src={ product.Image } alt={ product.Name } loading="lazy"/>
-					} else {
-						<span class="seller-product-thumb seller-product-thumb--empty" role="img" aria-label={ product.Name + " image unavailable" }>No image</span>
-					}
-					<span>
-						if p.CanProductWrite && product.Status != "archived" {
-							<a class="seller-product-link" href={ "/seller-admin/products/" + product.ID + "/edit" }>{ product.Name }</a>
-						} else {
-							<b title={ product.Name }>{ product.Name }</b>
-						}
-						<small>{ components.StatusLabel(product.Status) }</small>
-					</span>
-				</div></td><td data-label="SKU">{ product.SKU }</td><td data-label="Category">{ product.Category }</td><td data-label="Price">{ product.Price }</td><td data-label="Stock">{ product.Stock }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td><td data-label="Actions" class="row-actions"><details><summary>Manage product</summary>
-					if p.CanProductWrite && product.Status != "archived" {
-						<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit product</a>
-						<form method="post" action="/seller-admin/products/archive" data-confirm="Archive this product? It will be hidden from customers while past orders remain available."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to archive" required/><button class="seller-button danger" type="submit">Archive</button></form>
-					}
-					if p.CanProductWrite && product.Status == "archived" {
-						<form method="post" action="/seller-admin/products/restore" data-confirm="Restore this as a private draft? It must be resubmitted for review before customers can see it."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to restore" required/><button class="seller-button outline" type="submit">Restore draft</button></form>
-					}
-					if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
-						<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
-					}
-				</details></td></tr>
-			}
-		</tbody></table></div>
-			if len(p.Products) == 0 && p.DataWarning == "" {
-				@SellerTableEmpty("No products found", "Create a product draft or change your search.")
-			}</div></section>
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">category</span><span><h2>Product catalogue</h2><p>Review listings, pricing, stock and available row actions.</p></span></div></div>
+			<div class="seller-table-scroll">
+				<div class="ui-table-region" tabindex="0" role="region" aria-label="Product catalogue">
+					<table class="ui-table ui-table--records">
+						<thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+						<tbody>
+							for _, product := range p.Products {
+								<tr>
+									<td data-label="Product">
+										<div class="seller-product-cell">
+											if product.Image != "" {
+												<img class="seller-product-thumb" width="56" height="56" src={ product.Image } alt={ product.Name } loading="lazy"/>
+											} else {
+												<span class="seller-product-thumb seller-product-thumb--empty" role="img" aria-label={ product.Name + " image unavailable" }>No image</span>
+											}
+											<span>
+												if p.CanProductWrite && product.Status != "archived" {
+													<a class="seller-product-link" href={ "/seller-admin/products/" + product.ID + "/edit" }>{ product.Name }</a>
+												} else {
+													<b title={ product.Name }>{ product.Name }</b>
+												}
+												<small>{ components.StatusLabel(product.Status) }</small>
+											</span>
+										</div>
+									</td>
+									<td data-label="SKU">{ product.SKU }</td>
+									<td data-label="Category">{ product.Category }</td>
+									<td data-label="Price">{ product.Price }</td>
+									<td data-label="Stock">{ product.Stock }</td>
+									<td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td>
+									<td data-label="Actions" class="row-actions">
+										<details>
+											<summary>Manage product</summary>
+											if p.CanProductWrite && product.Status != "archived" {
+												<a class="seller-button outline" href={ "/seller-admin/products/" + product.ID + "/edit" }>Edit product</a>
+												<form method="post" action="/seller-admin/products/archive" data-confirm="Archive this product? It will be hidden from customers while past orders remain available."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to archive" required/><button class="seller-button danger" type="submit">Archive</button></form>
+											}
+											if p.CanProductWrite && product.Status == "archived" {
+												<form method="post" action="/seller-admin/products/restore" data-confirm="Restore this as a private draft? It must be resubmitted for review before customers can see it."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to restore" required/><button class="seller-button outline" type="submit">Restore draft</button></form>
+											}
+											if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
+												<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
+											}
+										</details>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+				if len(p.Products) == 0 && p.DataWarning == "" {
+					@SellerTableEmpty("No products found", "Create a product draft or change your search.")
+				}
+			</div>
+		</section>
 	}
 }
 
 templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductForm) {
 	@Document(p) {
-		<section class="seller-panel seller-form-panel"><form class="seller-form-grid" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder>
-			<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-			<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
-			<fieldset class="ui-form-section"><legend>Basics</legend><label>Title<input name="name" value={ form.Name } required maxlength="180"/></label>
-			<label>Category<select name="category_slug" required><option value="">Choose a category</option>
-				for _, category := range form.Categories {
-					<option value={ category.Slug } selected?={ form.CategorySlug == category.Slug }>{ category.Name }</option>
-				}
-			</select><input type="hidden" name="category_name" value={ form.CategoryName } data-category-name/></label>
-			<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
-			</fieldset><fieldset class="ui-form-section"><legend>Pricing and stock</legend><p>Enter prices in rupees. Use up to two decimal places.</p><label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(form.PriceCents) } required/></label>
-			<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ rupeeInput(form.CompareAtCents) }/></label>
-			<label>Unit cost (INR, optional)<input name="cost_price_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ rupeeInput(form.CostPriceCents) }/></label>
-			if form.ID == "" {
-				if p.CanInventoryWrite {
-					<label>Stock quantity<input name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
-				} else {
-					<input type="hidden" name="initial_stock" value="0"/>
-				}
-			} else {
-				<div class="seller-form-wide seller-form-note">Stock is managed separately in Inventory. Editing this listing will not change available units.</div>
+		<section class="seller-panel seller-form-panel">
+			if form.ID != "" {
+				<section class="seller-draft-checklist" aria-label="Saved draft checklist">
+					<h2>Saved product · { components.StatusLabel(form.Status) }</h2>
+					<ul><li>Details and pricing saved</li><li><a href="#product-gallery">Review photos and gallery</a></li><li><a href="#product-variants">Review product variants</a></li><li>Submit separately for marketplace review when ready</li></ul>
+					if form.Status == "draft" || form.Status == "rejected" {
+						<form method="post" action="/seller-admin/products/submit" data-review-submit><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><button class="seller-button outline" type="submit">Submit for review</button></form>
+					}
+				</section>
 			}
-</fieldset><fieldset class="ui-form-section"><legend>Main product image</legend><p>Choose a clear photo of this exact product. Additional gallery images and videos can be added after saving the draft.</p>
-            <label class="seller-form-wide">Choose image (JPEG, PNG or WebP, up to 25 MB)<input type="file" name="image_file" accept="image/png,image/jpeg,image/webp" data-main-image/></label>
-            <div class="seller-form-wide" data-main-image-preview>
-              if form.Image != "" {
-<img class="product-media-square" src={ form.Image } alt={ "Current image for " + form.Name }/>
-}
-            </div>
-            <details class="seller-form-wide"><summary>Use an existing image URL</summary><label>Product image URL<input name="image_url" value={ form.Image }/></label></details>
-            </fieldset><fieldset class="ui-form-section"><legend>Description and delivery</legend>
-			<label class="seller-form-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
-			<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ components.ProductStory(form.Description) }</textarea></label>
-			<label>Materials (optional)<input name="materials" value={ components.SpecificationValue(form.Description,"Materials") } maxlength="500"/></label>
-            <label>Dimensions (optional)<input name="dimensions" value={ components.SpecificationValue(form.Description,"Dimensions") } maxlength="500"/></label>
-            <label>Care (optional)<input name="care" value={ components.SpecificationValue(form.Description,"Care") } maxlength="500"/></label>
-            <label>Technique (optional)<input name="technique" value={ components.SpecificationValue(form.Description,"Technique") } maxlength="500"/></label>
-            </fieldset><div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button primary" type="submit">Save product draft</button></div>
-		</form>
-		if form.ID != "" {
-			<fieldset class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
-				<legend>Product images</legend><p>Images update the main product photo and appear in the customer product gallery.</p>
-				<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button><div class="product-media-selection" data-media-selection></div><p role="status" aria-live="polite" data-media-status></p>
-				<div class="product-media-assets">
-					if len(form.Media) == 0 {
-						<p>No uploaded media yet.</p>
-					}
-					for _, media := range form.Media {
-						<article class="product-media-asset">
-							if media.IsVideo {
-								<video controls preload="metadata" aria-label={ "Product video " + media.ID }><source src={ media.URL } type={ media.ContentType }/></video>
-							} else {
-							<img class="product-media-square" src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
-							}
-							if media.URL == form.Image {
-                <strong class="status">Current product photo</strong>
-              }
-							<p>{ media.ContentType } · { media.Size } bytes</p><button class="seller-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
-						</article>
-					}
-				</div>
-			</fieldset>
-			<section class="seller-panel product-variant-manager">
-				<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><span><h2>Product variants</h2><p>Enter prices in rupees. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></span></div></div>
-			for _, variant := range form.Variants {
-				<div class="product-variant-row">
-					<form class="seller-form-grid product-variant-edit" method="post" action="/seller-admin/products/variants/update">
-						<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
-						<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
-						<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
-						<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
-						<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
-						<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
-						if variant.Status == "active" {
-							<button class="seller-button primary" type="submit">Save variant</button>
+			<form class="seller-form-grid seller-product-wizard" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder data-saved-product={ form.ID } novalidate>
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
+				if form.ErrorMessage != "" {
+					<p id="product-error" class="seller-form-error ui-form-error seller-form-wide" role="alert" tabindex="-1">
+						{ form.ErrorMessage }
+						if form.ErrorField!="" {
+							<a href={ "#product-" + form.ErrorField } data-server-product-field={ form.ErrorField }>Correct this field</a>
 						}
-					</form>
-					if variant.Status == "active" {
-						<form method="post" action="/seller-admin/products/variants/archive" data-confirm="Archive this variant? Existing orders will remain intact.">
-							<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
-							<label>Archive reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Why this option is being removed"/></label><button class="seller-button danger" type="submit">Archive variant</button>
-						</form>
-					}
-				</div>
-			}
-			<form class="seller-form-grid product-variant-create" method="post" action="/seller-admin/products/variants/create">
-				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/>
-				<h3>Add variant</h3>
-				<label>Variant name<input name="name" required maxlength="120" placeholder="Color, size or option"/></label>
-				<label>SKU<input name="sku" required maxlength="120"/></label>
-				<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" required/></label>
-				<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal"/></label>
-				if p.CanInventoryWrite {
-					<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
-				} else {
-					<p class="seller-form-wide seller-form-note">This variant starts at zero stock. An owner must grant Inventory write access before you can add stock.</p>
+					</p>
 				}
-				<button class="seller-button primary" type="submit">Add variant</button>
+				<nav class="seller-product-steps seller-form-wide" aria-label="Product entry steps" data-product-steps hidden>
+					<button type="button" data-product-step-link="details">1. Details</button><button type="button" data-product-step-link="pricing">2. Pricing &amp; stock</button><button type="button" data-product-step-link="photos">3. Photos</button><button type="button" data-product-step-link="review">4. Review</button>
+				</nav>
+				<fieldset class="ui-form-section seller-form-wide" data-product-step="details">
+					<legend tabindex="-1">Product details</legend>
+					<label>Title<input name="name" value={ form.Name } required maxlength="180"/></label>
+					<label>
+						Category
+						<select name="category_slug" required>
+							<option value="">Choose a category</option>
+							for _, category := range form.Categories {
+								<option value={ category.Slug } selected?={ form.CategorySlug == category.Slug }>{ category.Name }</option>
+							}
+						</select><input type="hidden" name="category_name" value={ form.CategoryName } data-category-name/>
+					</label>
+					<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
+					<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ components.ProductStory(form.Description) }</textarea></label>
+					<label class="seller-form-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
+					<details class="seller-form-wide seller-optional-details">
+						<summary>Optional product specifications</summary>
+						<div class="seller-form-grid">
+							for _, name := range []string{"materials", "dimensions", "care", "technique"} {
+								<label>{ sellerFieldLabel(name) }<input name={ name } value={ sellerProductInput(form, name, components.SpecificationValue(form.Description, sellerFieldLabel(name))) } maxlength="500"/></label>
+							}
+						</div>
+					</details>
+				</fieldset>
+				<fieldset class="ui-form-section seller-form-wide" data-product-step="pricing">
+					<legend tabindex="-1">Pricing &amp; stock</legend>
+					<p>Enter prices in rupees, with up to two decimal places.</p>
+					<label>Price (INR)<input id="product-price_rupees" aria-invalid={ sellerProductInvalid(form, "price_rupees") } aria-describedby={ sellerProductErrorID(form, "price_rupees") } name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "price_rupees", rupeeInput(form.PriceCents)) } required/></label>
+					<label>Compare-at price (INR, optional)<input id="product-compare_at_rupees" aria-invalid={ sellerProductInvalid(form, "compare_at_rupees") } aria-describedby={ sellerProductErrorID(form, "compare_at_rupees") } name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "compare_at_rupees", rupeeInput(form.CompareAtCents)) }/></label>
+					<label>Unit cost (INR, optional)<input id="product-cost_price_rupees" aria-invalid={ sellerProductInvalid(form, "cost_price_rupees") } aria-describedby={ sellerProductErrorID(form, "cost_price_rupees") } name="cost_price_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "cost_price_rupees", rupeeInput(form.CostPriceCents)) }/></label>
+					if form.ID == "" {
+						if p.CanInventoryWrite {
+							<label>Stock quantity<input id="product-initial_stock" aria-invalid={ sellerProductInvalid(form, "initial_stock") } aria-describedby={ sellerProductErrorID(form, "initial_stock") } name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
+						} else {
+							<input type="hidden" id="product-initial_stock" name="initial_stock" value="0"/>
+						}
+					} else {
+						<p class="seller-form-wide seller-form-note">Use <a href="/seller-admin/inventory">Inventory</a> to change available units. Saving this listing does not change stock.</p>
+					}
+				</fieldset>
+				<fieldset class="ui-form-section seller-form-wide" data-product-step="photos">
+					<legend tabindex="-1">Main product image</legend>
+					<p>Choose a clear photo of this exact product. Additional gallery images and videos can be added below after the first draft save.</p>
+					<label class="seller-form-wide">Choose image (JPEG, PNG or WebP, up to 25 MB)<input type="file" id="product-image_file" aria-invalid={ sellerProductInvalid(form, "image_file") } aria-describedby={ sellerProductErrorID(form, "image_file") } name="image_file" accept="image/png,image/jpeg,image/webp" data-main-image/></label>
+					<div class="seller-form-wide" data-main-image-preview>
+						if form.Image != "" {
+							<img class="product-media-square" src={ form.Image } alt={ "Current image for " + form.Name }/>
+						}
+					</div>
+					<details class="seller-form-wide"><summary>Use an existing image URL</summary><label>Product image URL<input name="image_url" value={ form.Image }/></label></details>
+				</fieldset>
+				<section class="seller-form-wide seller-product-review" data-product-step="review" hidden><h2 tabindex="-1">Review product draft</h2><p>Check your details before saving. Saving a draft does not submit it for marketplace review.</p><div data-product-review></div></section>
+				<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button outline" type="button" data-product-back hidden>Back</button><button class="seller-button primary" type="button" data-product-next hidden>Next</button><button class="seller-button primary" type="submit" data-product-save>Save product draft</button></div>
 			</form>
-			</section>
-		}
+			if form.ID != "" {
+				<fieldset id="product-gallery" class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
+					<legend>Product images</legend>
+					<p>Images update the main product photo and appear in the customer product gallery.</p>
+					<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button>
+					<div class="product-media-selection" data-media-selection></div>
+					<p role="status" aria-live="polite" data-media-status></p>
+					<div class="product-media-assets">
+						if len(form.Media) == 0 {
+							<p>No uploaded media yet.</p>
+						}
+						for _, media := range form.Media {
+							<article class="product-media-asset">
+								if media.IsVideo {
+									<video controls preload="metadata" aria-label={ "Product video " + media.ID }><source src={ media.URL } type={ media.ContentType }/></video>
+								} else {
+									<img class="product-media-square" src={ media.URL } alt={ "Uploaded product image " + media.ID } loading="lazy"/>
+								}
+								if media.URL == form.Image {
+									<strong class="status">Current product photo</strong>
+								}
+								<p>{ media.ContentType } · { media.Size } bytes</p><button class="seller-button danger" type="button" data-media-delete data-media-id={ media.ID }>Delete media</button>
+							</article>
+						}
+					</div>
+				</fieldset>
+				<section id="product-variants" class="seller-panel product-variant-manager">
+					<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><span><h2>Product variants</h2><p>Enter prices in rupees. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></span></div></div>
+					for _, variant := range form.Variants {
+						<div class="product-variant-row">
+							<form class="seller-form-grid product-variant-edit" method="post" action="/seller-admin/products/variants/update">
+								<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+								<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+								<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
+								<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
+								<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
+								<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
+								if variant.Status == "active" {
+									<button class="seller-button primary" type="submit">Save variant</button>
+								}
+							</form>
+							if variant.Status == "active" {
+								<form method="post" action="/seller-admin/products/variants/archive" data-confirm="Archive this variant? Existing orders will remain intact.">
+									<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+									<label>Archive reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Why this option is being removed"/></label><button class="seller-button danger" type="submit">Archive variant</button>
+								</form>
+							}
+						</div>
+					}
+					<form class="seller-form-grid product-variant-create" method="post" action="/seller-admin/products/variants/create">
+						<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/>
+						<h3>Add variant</h3>
+						<label>Variant name<input name="name" required maxlength="120" placeholder="Color, size or option"/></label>
+						<label>SKU<input name="sku" required maxlength="120"/></label>
+						<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" required/></label>
+						<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal"/></label>
+						if p.CanInventoryWrite {
+							<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
+						} else {
+							<p class="seller-form-wide seller-form-note">This variant starts at zero stock. An owner must grant Inventory write access before you can add stock.</p>
+						}
+						<button class="seller-button primary" type="submit">Add variant</button>
+					</form>
+				</section>
+			}
 		</section>
 	}
 }
 
 templ PortalInventory(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<form class="seller-toolbar low-stock-setting" method="post" action="/seller-admin/inventory/threshold"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Alert when available stock falls below<input type="number" name="low_stock_threshold" min="1" max="100000" value={ sellerInt(p.LowStockThreshold) } required/> units</label><button class="seller-button primary" type="submit">Save threshold</button></form>
-		if len(p.LowStock) > 0 {
-			<section class="seller-panel low-stock-alert" role="status"><h2>Needs restocking</h2><ul>
-				for _, item := range p.LowStock {
-					<li><strong>{ item.Name }</strong><span>SKU { item.SKU } · { item.Available } available</span></li>
-				}
-			</ul></section>
+		if p.CanInventoryWrite {
+			<form class="seller-toolbar low-stock-setting" method="post" action="/seller-admin/inventory/threshold"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Alert when available stock falls below<input type="number" name="low_stock_threshold" min="1" max="100000" value={ sellerInt(p.LowStockThreshold) } required/> units</label><button class="seller-button outline" type="submit">Save threshold</button></form>
 		}
-		<form class="seller-toolbar" action="/seller-admin/inventory" method="get"><label class="sr-only" for="portal-inventory-query">Search inventory</label><input id="portal-inventory-query" name="q" value={ p.Query } placeholder="Search product, variant or SKU"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/inventory">Clear</a></form>
-		<section class="seller-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><span><h2>Inventory</h2><p>Adjust available stock per variant.</p></span></div></div><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller inventory"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Variant</th><th scope="col">Available</th><th scope="col">Reserved</th><th scope="col">Stock action</th></tr></thead><tbody>
-			for _, item := range p.Inventory {
-				<tr><th scope="row" class="record-title">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Variant">{ item.Variant }</td><td class="numeric" data-label="Available">{ item.Available }</td><td class="numeric" data-label="Reserved">{ item.Reserved }</td><td data-label="Stock action" class="row-actions">
-					if p.CanInventoryWrite {
-						<form class="seller-inline-form" method="post" action="/seller-admin/inventory/adjust"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/><label class="sr-only" for={ "stock-delta-" + item.VariantID }>Stock change for { item.Name }</label><input id={ "stock-delta-" + item.VariantID } type="number" name="delta" required placeholder="+/- qty"/><input name="reason" required minlength="3" maxlength="500" placeholder="Reason"/><button class="seller-button primary" type="submit">Save</button></form>
-					} else {
-						<span>Read only</span>
+		<form class="seller-toolbar" action="/seller-admin/inventory" method="get"><label for="portal-inventory-query">Search inventory<input id="portal-inventory-query" name="q" value={ p.Query } placeholder="Product, variant or SKU"/></label><label>Stock level<select name="stock"><option value="">All stock</option><option value="low" selected?={ p.InventoryFilter=="low" }>Low stock</option><option value="out" selected?={ p.InventoryFilter=="out" }>Out of stock</option></select></label><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/inventory">Clear</a></form>
+		if len(p.LowStock)>0 {
+			<details class="seller-panel low-stock-alert">
+				<summary>Needs restocking on this page · { sellerInt(len(p.LowStock)) } variants</summary>
+				<ul>
+					for _, item := range p.LowStock {
+						<li><a href={ sellerInventoryURL(p, item.VariantID) }>{ item.Name } · { item.SKU }</a><span>{ item.Available } available · Update stock</span></li>
 					}
-				</td></tr>
-			}
-		</tbody></table></div>
-			if len(p.Inventory) == 0 && p.DataWarning == "" {
-				@SellerTableEmpty("No inventory found", "Inventory records appear when a product variant is created.")
+				</ul>
+			</details>
+		}
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><h2>Inventory</h2><p>Available units can be sold. Reserved units are held for orders.</p></div></div>
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller inventory">
+				<table class="ui-table ui-table--records">
+					<thead><tr><th scope="col">Product / variant</th><th scope="col">SKU</th><th scope="col">Available</th><th scope="col">Reserved</th><th scope="col">Stock action</th></tr></thead>
+					<tbody>
+						for _, item := range p.Inventory {
+							<tr id={ "stock-" + item.VariantID }>
+								<th scope="row" class="record-title">{ item.Name }<small class="seller-variant-label">{ item.Variant }</small><span class={ "ui-status " + components.StatusTone(item.Status) }>{ item.Status }</span></th>
+								<td data-label="SKU">{ item.SKU }</td>
+								<td class="numeric" data-label="Available">{ item.Available }</td>
+								<td class="numeric" data-label="Reserved">{ item.Reserved }</td>
+								<td data-label="Stock action" class="row-actions">
+									<details class="seller-stock-editor" open?={ p.SelectedVariant==item.VariantID }>
+										<summary>Adjust stock / history</summary>
+										if p.CanInventoryWrite {
+											<form method="post" action="/seller-admin/inventory/adjust" data-stock-adjustment data-available={ item.Available }>
+												<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/>
+												<input type="hidden" name="return_query" value={ p.Query }/><input type="hidden" name="return_stock" value={ p.InventoryFilter }/><input type="hidden" name="return_page" value={ sellerInt(p.Pagination.Page) }/>
+												<label>Adjustment<select name="adjustment_type"><option value="add">Add stock</option><option value="remove">Remove stock</option></select></label>
+												<label>Quantity<input type="number" name="quantity" min="1" max="100000" step="1" inputmode="numeric" required/></label>
+												<label>Reason<input name="reason" required minlength="3" maxlength="500"/></label>
+												<p class="seller-form-note" role="status" data-stock-preview>Reserved units are unchanged.</p><button class="seller-button primary" type="submit">Save stock change</button>
+											</form>
+										} else {
+											<p>Stock updates are unavailable for this seller profile.</p>
+										}
+										<a class="seller-button outline" href={ sellerInventoryHistoryURL(p, item.VariantID) }>View adjustment history</a>
+									</details>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			if len(p.Inventory)==0 && p.DataWarning=="" {
+				@SellerTableEmpty("No matching inventory", "Change your search or stock filter, or create a product variant.")
 			}
 		</section>
+		if p.SelectedVariant!="" {
+			<section id="inventory-history" class="seller-panel">
+				<h2>Recent stock adjustments</h2>
+				<p>Latest 20 recorded adjustments for the selected variant.</p>
+				if len(p.InventoryHistory)==0 {
+					<p>No recorded adjustments are available for this selection.</p>
+				} else {
+					<div class="ui-table-region" role="region" aria-label="Stock adjustment history" tabindex="0">
+						<table class="ui-table ui-table--records">
+							<thead><tr><th scope="col">Date</th><th scope="col">Change</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Reason</th></tr></thead>
+							<tbody>
+								for _, item := range p.InventoryHistory {
+									<tr><th scope="row">{ item.Date }</th><td data-label="Change">{ item.Delta }</td><td data-label="Before">{ item.Before }</td><td data-label="After">{ item.After }</td><td data-label="Reason">{ item.Reason }</td></tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				}
+			</section>
+		}
 	}
 }
 
 templ PortalOrders(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<form method="get" class="seller-form-grid" aria-label="Filter seller orders"><label for="seller-order-stage">Fulfilment stage<select id="seller-order-stage" name="tab"><option value="">All stages</option>
-			for _, stage := range sellerFulfillmentOptions("") {
-				<option value={ stage } selected?={ p.Tab == stage }>{ sellerFulfillmentLabel(stage) }</option>
+		<form method="get" class="seller-toolbar" aria-label="Filter seller orders">
+			<label>Search orders<input name="q" value={ p.Query } placeholder="Order, customer, product or SKU"/></label>
+			<label for="seller-order-stage">
+				Fulfilment stage
+				<select id="seller-order-stage" name="tab">
+					<option value="">All stages</option>
+					for _, stage := range sellerFulfillmentOptions("") {
+						<option value={ stage } selected?={ p.Tab==stage || (p.Tab=="new" && stage=="pending") || (p.Tab=="ready" && stage=="out_for_delivery") }>{ sellerFulfillmentLabel(stage) }</option>
+					}
+				</select>
+			</label><button class="seller-button outline" type="submit">Apply filter</button><a class="seller-button outline" href="/seller-admin/orders">Clear</a>
+		</form>
+		<section class="seller-panel" data-seller-orders-region>
+			<div class="seller-panel-heading"><div><h2>Orders</h2><p>{ sellerInt(len(p.Orders)) } orders on this page · { sellerTotal(p.Pagination.Total) } matching orders</p></div></div>
+			if len(p.Orders)==0 && p.DataWarning=="" {
+				@SellerTableEmpty("No matching orders", "Change your search or stage filter. New orders appear here when received.")
+			} else {
+				<div class="ui-table-region" role="region" aria-label="Seller order queue" tabindex="0">
+					<table class="ui-table ui-table--records">
+						<thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Value</th><th scope="col">Payment</th><th scope="col">Fulfilment</th><th scope="col">Action</th></tr></thead>
+						<tbody>
+							for _, order := range p.Orders {
+								<tr><th scope="row" class="record-title"><a href={ sellerOrderURL(p, order.Number) }>{ order.Number }</a><small class="seller-variant-label">{ order.Date }</small></th><td data-label="Customer">{ order.Customer }</td><td data-label="Items">{ order.Items }</td><td data-label="Value">{ order.Value }</td><td data-label="Payment">{ components.StatusLabel(order.Payment) }</td><td data-label="Fulfilment"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ sellerFulfillmentLabel(order.Status) }</span></td><td data-label="Action"><a class="seller-button outline" href={ sellerOrderURL(p, order.Number) }>Open order</a></td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
 			}
-		</select></label><input type="hidden" name="q" value={ p.Query }/><button class="seller-button outline" type="submit">Apply filter</button></form>
-		<div data-seller-orders-region>
-		@SellerOrderStage(p, "new", "New")
-		@SellerOrderStage(p, "processing", "Processing")
-		@SellerOrderStage(p, "packing", "Packing")
-		@SellerOrderStage(p, "shipped", "Shipped")
-		@SellerOrderStage(p, "out_for_delivery", "Ready to deliver")
-		@SellerOrderStage(p, "delivered", "Delivered")
-		</div>
+			@components.PortalPagination(p.Pagination)
+		</section>
 	}
 }
 
 templ SellerOrderStage(p viewmodels.SellerAdminPage, key, label string) {
-	<section class="seller-panel order-stage"><div class="seller-panel-heading"><div><h2>{ label }</h2><p>{ sellerInt(len(sellerOrdersByStage(p.Orders, key))) } orders</p></div></div>
+	<section class="seller-panel order-stage">
+		<div class="seller-panel-heading"><div><h2>{ label }</h2><p>{ sellerInt(len(sellerOrdersByStage(p.Orders, key))) } orders</p></div></div>
 		if len(sellerOrdersByStage(p.Orders, key)) == 0 && p.DataWarning == "" {
 			@SellerTableEmpty("No orders in this stage", "Orders move here as you fulfil them.")
 		} else {
@@ -287,48 +441,81 @@ templ SellerOrderStage(p viewmodels.SellerAdminPage, key, label string) {
 templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		if p.OrderDetail != nil {
-			<div class="seller-order-actions"><a class="seller-button outline" href="/seller-admin/orders">Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
-			<section class="seller-two-grid"><article class="seller-panel" data-seller-order-detail><h2>Order { p.OrderDetail.Number }</h2><p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p><p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p><h3>Delivery address</h3><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><h3>Items from your store</h3><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller order items"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Total</th></tr></thead><tbody>
-				for _, item := range p.OrderDetail.Items {
-					<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Qty" class="numeric">{ item.Quantity }</td><td data-label="Unit price" class="numeric">{ item.UnitPrice }</td><td data-label="Total" class="numeric">{ item.LineTotal }</td></tr>
-				}
-				</tbody></table></div><p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p></article>
+			<div class="seller-order-actions"><a class="seller-button outline" href={ sellerOrdersBackURL(p) }>Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
+			<section class="seller-two-grid">
+				<article class="seller-panel" data-seller-order-detail>
+					<h2>Order { p.OrderDetail.Number }</h2>
+					<p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p>
+					<p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p>
+					<h3>Delivery address</h3>
+					<address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address>
+					<h3>Items from your store</h3>
+					<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller order items">
+						<table class="ui-table ui-table--records">
+							<thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Total</th></tr></thead>
+							<tbody>
+								for _, item := range p.OrderDetail.Items {
+									<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Qty" class="numeric">{ item.Quantity }</td><td data-label="Unit price" class="numeric">{ item.UnitPrice }</td><td data-label="Total" class="numeric">{ item.LineTotal }</td></tr>
+								}
+							</tbody>
+						</table>
+					</div>
+					<p><strong>Seller subtotal: { p.OrderDetail.Subtotal }</strong></p>
+				</article>
 				@SellerOrderFulfillment(p)
 			</section>
 			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>WeevCrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
-			<div class="seller-print-document" data-print-document="packing-slip"><h1>Packing slip · { p.OrderDetail.Number }</h1>
+			<div class="seller-print-document" data-print-document="packing-slip">
+				<h1>Packing slip · { p.OrderDetail.Number }</h1>
 				for _, item := range p.OrderDetail.Items {
 					<p>{ item.Quantity } × { item.Name } · SKU { item.SKU }</p>
 				}
 			</div>
-			<div class="seller-print-document" data-print-document="invoice"><h1>Order invoice · { p.OrderDetail.Number }</h1><p>Seller: { p.SellerName } · Customer: { p.OrderDetail.RecipientName }</p>
+			<div class="seller-print-document" data-print-document="invoice">
+				<h1>Order invoice · { p.OrderDetail.Number }</h1>
+				<p>Seller: { p.SellerName } · Customer: { p.OrderDetail.RecipientName }</p>
 				for _, item := range p.OrderDetail.Items {
 					<p>{ item.Name } · { item.Quantity } × { item.UnitPrice } · { item.LineTotal }</p>
 				}
-				<strong>Seller item subtotal: { p.OrderDetail.Subtotal }</strong><p>Basic order document based on stored order data.</p></div>
+				<strong>Seller item subtotal: { p.OrderDetail.Subtotal }</strong>
+				<p>Basic order document based on stored order data.</p>
+			</div>
 		}
 	}
 }
 
 templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
-	<article class="seller-panel"><h2>Fulfilment &amp; tracking</h2>
-		if reason := sellerFulfillmentBlockReason(p.OrderDetail.OrderStatus, p.OrderDetail.Payment); reason != "" {
+	<article class="seller-panel">
+		<h2>Fulfilment &amp; tracking</h2>
+		<p>Current stage: <strong>{ sellerFulfillmentLabel(p.OrderDetail.Status) }</strong></p>
+		if reason := sellerFulfillmentBlockReason(p.OrderDetail.OrderStatus,p.OrderDetail.Payment); reason!="" {
 			<p class="seller-notice" role="alert">{ reason }</p>
-		} else if p.CanFulfill && p.OrderDetail.Status != "delivered" {
-			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill" data-fulfillment-form><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><input type="hidden" name="expected_revision" value={ p.OrderDetail.Revision }/><label>Status<select name="status" aria-describedby="fulfilment-help">
-				for _, option := range sellerFulfillmentOptions(p.OrderDetail.Status) {
-					<option value={ option } selected?={ sellerFulfillmentSelected(p.OrderDetail.Status, option) } disabled?={ sellerFulfillmentDisabled(p.OrderDetail.Status, option) }>{ sellerFulfillmentLabel(option) }</option>
+		} else if p.CanFulfill && sellerNextFulfillmentStatus(p.OrderDetail.Status)!="" {
+			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill" data-fulfillment-form>
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><input type="hidden" name="expected_revision" value={ p.OrderDetail.Revision }/><input type="hidden" name="status" value={ sellerNextFulfillmentStatus(p.OrderDetail.Status) }/>
+				<input type="hidden" name="return_query" value={ p.Query }/><input type="hidden" name="return_tab" value={ p.Tab }/><input type="hidden" name="return_page" value={ sellerInt(p.OrderReturnPage) }/>
+				<p class="seller-form-wide">Next stage: <strong>{ sellerFulfillmentLabel(sellerNextFulfillmentStatus(p.OrderDetail.Status)) }</strong>. Updates are recorded after you save.</p>
+				if sellerNextFulfillmentStatus(p.OrderDetail.Status)=="shipped" {
+					<label>
+						Carrier
+						<select name="carrier" required>
+							<option value="">Choose a carrier</option>
+							for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
+								<option value={ carrier } selected?={ p.OrderDetail.Carrier==carrier }>{ carrier }</option>
+							}
+						</select>
+					</label><label data-custom-carrier>Other carrier name<input name="custom_carrier" maxlength="80" placeholder="Required when carrier is Other"/></label><label>Tracking number<input name="tracking_number" maxlength="120" value={ p.OrderDetail.TrackingNumber } required/></label>
+				} else {
+					<input type="hidden" name="carrier" value={ p.OrderDetail.Carrier }/><input type="hidden" name="tracking_number" value={ p.OrderDetail.TrackingNumber }/>
+					if p.OrderDetail.Carrier!="" {
+						<p class="seller-form-wide">{ p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p>
+					}
 				}
-			</select></label><p id="fulfilment-help" class="seller-form-note">Choose the next stage. The committed stage is shown here after every save.</p><label>Carrier<select name="carrier">
-				<option value="" selected?={ p.OrderDetail.Carrier == "" }>Choose a carrier before shipping</option>
-				for _, carrier := range sellerCarriers(p.OrderDetail.Carrier) {
-					<option value={ carrier } selected?={ p.OrderDetail.Carrier == carrier }>{ carrier }</option>
+				<label class="seller-form-wide">Note (optional)<input name="note" maxlength="500" value={ p.OrderDetail.Note }/></label><button class="seller-button primary" type="submit">{ sellerNextAction(p.OrderDetail.Status) }</button>
+				if p.LocalDeliverySimulation {
+					<div class="utility-callout"><p>Local delivery simulation records the next permitted shipment step.</p><button class="seller-button outline" type="button" data-mock-delivery>Simulate next delivery update</button></div>
 				}
-			</select></label><label>Other carrier name<input name="custom_carrier" maxlength="80" placeholder="Used when carrier is Other"/></label><label>Tracking number<input name="tracking_number" maxlength="120" value={ p.OrderDetail.TrackingNumber } placeholder="Required when shipping"/></label><label>Note<input name="note" maxlength="500" value={ p.OrderDetail.Note } placeholder="Optional fulfilment note"/></label><button class="seller-button primary" type="submit">Save fulfilment</button>
-          if p.LocalDeliverySimulation {
-            <div class="utility-callout"><p>Local delivery simulation uses a demo courier and records the next permitted shipment step.</p><button class="seller-button outline" type="button" data-mock-delivery>Simulate next delivery update</button></div>
-          }
-        </form>
+			</form>
 		} else {
 			<p>{ p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p>
 		}
@@ -337,11 +524,17 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 
 templ PortalReturns(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel"><div class="ui-table-region" role="region" tabindex="0" aria-label="Seller returns"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Return</th><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Item</th><th scope="col">Reason</th><th scope="col">Requested</th><th scope="col">Status</th></tr></thead><tbody>
-			for _, item := range p.Returns {
-				<tr><th scope="row">{ item.Number }</th><td data-label="Order">{ item.Order }</td><td data-label="Customer">{ item.Customer }</td><td data-label="Item">{ item.Product }</td><td data-label="Reason">{ item.Reason }</td><td data-label="Requested">{ item.Date }</td><td data-label="Status">{ item.Status }</td></tr>
-			}
-		</tbody></table></div>
+		<section class="seller-panel">
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller returns">
+				<table class="ui-table ui-table--records">
+					<thead><tr><th scope="col">Return</th><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Item</th><th scope="col">Reason</th><th scope="col">Requested</th><th scope="col">Status</th></tr></thead>
+					<tbody>
+						for _, item := range p.Returns {
+							<tr><th scope="row">{ item.Number }</th><td data-label="Order">{ item.Order }</td><td data-label="Customer">{ item.Customer }</td><td data-label="Item">{ item.Product }</td><td data-label="Reason">{ item.Reason }</td><td data-label="Requested">{ item.Date }</td><td data-label="Status">{ item.Status }</td></tr>
+						}
+					</tbody>
+				</table>
+			</div>
 			if len(p.Returns) == 0 && p.DataWarning == "" {
 				@SellerTableEmpty("No return requests", "Customer return requests that include your products appear here.")
 			}
@@ -353,25 +546,35 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		<form class="seller-toolbar" action="/seller-admin/earnings" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
 		@SellerStatGrid(p)
-		<section class="seller-two-grid"><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
-			if len(p.Ledger) == 0 && p.DataWarning == "" {
-				@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
-			} else {
-				<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller ledger"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Sale</th><th scope="col">Commission</th><th scope="col">Adjustments</th><th scope="col">Net</th><th scope="col">Status</th></tr></thead><tbody>
-					for _, row := range p.Ledger {
-						<tr><th scope="row">{ row.Number }</th><td data-label="Date">{ row.Date }</td><td data-label="Sale" class="numeric">{ row.Sale }</td><td data-label="Commission" class="numeric">{ row.Commission }</td><td data-label="Adjustments" class="numeric">{ row.Adjustments }</td><td data-label="Net" class="numeric">{ row.Net }</td><td data-label="Status">{ row.Status }</td></tr>
-					}
-				</tbody></table></div>
-			}
-			@components.PortalPagination(p.LedgerPagination)
-		</article><article class="seller-panel"><div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div></div>
-			if len(p.Settlements) == 0 && p.DataWarning == "" {
-				@SellerTableEmpty("No settlements", "Settlement records will appear here when available.")
-			} else {
-				@SettlementRows(p.Settlements)
-			}
-			@components.PortalPagination(p.SettlementPagination)
-		</article></section>
+		<section class="seller-two-grid">
+			<article class="seller-panel">
+				<div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
+				if len(p.Ledger) == 0 && p.DataWarning == "" {
+					@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
+				} else {
+					<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller ledger">
+						<table class="ui-table ui-table--records">
+							<thead><tr><th scope="col">Reference</th><th scope="col">Date</th><th scope="col">Sale</th><th scope="col">Commission</th><th scope="col">Adjustments</th><th scope="col">Net</th><th scope="col">Status</th></tr></thead>
+							<tbody>
+								for _, row := range p.Ledger {
+									<tr><th scope="row">{ row.Number }</th><td data-label="Date">{ row.Date }</td><td data-label="Sale" class="numeric">{ row.Sale }</td><td data-label="Commission" class="numeric">{ row.Commission }</td><td data-label="Adjustments" class="numeric">{ row.Adjustments }</td><td data-label="Net" class="numeric">{ row.Net }</td><td data-label="Status">{ row.Status }</td></tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				}
+				@components.PortalPagination(p.LedgerPagination)
+			</article>
+			<article class="seller-panel">
+				<div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div></div>
+				if len(p.Settlements) == 0 && p.DataWarning == "" {
+					@SellerTableEmpty("No settlements", "Settlement records will appear here when available.")
+				} else {
+					@SettlementRows(p.Settlements)
+				}
+				@components.PortalPagination(p.SettlementPagination)
+			</article>
+		</section>
 	}
 }
 
@@ -379,16 +582,22 @@ templ PortalAnalytics(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		<form class="seller-toolbar" action="/seller-admin/analytics" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
 		@SellerStatGrid(p)
-		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Top-selling products</h2><p>{ p.RangeLabel } · ranked by units sold</p></div></div>
-		if len(p.TopProducts) == 0 && p.DataWarning == "" {
-			@SellerTableEmpty("No sales in this period", "Paid orders will appear here as customers buy your products.")
-		} else {
-			<div class="ui-table-region" role="region" tabindex="0" aria-label="Top selling products"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Units</th><th scope="col">Revenue</th><th scope="col">Unit cost</th><th scope="col">Unit profit</th><th scope="col">Margin</th></tr></thead><tbody>
-				for _, item := range p.TopProducts {
-					<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Units" class="numeric">{ item.Units }</td><td data-label="Revenue" class="numeric">{ item.Revenue }</td><td data-label="Unit cost" class="numeric">{ sellerOptional(item.UnitCost,item.HasCost) }</td><td data-label="Unit profit" class="numeric">{ sellerOptional(item.UnitProfit,item.HasCost) }</td><td data-label="Margin" class="numeric">{ sellerOptional(item.Margin,item.HasCost) }</td></tr>
-				}
-			</tbody></table></div>
-		}
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><h2>Top-selling products</h2><p>{ p.RangeLabel } · ranked by units sold</p></div></div>
+			if len(p.TopProducts) == 0 && p.DataWarning == "" {
+				@SellerTableEmpty("No sales in this period", "Paid orders will appear here as customers buy your products.")
+			} else {
+				<div class="ui-table-region" role="region" tabindex="0" aria-label="Top selling products">
+					<table class="ui-table ui-table--records">
+						<thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Units</th><th scope="col">Revenue</th><th scope="col">Unit cost</th><th scope="col">Unit profit</th><th scope="col">Margin</th></tr></thead>
+						<tbody>
+							for _, item := range p.TopProducts {
+								<tr><th scope="row">{ item.Name }</th><td data-label="SKU">{ item.SKU }</td><td data-label="Units" class="numeric">{ item.Units }</td><td data-label="Revenue" class="numeric">{ item.Revenue }</td><td data-label="Unit cost" class="numeric">{ sellerOptional(item.UnitCost,item.HasCost) }</td><td data-label="Unit profit" class="numeric">{ sellerOptional(item.UnitProfit,item.HasCost) }</td><td data-label="Margin" class="numeric">{ sellerOptional(item.Margin,item.HasCost) }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			}
 		</section>
 	}
 }
@@ -401,7 +610,8 @@ templ PortalUnavailable(p viewmodels.SellerAdminPage) {
 
 templ PortalOnboarding(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel"><div class="seller-panel-heading"><div><h2>Seller application</h2><p>Your seller profile and marketplace approval state.</p></div><span class="seller-status-pill">{ p.SellerStatus }</span></div>
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><h2>Seller application</h2><p>Your seller profile and marketplace approval state.</p></div><span class="seller-status-pill">{ p.SellerStatus }</span></div>
 			if p.SellerStatus == "" {
 				<form class="seller-inline-form" method="post" action="/seller-admin/onboarding"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Maker or studio name<input name="display_name" minlength="2" maxlength="120" required/></label><button class="seller-button primary" type="submit">Submit application</button></form>
 			} else if p.SellerStatus == "pending" {
@@ -418,23 +628,24 @@ templ PortalOnboarding(p viewmodels.SellerAdminPage) {
 }
 
 templ PortalSettings(p viewmodels.SellerAdminPage) {
- @Document(p) {
-  <section class="seller-panel"><div class="seller-panel-heading"><div><h2>Your public maker story</h2><p>Share your real place, people and craft. These details appear on your maker storefront.</p></div></div>
-   <form class="seller-form-grid" method="post" action="/seller-admin/settings" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
-    <label>Studio or maker name<input name="display_name" value={ p.SellerName } minlength="2" maxlength="120" required/></label>
-    <label>Public location (optional)<input name="public_location" value={ p.PublicLocation } maxlength="160" placeholder="Town or city, state"/></label>
-    <label class="seller-form-wide">Your story (optional)<textarea name="public_story" maxlength="4000" rows="6">{ p.PublicStory }</textarea></label>
-    <label class="seller-form-wide">Materials and techniques (optional)<textarea name="public_technique" maxlength="500" rows="3">{ p.PublicTechnique }</textarea></label>
-    <label class="seller-form-wide">Maker or studio portrait (optional, up to 25 MB)<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" data-main-image/></label><input name="image_url" type="hidden" value={ p.PublicPortrait }/>
-    <div class="seller-form-wide" data-main-image-preview>
-     if p.PublicPortrait!="" {
-      <img class="maker-portrait-preview" src={ p.PublicPortrait } alt="Current public maker portrait"/>
-     }
-    </div>
-    <label class="seller-form-wide">Reason for change<input name="reason" minlength="4" maxlength="1000" required placeholder="For the audit trail"/></label>
-    <div class="seller-form-wide"><button class="seller-button primary" type="submit">Save maker story</button></div>
-   </form>
-  </section>
- }
+	@Document(p) {
+		<section class="seller-panel">
+			<div class="seller-panel-heading"><div><h2>Your public maker story</h2><p>Share your real place, people and craft. These details appear on your maker storefront.</p></div></div>
+			<form class="seller-form-grid" method="post" action="/seller-admin/settings" enctype="multipart/form-data">
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				<label>Studio or maker name<input name="display_name" value={ p.SellerName } minlength="2" maxlength="120" required/></label>
+				<label>Public location (optional)<input name="public_location" value={ p.PublicLocation } maxlength="160" placeholder="Town or city, state"/></label>
+				<label class="seller-form-wide">Your story (optional)<textarea name="public_story" maxlength="4000" rows="6">{ p.PublicStory }</textarea></label>
+				<label class="seller-form-wide">Materials and techniques (optional)<textarea name="public_technique" maxlength="500" rows="3">{ p.PublicTechnique }</textarea></label>
+				<label class="seller-form-wide">Maker or studio portrait (optional, up to 25 MB)<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" data-main-image/></label><input name="image_url" type="hidden" value={ p.PublicPortrait }/>
+				<div class="seller-form-wide" data-main-image-preview>
+					if p.PublicPortrait!="" {
+						<img class="maker-portrait-preview" src={ p.PublicPortrait } alt="Current public maker portrait"/>
+					}
+				</div>
+				<label class="seller-form-wide">Reason for change<input name="reason" minlength="4" maxlength="1000" required placeholder="For the audit trail"/></label>
+				<div class="seller-form-wide"><button class="seller-button primary" type="submit">Save maker story</button></div>
+			</form>
+		</section>
+	}
 }

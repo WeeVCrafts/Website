@@ -23,6 +23,7 @@ templ Document(p viewmodels.SellerAdminPage) {
       <script defer src="/assets/js/htmx.min.js"></script>
       <script defer src="/assets/js/alpine.min.js"></script>
       <script defer src={ assets.URL("js/product-media.min.js") }></script>
+      <script defer src={ assets.URL("js/seller-workflows.min.js") }></script>
     <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
 <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
 </head>
@@ -42,7 +43,9 @@ templ Document(p viewmodels.SellerAdminPage) {
               <div class="seller-notice" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>{ p.DataWarning }</div>
             }
             { children... }
-            @components.PortalPagination(p.Pagination)
+            if p.Active != "orders" {
+              @components.PortalPagination(p.Pagination)
+            }
           </main>
         </div>
       </div>
@@ -68,6 +71,12 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
         <label class="sr-only" for="seller-search">Search seller portal</label>
         <span class="material-symbols-outlined" aria-hidden="true">search</span>
         <input id="seller-search" name="q" value={ p.Query } placeholder="Search orders, products, payouts, and more..."/>
+        if p.Active == "orders" && p.Tab != "" {
+          <input type="hidden" name="tab" value={ p.Tab }/>
+        }
+        if p.Active == "inventory" && p.InventoryFilter != "" {
+          <input type="hidden" name="stock" value={ p.InventoryFilter }/>
+        }
         <button type="submit" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>
       </form>
 

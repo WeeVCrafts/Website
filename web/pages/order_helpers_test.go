@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -24,5 +25,34 @@ func TestOrderHistoryUsesActualStateAndPurchasedQuantities(t *testing.T) {
 	}
 	if strings.Contains(rendered.String(), "<b>Packed</b>") || strings.Contains(rendered.String(), "Maker update") {
 		t.Fatal("history invents a packing update")
+	}
+}
+
+func TestConfirmationReflectsRecordedPaymentAndEveryParcelStage(t *testing.T) {
+	for _, stage := range domaincommerce.FulfillmentStages {
+		order := viewmodels.Order{Number: "QA-ORDER", State: "paid", PaymentState: "captured", Shipments: []domaincommerce.OrderFulfillment{{Status: string(stage)}}}
+		if confirmationProcessing(order) != (stage.Index() >= domaincommerce.FulfillmentProcessing.Index()) {
+			t.Errorf("processing: %s", stage)
+		}
+		if confirmationDelivered(order) != (stage == domaincommerce.FulfillmentDelivered) {
+			t.Errorf("delivered: %s", stage)
+		}
+	}
+	mixed := viewmodels.Order{State: "paid", PaymentState: "captured", Shipments: []domaincommerce.OrderFulfillment{{Status: "delivered"}, {Status: "packing"}}}
+	if !confirmationProcessing(mixed) || confirmationDelivered(mixed) {
+		t.Fatal("partial delivery reported as complete")
+	}
+	refunded := viewmodels.Order{State: "refunded", PaymentState: "refunded", Shipments: []domaincommerce.OrderFulfillment{{Status: "delivered"}}}
+	if !confirmationPaymentSettled(refunded) || !confirmationProcessing(refunded) || !confirmationDelivered(refunded) {
+		t.Fatal("refund erased recorded delivery history")
+	}
+	for _, state := range []string{"pending_payment", "payment_failed", "cancelled", "refunded"} {
+		var html bytes.Buffer
+		if err := OrderConfirmation(viewmodels.CustomerPage{SelectedOrder: viewmodels.Order{Number: "QA-ORDER", State: state}}).Render(context.Background(), &html); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(html.String(), "Order placed successfully!") {
+			t.Errorf("unpaid or closed order presented as success: %s", state)
+		}
 	}
 }

@@ -52,13 +52,17 @@ type Brand struct {
 }
 
 type Cart struct {
-	ID             int64              `json:"id"`
-	UserID         pgtype.Int8        `json:"user_id"`
-	GuestTokenHash pgtype.Text        `json:"guest_token_hash"`
-	Status         string             `json:"status"`
-	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ID               int64              `json:"id"`
+	UserID           pgtype.Int8        `json:"user_id"`
+	GuestTokenHash   pgtype.Text        `json:"guest_token_hash"`
+	Status           string             `json:"status"`
+	ExpiresAt        pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	Purpose          string             `json:"purpose"`
+	CheckoutToken    pgtype.Text        `json:"checkout_token"`
+	IntentRequestKey pgtype.Text        `json:"intent_request_key"`
+	CheckoutOrderID  pgtype.Int8        `json:"checkout_order_id"`
 }
 
 type CartItem struct {

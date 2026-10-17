@@ -194,14 +194,14 @@ templ Document(p viewmodels.CustomerPage) {
       if p.Route == "/login" {
         @LoginGalleryHeader(p)
       } else {
-        @components.Header(p)
+        @components.Header(shoppingShell(p))
       }
       if !p.Authenticated && !isAuthPage(p.Route) {
         @GuestLoginDialog(p)
       }
       @QuickViewDialog()
-      <main id="page" class={ templ.KV("home-page", p.Route == "/"), templ.KV("login-page", p.Route == "/login") } tabindex="-1" x-data="{checkoutStep:1,payment:'upi',detailQuantity:1}">
-        if p.Route == "/payments" {
+      <main id="page" class={ templ.KV("home-page", p.Route == "/"), templ.KV("login-page", p.Route == "/login") } tabindex="-1" x-data={ fmt.Sprintf("{checkoutStep:1,payment:'upi',detailQuantity:%d}",productInitialQuantity(p)) }>
+        if p.Route == "/payments" && p.Mock {
           <nav class="payment-state-links container" aria-label="Payment status views"><span>Reconciliation views</span><a href="/payments/success">Success</a><a href="/payments/pending">Pending</a><a href="/payments/failed">Failed</a></nav>
         }
         if p.Route != "/" {
@@ -333,7 +333,7 @@ templ HistoryRows(orders []viewmodels.Order) {
       if len(order.Items) > 0 {
         <img src={ firstCartItemValue(order.Items).Product.ImageURL } alt={ firstCartItemValue(order.Items).Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(firstCartItemValue(order.Items).Product.ImageURL, firstCartItemValue(order.Items).Product.ImageSrcSet) } sizes="160px"/><span>{ firstCartItemValue(order.Items).Product.Name }<small>{ orderItemCount(order) } items</small></span>
       }
-      <a href={ orderPath(order.Number) }>View details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></article>
+      <a href={ orderDetailsURL(order) }>View details <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></article>
   }
 }
 
@@ -636,9 +636,22 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           } else if len(p.Product.Variants) == 1 {
             <input id="detail-variant" type="hidden" name="variant_id" value={ p.Product.Variants[0].ID }/>
           }
-          <div class="quantity-row"><label>Quantity <span class="quantity-control"><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } @click="detailQuantity=Math.max(1, detailQuantity-1)">-</button><output aria-live="polite" x-text="detailQuantity">1</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } @click="detailQuantity=Math.min(99, detailQuantity+1)">+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
-          <input id="detail-quantity" type="hidden" name="quantity" :value="detailQuantity"/>
+          <div class="quantity-row"><label>Quantity <span class="quantity-control"><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } @click="detailQuantity=Math.max(1, detailQuantity-1)">-</button><output aria-live="polite" x-text="detailQuantity">{ productInitialQuantity(p) }</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } @click="detailQuantity=Math.min(99, detailQuantity+1)">+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
+          <input id="detail-quantity" type="hidden" name="quantity" value={fmt.Sprint(productInitialQuantity(p))} :value="detailQuantity"/>
           <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
+          <dl class="purchase-facts" aria-label="About this piece"><div><dt>Craft category</dt><dd>{p.Product.Category}</dd></div>
+            for i,spec:=range components.ProductSpecifications(p.Product.Description) {
+              if i<2 {
+<div><dt>{spec.Name}</dt><dd>{spec.Value}</dd></div>
+}
+            }
+          </dl>
+          <details class="purchase-policy-summary"><summary>Shipping and returns</summary><p>{p.ShippingInformation}</p>
+           if p.Storefront!=nil && p.Storefront.Settings.Policy.ReturnDays>0 {
+<p>Eligible return requests can be made within {fmt.Sprint(p.Storefront.Settings.Policy.ReturnDays)} days of delivery. Check the full policy for conditions.</p>
+}
+           <p><a href="/shipping">Read shipping information</a> · <a href="/pages/returns">Read returns and refund policy</a></p>
+          </details>
           <div class="benefits"><span><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Delivery</b><small>{ p.Product.DeliveryLabel }</small></span><span><span class="material-symbols-outlined" aria-hidden="true">public</span><b>Shipping region</b><small>India only</small></span></div>
           <nav class="product-policy-links" aria-label="Product policies"><a href="/shipping">Shipping information</a><a href="/pages/returns">Returns &amp; refunds</a><a href="/size-guide">Size guide</a></nav>
           <button class="text-button product-share" type="button" data-product-share data-share-title={ p.Product.Name }><span class="material-symbols-outlined" aria-hidden="true">share</span>Share this piece</button>
@@ -796,7 +809,7 @@ templ WishlistGridMutation(p viewmodels.CustomerPage) {
 templ Wishlist(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro wishlist-intro">
-        @Breadcrumb("Home", "My Wishlist")<p class="eyebrow">SAVED WITH LOVE</p><h1>{ storefrontNativeHeading(p,"My wishlist") }</h1><p>Handpicked with love, for a more beautiful tomorrow.</p><p>Your saved treasures from India's finest artisans. Keep them close, move to cart when you are ready.</p></section><section class="container section"><div class="section-head"><div><h2 data-backend-wishlist-count>{ p.WishlistCount } items in your wishlist</h2><p>These are the pieces you chose to keep an eye on.</p></div><a class="outline-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@WishlistGrid(p)</section>
+        @Breadcrumb("Home", "My Wishlist")<p class="eyebrow">SAVED WITH LOVE</p><h1>{ storefrontNativeHeading(p,"My wishlist") }</h1><p>Handpicked with love, for a more beautiful tomorrow.</p><p>Your saved treasures from India's finest artisans. Keep them close, move to cart when you are ready.</p></section><section class="container section"><div class="section-head"><div><h2 data-backend-wishlist-count>{ checkoutItemsLabel(p.WishlistCount) } in your wishlist</h2><p>These are the pieces you chose to keep an eye on.</p></div><a class="outline-button" href="/products">Continue shopping <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>@WishlistGrid(p)</section>
       if len(p.Products) > 6 {
       <section class="container section wishlist-recommendations">
         @SectionHeading("KEEP DISCOVERING", "You may also love", "More beautiful finds from independent makers.")<div class="product-grid product-grid--six" data-backend-products="listing">
@@ -841,9 +854,9 @@ templ Orders(p viewmodels.CustomerPage) {
 
 templ PrimaryOrder(order viewmodels.Order, csrfToken string) {
   <article class="order-card"><header><div><p class="eyebrow">ORDER PLACED</p><h2>{ order.Number } <span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></h2><small>{ order.Date } | { order.Payment }</small></div><div><b>{ orderItemCount(order) } items</b><strong>{ order.Total }</strong></div></header><div class="order-progress"><span class="done"><i>1</i><b>Order placed</b><small>{ order.Date }</small></span><span class="current"><i>2</i><b>{ components.StatusLabel(order.Status) }</b><small>Current order status</small></span></div><div class="seller-order"><div class="seller-order-head"><b><span class="material-symbols-outlined" aria-hidden="true">storefront</span> { orderSeller(order) }</b><span>{ orderDeliveryCopy(order) }</span></div>
-  @OrderRows(order.Items)</div><footer><a class="primary-button" href={ orderPath(order.Number) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+  @OrderRows(order.Items)</div><footer><a class="primary-button" href={ orderDetailsURL(order) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
     if order.CanCancel {
-      <form method="post" action={ orderPath(order.Number) + "/cancel" }><input type="hidden" name="csrf_token" value={ csrfToken }/><button class="outline-button" type="submit">Cancel order</button></form>
+      <form method="post" action={ orderPath(order.Number) + "/cancel" } data-confirm="Cancel this unpaid order? Its reserved items will be released."><input type="hidden" name="csrf_token" value={ csrfToken }/><button class="outline-button" type="submit">Cancel order</button></form>
     }
     <a class="outline-button" href="/contact">Need help?</a></footer></article>
 }
@@ -916,10 +929,10 @@ templ ReturnsFiltered(p viewmodels.CustomerPage, tab string) {
     </section>
     <section class="container returns-layout">
       <div class="returns-main">
-        <nav class="tabs" role="tablist" aria-label="Return status">
-          <a class={ returnTabClass(p.Filters, "") } role="tab" aria-current={ returnTabCurrent(p.Filters, "") } aria-selected={ tabSelected(returnTabClass(p.Filters, "") == "active") } href="/returns">Current ({ returnCount(p.Returns, "") })</a>
-          <a class={ returnTabClass(p.Filters, "refunds") } role="tab" aria-current={ returnTabCurrent(p.Filters, "refunds") } aria-selected={ tabSelected(returnTabClass(p.Filters, "refunds") == "active") } href="/returns?tab=refunds">Refunded ({ returnCount(p.Returns, "refunds") })</a>
-          <a class={ returnTabClass(p.Filters, "closed") } role="tab" aria-current={ returnTabCurrent(p.Filters, "closed") } aria-selected={ tabSelected(returnTabClass(p.Filters, "closed") == "active") } href="/returns?tab=closed">Closed ({ returnCount(p.Returns, "closed") })</a>
+        <nav class="tabs" aria-label="Return status">
+          <a class={ returnTabClass(p.Filters, "") } aria-current={ returnTabCurrent(p.Filters, "") } href="/returns">Current ({ returnCount(p.Returns, "") })</a>
+          <a class={ returnTabClass(p.Filters, "refunds") } aria-current={ returnTabCurrent(p.Filters, "refunds") } href="/returns?tab=refunds">Refunded ({ returnCount(p.Returns, "refunds") })</a>
+          <a class={ returnTabClass(p.Filters, "closed") } aria-current={ returnTabCurrent(p.Filters, "closed") } href="/returns?tab=closed">Closed ({ returnCount(p.Returns, "closed") })</a>
         </nav>
         if len(returnSubset(p.Returns, tab)) == 0 {
           <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><h2>No return requests here</h2><p>Return requests and their latest status will appear here. To request a return, open an eligible order.</p><a class="primary-button" href="/orders">View your orders <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
@@ -958,8 +971,8 @@ templ Account(p viewmodels.CustomerPage) {
 templ OrderDetail(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container page-intro compact-intro">
-      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/account">My Account</a><span aria-hidden="true">/</span><a href="/orders">My Orders</a><span aria-hidden="true">/</span><span aria-current="page">Order details</span></nav>
-      <p class="eyebrow">ORDER DETAILS</p>
+      <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/account">My Account</a><span aria-hidden="true">/</span><a href={ customerOrderBackURL(p) }>My Orders</a><span aria-hidden="true">/</span><span aria-current="page">Order details</span></nav>
+      <a class="text-link" href={ customerOrderBackURL(p) }>Back to orders</a><p class="eyebrow">ORDER DETAILS</p>
       <h1>{ p.SelectedOrder.Number }</h1>
       <p>Placed on { p.SelectedOrder.Date }</p>
     </section>
@@ -969,7 +982,7 @@ templ OrderDetail(p viewmodels.CustomerPage) {
         @OrderPaymentRecovery(p)
         @OrderDetailRows(p.SelectedOrder.Items)
         if p.SelectedOrder.CanCancel {
-          <form class="order-cancel-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/cancel" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Cancel order</button></form>
+          <form class="order-cancel-form" method="post" action={ "/orders/" + p.SelectedOrder.Number + "/cancel" } data-confirm="Cancel this unpaid order? Its reserved items will be released."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="outline-button" type="submit">Cancel order</button></form>
         }
         if p.SelectedOrder.ReturnStatus != "" {
           <section class="order-return-card"><h2>Return request</h2><p>Status: <mark>{ returnStatusLabel(p.SelectedOrder.ReturnStatus) }</mark></p><a class="text-link" href="/returns">View return history <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></section>
@@ -997,7 +1010,7 @@ templ OrderDetail(p viewmodels.CustomerPage) {
           </form>
         }
       </div>
-      <aside class="summary"><h2>Order summary</h2><p>Items ({ orderItemCount(p.SelectedOrder) }) <b>{ p.SelectedOrder.Subtotal }</b></p><p>Shipping <b>{ p.SelectedOrder.Shipping }</b></p><p>Coupon discount <b>- { p.SelectedOrder.Discount }</b></p><hr/><h3>Total amount <strong>{ p.SelectedOrder.Total }</strong></h3><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/invoice" }>View/print receipt</a><a class="outline-button full" href="/contact">Need help?</a></aside>
+      <aside class="summary"><h2>Order summary</h2><p>Items ({ orderItemCount(p.SelectedOrder) }) <b>{ p.SelectedOrder.Subtotal }</b></p><p>Shipping <b>{ p.SelectedOrder.Shipping }</b></p><p>Coupon discount <b>- { p.SelectedOrder.Discount }</b></p><hr/><h3>Total amount <strong>{ p.SelectedOrder.Total }</strong></h3><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/tracking" }>Track order</a><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/invoice" }>View/print receipt</a><a class="outline-button full" href={ customerSupportURL(p.SelectedOrder.Number) }>Need help?</a></aside>
     </section>
   }
 }
@@ -1060,7 +1073,10 @@ templ Checkout(p viewmodels.CustomerPage) {
       <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>{ storefrontNativeHeading(p,"Checkout") }</h1><p>One step closer to bringing home something beautiful.</p>
       <div class="steps" role="list" aria-label="Checkout progress"><span :class="checkoutStep >= 1 ? 'active' : ''" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Delivery</b></span><i></i><span :class="checkoutStep >= 3 ? 'active' : ''" role="listitem"><i>3</i><b>Payment</b></span><i></i><span :class="checkoutStep >= 4 ? 'active' : ''" role="listitem"><i>4</i><b>Review</b></span></div>
     </section>
-    <section class="container checkout-layout">
+    if p.CheckoutIntentID!="" {
+<div class="container utility-callout" data-checkout-intent={p.CheckoutIntentID}><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><p><strong>Buying this item only</strong>Your other cart items are saved. <a href="/cart">View your shopping cart</a></p></div>
+}
+<section class="container checkout-layout">
       <div class="checkout-main">
         <section class="checkout-card" data-step="1" x-show="checkoutStep === 1">
           <header><h2><span>1</span> Delivery address</h2></header>
@@ -1098,13 +1114,13 @@ templ Checkout(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           } else if p.PaymentReady {
             if p.PaymentMode == "local" {
-              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. After placing the order, choose whether to simulate a successful or failed payment.</p></div>
+              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. Placing the order completes a simulated payment. No money is charged.</p></div>
             } else {
               <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Pay securely through Razorpay. Available payment options appear in its checkout window.</p></div>
             }
             <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           } else {
-            <div class="utility-callout is-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><p>Online payments are not configured for this deployment. Checkout will be available once the payment provider credentials are set.</p></div>
+            <div class="utility-callout is-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><p>Payments are temporarily unavailable. Your cart is saved. Please try again later or contact support.</p></div>
             <button class="primary-button full" type="button" disabled>Payment unavailable</button>
           }
         </section>

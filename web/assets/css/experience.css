@@ -56,7 +56,8 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .storefront-body .hero-image { min-height: 360px; }
 .storefront-body .hero-image img { height: 100%; width: 100%; object-fit: cover; }
 .hero-slide[hidden] { display: none !important; }
-.hero-slides { min-width: 0; }
+.hero-slides { min-width: 0; display: grid; isolation: isolate; }
+.hero-slides > .hero-slide { grid-area: 1 / 1; min-width: 0; width: 100%; }
 .hero-controls { display: flex; align-items: center; justify-content: end; gap: 12px; padding-block: 10px; color: var(--muted); }
 .hero-controls button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; color: var(--forest); background: var(--surface); }
 .hero-controls output { min-width: 54px; text-align: center; font: 400 14px/1.5 var(--sans); font-variant-numeric: tabular-nums; }

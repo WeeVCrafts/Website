@@ -246,6 +246,12 @@
       await this.call(ROOT + "/wishlist/" + product.id, { method: "DELETE", authenticated: true });
     }
 
+    async buyNow(slug, quantity, selectedVariantId, key) {
+      const product=await this.product(slug);
+      const variantId=Number(selectedVariantId)||Number(product?.variantId);
+      if(!variantId)throw new Error('Choose an available product option.');
+      return unwrap(await this.call(ROOT+'/checkout/intents',{method:'POST',authenticated:true,headers:{'Idempotency-Key':key},body:{variant_id:variantId,quantity:Number(quantity||1)}}));
+    }
     async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
 		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
 	}
@@ -261,7 +267,7 @@
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal, expected_policy_revision: policyRevision }
+        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
       });
     }
 

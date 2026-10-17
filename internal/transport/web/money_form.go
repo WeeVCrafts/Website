@@ -66,3 +66,24 @@ func productDescriptionFromForm(r *http.Request) string {
 	}
 	return strings.TrimSpace(story)
 }
+
+// Use the draft parser's exact arithmetic to identify a recoverable field.
+func sellerProductInputErrorField(r *http.Request) string {
+	price, err := moneyFromForm(r, "price_cents")
+	if err != nil || price <= 0 {
+		return "price_rupees"
+	}
+	if raw := moneyFormRaw(r, "compare_at_cents"); raw != "" {
+		value, err := moneyFromForm(r, "compare_at_cents")
+		if err != nil || value < 0 || value > 0 && value < price {
+			return "compare_at_rupees"
+		}
+	}
+	if raw := moneyFormRaw(r, "cost_price_cents"); raw != "" {
+		value, err := moneyFromForm(r, "cost_price_cents")
+		if err != nil || value < 0 {
+			return "cost_price_rupees"
+		}
+	}
+	return "image_file"
+}

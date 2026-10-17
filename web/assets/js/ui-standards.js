@@ -27,7 +27,12 @@
       field.insertAdjacentElement("afterend", error);
       if (!first) first = field;
     });
-    if (first) { first.focus(); first.scrollIntoView({block:"center",behavior:"instant"}); }
+    if (first) {
+      first.dispatchEvent(new CustomEvent('ui:invalid', {bubbles:true}));
+      let disclosure = first.closest('details');
+      while (disclosure) { disclosure.open = true; disclosure = disclosure.parentElement?.closest('details'); }
+      first.focus(); first.scrollIntoView({block:"center",behavior:"instant"});
+    }
     return !first;
   }
   function confirmAction(message, trigger, actionLabel, options = {}) {
@@ -41,7 +46,9 @@
       const actions = document.createElement("div"); actions.className = "ui-confirm-actions";
       const cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = options.cancelLabel || "Cancel"; cancel.autofocus = true;
       const accept = document.createElement("button"); accept.type = "button"; accept.textContent = actionLabel || "Continue"; accept.dataset.confirmAccept = "";
-      actions.append(cancel, accept); dialog.append(heading, copy, actions); document.body.append(dialog);
+      actions.append(cancel);
+      if(options.additionalAction){const additional=document.createElement('button');additional.type='button';additional.textContent=options.additionalAction.label;additional.addEventListener('click',()=>finish(options.additionalAction.value));actions.append(additional);}
+      actions.append(accept); dialog.append(heading, copy, actions); document.body.append(dialog);
       function finish(accepted) { dialog.close(); dialog.remove(); trigger?.focus(); resolve(accepted); }
       cancel.addEventListener("click",()=>finish(false)); accept.addEventListener("click",()=>finish(true));
       dialog.addEventListener("cancel", event => { event.preventDefault(); finish(false); });
@@ -159,14 +166,20 @@
     root.querySelectorAll("form").forEach(form => {
       if (form.dataset.uiBound) return;
       form.dataset.uiBound = "true"; form.noValidate = true;
+      if (form.method.toLowerCase() === "post" && customerFormPath(new URL(form.action, location.href).pathname)) form.dataset.customerRetain = "true";
       form.addEventListener("input",event => { if (event.target.dataset.uiError) clearError(event.target); });
       form.addEventListener("submit",async event => {
+        if (form.dataset.wizardStep !== undefined && form.dataset.wizardStep !== 'review') {
+          event.preventDefault(); event.stopImmediatePropagation();
+          form.dispatchEvent(new CustomEvent('ui:wizard-next')); return;
+        }
         if (!validate(form)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
-        if (form.dataset.confirm && !form.dataset.confirmed) {
+        const confirmation=event.submitter?.dataset.confirm||form.dataset.confirm;
+        if (confirmation && !form.dataset.confirmed) {
           event.preventDefault(); event.stopImmediatePropagation();
           const submitter = event.submitter || form.querySelector('[type="submit"]');
           const intent = /\/delete$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
-          if (await confirmAction(form.dataset.confirm, submitter, submitter?.textContent.trim(), {intent})) {
+          if (await confirmAction(confirmation, submitter, submitter?.textContent.trim(), {intent})) {
             form.dataset.confirmed = "true"; form.requestSubmit(submitter); delete form.dataset.confirmed;
           }
         }
@@ -200,12 +213,13 @@
       img.addEventListener("error",fallback); if (img.complete && !img.naturalWidth && !img.hasAttribute('data-src')) fallback();
     });
   }
-  window.WVUI = {validate,confirmAction,busy,enhance:root=>init(root||document)};
+  window.WVUI = {validate,confirmAction,busy,enhance:root=>init(root||document),markDirty:form=>dirtyForms.add(form)};
   document.addEventListener('keydown',()=>{document.body.dataset.keyboardInput='true';},true);
   document.addEventListener('pointerdown',()=>{delete document.body.dataset.keyboardInput;},true);
+  const customerFormPath = path => /^\/account\/(profile|addresses(?:\/delete)?|notifications|reviews)$/.test(path) || /^\/support\/(create|customer-reply)$/.test(path) || /^\/privacy\/(consent|requests)$/.test(path) || /^\/orders\/[^/]+\/(cancel|return|refund)$/.test(path);
   // Protect long edits in memory. Do not persist account/product form values locally.
   const dirtyForms = new Set();
-  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty]';
+  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty], [data-customer-retain]';
   function dirtyForm() {
     for (const form of dirtyForms) {
       if (!form.isConnected) { dirtyForms.delete(form); continue; }
@@ -232,7 +246,13 @@
     if (discardPending) return;
     discardPending = true;
     try {
-      if (await confirmAction('You have unsaved changes. Discard them before leaving this page?', link, 'Discard changes', {cancelLabel:'Keep editing',intent:'warning'})) {
+      const storefront = form.matches('[data-storefront-dirty]');
+      const restoreTrigger=link.hidden?document.activeElement:link;
+      const result=await confirmAction('You have unsaved changes. Save them before leaving, discard them, or keep editing.', restoreTrigger, 'Discard changes', {cancelLabel:'Keep editing',intent:'warning',additionalAction:storefront?{label:'Save draft and continue',value:'save'}:undefined});
+      if(result==='save') {
+        const next=form.querySelector('[name=return_to]')||document.createElement('input');next.type='hidden';next.name='return_to';next.value=destination.pathname+destination.search;form.append(next);form.requestSubmit(form.querySelector('button[type=submit]:not([name=operation])'));return;
+      }
+      if (result === true) {
         dirtyForms.forEach(item => { item.dataset.discarded = 'true'; });
         location.assign(destination.href);
       }
@@ -286,29 +306,55 @@
     const form=event.target;
     if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
     const action=new URL(event.submitter?.getAttribute("formaction") || form.getAttribute("action") || location.href,location.href);
-    if(action.origin!==location.origin || !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname)) return;
+    const customerForm = customerFormPath(action.pathname);
+    if(action.origin!==location.origin || (!customerForm && !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname))) return;
     event.preventDefault();
     if(form.dataset.saving) return;
     const payload=new FormData(form);
     if(event.submitter?.name) payload.append(event.submitter.name,event.submitter.value);
     const buttons=Array.from(form.querySelectorAll('button[type="submit"],input[type="submit"]')).filter(button=>!button.disabled);
     const oldError=form.querySelector('.ui-form-error'); oldError?.remove();
-    form.dataset.saving="true"; form.setAttribute('aria-busy','true'); buttons.forEach(button=>button.disabled=true);
+    form.dataset.saving="true"; form.setAttribute('aria-busy','true'); buttons.forEach(button=>{button.disabled=true;busy(button,true);});
     const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),30000);
+    let productInvalidField = null;
     try {
-      const response=await fetch(action.href,{method:'POST',credentials:'same-origin',body:payload,signal:controller.signal});
+      const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:customerForm && form.enctype!=='multipart/form-data' ? new URLSearchParams(payload) : payload,signal:controller.signal});
+      if (customerForm && response.redirected && new URL(response.url).pathname === '/login') {
+        const error = new Error('Your session ended. Your entries are still here. Copy your changes before signing in again.');
+        error.customerSession = true; throw error;
+      }
       if(response.ok && response.redirected) { location.assign(response.url); return; }
       const html=await response.text(); const doc=new DOMParser().parseFromString(html,'text/html');
+      if (response.status === 422 && form.matches('[data-product-builder]')) {
+        const rejectedField = response.headers.get('X-Seller-Product-Field');
+        const field = rejectedField && form.elements.namedItem(rejectedField);
+        if (field && field.willValidate) {
+          productInvalidField = field;
+          const message = doc.querySelector('.seller-form-error,.ui-error-summary p,.error-state p,main p')?.textContent?.trim();
+          field.setCustomValidity(message || 'Check this value before saving.');
+          field.addEventListener('input', () => field.setCustomValidity(''), {once:true});
+        }
+      }
       const storefrontSummary=doc.querySelector('.sf-error');
       if(storefrontSummary){const error=new Error(storefrontSummary.textContent.trim());error.storefrontSummary=storefrontSummary;throw error;}
-      const message=response.headers.get('Content-Type')?.includes('text/plain') ? html.trim().slice(0,1000) : (doc.querySelector('.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
-      throw new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
+      const message=response.headers.get('Content-Type')?.includes('text/plain') ? html.trim().slice(0,1000) : (doc.querySelector('.profile-error,.seller-form-error,.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
+      const error = new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
+      error.orderConflict = response.status===409 && form.matches('[data-fulfillment-form]');
+      throw error;
     } catch(error) {
       const banner=document.createElement('div'); banner.className='ui-form-error'; banner.role='alert'; banner.tabIndex=-1;
       banner.textContent=error.name==='AbortError' || error instanceof TypeError ? 'Could not confirm whether your changes were saved. Check the record before trying again.' : error.message;
       if(error.storefrontSummary)banner.replaceChildren(...Array.from(error.storefrontSummary.childNodes).map(node=>node.cloneNode(true)));
+      if (error.customerSession) {
+        const signIn=document.createElement('a');signIn.href='/login?next='+encodeURIComponent(location.pathname+location.search);signIn.textContent='Sign in again';banner.append(' ',signIn);
+      }
+      if(error.orderConflict) {
+        const reload=document.createElement('a'); reload.href=location.pathname+location.search; reload.textContent='Reload latest order';
+        banner.append(' ',reload);
+      }
       form.prepend(banner); banner.focus();
-      buttons.forEach(button=>button.disabled=false); delete form.dataset.saving; form.removeAttribute('aria-busy');
+      if (productInvalidField) validate(form);
+      buttons.forEach(button=>{button.disabled=false;busy(button,false);}); delete form.dataset.saving; form.removeAttribute('aria-busy');
     } finally { clearTimeout(timer); }
   });
   document.addEventListener('click',event=>{
@@ -316,7 +362,7 @@
     if (!button) return;
     const form=button.form;
     form.elements.namedItem('carrier').value='Other';
-    form.elements.namedItem('custom_carrier').value='Demo courier';
+    if (form.elements.namedItem('custom_carrier')) form.elements.namedItem('custom_carrier').value='Demo courier';
     form.elements.namedItem('tracking_number').value='DEMO-'+form.elements.namedItem('order_number').value;
     form.elements.namedItem('note').value='Local delivery simulation';
     form.requestSubmit(form.querySelector('[type="submit"]'));
@@ -397,7 +443,7 @@
         if (!next) throw new Error('refresh failed');
         const active = document.activeElement;
         // Preserve a focused button/link until the next refresh opportunity.
-        if (!region.contains(active)) { region.replaceWith(next); region = next; }
+        if (!region.contains(active)) { region.replaceWith(next); region = next; if (customerList) init(region); }
         if (customerList) {
           const counts = document.querySelector('.account-intro .tabs');
           const nextCounts = doc.querySelector('.account-intro .tabs');

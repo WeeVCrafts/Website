@@ -79,8 +79,8 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if p.SelectedOrder.State == "cancelled" || p.SelectedOrder.State == "payment_failed" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1 id=\"confirmation-title\">Your order is saved</h1><p class=\"confirmation-lead\">Payment was not completed. Open your order to review its status and available next steps.</p>")
+			if p.SelectedOrder.PaymentState != "captured" || p.SelectedOrder.State == "cancelled" || p.SelectedOrder.State == "refunded" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1 id=\"confirmation-title\">Your order is saved</h1><p class=\"confirmation-lead\">Open your order to review its recorded payment status and available next steps.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -193,7 +193,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 = []any{confirmationStep(p.SelectedOrder.PaymentState == "captured")}
+			var templ_7745c5c3_Var10 = []any{confirmationStep(confirmationPaymentSettled(p.SelectedOrder))}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -218,7 +218,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(confirmationPayment(p.SelectedOrder))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/checkout.templ`, Line: 37, Col: 220}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/checkout.templ`, Line: 37, Col: 223}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -228,7 +228,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var13 = []any{confirmationStep(p.SelectedOrder.State == "processing" || p.SelectedOrder.State == "shipped" || p.SelectedOrder.State == "delivered")}
+			var templ_7745c5c3_Var13 = []any{confirmationStep(confirmationProcessing(p.SelectedOrder))}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -250,7 +250,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if p.SelectedOrder.State == "processing" || p.SelectedOrder.State == "shipped" || p.SelectedOrder.State == "delivered" {
+			if confirmationProcessing(p.SelectedOrder) {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "Started")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -265,7 +265,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var15 = []any{confirmationStep(p.SelectedOrder.State == "delivered")}
+			var templ_7745c5c3_Var15 = []any{confirmationStep(confirmationDelivered(p.SelectedOrder))}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var15...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -287,7 +287,7 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if p.SelectedOrder.State == "delivered" {
+			if confirmationDelivered(p.SelectedOrder) {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "Delivered")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -316,9 +316,9 @@ func OrderConfirmation(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var18 templ.SafeURL
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs("/account/support?order=" + p.SelectedOrder.Number)
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(customerSupportURL(p.SelectedOrder.Number))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/checkout.templ`, Line: 54, Col: 103}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/checkout.templ`, Line: 54, Col: 97}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -346,6 +346,9 @@ func confirmationStep(done bool) string {
 }
 
 func confirmationPayment(order viewmodels.Order) string {
+	if order.State == "refunded" || order.RefundStatus == "processed" {
+		return "Payment refunded"
+	}
 	if order.PaymentState == "captured" {
 		return "Payment completed"
 	}

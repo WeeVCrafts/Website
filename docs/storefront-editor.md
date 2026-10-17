@@ -164,3 +164,63 @@ Genuine inventory publication remains dependent on merchant-supplied CSV details
 confirmed stock and matching product photographs. Use the existing opt-in
 importer described in [catalog management](catalog-management.md); do not create
 sample sellable listings to meet the launch product-count target.
+
+## Guided customization — 17 October 2026
+
+The overview separates the current published release from editable and submitted
+drafts. Continue editing resumes an existing draft; creating a draft remains an
+explicit action. Existing editor links remain valid. Page design, Brand &
+navigation, Content, Store settings and Review & publish group the tools.
+
+Select a page, then choose a section in the outline or Edit preview. The selected
+section owns its content controls and ordering actions. Hidden sections remain
+available in the outline. Phones offer Sections, Edit and Preview tabs. Guidance
+can be dismissed and reopened. Protected product and checkout content explains
+that catalog facts and commerce services remain authoritative.
+
+Typing refreshes a private, unsaved preview after 300 ms using the customer
+renderer. Save draft remains explicit. Invalid proposals keep the last valid
+preview and entered fields. Unsaved navigation offers Save draft and continue,
+Discard changes or Keep editing. Structural actions require saving or explicitly
+discarding current edits first. Version conflicts never overwrite another save.
+
+The authenticated POST `/admin/storefront/render-preview` (also under
+`/super-admin`) accepts the existing draft/version, workspace, selected target
+and proposed form fields. It renders without persisting, requires CSRF, rejects
+locked/stale drafts, and returns no-store JSON containing HTML or a validation
+error. Saved GET previews remain separate and read-only. Frame messages are
+accepted only from the current same-origin preview window and known targets.
+
+Photograph fields offer a searchable, paginated library and in-place uploads,
+including descriptions and focal controls for new photographs. Uploading retains
+the asset without publishing it. URL entry remains under Advanced. Structured
+navigation, footer, collection, FAQ and trust rows use additive JSON form fields;
+legacy text forms remain usable without JavaScript. Destination suggestions use
+real pages, categories, approved products and active makers.
+
+Section starting points cover curated products, gifts, collection tiles, maker
+stories, promotional banners and FAQs. They never create sellable inventory,
+fabricate a maker, or publish automatically. Readiness findings link to the
+relevant editor. Empty selected collections are warnings. Publication retains
+the existing authorization, expected-version and review-note requirements.
+
+## Selected-item checkout
+
+Add to cart opens `/cart` after a confirmed addition. The header cart drawer stays
+available through its existing trigger. Buy now opens `/checkout?intent=...` for
+only the chosen variant and quantity. The normal shopping cart remains intact,
+including any matching variants; its badge still counts only normal cart items.
+
+POST `/api/v1/checkout/intents` requires customer ownership, CSRF, an idempotency
+key, an available variant and a quantity from 1 to 99. It returns an opaque intent
+ID, checkout URL and expiry. The intent expires after 24 hours before placement;
+creating it does not reserve stock. Quote requests accept `intent`, and checkout
+placement accepts the optional `checkout_intent_id`. Requests without an intent
+retain normal cart behavior. Retries use the same context and saved order.
+
+Migration 50 adds cart purpose, direct-purchase identity and the saved order link.
+Existing carts become shopping carts. Normal-cart uniqueness, lookup, merging
+and counts exclude direct purchases. Both purchase modes retain the same money,
+policy, coupon, stock-locking, reservation and payment verification services.
+Migration rollback must preserve new purchase contexts and saved orders; never
+reclassify active Buy now carts as normal carts or restore a pre-order database.

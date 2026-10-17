@@ -5,6 +5,9 @@ import (
 )
 
 type StorefrontEditor struct {
+	Published                                    storefront.Release
+	Readiness                                    []StorefrontFinding
+	Destinations                                 []storefront.Link
 	PreviewURL                                   string
 	Differences                                  []StorefrontDifference
 	PaymentOptions                               []string
@@ -28,6 +31,11 @@ type StorefrontEditor struct {
 	Page                                         storefront.Page
 	Media                                        []StorefrontMedia
 	Simulation                                   string
+}
+
+type StorefrontFinding struct {
+	Label, Hint, Tab, Selected string
+	Warning                    bool
 }
 type StorefrontMedia struct {
 	ID, URL, Alt, Created string

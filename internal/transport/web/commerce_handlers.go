@@ -268,6 +268,9 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cart, err := h.cartService.GetOrCreate(r.Context(), session.UserID, "")
+	if token := r.FormValue("checkout_intent_id"); token != "" {
+		cart, err = h.cartService.GetCheckoutCart(r.Context(), session.UserID, token)
+	}
 	if err != nil {
 		h.renderError(w, http.StatusNotFound, "Cart is empty", "Add a product before starting checkout.")
 		return
@@ -694,18 +697,22 @@ func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	input, inputErr := productDraftFromForm(r, false)
 	if inputErr != nil {
-		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the product details and upload a PNG, JPEG or WebP image up to 25 MB. Image storage must be available.")
+		w.Header().Set("X-Seller-Product-Field", sellerProductInputErrorField(r))
+		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the product details and choose a JPEG, PNG or WebP image up to 25 MB.")
 		return
 	}
 	if _, updateErr := h.commerceCatalog.UpdateDraft(r.Context(), session.UserID, productID, input); updateErr != nil {
+		if errors.Is(updateErr, applicationcommerce.ErrInvalidProduct) && input.CompareAtCents != nil && *input.CompareAtCents < input.PriceCents {
+			w.Header().Set("X-Seller-Product-Field", "compare_at_rupees")
+		}
 		h.renderCommerceError(w, r, updateErr, "We could not update that product draft.")
 		return
 	}
 	if err := h.saveProductCover(r, session.UserID, productID); err != nil {
-		h.renderError(w, http.StatusServiceUnavailable, "Product image not saved", "Product details were saved, but the image upload failed. Open this product's editor and retry the image upload. Your previous cover is preserved.")
+		h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(productID, 10)+"/edit?step=photos&notice=Product+details+saved.+Image+upload+failed%3B+choose+the+image+again+to+retry.+Your+previous+cover+is+preserved.")
 		return
 	}
-	h.redirect(w, r, "/seller-admin/products?notice=Product+details+saved")
+	h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(productID, 10)+"/edit?step=review&notice=Product+details+saved")
 }
 
 func sellerProductID(path string) (int64, error) {
@@ -735,6 +742,11 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	price, err := moneyFromForm(r, "price_cents")
 	stock, stockErr := strconv.Atoi(r.FormValue("initial_stock"))
 	if err != nil || stockErr != nil {
+		if err != nil {
+			w.Header().Set("X-Seller-Product-Field", "price_rupees")
+		} else {
+			w.Header().Set("X-Seller-Product-Field", "initial_stock")
+		}
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Price and stock must be numeric.")
 		return
 	}
@@ -742,6 +754,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	if raw := moneyFormRaw(r, "compare_at_cents"); raw != "" {
 		value, parseErr := moneyFromForm(r, "compare_at_cents")
 		if parseErr != nil {
+			w.Header().Set("X-Seller-Product-Field", "compare_at_rupees")
 			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Compare-at price must be numeric.")
 			return
 		}
@@ -753,6 +766,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	if raw := moneyFormRaw(r, "cost_price_cents"); raw != "" {
 		value, parseErr := moneyFromForm(r, "cost_price_cents")
 		if parseErr != nil || value < 0 {
+			w.Header().Set("X-Seller-Product-Field", "cost_price_rupees")
 			h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Cost price must be a non-negative amount with up to two decimal places.")
 			return
 		}
@@ -770,6 +784,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	imageURL, _, _, err := readProductImage(r)
 	if err != nil {
+		w.Header().Set("X-Seller-Product-Field", "image_file")
 		h.renderError(w, http.StatusUnprocessableEntity, "Product image not saved", "Upload a PNG, JPEG or WebP image up to 25 MB. If the problem continues, check image storage and try again.")
 		return
 	}
@@ -777,14 +792,17 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
 	})
 	if err != nil {
+		if errors.Is(err, applicationcommerce.ErrInvalidProduct) && compareAt != nil && *compareAt < price {
+			w.Header().Set("X-Seller-Product-Field", "compare_at_rupees")
+		}
 		h.renderCommerceError(w, r, err, "We could not create that product draft.")
 		return
 	}
 	if err := h.saveProductCover(r, session.UserID, product.ID); err != nil {
-		h.renderError(w, http.StatusServiceUnavailable, "Draft created; image not saved", "The product draft was created, but persistent image storage could not save the cover. Open the draft from Products and retry the image upload rather than creating another product.")
+		h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?step=photos&notice=Draft+saved.+Image+upload+failed%3B+choose+the+image+again+to+retry+on+this+saved+draft.")
 		return
 	}
-	http.Redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?notice=Product+draft+created", http.StatusSeeOther)
+	http.Redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?step=review&notice=Product+draft+created", http.StatusSeeOther)
 }
 
 func productSlug(value string) string {

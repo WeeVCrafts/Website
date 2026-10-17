@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -110,6 +111,10 @@ func (h *Handler) supportCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(files) > 0 {
 		if h.supportAttachments == nil || h.supportAttachments.Store(r.Context(), session.UserID, ticket.ID, 0, files) != nil {
+			if !seller {
+				h.redirect(w, r, "/account/support?ticket_id="+strconv.FormatInt(ticket.ID, 10)+"&notice="+url.QueryEscape("Your request was saved, but some photos could not be stored. Review this conversation before sending a follow-up."))
+				return
+			}
 			h.renderError(w, http.StatusUnprocessableEntity, "Support upload failed", "The request was created, but the attachments could not be stored. Please try again without files or submit them again.")
 			return
 		}
@@ -252,7 +257,7 @@ func (h *Handler) supportCustomerReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(files) > 0 && (h.supportAttachments == nil || h.supportAttachments.Store(r.Context(), session.UserID, ticketID, messageID, files) != nil) {
-		h.renderError(w, http.StatusUnprocessableEntity, "Support upload failed", "Your reply was sent, but the attachments could not be stored. Please try again without files.")
+		h.redirect(w, r, "/account/support?ticket_id="+strconv.FormatInt(ticketID, 10)+"&notice="+url.QueryEscape("Your reply was saved, but some photos could not be stored. Review this conversation before sending a follow-up."))
 		return
 	}
 	h.redirect(w, r, "/account/support?ticket_id="+strconv.FormatInt(ticketID, 10)+"&notice=Reply+sent")

@@ -158,6 +158,9 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
+	InventoryFilter, SelectedVariant                                                 string
+	InventoryHistory                                                                 []SellerInventoryTransaction
+	OrderReturnPage                                                                  int
 	LocalDeliverySimulation                                                          bool
 	Pagination                                                                       PortalPagination
 	LedgerPagination, SettlementPagination                                           PortalPagination
@@ -201,6 +204,10 @@ type SellerAdminProduct struct {
 type SellerAdminInventory struct {
 	VariantID, Name, SKU, Variant, Location, Available, Reserved, Reorder, Status, Image string
 	IsLowStock                                                                           bool
+}
+
+type SellerInventoryTransaction struct {
+	Date, Delta, Before, After, Reason string
 }
 
 type SellerAdminOrder struct {
@@ -274,6 +281,8 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
+	Status, ErrorMessage, ErrorField                                                                         string
+	Input                                                                                                    map[string]string
 	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                                         string
 	Description, PriceCents, CostPriceCents, CompareAtCents, SKU, InitialStock, DeliveryLabel, Action, Image string
 	Categories                                                                                               []SellerCategoryChoice

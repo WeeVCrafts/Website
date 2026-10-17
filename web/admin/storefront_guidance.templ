@@ -1,0 +1,93 @@
+package admin
+
+import (
+ "fmt"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ StorefrontWorkspaceNavigation(m viewmodels.StorefrontEditor) {
+ <nav class="sf-tabs sf-workspace-groups" aria-label="Storefront workspace">
+  <a href={m.Admin.PortalRoot+"/storefront"} aria-current={ariaCurrent(m.Tab=="overview")}>Overview</a>
+  for _,g:=range []struct{ID,Tab,Label string}{{"design","homepage","Page design"},{"brand","theme","Brand & navigation"},{"content","pages","Content"},{"settings","settings","Store settings"},{"publishing","publishing","Review & publish"}} {
+   <a href={editorURL(m,g.Tab,"")} aria-current={ariaCurrent(m.Tab!="overview"&&editorGroup(m.Tab)==g.ID)}>{g.Label}</a>
+  }
+ </nav>
+ if m.Draft.ID>0 && m.Tab!="publishing" {
+  <nav class="sf-subtabs" aria-label="Customization tools">
+   for _,tab:=range []struct{ID,Label string}{{"homepage","Homepage"},{"hero","Hero slides"},{"categories","Categories"},{"templates","Page templates"},{"theme","Theme"},{"navigation","Navigation"},{"media","Media"},{"pages","Content pages"},{"settings","Shopping policies"},{"promotions","Promotions"}} {
+    if editorGroup(tab.ID)==editorGroup(m.Tab) {
+     <a href={editorURL(m,tab.ID,"")} aria-current={ariaCurrent(tab.ID==m.Tab)} data-editor-target={editorGlobalTarget(tab.ID)}>{tab.Label}</a>
+    }
+   }
+  </nav>
+ }
+}
+
+templ StorefrontGuide(m viewmodels.StorefrontEditor) {
+ <details class="sf-guide" open?={m.Selected==""} data-editor-guide>
+  <summary>How customization works</summary>
+  <ol aria-label="Customization steps"><li>Choose a page</li><li>Select a section</li><li>Edit and preview</li><li>Check mobile and desktop</li><li>Save draft</li><li>Review and publish</li></ol>
+  <p>Preview changes stay private. Save keeps them in this draft. Only Publish changes the customer storefront.</p>
+  <button type="button" class="admin-button secondary" data-guide-dismiss hidden>Hide guidance</button>
+ </details>
+ <button type="button" class="sf-guide-reopen admin-button secondary" data-guide-reopen hidden>Show guidance</button>
+ if m.Tab=="homepage"||m.Tab=="templates"||m.Tab=="template-sections"||m.Tab=="pages"||m.Tab=="page-sections" {
+  <form method="get" action={m.Admin.PortalRoot+"/storefront"} class="sf-page-selector" data-editor-page-selector>
+   <input type="hidden" name="draft" value={fmt.Sprint(m.Draft.ID)}/>
+   <label for="sf-page-choice">Page to customize</label>
+   <select id="sf-page-choice" name="destination" data-editor-page-choice>
+    <option value={editorURL(m,"homepage","")}>Homepage</option>
+    for _,t:=range m.Draft.Config.Templates {
+     <option value={editorURL(m,"templates",t.ID)} selected?={m.Template.ID==t.ID}>{editorPageName(t.Kind)} · {editorAssignment(t.Match)}</option>
+    }
+    for _,p:=range m.Draft.Config.Pages {
+     <option value={editorURL(m,"pages",p.Slug)} selected?={m.Page.Slug==p.Slug}>{p.Title}</option>
+    }
+   </select><button type="submit" class="admin-button secondary">Open page</button>
+  </form>
+ }
+}
+
+templ StorefrontOverview(m viewmodels.StorefrontEditor) {
+ <section class="sf-overview admin-panel">
+  <div><span class="material-symbols-outlined sf-overview-icon" aria-hidden="true">storefront</span><h2>Your customer storefront</h2><p>Start with an existing draft, or create a new draft from the published design.</p>
+   <p><strong>Published release {fmt.Sprint(m.Published.ID)}</strong><br/>{m.Published.Note}</p><a href="/" target="_blank" rel="noopener">View published storefront <span class="sr-only">in a new tab</span></a>
+  </div>
+  <div><h3>Continue your work</h3>
+   if len(m.Drafts)==0 {
+<p>No drafts yet. Create a draft to start customizing.</p>
+}
+   <ul class="sf-draft-list">
+    for _,d:=range m.Drafts {
+     if d.State!="published" {
+      <li><div><strong>Draft {fmt.Sprint(d.ID)}</strong><small>{editorDraftState(d.State)} · Updated {d.Updated.Format("02 Jan, 15:04")}</small></div><a class="admin-button secondary" href={editorDraftDestination(m,d.ID,d.State)}>{editorContinueLabel(d.State)}</a></li>
+     }
+    }
+   </ul>
+  </div>
+ </section>
+ <section class="sf-overview-hints"><h2>What would you like to change?</h2><p><strong>Page design:</strong> arrange sections, photographs, collections, and maker stories.</p><p><strong>Brand & navigation:</strong> update supported colors, fonts, menu links, and footer groups.</p><p><strong>Store settings:</strong> review shipping, return windows, and promotions before publication.</p></section>
+}
+
+templ StorefrontReadiness(m viewmodels.StorefrontEditor) {
+ <section class="admin-panel sf-readiness"><h2>Ready to publish?</h2><p data-editor-unsaved-check>Save all changes, check the responsive preview, and review the comparison below.</p>
+  if len(m.Readiness)==0 {
+<p class="sf-ready">Required content and settings are valid. Empty product collections remain honest empty states.</p>
+} else {
+   <ul>
+for _,f:=range m.Readiness {
+<li><strong>{editorFindingLabel(f.Warning)}: {f.Label}</strong><p>{f.Hint}</p><a href={editorURL(m,f.Tab,f.Selected)}>Review this content</a></li>
+}
+
+</ul>
+  }
+ </section>
+}
+
+templ StorefrontPresetGallery(m viewmodels.StorefrontEditor) {
+ <details class="sf-presets"><summary>Add a section from a starting point</summary><p>Choose a starting point, then add your own content. Nothing is published automatically.</p><div class="sf-preset-grid">
+  for _,preset:=range []struct{ID,Icon,Name,Hint string}{{"curated","shopping_bag","Curated collection","Hand-select real catalog products."},{"gifts","local_offer","Gift selection","Available pieces under ₹1,500."},{"edits","category","Collection tiles","Guide shoppers by category, craft, or occasion."},{"story","storefront","Maker story","Use verified maker profiles."},{"promotion","image","Promotional banner","Add a photograph and destination."},{"questions","help","FAQ","Answer questions about a collection."}} {
+   <form method="post" action={m.Admin.PortalRoot+"/storefront/save"}>@EditorFields(m)<input type="hidden" name="operation" value="add"/><button type="submit" name="type" value={preset.ID} disabled?={m.Draft.State!="draft"}><span class="material-symbols-outlined" aria-hidden="true">{preset.Icon}</span><strong>{preset.Name}</strong><small>{preset.Hint}</small></button></form>
+  }
+ </div></details>
+}

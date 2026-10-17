@@ -242,6 +242,14 @@ type Cart struct {
 	ExpiresAt     time.Time  `json:"expires_at"`
 }
 
+// CheckoutIntent isolates a direct purchase from the customer's shopping cart.
+type CheckoutIntent struct {
+	ID          string    `json:"id"`
+	CartID      int64     `json:"cart_id"`
+	OrderNumber string    `json:"order_number,omitempty"`
+	ExpiresAt   time.Time `json:"expires_at"`
+}
+
 type WishlistItem struct {
 	ProductID  int64  `json:"product_id"`
 	Slug       string `json:"slug"`

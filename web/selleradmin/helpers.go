@@ -9,7 +9,74 @@ import (
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
-func sellerInt(value int) string      { return strconv.Itoa(value) }
+func sellerInt(value int) string     { return strconv.Itoa(value) }
+func sellerTotal(value int64) string { return strconv.FormatInt(value, 10) }
+func sellerOrderURL(p viewmodels.SellerAdminPage, number string) string {
+	q := sellerOrderQuery(p)
+	return "/seller-admin/orders/" + url.PathEscape(number) + "?" + q.Encode()
+}
+func sellerOrderQuery(p viewmodels.SellerAdminPage) url.Values {
+	q := url.Values{"q": {p.Query}, "tab": {p.Tab}}
+	if p.Pagination.Page > 1 {
+		q.Set("page", strconv.Itoa(p.Pagination.Page))
+	}
+	if p.OrderReturnPage > 1 {
+		q.Set("page", strconv.Itoa(p.OrderReturnPage))
+	}
+	return q
+}
+func sellerOrdersBackURL(p viewmodels.SellerAdminPage) string {
+	return "/seller-admin/orders?" + sellerOrderQuery(p).Encode()
+}
+func sellerFieldLabel(name string) string { return strings.ToUpper(name[:1]) + name[1:] }
+func sellerProductInput(form viewmodels.SellerProductForm, name, fallback string) string {
+	if form.Input != nil {
+		return form.Input[name]
+	}
+	return fallback
+}
+
+func sellerProductInvalid(form viewmodels.SellerProductForm, name string) string {
+	if form.ErrorField == name {
+		return "true"
+	}
+	return "false"
+}
+func sellerProductErrorID(form viewmodels.SellerProductForm, name string) string {
+	if form.ErrorField == name {
+		return "product-error"
+	}
+	return ""
+}
+
+func sellerInventoryURL(p viewmodels.SellerAdminPage, variant string) string {
+	q := url.Values{"q": {p.Query}, "stock": {p.InventoryFilter}, "variant": {variant}}
+	if p.Pagination.Page > 1 {
+		q.Set("page", strconv.Itoa(p.Pagination.Page))
+	}
+	return "/seller-admin/inventory?" + q.Encode() + "#stock-" + variant
+}
+
+func sellerInventoryHistoryURL(p viewmodels.SellerAdminPage, variant string) string {
+	return strings.SplitN(sellerInventoryURL(p, variant), "#", 2)[0] + "#inventory-history"
+}
+
+func sellerNextAction(status string) string {
+	switch sellerNextFulfillmentStatus(status) {
+	case "processing":
+		return "Start processing"
+	case "packing":
+		return "Mark as packed"
+	case "shipped":
+		return "Mark as shipped"
+	case "out_for_delivery":
+		return "Mark ready to deliver"
+	case "delivered":
+		return "Mark as delivered"
+	default:
+		return "Save fulfilment"
+	}
+}
 func sellerQuery(value string) string { return url.QueryEscape(value) }
 func sellerOptional(value string, present bool) string {
 	if present {

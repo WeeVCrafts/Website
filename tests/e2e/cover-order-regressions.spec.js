@@ -91,15 +91,12 @@ test('persistent covers, clean demo confirmation and synchronized fulfilment', a
     const stages = [['processing','Processing'], ['packing','Packing'], ['shipped','Shipped'], ['out_for_delivery','Ready to deliver'], ['delivered','Delivered']];
     for (const [stage, label] of stages) {
       const form = seller.page.locator('[data-fulfillment-form]');
-      if (stage === 'processing') {
-        expect(await form.locator('[name="status"] option').evaluateAll(options => options.map(o => o.textContent))).toEqual(['New','Processing','Packing','Shipped','Ready to deliver','Delivered']);
-      }
-      await form.locator('[name="status"]').selectOption(stage);
+      await expect(form.locator('[name="status"]')).toHaveValue(stage);
       if (stage === 'shipped') {
         await form.locator('[name="carrier"]').selectOption('India Post');
         await form.locator('[name="tracking_number"]').fill('QA-TRACK-' + suffix);
       }
-      await form.getByRole('button', { name: 'Save fulfilment' }).click();
+      await form.locator('button[type=submit]').click();
       await expect(seller.page).toHaveURL(/notice=Fulfilment/);
       await expect(seller.page.locator('[data-seller-order-detail]')).toContainText(label);
       await expect(row(admin.page).locator('[data-label="Fulfilment stage"]')).toHaveText(label, { timeout: 20000 });

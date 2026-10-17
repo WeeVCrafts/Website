@@ -6,6 +6,7 @@ import (
 	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -43,6 +44,47 @@ func storefrontDifferences(saved, proposed storefront.Config) []viewmodels.Store
 		return result
 	}
 	a, b := flatten(saved), flatten(proposed)
+	labels := map[string]string{"homepage": "Homepage", "slides": "Hero slides", "navigation": "Header navigation", "footer groups": "Footer", "settings": "Store settings", "templates": "Page templates", "pages": "Content pages", "theme": "Brand appearance", "promotions": "Promotions"}
+	for _, c := range []storefront.Config{saved, proposed} {
+		for _, s := range c.Homepage {
+			label := s.Title
+			if label == "" {
+				label = s.Type
+			}
+			labels[s.ID] = label
+		}
+		for _, s := range c.Slides {
+			labels[s.ID] = s.Title
+		}
+		for _, s := range c.Categories {
+			labels[s.Slug] = s.Name
+		}
+		for _, s := range c.Templates {
+			label := s.Kind + " page"
+			if s.Match != "" {
+				label += " (" + s.Match + ")"
+			}
+			labels[s.ID] = label
+			for _, section := range s.Sections {
+				if section.Title != "" {
+					labels[section.ID] = section.Title
+				}
+			}
+		}
+		for _, s := range c.Pages {
+			labels[s.Slug] = s.Title
+		}
+	}
+	readable := func(key string) string {
+		parts := strings.Split(key, " / ")
+		for i, part := range parts {
+			if name := labels[part]; name != "" {
+				parts[i] = name
+			}
+		}
+		return strings.Join(parts, " / ")
+	}
+
 	keys := []string{}
 	for key := range a {
 		keys = append(keys, key)
@@ -56,11 +98,29 @@ func storefrontDifferences(saved, proposed storefront.Config) []viewmodels.Store
 	var result []viewmodels.StorefrontDifference
 	for _, key := range keys {
 		if a[key] != b[key] {
-			result = append(result, viewmodels.StorefrontDifference{Field: key, Saved: a[key], Proposed: b[key]})
+			result = append(result, viewmodels.StorefrontDifference{Field: readable(key), Saved: readableDifference(key, a[key]), Proposed: readableDifference(key, b[key])})
 			if len(result) == 100 {
 				break
 			}
 		}
 	}
 	return result
+}
+
+func readableDifference(key, value string) string {
+	if strings.Contains(key, "cents") || strings.HasSuffix(key, " / min price") || strings.HasSuffix(key, " / max price") {
+		if cents, e := strconv.ParseInt(value, 10, 64); e == nil && cents >= 0 {
+			return storefrontMoney(cents)
+		}
+	}
+	switch value {
+	case "<nil>":
+		return "Not set"
+	case "true":
+		return "Yes"
+	case "false":
+		return "No"
+	default:
+		return value
+	}
 }

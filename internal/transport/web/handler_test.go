@@ -686,7 +686,7 @@ func TestSellerDraftEditRendersManagedValuesAndHTMXContract(t *testing.T) {
 	}, session)
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller-admin/products?notice=Product+details+saved" {
+	if recorder.Code != http.StatusNoContent || recorder.Header().Get("HX-Redirect") != "/seller-admin/products/7/edit?step=review&notice=Product+details+saved" {
 		t.Fatalf("expected HTMX seller edit redirect, got %d %q: %s", recorder.Code, recorder.Header().Get("HX-Redirect"), recorder.Body.String())
 	}
 	if managementRepository.updatedWith.Name != "Updated Soap" || managementRepository.updatedWith.PriceCents != 13900 || managementRepository.updatedWith.InitialStock != 0 {

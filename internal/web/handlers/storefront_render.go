@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -92,9 +91,9 @@ func (h *LivePortalHandler) StorefrontPreview(w http.ResponseWriter, r *http.Req
 	if target == "" {
 		target = "/"
 	}
-	parsed, e := url.Parse(target)
-	if e != nil || parsed.IsAbs() || parsed.Host != "" || !strings.HasPrefix(target, "/") || strings.HasPrefix(target, "//") || strings.ContainsAny(target, "\\\r\n") || h.storefrontPreview == nil || !h.storefrontPreview.ownsRoute(parsed.Path) || strings.HasPrefix(parsed.Path, "/account/profile/photo") || strings.Contains(parsed.Path, "/label") || strings.Contains(parsed.Path, "/invoice") || strings.HasPrefix(parsed.Path, "/payments/") {
-		http.Error(w, "Choose a customer page to preview.", 422)
+	parsed, e := h.validStorefrontPreviewPath(target)
+	if e != nil {
+		http.Error(w, e.Error(), 422)
 		return
 	}
 	clone := r.Clone(storefront.WithRevision(r.Context(), storefront.Revision{ID: id, Config: d.Config, Preview: true}))

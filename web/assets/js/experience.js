@@ -50,10 +50,18 @@
       const selectors = Array.from(hero.querySelectorAll("[data-hero-select]"));
       const status = hero.querySelector("[data-hero-status]");
       const listeners = new AbortController();
-      let active = 0, timer = null, paused = reducedMotion.matches, hovered = false;
+      let active = 0, requested = 0, timer = null, paused = reducedMotion.matches, hovered = false;
       let inView = false, keyboardFocused = false, request = 0, destroyed = false, touch = null;
+      let fade = null;
+      const settle = () => {
+        if (fade) { fade.forEach(animation => animation.cancel()); fade = null; }
+        slides.forEach((slide, i) => {
+          slide.hidden = i !== active; slide.inert = i !== active;
+          slide.style.removeProperty('z-index');
+        });
+      };
       const clear = () => { clearTimeout(timer); timer = null; };
-      const canPlay = () => !paused && !hovered && !keyboardFocused && inView && !document.hidden && !destroyed && hero.isConnected;
+      const canPlay = () => document.body.dataset.storefrontEditing !== "true" && !paused && !hovered && !keyboardFocused && inView && !document.hidden && !destroyed && hero.isConnected;
       const sync = () => {
         clear();
         hero.dataset.playing = String(canPlay());
@@ -69,7 +77,7 @@
         const done = ok => { clearTimeout(timeout); img.removeEventListener("load", loaded); img.removeEventListener("error", failed); listeners.signal.removeEventListener("abort", failed); resolve(ok); };
         const loaded = () => { if (img.decode) img.decode().then(() => done(true), () => done(img.naturalWidth > 0)); else done(true); };
         const failed = () => done(false);
-        if (img.complete) return done(img.naturalWidth > 0);
+        if (img.complete) { if (img.naturalWidth > 0) loaded(); else failed(); return; }
         img.addEventListener("load", loaded, {once:true}); img.addEventListener("error", failed, {once:true});
         listeners.signal.addEventListener("abort", failed, {once:true});
         timeout = setTimeout(failed, 8000);
@@ -78,6 +86,7 @@
         clear();
         const version = ++request;
         let next = (index + slides.length) % slides.length;
+        requested = next;
         let loaded = false;
         for (let attempts = 0; attempts < (manual ? 1 : slides.length); attempts++) {
           loaded = await ready(slides[next].querySelector("img"));
@@ -86,44 +95,58 @@
           next = (next + 1) % slides.length;
         }
         if (!loaded) {
+          requested = active;
           status.textContent = "This collection image could not load. Your current collection is still available.";
           sync(); return;
         }
         // A hover/focus/visibility change during loading must not advance playback.
         if (!manual && !canPlay()) { sync(); return; }
+        settle();
+        const previous = active;
         active = next;
-        slides.forEach((slide, i) => {
-          slide.hidden = i !== active; slide.inert = i !== active;
-          if (i !== active) slide.getAnimations().forEach(animation => animation.cancel());
-        });
+        requested = active;
+        slides.forEach((slide, i) => { slide.inert = i !== active; });
+        slides[active].hidden = false;
         selectors.forEach((button, i) => button.setAttribute("aria-pressed", String(i === active)));
         hero.querySelector("[data-hero-count]").textContent = (active + 1) + " / " + slides.length;
         if (manual) status.textContent = "Collection " + (active + 1) + " of " + slides.length + ": " + slides[active].querySelector("h1").textContent;
-        if (!reducedMotion.matches) slides[active].animate([{opacity:.75},{opacity:1}],{duration:200,easing:"ease-out"});
+        if (previous !== active && !reducedMotion.matches) {
+          slides[active].style.zIndex = '1';
+          const animations = [
+            slides[previous].animate([{opacity:1},{opacity:0}],{duration:450,easing:'ease-out',fill:'forwards'}),
+            slides[active].animate([{opacity:0},{opacity:1}],{duration:450,easing:'ease-out',fill:'forwards'})
+          ];
+          fade = animations;
+          Promise.all(animations.map(animation => animation.finished)).then(() => {
+            if (fade === animations) settle();
+          }).catch(() => {});
+        } else settle();
         sync();
       }
       const on = (element, type, callback, options = {}) => element.addEventListener(type, callback, {...options, signal:listeners.signal});
       controls.hidden = false;
       slides.forEach((slide, i) => { slide.hidden = i !== 0; slide.inert = i !== 0; });
-      on(hero.querySelector("[data-hero-prev]"), "click", () => show(active - 1));
-      on(hero.querySelector("[data-hero-next]"), "click", () => show(active + 1));
+      on(hero.querySelector("[data-hero-prev]"), "click", () => show(requested - 1));
+      on(hero.querySelector("[data-hero-next]"), "click", () => show(requested + 1));
       selectors.forEach((button, i) => on(button, "click", () => show(i)));
       on(hero, "pointerenter", event => { if (event.pointerType === "mouse") { hovered = true; sync(); } });
       on(hero, "pointerleave", () => { hovered = false; sync(); });
       on(hero, "focusin", event => { keyboardFocused = event.target.matches(":focus-visible"); ++request; sync(); });
       on(hero, "focusout", event => { if (!hero.contains(event.relatedTarget)) { keyboardFocused = false; ++request; sync(); } });
       on(document, "visibilitychange", () => { ++request; sync(); });
-      on(reducedMotion, "change", () => { paused = reducedMotion.matches; ++request; sync(); });
+      on(document,"weevcrafts:preview-mode",()=>{++request;settle();sync();});
+      on(document,"weevcrafts:preview-slide",event=>{if(document.body.dataset.storefrontEditing==='true')show(event.detail.index);});
+      on(reducedMotion, "change", () => { paused = reducedMotion.matches; ++request; settle(); sync(); });
       on(hero, "touchstart", event => { if (event.touches.length === 1) touch = {x:event.touches[0].clientX,y:event.touches[0].clientY}; }, {passive:true});
       on(hero, "touchend", event => {
         if (!touch || !event.changedTouches.length) return;
         const dx = event.changedTouches[0].clientX - touch.x, dy = event.changedTouches[0].clientY - touch.y;
         touch = null;
-        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(active + (dx < 0 ? 1 : -1));
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(requested + (dx < 0 ? 1 : -1));
       }, {passive:true});
       const observer = new IntersectionObserver(entries => { inView = entries[0].isIntersecting; ++request; sync(); }, {threshold:.1});
       observer.observe(hero);
-      heroControllers.set(hero, {destroy(){ destroyed = true; ++request; clear(); observer.disconnect(); listeners.abort(); }});
+      heroControllers.set(hero, {destroy(){ destroyed = true; ++request; clear(); settle(); observer.disconnect(); listeners.abort(); }});
       sync();
     });
   }

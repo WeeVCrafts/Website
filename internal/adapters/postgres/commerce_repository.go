@@ -655,11 +655,11 @@ func (r *CommerceRepository) GetOrCreateCart(ctx context.Context, userID int64, 
 	if userID > 0 {
 		guestTokenHash = ""
 	}
-	if _, err := r.pool.Exec(ctx, `UPDATE carts SET status='expired',updated_at=NOW() WHERE status='active' AND expires_at<=NOW() AND (($1>0 AND user_id=$1) OR ($2<>'' AND guest_token_hash=$2))`, userID, guestTokenHash); err != nil {
+	if _, err := r.pool.Exec(ctx, `UPDATE carts SET status='expired',updated_at=NOW() WHERE purpose='shopping' AND status='active' AND expires_at<=NOW() AND (($1>0 AND user_id=$1) OR ($2<>'' AND guest_token_hash=$2))`, userID, guestTokenHash); err != nil {
 		return domaincommerce.Cart{}, err
 	}
 	var cartID int64
-	query := `SELECT id FROM carts WHERE status = 'active' AND expires_at > NOW() AND (($1 > 0 AND user_id = $1) OR ($2 <> '' AND guest_token_hash = $2)) LIMIT 1`
+	query := `SELECT id FROM carts WHERE purpose='shopping' AND status = 'active' AND expires_at > NOW() AND (($1 > 0 AND user_id = $1) OR ($2 <> '' AND guest_token_hash = $2)) LIMIT 1`
 	err := r.pool.QueryRow(ctx, query, userID, guestTokenHash).Scan(&cartID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = r.pool.QueryRow(ctx, `INSERT INTO carts (user_id, guest_token_hash, expires_at) VALUES (NULLIF($1, 0), NULLIF($2, ''), NOW() + INTERVAL '30 days') ON CONFLICT DO NOTHING RETURNING id`, userID, guestTokenHash).Scan(&cartID)
@@ -748,13 +748,13 @@ func (r *CommerceRepository) MoveCartItemToWishlist(ctx context.Context, cartID,
 func (r *CommerceRepository) MergeGuestCart(ctx context.Context, userID int64, guestTokenHash string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var guestID, userCartID int64
-		if err := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE guest_token_hash = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, guestTokenHash).Scan(&guestID); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE purpose='shopping' AND guest_token_hash = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, guestTokenHash).Scan(&guestID); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil
 			}
 			return err
 		}
-		if err := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE user_id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, userID).Scan(&userCartID); errors.Is(err, pgx.ErrNoRows) {
+		if err := tx.QueryRow(transactionContext, `SELECT id FROM carts WHERE purpose='shopping' AND user_id = $1 AND status = 'active' AND expires_at > NOW() FOR UPDATE`, userID).Scan(&userCartID); errors.Is(err, pgx.ErrNoRows) {
 			if err := tx.QueryRow(transactionContext, `INSERT INTO carts (user_id, expires_at) VALUES ($1, NOW() + INTERVAL '30 days') RETURNING id`, userID).Scan(&userCartID); err != nil {
 				return err
 			}
@@ -1072,7 +1072,7 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		if err != nil {
 			return err
 		}
-		_, err = tx.Exec(transactionContext, `UPDATE carts SET status = 'checked_out', updated_at = NOW() WHERE id = $1`, cartID)
+		_, err = tx.Exec(transactionContext, `UPDATE carts SET status = 'checked_out', checkout_order_id=$2, updated_at = NOW() WHERE id = $1`, cartID, order.ID)
 		return err
 	})
 	return order, err
