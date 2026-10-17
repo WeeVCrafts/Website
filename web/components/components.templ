@@ -169,8 +169,12 @@ templ WishlistAction(p viewmodels.CustomerPage) {
 
 
 templ DetailWishlistButton(product viewmodels.Product) {
-  <button class={ "gallery-heart " + productHeartClass(product.Saved) } type="button" data-product-slug={ product.Slug } aria-label={ productHeartLabel(product.Name,product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-target="#wishlist-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button>
+  <button class={ "gallery-heart " + productHeartClass(product.Saved) } type="button" data-product-slug={ product.Slug } data-product-name={ product.Name } aria-label={ productHeartLabel(product.Name,product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-target="#wishlist-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this">@WishlistHeartIcon()</button>
     }
+
+templ WishlistHeartIcon() {
+  <svg class="wishlist-heart-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+}
 
 
 templ CartMutation(p viewmodels.CustomerPage) {
@@ -238,7 +242,7 @@ templ Footer(p viewmodels.CustomerPage) {
 
 templ ProductCard(product viewmodels.Product, showAction bool, priority ...bool) {
   <article class={ "product-card", templ.KV("product-card--compact", !showAction) } data-product={ product.Slug } data-action={ showAction }>
-    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ ProductImage(product.ImageURL) } alt={ product.Name } loading={ productImageLoading(priority) } fetchpriority={ productImagePriority(priority) } width="640" height="640" srcset={ ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="(max-width:360px) calc(100vw - 32px), (max-width:720px) calc((100vw - 44px) / 2), (max-width:1024px) 30vw, 280px"/></a><button class={ productHeartClass(product.Saved) } type="button" aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productCardWishlistValues(product.Saved, showAction) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">{ productHeartIcon(product.Saved) }</span></button><span class="badge">{ product.Badge }</span></div>
+    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ ProductImage(product.ImageURL) } alt={ product.Name } loading={ productImageLoading(priority) } fetchpriority={ productImagePriority(priority) } width="640" height="640" srcset={ ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="(max-width:360px) calc(100vw - 32px), (max-width:720px) calc((100vw - 44px) / 2), (max-width:1024px) 30vw, 280px"/></a><button class={ productHeartClass(product.Saved) } type="button" data-product-slug={ product.Slug } data-product-name={ product.Name } aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productCardWishlistValues(product.Saved, showAction) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this">@WishlistHeartIcon()</button><span class="badge">{ product.Badge }</span></div>
     <div class="product-copy"><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p>if product.Reviews > 0 {
     <div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div>
     } else {

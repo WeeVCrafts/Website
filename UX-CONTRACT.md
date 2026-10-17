@@ -1,5 +1,28 @@
 # WeevCrafts UX contract
 
+## Shopping reliability — 17 October 2026
+
+This amendment supersedes earlier references to hero arrow controls. Hero slide
+selectors and swipe remain functional, with existing rotation and reduced-motion
+rules. Category scroll buttons appear only when needed, expose previous/next
+names, disable at the respective boundary and recalculate after content/size
+changes. Native scrolling and category links remain available without enhancement.
+
+Wishlist writes commit their visible state only after server confirmation. Every
+rendered control for the same product shares saved/pending state, blocks duplicate
+activation, retains its visible heart and synchronizes after HTMX settlement.
+Failed writes retain the prior state and allow retry; expired sessions use the
+existing sign-in prompt. Removing a saved card focuses the next/previous saved
+card or the empty-state browsing link. Existing wishlist APIs and CSRF checks own
+persistence and authorization; no shopping state is stored in browser storage.
+
+Background cart/wishlist counts refresh independently without product hydration.
+Transient reads retry once; cancelled, unauthorized and obsolete reads do not.
+Background failure preserves the last usable count, never shows an error toast
+and never disables shopping. A count failure cannot turn a confirmed wishlist
+write into a reported failure. Older refresh responses cannot overwrite newer
+confirmed wishlist changes. Direct action failures still receive useful feedback.
+
 ## Customer workflow refinement — 17 October 2026
 
 Customer order history uses server pagination at 20 records per page. Existing

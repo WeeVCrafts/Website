@@ -123,7 +123,7 @@
         } else settle();
         sync();
       }
-      const on = (element, type, callback, options = {}) => element.addEventListener(type, callback, {...options, signal:listeners.signal});
+      const on = (element, type, callback, options = {}) => element?.addEventListener(type, callback, {...options, signal:listeners.signal});
       controls.hidden = false;
       slides.forEach((slide, i) => { slide.hidden = i !== 0; slide.inert = i !== 0; });
       on(hero.querySelector("[data-hero-prev]"), "click", () => show(requested - 1));
@@ -159,6 +159,42 @@
       section.querySelectorAll("[data-rail-direction]").forEach(button => button.addEventListener("click", () => {
         rail.scrollBy({left: Number(button.dataset.railDirection) * rail.clientWidth * .8, behavior:reducedMotion.matches ? "instant" : "smooth"});
       }));
+    });
+  }
+
+  const categoryRails = new Map();
+  function initCategoryRails() {
+    for (const [element, controller] of categoryRails) {
+      if (!element.isConnected) { controller.destroy(); categoryRails.delete(element); }
+    }
+    document.querySelectorAll('[data-category-rail]').forEach(section => {
+      if (categoryRails.has(section)) return;
+      const track = section.querySelector('[data-category-track]');
+      const buttons = Array.from(section.querySelectorAll('[data-category-direction]'));
+      if (!track) return;
+      const listeners = new AbortController();
+      const update = () => {
+        const overflow = track.scrollWidth > section.clientWidth + 2;
+        section.classList.toggle('has-overflow', overflow);
+        buttons.forEach(button => {
+          // Do not discard keyboard focus when resizing the row to fit.
+          if (!overflow && document.activeElement === button) track.querySelector('a')?.focus({preventScroll:true});
+          button.hidden = !overflow;
+          button.disabled = Number(button.dataset.categoryDirection) < 0
+            ? track.scrollLeft <= 2 : track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+        });
+      };
+      buttons.forEach(button => button.addEventListener('click', () => {
+        track.scrollBy({left:Number(button.dataset.categoryDirection) * track.clientWidth * .8, behavior:reducedMotion.matches ? 'instant' : 'smooth'});
+      }, {signal:listeners.signal}));
+      track.addEventListener('scroll', update, {passive:true, signal:listeners.signal});
+      const resize = new ResizeObserver(update);
+      resize.observe(track);
+      const observeItems = () => { resize.disconnect(); resize.observe(track); Array.from(track.children).forEach(item => resize.observe(item)); update(); };
+      const mutation = new MutationObserver(observeItems);
+      mutation.observe(track, {childList:true, subtree:true});
+      observeItems();
+      categoryRails.set(section, {destroy(){listeners.abort();resize.disconnect();mutation.disconnect();}});
     });
   }
 
@@ -407,6 +443,7 @@
     // sheet only after that step so its open/focus state cannot be overwritten.
     if (!(event?.type==='htmx:afterSwap' && ['page','listing-content'].includes(event.detail.target?.id) && filterSnapshot)) initFilters();
     initHero(document);
+      initCategoryRails();
     initProductRails(document);initGallery(document);initSearch();initPurchaseBar();syncPurchase();
     document.querySelectorAll(".facet-search").forEach(facet=>{
       if (facet.dataset.emptyBound) return;

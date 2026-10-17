@@ -116,7 +116,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<nav class=\"container discovery-categories\" aria-label=\"Shop by craft\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"container category-rail\" data-category-rail><button class=\"category-rail-button\" type=\"button\" data-category-direction=\"-1\" aria-label=\"Previous categories\" hidden><span aria-hidden=\"true\">←</span></button><nav class=\"discovery-categories\" aria-label=\"Shop by craft\" data-category-track>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -128,7 +128,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 			var templ_7745c5c3_Var7 templ.SafeURL
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs("/products?category=" + category.Slug)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 16, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 18, Col: 77}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -141,7 +141,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(category.Slug)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 16, Col: 119}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 18, Col: 119}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
@@ -159,7 +159,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("object-position:" + category.ImagePosition)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 18, Col: 59}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 20, Col: 59}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -172,7 +172,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(category.ImageURL)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 18, Col: 85}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 20, Col: 85}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 				if templ_7745c5c3_Err != nil {
@@ -185,7 +185,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(category.ImageURL, ""))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 18, Col: 152}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 20, Col: 152}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 				if templ_7745c5c3_Err != nil {
@@ -208,7 +208,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(category.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 22, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 24, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -219,7 +219,7 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</nav><button class=\"category-rail-button\" type=\"button\" data-category-direction=\"1\" aria-label=\"Next categories\" hidden><span aria-hidden=\"true\">→</span></button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -255,7 +255,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		var templ_7745c5c3_Var14 templ.SafeURL
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 29, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 33, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -268,7 +268,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(storefrontCollectionImage(image))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 29, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 33, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
@@ -281,7 +281,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(storefrontCollectionImage(image), ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 29, Col: 172}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 33, Col: 172}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 		if templ_7745c5c3_Err != nil {
@@ -294,7 +294,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 29, Col: 283}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 33, Col: 283}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +307,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(copy)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 29, Col: 307}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 33, Col: 307}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -384,7 +384,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var22 string
 					templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(seller.PortraitURL)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 41, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 45, Col: 35}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 					if templ_7745c5c3_Err != nil {
@@ -397,7 +397,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var23 string
 					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue("Portrait shared by " + seller.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 41, Col: 79}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 45, Col: 79}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 					if templ_7745c5c3_Err != nil {
@@ -415,7 +415,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var24 templ.SafeURL
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs("/makers/" + seller.Slug)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 44, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 48, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -428,7 +428,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var25 string
 				templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(seller.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 44, Col: 60}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 48, Col: 60}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 				if templ_7745c5c3_Err != nil {
@@ -446,7 +446,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var26 string
 					templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(seller.Location)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 46, Col: 127}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 50, Col: 127}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 					if templ_7745c5c3_Err != nil {
@@ -465,7 +465,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var27 string
 					templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(seller.Technique)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 49, Col: 52}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 53, Col: 52}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 					if templ_7745c5c3_Err != nil {
@@ -484,7 +484,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var28 string
 					templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(seller.Description)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 52, Col: 50}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 56, Col: 50}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 					if templ_7745c5c3_Err != nil {
@@ -502,7 +502,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var29 templ.SafeURL
 				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinURLErrs("/makers/" + seller.Slug)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 55, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 59, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 				if templ_7745c5c3_Err != nil {
@@ -520,7 +520,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var30 templ.SafeURL
 					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinURLErrs("/ui/seller-follow/" + seller.Slug)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 57, Col: 71}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 61, Col: 71}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 					if templ_7745c5c3_Err != nil {
@@ -533,7 +533,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var31 string
 					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CSRFToken)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 58, Col: 67}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 62, Col: 67}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 					if templ_7745c5c3_Err != nil {
@@ -566,7 +566,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					var templ_7745c5c3_Var32 templ.SafeURL
 					templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinURLErrs("/makers/" + seller.Slug + "#maker-follow")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 66, Col: 83}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 70, Col: 83}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 					if templ_7745c5c3_Err != nil {
@@ -619,7 +619,7 @@ func ListingBanner(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue(storefrontTemplateImage(p, "/assets/images/customer/living-banner.webp"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 78, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 82, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
 		if templ_7745c5c3_Err != nil {
@@ -632,7 +632,7 @@ func ListingBanner(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(storefrontTemplateImage(p, "/assets/images/customer/living-banner.webp"), ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 78, Col: 232}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 82, Col: 232}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35)
 		if templ_7745c5c3_Err != nil {
@@ -653,7 +653,7 @@ func ListingBanner(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(listingTitle(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 80, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 84, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 		if templ_7745c5c3_Err != nil {
@@ -666,7 +666,7 @@ func ListingBanner(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(listingDescription(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 80, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 84, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -679,7 +679,7 @@ func ListingBanner(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var38 string
 		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs("for everyday living")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 80, Col: 454}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 84, Col: 454}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {
@@ -799,7 +799,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var42 string
 		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ProductImage(p.Product.ImageURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 100, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 104, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
 		if templ_7745c5c3_Err != nil {
@@ -812,7 +812,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 100, Col: 173}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 104, Col: 173}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var43)
 		if templ_7745c5c3_Err != nil {
@@ -825,7 +825,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var44 string
 		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Product.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 100, Col: 234}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 104, Col: 234}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var44)
 		if templ_7745c5c3_Err != nil {
@@ -838,7 +838,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var45 string
 		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(p.Product.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 102, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 106, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 		if templ_7745c5c3_Err != nil {
@@ -851,7 +851,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var46 templ.SafeURL
 		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinURLErrs(sellerPath(p.Product))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 103, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 107, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 		if templ_7745c5c3_Err != nil {
@@ -864,7 +864,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(p.Product.Seller)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 103, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 107, Col: 79}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 		if templ_7745c5c3_Err != nil {
@@ -885,7 +885,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(p.Product.Price)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 104, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 108, Col: 71}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 		if templ_7745c5c3_Err != nil {
@@ -908,7 +908,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var49 string
 				templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.ResolveAttributeValue(variant.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var49)
 				if templ_7745c5c3_Err != nil {
@@ -921,7 +921,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var50 string
 				templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.ResolveAttributeValue(variant.Price)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var50)
 				if templ_7745c5c3_Err != nil {
@@ -934,7 +934,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var51 string
 				templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(variant.InStock))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 107}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 107}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var51)
 				if templ_7745c5c3_Err != nil {
@@ -947,7 +947,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var52 string
 				templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(variant.StockMessage)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 151}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 151}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
 				if templ_7745c5c3_Err != nil {
@@ -960,7 +960,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var53 string
 				templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(components.CustomerOption(variant.Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 195}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 195}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
 				if templ_7745c5c3_Err != nil {
@@ -973,7 +973,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var54 string
 				templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(variant.Price)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 111, Col: 216}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 216}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 				if templ_7745c5c3_Err != nil {
@@ -996,7 +996,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 			var templ_7745c5c3_Var55 string
 			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Product.Variants[0].ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 115, Col: 118}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 119, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var55)
 			if templ_7745c5c3_Err != nil {
@@ -1014,7 +1014,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var56 string
 		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(productStockMessage(p.Product))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 117, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 121, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 		if templ_7745c5c3_Err != nil {
@@ -1027,7 +1027,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var57 string
 		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.ResolveAttributeValue(quickViewVariantID(p.Product))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 119, Col: 115}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 123, Col: 115}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var57)
 		if templ_7745c5c3_Err != nil {
@@ -1040,7 +1040,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var58 string
 		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.ResolveAttributeValue("/ui/cart/" + p.Product.Slug)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 119, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 123, Col: 156}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var58)
 		if templ_7745c5c3_Err != nil {
@@ -1053,7 +1053,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var59 string
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.ResolveAttributeValue("{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 119, Col: 249}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 123, Col: 249}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var59)
 		if templ_7745c5c3_Err != nil {
@@ -1076,7 +1076,7 @@ func QuickView(p viewmodels.CustomerPage) templ.Component {
 		var templ_7745c5c3_Var60 templ.SafeURL
 		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinURLErrs("/products/" + p.Product.Slug)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 120, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 124, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 		if templ_7745c5c3_Err != nil {

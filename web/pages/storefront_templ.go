@@ -1183,20 +1183,20 @@ func StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) templ.
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</div><button type=\"button\" data-hero-prev aria-label=\"Previous collection\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_left</span></button><output data-hero-count aria-label=\"Current collection\" aria-live=\"off\">1 / ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</div><output data-hero-count aria-label=\"Current collection\" aria-live=\"off\">1 / ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var69 string
 			templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(len(slides)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront.templ`, Line: 158, Col: 268}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront.templ`, Line: 158, Col: 111}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</output><button type=\"button\" data-hero-next aria-label=\"Next collection\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">chevron_right</span></button></div><p class=\"sr-only\" data-hero-status role=\"status\" aria-live=\"polite\"></p></section>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</output></div><p class=\"sr-only\" data-hero-status role=\"status\" aria-live=\"polite\"></p></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

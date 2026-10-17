@@ -93,11 +93,6 @@
     if (element) element.dataset.backendReady = "true";
   }
 
-  function showUnknownCounts() {
-    document.querySelectorAll("[data-backend-counter] em").forEach((counter) => { counter.textContent = "—"; });
-    document.querySelectorAll("[data-backend-counter]").forEach(markReady);
-  }
-
   function priceMarkup(product) {
     return "<div class=\"price\"><strong>" + money(product.priceCents) + "</strong>" +
       (product.compareAtCents > product.priceCents ? "<del>" + money(product.compareAtCents) + "</del>" : "") + "</div>";
@@ -106,7 +101,7 @@
 
   function savedMarkup(product) {
     const slug = esc(product.slug);
-    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart is-active\" aria-pressed=\"true\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">favorite</span></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><a class=\"primary-button\" href=\"/products/" + slug + "\">View product</a><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
+    return "<article class=\"saved-card\" data-product=\"" + slug + "\"><div class=\"saved-media\"><a href=\"/products/" + slug + "\" tabindex=\"-1\" aria-hidden=\"true\"><img src=\"" + esc(product.image) + "\" alt=\"" + esc(product.name) + "\" width=\"320\" height=\"346\"/></a><button class=\"heart is-active\" aria-pressed=\"true\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\"><svg class=\"wishlist-heart-icon\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z\"></path></svg></button></div><div class=\"saved-copy\"><span class=\"badge\">" + (product.available > 0 ? "In stock" : "Sold out") + "</span><h3><a href=\"/products/" + slug + "\">" + esc(product.name) + "</a></h3><p>By " + esc(product.seller) + "</p>" + priceMarkup(product) + "<small class=\"availability\">" + (product.available > 0 ? "In stock" : "Currently unavailable") + "</small><div><a class=\"primary-button\" href=\"/products/" + slug + "\">View product</a><button class=\"text-button\" type=\"button\" data-backend-action=\"wishlist-remove\" data-product-slug=\"" + slug + "\" aria-label=\"Remove from wishlist\">Remove</button></div></div></article>";
   }
 
 
@@ -185,12 +180,29 @@
 
   function updateBadges(cart, wishlist) {
     const cartCount = document.querySelector("#cart-count em");
-    const wishlistCount = document.querySelector("#wishlist-count em");
-    const count = cartItemCount(cart.items);
-    if (cartCount) { cartCount.textContent = String(count); cartCount.closest('a').setAttribute('aria-label','Cart, '+count+' items'); }
-    if (wishlistCount) { wishlistCount.textContent = String(wishlist.length); wishlistCount.closest('a').setAttribute('aria-label','Wishlist, '+wishlist.length+' items'); }
-    markReady(document.getElementById("cart-count"));
-    markReady(document.getElementById("wishlist-count"));
+    if (cart) {
+      const count = cartItemCount(cart.items);
+      if (cartCount) { cartCount.textContent = String(count); cartCount.closest('a').setAttribute('aria-label','Cart, '+count+' items'); }
+      markReady(document.getElementById("cart-count"));
+    }
+    if (wishlist) updateWishlistCount(wishlist.length);
+  }
+
+  function updateWishlistCount(count) {
+    const link = document.getElementById('wishlist-count');
+    const counter = link?.querySelector('em');
+    if (counter) counter.textContent = String(count);
+    if (link) {
+      link.setAttribute('aria-label', 'Wishlist, ' + count + ' items');
+      link.classList.toggle('is-active', count > 0);
+      const icon = link.querySelector('.material-symbols-outlined');
+      if (icon) icon.textContent = count > 0 ? 'favorite' : 'favorite_border';
+      markReady(link);
+    }
+    document.querySelectorAll('[data-backend-wishlist-count]').forEach(label => {
+      label.textContent = (count === 1 ? '1 item' : count + ' items') + ' in your wishlist';
+      markReady(label);
+    });
   }
 
   function renderCartDrawer(cart, signedIn) {
@@ -331,22 +343,56 @@
     }
   }
 
+  let countsRequest = 0, wishlistRevision = 0;
+  const wishlistState = new Map();
+  const wishlistPending = new Set();
+  let wishlistSnapshot = null;
+  const transientRead = error => error.name !== 'AbortError' &&
+    (error instanceof TypeError || error.status === 408 || error.status === 429 || error.status >= 500);
+
   async function refreshCounts() {
-    const user = await ensureBackend().currentUser();
-    authenticated = Boolean(user);
-    if (!user) return;
-    const cart = normalizeCart(await backend.cart({countsOnly:true}));
-    const wishlist = document.body.dataset.wishlistEnabled==="false" ? [] : await backend.wishlist();
-    updateBadges(cart, wishlist);
+    if (!backend || !authenticated || document.hidden) return;
+    const request = ++countsRequest, revision = wishlistRevision;
+    // A count failure must never disable mutations or invalidate usable SSR data.
+    const read = async (load, apply) => {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const value = await load();
+          if (request === countsRequest) apply(value);
+          return;
+        } catch (error) {
+          if (attempt || !transientRead(error) || request !== countsRequest) return;
+          await new Promise(resolve => global.setTimeout(resolve, 1000));
+          if (request !== countsRequest || document.hidden || backend.readController.signal.aborted) return;
+        }
+      }
+    };
+    await Promise.all([
+      read(() => backend.cart({countsOnly:true}), cart => updateBadges(normalizeCart(cart), null)),
+      document.body.dataset.wishlistEnabled === 'false' ? Promise.resolve() :
+        read(() => backend.wishlistSummary(), items => {
+          if (revision !== wishlistRevision || wishlistPending.size) return;
+          wishlistSnapshot = new Set(items.map(item => item.slug));
+          wishlistState.forEach((_, slug) => wishlistState.set(slug, wishlistSnapshot.has(slug)));
+          updateWishlistCount(items.length);
+          reconcileWishlistHearts();
+        })
+    ]);
   }
 
   async function requireUser() {
     const user = await ensureBackend().currentUser();
-    if (!user) throw new Error("Sign in to save a cart, wishlist, or order.");
+    if (!user) {
+      authenticated = false;
+      const error = new Error("Sign in to save a cart, wishlist, or order.");
+      error.status = 401;
+      throw error;
+    }
     return user;
   }
 
   function syncWishlistHearts(slug, saved) {
+    wishlistState.set(slug, saved);
     document.querySelectorAll(".heart, .gallery-heart").forEach(function (button) {
       const path = button.getAttribute("hx-post") || "";
       const buttonSlug = button.dataset.productSlug || (path.startsWith("/ui/wishlist/") ? decodeURIComponent(path.slice(13)) : "");
@@ -354,15 +400,79 @@
       button.dataset.productSlug = slug;
       button.dataset.backendAction = saved ? "wishlist-remove" : "wishlist-add";
       button.classList.toggle("is-active", saved);
+      button.classList.remove('is-saved');
       button.setAttribute("aria-pressed", String(saved));
-      const name = button.closest("article")?.querySelector("h3")?.textContent || "product";
+      const name = button.dataset.productName || button.closest("article")?.querySelector("h3")?.textContent || document.querySelector('.detail-copy h1')?.textContent || "product";
       button.setAttribute("aria-label", (saved ? "Remove " : "Save ") + name + (saved ? " from wishlist" : " to wishlist"));
+      let values = {};
+      try { values = JSON.parse(button.getAttribute('hx-vals') || '{}'); } catch (_) { /* Keep the button usable. */ }
+      if (saved) values.source = 'wishlist'; else delete values.source;
+      button.setAttribute('hx-vals', JSON.stringify(values));
       const icon = button.querySelector(".material-symbols-outlined");
       if (icon) icon.textContent = saved ? "favorite" : "favorite_border";
     });
   }
 
-  const wishlistPending = new Set();
+  function wishlistSlug(button) {
+    const path = button.getAttribute('hx-post') || '';
+    return button.dataset.productSlug || (path.startsWith('/ui/wishlist/') ? decodeURIComponent(path.slice(13)) : '');
+  }
+
+  function wishlistBusy(slug, active) {
+    document.querySelectorAll('.heart, .gallery-heart, .saved-card .text-button').forEach(button => {
+      if (wishlistSlug(button) !== slug) return;
+      if (active && !button.disabled) {
+        button.dataset.wishlistPending = 'true';
+        button.disabled = true;
+        global.WVUI?.busy(button, true);
+        button.setAttribute('aria-busy', 'true');
+      } else if (!active && button.dataset.wishlistPending) {
+        delete button.dataset.wishlistPending;
+        button.disabled = false;
+        global.WVUI?.busy(button, false);
+        button.removeAttribute('aria-busy');
+      }
+    });
+  }
+
+  function reconcileWishlistHearts() {
+    const slugs = new Set();
+    document.querySelectorAll('.heart, .gallery-heart').forEach(button => {
+      const slug = wishlistSlug(button);
+      if (!slug) return;
+      if (!wishlistState.has(slug)) wishlistState.set(slug, wishlistSnapshot ? wishlistSnapshot.has(slug) : button.getAttribute('aria-pressed') === 'true');
+      slugs.add(slug);
+    });
+    slugs.forEach(slug => {
+      syncWishlistHearts(slug, wishlistState.get(slug));
+      if (wishlistPending.has(slug)) wishlistBusy(slug, true);
+    });
+  }
+
+  function commitWishlist(slug, saved) {
+    const previous = wishlistState.get(slug);
+    ++wishlistRevision;
+    syncWishlistHearts(slug, saved);
+    if (wishlistSnapshot) { if (saved) wishlistSnapshot.add(slug); else wishlistSnapshot.delete(slug); }
+    const counter = document.querySelector('#wishlist-count em');
+    const count = counter ? Number(counter.textContent) : NaN;
+    if (Number.isFinite(count) && typeof previous === 'boolean' && previous !== saved) updateWishlistCount(Math.max(0, count + (saved ? 1 : -1)));
+  }
+
+  function removeSavedCard(slug, trigger) {
+    const root = document.getElementById('wishlist-grid');
+    if (!root) return;
+    const cards = Array.from(root.querySelectorAll('.saved-card'));
+    const card = cards.find(item => item.dataset.product === slug);
+    if (!card) return;
+    const focused = card.contains(document.activeElement) || card.contains(trigger);
+    const index = cards.indexOf(card);
+    card.remove();
+    const remaining = Array.from(root.querySelectorAll('.saved-card'));
+    if (!remaining.length) root.innerHTML = '<div class="empty-state"><h2>Your wishlist is empty</h2><p>Save pieces you love and they will appear here.</p><a class="primary-button" href="/products">Discover handmade finds</a></div>';
+    if (focused) (remaining[Math.min(index, remaining.length - 1)]?.querySelector('button') || root.querySelector('.empty-state a'))?.focus();
+  }
+
   const cartPending = new Set();
   async function runAction(action, slug, delta, selectedVariantId, triggerElement) {
     const api = ensureBackend();
@@ -403,47 +513,23 @@
     }
     if (action === "wishlist-add") {
       await requireUser();
-      const heartBtn = triggerElement ? (triggerElement.closest(".heart, .gallery-heart") || triggerElement) : null;
       await api.addWishlist(slug);
-      if (heartBtn) {
-        heartBtn.classList.add("is-active");
-        heartBtn.setAttribute("aria-pressed", "true");
-        const icon = heartBtn.querySelector(".material-symbols-outlined");
-        if (icon) icon.textContent = "favorite";
-        heartBtn.dataset.backendAction = "wishlist-remove";
-        heartBtn.dataset.productSlug = slug;
-        heartBtn.setAttribute("aria-label", "Remove product from wishlist");
-      }
-      syncWishlistHearts(slug, true);
-      await refreshCounts().catch(function () { notice("Saved. Refresh the page to update the wishlist count.", false); });
+      commitWishlist(slug, true);
       notice("Saved to your wishlist.", false);
       return;
     }
     if (action === "wishlist-remove") {
       await requireUser();
       await api.removeWishlist(slug);
-      syncWishlistHearts(slug, false);
-      if (triggerElement) {
-        const heartBtn = triggerElement.closest(".heart, .gallery-heart") || triggerElement;
-        const isOnProductCard = heartBtn.closest(".product-card, .gallery-main");
-        if (isOnProductCard) {
-          heartBtn.classList.remove("is-active");
-          heartBtn.setAttribute("aria-pressed", "false");
-          const icon = heartBtn.querySelector(".material-symbols-outlined");
-          if (icon) icon.textContent = "favorite_border";
-          heartBtn.dataset.backendAction = "wishlist-add";
-          heartBtn.dataset.productSlug = slug;
-          heartBtn.setAttribute("aria-label", "Save product to wishlist");
-          await refreshCounts();
-          return;
-        }
-      }
-      await hydrateCart();
+      commitWishlist(slug, false);
+      removeSavedCard(slug, triggerElement);
+      notice("Removed from your wishlist.", false);
       return;
     }
     if (action === "wishlist-move") {
       await requireUser();
       await api.moveCartToWishlist(slug, selectedVariantId);
+      commitWishlist(slug, true);
       global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
       await hydrateCart();
       notice("Moved to your wishlist.", false);
@@ -453,6 +539,7 @@
       await requireUser();
       await api.addCart(slug, 1);
       await api.removeWishlist(slug);
+      commitWishlist(slug, false);
       global.sessionStorage.removeItem(SHOPPING_CHECKOUT_KEY);
       global.location.assign('/cart');
     }
@@ -872,7 +959,11 @@
       const cartKey = slug + ':' + (selectedVariantId || 'default');
       if (cartMutation && cartPending.has(cartKey)) return;
       if (cartMutation) cartPending.add(cartKey);
-      if (wishlistToggle) wishlistPending.add(slug);
+      if (wishlistToggle) {
+        ++wishlistRevision;
+        wishlistPending.add(slug);
+        wishlistBusy(slug, true);
+      }
       const row=element.closest('.cart-line');
       const rowIndex=row?Array.from(document.querySelectorAll('.cart-items .cart-line')).indexOf(row):-1;
       const affected=row||element.closest('.detail-copy')||element.closest('.mobile-buy-bar');
@@ -893,12 +984,20 @@
         if(action==='cart-remove')notice('Item removed from your cart.',false);
       }
       catch (error) {
-        notice(error.message, true);
+        if (error.status === 401) {
+          authenticated = false;
+          promptLogin(global.location.pathname + global.location.search, element);
+        } else notice(error.message, true);
         const quickFeedback = element.closest('[data-quick-product]')?.querySelector('[data-quick-feedback]');
         if (quickFeedback) quickFeedback.textContent = error.message;
       }
       finally {
-        if (wishlistToggle) wishlistPending.delete(slug);
+        if (wishlistToggle) {
+          wishlistPending.delete(slug);
+          wishlistBusy(slug, false);
+          ++wishlistRevision;
+          void refreshCounts();
+        }
         if (cartMutation) cartPending.delete(cartKey);
         peers.forEach(button=>{if(button.isConnected)button.disabled=false;});row?.removeAttribute('aria-busy');
         delete element.dataset.pending;
@@ -1036,10 +1135,21 @@
       });
     }
     bindActions();
+    reconcileWishlistHearts();
+    document.addEventListener('htmx:afterSettle', reconcileWishlistHearts);
+    document.addEventListener('htmx:historyRestore', reconcileWishlistHearts);
     try {
       backend = await create();
       global.weevcraftsBackend = backend;
-      authenticated = Boolean(await backend.currentUser());
+    } catch (error) {
+      backendError = error;
+      global.weevcraftsBackendError = error;
+      return;
+    }
+    // The server-rendered session is authoritative for this document. Optional
+    // startup reads are isolated from adapter creation and from one another.
+    void refreshCounts();
+    try {
       if (global.location.pathname === "/deals") {
         const offerBadge = document.querySelector(".deals-banner .badge");
         if (offerBadge) offerBadge.textContent = "Current catalog offers";
@@ -1059,10 +1169,9 @@
       // after a mutation or when opening the drawer; avoid replacing usable
       // rows (and their focus/geometry) during initial navigation.
       const initialCart=document.querySelector('[data-backend-cart] .cart-items');
-      if(initialCart) {const mediaCart=await backend.cart();wireCartLineActions(initialCart,mediaCart.items);}
-      if (global.location.pathname === "/orders") await hydrateOrders();
+      if(initialCart) void backend.cart().then(mediaCart => wireCartLineActions(initialCart,mediaCart.items)).catch(() => {});
+      if (global.location.pathname === "/orders") void hydrateOrders().catch(() => {});
       startOrderStatusRefresh();
-      await refreshCounts();
       try {
         const authNotice = global.sessionStorage.getItem("weevcrafts_auth_notice");
         if (authNotice) {
@@ -1070,17 +1179,15 @@
           notice(authNotice, true);
         }
       } catch (_) { /* Storage can be disabled by the browser. */ }
-    } catch (error) {
-      if(error.name==='AbortError')return;
-      backend = null;
-      backendError = error;
-      global.weevcraftsBackendError = error;
-      showUnknownCounts();
-      notice("Some live account counts could not be refreshed. Please try again.", true);
-    }
+    } catch (_) { /* Preserve rendered content when an optional startup read fails. */ }
   }
 
-  global.addEventListener('pageshow',event=>{if(event.persisted && backend)refreshCounts().catch(()=>{});});
+  // The adapter renews its read controller in its own pageshow listener. Run
+  // after every listener so a restored document does not reuse an aborted read.
+  global.addEventListener('pageshow', event => {
+    if (event.persisted && backend) global.setTimeout(() => { void refreshCounts(); }, 0);
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshCounts(); });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();

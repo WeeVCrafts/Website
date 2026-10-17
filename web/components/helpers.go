@@ -93,7 +93,7 @@ func productHeartLabel(name string, saved bool) string {
 	if saved {
 		return "Remove " + name + " from wishlist"
 	}
-	return "Save " + name
+	return "Save " + name + " to wishlist"
 }
 
 func productWishlistValues(saved bool) string {

@@ -37,6 +37,20 @@ components:
 
 # WeevCrafts visual standards
 
+## Shopping reliability — 17 October 2026
+
+Hero previous/next arrows are removed at every width, including previews. Existing
+rotation, slide selectors, swipe and reduced-motion behavior remain. Category
+navigation owns separate 44px scroll buttons, visible only when its row overflows.
+Buttons sit beside the row and never cover category photographs or links.
+
+Product and saved-item hearts use a shared inline SVG, an outline when unsaved
+and a terracotta fill when saved, on the existing warm-white circular surface.
+Pending hearts retain their icon and geometry with a small surrounding indicator.
+The canonical saved class is `is-active`; styles and accessible pressed state agree.
+Runtime owners remain shared templ components, `storefront.js`, `experience.js`
+and `storefront-reference.css`; established branding tokens are unchanged.
+
 ## Customer workflow refinement — 17 October 2026
 
 Customer task pages retain the approved shared brand, typography, cards and

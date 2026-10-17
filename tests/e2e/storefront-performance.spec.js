@@ -26,7 +26,7 @@ test('desktop hero controls reserve space and secondary media waits for selectio
     expect(images.some(url=>new URL(url).pathname.includes('textiles-banner'))).toBe(false);
     expect(images.some(url=>new URL(url).pathname.includes('craft-mobile-banner'))).toBe(false);
     await page.emulateMedia({reducedMotion:'reduce'});
-    await page.locator('[data-hero-next]').press('Enter');
+    await page.locator('[data-hero-select="1"]').press('Enter');
     await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
     const second=page.locator('[data-hero-slide] img').nth(1);
     await expect.poll(()=>second.evaluate(image=>image.complete&&image.naturalWidth>0&&image.currentSrc)).toBeTruthy();
@@ -44,7 +44,8 @@ test('mobile homepage loads its own banner without also loading the desktop phot
     if(request.resourceType()==='image' && /craft-(?:mobile-)?banner/.test(pathname))banners.add(pathname);
   });
   await page.goto('/');
-  await expect(page.locator('.responsive-home-intro')).toBeVisible();
+  // Configured storefronts render the shared hero without the default intro wrapper.
+  await expect(page.locator('[data-hero]')).toBeVisible();
   await expect.poll(()=>page.locator('[data-hero-slide] img').first().evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
   expect([...banners]).toHaveLength(1);
   expect([...banners][0]).toContain('craft-mobile-banner');

@@ -38,12 +38,12 @@ async function main() {
     await check('manual desktop hero: keyboard controls and no playback toggle',async()=>{
       await page.setViewportSize({width:1440,height:1000});
       try {
-        await page.goto('/');await page.locator('[data-hero-next]').click();
+        await page.goto('/');await page.locator('[data-hero-select="1"]').click();
         assert.equal(await page.locator('[data-hero-count]').textContent(),'2 / 5');
         assert.equal(await page.locator('[data-hero-slide]:not([hidden])').count(),1);
         assert.equal(await page.locator('[data-hero-slide][inert]').count(),4);
         assert.equal(await page.locator('[data-hero-slide] img').evaluateAll(images=>images.filter(image=>image.hasAttribute('data-src')).length),3);
-        await page.locator('[data-hero-next]').focus();await page.keyboard.press('Enter');
+        await page.locator('[data-hero-select="2"]').focus();await page.keyboard.press('Enter');
         assert.equal(await page.locator('[data-hero-count]').textContent(),'3 / 5');
         assert.equal(await page.locator('[data-hero-autoplay]').count(),0);
       } finally { await page.setViewportSize({width:390,height:844}); }

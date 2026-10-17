@@ -155,7 +155,7 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
 					for i,s:=range slides {
 						<button type="button" data-hero-select={ fmt.Sprint(i) } aria-label={ "Show " + s.Title } aria-pressed={ fmt.Sprint(i == 0) }></button>
 					}
-				</div><button type="button" data-hero-prev aria-label="Previous collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button><output data-hero-count aria-label="Current collection" aria-live="off">1 / { fmt.Sprint(len(slides)) }</output><button type="button" data-hero-next aria-label="Next collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
+				</div><output data-hero-count aria-label="Current collection" aria-live="off">1 / { fmt.Sprint(len(slides)) }</output>
 			</div>
 			<p class="sr-only" data-hero-status role="status" aria-live="polite"></p>
 		</section>

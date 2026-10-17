@@ -133,9 +133,9 @@ test('homepage overlaps slides for 450ms, handles rapid input and respects reduc
    if(visible.length===2){const boxes=visible.map(slide=>slide.getBoundingClientRect());window.heroFadeEvidence.push({interactive:visible.filter(slide=>!slide.inert).length,durations:visible.flatMap(slide=>slide.getAnimations().map(animation=>animation.effect.getTiming().duration)),overlap:boxes[0].x===boxes[1].x&&boxes[0].y===boxes[1].y&&boxes[0].width===boxes[1].width});}
   }).observe(document.querySelector('[data-hero]'),{subtree:true,attributes:true,attributeFilter:['hidden','inert']});
  });
- await page.locator('[data-hero-next]').click();await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
+ await page.locator('[data-hero-select="1"]').click();await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
  const evidence=await page.evaluate(()=>window.heroFadeEvidence);expect(evidence).toContainEqual({interactive:1,durations:[450,450],overlap:true});
- await page.locator('[data-hero-next]').click();await page.locator('[data-hero-next]').click();await expect(page.locator('[data-hero-count]')).toHaveText('4 / 5');await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);
- await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-hero-prev]').click();await expect(page.locator('[data-hero-count]')).toHaveText('3 / 5');await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);await expect(page.locator('[data-hero]')).toHaveAttribute('data-playing','false');
+ await page.locator('[data-hero-select="2"]').click();await page.locator('[data-hero-select="3"]').click();await expect(page.locator('[data-hero-count]')).toHaveText('4 / 5');await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);
+ await page.emulateMedia({reducedMotion:'reduce'});await page.locator('[data-hero-select="2"]').click();await expect(page.locator('[data-hero-count]')).toHaveText('3 / 5');await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);await expect(page.locator('[data-hero]')).toHaveAttribute('data-playing','false');
  await expect(page.locator('[data-hero-autoplay]')).toHaveCount(0);
 });

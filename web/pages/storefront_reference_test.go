@@ -3,12 +3,58 @@ package pages
 import (
 	"bytes"
 	"context"
+	"github.com/a-h/templ"
 	"strings"
 	"testing"
 
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/components"
 )
+
+func TestHeroNavigationUsesSelectorsWithoutArrows(t *testing.T) {
+	for name, hero := range map[string]templ.Component{
+		"default":    HomeHero(),
+		"configured": StorefrontHero(viewmodels.CustomerPage{}, []storefront.Slide{{ID: "craft", Title: "Craft", Image: "/craft.webp"}}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			var out bytes.Buffer
+			if err := hero.Render(context.Background(), &out); err != nil {
+				t.Fatal(err)
+			}
+			html := out.String()
+			if strings.Contains(html, "data-hero-prev") || strings.Contains(html, "data-hero-next") {
+				t.Fatal("hero arrows must not render")
+			}
+			if !strings.Contains(html, "data-hero-select") {
+				t.Fatal("accessible slide selectors must remain")
+			}
+		})
+	}
+}
+
+func TestWishlistHeartsUseStableSVGAndPressedState(t *testing.T) {
+	for _, saved := range []bool{false, true} {
+		product := viewmodels.Product{Slug: "real-piece", Name: "Real piece", Saved: saved}
+		for _, component := range []templ.Component{components.ProductCard(product, false), components.DetailWishlistButton(product)} {
+			var out bytes.Buffer
+			if err := component.Render(context.Background(), &out); err != nil {
+				t.Fatal(err)
+			}
+			html := out.String()
+			if !strings.Contains(html, `class="wishlist-heart-icon"`) || !strings.Contains(html, `data-product-slug="real-piece"`) {
+				t.Fatal("heart must retain its SVG and product identity")
+			}
+			pressed := `aria-pressed="false"`
+			if saved {
+				pressed = `aria-pressed="true"`
+			}
+			if !strings.Contains(html, pressed) {
+				t.Fatal("heart must expose actual saved state")
+			}
+		}
+	}
+}
 
 func TestQuickViewRequiresARealOption(t *testing.T) {
 	for _, test := range []struct {

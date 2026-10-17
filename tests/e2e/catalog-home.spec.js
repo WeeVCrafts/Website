@@ -53,11 +53,11 @@ test('swipe, keyboard focus, hover, reduced motion and failed images keep the cu
  await hero.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:100,clientY:255}]});
  await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
  await expect(hero).toHaveAttribute('data-playing','false');
- await page.locator('[data-hero-prev]').press('Enter');
+ await page.locator('[data-hero-select="0"]').press('Enter');
  await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
  await page.route('**/*textiles-banner*',route=>route.abort());
  await page.reload();await ready(page);
- await page.locator('[data-hero-next]').press('Enter');
+ await page.locator('[data-hero-select="1"]').press('Enter');
  await expect(page.locator('[data-hero-status]')).toContainText('could not load');
  await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
  await page.unroute('**/*textiles-banner*');
@@ -66,7 +66,7 @@ test('swipe, keyboard focus, hover, reduced motion and failed images keep the cu
  await expect(hero).toHaveAttribute('data-playing','true');
  await hero.hover();await expect(hero).toHaveAttribute('data-playing','false');
  await page.mouse.move(0,0);await expect(hero).toHaveAttribute('data-playing','true');
- await page.locator('[data-hero-prev]').press('Tab');
+ await page.locator('[data-hero-select="0"]').press('Tab');
  await expect(hero).toHaveAttribute('data-playing','false');
 });
 

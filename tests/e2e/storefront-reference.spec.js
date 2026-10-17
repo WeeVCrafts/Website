@@ -32,10 +32,10 @@ test('reduced motion keeps accessible manual controls and deferred images', asyn
   await expect(page.locator('[data-hero-slide] img[data-src]')).toHaveCount(4);
   await page.clock.runFor(30000);
   await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
-  await page.locator('[data-hero-prev]').press('Enter');
+  await page.locator('[data-hero-select="4"]').press('Enter');
   await expect(page.locator('[data-hero-count]')).toHaveText('5 / 5');
   await expect(page.locator('[data-hero-status]')).toContainText('Collection 5 of 5');
-  await page.locator('[data-hero-next]').press('Enter');
+  await page.locator('[data-hero-select="0"]').press('Enter');
   await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
   for (let index = 0; index < 5; index++) {
     await page.locator(`[data-hero-select="${index}"]`).press('Enter');
@@ -80,7 +80,7 @@ test('reference layouts reflow and retain accessible navigation', async ({ page 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/'); await ready(page);
-  await page.locator('[data-hero-next]').press('Enter');
+  await page.locator('[data-hero-select="1"]').press('Enter');
   await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
   expect(errors).toEqual([]);
 });

@@ -11,7 +11,9 @@ templ DiscoveryCategory(href, image, name string) {
 }
 
 templ HomeCategoryRail(p viewmodels.CustomerPage) {
- <nav class="container discovery-categories" aria-label="Shop by craft">
+ <div class="container category-rail" data-category-rail>
+ <button class="category-rail-button" type="button" data-category-direction="-1" aria-label="Previous categories" hidden><span aria-hidden="true">←</span></button>
+ <nav class="discovery-categories" aria-label="Shop by craft" data-category-track>
   for _, category := range components.NavigationCategories(p) {
    <a class="discovery-category" href={ "/products?category=" + category.Slug } data-storefront-category={category.Slug}>
     if category.ImageURL != "" {
@@ -23,6 +25,8 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
    </a>
   }
  </nav>
+ <button class="category-rail-button" type="button" data-category-direction="1" aria-label="Next categories" hidden><span aria-hidden="true">→</span></button>
+ </div>
 }
 
 templ CollectionTile(href, image, title, copy string) {

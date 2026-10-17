@@ -59,8 +59,8 @@ async function main() {
     });
     await check('forced colors and reduced motion retain active controls',async()=>{
       await page.setViewportSize({width:390,height:844});await page.emulateMedia({forcedColors:'active',reducedMotion:'reduce'});await page.goto('/');
-      await page.locator('[data-hero-next]').press('Enter');assert.equal(await page.locator('[data-hero-count]').textContent(),'2 / 3');
-      assert.equal(await page.locator('[data-hero-next]').evaluate(element=>getComputedStyle(element).transitionDuration),'0s');
+      await page.locator('[data-hero-select="1"]').press('Enter');assert.equal(await page.locator('[data-hero-count]').textContent(),'2 / 3');
+      assert.equal(await page.locator('[data-hero-select="1"]').evaluate(element=>getComputedStyle(element).transitionDuration),'0s');
       await page.goto('/products');await page.locator('[data-filter-open]').press('Enter');await page.keyboard.press('Escape');
       await page.emulateMedia({forcedColors:'none',reducedMotion:'no-preference'});
     });

@@ -15,11 +15,14 @@
     let body = {};
     if (text) {
       try { body = JSON.parse(text); } catch (_) {
-        throw new Error("The service could not complete this request. Please check the current status and try again.");
+        const error = new Error("The service could not complete this request. Please check the current status and try again.");
+        error.status = response.status;
+        throw error;
       }
     }
     if (!response.ok) {
       const error = new Error(messageFrom(response, body.error || body));
+      error.status = response.status;
       error.code = (body.error || body).code;
       throw error;
     }
@@ -151,7 +154,7 @@
 
     async currentUser() {
       try { return Boolean(unwrap(await this.call(ROOT + "/auth/session"))); }
-      catch (error) { if(error.name==='AbortError')throw error;return null; }
+      catch (error) { if (error.status === 401) return null; throw error; }
     }
 
     async products(filters) {
@@ -227,8 +230,12 @@
       return this.cart();
     }
 
+    async wishlistSummary() {
+      return unwrap(await this.call(ROOT + "/wishlist")) || [];
+    }
+
     async wishlist() {
-      const payload = unwrap(await this.call(ROOT + "/wishlist"));
+      const payload = await this.wishlistSummary();
       const result = [];
       for (const item of payload || []) result.push(await this.product(item.slug));
       return result;
