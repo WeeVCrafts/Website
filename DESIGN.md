@@ -37,6 +37,17 @@ components:
 
 # WeevCrafts visual standards
 
+## Seller reflow — 23 October 2026
+
+Seller toolbars wrap complete controls instead of compressing button labels.
+Short actions, table headings, dates and money remain intact; descriptive text
+wraps between words. Named table regions own horizontal overflow above 720px;
+labelled records preserve every value and action at 720px and below. Earnings
+places the ledger above settlements at full content width. Support uses the
+existing seller form grid, separated message history and full-width reply fields.
+These geometry rules live in `seller-admin.css`; shared branding, Inter/Roboto
+typography, native selects and `ui-standards.js` behavior remain canonical.
+
 ## Shopping reliability — 17 October 2026
 
 Hero previous/next arrows are removed at every width, including previews. Existing

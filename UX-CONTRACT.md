@@ -1,5 +1,16 @@
 # WeevCrafts UX contract
 
+## Seller responsive layout — 23 October 2026
+
+Short seller action labels stay on one line; complete controls move to the next
+toolbar row when space is insufficient. Tables retain semantic headers and named,
+focusable overflow regions, switching to explicitly labelled records at 720px.
+Long references and filenames remain available without truncation on phones.
+Support creation and replies reuse shared inline validation, retained input/files
+on a rejected enhanced submission, duplicate prevention and native file selection.
+Closed support requests retain their history and omit the reply form. Filtering,
+pagination, request limits and server authorization keep their existing contracts.
+
 ## Shopping reliability — 17 October 2026
 
 This amendment supersedes earlier references to hero arrow controls. Hero slide

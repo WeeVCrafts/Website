@@ -7,22 +7,22 @@ import "github.com/wecratfs/commerce/internal/web/viewmodels"
 templ SupportLive(p viewmodels.SellerSupportPage) {
  @Document(p.Portal) {
  @components.SellerConfirmations(p.Confirmations,"/seller-admin/support",p.Portal.CSRFToken,p.RequestKey,true,p.QueueStatus,p.QueueNext,0)
-  <section class="seller-panel">
+  <section class="seller-panel seller-support-create">
    <h2>Create a support request</h2>
-   <form action="/seller-admin/support/create" method="post" enctype="multipart/form-data">
+   <form class="seller-form-grid seller-support-form" action="/seller-admin/support/create" method="post" enctype="multipart/form-data" novalidate>
     <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/>
-    <label>Seller order number (optional)<input name="order_number" maxlength="120" placeholder="Order containing your products"/></label>
-    <label>Subject<input name="subject" minlength="4" maxlength="160" required/></label>
-    <label>Message<textarea name="message" minlength="10" maxlength="4000" rows="5" required></textarea></label>
-    <label>Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple/></label>
-    <p>Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
-    <button class="seller-button primary" type="submit">Send request</button>
+    <label><span id="seller-support-order-label">Seller order number (optional)</span><input name="order_number" maxlength="120" placeholder="Order containing your products" aria-labelledby="seller-support-order-label"/></label>
+    <label><span id="seller-support-subject-label">Subject</span><input name="subject" minlength="4" maxlength="160" required aria-labelledby="seller-support-subject-label"/></label>
+    <label class="seller-form-wide"><span id="seller-support-message-label">Message</span><textarea name="message" minlength="10" maxlength="4000" rows="5" required aria-labelledby="seller-support-message-label"></textarea></label>
+    <label class="seller-form-wide">Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="seller-support-upload-help"/></label>
+    <p id="seller-support-upload-help" class="seller-form-wide seller-form-note">Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
+    <div class="seller-form-wide seller-support-actions"><button class="seller-button primary" type="submit">Send request</button></div>
    </form>
   </section>
-  <section class="seller-panel">
+  <section class="seller-panel seller-support-requests">
    <h2>{ strconv.Itoa(p.Total) } support requests</h2>
-   <form action="/seller-admin/support" method="get">
-    <label>Search requests<input name="q" value={ p.Portal.Query }/></label>
+   <form class="seller-toolbar" action="/seller-admin/support" method="get">
+    <label class="seller-toolbar-search">Search requests<input name="q" value={ p.Portal.Query }/></label>
     <label>Status<select name="status">
      <option value="" selected?={ p.Status == "" }>All statuses</option>
      <option value="open" selected?={ p.Status == "open" }>Open</option>
@@ -31,42 +31,50 @@ templ SupportLive(p viewmodels.SellerSupportPage) {
      <option value="resolved" selected?={ p.Status == "resolved" }>Resolved</option>
      <option value="closed" selected?={ p.Status == "closed" }>Closed</option>
     </select></label>
-    <button type="submit" class="seller-button">Apply filters</button>
+    <button type="submit" class="seller-button outline">Apply filters</button>
+    <a class="seller-button outline" href="/seller-admin/support">Clear</a>
    </form>
    if len(p.Tickets) == 0 {
-    <p>No support requests match these filters.</p>
+    <p class="seller-table-empty" role="status">No support requests match these filters.</p>
    }
    for _, ticket := range p.Tickets {
-    <article id={ "ticket-" + strconv.FormatInt(ticket.ID,10) } class="seller-panel">
-     <h3>{ ticket.Subject }</h3><p>{ ticket.Number } · { ticket.Status } · { ticket.Created }</p>
+    <article id={ "ticket-" + strconv.FormatInt(ticket.ID,10) } class="seller-panel seller-support-ticket">
+     <header class="seller-support-ticket-heading"><div><h3>{ ticket.Subject }</h3><p class="seller-form-note">{ ticket.Number } · { ticket.Created }</p></div><span class={ "ui-status " + components.StatusTone(ticket.Status) }>{ components.StatusLabel(ticket.Status) }</span></header>
      if ticket.OrderNumber != "" {
       <p>Order: { ticket.OrderNumber }</p>
      }
+     <div class="seller-support-messages">
      for _, message := range ticket.Messages {
-      <section><h4>{ message.Author } · { message.Role }</h4><time>{ message.Created }</time><p style="white-space:pre-wrap">{ message.Body }</p>
+      <section class="seller-support-message"><header><h4>{ message.Author } · { message.Role }</h4><time>{ message.Created }</time></header><p>{ message.Body }</p>
+       if len(message.Attachments) > 0 {
+       <ul class="seller-support-attachments" aria-label="Message attachments">
        for _, attachment := range message.Attachments {
-        <a href={ templ.SafeURL(attachment.URL) }>{ attachment.FileName }</a>
+        <li><a href={ templ.SafeURL(attachment.URL) }>{ attachment.FileName }</a></li>
+       }
+       </ul>
        }
       </section>
      }
+     </div>
      if ticket.Status != "closed" {
-      <form action="/seller-admin/support/reply" method="post" enctype="multipart/form-data">
+      <form class="seller-form-grid seller-support-form seller-support-reply" action="/seller-admin/support/reply" method="post" enctype="multipart/form-data" novalidate>
        <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID,10) }/>
-       <label>Reply<textarea name="message" rows="4" maxlength="4000" required></textarea></label>
-       <label>Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple/></label>
-       <button type="submit" class="seller-button primary">Send reply</button>
+       <label class="seller-form-wide"><span id={ "seller-reply-label-" + strconv.FormatInt(ticket.ID,10) }>Reply</span><textarea name="message" rows="4" maxlength="4000" required aria-labelledby={ "seller-reply-label-" + strconv.FormatInt(ticket.ID,10) }></textarea></label>
+       <label class="seller-form-wide">Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby={ "seller-reply-upload-help-" + strconv.FormatInt(ticket.ID,10) }/></label>
+       <p id={ "seller-reply-upload-help-" + strconv.FormatInt(ticket.ID,10) } class="seller-form-wide seller-form-note">Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
+       <div class="seller-form-wide seller-support-actions"><button type="submit" class="seller-button primary">Send reply</button></div>
       </form>
      } else {
       <p>This request is closed. Create a new request for further help.</p>
      }
     </article>
    }
-   <nav aria-label="Support pagination">
+   <nav class="seller-support-pagination" aria-label="Support pagination">
     if p.PreviousURL != "" {
-     <a href={ templ.SafeURL(p.PreviousURL) }>Previous</a>
+     <a class="seller-button outline" href={ templ.SafeURL(p.PreviousURL) } rel="prev">Previous</a>
     }
     if p.NextURL != "" {
-     <a href={ templ.SafeURL(p.NextURL) }>Next</a>
+     <a class="seller-button outline" href={ templ.SafeURL(p.NextURL) } rel="next">Next</a>
     }
    </nav>
   </section>

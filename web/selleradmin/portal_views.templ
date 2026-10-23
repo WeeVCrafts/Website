@@ -21,7 +21,7 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 		if len(p.LowStock) > 0 {
 			<section class="seller-callout" role="status"><p><strong>{ sellerInt(len(p.LowStock)) } variants on this page need a stock check</strong><small>Below your { sellerInt(p.LowStockThreshold) } unit threshold. <a href="/seller-admin/inventory?stock=low">Review stock</a></small></p></section>
 		}
-		<section class="seller-two-grid">
+		<section class="seller-two-grid seller-dashboard-tables">
 			<article class="seller-panel">
 				<div class="seller-panel-heading"><div><h2>Products</h2><p>Your latest listings</p></div><a class="seller-panel-link" href="/seller-admin/products">View all products</a></div>
 				if len(p.Products) == 0 && p.DataWarning == "" {
@@ -97,7 +97,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}
 		<form class="seller-toolbar" action="/seller-admin/products" method="get">
-			<label class="sr-only" for="portal-product-query">Search products</label><input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
+			<label class="seller-toolbar-search" for="portal-product-query">Search products<input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/></label><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
 				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
 			}
@@ -546,7 +546,7 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		<form class="seller-toolbar" action="/seller-admin/earnings" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
 		@SellerStatGrid(p)
-		<section class="seller-two-grid">
+		<section class="seller-earnings-panels">
 			<article class="seller-panel">
 				<div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
 				if len(p.Ledger) == 0 && p.DataWarning == "" {

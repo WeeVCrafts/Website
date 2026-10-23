@@ -111,7 +111,7 @@ func PortalDashboard(p viewmodels.SellerAdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " <section class=\"seller-two-grid\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><h2>Products</h2><p>Your latest listings</p></div><a class=\"seller-panel-link\" href=\"/seller-admin/products\">View all products</a></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " <section class=\"seller-two-grid seller-dashboard-tables\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><h2>Products</h2><p>Your latest listings</p></div><a class=\"seller-panel-link\" href=\"/seller-admin/products\">View all products</a></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -465,20 +465,20 @@ func PortalProducts(p viewmodels.SellerAdminPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " <form class=\"seller-toolbar\" action=\"/seller-admin/products\" method=\"get\"><label class=\"sr-only\" for=\"portal-product-query\">Search products</label><input id=\"portal-product-query\" name=\"q\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " <form class=\"seller-toolbar\" action=\"/seller-admin/products\" method=\"get\"><label class=\"seller-toolbar-search\" for=\"portal-product-query\">Search products<input id=\"portal-product-query\" name=\"q\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.Query)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 100, Col: 133}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/selleradmin/portal_views.templ`, Line: 100, Col: 139}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" placeholder=\"Search your products\"><button class=\"seller-button outline\" type=\"submit\">Search</button><a class=\"seller-button outline\" href=\"/seller-admin/products\">Clear</a> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" placeholder=\"Search your products\"></label><button class=\"seller-button outline\" type=\"submit\">Search</button><a class=\"seller-button outline\" href=\"/seller-admin/products\">Clear</a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -4230,7 +4230,7 @@ func PortalEarnings(p viewmodels.SellerAdminPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 386, " <section class=\"seller-two-grid\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 386, " <section class=\"seller-earnings-panels\"><article class=\"seller-panel\"><div class=\"seller-panel-heading\"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
