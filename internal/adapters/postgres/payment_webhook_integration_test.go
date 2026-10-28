@@ -34,10 +34,10 @@ func TestVerifiedPaymentWebhookTransitionsOrderOnceAndCommitsReservation(t *test
 	t.Cleanup(func() {
 		cleanupContext, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cleanupCancel()
-		_, _ = pool.Exec(cleanupContext, `DELETE FROM payment_webhook_events WHERE event_id = $1`, eventID)
+		_, _ = pool.Exec(cleanupContext, `DELETE FROM payment_webhook_events WHERE event_id = $1 OR event_id = $1 || '_late' OR event_id = $1 || '_failed'`, eventID)
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM audit_logs WHERE action = 'payment.webhook_processed' AND resource_id = $1`, fmt.Sprint(order.ID))
 	})
-	raw := []byte(fmt.Sprintf(`{"id":%q,"event":"payment.captured","payload":{"payment":{"entity":{"id":%q,"order_id":%q,"amount":%d,"currency":%q,"status":"captured"}}}}`, eventID, paymentID, "order_fixture_"+fmt.Sprint(order.ID), order.TotalCents, order.Currency))
+	raw := []byte(fmt.Sprintf(`{"entity":"event","event":"payment.captured","payload":{"payment":{"entity":{"id":%q,"order_id":%q,"amount":%d,"currency":%q,"status":"captured"}}}}`, paymentID, "order_fixture_"+fmt.Sprint(order.ID), order.TotalCents, order.Currency))
 	secret := "webhook-fixture-secret"
 	digest := hmac.New(sha256.New, []byte(secret))
 	_, _ = digest.Write(raw)
@@ -45,11 +45,11 @@ func TestVerifiedPaymentWebhookTransitionsOrderOnceAndCommitsReservation(t *test
 	gateway := razorpayadapter.NewGateway("key", "secret", secret, "http://payments.invalid")
 	service := applicationpayment.NewService(gateway, paymentRepository)
 
-	processed, err := service.HandleWebhook(ctx, raw, signature)
+	processed, err := service.HandleWebhook(ctx, raw, signature, eventID)
 	if err != nil || !processed {
 		t.Fatalf("process verified capture: processed=%v err=%v", processed, err)
 	}
-	processed, err = service.HandleWebhook(ctx, raw, signature)
+	processed, err = service.HandleWebhook(ctx, raw, signature, eventID)
 	if err != nil || processed {
 		t.Fatalf("replayed capture was not harmless: processed=%v err=%v", processed, err)
 	}
@@ -72,6 +72,18 @@ func TestVerifiedPaymentWebhookTransitionsOrderOnceAndCommitsReservation(t *test
 	var confirmations int
 	if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM outbox_events WHERE event_type='OrderPaid' AND aggregate_id=$1`, order.OrderNumber).Scan(&confirmations); err != nil || confirmations != 1 {
 		t.Fatalf("confirmation events=%d err=%v", confirmations, err)
+	}
+
+	// Authorization callbacks and failed attempts may arrive after capture.
+	// Neither may downgrade the captured payment or undo committed inventory.
+	for _, late := range []struct{ id, event, status string }{{eventID + "_late", "payment.authorized", "authorized"}, {eventID + "_failed", "payment.failed", "failed"}} {
+		_, err := paymentRepository.ProcessWebhook(ctx, ports.PaymentWebhook{EventID: late.id, EventType: late.event, ProviderOrderID: "order_fixture_" + fmt.Sprint(order.ID), ProviderPaymentID: paymentID, AmountCents: order.TotalCents, Currency: order.Currency, Status: late.status}, []byte(`{}`))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := pool.QueryRow(ctx, `SELECT status FROM payment_attempts WHERE order_id=$1`, order.ID).Scan(&paymentStatus); err != nil || paymentStatus != "captured" {
+			t.Fatalf("late %s downgraded payment: %s, %v", late.event, paymentStatus, err)
+		}
 	}
 
 	unknownRaw := []byte(fmt.Sprintf(`{"id":"evt_unknown_%d","event":"payment.unknown","payload":{}}`, order.ID))

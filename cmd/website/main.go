@@ -241,7 +241,7 @@ func main() {
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
-	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL, cfg.PaymentMode == "local")
+	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL, cfg.PaymentMode == "local" || strings.HasPrefix(cfg.RazorpayKeyID, "rzp_test_"))
 	go worker.RunPeriodic(workerContext, 10*time.Second, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()

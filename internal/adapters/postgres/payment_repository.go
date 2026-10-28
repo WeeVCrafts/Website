@@ -163,7 +163,12 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 				return err
 			}
 		} else if webhook.EventType == "payment.failed" {
-			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'failed', updated_at = NOW() WHERE order_id = $2`, webhook.ProviderPaymentID, orderID); err != nil {
+			result, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'failed', updated_at = NOW() WHERE order_id = $2 AND status IN ('created', 'pending', 'authorized')`, webhook.ProviderPaymentID, orderID)
+			if err != nil {
+				return err
+			}
+			if result.RowsAffected() == 0 {
+				_, err := tx.Exec(transactionContext, `UPDATE payment_webhook_events SET processed_at = NOW() WHERE event_id = $1`, webhook.EventID)
 				return err
 			}
 			if _, err := releaseReservation(transactionContext, tx, orderID); err != nil {
@@ -180,7 +185,7 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 			if webhook.EventType == "payment.authorized" {
 				status = "authorized"
 			}
-			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = $2, updated_at = NOW() WHERE order_id = $3 AND (provider_payment_id IS NULL OR provider_payment_id = $1)`, webhook.ProviderPaymentID, status, orderID); err != nil {
+			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = $2, updated_at = NOW() WHERE order_id = $3 AND status IN ('created', 'pending', 'authorized') AND (provider_payment_id IS NULL OR provider_payment_id = $1)`, webhook.ProviderPaymentID, status, orderID); err != nil {
 				return err
 			}
 		}

@@ -1115,6 +1115,8 @@ templ Checkout(p viewmodels.CustomerPage) {
           } else if p.PaymentReady {
             if p.PaymentMode == "local" {
               <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. Placing the order completes a simulated payment. No money is charged.</p></div>
+            } else if razorpayTestMode(p) {
+              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Razorpay test mode.</strong> Use test payment details only. No real money will be charged.</p></div>
             } else {
               <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Pay securely through Razorpay. Available payment options appear in its checkout window.</p></div>
             }

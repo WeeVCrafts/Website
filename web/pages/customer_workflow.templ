@@ -59,6 +59,9 @@ templ OrderStatusRegion(order viewmodels.Order) {
 templ OrderPaymentRecovery(p viewmodels.CustomerPage) {
   if p.SelectedOrder.State == "pending_payment" && p.PaymentReady {
     <section class="utility-card"><h2>Complete your payment</h2><p>Your order is saved. Continue payment for this order without creating another one.</p>
+      if razorpayTestMode(p) {
+        <p>Razorpay test mode. Use test payment details only. No real money will be charged.</p>
+      }
       <div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
       <button class="primary-button" type="button" data-retry-payment={ p.SelectedOrder.Number }>Continue payment</button><p data-backend-message role="status"></p>
     </section>

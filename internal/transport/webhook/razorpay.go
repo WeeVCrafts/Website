@@ -26,7 +26,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
-	processed, err := h.payments.HandleWebhook(r.Context(), body, r.Header.Get("X-Razorpay-Signature"))
+	processed, err := h.payments.HandleWebhook(r.Context(), body, r.Header.Get("X-Razorpay-Signature"), r.Header.Get("X-Razorpay-Event-Id"))
 	if errors.Is(err, applicationpayment.ErrWebhookRejected) {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "webhook rejected"})
 		return

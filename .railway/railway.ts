@@ -23,7 +23,10 @@ export default defineRailway(() => {
       WECRATFS_SECURE_COOKIES: "true",
       WECRATFS_PUBLIC_URL: preserve(),
       WECRATFS_LOCAL_MODE: "false",
-      WECRATFS_PAYMENT_MODE: "local",
+      WECRATFS_PAYMENT_MODE: "razorpay",
+      RAZORPAY_KEY_ID: preserve(),
+      RAZORPAY_KEY_SECRET: preserve(),
+      RAZORPAY_WEBHOOK_SECRET: preserve(),
       WECRATFS_LOCAL_PAYMENT_SECRET: preserve(),
     },
   });

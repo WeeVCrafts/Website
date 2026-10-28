@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/wecratfs/commerce/internal/adapters/postgres"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/identity"
 )
 
@@ -35,7 +37,17 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			return
 		}
 		set := sitemapURLSet{XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9"}
-		for _, path := range []string{"/", "/products", "/categories", "/makers", "/brands", "/our-story", "/contact", "/shipping", "/faq"} {
+		content := storefront.Defaults()
+		if pool != nil {
+			revision, err := postgres.ReadPublishedStorefront(r.Context(), pool)
+			if err != nil {
+				w.Header().Set("Retry-After", "300")
+				http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			content = revision.Config
+		}
+		for _, path := range sitemapContentPaths(content) {
 			set.URLs = append(set.URLs, sitemapEntry{Loc: base + path})
 		}
 		if pool != nil {
@@ -75,6 +87,30 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 	return robots, sitemap
 }
 
+func sitemapContentPaths(config storefront.Config) []string {
+	paths := []string{"/", "/products", "/categories", "/makers", "/brands"}
+	for _, page := range config.Pages {
+		if page.Hidden {
+			continue
+		}
+		prefix := "/pages/"
+		if page.Legacy {
+			prefix = "/"
+		}
+		paths = append(paths, prefix+page.Slug)
+	}
+	return paths
+}
+
+// Exact migrations from the previous storefront, as reported by Search
+// Console. Retired products without an equivalent retain their real 404s.
+var legacyPublicURLs = map[string]string{
+	"/pages/about-us":              "/about",
+	"/collections/frontpage":       "/products",
+	"/collections/arts-collection": "/categories/arts",
+	"/collections/sarees":          "/categories/textiles",
+}
+
 var sitemapCatalogSources = []struct {
 	query, prefix string
 	maker         bool
@@ -88,6 +124,15 @@ var sitemapCatalogSources = []struct {
 func canonicalHostRedirect(next http.Handler, canonical string, environment string) http.Handler {
 	canonicalURL, _ := url.Parse(strings.TrimRight(canonical, "/"))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			if target, ok := legacyPublicURLs[r.URL.Path]; ok {
+				if canonicalURL != nil && strings.EqualFold(environment, "production") {
+					target = strings.TrimRight(canonicalURL.String(), "/") + target
+				}
+				http.Redirect(w, r, target, http.StatusMovedPermanently)
+				return
+			}
+		}
 		if canonicalURL == nil || !strings.EqualFold(environment, "production") || r.Method != http.MethodGet && r.Method != http.MethodHead {
 			next.ServeHTTP(w, r)
 			return

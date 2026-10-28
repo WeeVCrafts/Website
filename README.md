@@ -155,6 +155,11 @@ server-side sessions and CSRF tokens. Checkout creates pending orders; a
 verified Razorpay webhook is the path that marks an order paid. Payments are
 not collected in local mode.
 
+See [Razorpay test payments](docs/razorpay-integration.md) for sandbox settings,
+webhook setup and the opt-in provider browser test. The
+[28 October indexing audit](docs/seo-audit-2026-10-28.md) records Search Console
+findings, implemented SEO fixes and the remaining deployment/recrawl steps.
+
 To rebuild the disposable Meilisearch index from PostgreSQL catalog data:
 
 ```sh

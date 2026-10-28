@@ -56,8 +56,11 @@ func privacyConsentAction(enabled bool, purpose string) string {
 func privacyRequestID(value int64) string { return strconv.FormatInt(value, 10) }
 
 func pageIsIndexable(p viewmodels.CustomerPage) bool {
+	if p.StorefrontPage != nil {
+		return !p.StorefrontPage.Hidden
+	}
 	switch {
-	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products", p.Route == "/makers", p.Route == "/our-story", p.Route == "/about", p.Route == "/contact", p.Route == "/shipping", p.Route == "/faq":
+	case p.Route == "/", p.Route == "/categories", p.Route == "/brands", p.Route == "/products", p.Route == "/makers", p.Route == "/our-story", p.Route == "/about", p.Route == "/contact", p.Route == "/shipping", p.Route == "/faq", p.Route == "/sustainability", p.Route == "/privacy", p.Route == "/terms", p.Route == "/size-guide", p.Route == "/press", p.Route == "/careers":
 		return true
 	case strings.HasPrefix(p.Route, "/products/"), strings.HasPrefix(p.Route, "/categories/"), strings.HasPrefix(p.Route, "/brands/"), strings.HasPrefix(p.Route, "/makers/"):
 		return true
@@ -102,13 +105,24 @@ func pageCanonicalURL(p viewmodels.CustomerPage) string {
 		base = "http://localhost:8080"
 	}
 	path := p.Route
+	if p.StorefrontPage != nil && p.StorefrontPage.Legacy {
+		path = "/" + p.StorefrontPage.Slug
+	}
 	if path == "" {
 		path = "/"
 	}
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
-	return base + path
+	canonical := base + path
+	if p.Page > 1 && (p.Route == "/products" || strings.HasPrefix(p.Route, "/categories/")) {
+		canonical += "?page=" + strconv.Itoa(p.Page)
+	}
+	return canonical
+}
+
+func razorpayTestMode(p viewmodels.CustomerPage) bool {
+	return p.PaymentMode == "razorpay" && strings.HasPrefix(p.PaymentPublicKey, "rzp_test_")
 }
 
 func pageDocumentTitle(p viewmodels.CustomerPage) string {
@@ -133,7 +147,24 @@ func pageDescription(p viewmodels.CustomerPage) string {
 	if p.Route == "/" {
 		return identity.Description
 	}
-	return p.Description
+	if description := strings.TrimSpace(p.Description); description != "" {
+		return description
+	}
+	if p.StorefrontPage != nil {
+		for _, section := range p.StorefrontPage.Sections {
+			if !section.Hidden && strings.TrimSpace(section.Text) != "" {
+				text := []rune(strings.Join(strings.Fields(section.Text), " "))
+				if len(text) > 160 {
+					text = append(text[:157], '.', '.', '.')
+				}
+				return string(text)
+			}
+		}
+	}
+	if strings.TrimSpace(p.Title) != "" {
+		return p.Title + " at " + identity.Name + "."
+	}
+	return identity.Description
 }
 
 func pageOGDescription(p viewmodels.CustomerPage) string {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
@@ -22,10 +23,53 @@ func TestCustomerPageSEOIndexingPolicy(t *testing.T) {
 		{route: "/checkout", want: "noindex,nofollow"},
 		{route: "/admin", want: "noindex,nofollow"},
 		{route: "/faq", want: "index,follow"},
+		{route: "/size-guide", want: "index,follow"},
+		{route: "/sustainability", want: "index,follow"},
+		{route: "/press", want: "index,follow"},
+		{route: "/privacy", want: "index,follow"},
+		{route: "/terms", want: "index,follow"},
 	} {
 		if got := pageRobots(viewmodels.CustomerPage{Route: test.route}); got != test.want {
 			t.Fatalf("pageRobots(%q) = %q, want %q", test.route, got, test.want)
 		}
+	}
+}
+
+func TestPublishedContentAndPaginationSEO(t *testing.T) {
+	page := viewmodels.CustomerPage{Route: "/pages/returns", PublicURL: "https://weevcrafts.com", StorefrontPage: &storefront.Page{Slug: "returns"}}
+	if pageRobots(page) != "index,follow" {
+		t.Fatal("published public pages must be discoverable")
+	}
+	page.StorefrontPreview = true
+	if pageRobots(page) != "noindex,nofollow,noarchive" {
+		t.Fatal("draft previews must stay private")
+	}
+	page.StorefrontPreview = false
+	page.StorefrontPage.Hidden = true
+	if pageRobots(page) != "noindex,nofollow" {
+		t.Fatal("hidden content must not be indexed")
+	}
+	page.StorefrontPage = &storefront.Page{Slug: "shipping", Legacy: true}
+	page.Route = "/pages/shipping"
+	if got := pageCanonicalURL(page); got != "https://weevcrafts.com/shipping" {
+		t.Fatalf("legacy content canonical = %s", got)
+	}
+	page.StorefrontPage = nil
+	page.Route = "/products"
+	page.Page = 2
+	if got := pageCanonicalURL(page); got != "https://weevcrafts.com/products?page=2" {
+		t.Fatalf("pagination must keep its own canonical: %s", got)
+	}
+}
+
+func TestPublishedContentDescriptionUsesVisibleContent(t *testing.T) {
+	page := viewmodels.CustomerPage{Title: "Shipping information", StorefrontPage: &storefront.Page{Slug: "shipping", Sections: []storefront.Section{{Text: "Hidden copy", Hidden: true}, {Text: "Delivery is available to serviceable PIN codes within India."}}}}
+	if got := pageDescription(page); got != "Delivery is available to serviceable PIN codes within India." {
+		t.Fatalf("public page description = %q", got)
+	}
+	page.Description = "An editor's saved description."
+	if got := pageDescription(page); got != page.Description {
+		t.Fatal("saved SEO copy must take precedence")
 	}
 }
 

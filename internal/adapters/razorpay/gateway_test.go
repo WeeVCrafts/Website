@@ -29,6 +29,9 @@ func TestGatewayCreatesServerSideOrderAndChecksAmount(t *testing.T) {
 		if request["amount"] != float64(13900) || request["currency"] != "INR" || request["receipt"] != "WC-42" {
 			t.Fatalf("unexpected provider request: %+v", request)
 		}
+		if _, exists := request["payment_capture"]; exists {
+			t.Error("order must use the account's automatic capture settings")
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"id":"order_42","amount":13900,"currency":"INR"}`))
 	}))
@@ -99,5 +102,24 @@ func TestGatewayVerifiesRawWebhookSignatureAndPayload(t *testing.T) {
 	}
 	if _, err := gateway.VerifyWebhook(context.Background(), raw, "bad"); err != ErrInvalidSignature {
 		t.Fatalf("expected invalid signature, got %v", err)
+	}
+}
+
+func TestGatewayAcceptsRazorpayWebhookWithoutBodyEventID(t *testing.T) {
+	gateway := NewGateway("key", "secret", "webhook-secret", "")
+	raw := []byte(`{"entity":"event","event":"payment.captured","payload":{"payment":{"entity":{"id":"pay_123","order_id":"order_123","amount":12900,"currency":"INR","status":"captured"}}}}`)
+	digest := hmac.New(sha256.New, []byte("webhook-secret"))
+	_, _ = digest.Write(raw)
+	signature := hex.EncodeToString(digest.Sum(nil))
+	webhook, err := gateway.VerifyWebhook(context.Background(), raw, signature)
+	if err != nil || webhook.EventID == "" || webhook.ProviderOrderID != "order_123" {
+		t.Fatalf("provider webhook rejected: %+v, %v", webhook, err)
+	}
+	retry, err := gateway.VerifyWebhook(context.Background(), raw, signature)
+	if err != nil || retry.EventID != webhook.EventID {
+		t.Fatal("identical signed deliveries must have a stable fallback event ID")
+	}
+	if _, err := gateway.VerifyWebhook(context.Background(), append(raw, ' '), signature); err != ErrInvalidSignature {
+		t.Fatalf("altered raw body accepted: %v", err)
 	}
 }

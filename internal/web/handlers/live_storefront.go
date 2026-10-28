@@ -807,12 +807,39 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		for _, candidate := range page.Categories {
 			if candidate.Slug == category {
 				page.Title = candidate.Name
+				page.Description = "Shop " + candidate.Name + " on " + identity.Name + ". Browse products, prices and availability from independent Indian makers."
 				if strings.TrimSpace(candidate.Description) != "" {
 					page.Description = candidate.Description
 				}
 				break
 			}
 		}
+	}
+	if strings.HasPrefix(page.Route, "/makers/") {
+		seller := liveSeller(page.Route, page.Sellers)
+		if seller.ID == 0 {
+			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
+		}
+		page.Title = seller.Name + " - Maker collection"
+		page.Description = "Explore " + seller.Name + "'s collection on " + identity.Name + ". Shop pieces from this independent Indian maker."
+		if strings.TrimSpace(seller.Description) != "" {
+			page.Description = seller.Description
+		}
+	}
+	if strings.HasPrefix(page.Route, "/brands/") {
+		brand := liveBrand(page.Route, page.Brands)
+		found := false
+		for _, candidate := range page.Brands {
+			if candidate.Slug == brand.Slug {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
+		}
+		page.Title = brand.Name + " collection"
+		page.Description = "Discover the " + brand.Name + " collection on " + identity.Name + ". Browse products, prices and availability from independent Indian makers."
 	}
 	if len(page.Products) == 0 {
 		var hasPublished bool

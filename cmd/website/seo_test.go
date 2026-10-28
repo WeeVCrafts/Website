@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/identity"
 	"net/http"
 	"net/http/httptest"
@@ -108,5 +109,33 @@ func TestCanonicalRedirectPreservesDiscoveryPathAndQuery(t *testing.T) {
 	h.ServeHTTP(w, r)
 	if !called || w.Code != 204 {
 		t.Fatal("canonical redirect must not redirect checkout mutations")
+	}
+}
+
+func TestSitemapIncludesOnlyVisibleCanonicalContentPages(t *testing.T) {
+	config := storefront.Config{Pages: []storefront.Page{{Slug: "returns"}, {Slug: "shipping", Legacy: true}, {Slug: "hidden", Hidden: true}}}
+	paths := sitemapContentPaths(config)
+	joined := strings.Join(paths, " ")
+	if !strings.Contains(joined, "/pages/returns") || !strings.Contains(joined, "/shipping") || strings.Contains(joined, "/pages/shipping") || strings.Contains(joined, "hidden") {
+		t.Fatalf("sitemap content paths = %v", paths)
+	}
+}
+
+func TestLegacyStorefrontRedirectsHaveRelevantReplacements(t *testing.T) {
+	h := canonicalHostRedirect(http.NotFoundHandler(), "https://weevcrafts.com", "production")
+	for _, tc := range []struct{ source, target string }{{"/pages/about-us", "/about"}, {"/collections/frontpage", "/products"}, {"/collections/arts-collection", "/categories/arts"}, {"/collections/sarees", "/categories/textiles"}} {
+		r := httptest.NewRequest(http.MethodGet, "https://weevcrafts.com"+tc.source, nil)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusMovedPermanently || w.Header().Get("Location") != "https://weevcrafts.com"+tc.target {
+			t.Fatalf("redirect %s: %d %s", tc.source, w.Code, w.Header().Get("Location"))
+		}
+	}
+	for _, path := range []string{"/collections/handmade-bangles", "/collections/home-made-pickles", "/collections/warli-painting", "/products/saree", "/not-a-real-page"} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		if w.Code != http.StatusNotFound {
+			t.Fatalf("unmatched content %s must retain its real 404", path)
+		}
 	}
 }

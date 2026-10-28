@@ -27,6 +27,8 @@ templ OrderConfirmation(p viewmodels.CustomerPage) {
     <div><span class="material-symbols-outlined" aria-hidden="true">payments</span><div><strong>{ confirmationPayment(p.SelectedOrder) }</strong>
      if p.PaymentMode=="local" {
 <p>Demo payment. No money has been charged.</p>
+} else if razorpayTestMode(p) {
+<p>Razorpay test payment. No real money has been charged.</p>
 } else {
 <p>Your payment status reflects the provider’s latest confirmed update.</p>
 }

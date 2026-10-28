@@ -39,7 +39,9 @@ func (g *Gateway) CreateOrder(ctx context.Context, request ports.PaymentOrderReq
 	if g.keyID == "" || g.keySecret == "" {
 		return ports.PaymentOrder{}, errors.New("razorpay credentials are not configured")
 	}
-	body, err := json.Marshal(map[string]any{"amount": request.AmountCents, "currency": request.Currency, "receipt": request.Reference, "payment_capture": 0})
+	// Capture follows the Razorpay account settings. Do not force manual
+	// capture: the application confirms orders from captured webhooks.
+	body, err := json.Marshal(map[string]any{"amount": request.AmountCents, "currency": request.Currency, "receipt": request.Reference})
 	if err != nil {
 		return ports.PaymentOrder{}, err
 	}
@@ -123,10 +125,20 @@ func (g *Gateway) VerifyWebhook(_ context.Context, rawBody []byte, signature str
 	if err := json.Unmarshal(rawBody, &payload); err != nil {
 		return ports.PaymentWebhook{}, err
 	}
-	if payload.ID == "" || payload.Event == "" {
+	if payload.Event == "" {
 		return ports.PaymentWebhook{}, errors.New("webhook event is incomplete")
 	}
+	// Razorpay supplies its event ID in X-Razorpay-Event-Id, not in the
+	// JSON body. A digest of the verified raw body also makes delivery safe
+	// when a proxy omits that header. The transport supplies it when present.
+	if payload.ID == "" {
+		digest := sha256.Sum256(rawBody)
+		payload.ID = "razorpay_" + hex.EncodeToString(digest[:])
+	}
 	entity := payload.Payload.Payment.Entity
+	if entity.ID == "" || entity.OrderID == "" || entity.Amount <= 0 || entity.Currency == "" {
+		return ports.PaymentWebhook{}, errors.New("webhook payment is incomplete")
+	}
 	return ports.PaymentWebhook{EventID: payload.ID, EventType: payload.Event, ProviderOrderID: entity.OrderID, ProviderPaymentID: entity.ID, Status: entity.Status, AmountCents: entity.Amount, Currency: entity.Currency}, nil
 }
 
