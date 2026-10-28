@@ -1,5 +1,8 @@
 # Razorpay test payments
 
+The [hosted release verification](hosted-release-2026-10-28.md) records the
+GitHub deployment, live signature checks and provider webhook delivery.
+
 The application uses Standard Checkout, server-created Orders API orders and
 HMAC-verified callbacks. Only verified capture webhooks mark orders paid.
 Credentials determine the mode: `rzp_test_` keys use the sandbox. Changing the

@@ -1,0 +1,873 @@
+{
+  "code_commit": "a198a7ce00fa234c4eea0884f2a625e346a07121",
+  "railway_deployment": "a630131c-ebb7-4675-b7ea-94cc56c0425f",
+  "deployment_status": "SUCCESS",
+  "payment_mode": "razorpay_test",
+  "hosted_seo": {
+    "healthy": true,
+    "sitemap_pages": 45,
+    "public_pages": [
+      {
+        "url": "https://weevcrafts.com/",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/",
+        "canonical": [
+          "https://weevcrafts.com/"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop handmade Indian arts, crafts, sarees, home decor and gifts from independent makers at WeevCrafts."
+        ],
+        "title": "WeevCrafts | Handmade Indian Arts, Crafts & Sarees",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products",
+        "canonical": [
+          "https://weevcrafts.com/products"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop handmade Indian arts, crafts, sarees, home decor and gifts from independent makers at WeevCrafts."
+        ],
+        "title": "Products - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories",
+        "canonical": [
+          "https://weevcrafts.com/categories"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop handmade Indian arts, crafts, sarees, home decor and gifts from independent makers at WeevCrafts."
+        ],
+        "title": "Categories - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/makers",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/makers",
+        "canonical": [
+          "https://weevcrafts.com/makers"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop handmade Indian arts, crafts, sarees, home decor and gifts from independent makers at WeevCrafts."
+        ],
+        "title": "Makers - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/brands",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/brands",
+        "canonical": [
+          "https://weevcrafts.com/brands"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop handmade Indian arts, crafts, sarees, home decor and gifts from independent makers at WeevCrafts."
+        ],
+        "title": "Brands - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/pages/returns",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/pages/returns",
+        "canonical": [
+          "https://weevcrafts.com/pages/returns"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Eligible items can be requested for return within the policy window."
+        ],
+        "title": "Returns and refunds - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/shipping",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/shipping",
+        "canonical": [
+          "https://weevcrafts.com/shipping"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Delivery options and shipping charges are shown at checkout."
+        ],
+        "title": "Shipping information - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/size-guide",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/size-guide",
+        "canonical": [
+          "https://weevcrafts.com/size-guide"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Product pages list the fabric, length, width and care instructions. Handmade pieces may carry small variations."
+        ],
+        "title": "Size guide - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/terms",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/terms",
+        "canonical": [
+          "https://weevcrafts.com/terms"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Customers provide accurate account details and use the marketplace lawfully. Makers provide honest product information and fulfilment updates."
+        ],
+        "title": "Terms & conditions - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/privacy",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/privacy",
+        "canonical": [
+          "https://weevcrafts.com/privacy"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Account, delivery, order and preference information helps us provide the service. Support teams only receive the context they need."
+        ],
+        "title": "Privacy policy - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/about",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/about",
+        "canonical": [
+          "https://weevcrafts.com/about"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "We keep the maker's name, place and process close to every piece."
+        ],
+        "title": "About WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/our-story",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/our-story",
+        "canonical": [
+          "https://weevcrafts.com/our-story"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "We keep the maker's name, place and process close to every piece."
+        ],
+        "title": "Our story - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/sustainability",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/sustainability",
+        "canonical": [
+          "https://weevcrafts.com/sustainability"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "We keep the maker's name, place and process close to every piece."
+        ],
+        "title": "Sustainability - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/press",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/press",
+        "canonical": [
+          "https://weevcrafts.com/press"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "We keep the maker's name, place and process close to every piece."
+        ],
+        "title": "Press - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/careers",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/careers",
+        "canonical": [
+          "https://weevcrafts.com/careers"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "We keep the maker's name, place and process close to every piece."
+        ],
+        "title": "Careers - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/faq",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/faq",
+        "canonical": [
+          "https://weevcrafts.com/faq"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Frequently asked questions at WeevCrafts."
+        ],
+        "title": "Frequently asked questions - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/contact",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/contact",
+        "canonical": [
+          "https://weevcrafts.com/contact"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Share a little context so the right team can respond."
+        ],
+        "title": "Contact us - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-madhubani-tree",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-madhubani-tree",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-madhubani-tree"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Decorative tree of life artwork."
+        ],
+        "title": "Tree of Life Painting - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-brass-elephant",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-brass-elephant",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-brass-elephant"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Decorative elephant figurine."
+        ],
+        "title": "Elephant Figurine - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-maroon-saree",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-maroon-saree",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-maroon-saree"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Maroon draped saree."
+        ],
+        "title": "Maroon Saree - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-blue-saree",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-blue-saree",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-blue-saree"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Blue draped saree."
+        ],
+        "title": "Blue Saree - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-wooden-box",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-wooden-box",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-wooden-box"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Decorative box for small items."
+        ],
+        "title": "Decorative Wooden Box - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-ceramic-mugs",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-ceramic-mugs",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-ceramic-mugs"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Pair of decorative mugs."
+        ],
+        "title": "Decorative Mugs - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-blue-tote",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-blue-tote",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-blue-tote"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Blue everyday tote bag."
+        ],
+        "title": "Blue Tote Bag - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-terracotta-lamp",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-terracotta-lamp",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-terracotta-lamp"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Decorative table lamp."
+        ],
+        "title": "Decorative Table Lamp - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-terracotta-planter",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-terracotta-planter",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-terracotta-planter"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Decorative plant pot."
+        ],
+        "title": "Decorative Planter green - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/weevcrafts-black-cushion",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/weevcrafts-black-cushion",
+        "canonical": [
+          "https://weevcrafts.com/products/weevcrafts-black-cushion"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Black decorative cushion."
+        ],
+        "title": "Black Cushion - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/handpainted-ceramic-cofee-mug",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/handpainted-ceramic-cofee-mug",
+        "canonical": [
+          "https://weevcrafts.com/products/handpainted-ceramic-cofee-mug"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "A cute mug"
+        ],
+        "title": "Hand painted ceramic cofee mug - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/modern-frock-2",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/modern-frock-2",
+        "canonical": [
+          "https://weevcrafts.com/products/modern-frock-2"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "good"
+        ],
+        "title": "Frock 2 - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/modern-frock-4",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/modern-frock-4",
+        "canonical": [
+          "https://weevcrafts.com/products/modern-frock-4"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "good product"
+        ],
+        "title": "Frock 4 - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/denim-shoe",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/denim-shoe",
+        "canonical": [
+          "https://weevcrafts.com/products/denim-shoe"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "A brand new shoe"
+        ],
+        "title": "Shoes - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/products/shoe-1",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/products/shoe-1",
+        "canonical": [
+          "https://weevcrafts.com/products/shoe-1"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "A NEW COLLECTION ERA"
+        ],
+        "title": "SHOES 1 - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/makers/deepika",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/makers/deepika",
+        "canonical": [
+          "https://weevcrafts.com/makers/deepika"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Explore Deepika's collection on WeevCrafts. Shop pieces from this independent Indian maker."
+        ],
+        "title": "Deepika - Maker collection - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/makers/kamala",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/makers/kamala",
+        "canonical": [
+          "https://weevcrafts.com/makers/kamala"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Explore Kamala's collection on WeevCrafts. Shop pieces from this independent Indian maker."
+        ],
+        "title": "Kamala - Maker collection - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/makers/weevcrafts-qa-seller",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/makers/weevcrafts-qa-seller",
+        "canonical": [
+          "https://weevcrafts.com/makers/weevcrafts-qa-seller"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Explore WeevCrafts QA Seller's collection on WeevCrafts. Shop pieces from this independent Indian maker."
+        ],
+        "title": "WeevCrafts QA Seller - Maker collection",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/brands/korean-white",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/brands/korean-white",
+        "canonical": [
+          "https://weevcrafts.com/brands/korean-white"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Discover the KOREA collection on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "KOREA collection - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/brands/quuen",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/brands/quuen",
+        "canonical": [
+          "https://weevcrafts.com/brands/quuen"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Discover the Queen collection on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Queen collection - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/brands/weevcrafts",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/brands/weevcrafts",
+        "canonical": [
+          "https://weevcrafts.com/brands/weevcrafts"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Discover the WeevCrafts collection on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "WeevCrafts collection",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/arts",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/arts",
+        "canonical": [
+          "https://weevcrafts.com/categories/arts"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Arts on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Arts - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/clothing",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/clothing",
+        "canonical": [
+          "https://weevcrafts.com/categories/clothing"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Fashion on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Fashion - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/crafts",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/crafts",
+        "canonical": [
+          "https://weevcrafts.com/categories/crafts"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Crafts on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Crafts - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/home",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/home",
+        "canonical": [
+          "https://weevcrafts.com/categories/home"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Home on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Home - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/home-living",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/home-living",
+        "canonical": [
+          "https://weevcrafts.com/categories/home-living"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Home$Living on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Home$Living - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/human-essential",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/human-essential",
+        "canonical": [
+          "https://weevcrafts.com/categories/human-essential"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Footwear on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Footwear - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      },
+      {
+        "url": "https://weevcrafts.com/categories/textiles",
+        "status": 200,
+        "final_url": "https://weevcrafts.com/categories/textiles",
+        "canonical": [
+          "https://weevcrafts.com/categories/textiles"
+        ],
+        "robots": [
+          "index,follow"
+        ],
+        "description": [
+          "Shop Textiles on WeevCrafts. Browse products, prices and availability from independent Indian makers."
+        ],
+        "title": "Textiles - WeevCrafts",
+        "location": null,
+        "robots_header": null
+      }
+    ],
+    "redirects": [
+      {
+        "url": "https://weevcrafts.com/pages/about-us",
+        "status": 301,
+        "location": "https://weevcrafts.com/about"
+      },
+      {
+        "url": "https://weevcrafts.com/collections/frontpage",
+        "status": 301,
+        "location": "https://weevcrafts.com/products"
+      },
+      {
+        "url": "https://weevcrafts.com/collections/arts-collection",
+        "status": 301,
+        "location": "https://weevcrafts.com/categories/arts"
+      },
+      {
+        "url": "https://weevcrafts.com/collections/sarees",
+        "status": 301,
+        "location": "https://weevcrafts.com/categories/textiles"
+      }
+    ],
+    "aliases": [
+      {
+        "url": "https://www.weevcrafts.com/",
+        "status": 301,
+        "location": "https://weevcrafts.com/"
+      },
+      {
+        "url": "http://weevcrafts.com/",
+        "status": 301,
+        "location": "https://weevcrafts.com/"
+      },
+      {
+        "url": "http://www.weevcrafts.com/",
+        "status": 301,
+        "location": "https://weevcrafts.com/"
+      }
+    ],
+    "problems": []
+  },
+  "hosted_signature_probe": {
+    "event": "deployment_check_2a39d5d6-67f2-4ea5-b039-ddcda946b032",
+    "results": [
+      {
+        "name": "altered",
+        "status": 401,
+        "request_id": "20261028T033713.735584175Z"
+      },
+      {
+        "name": "valid",
+        "status": 200,
+        "processed": true,
+        "request_id": "20261028T033714.172700288Z"
+      },
+      {
+        "name": "duplicate",
+        "status": 200,
+        "processed": false,
+        "request_id": "20261028T033714.486568682Z"
+      }
+    ],
+    "scope": "Signed deployment probe with an unmatched provider order; no customer order or stock changed."
+  },
+  "provider_test": {
+    "provider_order_id": "order_TtBNDoF4dA6b0G",
+    "provider_payment_id": "pay_TtBNQhVam7tltZ",
+    "provider_status": "captured",
+    "amount_subunits": 139800,
+    "currency": "INR",
+    "checkout_environment": "isolated local QA",
+    "hosted_customer_orders_created": 0,
+    "hosted_provider_webhook_responses": [
+      {
+        "time_utc": "2026-10-28T03:38:08.918778051Z",
+        "status": 200
+      },
+      {
+        "time_utc": "2026-10-28T03:38:09.429627980Z",
+        "status": 200
+      }
+    ]
+  },
+  "search_console": {
+    "sitemap_status": "Success",
+    "discovered_pages": 45,
+    "submitted_date": "2026-10-28",
+    "individual_indexing_request": "Failed: Google reCAPTCHA service connection error"
+  },
+  "www_redirect": {
+    "enabled": true,
+    "status": 301,
+    "preserve_path": true,
+    "preserve_query": true,
+    "verified_http": true,
+    "verified_https": true
+  }
+}
