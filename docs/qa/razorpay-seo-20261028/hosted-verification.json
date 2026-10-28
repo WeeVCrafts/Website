@@ -860,7 +860,13 @@
     "sitemap_status": "Success",
     "discovered_pages": 45,
     "submitted_date": "2026-10-28",
-    "individual_indexing_request": "Failed: Google reCAPTCHA service connection error"
+    "individual_indexing_request": "Failed: Google reCAPTCHA service connection error",
+    "live_url_test": {
+      "url": "https://weevcrafts.com/size-guide",
+      "status": "URL is available to Google",
+      "page_availability": "Page can be indexed",
+      "date": "2026-10-28"
+    }
   },
   "www_redirect": {
     "enabled": true,

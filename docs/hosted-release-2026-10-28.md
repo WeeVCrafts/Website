@@ -41,9 +41,9 @@ already indexed before this release.
 
 An individual indexing request for `/size-guide` failed with Google's message
 that its reCAPTCHA service could not connect. The accepted sitemap remains the
-bulk discovery path. A live URL inspection was also started. Search indexing
-and ranking are controlled by Google and do not change immediately after a
-deployment.
+bulk discovery path. Google's live inspection then confirmed `/size-guide` is
+available to Google and can be indexed. Search indexing and ranking are
+controlled by Google and do not change immediately after a deployment.
 
 Private login/wishlist exclusions and genuinely removed products are intentional.
 Do not remove private-page `noindex` directives or redirect unrelated retired
