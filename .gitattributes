@@ -1,0 +1,3 @@
+# templ embeds source newlines inside generated strings; use identical input
+# on Windows, Linux CI and container builds.
+*.templ text eol=lf
