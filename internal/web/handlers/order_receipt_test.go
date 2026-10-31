@@ -47,4 +47,7 @@ func TestReceiptPDFUsesOrderDataAndProducesDownload(t *testing.T) {
 	if !bytes.HasPrefix(data, []byte("%PDF-")) || !bytes.Contains(data, []byte("%%EOF")) {
 		t.Fatal("receiptPDF() did not return a complete PDF")
 	}
+	if pages := bytes.Count(data, []byte("/Type /Page\n")); pages != 1 {
+		t.Fatalf("ordinary single-item receipt should fit on one page, got %d", pages)
+	}
 }

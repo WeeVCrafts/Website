@@ -229,7 +229,9 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 	if len(order.Items) == 0 {
 		rowY += 12
 	}
-	if rowY+90 > 270 {
+	// Totals and the two receipt-note lines occupy 83mm below the item table.
+	// Keep a normal one-item receipt on one page without entering the footer.
+	if rowY+83 > 270 {
 		pdf.AddPage()
 		receiptLabel(pdf, "Order "+order.Number+" · totals", 14, 16, 182)
 		rowY = 30
