@@ -6,10 +6,10 @@ require (
 	firebase.google.com/go/v4 v4.22.0
 	github.com/a-h/templ v0.3.1020
 	github.com/go-pdf/fpdf v0.9.0
-	github.com/jackc/pgx/v5 v5.7.2
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/minio/minio-go/v7 v7.0.97
-	github.com/redis/go-redis/v9 v9.7.0
-	golang.org/x/crypto v0.52.0
+	github.com/redis/go-redis/v9 v9.7.3
+	golang.org/x/crypto v0.57.0
 	golang.org/x/image v0.46.0
 	google.golang.org/api v0.279.0
 )
@@ -69,7 +69,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.45.0 // indirect
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect

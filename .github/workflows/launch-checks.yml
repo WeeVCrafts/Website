@@ -24,7 +24,7 @@ jobs:
       redis:
         image: redis:7-alpine
         ports: ['6379:6379']
-        options: --health-cmd 'redis-cli ping' --health-interval 5s --health-timeout 5s --health-retries 12
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 12
     env:
       DATABASE_URL: postgres://ci:isolated-ci-only@localhost:5432/weevcrafts_ci?sslmode=disable
       REDIS_ADDR: localhost:6379
@@ -32,7 +32,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: '1.26.x'
+          check-latest: true
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -59,7 +60,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: '1.26.x'
+          check-latest: true
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - uses: gitleaks/gitleaks-action@v2
         env:

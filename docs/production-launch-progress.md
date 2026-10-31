@@ -91,4 +91,8 @@ Unavailable images leave a placeholder; arbitrary external URLs are never fetche
 - Receipt pagination and thumbnail tests passed after the receipt changes.
 - sqlc 1.30.0 Docker generation completed; repeated output hashes matched.
 - Backup script syntax, architecture boundary check and workflow YAML parsing passed.
-- Remote CI, vulnerability scans, backup restore and hosted deployment remain unverified.
+- First remote CI run found incorrect Redis option quoting and vulnerable dependency
+  versions. Redis quoting was corrected; CI now selects the latest Go 1.26 patch.
+  pgx was upgraded to 5.9.2, go-redis to 9.7.3 and x/net to 0.60.0; x/crypto
+  resolves to 0.57.0. The corrected CI run and dependency regression tests must pass.
+- Backup restore and hosted deployment remain unverified.
