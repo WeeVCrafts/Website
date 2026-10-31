@@ -533,7 +533,7 @@ html {scroll-padding-block-start:90px;}
 .checkout-summary h3 { color: var(--forest); }
 .checkout-summary h3 strong { color: var(--terracotta); font-size: 1.3em; font-variant-numeric: tabular-nums; }
 .checkout-summary hr { border: 0; border-top: 1px solid var(--line); }
-.checkout-summary .checkout-coupon { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.checkout-summary .checkout-coupon { grid-template-columns: minmax(0, 1fr); align-items: start; }
 .checkout-summary .checkout-coupon label,
 .checkout-summary .checkout-coupon small { grid-column: 1 / -1; }
 .checkout-summary .checkout-coupon .outline-button { min-height: 44px; }
