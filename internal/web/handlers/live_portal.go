@@ -910,7 +910,8 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 		err = h.queryRow(r, `
 			SELECT p.id,p.seller_id,COALESCE(s.display_name,''),p.name,p.slug,p.brand_slug,b.name,p.category_slug,c.name,p.description,
 			       COALESCE(v.sku,''),COALESCE(v.price_cents,p.price_cents),COALESCE(v.compare_at_cents,0),v.compare_at_cents IS NOT NULL,
-			       COALESCE(i.available_quantity,0),p.delivery_label,p.status,p.image_url
+			       COALESCE(i.available_quantity,0),p.delivery_label,p.status,
+			       COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),'')
 			FROM products p LEFT JOIN sellers s ON s.id=p.seller_id
 			JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug
 			LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE

@@ -1068,9 +1068,10 @@ templ Checkout(p viewmodels.CustomerPage) {
     if len(p.Cart) == 0 {
       <section class="container page-intro compact-intro">@Breadcrumb("Home", "Checkout")<h1>{ storefrontNativeHeading(p,"Your cart is empty") }</h1><p>Choose a handmade piece before checking out.</p><a class="primary-button" href="/products">Continue shopping</a></section>
     } else {
-    <section class="container page-intro checkout-intro">
+    <section class="container page-intro checkout-intro checkout-reference">
+      <div class="checkout-topbar"><a class="checkout-brand" href="/"><img src={ assets.URL("images/brand/weevcrafts-logo.png") } alt="" width="32" height="32"/><span>WeevCrafts</span></a><span class="checkout-secure"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Secure checkout</span></div>
       @Breadcrumb("Home", "Checkout")
-      <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>{ storefrontNativeHeading(p,"Checkout") }</h1><p>One step closer to bringing home something beautiful.</p>
+      <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>{ storefrontNativeHeading(p,"Checkout") }</h1><p>A little closer to something handmade.</p>
       <div class="steps" role="list" aria-label="Checkout progress"><span :class="checkoutStep >= 1 ? 'active' : ''" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Delivery</b></span><i></i><span :class="checkoutStep >= 3 ? 'active' : ''" role="listitem"><i>3</i><b>Payment</b></span><i></i><span :class="checkoutStep >= 4 ? 'active' : ''" role="listitem"><i>4</i><b>Review</b></span></div>
     </section>
     if p.CheckoutIntentID!="" {
@@ -1078,7 +1079,7 @@ templ Checkout(p viewmodels.CustomerPage) {
 }
 <section class="container checkout-layout">
       <div class="checkout-main">
-        <section class="checkout-card" data-step="1" x-show="checkoutStep === 1">
+        <section class="checkout-card checkout-step-card" data-step="1" x-show="checkoutStep === 1">
           <header><h2><span>1</span> Delivery address</h2></header>
           <form id="checkout-address-form" class="utility-form" data-backend-address>
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="policy_revision" value={ fmt.Sprint(p.StorefrontRevision) }/>
@@ -1106,14 +1107,15 @@ templ Checkout(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="button" data-checkout-step="2" @click="if (WVUI.validate($el.form)) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           </form>
         </section>
-        <section class="checkout-card" data-step="2" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
+        <section class="checkout-card checkout-step-card" data-step="2" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
           <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to address</button>
         @CheckoutItems(p.Cart)<button class="primary-button full" type="button" data-checkout-step="3" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
-        <section class="checkout-card" data-step="3" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><button class="text-button checkout-back" type="button" data-checkout-step="2" @click="checkoutStep=2"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to delivery</button><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
+        <section class="checkout-card checkout-step-card" data-step="3" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><button class="text-button checkout-back" type="button" data-checkout-step="2" @click="checkoutStep=2"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to delivery</button><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
           if p.NoPaymentDemo {
             <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div>
             <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
           } else if p.PaymentReady {
+            <div class="checkout-payment-methods" aria-label="Available payment methods"><span>Razorpay</span><span>UPI</span><span>VISA</span><span>Mastercard</span><span>RuPay</span></div>
             if p.PaymentMode == "local" {
               <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. Placing the order completes a simulated payment. No money is charged.</p></div>
             } else if razorpayTestMode(p) {
@@ -1127,7 +1129,7 @@ templ Checkout(p viewmodels.CustomerPage) {
             <button class="primary-button full" type="button" disabled>Payment unavailable</button>
           }
         </section>
-        <section class="checkout-card" data-step="4" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2>
+        <section class="checkout-card checkout-step-card" data-step="4" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2>
             if p.NoPaymentDemo {
               <span class="muted">Demo order · no payment</span>
             } else {

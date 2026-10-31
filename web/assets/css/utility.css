@@ -149,7 +149,7 @@
   .utility-card { padding: 21px; }
   .auth-links { flex-direction: column; }
   .utility-form.two-column, .info-hero, .story-layout, .contact-grid { grid-template-columns: 1fr; }
-  .info-hero img, .story-layout img { min-height: 200px; max-height: 230px; }
+  .info-hero img, .story-layout img { min-height: 0; max-height: none; height: auto; aspect-ratio: 4 / 3; object-fit: cover; object-position: center top; }
   .info-hero > div, .story-layout > div { padding: 27px 24px; }
   .info-contact-strip { align-items: flex-start; flex-wrap: wrap; }
   .info-contact-strip .primary-button { width: 100%; margin-left: 0; }

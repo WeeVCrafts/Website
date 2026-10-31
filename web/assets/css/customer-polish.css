@@ -550,7 +550,41 @@ html {scroll-padding-block-start:90px;}
   .checkout-summary .checkout-coupon { grid-template-columns: minmax(0, 1fr); }
   .checkout-summary .checkout-coupon .outline-button { justify-self: stretch; }
 }
+/* Checkout reference layout: quiet branded header, card-based steps and a readable summary. */
+.checkout-reference { max-width: 1120px; }
+.checkout-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 0 14px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.checkout-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--forest); font: 600 20px/1 var(--serif); }
+.checkout-brand img { width: 32px; height: 32px; object-fit: contain; }
+.checkout-secure { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.checkout-secure .material-symbols-outlined { font-size: 16px; color: var(--forest); }
+.checkout-reference > .breadcrumb { margin-bottom: 16px; }
+.checkout-reference .steps { max-width: 760px; margin-inline: auto; }
+.checkout-layout { align-items: start; }
+.checkout-step-card { border-radius: 6px; }
+.checkout-step-card > header { gap: 12px; }
+.checkout-step-card > header h2 { min-width: 0; }
+.checkout-step-card > header .muted { text-align: right; }
+.checkout-payment-methods { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
+.checkout-payment-methods span { display: inline-flex; align-items: center; min-height: 30px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); color: var(--forest); font-size: 12px; font-weight: 600; }
+.checkout-summary { border-radius: 6px; }
+.checkout-summary > h2 { color: var(--forest); }
+.checkout-summary .summary-items p > b { align-self: start; }
+.checkout-summary .checkout-coupon label { color: var(--muted); font-size: 13px; }
+.checkout-summary .checkout-coupon .outline-button { width: fit-content; min-width: 84px; }
+.checkout-summary h3 strong { color: var(--forest); }
+@media (min-width: 721px) {
+  .checkout-summary { position: sticky; top: 20px; }
+  .checkout-main { gap: 12px; }
+}
 @media (max-width: 720px) {
+  .checkout-topbar { align-items: flex-start; }
+  .checkout-brand { font-size: 18px; }
+  .checkout-reference .steps { margin-top: 22px; }
+  .checkout-step-card { padding: 16px; }
+  .checkout-step-card > header { align-items: flex-start; flex-direction: column; }
+  .checkout-step-card > header .muted { text-align: left; }
+  .checkout-payment-methods span { flex: 1 1 auto; justify-content: center; }
+  .checkout-coupon .outline-button { width: 100%; }
   .cart-layout .cart-seller-head { align-items: flex-start; flex-direction: column; gap: 8px; }
   .cart-layout .cart-seller-head > div { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: baseline; gap: 4px 8px; }
   .cart-layout .cart-seller-head > div > small { grid-column: 2; }
