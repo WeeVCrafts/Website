@@ -24,6 +24,26 @@ func TestLiveIsIndependentOfDependencies(t *testing.T) {
 	}
 }
 
+func TestPublicReadyHidesDependencyDetails(t *testing.T) {
+	for _, failed := range []bool{false, true} {
+		h := NewHandler(map[string]Probe{"private-database": func(context.Context) error {
+			if failed {
+				return errors.New("private host unavailable")
+			}
+			return nil
+		}})
+		w := httptest.NewRecorder()
+		h.PublicReady(w, httptest.NewRequest("GET", "/health/ready", nil))
+		want := 200
+		if failed {
+			want = 503
+		}
+		if w.Code != want || strings.Contains(w.Body.String(), "private") || strings.Contains(w.Body.String(), "checks") {
+			t.Fatalf("unexpected public health: %d %s", w.Code, w.Body.String())
+		}
+	}
+}
+
 func TestReadyReportsFailedProbe(t *testing.T) {
 	handler := NewHandler(map[string]Probe{
 		"database": func(context.Context) error { return errors.New("database is down") },

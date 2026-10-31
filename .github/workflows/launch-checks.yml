@@ -1,0 +1,73 @@
+name: Launch checks
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+permissions:
+  contents: read
+concurrency:
+  group: launch-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: weevcrafts_ci
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd 'redis-cli ping' --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgres://ci:isolated-ci-only@localhost:5432/weevcrafts_ci?sslmode=disable
+      REDIS_ADDR: localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: go install github.com/a-h/templ/cmd/templ@v0.3.1020
+      - run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
+      - run: templ generate
+      - run: npm run css:build
+      - name: Verify generated templates
+        run: git diff --exit-code -- ':(glob)**/*_templ.go'
+      - run: bash scripts/check-sqlc-generated.sh
+      - run: bash scripts/check-architecture.sh
+      - run: go vet ./...
+      - run: go test -p 1 ./...
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c tests/e2e/customer-layout.config.js
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker build --label org.opencontainers.image.revision=${{ github.sha }} -t weevcrafts:${{ github.sha }} .
+      - uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: weevcrafts:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: false

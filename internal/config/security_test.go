@@ -2,6 +2,26 @@ package config
 
 import "testing"
 
+func TestStagingRequiresIsolatedAccessAndSandbox(t *testing.T) {
+	c := Config{Environment: "production", Staging: true, StagingUsername: "qa", StagingPassword: "dedicated-password-long-enough", PublicURL: "https://staging.example", SecureCookies: true, DatabaseURL: "postgres://app:dedicated-password@db/qa?sslmode=verify-full", S3Secure: true, S3AccessKey: "staging", S3SecretKey: "dedicated", PaymentMode: "razorpay", RazorpayKeyID: "rzp_test_fixture"}
+	if err := c.ValidateSecurity(); err != nil {
+		t.Fatal(err)
+	}
+	for _, mutate := range []func(*Config){
+		func(c *Config) { c.StagingPassword = "" },
+		func(c *Config) { c.RazorpayKeyID = "rzp_live_fixture" },
+		func(c *Config) { c.Environment = "development" },
+		func(c *Config) { c.SMTPAddress = "smtp.example:587" },
+		func(c *Config) { c.ResendAPIKey = "fixture" },
+	} {
+		unsafe := c
+		mutate(&unsafe)
+		if unsafe.ValidateSecurity() == nil {
+			t.Fatal("unsafe staging accepted")
+		}
+	}
+}
+
 func TestProductionRejectsDevelopmentConfiguration(t *testing.T) {
 	config := Config{Environment: "production", PublicURL: "https://shop.example", SecureCookies: true, DatabaseURL: "postgres://app:unique-secret@db/commerce?sslmode=verify-full", S3Secure: true, S3AccessKey: "dedicated", S3SecretKey: "dedicated-secret"}
 	if err := config.ValidateSecurity(); err != nil {

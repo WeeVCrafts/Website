@@ -36,6 +36,14 @@ func (h *Handler) Live(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h *Handler) Ready(w http.ResponseWriter, r *http.Request) {
+	h.ready(w, r, true)
+}
+
+func (h *Handler) PublicReady(w http.ResponseWriter, r *http.Request) {
+	h.ready(w, r, false)
+}
+
+func (h *Handler) ready(w http.ResponseWriter, r *http.Request, detailed bool) {
 	checks := make(map[string]string, len(h.probes))
 	failed := false
 	for name, probe := range h.probes {
@@ -56,7 +64,11 @@ func (h *Handler) Ready(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusServiceUnavailable
 		state = "not_ready"
 	}
-	writeJSON(w, status, map[string]any{"status": state, "checks": checks})
+	if detailed {
+		writeJSON(w, status, map[string]any{"status": state, "checks": checks})
+	} else {
+		writeJSON(w, status, map[string]any{"status": state})
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {

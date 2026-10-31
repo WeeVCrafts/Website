@@ -8,6 +8,20 @@ import (
 
 // ValidateSecurity rejects development defaults before connecting or serving.
 func (c Config) ValidateSecurity() error {
+	if c.OperationalMetricsToken != "" && len(c.OperationalMetricsToken) < 32 {
+		return errors.New("operational metrics token must contain at least 32 characters")
+	}
+	if c.Staging {
+		if c.Environment != "production" || c.StagingUsername == "" || len(c.StagingPassword) < 24 {
+			return errors.New("staging requires production safeguards and dedicated access credentials of at least 24 characters")
+		}
+		if c.PaymentMode != "razorpay" || !strings.HasPrefix(c.RazorpayKeyID, "rzp_test_") {
+			return errors.New("staging requires Razorpay test credentials")
+		}
+		if c.ResendAPIKey != "" || c.ResendAPIKeyFile != "" || c.SMTPAddress != "" {
+			return errors.New("staging email delivery must remain disabled until recipient isolation is configured")
+		}
+	}
 	if !strings.EqualFold(c.Environment, "production") {
 		return nil
 	}
