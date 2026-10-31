@@ -65,6 +65,11 @@ amount and currency before using the existing transactional completion method.
 Lookup failures back off to a maximum of 60 minutes; successful pending results
 return to five-minute polling.
 No match or multiple matches require investigation; absence never authorizes a POST.
+Before deploying migration 52, drain and stop older application instances that can
+submit refunds. Older refund code does not honor the new submission claim. During
+rollback, block refund submission routes before starting an older application;
+reconcile every submitting/uncertain/pending record before reopening those routes.
+Do not roll back the refund schema or delete recovery records to enable retries.
 The existing finance projection reports uncertain/submitting states and marks
 pending records older than 24 hours as needs_review. Provider-confirmed failure
 is terminal until reviewed. Signed refund events use the same transactional completion
