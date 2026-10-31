@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/wecratfs/commerce/internal/adapters/postgres"
 	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/identity"
 	"net/http"
@@ -45,6 +46,9 @@ func TestSitemapCatalogQueriesAgainstPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	if err := postgres.ApplyMigrations(t.Context(), pool); err != nil {
+		t.Fatal(err)
+	}
 	_, sitemap := seoHandler(pool, "https://weevcrafts.com")
 	w := httptest.NewRecorder()
 	sitemap(w, httptest.NewRequest(http.MethodGet, "/sitemap.xml", nil))
