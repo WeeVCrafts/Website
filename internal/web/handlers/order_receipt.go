@@ -51,21 +51,18 @@ func receiptLabel(pdf *fpdf.Fpdf, text string, x, y, width float64) {
 	pdf.CellFormat(width, 5, strings.ToUpper(text), "", 0, "L", false, 0, "")
 }
 
-func receiptValue(pdf *fpdf.Fpdf, text string, x, y, width float64) {
-	receiptSetText(pdf, receiptInk)
-	pdf.SetFont("DM", "", 10)
-	pdf.SetXY(x, y)
-	pdf.CellFormat(width, 6, text, "", 0, "L", false, 0, "")
-}
-
 func receiptValueRight(pdf *fpdf.Fpdf, text string, x, y, width float64) {
 	receiptSetText(pdf, receiptInk)
-	pdf.SetFont("DM", "", 10)
-	for size := 10.0; size > 6 && pdf.GetStringWidth(text) > width-2; size -= 0.5 {
-		pdf.SetFontSize(size - 0.5)
-	}
+	receiptFitFont(pdf, "", 10, text, width)
 	pdf.SetXY(x, y)
 	pdf.CellFormat(width, 6, text, "", 0, "R", false, 0, "")
+}
+
+func receiptFitFont(pdf *fpdf.Fpdf, style string, size float64, text string, width float64) {
+	pdf.SetFont("DM", style, size)
+	for ; size > 6 && pdf.GetStringWidth(text) > width-2; size -= 0.5 {
+		pdf.SetFontSize(size - 0.5)
+	}
 }
 
 func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error)) ([]byte, error) {
@@ -150,17 +147,29 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 		{"Order number", order.Number, 14, 70}, {"Order date", order.Date, 90, 50}, {"Currency", "INR", 148, 40},
 		{"Seller", receiptSeller(order), 14, 70}, {"Payment status", order.Payment, 90, 50}, {"Order status", order.Status, 148, 40},
 	}
-	for i, item := range metaCols {
-		y := metaY + float64(i/3)*25
-		receiptLabel(pdf, item.label, item.x, y, item.w)
-		receiptValue(pdf, item.value, item.x, y+6, item.w)
-		if i%3 != 2 {
-			receiptSetDraw(pdf, receiptLine)
-			pdf.SetLineWidth(0.3)
-			pdf.Line(item.x+item.w+5, y-1, item.x+item.w+5, y+15)
+	for row := 0; row < len(metaCols); row += 3 {
+		rowH := 25.0
+		for _, item := range metaCols[row : row+3] {
+			pdf.SetFont("DM", "", 10)
+			if height := 15 + float64(len(pdf.SplitText(item.value, item.w)))*5; height > rowH {
+				rowH = height
+			}
 		}
+		for col, item := range metaCols[row : row+3] {
+			receiptLabel(pdf, item.label, item.x, metaY, item.w)
+			receiptSetText(pdf, receiptInk)
+			pdf.SetFont("DM", "", 10)
+			pdf.SetXY(item.x, metaY+6)
+			pdf.MultiCell(item.w, 5, item.value, "", "L", false)
+			if col != 2 {
+				receiptSetDraw(pdf, receiptLine)
+				pdf.SetLineWidth(0.3)
+				pdf.Line(item.x+item.w+5, metaY-1, item.x+item.w+5, metaY+rowH-10)
+			}
+		}
+		metaY += rowH
 	}
-	tableY := 143.0
+	tableY := metaY + 2
 	receiptSetFill(pdf, "f2eee4")
 	pdf.RoundedRect(14, tableY, contentW, 14, 3, "1234", "F")
 	receiptLabel(pdf, "Item", 20, tableY+4, 95)
@@ -229,8 +238,10 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 	receiptSetText(pdf, receiptMuted)
 	pdf.SetFont("DM", "", 10)
 	for _, line := range []struct{ label, value string }{{"Subtotal", order.Subtotal}, {"Shipping", order.Shipping}, {"Discount", order.Discount}} {
+		pdf.SetFont("DM", "", 10)
 		pdf.SetXY(112, totalY)
 		pdf.CellFormat(30, 7, line.label, "", 0, "L", false, 0, "")
+		receiptFitFont(pdf, "", 10, line.value, 54)
 		pdf.SetXY(142, totalY)
 		pdf.CellFormat(54, 7, line.value, "", 0, "R", false, 0, "")
 		totalY += 8
@@ -249,7 +260,7 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 		totalLabel = "Order total"
 	}
 	pdf.CellFormat(35, 7, totalLabel, "", 0, "L", false, 0, "")
-	pdf.SetFont("DM", "B", 12)
+	receiptFitFont(pdf, "B", 12, order.Total, 40)
 	pdf.SetXY(151, totalY+5)
 	pdf.CellFormat(40, 7, order.Total, "", 0, "R", false, 0, "")
 	noteY := totalY + 27

@@ -156,3 +156,10 @@ GitHub application and security jobs, including database-backed Go tests, genera
 output checks, Playwright, govulncheck, secret scanning and the container scan.
 This earnings change requires its own CI run; it does not complete payout approvals,
 MFA, shipping operations or the remaining release gates above.
+
+Rendered receipt review additionally found seller metadata overflowing across
+payment/status columns. Metadata now wraps within each column and increases row
+height before the item table. Amount fonts shrink within their allocated columns,
+including the final paid/payable total. Normal and long-name/large-total sample
+PDFs were rendered with Poppler and inspected locally, including the continued
+totals page. Receipt tests passed after this correction.
