@@ -25,13 +25,20 @@
 .seller-order-card > div span { color: var(--seller-muted); font-size: 12px; }
 .seller-order-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .seller-print-document { display: none; }
+.seller-print-document[data-print-document="invoice"] { font-family: var(--seller-sans, Arial, sans-serif); }
 @media (max-width: 620px) { .seller-order-card { grid-template-columns: minmax(0, 1fr); } }
 @media print {
   body[data-print-kind] * { visibility: hidden !important; }
   body[data-print-kind] .seller-print-document[data-print-document] { display: none !important; }
   body[data-print-kind="label"] .seller-print-document[data-print-document="label"],
   body[data-print-kind="packing-slip"] .seller-print-document[data-print-document="packing-slip"],
-  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] { display: block !important; position: fixed; inset: 0; padding: 24px; color: #111; background: #fff; visibility: visible !important; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] { display: block !important; position: fixed; inset: 0; box-sizing: border-box; width: 100%; min-height: 100vh; padding: 46px 54px; color: #203a31; background: #fffdf9; font: 11pt/1.55 Arial, sans-serif; visibility: visible !important; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] h1 { margin: 0 0 24px; padding: 0 0 14px; border-bottom: 2px solid #174a3a; color: #174a3a; font: 700 24pt/1.2 Georgia, serif; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] p { margin: 10px 0; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] p:first-of-type { color: #53665f; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] p:not(:first-of-type) { display: grid; grid-template-columns: minmax(0, 1fr) 48px 125px 125px; gap: 12px; align-items: baseline; padding: 12px 10px; border-bottom: 1px solid #e7ded0; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] strong { display: block; margin: 22px 0 0 auto; max-width: 320px; padding: 16px; border-radius: 4px; background: #174a3a; color: white; font-size: 14pt; text-align: right; }
+  body[data-print-kind="invoice"] .seller-print-document[data-print-document="invoice"] strong::before { content: "Seller item subtotal"; display: block; margin-bottom: 4px; font-size: 9pt; font-weight: 400; opacity: .8; }
   body[data-print-kind] .seller-print-document[data-print-document] * { visibility: visible !important; }
 }
 .seller-team-person { display: flex; align-items: center; gap: 8px; min-width: 0; }

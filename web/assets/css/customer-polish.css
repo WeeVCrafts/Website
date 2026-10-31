@@ -510,6 +510,46 @@ html {scroll-padding-block-start:90px;}
 .checkout-summary .checkout-coupon small { margin-top: 0; text-align: left; }
 .checkout-prefill-status { margin: 0; color: var(--forest); font-size: 14px; }
 .checkout-prefill-status:empty { display: none; }
+
+/* Checkout refresh: keep the existing four-step flow and payment behavior,
+   while bringing the page closer to the approved visual direction. */
+.checkout-intro { padding-top: 30px; }
+.checkout-intro > .eyebrow { color: var(--terracotta); letter-spacing: .16em; }
+.checkout-intro h1 { color: var(--forest); }
+.checkout-intro > p:not(.eyebrow) { color: var(--muted); }
+.checkout-intro .steps { max-width: 860px; margin-top: 28px; }
+.checkout-layout { align-items: start; gap: 24px; }
+.checkout-main { display: grid; gap: 16px; min-width: 0; }
+.checkout-main .checkout-card,
+.checkout-layout > .checkout-summary { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: 0 4px 18px rgb(38 30 20 / 3%); }
+.checkout-main .checkout-card { padding: clamp(18px, 2.4vw, 28px); }
+.checkout-main .checkout-card > header { gap: 14px; margin-bottom: 18px; }
+.checkout-main .checkout-card > header h2 { color: var(--forest); }
+.checkout-main .checkout-card > header h2 > span:first-child { background: var(--forest); }
+.checkout-main .checkout-card[data-step="3"] { border-color: color-mix(in srgb, var(--terracotta) 34%, var(--line)); }
+.checkout-main .checkout-card .full { min-height: 50px; border-radius: 5px; }
+.checkout-layout > .checkout-summary { position: sticky; top: 20px; padding: clamp(18px, 2.2vw, 26px); }
+.checkout-summary h2 { color: var(--forest); }
+.checkout-summary h3 { color: var(--forest); }
+.checkout-summary h3 strong { color: var(--terracotta); font-size: 1.3em; font-variant-numeric: tabular-nums; }
+.checkout-summary hr { border: 0; border-top: 1px solid var(--line); }
+.checkout-summary .checkout-coupon { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.checkout-summary .checkout-coupon label,
+.checkout-summary .checkout-coupon small { grid-column: 1 / -1; }
+.checkout-summary .checkout-coupon .outline-button { min-height: 44px; }
+.checkout-summary > small { display: block; margin-top: 12px; color: var(--muted); line-height: 1.55; }
+@media (max-width: 860px) {
+  .checkout-layout { grid-template-columns: minmax(0, 1fr); }
+  .checkout-layout > .checkout-summary { position: static; }
+}
+@media (max-width: 520px) {
+  .checkout-intro { padding-top: 18px; }
+  .checkout-main .checkout-card { padding: 16px; }
+  .checkout-main .checkout-card > header { align-items: flex-start; }
+  .checkout-main .checkout-card > header > .muted { text-align: right; }
+  .checkout-summary .checkout-coupon { grid-template-columns: minmax(0, 1fr); }
+  .checkout-summary .checkout-coupon .outline-button { justify-self: stretch; }
+}
 @media (max-width: 720px) {
   .cart-layout .cart-seller-head { align-items: flex-start; flex-direction: column; gap: 8px; }
   .cart-layout .cart-seller-head > div { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: baseline; gap: 4px 8px; }
