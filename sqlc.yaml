@@ -27,6 +27,7 @@ sql:
       - internal/adapters/postgres/migrations/0050_checkout_intents.sql
       - internal/adapters/postgres/migrations/0051_catalog_discovery.sql
       - internal/adapters/postgres/migrations/0052_refund_recovery.sql
+      - internal/adapters/postgres/migrations/0053_order_finance_snapshots.sql
     gen:
       go:
         package: generated

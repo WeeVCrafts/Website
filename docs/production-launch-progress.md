@@ -107,3 +107,52 @@ Unavailable images leave a placeholder; arbitrary external URLs are never fetche
   literals. Template inputs now enforce LF through `.gitattributes`; generated
   embedded scripts/styles were regenerated without changing their behavior.
 - Backup restore and hosted deployment remain unverified.
+
+## Earnings allocation checkpoint
+
+Migration 53 adds nullable order/item financial snapshots. New checkout placements
+save the exact merchandise discount per item and save free-shipping discounts
+separately, in the placement transaction. Selected-product coupons allocate only
+to selected products. Cumulative integer rounding preserves the full discount
+without losing or adding a paisa; placement verifies allocations reconcile to
+the saved order discount before committing.
+
+At capture, seller earnings use saved merchandise values less saved item discounts.
+The applicable commission rule ID, rate and calculated amount are recorded per
+item in `orders.seller_finance_snapshot`. Shipping and shipping discounts are
+recorded separately and excluded from merchandise commission. This change does
+not authorize shipping payouts or introduce a shipping allocation policy.
+
+Capture replay does not change snapshots or existing ledger entries. A full refund
+continues to append exact negative copies of saved sale entries, including after
+the sale was settled. It never recalculates using current commission rates.
+
+Historical ledger amounts are preserved. Older orders without saved allocations
+remain distinguishable: existing historical sales keep NULL snapshots; newly
+captured legacy orders have `allocation_status=legacy_unallocated`. Review these
+before payout rather than reconstructing coupon targeting from current promotions:
+
+```sql
+SELECT o.order_number, sl.seller_id, sl.gross_cents, sl.commission_cents
+FROM orders o JOIN seller_ledger sl ON sl.order_id=o.id AND sl.entry_type='sale'
+WHERE o.seller_finance_snapshot IS NULL
+   OR o.seller_finance_snapshot->>'allocation_status'='legacy_unallocated';
+```
+
+Rollout is additive. Keep migration 53 during application rollback. An older
+application can read the schema but does not save allocations and uses the older
+commission calculation. Therefore block checkout/capture processing before such
+a rollback; do not process captured earnings under the old code. Record/reconcile
+external captures during the interruption before reopening. Never rewrite paid
+historical ledger entries as an upgrade/rollback shortcut.
+
+Verification: isolated PostgreSQL tests cover no discount, selected products,
+multi-seller rounding, free shipping, fully discounted merchandise, catalog/promotion
+changes before capture, commission changes after capture and refund/capture replay.
+The existing placement/quote test also verifies discount snapshots are persisted.
+
+The previous pushed checkout/release-controls commit `7014541` passed the complete
+GitHub application and security jobs, including database-backed Go tests, generated
+output checks, Playwright, govulncheck, secret scanning and the container scan.
+This earnings change requires its own CI run; it does not complete payout approvals,
+MFA, shipping operations or the remaining release gates above.

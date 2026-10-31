@@ -175,18 +175,21 @@ type Order struct {
 	PolicyRevision         pgtype.Int8        `json:"policy_revision"`
 	PolicySnapshot         []byte             `json:"policy_snapshot"`
 	DeliveredAt            pgtype.Timestamptz `json:"delivered_at"`
+	ShippingDiscountCents  pgtype.Int8        `json:"shipping_discount_cents"`
+	SellerFinanceSnapshot  []byte             `json:"seller_finance_snapshot"`
 }
 
 type OrderItem struct {
-	ID             int64              `json:"id"`
-	OrderID        int64              `json:"order_id"`
-	VariantID      int64              `json:"variant_id"`
-	ProductName    string             `json:"product_name"`
-	Sku            string             `json:"sku"`
-	UnitPriceCents int64              `json:"unit_price_cents"`
-	Quantity       int32              `json:"quantity"`
-	LineTotalCents int64              `json:"line_total_cents"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ID                     int64              `json:"id"`
+	OrderID                int64              `json:"order_id"`
+	VariantID              int64              `json:"variant_id"`
+	ProductName            string             `json:"product_name"`
+	Sku                    string             `json:"sku"`
+	UnitPriceCents         int64              `json:"unit_price_cents"`
+	Quantity               int32              `json:"quantity"`
+	LineTotalCents         int64              `json:"line_total_cents"`
+	CreatedAt              pgtype.Timestamptz `json:"created_at"`
+	AllocatedDiscountCents pgtype.Int8        `json:"allocated_discount_cents"`
 }
 
 type OrderStatusHistory struct {

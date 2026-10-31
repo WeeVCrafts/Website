@@ -1107,6 +1107,9 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 				return ports.ErrInsufficientStock
 			}
 		}
+		if err := snapshotOrderDiscounts(transactionContext, tx, order.ID, promotionID); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO payment_attempts (order_id, provider, status, amount_cents) VALUES ($1, 'razorpay', 'created', $2)`, order.ID, order.TotalCents); err != nil {
 			return err
 		}

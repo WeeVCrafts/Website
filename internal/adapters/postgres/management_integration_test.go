@@ -72,7 +72,9 @@ func TestManagementCRUDSearchAuthorizationAuditAndCommissionLedger(t *testing.T)
 	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "brands", Action: "delete", ID: fixture.brandSlug, Reason: "Reject in-use brand"}); !errors.Is(err, ports.ErrManagementConflict) {
 		t.Fatalf("in-use brand deleted: %v", err)
 	}
-	if e:=service.Mutate(ctx,actorID,ports.ManagementMutation{Section:"category-management",Action:"update",ID:fixture.category,Name:"Renamed category",Reason:"Requires publication"});!errors.Is(e,ports.ErrForbidden){t.Fatalf("taxonomy bypass: %v",e)}
+	if e := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "category-management", Action: "update", ID: fixture.category, Name: "Renamed category", Reason: "Requires publication"}); !errors.Is(e, ports.ErrForbidden) {
+		t.Fatalf("taxonomy bypass: %v", e)
+	}
 	if err := service.Mutate(ctx, actorID, ports.ManagementMutation{Section: "category-management", Action: "delete", ID: fixture.category, Reason: "Reject in-use category"}); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("legacy category bypass: %v", err)
 	}
@@ -117,6 +119,23 @@ func TestManagementCRUDSearchAuthorizationAuditAndCommissionLedger(t *testing.T)
 	if err := pool.QueryRow(ctx, `SELECT commission_cents FROM seller_ledger WHERE order_id=$1 AND entry_type='sale'`, first).Scan(&commission); err != nil || commission != 750 {
 		t.Fatalf("historic ledger changed: %d %v", commission, err)
 	}
+	var allocationStatus string
+	if err := pool.QueryRow(ctx, `SELECT seller_finance_snapshot->>'allocation_status' FROM orders WHERE id=$1`, first).Scan(&allocationStatus); err != nil || allocationStatus != "legacy_unallocated" {
+		t.Fatalf("unsnapshotted legacy allocations must be marked for review: %q %v", allocationStatus, err)
+	}
+	// Simulate an existing historical sale predating snapshot support. A replay
+	// must not manufacture snapshots using today's rates or rewrite the ledger.
+	if _, err := pool.Exec(ctx, `UPDATE orders SET seller_finance_snapshot=NULL WHERE id=$1`, first); err != nil {
+		t.Fatal(err)
+	}
+	if err := WithinTransaction(ctx, pool, func(ctx context.Context, tx pgx.Tx) error { return recordSellerSalesLedger(ctx, tx, first) }); err != nil {
+		t.Fatal(err)
+	}
+	var historical bool
+	if err := pool.QueryRow(ctx, `SELECT o.seller_finance_snapshot IS NULL AND sl.commission_cents=750
+		FROM orders o JOIN seller_ledger sl ON sl.order_id=o.id AND sl.entry_type='sale' WHERE o.id=$1`, first).Scan(&historical); err != nil || !historical {
+		t.Fatalf("historical sale was recalculated: %v", err)
+	}
 	mutate(ports.ManagementMutation{Section: "commission-rules", Action: "delete", ID: strconv.FormatInt(ruleID, 10)})
 
 	var auditCount int
@@ -126,8 +145,20 @@ func TestManagementCRUDSearchAuthorizationAuditAndCommissionLedger(t *testing.T)
 }
 
 func TestLegacyManagementSettingsRequirePublication(t *testing.T) {
- pool:=openIntegrationPool(t);ctx:=context.Background();actor:=roleFixture(t,pool,"super_admin");before,e:=ReadStorefrontSettings(ctx,pool);if e!=nil{t.Fatal(e)}
- service:=applicationcommerce.NewManagementService(NewManagementRepository(pool))
- e=service.Mutate(ctx,actor,ports.ManagementMutation{Section:"settings",Action:"save",Reason:"Reject legacy settings bypass",Settings:ports.StorefrontSettings{SupportEmail:"draft@example.invalid",ShippingInformation:"This must not publish immediately."}})
- if !errors.Is(e,ports.ErrForbidden){t.Fatalf("legacy settings bypass: %v",e)};after,e:=ReadStorefrontSettings(ctx,pool);if e!=nil||before!=after{t.Fatalf("legacy save changed live settings: %+v %v",after,e)}
+	pool := openIntegrationPool(t)
+	ctx := context.Background()
+	actor := roleFixture(t, pool, "super_admin")
+	before, e := ReadStorefrontSettings(ctx, pool)
+	if e != nil {
+		t.Fatal(e)
+	}
+	service := applicationcommerce.NewManagementService(NewManagementRepository(pool))
+	e = service.Mutate(ctx, actor, ports.ManagementMutation{Section: "settings", Action: "save", Reason: "Reject legacy settings bypass", Settings: ports.StorefrontSettings{SupportEmail: "draft@example.invalid", ShippingInformation: "This must not publish immediately."}})
+	if !errors.Is(e, ports.ErrForbidden) {
+		t.Fatalf("legacy settings bypass: %v", e)
+	}
+	after, e := ReadStorefrontSettings(ctx, pool)
+	if e != nil || before != after {
+		t.Fatalf("legacy save changed live settings: %+v %v", after, e)
+	}
 }

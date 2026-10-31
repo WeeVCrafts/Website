@@ -76,6 +76,11 @@ func TestCouponQuoteMatchesOrderAndRetryConsumesOnce(t *testing.T) {
 	if err != nil || order.TotalCents != quote.TotalCents || order.DiscountCents != quote.DiscountCents {
 		t.Fatalf("coupon order=%+v error=%v", order, err)
 	}
+	var merchandiseDiscount, shippingDiscount int64
+	if err := pool.QueryRow(ctx, `SELECT SUM(oi.allocated_discount_cents)::bigint,o.shipping_discount_cents
+		FROM orders o JOIN order_items oi ON oi.order_id=o.id WHERE o.id=$1 GROUP BY o.id`, order.ID).Scan(&merchandiseDiscount, &shippingDiscount); err != nil || merchandiseDiscount != 200 || shippingDiscount != 0 {
+		t.Fatalf("placement discount snapshot merchandise=%d shipping=%d: %v", merchandiseDiscount, shippingDiscount, err)
+	}
 	retry, err := r.CreateQuotedOrder(ctx, f.userIDs[0], f.cartIDs[0], "coupon-retry-check", address, code, quote.TotalCents)
 	if err != nil || retry.ID != order.ID {
 		t.Fatalf("coupon retry=%+v error=%v", retry, err)
