@@ -221,7 +221,7 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 		pdf.SetFont("DM", "", 8)
 		pdf.SetXY(44, rowY+5+float64(len(nameLines))*5)
 		pdf.MultiCell(71, 4, detail, "", "L", false)
-		receiptValueRight(pdf, fmt.Sprintf("%d", item.Quantity), 120, rowY+8, 20)
+		receiptValueRight(pdf, fmt.Sprintf("%d", item.Quantity), 120, rowY+8, 12)
 		receiptValueRight(pdf, item.Product.Price, 136, rowY+8, 30)
 		receiptValueRight(pdf, receiptMoney(item.LineTotalCents), 166, rowY+8, 30)
 		rowY += rowH
