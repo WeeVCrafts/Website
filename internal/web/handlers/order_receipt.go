@@ -147,16 +147,29 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	receiptLabel(pdf, "Unit price", 136, tableY+4, 30)
 	receiptLabel(pdf, "Amount", 166, tableY+4, 30)
 	rowY := tableY + 14
-	for _, item := range order.Items {
+	for itemIndex, item := range order.Items {
 		rowH := 25.0
 		receiptSetDraw(pdf, receiptLine)
 		pdf.SetLineWidth(0.3)
 		pdf.Line(14, rowY+rowH, pageW-14, rowY+rowH)
-		receiptValue(pdf, item.Product.Name, 20, rowY+5, 95)
+		receiptSetFill(pdf, "f2eee4")
+		pdf.RoundedRect(20, rowY+3, 18, 19, 1, "1234", "F")
+		if imagePath := strings.TrimPrefix(strings.TrimSpace(item.Product.ImageURL), "/assets/"); imagePath != "" && (strings.HasSuffix(imagePath, ".png") || strings.HasSuffix(imagePath, ".jpg") || strings.HasSuffix(imagePath, ".jpeg")) {
+			if image, readErr := assets.FS.ReadFile(imagePath); readErr == nil {
+				name := fmt.Sprintf("receipt-item-%d", itemIndex)
+				imageType := "png"
+				if strings.HasSuffix(imagePath, ".jpg") || strings.HasSuffix(imagePath, ".jpeg") {
+					imageType = "jpg"
+				}
+				_ = pdf.RegisterImageOptionsReader(name, fpdf.ImageOptions{ImageType: imageType, ReadDpi: true}, bytes.NewReader(image))
+				pdf.ImageOptions(name, 20, rowY+3, 18, 19, false, fpdf.ImageOptions{ImageType: imageType, ReadDpi: true}, 0, "")
+			}
+		}
+		receiptValue(pdf, item.Product.Name, 44, rowY+5, 71)
 		receiptSetText(pdf, receiptMuted)
 		pdf.SetFont("DM", "", 8)
-		pdf.SetXY(20, rowY+12)
-		pdf.CellFormat(95, 5, firstNonEmpty(item.Product.Category, item.VariantName, "Handmade craft"), "", 0, "L", false, 0, "")
+		pdf.SetXY(44, rowY+12)
+		pdf.CellFormat(71, 5, firstNonEmpty(item.Product.Category, item.VariantName, "Handmade craft"), "", 0, "L", false, 0, "")
 		receiptValueRight(pdf, fmt.Sprintf("%d", item.Quantity), 120, rowY+8, 20)
 		receiptValueRight(pdf, item.Product.Price, 136, rowY+8, 30)
 		receiptValueRight(pdf, receiptMoney(item.LineTotalCents), 166, rowY+8, 30)
