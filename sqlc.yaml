@@ -25,6 +25,7 @@ sql:
       - internal/adapters/postgres/migrations/0048_catalog_categories.sql
       - internal/adapters/postgres/migrations/0049_storefront_editor.sql
       - internal/adapters/postgres/migrations/0050_checkout_intents.sql
+      - internal/adapters/postgres/migrations/0051_catalog_discovery.sql
     gen:
       go:
         package: generated

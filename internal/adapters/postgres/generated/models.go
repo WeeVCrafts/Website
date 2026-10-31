@@ -109,6 +109,12 @@ type Credential struct {
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
+type FeaturedPopularity struct {
+	ProductID   int64              `json:"product_id"`
+	PaidUnits   int64              `json:"paid_units"`
+	RefreshedAt pgtype.Timestamptz `json:"refreshed_at"`
+}
+
 type IdempotencyKey struct {
 	Scope        string             `json:"scope"`
 	Key          string             `json:"key"`
@@ -273,6 +279,8 @@ type Product struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 	SellerID       pgtype.Int8        `json:"seller_id"`
+	SearchTags     []string           `json:"search_tags"`
+	FeaturedPinned bool               `json:"featured_pinned"`
 }
 
 type ProductCategory struct {
@@ -292,6 +300,19 @@ type ProductMedium struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	PublicUrl   string             `json:"public_url"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ProductSearchDocument struct {
+	ProductID  int64       `json:"product_id"`
+	Name       string      `json:"name"`
+	Skus       []string    `json:"skus"`
+	SearchText string      `json:"search_text"`
+	Document   interface{} `json:"document"`
+}
+
+type ProductSearchTerm struct {
+	ProductID int64  `json:"product_id"`
+	Term      string `json:"term"`
 }
 
 type ProductVariant struct {

@@ -58,13 +58,21 @@ func (h *Handler) sellerInventoryAdjust(w http.ResponseWriter, r *http.Request) 
 		h.renderCommerceError(w, r, applicationcommerce.ErrInvalidInventoryAdjustment, "The stock adjustment is invalid.")
 		return
 	}
-	err := h.inventoryService.Adjust(r.Context(), session.UserID, domaincommerce.InventoryAdjustment{
+	adjust := h.inventoryService.Adjust
+	if r.URL.Path == "/super-admin/inventory/adjust" {
+		adjust = h.inventoryService.AdjustAdmin
+	}
+	err := adjust(r.Context(), session.UserID, domaincommerce.InventoryAdjustment{
 		VariantID: variantID,
 		Delta:     delta,
 		Reason:    r.FormValue("reason"),
 	})
 	if err != nil {
 		h.renderCommerceError(w, r, err, "We could not save that stock adjustment.")
+		return
+	}
+	if r.URL.Path == "/super-admin/inventory/adjust" {
+		h.redirect(w, r, "/super-admin/inventory?notice=Stock+adjustment+saved")
 		return
 	}
 	query := url.Values{"notice": {"Stock adjustment saved."}}

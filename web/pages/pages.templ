@@ -346,7 +346,7 @@ templ CartRows(items []viewmodels.CartItem) {
         if item.VariantName != "" && item.VariantName != "Default variant" {
           <p class="cart-variant">Option: <b>{ item.VariantName }</b></p>
         }
-        <div class="price"><strong>{ item.Product.Price }</strong><del>{ item.Product.CompareAt }</del></div><div class="cart-line-actions"><span class="quantity-control"><button type="button" aria-label={ "Decrease " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, -1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">-</button><output aria-live="polite">{ item.Quantity }</output><button type="button" aria-label={ "Increase " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, 1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">+</button></span><button class="text-button" type="button" hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartRemoveValues(item.Product.VariantID) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Remove</button><button class="text-button" type="button" hx-post={ "/ui/wishlist/" + item.Product.Slug } hx-vals={ cartWishlistValues(item.Product.VariantID) } hx-target="#cart-layout" hx-select="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Move to wishlist</button></div></div></div></article>
+        <div class="price"><strong>{ item.Product.Price }</strong><del>{ item.Product.CompareAt }</del></div></div><div class="cart-line-actions"><span class="quantity-control"><button type="button" aria-label={ "Decrease " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, -1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">-</button><output aria-live="polite">{ item.Quantity }</output><button type="button" aria-label={ "Increase " + item.Product.Name + " quantity" } hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartDeltaValues(item.Product.VariantID, 1) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this">+</button></span><button class="text-button" type="button" hx-post={ "/ui/cart/" + item.Product.Slug } hx-vals={ cartRemoveValues(item.Product.VariantID) } hx-select="#cart-layout" hx-target="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">delete</span> Remove</button><button class="text-button" type="button" hx-post={ "/ui/wishlist/" + item.Product.Slug } hx-vals={ cartWishlistValues(item.Product.VariantID) } hx-target="#cart-layout" hx-select="#cart-layout" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">favorite</span> Move to wishlist</button></div></div></article>
     }
   }
   <div class="cart-note"><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><div><b>You are supporting independent makers</b><small>Every order helps preserve a living craft tradition.</small></div></div>
@@ -375,7 +375,7 @@ templ Home(p viewmodels.CustomerPage) {
     } else {
     @HomeIntro(p)
     <section class="container section home-featured">
-      @SectionHeading("", "Featured from our makers", "Handpicked pieces, made with love across India.")
+      <div class="section-head"><div><h2>Featured from our makers</h2><p>Maker selections and customer favourites.</p></div><a class="text-link" href="/featured-products">View all featured products</a></div>
       <div class="product-grid home-product-grid" data-backend-products="featured">
         if len(availableProducts(p.Products, "", 6)) == 0 {
           <div class="empty-state"><h2>Our collection is on its way</h2><p>New pieces will appear here when our makers publish them.</p><a class="outline-button" href="/products">Explore the collection</a></div>
@@ -496,14 +496,14 @@ templ ListingUpdate(p viewmodels.CustomerPage) {
 templ ListingContent(p viewmodels.CustomerPage) {
   <div id="listing-content">
     @ListingBanner(p)
-    <form id="listing-filters" class="container listing-filter-form" method="get" action="/products" hx-get="/products" hx-select="#listing-content" hx-target="#listing-content" hx-swap="outerHTML" hx-sync="#page:replace" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#ui-loading" data-listing-filters>
+    <form id="listing-filters" class="container listing-filter-form" method="get" action={ listingPath(p) } hx-get={ listingPath(p) } hx-select="#listing-content" hx-target="#listing-content" hx-swap="outerHTML" hx-sync="#page:replace" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#ui-loading" data-listing-filters>
       <input type="hidden" name="q" value={ p.Query }/>
       if p.Category == "offers" {
         <input type="hidden" name="category" value={ p.Category }/>
       }
       <section class="listing-layout">
         <aside id="listing-filter-sidebar" class="filter-sidebar" aria-label="Product filters" data-filter-panel><button class="mobile-filter-close" type="button" data-filter-close>Close filters</button>
-          <div class="filter-head"><h2 id="filter-title">Filters</h2><a href="/products">Clear all</a></div>
+          <div class="filter-head"><h2 id="filter-title">Filters</h2><a href={ listingPath(p) }>Clear all</a></div>
           <details open>
             <summary>Categories <span class="material-symbols-outlined" aria-hidden="true">expand_less</span></summary>
             <div class="facet-search" x-data="{query:''}"><label class="sr-only" for="facet-category">Search categories</label><input id="facet-category" type="search" placeholder="Find categories" x-model="query"/><button type="button" x-show="query" x-cloak aria-label="Clear categories search" @click="query=''; $el.previousElementSibling.focus()">Clear</button><div class="facet-options">
@@ -1092,6 +1092,7 @@ templ Checkout(p viewmodels.CustomerPage) {
             if p.UserName != "" || p.UserPhone != "" {
               <div class="checkout-quick-fill"><div><strong>Save time</strong><small>Use your account details for the contact fields.</small></div><button class="outline-button" type="button" data-checkout-prefill="account" data-name={ p.UserName } data-phone={ p.UserPhone }><span class="material-symbols-outlined" aria-hidden="true">auto_fix_high</span>Use account details</button></div>
             }
+            <p class="checkout-prefill-status" data-checkout-prefill-status role="status" aria-live="polite" aria-atomic="true"></p>
             <label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
             <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" inputmode="tel" autocomplete="tel" required maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed"/></label>
             <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
@@ -1148,7 +1149,7 @@ templ Checkout(p viewmodels.CustomerPage) {
           }
           <p data-backend-message role="status"></p></section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ p.ItemsTotal }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ p.ShippingTotal }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ p.DiscountTotal }</b></p><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small><hr/><h3>Total payable <strong data-quote-total>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ p.ItemsTotal }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ p.ShippingTotal }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ p.DiscountTotal }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
     </section>
     }
   }

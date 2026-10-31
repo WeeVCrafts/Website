@@ -80,8 +80,8 @@ func (c *searchCache) Set(_ context.Context, _ string, value []byte, _ int) erro
 }
 func (c *searchCache) Delete(context.Context, string) error { return nil }
 
-func TestSearchServiceHydratesIndexedSlugsAndPreservesTotal(t *testing.T) {
-	repository := &searchRepository{hydrated: []domain.Product{{Slug: "soap"}}}
+func TestSearchServiceIgnoresIndexAndPreservesDatabaseTotal(t *testing.T) {
+	repository := &searchRepository{searchProducts: []domain.Product{{Slug: "soap"}}, searchTotal: 7}
 	engine := &searchEngine{result: ports.SearchResult{ProductSlugs: []string{"soap", "soap", ""}, Total: 7}}
 	service := NewSearchServiceWithEngine(repository, nil, engine)
 
@@ -92,13 +92,13 @@ func TestSearchServiceHydratesIndexedSlugsAndPreservesTotal(t *testing.T) {
 	if total != 7 || len(products) != 1 || products[0].Slug != "soap" {
 		t.Fatalf("unexpected hydrated search result: total=%d products=%+v", total, products)
 	}
-	if engine.calls != 1 || repository.hydrateCalls != 1 || repository.searchCalls != 0 {
-		t.Fatalf("expected indexed path only, engine=%d hydrate=%d postgres=%d", engine.calls, repository.hydrateCalls, repository.searchCalls)
+	if engine.calls != 0 || repository.hydrateCalls != 0 || repository.searchCalls != 1 {
+		t.Fatalf("expected canonical PostgreSQL path, engine=%d hydrate=%d postgres=%d", engine.calls, repository.hydrateCalls, repository.searchCalls)
 	}
 }
 
-func TestSearchServiceUsesIndexForUnfilteredSearch(t *testing.T) {
-	repository := &searchRepository{hydrated: []domain.Product{{Slug: "soap"}}}
+func TestSearchServiceUsesDatabaseForUnfilteredSearch(t *testing.T) {
+	repository := &searchRepository{searchProducts: []domain.Product{{Slug: "soap"}}, searchTotal: 1}
 	engine := &searchEngine{result: ports.SearchResult{ProductSlugs: []string{"soap"}, Total: 1}}
 	service := NewSearchServiceWithEngine(repository, nil, engine)
 
@@ -106,9 +106,10 @@ func TestSearchServiceUsesIndexForUnfilteredSearch(t *testing.T) {
 	if err != nil || total != 1 || len(products) != 1 {
 		t.Fatalf("search options failed: total=%d products=%+v err=%v", total, products, err)
 	}
-	if engine.request.Query != "soap" || engine.request.Limit != 12 || engine.request.Offset != 0 {
-		t.Fatalf("search options were not forwarded: %+v", engine.request)
+	if engine.calls != 0 || repository.searchCalls != 1 {
+		t.Fatal("optional index changed canonical search")
 	}
+
 }
 
 func TestSearchServiceNormalizesAndForwardsListingFilters(t *testing.T) {
@@ -162,7 +163,7 @@ func TestSearchServiceUsesDatabaseForLiveListingFilters(t *testing.T) {
 }
 
 func TestSearchServiceReturnsFacetsAndObservesBackend(t *testing.T) {
-	repository := &searchRepository{hydrated: []domain.Product{{Slug: "soap"}}, facets: []ports.SearchFacet{{Value: "natural-care", Label: "Natural care", Count: 3}}}
+	repository := &searchRepository{searchProducts: []domain.Product{{Slug: "soap"}}, searchTotal: 3, facets: []ports.SearchFacet{{Value: "natural-care", Label: "Natural care", Count: 3}}}
 	observer := &searchObserver{}
 	engine := &searchEngine{result: ports.SearchResult{ProductSlugs: []string{"soap"}, Total: 3, Facets: []ports.SearchFacet{{Value: "stale-primary", Label: "Old name", Count: 1}}}}
 	service := NewSearchServiceWithEngineAndObserver(repository, nil, engine, observer)
@@ -171,7 +172,7 @@ func TestSearchServiceReturnsFacetsAndObservesBackend(t *testing.T) {
 	if err != nil || total != 3 || len(facets) != 1 || facets[0].Value != "natural-care" {
 		t.Fatalf("unexpected search facets: total=%d facets=%+v err=%v", total, facets, err)
 	}
-	if len(observer.observations) != 1 || observer.observations[0].Backend != "index" || observer.observations[0].Error {
+	if len(observer.observations) != 1 || observer.observations[0].Backend != "postgresql" || observer.observations[0].Error {
 		t.Fatalf("unexpected search observation: %+v", observer.observations)
 	}
 }

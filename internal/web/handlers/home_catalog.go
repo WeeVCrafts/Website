@@ -25,7 +25,7 @@ func (h *LiveStorefrontHandler) loadHomeCatalog(r *http.Request, p *viewmodels.C
 		options ports.ProductSearchOptions
 		target  *[]viewmodels.Product
 	}{
-		{ports.ProductSearchOptions{Limit: 6}, &p.Products},
+		{ports.ProductSearchOptions{Limit: 6, Featured: true}, &p.Products},
 		{ports.ProductSearchOptions{Limit: 8, Sort: "newest"}, &p.HomeNewArrivals},
 		{ports.ProductSearchOptions{Limit: 5, CategorySlug: p.HomeSelectedCategory}, &p.HomeCategoryProducts},
 		{ports.ProductSearchOptions{Limit: 6, CategorySlug: "gifts", PriceRange: "under-1500"}, &p.HomeGifts},

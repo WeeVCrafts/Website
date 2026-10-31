@@ -70,15 +70,14 @@ later without exposing deployment configuration.
 
 ## Seller workflow amendment — 17 October 2026
 
-Product entry uses Details, Pricing & stock, Photos and Review steps. Completed
-steps remain revisitable. Validate before advancing, keep entered values in
-memory, reveal the invalid step and focus its first invalid field. Without
-JavaScript, all editable sections remain available in one native form. Optional
-specifications use a native disclosure. Review reflects entered values; Save
+Product entry exposes basic details, pricing, stock, tags and photos together.
+Advanced details and variants use native disclosures. Keep entered values on
+validation failure and focus the first invalid field. Without JavaScript, all
+editable sections remain available in one native form. Save
 product draft never submits for marketplace approval. Successful create and
 edit return to the saved editor. Gallery media and variants remain attached to
-that product. A cover failure after saving opens the saved product's Photos
-step with retry instructions; it never asks the seller to create another draft.
+that product. A cover failure after saving opens the saved product's editor
+with retry instructions; it never asks the seller to create another draft.
 Submission for review is a separate action and is disabled while edited product
 fields have unsaved changes. Server validation retains values and identifies
 money/upload corrections when available; session and permission errors remain

@@ -83,10 +83,11 @@ type Category struct {
 }
 
 type CartItem struct {
-	Product     Product
-	VariantName string
-	Quantity    int
-	Delivery    string
+	LineTotalCents int64
+	Product        Product
+	VariantName    string
+	Quantity       int
+	Delivery       string
 }
 
 type Order struct {

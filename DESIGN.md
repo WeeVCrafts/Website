@@ -74,8 +74,8 @@ system or customer-specific dialog implementation is introduced.
 ## Seller workflow refinement — 17 October 2026
 
 The seller portal retains its established palette, operational typefaces, sidebar,
-shared validation and button family. Product forms use a four-step navigation
-with a clear current step, compact optional specifications and an editable review.
+shared validation and button family. Product forms use one visible basic form
+with native Advanced disclosures for optional details and variants.
 Inventory adjustments expand within the relevant record. Orders use one paginated
 table with explicit payment and fulfilment labels. Controls retain 44px targets;
 phone layouts preserve every value and action through existing record-table rules.

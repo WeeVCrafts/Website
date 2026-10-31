@@ -107,7 +107,7 @@ func templateKind(path string) string {
 	switch {
 	case strings.HasPrefix(path, "/categories"):
 		return "category"
-	case path == "/search" || path == "/products" || path == "/deals":
+	case path == "/featured-products" || path == "/search" || path == "/products" || path == "/deals":
 		return "search"
 	case strings.HasPrefix(path, "/products/"):
 		return "product"
@@ -237,7 +237,10 @@ func (h *LiveStorefrontHandler) loadConfiguredSections(r *http.Request, p *viewm
 		if sel.Mode == "category" && category == "" {
 			category = p.HomeSelectedCategory
 		}
-		options := ports.ProductSearchOptions{CategorySlug: category, DatabaseOnly: true, InStock: sel.Available, Limit: max(1, min(24, sel.Limit)), MinPriceCents: sel.MinPrice, MaxPriceCents: sel.MaxPrice, ProductIDs: sel.Products, SelectedOnly: sel.Mode == "selected"}
+		options := ports.ProductSearchOptions{CategorySlug: category, DatabaseOnly: true, InStock: sel.Available, Limit: max(1, min(24, sel.Limit)), MinPriceCents: sel.MinPrice, MaxPriceCents: sel.MaxPrice, ProductIDs: sel.Products, SelectedOnly: sel.Mode == "selected", Featured: sel.Mode == "featured"}
+		if options.Featured {
+			options.InStock = true
+		}
 		if sel.Mode == "newest" {
 			options.Sort = "newest"
 		}

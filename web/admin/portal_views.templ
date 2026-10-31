@@ -121,10 +121,11 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 				} else {
 					<label>Seller<input value={ form.SellerName } readonly/></label>
 				}
+				<label>Search tags<input name="search_tags" value={ form.SearchTags } placeholder="ceramic, coffee mug, floral"/><small>Up to 20 comma-separated tags, 40 characters each.</small></label>
 				<label>Product name<input name="name" value={ form.Name } required maxlength="180"/></label>
-				<label>Product URL slug<input name="slug" value={ form.Slug } placeholder="e.g. handpainted-ceramic-mug"/></label>
-				<label>Brand name<input name="brand_name" value={ form.BrandName } required maxlength="120"/></label>
-				<label>Brand slug<input name="brand_slug" value={ form.BrandSlug } placeholder="e.g. weaver-crafts"/></label>
+				<details><summary>Advanced: Product URL slug</summary><label>Product URL slug<input name="slug" value={ form.Slug } placeholder="e.g. handpainted-ceramic-mug"/></label></details>
+				<details><summary>Advanced: Brand name</summary><label>Brand name<input name="brand_name" value={ form.BrandName } maxlength="120"/></label></details>
+				<details><summary>Advanced: Brand slug</summary><label>Brand slug<input name="brand_slug" value={ form.BrandSlug } placeholder="e.g. weaver-crafts"/></label></details>
                 <input type="hidden" name="manage_categories" value="1"/>
                 <label>Primary category<select name="category_slug" required>
                  <option value="">Choose a category</option>
@@ -132,25 +133,29 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
                   <option value={ category.Slug } selected?={ category.Slug==form.CategorySlug }>{ category.Name }</option>
                  }
                 </select></label>
-                <fieldset class="admin-product-editor-wide category-memberships"><legend>Additional categories</legend><p>Products can appear in several categories. The primary category remains assigned.</p>
+                <details class="admin-product-editor-wide"><summary>Advanced categories</summary><fieldset class="admin-product-editor-wide category-memberships"><legend>Additional categories</legend><p>Products can appear in several categories. The primary category remains assigned.</p>
                  for _,category:=range form.Categories {
                   <label><input type="checkbox" name="additional_category" value={ category.Slug } checked?={ category.Assigned }/>{ category.Name }</label>
                  }
-                </fieldset>
-                <label>Featured order<input type="number" name="featured_rank" min="0" max="1000000" value={ form.FeaturedRank } required/><small>Lower numbers appear first in Featured.</small></label>
-				<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
+                </fieldset></details>
+                if p.PortalRoot=="/super-admin" {
+ <input type="hidden" name="manage_featured" value="1"/><label><input type="checkbox" name="featured_pinned" value="1" checked?={ form.FeaturedPinned }/>Pin to featured products</label>
+ <label>Featured order<input type="number" name="featured_rank" min="0" max="1000000" value={ form.FeaturedRank } required/><small>Lower numbers appear first among pinned products.</small></label>
+ }
+				<details><summary>Advanced: SKU</summary><label>SKU<input name="sku" value={ form.SKU } maxlength="120"/></label></details>
 				<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ components.RupeeInput(form.PriceCents) } required/></label>
-				<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ components.RupeeInput(form.CompareAtCents) }/></label>
+				<details><summary>Advanced: Compare-at price (INR)</summary><label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ components.RupeeInput(form.CompareAtCents) }/></label></details>
 				if form.ID == "" {
 					<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
 				}
 				<label class="admin-product-editor-wide">Upload product image (JPEG, PNG or WebP, up to 25 MB)<input type="file" name="image_file" data-main-image accept="image/png, image/jpeg, image/jpg, image/webp"/></label>
-				<label class="admin-product-editor-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label>
-				<label class="admin-product-editor-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
+				<details><summary>Advanced: Or Product Image URL</summary><label class="admin-product-editor-wide">Or Product Image URL<input name="image_url" value={ form.Image } placeholder="/assets/images/customer/saree-maroon.webp"/></label></details>
+				<details><summary>Advanced: Delivery note</summary><label class="admin-product-editor-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label></details>
 				<label class="admin-product-editor-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ form.Description }</textarea></label>
 				<div class="admin-product-editor-wide admin-product-editor-actions"><a class="admin-button secondary" href={ p.PortalRoot + "/products" }>Cancel</a><button class="admin-button primary" type="submit">Save product</button></div>
 			</form>
 			if form.ID != "" {
+ <a class="admin-button secondary" href={ p.PortalRoot+"/inventory?q="+form.SKU }>Manage stock for this product</a>
 				if form.Image != "" {
 					<img class="product-media-preview" src={ form.Image } alt={ "Current image for " + form.Name }/>
 				}
@@ -219,10 +224,18 @@ templ PortalInventory(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warehouse</span><div><h2>Marketplace inventory</h2><p>Current variant stock and reservations across Indian sellers.</p></div></div></div>
-			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Sellers manage stock adjustments in their inventory workspace.</p>
+			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Stock changes preserve reserved units and record an audit reason.</p>
 			<div class="ui-table-region" role="region" tabindex="0" aria-label="Marketplace inventory"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">On hand</th><th scope="col">Reserved</th><th scope="col">Available</th><th scope="col">Stock signal</th><th scope="col">Inventory value</th></tr></thead><tbody>
 				for _, item := range p.Inventory {
-					<tr><th scope="row" class="record-title"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span></th><td data-label="SKU">{ item.SKU }</td><td data-label="On hand" class="numeric">{ item.Stock }</td><td data-label="Reserved" class="numeric">{ item.Reserved }</td><td data-label="Available" class="numeric">{ item.Available }</td><td data-label="Stock signal"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ item.Reorder }</span></td><td data-label="Inventory value" class="numeric">{ item.Value }</td></tr>
+					<tr><th scope="row" class="record-title"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span></th><td data-label="SKU">{ item.SKU }</td><td data-label="On hand" class="numeric">{ item.Stock }</td><td data-label="Reserved" class="numeric">{ item.Reserved }</td><td data-label="Available" class="numeric">{ item.Available }
+ if p.PortalRoot=="/super-admin" {
+ <details><summary>Adjust stock</summary><form method="post" action="/super-admin/inventory/adjust" data-stock-adjustment data-available={ item.Available }>
+ <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="variant_id" value={ item.VariantID }/>
+ <label>Adjustment<select name="adjustment_type"><option value="add">Add stock</option><option value="remove">Remove stock</option></select></label>
+ <label>Units<input name="quantity" type="number" min="1" max="100000" required/></label><label>Reason<input name="reason" minlength="3" maxlength="500" required/></label>
+ <p role="status" data-stock-preview>Reserved units are unchanged.</p><button class="admin-button primary" type="submit">Save stock change</button></form></details>
+ }
+ </td><td data-label="Stock signal"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ item.Reorder }</span></td><td data-label="Inventory value" class="numeric">{ item.Value }</td></tr>
 				}
 			</tbody></table></div>
 				if len(p.Inventory) == 0 && p.DataWarning == "" {

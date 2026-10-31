@@ -2,7 +2,12 @@
   'use strict';
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-product-builder]');
-    if (form) {
+    if(form?.hasAttribute('data-product-simple')) {
+      form.addEventListener('input',()=>{const submit=document.querySelector('[data-review-submit] button');if(submit)submit.disabled=true;});
+      form.addEventListener('ui:invalid',event=>{let details=event.target.closest('details');while(details){details.open=true;details=details.parentElement.closest('details');}});
+    }
+
+    if (form && !form.hasAttribute("data-product-simple")) {
       const keys = ['details', 'pricing', 'photos', 'review'];
       const panels = keys.map(key => form.querySelector('[data-product-step="' + key + '"]'));
       const links = Array.from(form.querySelectorAll('[data-product-step-link]'));

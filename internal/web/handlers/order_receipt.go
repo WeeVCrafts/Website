@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-pdf/fpdf"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -27,7 +28,7 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 		pdf.MultiCell(0, 7, line, "", "L", false)
 	}
 	for _, item := range order.Items {
-		pdf.MultiCell(0, 7, fmt.Sprintf("%s\nQuantity: %d · Unit price: %s", item.Product.Name, item.Quantity, item.Product.Price), "B", "L", false)
+		pdf.MultiCell(0, 7, fmt.Sprintf("%s\nOption / SKU: %s\nQuantity: %d · Unit price: %s\nLine total: %s", item.Product.Name, strings.TrimSpace(item.VariantName+" "+item.Product.SKU), item.Quantity, item.Product.Price, storefrontMoney(item.LineTotalCents)), "B", "L", false)
 		pdf.Ln(3)
 	}
 	pdf.Ln(5)

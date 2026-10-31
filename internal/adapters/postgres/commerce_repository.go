@@ -119,6 +119,11 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 		if err := tx.QueryRow(transactionContext, `SELECT id FROM sellers WHERE status = 'active' AND (owner_user_id = $1 )`, ownerUserID).Scan(&sellerID); err != nil {
 			return ports.ErrForbidden
 		}
+		if input.BrandSlug == "" || input.BrandName == "" {
+			if err := tx.QueryRow(transactionContext, `SELECT coalesce((SELECT p.brand_slug FROM products p WHERE p.seller_id=s.id ORDER BY p.id LIMIT 1),'seller-'||s.id::text),coalesce((SELECT b.name FROM products p JOIN brands b ON b.slug=p.brand_slug WHERE p.seller_id=s.id ORDER BY p.id LIMIT 1),s.display_name) FROM sellers s WHERE s.id=$1`, sellerID).Scan(&input.BrandSlug, &input.BrandName); err != nil {
+				return err
+			}
+		}
 		if err := ensureCatalogName(transactionContext, tx, "brands", input.BrandSlug, input.BrandName); err != nil {
 			return err
 		}
@@ -147,6 +152,9 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 		if _, err := tx.Exec(transactionContext, `INSERT INTO inventory_stock (variant_id, available_quantity) VALUES ($1, $2)`, product.VariantID, input.InitialStock); err != nil {
 			return err
 		}
+		if err := saveProductTags(transactionContext, tx, productID, input.SearchTags); err != nil {
+			return err
+		}
 		product = domaincommerce.ManagedProduct{
 			ID:             productID,
 			VariantID:      product.VariantID,
@@ -172,6 +180,12 @@ func (r *CommerceRepository) CreateDraft(ctx context.Context, ownerUserID int64,
 		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'catalog.product_created', 'product', $2, $3, $4)`, fmt.Sprint(ownerUserID), fmt.Sprint(productID), ports.RequestID(transactionContext), []byte(`{"source":"seller"}`))
 		return err
 	})
+	if input.SearchTags != nil {
+		product.SearchTags = input.SearchTags
+	}
+	if input.FeaturedPinned != nil {
+		product.FeaturedPinned = *input.FeaturedPinned
+	}
 	return product, err
 }
 
@@ -222,6 +236,9 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'catalog.product_updated', 'product', $2, $3, $4)`, fmt.Sprint(ownerUserID), fmt.Sprint(productID), ports.RequestID(transactionContext), metadata); err != nil {
 			return err
 		}
+		if err := saveProductTags(transactionContext, tx, productID, input.SearchTags); err != nil {
+			return err
+		}
 		product = current
 		product.Slug = input.Slug
 		product.BrandSlug = input.BrandSlug
@@ -254,6 +271,12 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		}
 		return nil
 	})
+	if input.SearchTags != nil {
+		product.SearchTags = input.SearchTags
+	}
+	if input.FeaturedPinned != nil {
+		product.FeaturedPinned = *input.FeaturedPinned
+	}
 	return product, err
 }
 
@@ -271,6 +294,11 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 			return err
 		}
 		_, _ = tx.Exec(transactionContext, `UPDATE sellers SET status='active', updated_at=NOW() WHERE id=$1 AND status != 'closed'`, sellerID)
+		if input.BrandSlug == "" || input.BrandName == "" {
+			if err := tx.QueryRow(transactionContext, `SELECT coalesce((SELECT p.brand_slug FROM products p WHERE p.seller_id=s.id ORDER BY p.id LIMIT 1),'seller-'||s.id::text),coalesce((SELECT b.name FROM products p JOIN brands b ON b.slug=p.brand_slug WHERE p.seller_id=s.id ORDER BY p.id LIMIT 1),s.display_name) FROM sellers s WHERE s.id=$1`, sellerID).Scan(&input.BrandSlug, &input.BrandName); err != nil {
+				return err
+			}
+		}
 		if err := ensureCatalogName(transactionContext, tx, "brands", input.BrandSlug, input.BrandName); err != nil {
 			return err
 		}
@@ -321,6 +349,12 @@ func (r *CommerceRepository) CreateAdminProduct(ctx context.Context, actorID, se
 		_, err := tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(product.ID), payload)
 		return err
 	})
+	if input.SearchTags != nil {
+		product.SearchTags = input.SearchTags
+	}
+	if input.FeaturedPinned != nil {
+		product.FeaturedPinned = *input.FeaturedPinned
+	}
 	return product, err
 }
 
@@ -401,6 +435,12 @@ func (r *CommerceRepository) UpdateAdminProduct(ctx context.Context, actorID, pr
 		_, err = tx.Exec(transactionContext, `INSERT INTO outbox_events (event_type,aggregate_type,aggregate_id,payload) VALUES ('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), payload)
 		return err
 	})
+	if input.SearchTags != nil {
+		product.SearchTags = input.SearchTags
+	}
+	if input.FeaturedPinned != nil {
+		product.FeaturedPinned = *input.FeaturedPinned
+	}
 	return product, err
 }
 
@@ -642,12 +682,18 @@ type catalogProductQuerier interface {
 func (r *CommerceRepository) getSellerProduct(ctx context.Context, querier catalogProductQuerier, ownerUserID, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
 	err := querier.QueryRow(ctx, `SELECT p.id, s.id, s.display_name, p.slug, p.brand_slug, b.name, p.name, p.description, pv.sku, pv.price_cents, COALESCE(pv.compare_at_cents, 0), pv.compare_at_cents IS NOT NULL, COALESCE(i.available_quantity, 0), p.status, p.category_slug, c.name, p.delivery_label, pv.id FROM products p JOIN sellers s ON s.id = p.seller_id AND s.status = 'active' JOIN brands b ON b.slug = p.brand_slug JOIN categories c ON c.slug = p.category_slug JOIN product_variants pv ON pv.product_id = p.id AND pv.status = 'active' LEFT JOIN inventory_stock i ON i.variant_id = pv.id WHERE (s.owner_user_id = $1 ) AND p.id = $2 ORDER BY pv.id LIMIT 1`, ownerUserID, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	if err == nil {
+		err = querier.QueryRow(ctx, `SELECT search_tags,featured_pinned FROM products WHERE id=$1`, productID).Scan(&product.SearchTags, &product.FeaturedPinned)
+	}
 	return product, err
 }
 
 func (r *CommerceRepository) getAdminProduct(ctx context.Context, querier catalogProductQuerier, productID int64) (domaincommerce.ManagedProduct, error) {
 	var product domaincommerce.ManagedProduct
 	err := querier.QueryRow(ctx, `SELECT p.id,s.id,s.display_name,p.slug,p.brand_slug,b.name,p.name,p.description,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),p.status,p.category_slug,c.name,p.delivery_label,pv.id FROM products p LEFT JOIN sellers s ON s.id=p.seller_id JOIN brands b ON b.slug=p.brand_slug JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents,compare_at_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) pv ON TRUE LEFT JOIN inventory_stock i ON i.variant_id=pv.id WHERE p.id=$1`, productID).Scan(&product.ID, &product.SellerID, &product.SellerName, &product.Slug, &product.BrandSlug, &product.BrandName, &product.Name, &product.Description, &product.SKU, &product.PriceCents, &product.CompareAtCents, &product.HasCompareAt, &product.Stock, &product.Status, &product.CategorySlug, &product.CategoryName, &product.DeliveryLabel, &product.VariantID)
+	if err == nil {
+		err = querier.QueryRow(ctx, `SELECT search_tags,featured_pinned FROM products WHERE id=$1`, productID).Scan(&product.SearchTags, &product.FeaturedPinned)
+	}
 	return product, err
 }
 

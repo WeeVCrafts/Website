@@ -43,6 +43,10 @@ func storefrontSectionStyle(s storefront.Section) string {
 	return fmt.Sprintf("--sf-columns:%d;--sf-tablet-columns:%d;--sf-mobile-columns:%d;--sf-spacing:%dpx;--sf-mobile-spacing:%dpx", desktop, tablet, mobile, r.Spacing, r.MobileSpacing)
 }
 func storefrontProductURL(p viewmodels.CustomerPage, s storefront.Section) string {
+	if s.Selection.Mode == "featured" {
+		return "/featured-products"
+	}
+
 	if s.Button.URL != "" {
 		return s.Button.URL
 	}

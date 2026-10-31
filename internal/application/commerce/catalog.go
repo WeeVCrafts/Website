@@ -2,6 +2,8 @@ package commerce
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -63,7 +65,7 @@ func (s *CatalogService) UpdateSellerProfile(ctx context.Context, ownerUserID in
 }
 
 func (s *CatalogService) CreateDraft(ctx context.Context, ownerUserID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
-	if input.CategorySlugs != nil || input.FeaturedRank != nil {
+	if input.CategorySlugs != nil || input.FeaturedRank != nil || input.FeaturedPinned != nil {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	if !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
@@ -91,13 +93,28 @@ func (s *CatalogService) GetSellerProduct(ctx context.Context, ownerUserID, prod
 }
 
 func (s *CatalogService) UpdateDraft(ctx context.Context, ownerUserID, productID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
-	if input.CategorySlugs != nil || input.FeaturedRank != nil {
+	if input.CategorySlugs != nil || input.FeaturedRank != nil || input.FeaturedPinned != nil {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	if productID <= 0 || !s.sellerAllowed(ctx, ownerUserID, domaincommerce.SellerPermissionProductWrite) {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
-	var err error
+	current, err := s.repository.GetSellerProduct(ctx, ownerUserID, productID)
+	if err != nil {
+		return domaincommerce.ManagedProduct{}, err
+	}
+	if input.Slug == "" {
+		input.Slug = current.Slug
+	}
+	if input.SKU == "" {
+		input.SKU = current.SKU
+	}
+	if input.BrandSlug == "" {
+		input.BrandSlug = current.BrandSlug
+	}
+	if input.BrandName == "" {
+		input.BrandName = current.BrandName
+	}
 	input, err = normalizeDraft(input)
 	if err != nil {
 		return domaincommerce.ManagedProduct{}, err
@@ -111,6 +128,9 @@ func (s *CatalogService) UpdateDraft(ctx context.Context, ownerUserID, productID
 
 func (s *CatalogService) CreateAdminProduct(ctx context.Context, actorID, sellerID int64, input domaincommerce.ProductDraftInput) (domaincommerce.ManagedProduct, error) {
 	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleAdmin) || sellerID <= 0 {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
+	}
+	if input.FeaturedPinned != nil && !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	input, err := normalizeDraft(input)
@@ -131,9 +151,28 @@ func (s *CatalogService) UpdateAdminProduct(ctx context.Context, actorID, produc
 	if s.roles == nil || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin, domainidentity.RoleAdmin) || productID <= 0 {
 		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
-	input, err := normalizeDraft(input)
+	current, err := s.repository.GetAdminProduct(ctx, actorID, productID)
 	if err != nil {
 		return domaincommerce.ManagedProduct{}, err
+	}
+	if input.Slug == "" {
+		input.Slug = current.Slug
+	}
+	if input.SKU == "" {
+		input.SKU = current.SKU
+	}
+	if input.BrandSlug == "" {
+		input.BrandSlug = current.BrandSlug
+	}
+	if input.BrandName == "" {
+		input.BrandName = current.BrandName
+	}
+	input, err = normalizeDraft(input)
+	if err != nil {
+		return domaincommerce.ManagedProduct{}, err
+	}
+	if input.FeaturedPinned != nil && !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
+		return domaincommerce.ManagedProduct{}, ports.ErrForbidden
 	}
 	return s.repository.UpdateAdminProduct(ctx, actorID, productID, input)
 }
@@ -332,6 +371,42 @@ func validSlug(value string) bool {
 }
 
 func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.ProductDraftInput, error) {
+	if input.Slug == "" || input.SKU == "" {
+		var random [12]byte
+		if _, err := rand.Read(random[:]); err != nil {
+			return input, err
+		}
+		suffix := hex.EncodeToString(random[:])
+		if input.Slug == "" {
+			input.Slug = "product-" + suffix
+		}
+		if input.SKU == "" {
+			input.SKU = "WC-" + strings.ToUpper(suffix)
+		}
+	}
+
+	if input.SearchTags != nil {
+		tags := make([]string, 0, len(input.SearchTags))
+		seen := map[string]bool{}
+		for _, tag := range input.SearchTags {
+			tag = strings.ToLower(strings.Join(strings.Fields(tag), " "))
+			if tag == "" {
+				continue
+			}
+			if utf8.RuneCountInString(tag) > 40 {
+				return input, ErrInvalidProduct
+			}
+			if !seen[tag] {
+				seen[tag] = true
+				tags = append(tags, tag)
+			}
+		}
+		if len(tags) > 20 {
+			return input, ErrInvalidProduct
+		}
+		input.SearchTags = tags
+	}
+
 	if input.FeaturedRank != nil && (*input.FeaturedRank < 0 || *input.FeaturedRank > 1000000) {
 		return input, ErrInvalidProduct
 	}
@@ -357,8 +432,8 @@ func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.Prod
 	if input.DeliveryLabel == "" {
 		input.DeliveryLabel = "Dispatch details at checkout"
 	}
-	if !validSlug(input.Slug) || !validSlug(input.BrandSlug) || !validSlug(input.CategorySlug) ||
-		!withinTextLimit(input.BrandName, 120) || !withinTextLimit(input.CategoryName, 120) ||
+	if !validSlug(input.Slug) || (input.BrandSlug != "" && !validSlug(input.BrandSlug)) || !validSlug(input.CategorySlug) ||
+		(input.BrandName != "" && !withinTextLimit(input.BrandName, 120)) || !withinTextLimit(input.CategoryName, 120) ||
 		!withinTextLimit(input.Name, 180) || !withinTextLimit(input.Description, 10000) ||
 		!withinTextLimit(input.SKU, 120) || !withinTextLimit(input.DeliveryLabel, 180) ||
 		input.PriceCents <= 0 || input.InitialStock < 0 || input.InitialStock > 100000 {

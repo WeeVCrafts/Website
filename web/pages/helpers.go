@@ -814,6 +814,10 @@ func paymentActivityClass(status string) string {
 }
 
 func listingTitle(p viewmodels.CustomerPage) string {
+	if p.Route == "/featured-products" {
+		return "Featured products"
+	}
+
 	if p.StorefrontTemplate.Title != "" {
 		return p.StorefrontTemplate.Title
 	}
@@ -830,6 +834,10 @@ func listingTitle(p viewmodels.CustomerPage) string {
 }
 
 func listingDescription(p viewmodels.CustomerPage) string {
+	if p.Route == "/featured-products" {
+		return "Maker selections and customer favourites, available now."
+	}
+
 	if p.StorefrontTemplate.Description != "" {
 		return p.StorefrontTemplate.Description
 	}
@@ -887,9 +895,9 @@ func listingURL(p viewmodels.CustomerPage, page int) string {
 	}
 	query := values.Encode()
 	if query == "" {
-		return "/products"
+		return listingPath(p)
 	}
-	return "/products?" + query
+	return listingPath(p) + "?" + query
 }
 
 func makerPath(name string) string {
@@ -1000,4 +1008,12 @@ func customerSupportURL(number string) string {
 		return "/contact"
 	}
 	return "/contact?order=" + url.QueryEscape(number)
+}
+
+func listingPath(p viewmodels.CustomerPage) string {
+	switch p.Route {
+	case "/featured-products", "/search", "/deals":
+		return p.Route
+	}
+	return "/products"
 }

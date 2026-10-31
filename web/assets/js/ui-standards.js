@@ -367,6 +367,11 @@
     form.elements.namedItem('note').value='Local delivery simulation';
     form.requestSubmit(form.querySelector('[type="submit"]'));
   });
+  document.querySelectorAll('.admin-product-editor-form [data-stock-adjustment],.admin-body [data-stock-adjustment], [data-stock-adjustment]').forEach(form=>{
+    if(form.closest('.seller-shell'))return;
+    const preview=form.querySelector('[data-stock-preview]');if(!preview)return;
+    const update=()=>{const quantity=Number(form.elements.quantity.value||0),current=Number(form.dataset.available),direction=form.elements.adjustment_type.value==='remove'?-1:1;preview.textContent='Available: '+current+'; after change: '+(current+direction*quantity)+'. Reserved units unchanged.';};form.addEventListener('input',update);form.addEventListener('change',update);update();
+  });
   document.addEventListener("click",event => {
     const step=event.target.closest("[data-checkout-step]");
     if (!step) return;

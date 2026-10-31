@@ -17,7 +17,7 @@ templ Header(p viewmodels.CustomerPage) {
         <div class="search-shell">
           <form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit" hx-sync="#page:replace" hx-indicator="#global-search-indicator">
             <label class="sr-only" for="global-search">Search products</label>
-            <input id="global-search" name="q" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-select="unset" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-push-url="false"/>
+            <input id="global-search" name="q" maxlength="200" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-select="unset" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-push-url="false"/>
             <button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button>
           </form>
           <div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div>
@@ -77,6 +77,7 @@ templ Header(p viewmodels.CustomerPage) {
       for _, category := range NavigationCategories(p) {
         <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
       }
+      <a href="/featured-products">Featured products</a>
       if p.Storefront != nil {
         for _,link:=range p.Storefront.Navigation {
           <a href={ link.URL }>{ link.Label }</a>
@@ -94,6 +95,7 @@ templ Header(p viewmodels.CustomerPage) {
         for _,category:=range NavigationCategories(p) {
  @MenuLink("/products?category="+category.Slug,category.Name,"category")
  }
+        @MenuLink("/featured-products", "Featured products", "star")
         @MenuLink("/products?category=offers", "Offers", "local_offer")
         if p.Storefront != nil {
           for _,link:=range p.Storefront.Navigation {

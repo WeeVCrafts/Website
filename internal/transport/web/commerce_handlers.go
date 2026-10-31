@@ -780,7 +780,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	productSlugValue := strings.TrimSpace(r.FormValue("slug"))
 	if productSlugValue == "" {
-		productSlugValue = productSlug(name) + "-" + strconv.FormatInt(time.Now().UnixNano()%1000000000, 10)
+		productSlugValue = ""
 	}
 	imageURL, _, _, err := readProductImage(r)
 	if err != nil {
@@ -789,7 +789,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
-		Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
+		SearchTags: strings.Split(r.FormValue("search_tags"), ","), Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
 	})
 	if err != nil {
 		if errors.Is(err, applicationcommerce.ErrInvalidProduct) && compareAt != nil && *compareAt < price {
@@ -1037,6 +1037,10 @@ func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product details invalid", "Check the product details and upload a PNG, JPEG or WebP image up to 25 MB. Image storage must be available.")
 		return
 	}
+	if r.FormValue("manage_featured") == "1" {
+		pinned := r.FormValue("featured_pinned") == "1"
+		input.FeaturedPinned = &pinned
+	}
 	if raw := r.FormValue("featured_rank"); raw != "" {
 		rank, err := strconv.Atoi(raw)
 		if err != nil || rank < 0 || rank > 1000000 {
@@ -1189,7 +1193,7 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	}
 	brandName := strings.TrimSpace(r.FormValue("brand_name"))
 	if brandName == "" {
-		brandName = "WeevCrafts"
+		brandName = ""
 	}
 	brandSlug := toSlug(r.FormValue("brand_slug"))
 	if brandSlug == "" || len(brandSlug) < 2 {
@@ -1205,11 +1209,15 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	}
 	slug := toSlug(r.FormValue("slug"))
 	if slug == "" || len(slug) < 2 {
-		slug = toSlug(name)
+		if includeStock {
+			slug = ""
+		} else {
+			slug = toSlug(name)
+		}
 	}
 	sku := strings.TrimSpace(strings.ToUpper(r.FormValue("sku")))
 	if sku == "" {
-		sku = "WC-" + strconv.FormatInt(time.Now().UnixNano()%1000000, 10)
+		sku = ""
 	}
 	description := strings.TrimSpace(productDescriptionFromForm(r))
 	if description == "" {
@@ -1224,7 +1232,8 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 		return domaincommerce.ProductDraftInput{}, err
 	}
 	return domaincommerce.ProductDraftInput{
-		Slug: slug, BrandSlug: brandSlug, BrandName: brandName,
+		SearchTags: strings.Split(r.FormValue("search_tags"), ","),
+		Slug:       slug, BrandSlug: brandSlug, BrandName: brandName,
 		CategorySlug: categorySlug, CategoryName: categoryName, Name: name,
 		Description: description, PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: sku,
 		InitialStock: stock, DeliveryLabel: deliveryLabel, ImageURL: imageURL,

@@ -24,6 +24,9 @@ func (r *ProductSearchRepository) Search(ctx context.Context, query, categorySlu
 }
 
 func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options ports.ProductSearchOptions) ([]domaincatalog.Product, int, error) {
+	if options.Featured {
+		options.InStock = true
+	}
 	query := options.Query
 	categories := append([]string(nil), options.CategorySlugs...)
 	if options.CategorySlug != "" {
@@ -38,6 +41,15 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		offset = 0
 	}
 	orderBy := "p.featured_rank ASC, p.id ASC"
+	if query != "" {
+		orderBy = "catalog_search_score(sd,$1) DESC,p.id ASC"
+	}
+	if options.Featured {
+		if _, err := r.pool.Exec(ctx, `SELECT refresh_featured_popularity()`); err != nil {
+			return nil, 0, err
+		}
+		orderBy = "p.featured_pinned DESC,CASE WHEN p.featured_pinned THEN p.featured_rank ELSE 1000001 END,coalesce(fp.paid_units,0) DESC,p.created_at DESC,p.id ASC"
+	}
 	switch options.Sort {
 	case "price_asc":
 		orderBy = "pv.price_cents ASC, p.id ASC"
@@ -53,6 +65,8 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 	if err := r.pool.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT p.id)
 		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		LEFT JOIN featured_popularity fp ON fp.product_id=p.id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN LATERAL (
 			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
@@ -64,8 +78,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
-		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
+		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -83,6 +96,8 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		LEFT JOIN featured_popularity fp ON fp.product_id=p.id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN categories c ON c.slug = p.category_slug
 		JOIN brands b ON b.slug = p.brand_slug
@@ -95,8 +110,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
-		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
+		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -134,6 +148,8 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 	rows, err := r.pool.Query(ctx, `
 		SELECT membership.category_slug, c.name, COUNT(DISTINCT p.id)
 		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		LEFT JOIN featured_popularity fp ON fp.product_id=p.id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN product_categories membership ON membership.product_id=p.id
 		JOIN categories c ON c.slug=membership.category_slug AND c.show_in_navigation
@@ -147,8 +163,7 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR p.name ILIKE '%' || $1 || '%' OR p.description ILIKE '%' || $1 || '%' OR p.slug ILIKE '%' || $1 || '%'
-		       OR EXISTS (SELECT 1 FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active' AND search_variant.sku ILIKE '%' || $1 || '%'))
+		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -185,6 +200,8 @@ func (r *ProductSearchRepository) SearchBySlugs(ctx context.Context, slugs []str
 		       p.rating::float8, p.review_count, p.delivery_label, COALESCE(NULLIF(p.image_url, ''), (SELECT pm.public_url FROM product_media pm WHERE pm.product_id = p.id AND pm.status = 'ready' AND pm.visibility = 'public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''), p.swatches,
 		       pv.id, pv.sku, COALESCE(i.available_quantity, 0)
 		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		LEFT JOIN featured_popularity fp ON fp.product_id=p.id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN categories c ON c.slug = p.category_slug
 		JOIN brands b ON b.slug = p.brand_slug
@@ -222,6 +239,8 @@ func (r *ProductSearchRepository) ListApprovedForIndex(ctx context.Context) ([]p
 		       (SELECT ARRAY_AGG(search_variant.sku) FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active'),
 		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), COALESCE(pv.compare_at_cents > pv.price_cents, false), COALESCE(i.available_quantity, 0)
 		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		LEFT JOIN featured_popularity fp ON fp.product_id=p.id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		JOIN brands b ON b.slug = p.brand_slug
 		LEFT JOIN LATERAL (

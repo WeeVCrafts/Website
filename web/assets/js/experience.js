@@ -403,6 +403,7 @@
       input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));
       document.getElementById("search-suggestions").hidden=true;
       input.setAttribute("aria-expanded","false");input.removeAttribute("aria-activedescendant");input.focus();update();
+      if(location.pathname==='/search')input.form.requestSubmit();
     });
     update();
     const feedback=document.createElement('p');feedback.className='sr-only';feedback.dataset.searchFeedback='';feedback.setAttribute('role','status');input.closest('.search-shell').append(feedback);
@@ -496,6 +497,12 @@
     filterController.form.querySelector("#listing-results").setAttribute("aria-busy","true");
   });
   document.addEventListener("htmx:beforeSwap",event=>{
+    if(event.detail.target?.id==='search-suggestions') {
+      const query=event.detail.requestConfig?.parameters?.q;
+      const current=document.getElementById('global-search');
+      if(current && (current.dataset.composing || (query!==undefined && String(query)!==current.value))) {event.detail.shouldSwap=false;return;}
+    }
+
     if (["page","listing-content"].includes(event.detail.target?.id) && event.detail.shouldSwap && filterController) {
       if (pendingPageRequest && pendingPageRequest.xhr !== event.detail.xhr) {event.detail.shouldSwap=false;return;}
       if (pendingPageRequest?.filters) captureFilters();else filterSnapshot=null;

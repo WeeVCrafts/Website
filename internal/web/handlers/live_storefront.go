@@ -312,7 +312,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		component = pages.Brands(page)
 	case strings.HasPrefix(r.URL.Path, "/brands/"):
 		component = pages.BrandDetail(page, liveBrand(r.URL.Path, page.Brands))
-	case r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals":
+	case r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" || r.URL.Path == "/featured-products":
 		component = listingComponent
 	case strings.HasPrefix(r.URL.Path, "/products/"):
 		if strings.EqualFold(r.Header.Get("HX-Request"), "true") && r.Header.Get("HX-Target") == "product-quick-view-content" {
@@ -594,7 +594,7 @@ func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *
 }
 
 func (h *LiveStorefrontHandler) ownsRoute(path string) bool {
-	return strings.HasPrefix(path, "/pages/") || path == "/" || path == "/categories" || strings.HasPrefix(path, "/categories/") || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
+	return strings.HasPrefix(path, "/pages/") || path == "/" || path == "/categories" || strings.HasPrefix(path, "/categories/") || path == "/makers" || path == "/brands" || strings.HasPrefix(path, "/brands/") || path == "/products" || path == "/search" || path == "/deals" || path == "/featured-products" || strings.HasPrefix(path, "/products/") || strings.HasPrefix(path, "/makers/") || isAuthRoute(path) || isCustomerAccountRoute(path) || path == "/wishlist" || path == "/cart" || path == "/checkout" || path == "/orders" || strings.HasPrefix(path, "/orders/") || path == "/tracking" || path == "/returns" || strings.HasPrefix(path, "/returns/") || path == "/payments" || strings.HasPrefix(path, "/payments/") || isInfoRoute(path)
 }
 
 func isCustomerAccountRoute(path string) bool {
@@ -687,7 +687,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			return viewmodels.CustomerPage{}, applicationcatalog.ErrProductNotFound
 		}
 	}
-	if r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" || categoryLanding {
+	if r.URL.Path == "/products" || r.URL.Path == "/search" || r.URL.Path == "/deals" || r.URL.Path == "/featured-products" || categoryLanding {
 		currentPage = listingPage(filters.Get("page"))
 		offersOnly := r.URL.Path == "/deals"
 		categories := make([]string, 0, len(filters["category"]))
@@ -702,8 +702,9 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		}
 		searchSort := map[string]string{"price-asc": applicationcatalog.SearchSortPriceAsc, "price-desc": applicationcatalog.SearchSortPriceDesc, "newest": applicationcatalog.SearchSortNewest}[sortMode]
 		options := ports.ProductSearchOptions{
-			Query: query, CategorySlug: category, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
-			PriceRange: filters.Get("price"), InStock: hasQueryValue(filters["availability"], "in-stock"),
+			Featured: r.URL.Path == "/featured-products",
+			Query:    query, CategorySlug: category, CategorySlugs: categories, BrandSlugs: filters["brand"], Sort: searchSort,
+			PriceRange: filters.Get("price"), InStock: r.URL.Path == "/featured-products" || hasQueryValue(filters["availability"], "in-stock"),
 			OffersOnly: offersOnly, DatabaseOnly: true, Limit: 24, Offset: (currentPage - 1) * 24,
 		}
 		if sectionID := filters.Get("storefront_section"); sectionID != "" {
@@ -734,6 +735,7 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 					options.MaxPriceCents = selection.MaxPrice
 					options.ProductIDs = selection.Products
 					options.SelectedOnly = selection.Mode == "selected"
+					options.Featured = selection.Mode == "featured"
 					options.InStock = selection.Available
 					if selection.Category != "" {
 						options.CategorySlug = selection.Category
@@ -794,6 +796,9 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo, PublicURL: h.publicURL,
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
+	}
+	if r.URL.Path == "/featured-products" {
+		page.Title = "Featured products"
 	}
 	if err := h.configureStorefrontPage(r, &page); err != nil {
 		return viewmodels.CustomerPage{}, err
@@ -1467,7 +1472,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	}
 	view.CanRequestRefund = view.ReturnStatus == "received" && view.RefundStatus == "" && order.PaymentStatus == "captured" && (order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered")
 	rows, err := h.pool.Query(ctx, `
-		SELECT COALESCE(p.slug, ''), CASE WHEN oi.product_name = 'Default variant' THEN COALESCE(p.name, oi.product_name) ELSE oi.product_name END, oi.unit_price_cents, oi.quantity,
+		SELECT COALESCE(p.slug, ''), oi.product_name, oi.unit_price_cents, oi.quantity,oi.sku,oi.line_total_cents,
 		       COALESCE(p.image_url, ''), COALESCE(s.display_name, 'Independent maker')
 		FROM order_items oi
 		LEFT JOIN product_variants v ON v.id = oi.variant_id
@@ -1481,17 +1486,17 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	defer rows.Close()
 	view.Items = make([]viewmodels.CartItem, 0, len(order.Items))
 	for rows.Next() {
-		var slug, name, image, seller string
-		var cents int64
+		var slug, name, image, seller, sku string
+		var cents, lineTotal int64
 		var quantity int
-		if err := rows.Scan(&slug, &name, &cents, &quantity, &image, &seller); err != nil {
+		if err := rows.Scan(&slug, &name, &cents, &quantity, &sku, &lineTotal, &image, &seller); err != nil {
 			return viewmodels.Order{}, err
 		}
 		if image == "" {
 			image = "/assets/images/product-unavailable.svg"
 		}
-		product := viewmodels.Product{Slug: slug, Name: name, Seller: seller, ImageURL: image, PriceCents: cents, Price: storefrontMoney(cents)}
-		view.Items = append(view.Items, viewmodels.CartItem{Product: product, Quantity: quantity, Delivery: "See order tracking for delivery updates"})
+		product := viewmodels.Product{SKU: sku, Slug: slug, Name: name, Seller: seller, ImageURL: image, PriceCents: cents, Price: storefrontMoney(cents)}
+		view.Items = append(view.Items, viewmodels.CartItem{LineTotalCents: lineTotal, Product: product, Quantity: quantity, Delivery: "See order tracking for delivery updates"})
 	}
 	return view, rows.Err()
 }
@@ -1692,7 +1697,12 @@ func categoryForSearch(category string) string {
 
 func (h *LiveStorefrontHandler) searchSuggestions(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
-	products, err := h.products(r.Context(), "/search", query, "", "")
+	if len([]rune(query)) < 2 {
+		h.render(w, r, pages.SearchSuggestions(nil, query))
+		return
+	}
+	source, _, _, err := h.search.SearchWithOptionsAndFacets(r.Context(), query, "", "", 6, 0)
+	products := h.productViews(r.Context(), source)
 	if err != nil {
 		h.renderError(w, http.StatusServiceUnavailable, "Search is temporarily unavailable.")
 		return

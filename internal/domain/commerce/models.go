@@ -83,6 +83,8 @@ type SellerStaffMember struct {
 }
 
 type ProductDraftInput struct {
+	SearchTags     []string
+	FeaturedPinned *bool
 	CategorySlugs  []string
 	FeaturedRank   *int
 	Slug           string
@@ -128,24 +130,26 @@ type ProductVariant struct {
 }
 
 type ManagedProduct struct {
-	ID             int64  `json:"id"`
-	VariantID      int64  `json:"variant_id"`
-	SellerID       int64  `json:"seller_id"`
-	SellerName     string `json:"seller_name"`
-	Slug           string `json:"slug"`
-	BrandSlug      string `json:"brand_slug"`
-	BrandName      string `json:"brand_name"`
-	Name           string `json:"name"`
-	Description    string `json:"description"`
-	SKU            string `json:"sku"`
-	PriceCents     int64  `json:"price_cents"`
-	CompareAtCents int64  `json:"compare_at_cents"`
-	HasCompareAt   bool   `json:"has_compare_at"`
-	Stock          int    `json:"stock"`
-	Status         string `json:"status"`
-	CategorySlug   string `json:"category_slug"`
-	CategoryName   string `json:"category_name"`
-	DeliveryLabel  string `json:"delivery_label"`
+	SearchTags     []string `json:"search_tags"`
+	FeaturedPinned bool     `json:"featured_pinned"`
+	ID             int64    `json:"id"`
+	VariantID      int64    `json:"variant_id"`
+	SellerID       int64    `json:"seller_id"`
+	SellerName     string   `json:"seller_name"`
+	Slug           string   `json:"slug"`
+	BrandSlug      string   `json:"brand_slug"`
+	BrandName      string   `json:"brand_name"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	SKU            string   `json:"sku"`
+	PriceCents     int64    `json:"price_cents"`
+	CompareAtCents int64    `json:"compare_at_cents"`
+	HasCompareAt   bool     `json:"has_compare_at"`
+	Stock          int      `json:"stock"`
+	Status         string   `json:"status"`
+	CategorySlug   string   `json:"category_slug"`
+	CategoryName   string   `json:"category_name"`
+	DeliveryLabel  string   `json:"delivery_label"`
 }
 
 // InventoryItem is the seller-scoped stock record used by the live seller

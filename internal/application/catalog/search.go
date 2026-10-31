@@ -10,8 +10,8 @@ import (
 	"time"
 
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
- "github.com/wecratfs/commerce/internal/domain/storefront"
 )
 
 type SearchService struct {
@@ -55,6 +55,12 @@ func (s *SearchService) SearchWithOptionsAndFacets(ctx context.Context, query, c
 }
 
 func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.ProductSearchOptions) ([]domaincatalog.Product, int, []ports.SearchFacet, error) {
+	// Customer results always use the same authoritative matching and ordering.
+
+	if options.Featured {
+		options.InStock = true
+		options.DatabaseOnly = true
+	}
 	started := time.Now()
 	if options.Limit <= 0 || options.Limit > 48 {
 		options.Limit = 24
@@ -62,7 +68,10 @@ func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.Pro
 	if options.Offset < 0 || options.Offset > 10000 {
 		options.Offset = 0
 	}
-	options.Query = strings.TrimSpace(options.Query)
+	options.Query = strings.Join(strings.Fields(options.Query), " ")
+	if len([]rune(options.Query)) > 200 {
+		return nil, 0, nil, fmt.Errorf("search query exceeds 200 characters")
+	}
 	options.Sort = normalizeSearchSort(options.Sort)
 	options.PriceRange = normalizePriceRange(options.PriceRange)
 	if options.CategorySlug != "" {
@@ -81,8 +90,8 @@ func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.Pro
 			return nil, 0, nil, err
 		}
 	}
-	rev,_:=storefront.Current(ctx)
- cacheKey := fmt.Sprintf("catalog:search:%d:%d:%x", rev.ID,revision, sha256.Sum256(cacheKeyBytes))
+	rev, _ := storefront.Current(ctx)
+	cacheKey := fmt.Sprintf("catalog:search:%d:%d:%x", rev.ID, revision, sha256.Sum256(cacheKeyBytes))
 	if s.cache != nil && !options.DatabaseOnly && !options.InStock {
 		if value, err := s.cache.Get(ctx, cacheKey); err == nil {
 			var cached searchResult
@@ -108,29 +117,6 @@ func (s *SearchService) SearchWithFilters(ctx context.Context, options ports.Pro
 }
 
 func (s *SearchService) searchBackend(ctx context.Context, options ports.ProductSearchOptions, cacheKey string) (searchResult, error) {
-	if s.engine != nil && !requiresDatabaseSearch(options) {
-		indexed, engineErr := s.engine.Search(ctx, ports.SearchRequest{
-			Query: options.Query, CategorySlug: options.CategorySlug, CategorySlugs: options.CategorySlugs,
-			BrandSlugs: options.BrandSlugs, Sort: options.Sort, PriceRange: options.PriceRange,
-			InStock: options.InStock, OffersOnly: options.OffersOnly, Limit: options.Limit, Offset: options.Offset,
-		})
-		if engineErr == nil {
-			indexed.ProductSlugs = normalizeSearchSlugs(indexed.ProductSlugs)
-			products, hydrateErr := s.repository.SearchBySlugs(ctx, indexed.ProductSlugs)
-			if hydrateErr == nil {
-				// Memberships, labels and discovery visibility are managed in
-				// PostgreSQL; index facets still describe primary categories.
-				facets := s.searchFacets(ctx, options)
-				result := searchResult{Products: products, Total: indexed.Total, Facets: facets, Backend: "index"}
-				if s.cache != nil && !options.DatabaseOnly && !options.InStock {
-					if value, marshalErr := json.Marshal(result); marshalErr == nil {
-						_ = s.cache.Set(ctx, cacheKey, value, 30)
-					}
-				}
-				return result, nil
-			}
-		}
-	}
 	var products []domaincatalog.Product
 	var total int
 	var err error
@@ -153,7 +139,7 @@ func (s *SearchService) searchBackend(ctx context.Context, options ports.Product
 
 func requiresDatabaseSearch(options ports.ProductSearchOptions) bool {
 	return options.CategorySlug != "" || len(options.CategorySlugs) > 0 || len(options.BrandSlugs) > 0 ||
-		options.SelectedOnly || options.MinPriceCents>0 || options.MaxPriceCents>0 || options.PriceRange != "" || options.InStock || options.OffersOnly || options.DatabaseOnly || options.Sort != "" || options.Offset > 0
+		options.SelectedOnly || options.MinPriceCents > 0 || options.MaxPriceCents > 0 || options.PriceRange != "" || options.InStock || options.OffersOnly || options.DatabaseOnly || options.Sort != "" || options.Offset > 0
 }
 
 func (s *SearchService) searchFacets(ctx context.Context, options ports.ProductSearchOptions) []ports.SearchFacet {

@@ -78,7 +78,7 @@ uploads and public reads are proxied through the app, so the bucket endpoint can
 remain private to the Railway environment.
 
 PostgreSQL and Redis are required. Meilisearch and S3-compatible object storage
-are optional: search falls back to PostgreSQL, while product media uploads need
+are optional: customer search always uses PostgreSQL, while product media uploads need
 storage configured. Set `MEILI_ADDR` and `MEILI_API_KEY` for Meilisearch; set
 `S3_ADDR`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, and `S3_SECURE` for
 your S3-compatible storage. Configure SMTP with `WECRATFS_SMTP_ADDR`,
@@ -244,3 +244,5 @@ content and shopping-setting changes do not require a deployment.
 
 See [Storefront editor and publishing](docs/storefront-editor.md) for controls,
 permissions, media retention, checkout policies and rollout verification.
+
+Catalog discovery and product entry behavior: [workflow notes](docs/discovery-workflows.md).

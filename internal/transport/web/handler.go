@@ -325,7 +325,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	case r.URL.Path == "/seller/inventory":
 		h.sellerInventory(w, r)
-	case r.URL.Path == "/seller/inventory/adjust":
+	case r.URL.Path == "/seller/inventory/adjust" || r.URL.Path == "/super-admin/inventory/adjust":
 		h.sellerInventoryAdjust(w, r)
 	case r.URL.Path == "/seller/orders":
 		h.sellerOrders(w, r)

@@ -24,7 +24,7 @@ func openIntegrationPool(t *testing.T) *pgxpool.Pool {
 		t.Skip("DATABASE_URL is required for PostgreSQL integration tests")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {

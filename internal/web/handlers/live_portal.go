@@ -382,6 +382,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				denyPortalAccess(w, r)
 				return
 			}
+			if r.URL.Path == "/super-admin/inventory/adjust" {
+				h.delegateWithPortalRedirect(w, r, root)
+				return
+			}
 			if isSettlementMutationPath(r.URL.Path) {
 				h.adminSettlementMutation(w, r)
 				return
@@ -943,7 +947,7 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 	}
 	form.FeaturedRank = "1000"
 	if form.ID != "" {
-		if err := h.queryRow(r, `SELECT featured_rank::text FROM products WHERE id=$1`, form.ID).Scan(&form.FeaturedRank); err != nil {
+		if err := h.queryRow(r, `SELECT featured_rank::text,featured_pinned,array_to_string(search_tags,', ') FROM products WHERE id=$1`, form.ID).Scan(&form.FeaturedRank, &form.FeaturedPinned, &form.SearchTags); err != nil {
 			http.Error(w, "Product curation unavailable", 503)
 			return
 		}
@@ -1112,7 +1116,7 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 		return nil
 	}
 	rows, err := h.projectionRows(r, "admin-inventory", `
-		SELECT p.name, pv.sku, COALESCE(stock.available_quantity, 0), COALESCE(stock.reserved_quantity, 0), pv.price_cents, COALESCE(NULLIF(p.image_url, ''), '')
+		SELECT pv.id,p.name, pv.sku, COALESCE(stock.available_quantity, 0), COALESCE(stock.reserved_quantity, 0), pv.price_cents, COALESCE(NULLIF(p.image_url, ''), '')
 		FROM product_variants pv
 		JOIN products p ON p.id = pv.product_id
 		LEFT JOIN inventory_stock stock ON stock.variant_id = pv.id
@@ -1125,9 +1129,10 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 	items := make([]viewmodels.AdminInventory, 0)
 	for rows.Next() {
 		var name, sku, image string
+		var variantID int64
 		var available, reserved int64
 		var price int64
-		if rows.Scan(&name, &sku, &available, &reserved, &price, &image) != nil {
+		if rows.Scan(&variantID, &name, &sku, &available, &reserved, &price, &image) != nil {
 			return nil
 		}
 		onHand := available + reserved
@@ -1143,7 +1148,7 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 			image = "/assets/images/customer/madhubani-tree.webp"
 		}
 		items = append(items, viewmodels.AdminInventory{
-			Name: name, SKU: sku, Stock: strconv.FormatInt(onHand, 10), Reorder: signal,
+			VariantID: strconv.FormatInt(variantID, 10), Name: name, SKU: sku, Stock: strconv.FormatInt(onHand, 10), Reorder: signal,
 			Reserved: strconv.FormatInt(reserved, 10), Available: strconv.FormatInt(available, 10),
 			Location: "India", Value: money(price * available), Status: status,
 			Image: image,
@@ -2116,6 +2121,12 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	applySellerProductInput(r, &form)
 	page.Pagination = viewmodels.PortalPagination{}
 	page.Subtitle = "Save a product draft, then submit it for marketplace review. Products ship to serviceable PIN codes in India."
+	if form.ID != "" {
+		if err := h.queryRow(r, `SELECT array_to_string(search_tags,', ') FROM products WHERE id=$1`, form.ID).Scan(&form.SearchTags); err != nil {
+			http.Error(w, "Product tags unavailable", 503)
+			return
+		}
+	}
 	h.render(w, r, sellerpages.ProductForm(page, form))
 }
 

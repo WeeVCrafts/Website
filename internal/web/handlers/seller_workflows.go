@@ -69,7 +69,7 @@ func (h *LivePortalHandler) delegateSellerProduct(w http.ResponseWriter, r *http
 	h.delegateWithPortalRedirect(response, mutation, "/seller-admin")
 	if response.status == http.StatusUnprocessableEntity || response.status == http.StatusServiceUnavailable {
 		input := make(map[string]string)
-		for _, name := range []string{"name", "category_slug", "category_name", "sku", "price_rupees", "compare_at_rupees", "cost_price_rupees", "initial_stock", "description", "delivery_label", "materials", "dimensions", "care", "technique", "image_url"} {
+		for _, name := range []string{"name", "category_slug", "category_name", "sku", "price_rupees", "compare_at_rupees", "cost_price_rupees", "initial_stock", "description", "delivery_label", "materials", "dimensions", "care", "technique", "search_tags", "image_url"} {
 			input[name] = mutation.FormValue(name)
 		}
 		for _, prefix := range []string{"price", "compare_at", "cost_price"} {
@@ -129,6 +129,7 @@ func applySellerProductInput(r *http.Request, form *viewmodels.SellerProductForm
 		return
 	}
 	form.Input, form.ErrorMessage = state.input, state.message
+	form.SearchTags = state.input["search_tags"]
 	form.ErrorField = state.field
 	form.Name, form.CategorySlug, form.CategoryName = state.input["name"], state.input["category_slug"], state.input["category_name"]
 	form.SKU, form.InitialStock, form.DeliveryLabel = state.input["sku"], state.input["initial_stock"], state.input["delivery_label"]

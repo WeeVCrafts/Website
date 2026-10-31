@@ -20,11 +20,11 @@ test.describe('Razorpay sandbox in the isolated payment QA store', () => {
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.message));
     const login = await context.request.post('/api/v1/auth/login', {
-      data: { email: 'customer@weevcrafts.test', password: process.env.WEEVCRAFTS_QA_PASSWORD || 'Razorpay-QA-2026!' },
+      data: { email: process.env.WEEVCRAFTS_QA_CUSTOMER || 'customer@weevcrafts.test', password: process.env.WEEVCRAFTS_QA_PASSWORD || 'Razorpay-QA-2026!' },
     });
     expect(login.ok()).toBeTruthy();
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/products/weevcrafts-wooden-box');
+    await page.goto('/products/' + (process.env.WEEVCRAFTS_QA_PRODUCT || 'weevcrafts-wooden-box'));
     await page.waitForFunction(() => window.weevcraftsBackend);
     await page.locator('.mobile-buy-bar').getByRole('button', { name: /Buy now/i }).click();
     await expect(page).toHaveURL(/\/checkout\?intent=/);

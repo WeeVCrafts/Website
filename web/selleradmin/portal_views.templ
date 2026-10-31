@@ -173,7 +173,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					}
 				</section>
 			}
-			<form class="seller-form-grid seller-product-wizard" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder data-saved-product={ form.ID } novalidate>
+			<form class="seller-form-grid seller-product-wizard" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder data-product-simple data-saved-product={ form.ID } novalidate>
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
 				if form.ErrorMessage != "" {
@@ -199,11 +199,12 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 							}
 						</select><input type="hidden" name="category_name" value={ form.CategoryName } data-category-name/>
 					</label>
-					<label>SKU<input name="sku" value={ form.SKU } required maxlength="120"/></label>
+					<details class="seller-form-wide"><summary>Advanced identifiers</summary><label>SKU (generated if empty)<input name="sku" value={ form.SKU } maxlength="120"/></label></details>
+					<label class="seller-form-wide">Search tags<input name="search_tags" value={ sellerProductInput(form,"search_tags",form.SearchTags) } placeholder="ceramic, coffee mug, floral"/><small>Up to 20 comma-separated tags, 40 characters each.</small></label>
 					<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ components.ProductStory(form.Description) }</textarea></label>
 					<label class="seller-form-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
 					<details class="seller-form-wide seller-optional-details">
-						<summary>Optional product specifications</summary>
+						<summary>Advanced specifications</summary>
 						<div class="seller-form-grid">
 							for _, name := range []string{"materials", "dimensions", "care", "technique"} {
 								<label>{ sellerFieldLabel(name) }<input name={ name } value={ sellerProductInput(form, name, components.SpecificationValue(form.Description, sellerFieldLabel(name))) } maxlength="500"/></label>
@@ -215,8 +216,8 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					<legend tabindex="-1">Pricing &amp; stock</legend>
 					<p>Enter prices in rupees, with up to two decimal places.</p>
 					<label>Price (INR)<input id="product-price_rupees" aria-invalid={ sellerProductInvalid(form, "price_rupees") } aria-describedby={ sellerProductErrorID(form, "price_rupees") } name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "price_rupees", rupeeInput(form.PriceCents)) } required/></label>
-					<label>Compare-at price (INR, optional)<input id="product-compare_at_rupees" aria-invalid={ sellerProductInvalid(form, "compare_at_rupees") } aria-describedby={ sellerProductErrorID(form, "compare_at_rupees") } name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "compare_at_rupees", rupeeInput(form.CompareAtCents)) }/></label>
-					<label>Unit cost (INR, optional)<input id="product-cost_price_rupees" aria-invalid={ sellerProductInvalid(form, "cost_price_rupees") } aria-describedby={ sellerProductErrorID(form, "cost_price_rupees") } name="cost_price_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "cost_price_rupees", rupeeInput(form.CostPriceCents)) }/></label>
+					<details><summary>Compare-at price (INR, optional)</summary><label>Compare-at price (INR, optional)<input id="product-compare_at_rupees" aria-invalid={ sellerProductInvalid(form, "compare_at_rupees") } aria-describedby={ sellerProductErrorID(form, "compare_at_rupees") } name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "compare_at_rupees", rupeeInput(form.CompareAtCents)) }/></label></details>
+					<details><summary>Unit cost (INR, optional)</summary><label>Unit cost (INR, optional)<input id="product-cost_price_rupees" aria-invalid={ sellerProductInvalid(form, "cost_price_rupees") } aria-describedby={ sellerProductErrorID(form, "cost_price_rupees") } name="cost_price_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "cost_price_rupees", rupeeInput(form.CostPriceCents)) }/></label></details>
 					if form.ID == "" {
 						if p.CanInventoryWrite {
 							<label>Stock quantity<input id="product-initial_stock" aria-invalid={ sellerProductInvalid(form, "initial_stock") } aria-describedby={ sellerProductErrorID(form, "initial_stock") } name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
@@ -224,7 +225,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 							<input type="hidden" id="product-initial_stock" name="initial_stock" value="0"/>
 						}
 					} else {
-						<p class="seller-form-wide seller-form-note">Use <a href="/seller-admin/inventory">Inventory</a> to change available units. Saving this listing does not change stock.</p>
+						<p class="seller-form-wide seller-form-note">Use <a href={ "/seller-admin/inventory?q="+form.SKU }>Inventory for this product</a> to change available units. Saving this listing does not change stock.</p>
 					}
 				</fieldset>
 				<fieldset class="ui-form-section seller-form-wide" data-product-step="photos">
@@ -267,7 +268,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						}
 					</div>
 				</fieldset>
-				<section id="product-variants" class="seller-panel product-variant-manager">
+				<details class="seller-panel"><summary>Advanced variants</summary><section id="product-variants" class="seller-panel product-variant-manager">
 					<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><span><h2>Product variants</h2><p>Enter prices in rupees. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></span></div></div>
 					for _, variant := range form.Variants {
 						<div class="product-variant-row">
@@ -304,7 +305,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						}
 						<button class="seller-button primary" type="submit">Add variant</button>
 					</form>
-				</section>
+				</section></details>
 			}
 		</section>
 	}

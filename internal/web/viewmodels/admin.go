@@ -59,6 +59,8 @@ type AdminProduct struct {
 }
 
 type AdminProductEditor struct {
+	SearchTags                                                                               string
+	FeaturedPinned                                                                           bool
 	Categories                                                                               []Category
 	FeaturedRank                                                                             string
 	ID, SellerID, SellerName, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName   string
@@ -74,6 +76,7 @@ type ProductVariant struct {
 }
 
 type AdminInventory struct {
+	VariantID                                                                      string
 	Name, SKU, Stock, Reorder, Reserved, Available, Location, Value, Status, Image string
 }
 
@@ -281,6 +284,7 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
+	SearchTags                                                                                               string
 	Status, ErrorMessage, ErrorField                                                                         string
 	Input                                                                                                    map[string]string
 	ID, Name, Slug, BrandSlug, BrandName, CategorySlug, CategoryName                                         string

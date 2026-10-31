@@ -40,6 +40,14 @@ func (r *CommerceRepository) ListSellerInventory(ctx context.Context, userID int
 }
 
 func (r *CommerceRepository) AdjustSellerInventory(ctx context.Context, userID int64, adjustment domaincommerce.InventoryAdjustment) error {
+	return r.adjustInventory(ctx, userID, adjustment, false)
+}
+
+func (r *CommerceRepository) AdjustAdminInventory(ctx context.Context, userID int64, adjustment domaincommerce.InventoryAdjustment) error {
+	return r.adjustInventory(ctx, userID, adjustment, true)
+}
+
+func (r *CommerceRepository) adjustInventory(ctx context.Context, userID int64, adjustment domaincommerce.InventoryAdjustment, admin bool) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var sellerID int64
 		var before, reserved int
@@ -49,8 +57,8 @@ func (r *CommerceRepository) AdjustSellerInventory(ctx context.Context, userID i
 			JOIN product_variants pv ON pv.id = i.variant_id AND pv.status = 'active'
 			JOIN products p ON p.id = pv.product_id
 			JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
-			WHERE i.variant_id = $1 AND (s.owner_user_id = $2 )
-			FOR UPDATE OF i`, adjustment.VariantID, userID).Scan(&sellerID, &before, &reserved)
+			WHERE i.variant_id = $1 AND ((NOT $3::boolean AND s.owner_user_id=$2) OR ($3::boolean AND EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$2 AND u.status='active' AND ur.role_slug='super_admin')))
+			FOR UPDATE OF i`, adjustment.VariantID, userID, admin).Scan(&sellerID, &before, &reserved)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrForbidden
 		}

@@ -31,20 +31,21 @@ type ProductSearchFacetsRepository interface {
 }
 
 type ProductSearchOptions struct {
- MinPriceCents, MaxPriceCents int64
- ProductIDs []int64
- SelectedOnly bool
-	Query         string
-	CategorySlug  string
-	CategorySlugs []string
-	BrandSlugs    []string
-	Sort          string
-	PriceRange    string
-	InStock       bool
-	OffersOnly    bool
-	DatabaseOnly  bool
-	Limit         int
-	Offset        int
+	Featured                     bool
+	MinPriceCents, MaxPriceCents int64
+	ProductIDs                   []int64
+	SelectedOnly                 bool
+	Query                        string
+	CategorySlug                 string
+	CategorySlugs                []string
+	BrandSlugs                   []string
+	Sort                         string
+	PriceRange                   string
+	InStock                      bool
+	OffersOnly                   bool
+	DatabaseOnly                 bool
+	Limit                        int
+	Offset                       int
 }
 
 type SearchFacet struct {

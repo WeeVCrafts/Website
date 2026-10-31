@@ -59,3 +59,27 @@ func (s *InventoryService) sellerAllowed(ctx context.Context, userID int64, perm
 	}
 	return false
 }
+
+func (s *InventoryService) AdjustAdmin(ctx context.Context, userID int64, a domaincommerce.InventoryAdjustment) error {
+	if s.roles == nil {
+		return ports.ErrForbidden
+	}
+	allowed, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleSuperAdmin)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return ports.ErrForbidden
+	}
+	a.Reason = strings.TrimSpace(a.Reason)
+	if a.VariantID <= 0 || a.Delta == 0 || a.Delta < -100000 || a.Delta > 100000 || len(a.Reason) < 3 || len(a.Reason) > 500 {
+		return ErrInvalidInventoryAdjustment
+	}
+	repository, ok := s.repository.(interface {
+		AdjustAdminInventory(context.Context, int64, domaincommerce.InventoryAdjustment) error
+	})
+	if !ok {
+		return ports.ErrForbidden
+	}
+	return repository.AdjustAdminInventory(ctx, userID, a)
+}
