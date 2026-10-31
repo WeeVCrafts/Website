@@ -238,6 +238,15 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
+	go worker.RunPeriodic(workerContext, 5*time.Minute, func(ctx context.Context) error {
+		reconcileContext, cancel := context.WithTimeout(ctx, 2*time.Minute)
+		defer cancel()
+		_, err := refundService.Reconcile(reconcileContext, 20)
+		if err != nil {
+			logger.Warn("refund reconciliation requires attention")
+		}
+		return err
+	})
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
@@ -299,7 +308,11 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health/live", healthHandler.Live)
-	mux.HandleFunc("/health/ready", healthHandler.Ready)
+	if strings.EqualFold(cfg.Environment, "production") {
+		mux.HandleFunc("/health/ready", healthHandler.PublicReady)
+	} else {
+		mux.HandleFunc("/health/ready", healthHandler.Ready)
+	}
 	mux.HandleFunc("/health/metrics", healthHandler.Metrics)
 	robotsHandler, sitemapHandler := seoHandler(pool, cfg.PublicURL)
 	mux.HandleFunc("/robots.txt", robotsHandler)
@@ -420,7 +433,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)),
+		Handler:           releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

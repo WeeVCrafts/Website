@@ -36,6 +36,7 @@ type PaymentRefund struct {
 }
 
 type PaymentRefundRecord struct {
+	SubmissionState   string
 	ID                int64
 	OrderID           int64
 	OrderNumber       string
@@ -48,6 +49,16 @@ type PaymentRefundRecord struct {
 	Currency          string
 	Reason            string
 	RequestKey        string
+}
+
+// RefundRecoveryGateway resolves an existing provider refund without creating one.
+type RefundRecoveryGateway interface {
+	LookupRefund(context.Context, PaymentRefundRecord) (PaymentRefund, error)
+}
+
+type RefundRecoveryRepository interface {
+	ClaimRefundSubmission(context.Context, int64) (bool, error)
+	ClaimRefundReconciliation(context.Context, int) ([]PaymentRefundRecord, error)
 }
 
 type PaymentRefundRepository interface {

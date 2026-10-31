@@ -36,6 +36,8 @@ type PaymentWebhookVerifier interface {
 }
 
 type PaymentWebhook struct {
+	ProviderRefundID  string
+	RefundReceipt     string
 	EventID           string
 	EventType         string
 	ProviderOrderID   string

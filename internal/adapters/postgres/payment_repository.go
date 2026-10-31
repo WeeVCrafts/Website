@@ -106,6 +106,9 @@ func (r *PaymentRepository) AttachProviderOrder(ctx context.Context, userID int6
 }
 
 func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.PaymentWebhook, payload []byte) (bool, error) {
+	if webhook.EventType == "refund.created" || webhook.EventType == "refund.processed" || webhook.EventType == "refund.failed" {
+		return r.processRefundWebhook(ctx, webhook, payload)
+	}
 	returnValue := false
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var inserted bool

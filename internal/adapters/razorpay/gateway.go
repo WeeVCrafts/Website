@@ -111,6 +111,9 @@ func (g *Gateway) VerifyWebhook(_ context.Context, rawBody []byte, signature str
 		ID      string `json:"id"`
 		Event   string `json:"event"`
 		Payload struct {
+			Refund struct {
+				Entity recoveryRefund `json:"entity"`
+			} `json:"refund"`
 			Payment struct {
 				Entity struct {
 					ID       string `json:"id"`
@@ -134,6 +137,13 @@ func (g *Gateway) VerifyWebhook(_ context.Context, rawBody []byte, signature str
 	if payload.ID == "" {
 		digest := sha256.Sum256(rawBody)
 		payload.ID = "razorpay_" + hex.EncodeToString(digest[:])
+	}
+	if strings.HasPrefix(payload.Event, "refund.") {
+		entity := payload.Payload.Refund.Entity
+		if entity.ID == "" || entity.PaymentID == "" || entity.Amount <= 0 || entity.Currency == "" {
+			return ports.PaymentWebhook{}, errors.New("webhook refund is incomplete")
+		}
+		return ports.PaymentWebhook{EventID: payload.ID, EventType: payload.Event, ProviderRefundID: entity.ID, RefundReceipt: entity.Receipt, ProviderPaymentID: entity.PaymentID, Status: entity.Status, AmountCents: entity.Amount, Currency: entity.Currency}, nil
 	}
 	entity := payload.Payload.Payment.Entity
 	if entity.ID == "" || entity.OrderID == "" || entity.Amount <= 0 || entity.Currency == "" {

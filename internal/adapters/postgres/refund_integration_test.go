@@ -13,18 +13,29 @@ import (
 )
 
 type integrationRefundGateway struct {
-	calls int
+	calls   int
+	status  string
+	request ports.PaymentRefundRequest
 }
 
 func (g *integrationRefundGateway) CreateRefund(_ context.Context, request ports.PaymentRefundRequest) (ports.PaymentRefund, error) {
 	g.calls++
+	g.request = request
+	status := g.status
+	if status == "" {
+		status = "processed"
+	}
 	return ports.PaymentRefund{
 		ProviderRefundID:  "rfnd_fixture_" + fmt.Sprint(g.calls),
 		ProviderPaymentID: request.ProviderPaymentID,
 		AmountCents:       request.AmountCents,
 		Currency:          request.Currency,
-		Status:            "processed",
+		Status:            status,
 	}, nil
+}
+
+func (g *integrationRefundGateway) LookupRefund(context.Context, ports.PaymentRefundRecord) (ports.PaymentRefund, error) {
+	return ports.PaymentRefund{ProviderRefundID: "rfnd_fixture_1", ProviderPaymentID: g.request.ProviderPaymentID, AmountCents: g.request.AmountCents, Currency: g.request.Currency, Status: "processed"}, nil
 }
 
 func TestRefundAfterReceivedReturnTransitionsDeliveredOrderAndReplays(t *testing.T) {
@@ -53,9 +64,10 @@ func TestRefundAfterReceivedReturnTransitionsDeliveredOrderAndReplays(t *testing
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM payment_refunds WHERE order_id = $1`, order.ID)
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM audit_logs WHERE resource_id = $1`, fmt.Sprint(order.ID))
 		_, _ = pool.Exec(cleanupContext, `DELETE FROM payment_webhook_events WHERE event_id = $1`, eventID)
+		_, _ = pool.Exec(cleanupContext, `DELETE FROM payment_webhook_events WHERE event_id = $1`, eventID+"_refund")
 	})
 
-	gateway := &integrationRefundGateway{}
+	gateway := &integrationRefundGateway{status: "pending"}
 	service := applicationpayment.NewRefundService(gateway, paymentRepository)
 	if _, err := service.Refund(ctx, fixture.userIDs[0], order.OrderNumber, "refund-request-key-1234", "customer request"); !errors.Is(err, ports.ErrRefundState) {
 		t.Fatalf("refund should be blocked until operations receive the returned item, got %v", err)
@@ -70,8 +82,27 @@ func TestRefundAfterReceivedReturnTransitionsDeliveredOrderAndReplays(t *testing
 	if err != nil {
 		t.Fatalf("process refund: %v", err)
 	}
-	if refund.Status != "processed" || refund.AmountCents != order.TotalCents || gateway.calls != 1 {
+	if refund.Status != "pending" || refund.AmountCents != order.TotalCents || gateway.calls != 1 {
 		t.Fatalf("unexpected refund result: refund=%+v gateway_calls=%d", refund, gateway.calls)
+	}
+	if claimed, err := paymentRepository.ClaimRefundSubmission(ctx, refund.ID); err != nil || claimed {
+		t.Fatalf("submitted refund claimed again: %v %v", claimed, err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE payment_refunds SET next_reconcile_at=NOW() WHERE id=$1`, refund.ID); err != nil {
+		t.Fatal(err)
+	}
+	if count, err := service.Reconcile(ctx, 20); err != nil || count != 1 {
+		t.Fatalf("reconcile: %d %v", count, err)
+	}
+	if count, err := service.Reconcile(ctx, 20); err != nil || count != 0 {
+		t.Fatalf("reconcile repeated: %d %v", count, err)
+	}
+	refundEvent := ports.PaymentWebhook{EventID: eventID + "_refund", EventType: "refund.processed", ProviderRefundID: "rfnd_fixture_1", ProviderPaymentID: providerPaymentID, AmountCents: order.TotalCents, Currency: order.Currency, Status: "processed"}
+	if processed, err := paymentRepository.ProcessWebhook(ctx, refundEvent, []byte(`{"event":"refund.processed"}`)); err != nil || !processed {
+		t.Fatalf("refund webhook: %v %v", processed, err)
+	}
+	if processed, err := paymentRepository.ProcessWebhook(ctx, refundEvent, []byte(`{"event":"refund.processed"}`)); err != nil || processed {
+		t.Fatalf("refund webhook replay: %v %v", processed, err)
 	}
 
 	var orderStatus, paymentStatus, refundStatus string

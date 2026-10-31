@@ -15,7 +15,7 @@ import (
 const refundRecordSelect = `
 	SELECT pr.id, pr.order_id, o.order_number, o.status, pa.status,
 	       COALESCE(pa.provider_payment_id, ''), COALESCE(pr.provider_refund_id, ''),
-	       pr.status, pr.amount_cents, pr.currency, pr.reason, pr.request_key
+	       pr.status, pr.amount_cents, pr.currency, pr.reason, pr.request_key, pr.submission_state
 	FROM payment_refunds pr
 	JOIN orders o ON o.id = pr.order_id
 	JOIN payment_attempts pa ON pa.order_id = o.id
@@ -79,7 +79,7 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 				return tx.QueryRow(transactionContext, refundRecordSelect, refundID).Scan(
 					&record.ID, &record.OrderID, &record.OrderNumber, &record.OrderStatus, &record.PaymentStatus,
 					&record.ProviderPaymentID, &record.ProviderRefundID, &record.Status, &record.AmountCents,
-					&record.Currency, &record.Reason, &record.RequestKey,
+					&record.Currency, &record.Reason, &record.RequestKey, &record.SubmissionState,
 				)
 			}
 			if existingStatus == "pending" {
@@ -91,7 +91,7 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 					return tx.QueryRow(transactionContext, refundRecordSelect, refundID).Scan(
 						&record.ID, &record.OrderID, &record.OrderNumber, &record.OrderStatus, &record.PaymentStatus,
 						&record.ProviderPaymentID, &record.ProviderRefundID, &record.Status, &record.AmountCents,
-						&record.Currency, &record.Reason, &record.RequestKey,
+						&record.Currency, &record.Reason, &record.RequestKey, &record.SubmissionState,
 					)
 				}
 			}
@@ -99,15 +99,13 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 				return ports.ErrRefundState
 			}
 			if existingStatus == "failed" {
-				if _, err := tx.Exec(transactionContext, `UPDATE payment_refunds SET status = 'pending', reason = $2, last_error = '', updated_at = NOW() WHERE id = $1`, refundID, reason); err != nil {
-					return err
-				}
+				return ports.ErrRefundState
 			}
 		}
 		return tx.QueryRow(transactionContext, refundRecordSelect, refundID).Scan(
 			&record.ID, &record.OrderID, &record.OrderNumber, &record.OrderStatus, &record.PaymentStatus,
 			&record.ProviderPaymentID, &record.ProviderRefundID, &record.Status, &record.AmountCents,
-			&record.Currency, &record.Reason, &record.RequestKey,
+			&record.Currency, &record.Reason, &record.RequestKey, &record.SubmissionState,
 		)
 	})
 	return record, err
@@ -145,18 +143,18 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 			return tx.QueryRow(transactionContext, refundRecordSelect, refundID).Scan(
 				&record.ID, &record.OrderID, &record.OrderNumber, &record.OrderStatus, &record.PaymentStatus,
 				&record.ProviderPaymentID, &record.ProviderRefundID, &record.Status, &record.AmountCents,
-				&record.Currency, &record.Reason, &record.RequestKey,
+				&record.Currency, &record.Reason, &record.RequestKey, &record.SubmissionState,
 			)
 		}
 		if currentStatus != "pending" || refund.ProviderRefundID == "" || refund.AmountCents != amountCents ||
 			(refund.ProviderPaymentID != "" && refund.ProviderPaymentID != providerPaymentID) ||
 			(refund.Currency != "" && refund.Currency != currency) ||
-			(refund.Status != "pending" && refund.Status != "processed") {
+			(refund.Status != "pending" && refund.Status != "processed" && refund.Status != "failed") {
 			return ports.ErrRefundState
 		}
 		if _, err := tx.Exec(transactionContext, `
 			UPDATE payment_refunds
-			SET provider_refund_id = $2, status = $3, last_error = '', updated_at = NOW()
+			SET provider_refund_id = $2, status = $3, submission_state = $3, last_error = '', updated_at = NOW(), reconcile_attempts=0, next_reconcile_at=NOW()+INTERVAL '5 minutes'
 			WHERE id = $1`, refundID, refund.ProviderRefundID, refund.Status); err != nil {
 			return err
 		}
@@ -195,7 +193,7 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 		return tx.QueryRow(transactionContext, refundRecordSelect, refundID).Scan(
 			&record.ID, &record.OrderID, &record.OrderNumber, &record.OrderStatus, &record.PaymentStatus,
 			&record.ProviderPaymentID, &record.ProviderRefundID, &record.Status, &record.AmountCents,
-			&record.Currency, &record.Reason, &record.RequestKey,
+			&record.Currency, &record.Reason, &record.RequestKey, &record.SubmissionState,
 		)
 	})
 	return record, err
@@ -215,6 +213,6 @@ func (r *PaymentRepository) FailRefund(ctx context.Context, refundID int64, reas
 	if len(reason) > 500 {
 		reason = reason[:500]
 	}
-	_, err := r.pool.Exec(ctx, `UPDATE payment_refunds SET status = 'failed', last_error = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending'`, refundID, reason)
+	_, err := r.pool.Exec(ctx, `UPDATE payment_refunds SET submission_state = 'uncertain', last_error = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending'`, refundID, reason)
 	return err
 }

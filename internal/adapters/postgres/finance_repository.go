@@ -14,7 +14,10 @@ func (r *CommerceRepository) ListFinanceEntries(ctx context.Context, limit int) 
 		SELECT o.id, o.order_number, o.status,
 		       COALESCE(pa.status, 'unrecorded'), COALESCE(pa.provider, ''),
 		       COALESCE(pa.provider_payment_id, ''), COALESCE(pa.amount_cents, o.total_cents),
-		       COALESCE(pa.currency, o.currency), COALESCE(pr.status, ''),
+		       COALESCE(pa.currency, o.currency), CASE
+		         WHEN pr.status='pending' AND pr.created_at < NOW()-INTERVAL '24 hours' THEN 'needs_review'
+		         WHEN pr.status='pending' AND pr.submission_state IN ('submitting','uncertain') THEN pr.submission_state
+		         ELSE COALESCE(pr.status, '') END,
 		       COALESCE(pr.amount_cents, 0), o.created_at
 		FROM orders o
 		LEFT JOIN LATERAL (

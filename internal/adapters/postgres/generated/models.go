@@ -228,17 +228,21 @@ type PaymentAttempt struct {
 }
 
 type PaymentRefund struct {
-	ID               int64              `json:"id"`
-	OrderID          int64              `json:"order_id"`
-	RequestKey       string             `json:"request_key"`
-	AmountCents      int64              `json:"amount_cents"`
-	Currency         string             `json:"currency"`
-	Reason           string             `json:"reason"`
-	ProviderRefundID pgtype.Text        `json:"provider_refund_id"`
-	Status           string             `json:"status"`
-	LastError        string             `json:"last_error"`
-	CreatedAt        pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ID                  int64              `json:"id"`
+	OrderID             int64              `json:"order_id"`
+	RequestKey          string             `json:"request_key"`
+	AmountCents         int64              `json:"amount_cents"`
+	Currency            string             `json:"currency"`
+	Reason              string             `json:"reason"`
+	ProviderRefundID    pgtype.Text        `json:"provider_refund_id"`
+	Status              string             `json:"status"`
+	LastError           string             `json:"last_error"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	SubmissionState     string             `json:"submission_state"`
+	SubmissionStartedAt pgtype.Timestamptz `json:"submission_started_at"`
+	NextReconcileAt     pgtype.Timestamptz `json:"next_reconcile_at"`
+	ReconcileAttempts   int32              `json:"reconcile_attempts"`
 }
 
 type PaymentWebhookEvent struct {

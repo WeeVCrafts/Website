@@ -28,6 +28,37 @@ type fakeRefundRepository struct {
 	failReason   string
 }
 
+type recoveryRefundRepository struct {
+	*fakeRefundRepository
+	claimed bool
+}
+
+func (f *recoveryRefundRepository) ClaimRefundSubmission(context.Context, int64) (bool, error) {
+	if f.claimed {
+		return false, nil
+	}
+	f.claimed = true
+	return true, nil
+}
+func (f *recoveryRefundRepository) ClaimRefundReconciliation(context.Context, int) ([]ports.PaymentRefundRecord, error) {
+	return []ports.PaymentRefundRecord{f.record}, nil
+}
+
+func TestRefundTimeoutDoesNotSubmitAgain(t *testing.T) {
+	repository := &recoveryRefundRepository{fakeRefundRepository: &fakeRefundRepository{record: ports.PaymentRefundRecord{ID: 7, Status: "pending", ProviderPaymentID: "pay_fixture", AmountCents: 1000, Currency: "INR"}}}
+	gateway := &fakeRefundGateway{err: context.DeadlineExceeded}
+	service := NewRefundService(gateway, repository)
+	if _, err := service.Refund(context.Background(), 1, "WC-7", "refund-key-123456", ""); err == nil {
+		t.Fatal("expected uncertain provider response")
+	}
+	if _, err := service.Refund(context.Background(), 1, "WC-7", "refund-key-123456", ""); err != nil {
+		t.Fatal(err)
+	}
+	if gateway.calls != 1 {
+		t.Fatalf("uncertain refund repeated POST: %d", gateway.calls)
+	}
+}
+
 func (f *fakeRefundRepository) BeginRefund(context.Context, int64, string, string, string) (ports.PaymentRefundRecord, error) {
 	return f.record, nil
 }

@@ -43,6 +43,12 @@ func (s *Service) HandleWebhook(ctx context.Context, rawBody []byte, signature s
 
 func supportedWebhookEvent(webhook ports.PaymentWebhook) bool {
 	switch webhook.EventType {
+	case "refund.processed":
+		return webhook.Status == "processed"
+	case "refund.failed":
+		return webhook.Status == "failed"
+	case "refund.created":
+		return webhook.Status == "pending"
 	case "payment.captured", "order.paid", "payment.failed", "payment.authorized", "payment.pending":
 		return true
 	default:

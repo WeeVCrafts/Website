@@ -43,13 +43,21 @@ func (s *RefundService) Refund(ctx context.Context, userID int64, orderNumber, r
 		return mapRefund(record), nil
 	}
 	// A pending record with a provider reference has already crossed the
-	// external side-effect boundary. Do not issue a second refund; a future
-	// reconciliation worker can resolve the provider's final state.
+	// external side-effect boundary. The reconciliation worker resolves it.
 	if record.Status == "pending" && record.ProviderRefundID != "" {
 		return mapRefund(record), nil
 	}
 	if record.Status != "pending" {
 		return domaincommerce.Refund{}, ports.ErrRefundState
+	}
+	if recovery, ok := s.repository.(ports.RefundRecoveryRepository); ok {
+		claimed, err := recovery.ClaimRefundSubmission(ctx, record.ID)
+		if err != nil {
+			return domaincommerce.Refund{}, err
+		}
+		if !claimed {
+			return mapRefund(record), nil
+		}
 	}
 	providerRefund, err := s.gateway.CreateRefund(ctx, ports.PaymentRefundRequest{
 		ProviderPaymentID: record.ProviderPaymentID,
@@ -58,7 +66,7 @@ func (s *RefundService) Refund(ctx context.Context, userID int64, orderNumber, r
 		Receipt:           fmt.Sprintf("refund-%d", record.ID),
 	})
 	if err != nil {
-		_ = s.repository.FailRefund(ctx, record.ID, err.Error())
+		_ = s.repository.FailRefund(ctx, record.ID, "provider response uncertain; reconciliation required")
 		return domaincommerce.Refund{}, ErrRefundCreationFailed
 	}
 	if providerRefund.ProviderRefundID == "" || providerRefund.AmountCents != record.AmountCents ||
@@ -73,6 +81,40 @@ func (s *RefundService) Refund(ctx context.Context, userID int64, orderNumber, r
 		return domaincommerce.Refund{}, err
 	}
 	return mapRefund(completed), nil
+}
+
+// Reconcile only reads provider state. Missing or uncertain responses never
+// authorize another refund POST.
+func (s *RefundService) Reconcile(ctx context.Context, limit int) (int, error) {
+	repository, ok := s.repository.(ports.RefundRecoveryRepository)
+	gateway, supported := s.gateway.(ports.RefundRecoveryGateway)
+	if !ok || !supported {
+		return 0, nil
+	}
+	if limit < 1 || limit > 100 {
+		return 0, ErrRefundInvalidRequest
+	}
+	records, err := repository.ClaimRefundReconciliation(ctx, limit)
+	if err != nil {
+		return 0, err
+	}
+	completed := 0
+	var failures error
+	for _, record := range records {
+		refund, err := gateway.LookupRefund(ctx, record)
+		if err == nil && (refund.ProviderRefundID == "" || refund.ProviderPaymentID != record.ProviderPaymentID || refund.AmountCents != record.AmountCents || refund.Currency != record.Currency) {
+			err = ErrRefundResponseMismatch
+		}
+		if err == nil {
+			_, err = s.repository.CompleteRefund(ctx, record.ID, refund)
+		}
+		if err != nil {
+			failures = errors.Join(failures, err)
+			continue
+		}
+		completed++
+	}
+	return completed, failures
 }
 
 func mapRefund(record ports.PaymentRefundRecord) domaincommerce.Refund {

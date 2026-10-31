@@ -361,7 +361,9 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			component = pages.OrderConfirmation(page)
 		} else if strings.HasSuffix(r.URL.Path, "/invoice") {
 			if r.URL.Query().Get("format") == "pdf" {
-				serveReceiptPDF(w, page.SelectedOrder)
+				receiptContext, cancel := context.WithTimeout(r.Context(), 8*time.Second)
+				defer cancel()
+				serveReceiptPDF(w, page.SelectedOrder, h.receiptMedia(receiptContext, page.SelectedOrder.Number))
 				return
 			}
 			component = pages.OrderReceipt(page)

@@ -3,6 +3,11 @@ package handlers
 import (
 	"bytes"
 	"fmt"
+	"golang.org/x/image/draw"
+	_ "golang.org/x/image/webp"
+	"image"
+	_ "image/jpeg"
+	"image/png"
 	"net/http"
 	"strings"
 
@@ -56,11 +61,14 @@ func receiptValue(pdf *fpdf.Fpdf, text string, x, y, width float64) {
 func receiptValueRight(pdf *fpdf.Fpdf, text string, x, y, width float64) {
 	receiptSetText(pdf, receiptInk)
 	pdf.SetFont("DM", "", 10)
+	for size := 10.0; size > 6 && pdf.GetStringWidth(text) > width-2; size -= 0.5 {
+		pdf.SetFontSize(size - 0.5)
+	}
 	pdf.SetXY(x, y)
 	pdf.CellFormat(width, 6, text, "", 0, "R", false, 0, "")
 }
 
-func receiptPDF(order viewmodels.Order) ([]byte, error) {
+func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error)) ([]byte, error) {
 	regular, err := assets.FS.ReadFile("fonts/dm-sans-400.ttf")
 	if err != nil {
 		return nil, err
@@ -78,7 +86,20 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	pdf.AddUTF8FontFromBytes("DM", "B", medium)
 	pdf.AddUTF8FontFromBytes("Cormorant", "", serif)
 	pdf.SetMargins(14, 12, 14)
-	pdf.SetAutoPageBreak(true, 14)
+	pdf.SetAutoPageBreak(false, 20)
+	pdf.AliasNbPages("")
+	pdf.SetFooterFunc(func() {
+		receiptSetDraw(pdf, receiptLine)
+		pdf.Line(14, 278, 196, 278)
+		receiptSetText(pdf, receiptForest)
+		pdf.SetFont("Cormorant", "", 13)
+		pdf.SetXY(14, 281)
+		pdf.CellFormat(125, 7, "Thank you for supporting independent makers.", "", 0, "L", false, 0, "")
+		receiptSetText(pdf, receiptMuted)
+		pdf.SetFont("DM", "", 8)
+		pdf.SetXY(145, 283)
+		pdf.CellFormat(51, 5, fmt.Sprintf("WeevCrafts · Page %d of {nb}", pdf.PageNo()), "", 0, "R", false, 0, "")
+	})
 	pdf.AddPage()
 	pdf.SetCompression(true)
 	pageW, _ := pdf.GetPageSize()
@@ -148,28 +169,49 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	receiptLabel(pdf, "Amount", 166, tableY+4, 30)
 	rowY := tableY + 14
 	for itemIndex, item := range order.Items {
-		rowH := 25.0
+		pdf.SetFont("DM", "", 10)
+		nameLines := pdf.SplitText(item.Product.Name, 71)
+		detail := strings.TrimSpace(item.VariantName + " " + item.Product.SKU)
+		if detail == "" {
+			detail = firstNonEmpty(item.Product.Category, "Handmade craft")
+		}
+		detail = detail + " · " + item.Product.Seller
+		pdf.SetFont("DM", "", 8)
+		detailLines := pdf.SplitText(detail, 71)
+		rowH := 10 + float64(len(nameLines))*5 + float64(len(detailLines))*4
+		if rowH < 25 {
+			rowH = 25
+		}
+		if rowY+rowH > 268 {
+			pdf.AddPage()
+			receiptLabel(pdf, "Order "+order.Number+" · continued", 14, 16, 182)
+			rowY = 30
+		}
 		receiptSetDraw(pdf, receiptLine)
 		pdf.SetLineWidth(0.3)
 		pdf.Line(14, rowY+rowH, pageW-14, rowY+rowH)
 		receiptSetFill(pdf, "f2eee4")
 		pdf.RoundedRect(20, rowY+3, 18, 19, 1, "1234", "F")
-		if imagePath := strings.TrimPrefix(strings.TrimSpace(item.Product.ImageURL), "/assets/"); imagePath != "" && (strings.HasSuffix(imagePath, ".png") || strings.HasSuffix(imagePath, ".jpg") || strings.HasSuffix(imagePath, ".jpeg")) {
-			if image, readErr := assets.FS.ReadFile(imagePath); readErr == nil {
-				name := fmt.Sprintf("receipt-item-%d", itemIndex)
-				imageType := "png"
-				if strings.HasSuffix(imagePath, ".jpg") || strings.HasSuffix(imagePath, ".jpeg") {
-					imageType = "jpg"
-				}
-				_ = pdf.RegisterImageOptionsReader(name, fpdf.ImageOptions{ImageType: imageType, ReadDpi: true}, bytes.NewReader(image))
-				pdf.ImageOptions(name, 20, rowY+3, 18, 19, false, fpdf.ImageOptions{ImageType: imageType, ReadDpi: true}, 0, "")
-			}
+		var imageData []byte
+		if strings.HasPrefix(item.Product.ImageURL, "/assets/") {
+			imageData, _ = assets.FS.ReadFile(strings.TrimPrefix(item.Product.ImageURL, "/assets/"))
+		} else if len(loaders) > 0 && loaders[0] != nil {
+			imageData, _ = loaders[0](item.Product.ImageURL)
 		}
-		receiptValue(pdf, item.Product.Name, 44, rowY+5, 71)
+		if thumbnail := receiptThumbnail(imageData); len(thumbnail) > 0 {
+			name := fmt.Sprintf("receipt-item-%d", itemIndex)
+			options := fpdf.ImageOptions{ImageType: "png"}
+			pdf.RegisterImageOptionsReader(name, options, bytes.NewReader(thumbnail))
+			pdf.ImageOptions(name, 20, rowY+3, 18, 18, false, options, 0, "")
+		}
+		receiptSetText(pdf, receiptInk)
+		pdf.SetFont("DM", "", 10)
+		pdf.SetXY(44, rowY+4)
+		pdf.MultiCell(71, 5, item.Product.Name, "", "L", false)
 		receiptSetText(pdf, receiptMuted)
 		pdf.SetFont("DM", "", 8)
-		pdf.SetXY(44, rowY+12)
-		pdf.CellFormat(71, 5, firstNonEmpty(item.Product.Category, item.VariantName, "Handmade craft"), "", 0, "L", false, 0, "")
+		pdf.SetXY(44, rowY+5+float64(len(nameLines))*5)
+		pdf.MultiCell(71, 4, detail, "", "L", false)
 		receiptValueRight(pdf, fmt.Sprintf("%d", item.Quantity), 120, rowY+8, 20)
 		receiptValueRight(pdf, item.Product.Price, 136, rowY+8, 30)
 		receiptValueRight(pdf, receiptMoney(item.LineTotalCents), 166, rowY+8, 30)
@@ -177,6 +219,11 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	}
 	if len(order.Items) == 0 {
 		rowY += 12
+	}
+	if rowY+90 > 270 {
+		pdf.AddPage()
+		receiptLabel(pdf, "Order "+order.Number+" · totals", 14, 16, 182)
+		rowY = 30
 	}
 	totalY := rowY + 8
 	receiptSetText(pdf, receiptMuted)
@@ -195,7 +242,13 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	receiptSetText(pdf, "ffffff")
 	pdf.SetFont("Cormorant", "", 15)
 	pdf.SetXY(116, totalY+5)
-	pdf.CellFormat(35, 7, "Total paid", "", 0, "L", false, 0, "")
+	totalLabel := "Total payable"
+	if order.PaymentState == "captured" {
+		totalLabel = "Total paid"
+	} else if order.PaymentState == "refunded" {
+		totalLabel = "Order total"
+	}
+	pdf.CellFormat(35, 7, totalLabel, "", 0, "L", false, 0, "")
 	pdf.SetFont("DM", "B", 12)
 	pdf.SetXY(151, totalY+5)
 	pdf.CellFormat(40, 7, order.Total, "", 0, "R", false, 0, "")
@@ -207,16 +260,6 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	pdf.SetFont("DM", "", 9)
 	pdf.SetXY(14, noteY+14)
 	pdf.MultiCell(contentW, 5, "This is an order receipt, not a GST tax invoice.\nPayment status reflects the recorded order.", "", "L", false)
-	receiptSetDraw(pdf, receiptLine)
-	pdf.Line(14, 278, pageW-14, 278)
-	receiptSetText(pdf, receiptForest)
-	pdf.SetFont("Cormorant", "", 13)
-	pdf.SetXY(14, 282)
-	pdf.CellFormat(130, 7, "Thank you for supporting independent makers.", "", 0, "L", false, 0, "")
-	receiptSetText(pdf, receiptMuted)
-	pdf.SetFont("DM", "", 8)
-	pdf.SetXY(pageW-62, 284)
-	pdf.CellFormat(48, 5, "WeevCrafts · Page 1 of 1", "", 0, "R", false, 0, "")
 	var output bytes.Buffer
 	if err := pdf.Output(&output); err != nil {
 		return nil, err
@@ -225,6 +268,15 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 }
 
 func receiptSeller(order viewmodels.Order) string {
+	sellers := map[string]bool{}
+	for _, item := range order.Items {
+		if item.Product.Seller != "" {
+			sellers[item.Product.Seller] = true
+		}
+	}
+	if len(sellers) > 1 {
+		return fmt.Sprintf("%d independent makers", len(sellers))
+	}
 	for _, item := range order.Items {
 		if seller := strings.TrimSpace(item.Product.Seller); seller != "" {
 			return seller
@@ -255,8 +307,8 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func serveReceiptPDF(w http.ResponseWriter, order viewmodels.Order) {
-	data, err := receiptPDF(order)
+func serveReceiptPDF(w http.ResponseWriter, order viewmodels.Order, loaders ...func(string) ([]byte, error)) {
+	data, err := receiptPDF(order, loaders...)
 	if err != nil {
 		http.Error(w, "Receipt is unavailable. Please try again.", http.StatusServiceUnavailable)
 		return
@@ -266,4 +318,37 @@ func serveReceiptPDF(w http.ResponseWriter, order viewmodels.Order) {
 	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = w.Write(data)
+}
+
+func receiptThumbnail(data []byte) []byte {
+	if len(data) == 0 || len(data) > 8<<20 {
+		return nil
+	}
+	config, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil || config.Width <= 0 || config.Height <= 0 || int64(config.Width)*int64(config.Height) > 20000000 {
+		return nil
+	}
+	source, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil
+	}
+	width, height := 180, 180
+	if config.Width > config.Height {
+		height = config.Height * 180 / config.Width
+	} else {
+		width = config.Width * 180 / config.Height
+	}
+	if width < 1 {
+		width = 1
+	}
+	if height < 1 {
+		height = 1
+	}
+	thumb := image.NewNRGBA(image.Rect(0, 0, 180, 180))
+	draw.CatmullRom.Scale(thumb, image.Rect((180-width)/2, (180-height)/2, (180+width)/2, (180+height)/2), source, source.Bounds(), draw.Over, nil)
+	var buffer bytes.Buffer
+	if png.Encode(&buffer, thumb) != nil {
+		return nil
+	}
+	return buffer.Bytes()
 }
