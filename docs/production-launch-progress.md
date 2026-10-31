@@ -95,4 +95,10 @@ Unavailable images leave a placeholder; arbitrary external URLs are never fetche
   versions. Redis quoting was corrected; CI now selects the latest Go 1.26 patch.
   pgx was upgraded to 5.9.2, go-redis to 9.7.3 and x/net to 0.60.0; x/crypto
   resolves to 0.57.0. The corrected CI run and dependency regression tests must pass.
+- The updated local Go suite passed. Remote image scanning additionally identified
+  three high-severity transitive findings. go-jose is updated to 4.1.6, compress to
+  1.18.7 and gRPC to 1.83.2. These image-scan fixes require another remote scan.
+- Template drift was caused by Windows CRLF characters embedded in generated
+  literals. Template inputs now enforce LF through `.gitattributes`; generated
+  embedded scripts/styles were regenerated without changing their behavior.
 - Backup restore and hosted deployment remain unverified.
