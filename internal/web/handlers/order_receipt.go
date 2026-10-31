@@ -120,7 +120,7 @@ func receiptPDF(order viewmodels.Order) ([]byte, error) {
 	receiptSetText(pdf, receiptForest)
 	pdf.SetFont("DM", "B", 9)
 	pdf.SetXY(20, 76)
-	pdf.CellFormat(65, 5, "●  Payment "+strings.Title(strings.TrimSpace(order.Payment)), "", 0, "L", false, 0, "")
+	pdf.CellFormat(65, 5, "Payment "+strings.Title(strings.TrimSpace(order.Payment)), "", 0, "L", false, 0, "")
 	metaY := 91.0
 	metaCols := []struct {
 		label, value string
