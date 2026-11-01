@@ -136,8 +136,9 @@ async function deleteRoleUser(page, card, reason) {
     response => response.url().includes("/super-admin/users/delete") && response.request().method() === "POST",
     { timeout: 30_000 }
   );
-  page.once("dialog", dialog => dialog.accept());
   await form.getByRole("button", { name: "Delete account" }).click();
+  await expect(page.locator(".ui-confirm")).toBeVisible();
+  await page.locator("[data-confirm-accept]").click();
   const response = await responsePromise;
   expect(response.status()).toBe(303);
   await page.waitForURL(/\/super-admin\/security(?:\?|$)/, { timeout: 30_000 });

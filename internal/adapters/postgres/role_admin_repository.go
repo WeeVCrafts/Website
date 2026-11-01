@@ -28,10 +28,14 @@ func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, 
 	}
 	rows, err := r.pool.Query(ctx, `
 		SELECT u.id, u.email, u.display_name, u.status,
-		       COALESCE(array_agg(ur.role_slug ORDER BY ur.role_slug) FILTER (WHERE ur.role_slug IS NOT NULL), ARRAY[]::text[])
+		       COALESCE(array_agg(ur.role_slug ORDER BY ur.role_slug) FILTER (WHERE ur.role_slug IS NOT NULL), ARRAY[]::text[]),
+		       to_char(u.created_at AT TIME ZONE 'Asia/Kolkata','DD Mon YYYY'),
+		       COALESCE(to_char(MAX(sm.last_seen_at) AT TIME ZONE 'Asia/Kolkata','DD Mon YYYY, HH12:MI AM'),'Never')
 		FROM users u
 		LEFT JOIN user_roles ur ON ur.user_id = u.id
-		WHERE ($1 = '' OR u.email ILIKE '%' || $1 || '%' OR u.display_name ILIKE '%' || $1 || '%' OR EXISTS (SELECT 1 FROM user_roles search_role WHERE search_role.user_id = u.id AND search_role.role_slug ILIKE '%' || $1 || '%'))
+		LEFT JOIN sessions_metadata sm ON sm.user_id = u.id
+		WHERE u.status <> 'deleted'
+		  AND ($1 = '' OR u.email ILIKE '%' || $1 || '%' OR u.display_name ILIKE '%' || $1 || '%' OR EXISTS (SELECT 1 FROM user_roles search_role WHERE search_role.user_id = u.id AND search_role.role_slug ILIKE '%' || $1 || '%'))
 		GROUP BY u.id, u.email, u.display_name, u.status
 		ORDER BY u.created_at DESC, u.id DESC
 		LIMIT 200`, query)
@@ -42,7 +46,7 @@ func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, 
 	assignments := make([]domainidentity.RoleAssignment, 0)
 	for rows.Next() {
 		var assignment domainidentity.RoleAssignment
-		if err := rows.Scan(&assignment.ID, &assignment.Email, &assignment.DisplayName, &assignment.Status, &assignment.Roles); err != nil {
+		if err := rows.Scan(&assignment.ID, &assignment.Email, &assignment.DisplayName, &assignment.Status, &assignment.Roles, &assignment.CreatedAt, &assignment.LastActive); err != nil {
 			return nil, err
 		}
 		assignments = append(assignments, assignment)
@@ -222,50 +226,19 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 		if _, err := tx.Exec(transactionContext, `DELETE FROM user_avatars WHERE user_id=$1`, userID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE users SET email=$2, display_name='Deleted account', phone='', status='deleted', sessions_revoked_at=NOW(), updated_at=NOW() WHERE id=$1`, userID, fmt.Sprintf("deleted+%d@invalid.weevcrafts.local", userID)); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(transactionContext, `DELETE FROM user_roles WHERE user_id=$1`, userID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(transactionContext, `UPDATE seller_users SET status='revoked',updated_at=NOW() WHERE user_id=$1 AND status='active'`, userID); err != nil {
-			return err
-		}
-		archivedRows, err := tx.Query(transactionContext, `UPDATE products SET status='archived',updated_at=NOW() WHERE seller_id IN (SELECT id FROM sellers WHERE owner_user_id=$1) AND status <> 'archived' RETURNING id`, userID)
-		if err != nil {
-			return err
-		}
-		archivedProductIDs := make([]int64, 0)
-		for archivedRows.Next() {
-			var productID int64
-			if err := archivedRows.Scan(&productID); err != nil {
-				archivedRows.Close()
-				return err
+		// Account removal is intentionally physical. Foreign keys with protected
+		// history (orders, support, fulfilment and similar records) reject the
+		// delete below and are translated into a clear operational conflict.
+		if _, err := tx.Exec(transactionContext, `DELETE FROM sellers WHERE owner_user_id=$1`, userID); err != nil {
+			if isForeignKeyViolation(err) {
+				return ports.ErrUserHasProtectedRecords
 			}
-			archivedProductIDs = append(archivedProductIDs, productID)
-		}
-		if err := archivedRows.Err(); err != nil {
-			archivedRows.Close()
 			return err
 		}
-		archivedRows.Close()
-		for _, productID := range archivedProductIDs {
-			productMetadata, _ := json.Marshal(map[string]string{"source": "account_deletion", "reason": reason})
-			if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'catalog.product_archived','product',$2,$3,$4)`, fmt.Sprint(actorID), fmt.Sprint(productID), ports.RequestID(transactionContext), productMetadata); err != nil {
-				return err
+		if _, err := tx.Exec(transactionContext, `DELETE FROM users WHERE id=$1`, userID); err != nil {
+			if isForeignKeyViolation(err) {
+				return ports.ErrUserHasProtectedRecords
 			}
-			productEvent, _ := json.Marshal(map[string]any{"product_id": productID, "status": "archived"})
-			if _, err := tx.Exec(transactionContext, `INSERT INTO outbox_events(event_type,aggregate_type,aggregate_id,payload) VALUES('ProductIndexRequested','Product',$1,$2)`, fmt.Sprint(productID), productEvent); err != nil {
-				return err
-			}
-		}
-		if _, err := tx.Exec(transactionContext, `UPDATE sellers SET status='closed',updated_at=NOW() WHERE owner_user_id=$1 AND status <> 'closed'`, userID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(transactionContext, `UPDATE sessions_metadata SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL`, userID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(transactionContext, `UPDATE auth_action_tokens SET consumed_at=NOW() WHERE user_id=$1 AND consumed_at IS NULL`, userID); err != nil {
 			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"roles": roles, "reason": reason})
@@ -277,6 +250,11 @@ func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actor
 func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503"
 }
 
 func (r *RoleAdministrationRepository) requireSuperAdmin(ctx context.Context, actorID int64) error {

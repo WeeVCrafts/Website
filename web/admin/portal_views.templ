@@ -336,14 +336,19 @@ templ PortalAnalytics(p viewmodels.AdminPage) {
 
 templ PortalSecurity(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
-		if p.Workspace != "users" {
+		if p.Workspace == "users" {
+			@StatGrid(p)
+			<div class="user-management-actions">
+				<a class="admin-button secondary" href={ userExportURL(p) }><span class="material-symbols-outlined" aria-hidden="true">download</span>Export CSV</a>
+				<details class="user-create-disclosure">
+					<summary class="admin-button primary"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>Create user</summary>
+					<div class="user-create-popover">@RoleUserCreateForm(p)</div>
+				</details>
+			</div>
+		} else {
 			@StatGrid(p)
 		}
-		if p.Workspace == "users" {
-			<details class="admin-panel account-create"><summary>Create a user account</summary>
-				@RoleUserCreateForm(p)
-			</details>
-		} else {
+		if p.Workspace != "users" {
 			@RoleUserCreateForm(p)
 		}
 		@RoleAssignmentList(p)

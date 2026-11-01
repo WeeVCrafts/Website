@@ -215,3 +215,42 @@ func accountRole(roles []string) string {
 	}
 	return "customer"
 }
+
+func userFilterURL(p viewmodels.AdminPage, status, role string) string {
+	u := url.URL{Path: p.PortalRoot + "/users"}
+	query := u.Query()
+	if strings.TrimSpace(p.Query) != "" {
+		query.Set("q", p.Query)
+	}
+	if strings.TrimSpace(status) != "" {
+		query.Set("status", status)
+	}
+	if strings.TrimSpace(role) != "" {
+		query.Set("role", role)
+	}
+	u.RawQuery = query.Encode()
+	return u.String()
+}
+
+func userExportURL(p viewmodels.AdminPage) string {
+	u := url.URL{Path: p.PortalRoot + "/users/export"}
+	query := u.Query()
+	if strings.TrimSpace(p.Query) != "" {
+		query.Set("q", p.Query)
+	}
+	if strings.TrimSpace(p.StatusFilter) != "" {
+		query.Set("status", p.StatusFilter)
+	}
+	if strings.TrimSpace(p.RoleFilter) != "" {
+		query.Set("role", p.RoleFilter)
+	}
+	u.RawQuery = query.Encode()
+	return u.String()
+}
+
+func userFilterTabClass(active bool) string {
+	if active {
+		return "active"
+	}
+	return ""
+}

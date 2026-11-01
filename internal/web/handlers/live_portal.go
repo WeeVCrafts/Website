@@ -355,6 +355,14 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	currentRole := roles[0]
+	if r.URL.Path == "/super-admin/users/export" && r.Method == http.MethodGet {
+		if currentRole != domainidentity.RoleSuperAdmin {
+			denyPortalAccess(w, r)
+			return
+		}
+		h.adminUserExport(w, r)
+		return
+	}
 	if r.URL.Path == "/workspaces" {
 		http.Redirect(w, r, applicationauth.LoginDestination(roles), http.StatusSeeOther)
 		return
@@ -1022,11 +1030,13 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 	}
 	if workspace == "users" {
 		page.Title = "User Management"
-		page.Subtitle = "Create, search, update, suspend and remove marketplace accounts with an audited workflow."
+		page.Subtitle = "Find the right account quickly, make controlled changes, and permanently remove accounts only after confirmation."
 	}
 	if workspace == "users" {
+		page.StatusFilter = adminUserStatusFilter(r.URL.Query().Get("status"))
+		page.RoleFilter = adminUserRoleFilter(r.URL.Query().Get("role"))
+		page.Stats = h.adminUserStats(r)
 		page.RoleAssignments = h.adminUsers(r, query)
-		page.Sellers = h.adminSellers(r)
 		page.Pagination = projectionPagination(r, "admin-users")
 		page.DataWarning = projectionWarning(r, page.DataWarning)
 		return page
@@ -1067,6 +1077,24 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 		}
 	}
 	return page
+}
+
+func (h *LivePortalHandler) adminUserStats(r *http.Request) []viewmodels.AdminStat {
+	var total, active, suspended, needsAttention int64
+	if err := h.queryRow(r, `
+		SELECT COUNT(*) FILTER (WHERE status <> 'deleted'),
+		       COUNT(*) FILTER (WHERE status = 'active'),
+		       COUNT(*) FILTER (WHERE status = 'suspended'),
+		       COUNT(*) FILTER (WHERE status IN ('pending','suspended'))
+		FROM users`).Scan(&total, &active, &suspended, &needsAttention); err != nil {
+		return nil
+	}
+	return []viewmodels.AdminStat{
+		{Icon: "manage_accounts", Value: strconv.FormatInt(total, 10), Label: "Total accounts", Delta: "Live", Positive: true, Period: "database"},
+		{Icon: "check_circle", Value: strconv.FormatInt(active, 10), Label: "Active", Delta: "Live", Positive: true, Period: "database"},
+		{Icon: "pause_circle", Value: strconv.FormatInt(suspended, 10), Label: "Suspended", Delta: "Review", Positive: false, Period: "database"},
+		{Icon: "priority_high", Value: strconv.FormatInt(needsAttention, 10), Label: "Needs attention", Delta: "Review", Positive: false, Period: "database"},
+	}
 }
 
 func (h *LivePortalHandler) adminStats(r *http.Request) []viewmodels.AdminStat {

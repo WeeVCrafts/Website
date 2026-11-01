@@ -155,6 +155,10 @@ func (h *Handler) adminRoleUserDelete(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	if r.FormValue("confirm") != "yes" {
+		h.renderError(w, http.StatusUnprocessableEntity, "Confirmation required", "Confirm permanent deletion before continuing.")
+		return
+	}
 	userID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
 	if err != nil || userID <= 0 {
 		h.renderError(w, http.StatusUnprocessableEntity, "User request invalid", "Choose a valid user account.")
@@ -170,6 +174,8 @@ func (h *Handler) adminRoleUserDelete(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusNotFound, "User not found", "That user account is no longer available.")
 	case errors.Is(err, applicationauth.ErrInvalidRoleAssignment), errors.Is(err, ports.ErrRoleState):
 		h.renderError(w, http.StatusConflict, "User deletion rejected", "The request is invalid or would remove the last Super Admin account.")
+	case errors.Is(err, ports.ErrUserHasProtectedRecords):
+		h.renderError(w, http.StatusConflict, "Account has protected records", "This account cannot be hard-deleted until its orders, support records or other protected references are resolved.")
 	default:
 		h.renderError(w, http.StatusServiceUnavailable, "User deletion unavailable", "We could not delete this account.")
 	}

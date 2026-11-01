@@ -122,6 +122,13 @@ func TestIdentityAuditsAvoidCopyingPersonalEmail(t *testing.T) {
 	if err := repository.DeleteRoleUser(ctx, actorID, id, "Verify deletion audit metadata"); err != nil {
 		t.Fatal(err)
 	}
+	var remaining int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE id=$1`, id).Scan(&remaining); err != nil {
+		t.Fatal(err)
+	}
+	if remaining != 0 {
+		t.Fatalf("deleted account remains in users table: %d", remaining)
+	}
 	var events, personalFields int
 	if err := pool.QueryRow(ctx, `SELECT count(*),count(*) FILTER (WHERE metadata ? 'email' OR metadata ? 'phone' OR metadata ? 'password') FROM audit_logs WHERE actor_id=$1 AND resource_id=$2`, fmt.Sprint(actorID), fmt.Sprint(id)).Scan(&events, &personalFields); err != nil {
 		t.Fatal(err)

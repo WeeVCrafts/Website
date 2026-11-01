@@ -255,6 +255,7 @@ test('suspension, password replacement and deletion invalidate existing sessions
       const form = { csrf_token: admin.csrf_token, user_id: String(identity.data.id), email, display_name: 'QA Customer', status: action === 'suspension' ? 'suspended' : 'active', reason: `Isolated ${action} revocation verification` };
       if (action === 'password') form.password = 'Replaced-QA-Password-2026!';
       const endpoint = action === 'deletion' ? '/super-admin/users/delete' : '/super-admin/users/update';
+      if (action === 'deletion') form.confirm = 'yes';
       expect((await adminPage.request.post(endpoint, { form, maxRedirects: 0 })).status()).toBe(303);
       expect((await page.request.get('/api/v1/orders')).status()).toBe(401);
     }

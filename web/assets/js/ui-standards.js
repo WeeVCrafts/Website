@@ -118,8 +118,26 @@
       sync();
     });
   }
+  function initUserDeleteDialogs(root) {
+    root.querySelectorAll('[data-user-delete-trigger]').forEach(trigger => {
+      if (trigger.dataset.deleteDialogBound) return;
+      const dialog = document.getElementById(trigger.dataset.userDeleteDialog);
+      if (!dialog) return;
+      trigger.dataset.deleteDialogBound = 'true';
+      const cancel = dialog.querySelector('[data-user-delete-cancel]');
+      const reason = dialog.querySelector('[name="reason"]');
+      trigger.addEventListener('click', () => {
+        dialog.showModal();
+        requestAnimationFrame(() => reason?.focus());
+      });
+      cancel?.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('cancel', event => { event.preventDefault(); dialog.close(); });
+      dialog.addEventListener('close', () => trigger.focus({preventScroll:true}));
+    });
+  }
   function init(root) {
     initRoleNavigation(root);
+    initUserDeleteDialogs(root);
     // Persistent data-entry labels; placeholders remain examples, not labels.
     root.querySelectorAll('input,select,textarea').forEach(field=>{
       if(field.closest('label') || field.labels?.length || !field.name || field.name==='q' || ['hidden','submit','button','checkbox','radio'].includes(field.type))return;
@@ -180,6 +198,9 @@
           const submitter = event.submitter || form.querySelector('[type="submit"]');
           const intent = /\/delete$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
           if (await confirmAction(confirmation, submitter, submitter?.textContent.trim(), {intent})) {
+            if (form.action.endsWith('/users/delete') && !form.querySelector('input[name="confirm"]')) {
+              const confirmed = document.createElement('input'); confirmed.type = 'hidden'; confirmed.name = 'confirm'; confirmed.value = 'yes'; form.append(confirmed);
+            }
             form.dataset.confirmed = "true"; form.requestSubmit(submitter); delete form.dataset.confirmed;
           }
         }

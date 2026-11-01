@@ -40,12 +40,12 @@ for (const role of roles) {
    const denied=await page.request.get('/super-admin/users');expect(denied.status()).toBe(403);
   }
   if(role.email.startsWith('superadmin')) {
-   await expect(page.locator('.role-assignment-card')).toHaveCount(3);
-   const owner=page.locator('.role-assignment-card').filter({hasText:'seller@weevcrafts.local'});
+   await expect(page.locator('.user-management-table tbody tr')).toHaveCount(3);
+   const owner=page.locator('.user-management-table tbody tr').filter({hasText:'seller@weevcrafts.local'});
    await owner.locator('summary').click();
    await expect(owner.locator('[name="role"]')).toHaveValue('seller');
-   const own=page.locator('.role-assignment-card').filter({hasText:'superadmin@weevcrafts.local'});
-   await expect(own.locator('.role-delete-form')).toHaveCount(0);
+   const own=page.locator('.user-management-table tbody tr').filter({hasText:'superadmin@weevcrafts.local'});
+   await expect(own.locator('.user-delete-trigger')).toHaveCount(0);
    await expect(own.locator('.role-assignment-form [name="role"]')).toHaveValue('super_admin');
   }
   await page.locator(role.logout+' button').press('Enter');
@@ -55,7 +55,7 @@ for (const role of roles) {
 }
 test('Super Admin account creation, search, edits, role changes and deletion persist', async ({page}) => {
  await signIn(page,'superadmin@weevcrafts.local');await page.goto('/super-admin/users');
- await page.locator('.account-create > summary').click();
+ await page.locator('.user-create-disclosure > summary').click();
  const create=page.locator('.role-user-create-form');
  await create.locator('[name="display_name"]').fill('QA Clean Account');
  await create.locator('[name="email"]').fill('qa.clean@example.test');
@@ -67,10 +67,10 @@ test('Super Admin account creation, search, edits, role changes and deletion per
  await create.locator('[name="confirm"]').check();
  await create.getByRole('button',{name:'Create account',exact:true}).click();
  await expect(page).toHaveURL(/\/super-admin\/users\?notice=/);
- await page.locator('.role-assignment-search [name="q"]').fill('qa.clean');
- await page.locator('.role-assignment-search [type="submit"]').click();
- await expect(page.locator('.role-assignment-card')).toHaveCount(1);
- await page.locator('.account-controls summary').click();
+ await page.locator('.user-management-filters [name="q"]').fill('qa.clean');
+ await page.locator('.user-management-filters [type="submit"]').click();
+ await expect(page.locator('.user-management-table tbody tr')).toHaveCount(1);
+ await page.locator('.user-management-table tbody tr .account-controls summary').click();
  const edit=page.locator('.role-user-edit-form');
  await edit.locator('[name="display_name"]').fill('QA Updated Account');
  await edit.locator('[name="status"]').selectOption('suspended');
@@ -78,8 +78,8 @@ test('Super Admin account creation, search, edits, role changes and deletion per
  await edit.locator('[name="reason"]').fill('Verify persisted account edit');
  await edit.getByRole('button',{name:'Save account',exact:true}).click();
  await expect(page).toHaveURL(/notice=Account\+updated/);
- let account=page.locator('.role-assignment-card').filter({hasText:'qa.clean@example.test'});
- await expect(account.locator('.role-assignment-user strong')).toHaveText('QA Updated Account');
+ let account=page.locator('.user-management-table tbody tr').filter({hasText:'qa.clean@example.test'});
+ await expect(account.locator('.user-account-cell strong')).toHaveText('QA Updated Account');
  await account.locator('summary').click();
  await expect(account.locator('.ui-status')).toHaveText('Suspended');
  const reactivate=account.locator('.role-user-edit-form');
@@ -99,17 +99,16 @@ test('Super Admin account creation, search, edits, role changes and deletion per
  await role.locator('[name="confirm"]').check();
  await role.getByRole('button',{name:'Save role change'}).click();
  await expect(page).toHaveURL(/notice=Role\+updated/);
- account=page.locator('.role-assignment-card').filter({hasText:'qa.clean@example.test'});
- await expect(account.locator('.role-badges')).toContainText('Admin');
+ account=page.locator('.user-management-table tbody tr').filter({hasText:'qa.clean@example.test'});
+ await expect(account.locator('.account-role')).toContainText('Admin');
  await account.locator('summary').click();
- const remove=account.locator('.role-delete-form');
+ await account.locator('.user-delete-trigger').click();
+ const remove=page.locator('.user-delete-dialog');
  await remove.locator('[name="reason"]').fill('Remove temporary verification account');
- await remove.getByRole('button',{name:'Delete account'}).click();
- await expect(page.locator('.ui-confirm')).toBeVisible();
- await page.locator('[data-confirm-accept]').click();
+ await remove.locator('[name="confirm"]').check();
+ await remove.getByRole('button',{name:'Delete permanently'}).click();
  await expect(page).toHaveURL(/notice=User\+account\+deleted/);
- await expect(page.locator('.role-assignment-card').filter({hasText:'qa.clean@example.test'})).toHaveCount(0);
- await expect(page.locator('.role-assignment-card .ui-status').filter({hasText:'Deleted'})).toHaveCount(1);
+ await expect(page.locator('.user-management-table tbody tr').filter({hasText:'qa.clean@example.test'})).toHaveCount(0);
  const denied=await page.request.post('/super-admin/users/create',{form:{email:'rejected@example.test',display_name:'Rejected Account',password,role:'customer',reason:'Missing CSRF check'}});
  expect(denied.status()).toBe(403);
 });

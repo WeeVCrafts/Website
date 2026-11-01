@@ -8,6 +8,7 @@ type AdminPage struct {
 	Pagination                                                                       PortalPagination
 	ActorID                                                                          int64
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
+	StatusFilter, RoleFilter                                                         string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                                  string
 	SettlementRoot                                                                   string
 	OrderStage                                                                       string

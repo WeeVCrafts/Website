@@ -112,7 +112,7 @@ test.describe('Four roles and private company coordination', () => {
         }
       } finally {
         await context.close();
-        expect((await page.request.post('/super-admin/users/delete', { form: { csrf_token: csrf, user_id: id, reason: 'Remove disposable role creation QA account' }, maxRedirects: 0 })).status()).toBe(303);
+        expect((await page.request.post('/super-admin/users/delete', { form: { csrf_token: csrf, user_id: id, reason: 'Remove disposable role creation QA account', confirm: 'yes' }, maxRedirects: 0 })).status()).toBe(303);
       }
     }
   });

@@ -32,7 +32,7 @@ All three local accounts use `WeeVCrafts-Local-2026!`. `WECRATFS_RESET_PASSWORD`
 
 Historical clean/demo Compose profiles have been removed from normal configuration.
 
-Super Admin has a dedicated **User Management** navigation entry at `/super-admin/users`. Search by name, email or role; expand **Manage account** to edit account details, suspend/reactivate, reset passwords, change roles or delete non-protected accounts. Changes require an audit reason. Password/role changes revoke existing sessions; changing an email clears email verification. Deletion retains order/audit history. Super Admin access remains bootstrap-controlled.
+Super Admin has a dedicated **User Management** navigation entry at `/super-admin/users`. Search by name, email or role, filter by status, review live account metrics, and expand **Manage** to edit account details, suspend/reactivate, reset passwords, change roles or permanently delete non-protected accounts. Changes require an audit reason. Password/role changes revoke existing sessions; changing an email clears email verification. A hard delete is refused when protected order, support or operational references still exist. Super Admin access remains bootstrap-controlled.
 
 Authenticated customer, seller and admin headers expose a visible top-right **Log out** action at desktop and mobile widths. It submits POST with a session CSRF token.
 
@@ -64,7 +64,7 @@ The app upload path above is a fixed container path; keep it unchanged. The rese
 
 - Targeted Go checks passed for reset guards, authentication, PostgreSQL, portal handlers and admin rendering.
 - CSS build/minification, JavaScript syntax and Compose validation passed.
-- Four clean-start Playwright tests passed: working login/logout for all three roles at 1440, 960, 720, 390 and 320px; keyboard logout; customer/account management; protected Super Admin controls; seller access rejection; account creation/search/edit; suspension/reactivation; password visibility/reset (new password authenticated successfully); role replacement; anonymizing deletion; and CSRF rejection.
+- The clean-start Playwright suite covers working login/logout for all three roles at 1440, 960, 720, 390 and 320px; keyboard logout; customer/account management; protected Super Admin controls; seller access rejection; account creation/search/edit; suspension/reactivation; password visibility/reset; role replacement; hard deletion of a disposable account; and CSRF rejection.
 - The storefront header passed its nine-width interaction checks in Chromium, Firefox and WebKit for guest and authenticated customer sessions.
 - An isolated PostgreSQL container verified a fresh three-account bootstrap, preservation of existing accounts on repeat startup and preservation of existing categories when the user table is empty. The check removed its container afterward.
 - The strict frontend design audit reported zero findings. Desktop and narrow screenshots were visually inspected.
@@ -79,4 +79,4 @@ npx playwright test tests/e2e/clean-start.spec.js
 ./scripts/check-clean-bootstrap.ps1
 ```
 
-The browser test creates a temporary account and verifies deletion/anonymization; perform the explicit local reset afterward to return to exactly three stored accounts.
+The browser test creates a temporary account and verifies hard deletion; perform the explicit local reset afterward to return to exactly three stored accounts.

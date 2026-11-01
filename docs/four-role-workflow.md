@@ -9,7 +9,7 @@ This contract supersedes the role descriptions in dated audit reports. Historica
 | `admin` | `/admin` | Company marketplace, support, delivery follow-up, returns and existing finance operations. |
 | `super_admin` | `/super-admin` | Company operations plus account creation, all four role assignments, platform security, settings and audit access. |
 
-Accounts have one role. Assignments replace the previous role and invalidate existing sessions. Account creation and role replacement require explicit confirmation and an audit reason. The last active Super Admin cannot be demoted, suspended or deleted. A transaction-wide administration lock serializes these operations and rechecks the acting account after acquiring the lock.
+Accounts have one role. Assignments replace the previous role and invalidate existing sessions. Account creation and role replacement require explicit confirmation and an audit reason. The last active Super Admin cannot be demoted, suspended or deleted. The Super Admin account-directory delete is a physical delete for accounts without protected marketplace references; PostgreSQL-backed order, support and operational references block the delete. A transaction-wide administration lock serializes these operations and rechecks the acting account after acquiring the lock.
 
 Seller role replacement and deletion lock the seller record and check unfinished orders and unresolved returns. Checkout acquires that same seller lock before reading availability. Eligible demotion pauses the storefront while keeping products, media, earnings and order history. Reassigning Seller does not reactivate a suspended profile.
 

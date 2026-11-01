@@ -33,6 +33,8 @@ type RoleAssignment struct {
 	DisplayName string
 	Status      string
 	Roles       []string
+	CreatedAt   string
+	LastActive  string
 }
 
 type AdminCustomer struct {
