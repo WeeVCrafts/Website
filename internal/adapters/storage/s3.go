@@ -2,8 +2,11 @@ package storage
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"io"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -21,8 +24,31 @@ type S3 struct {
 }
 
 func NewS3(endpoint, accessKey, secretKey, bucket string, secure bool) (*S3, error) {
+	return NewS3WithCARegion(endpoint, accessKey, secretKey, bucket, secure, "", "")
+}
+
+// NewS3WithCA creates an S3 client and optionally trusts a private CA for a
+// TLS-terminated, self-managed object store. The default constructor remains
+// system-trust-only for local and public S3-compatible providers.
+func NewS3WithCA(endpoint, accessKey, secretKey, bucket string, secure bool, caPEM string) (*S3, error) {
+	return NewS3WithCARegion(endpoint, accessKey, secretKey, bucket, secure, caPEM, "")
+}
+
+// NewS3WithCARegion creates an S3 client with optional private CA trust and an
+// explicit signing region for providers such as Tigris and Cloudflare R2.
+func NewS3WithCARegion(endpoint, accessKey, secretKey, bucket string, secure bool, caPEM, region string) (*S3, error) {
 	endpoint = strings.TrimPrefix(strings.TrimPrefix(endpoint, "http://"), "https://")
-	client, err := minio.New(endpoint, &minio.Options{Creds: credentials.NewStaticV4(accessKey, secretKey, ""), Secure: secure})
+	options := minio.Options{Creds: credentials.NewStaticV4(accessKey, secretKey, ""), Secure: secure, Region: strings.TrimSpace(region)}
+	if strings.TrimSpace(caPEM) != "" {
+		roots := x509.NewCertPool()
+		if !roots.AppendCertsFromPEM([]byte(caPEM)) {
+			return nil, errors.New("S3_CA_CERT must contain a valid PEM certificate")
+		}
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots}
+		options.Transport = transport
+	}
+	client, err := minio.New(endpoint, &options)
 	if err != nil {
 		return nil, err
 	}

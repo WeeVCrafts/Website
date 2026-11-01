@@ -21,6 +21,8 @@ type Config struct {
 	MeiliAddress            string
 	MeiliAPIKey             string
 	S3Address               string
+	S3CACert                string
+	S3Region                string
 	SecureCookies           bool
 	RazorpayKeyID           string
 	RazorpayKeySecret       string
@@ -70,6 +72,8 @@ func FromEnv() Config {
 		MeiliAddress:            env("MEILI_ADDR", "localhost:7700"),
 		MeiliAPIKey:             env("MEILI_API_KEY", ""),
 		S3Address:               env("S3_ADDR", "localhost:3900"),
+		S3CACert:                env("S3_CA_CERT", ""),
+		S3Region:                env("S3_REGION", ""),
 		SecureCookies:           boolEnv("WECRATFS_SECURE_COOKIES", environment == "production"),
 		RazorpayKeyID:           env("RAZORPAY_KEY_ID", ""),
 		RazorpayKeySecret:       env("RAZORPAY_KEY_SECRET", ""),

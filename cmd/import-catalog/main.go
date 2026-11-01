@@ -98,7 +98,7 @@ func run() error {
 		fmt.Println("Dry run complete. No records, stock, credentials or media were changed.")
 		return nil
 	}
-	objectStorage, err := storage.NewS3(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure)
+	objectStorage, err := storage.NewS3WithCARegion(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure, cfg.S3CACert, cfg.S3Region)
 	if err != nil {
 		return err
 	}

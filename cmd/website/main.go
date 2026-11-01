@@ -166,7 +166,7 @@ func main() {
 	paymentService := applicationpayment.NewService(webhookVerifier, paymentRepository)
 	checkoutPaymentService := applicationpayment.NewCheckoutVerificationService(paymentGateway, paymentRepository, paymentRepository)
 	refundService := applicationpayment.NewRefundService(refundGateway, paymentRepository)
-	mediaStorage, storageErr := storageadapter.NewS3(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure)
+	mediaStorage, storageErr := storageadapter.NewS3WithCARegion(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure, cfg.S3CACert, cfg.S3Region)
 	if storageErr != nil {
 		logger.Warn("S3 media adapter unavailable", "error", storageErr)
 	} else if err := mediaStorage.EnsureBucket(startupContext); err != nil {
