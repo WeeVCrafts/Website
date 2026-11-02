@@ -89,9 +89,13 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
     <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
 <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
+if p.CanSecurity {
+ <link rel="stylesheet" href={assets.URL("css/superadmin.min.css")}/>
+ <script defer src={assets.URL("js/superadmin.min.js")}></script>
+}
 </head>
 
-    <body class="admin-body">
+    <body class={"admin-body",templ.KV("superadmin-body",p.CanSecurity)}>
 
       <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
 
@@ -107,6 +111,9 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
           <main id="admin-main" class="admin-content">
 
+            if p.CanSecurity {
+             @SuperAdminHeading(p)
+            } else {
             <section class="admin-page-heading">
 
               <div class="admin-heading-copy">
@@ -124,6 +131,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
               <div class="admin-heading-note"><span>More artisans.<br/>More stories.<br/><strong>A kinder<br/>tomorrow.</strong></span></div>
 
             </section>
+            }
 
             if p.Notice != "" {
 
@@ -137,6 +145,7 @@ templ AdminDocument(p viewmodels.AdminPage) {
 
             }
 
+            @UserManagementNavigation(p)
             { children... }
 
             @components.PortalPagination(p.Pagination)
@@ -193,13 +202,7 @@ templ Sidebar(p viewmodels.AdminPage) {
 
       if p.CanSecurity {
 
-       @AdminNav("users", "Users", "manage_accounts", p.NavActive, p.PortalRoot + "/users")
-
-       @AdminNav("roles", "Roles", "badge", p.NavActive, p.PortalRoot + "/roles")
-
-       @AdminNav("security", "Security", "admin_panel_settings", p.NavActive, p.PortalRoot + "/security")
-
-       @AdminNav("settings", "Settings", "settings", p.NavActive, p.PortalRoot + "/settings")
+       @AdminNav("user-management", "User Management", "manage_accounts", userManagementNavKey(p), p.PortalRoot + "/users")
 
       }
 
@@ -215,7 +218,7 @@ templ Sidebar(p viewmodels.AdminPage) {
 
 templ AdminNav(key, label, icon, current, href string) {
 
-  <a class={ navClass(key, current) } href={ href } aria-current={ ariaCurrent(key == current) }><span class="material-symbols-outlined" aria-hidden="true">{ icon }</span><span>{ label }</span></a>
+  <a class={ navClass(key, current) } href={ href } aria-label={label} aria-current={ ariaCurrent(key == current) }><span class="material-symbols-outlined" aria-hidden="true">{ icon }</span><span class="admin-nav-label">{ label }</span><span class="admin-nav-tooltip" aria-hidden="true">{label}</span></a>
 
 }
 
@@ -223,7 +226,7 @@ templ AdminNav(key, label, icon, current, href string) {
 
 templ AdminTableEmpty(message, hint string) {
 
-  <div class="admin-table-empty" role="status"><span class="material-symbols-outlined" aria-hidden="true">search_off</span><strong>{ message }</strong><small>{ hint }</small></div>
+  <div class="admin-table-empty" role="status"><span class="material-symbols-outlined" aria-hidden="true">search_off</span><img class="superadmin-empty-art" src={assets.URL("images/admin/package.webp")} width="220" height="147" alt="" loading="lazy"/><strong>{ message }</strong><small>{ hint }</small></div>
 
 }
 
@@ -232,6 +235,9 @@ templ AdminTableEmpty(message, hint string) {
 templ AdminHeader(p viewmodels.AdminPage) {
 
   <header class="admin-header">
+    if p.CanSecurity {
+     <button class="admin-rail-toggle" type="button" data-superadmin-toggle aria-label="Collapse sidebar" aria-controls="admin-sidebar" aria-expanded="true"><span class="material-symbols-outlined" aria-hidden="true">menu_open</span></button>
+    }
 
     <button class="admin-menu-button" type="button" x-ref="adminMenu" aria-label="Open admin navigation" aria-controls="admin-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.adminSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
 
@@ -310,6 +316,9 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
     <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span><div><h2>{ roleManagementHeading(p) }</h2><p>Search active accounts, review access at a glance, and open an account to edit its details.</p></div></div></div>
 
     <form method="get" action={ p.PortalRoot + "/users" } class="user-management-filters">
+      if p.Insights.Days>0 {
+       <input type="hidden" name="range" value={fmt.Sprint(p.Insights.Days)}/>
+      }
       <label class="user-management-search"><span>Search accounts</span><input type="search" name="q" value={ p.Query } maxlength="120" placeholder="Name, email or role"/></label>
       <label><span>Status</span><select name="status"><option value="" selected?={ p.StatusFilter == "" }>All statuses</option><option value="active" selected?={ p.StatusFilter == "active" }>Active</option><option value="suspended" selected?={ p.StatusFilter == "suspended" }>Suspended</option><option value="pending" selected?={ p.StatusFilter == "pending" }>Pending</option></select></label>
       <label><span>Role</span><select name="role"><option value="" selected?={ p.RoleFilter == "" }>All roles</option><option value="customer" selected?={ p.RoleFilter == "customer" }>Customer</option><option value="seller" selected?={ p.RoleFilter == "seller" }>Seller</option><option value="admin" selected?={ p.RoleFilter == "admin" }>Admin</option><option value="super_admin" selected?={ p.RoleFilter == "super_admin" }>Super Admin</option></select></label>
@@ -340,7 +349,7 @@ templ RoleAssignmentList(p viewmodels.AdminPage) {
           <tbody>
             for _, assignment := range p.RoleAssignments {
               <tr>
-                <td data-label="Account"><div class="user-account-cell"><strong>{ assignment.DisplayName }</strong><span>{ assignment.Email }</span></div></td>
+                <td data-label="Account"><div class="user-account-cell" data-initials={displayInitials(assignment.DisplayName)}><strong>{ assignment.DisplayName }</strong><span>{ assignment.Email }</span></div></td>
                 <td data-label="Role"><span class="account-role">{ components.StatusLabel(accountRole(assignment.Roles)) }</span></td>
                 <td data-label="Status"><span class={ "ui-status " + components.StatusTone(assignment.Status) }>{ components.StatusLabel(assignment.Status) }</span></td>
                 <td data-label="Last active"><time>{ assignment.LastActive }</time></td>
@@ -502,7 +511,8 @@ templ Workspace(p viewmodels.AdminPage) {
 
             for _, item := range p.Products {
 
-              <div class="table-row"><span class="person-cell"><img width="1254" height="1254" src={ item.Image } alt=""/>{ item.Name }<small>{ item.SKU }</small></span><span>{ item.Seller }</span><span>{ item.Category }</span><strong>{ item.Price }</strong><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><a class="table-action" href={ "/admin/brands?notice=" + actionNotice("Catalog item opened ", item.Name) }>Open</a></div>
+              <div class="table-row"><span class="person-cell"><img width="1254" height="1254" src={ item.Image } alt=""/>{ item.Name }
+<small>{ item.SKU }</small></span><span>{ item.Seller }</span><span>{ item.Category }</span><strong>{ item.Price }</strong><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span><a class="table-action" href={ "/admin/brands?notice=" + actionNotice("Catalog item opened ", item.Name) }>Open</a></div>
 
             }
 
@@ -661,6 +671,7 @@ templ StatGrid(p viewmodels.AdminPage) {
     }
 
   </section>
+  @SuperAdminCharts(p)
 
 }
 
@@ -668,7 +679,11 @@ templ StatGrid(p viewmodels.AdminPage) {
 
 templ StatCard(stat viewmodels.AdminStat) {
 
-  <article class="admin-stat-card"><span class="admin-stat-icon material-symbols-outlined" aria-hidden="true">{ stat.Icon }</span><div><strong>{ stat.Value }</strong><span>{ stat.Label }</span><small class={ trendClass(stat.Positive) }><span class="material-symbols-outlined" aria-hidden="true">{ trendIcon(stat.Positive) }</span>{ stat.Delta } <i>{ stat.Period }</i></small></div></article>
+  <article class={"admin-stat-card",templ.KV("admin-stat-card--money",statIsMoney(stat.Value))}><span class="admin-stat-icon material-symbols-outlined" aria-hidden="true">{ stat.Icon }</span><div><strong>{ stat.Value }</strong><span>{ stat.Label }</span>
+if stat.Delta!="" {
+<small class={ trendClass(stat.Positive) }><span class="material-symbols-outlined" aria-hidden="true">{ trendIcon(stat.Positive) }</span>{ stat.Delta } <i>{ stat.Period }</i></small>
+}
+</div></article>
 
 }
 
@@ -714,7 +729,8 @@ templ Dashboard(p viewmodels.AdminPage) {
 
         for _, item := range p.Donut {
 
-          <span><i class={ "dot-" + item.Color }></i>{ item.Label }<b>{ item.Value }</b></span>
+          <span><i class={ "dot-" + item.Color }></i>{ item.Label }
+<b>{ item.Value }</b></span>
 
         }
 
@@ -892,7 +908,8 @@ templ Returns(p viewmodels.AdminPage) {
 
       for i, item := range p.Returns {
 
-        <a class={ "return-queue-item " + returnClass(item.Status) } href={ "/admin/returns?notice=" + actionNotice("Selected return ", item.Number) }><img width="1254" height="1254" src={ item.Image } alt=""/><span><strong>{ item.Number }</strong><small>{ item.Customer }<br/>{ item.Reason }</small></span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></a>
+        <a class={ "return-queue-item " + returnClass(item.Status) } href={ "/admin/returns?notice=" + actionNotice("Selected return ", item.Number) }><img width="1254" height="1254" src={ item.Image } alt=""/><span><strong>{ item.Number }</strong><small>{ item.Customer }
+<br/>{ item.Reason }</small></span><span class={ "status " + statusClass(item.Status) }>{ item.Status }</span></a>
 
         if i == 4 {
 

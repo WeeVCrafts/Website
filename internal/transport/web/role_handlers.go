@@ -207,7 +207,7 @@ func (h *Handler) adminRoleUserUpdate(w http.ResponseWriter, r *http.Request) {
 		target := "/super-admin/users"
 		if next, e := url.Parse(r.FormValue("return_to")); e == nil && !next.IsAbs() && next.Host == "" && next.Path == target && !strings.ContainsAny(next.String(), "\\\r\n") {
 			query := url.Values{}
-			for _, key := range []string{"q", "status", "role", "page"} {
+			for _, key := range []string{"q", "status", "role", "page", "range"} {
 				if value := next.Query().Get(key); value != "" {
 					query.Set(key, value)
 				}

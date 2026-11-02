@@ -49,6 +49,9 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 		return true
 	}
 	if r.Method == http.MethodGet && !sellerReply {
+		if role == identity.RoleSuperAdmin {
+			r = withSuperAdminContext(projectionRequest(r))
+		}
 		if path == root+"/support/orders" || path == root+"/support/customers" {
 			redirectPortalDestination(w, r, root+"/"+strings.TrimPrefix(path, root+"/support/"))
 			return true
@@ -67,6 +70,13 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 		}
 		page := viewmodels.CompanySupportPage{Support: support, RequestKey: rand.Text()}
 		page.Admin = viewmodels.AdminPage{ActorID: session.UserID, Active: "support", NavActive: "support", Title: "Support & delivery", Subtitle: "Review the case, confirm with the seller and keep the customer informed.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, CanSecurity: role == identity.RoleSuperAdmin, Pagination: support.Pagination, Notice: r.URL.Query().Get("notice"), DataWarning: support.DataWarning}
+		if role == identity.RoleSuperAdmin {
+			page.Support.StatusFilter = supportInsightFilter(r)
+			page.Support.Range = r.URL.Query().Get("range")
+			page.Admin.Query = support.Query
+			h.superAdminInsights(r, &page.Admin)
+			page.Admin.DataWarning = projectionWarning(r, page.Admin.DataWarning)
+		}
 		var err error
 		before, _ := strconv.ParseInt(r.URL.Query().Get("coordination_before"), 10, 64)
 		page.QueueStatus = r.URL.Query().Get("coordination_status")

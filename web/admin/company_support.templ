@@ -10,6 +10,9 @@ import (
 
 templ CompanySupport(p viewmodels.CompanySupportPage) {
  @AdminDocument(p.Admin) {
+  if p.Admin.CanSecurity {
+@StatGrid(p.Admin)
+}
   @supportportal.CaseContent(p.Support,p.Admin.PortalRoot+"/support")
   if p.Support.SelectedCase.DatabaseID>0 {
    if p.Support.SelectedCase.Order!="" {
@@ -26,8 +29,7 @@ if len(p.Sellers)==0 {
 } else if p.Support.SelectedCase.Status!="closed" && p.Support.SelectedCase.Status!="resolved" {
 <form method="post" action={ p.Admin.PortalRoot+"/support/confirmations/create" }><input type="hidden" name="csrf_token" value={ p.Admin.CSRFToken }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(p.Support.SelectedCase.DatabaseID) }/><input type="hidden" name="request_key" value={ p.RequestKey }/><label for="confirmation-seller">Seller for this order</label><select id="confirmation-seller" name="seller_id" required>
 for _, seller := range p.Sellers {
-<option value={ fmt.Sprint(seller.ID) }>{ seller.Name }
-</option>
+<option value={ fmt.Sprint(seller.ID) }>{ seller.Name }</option>
 }
 </select><label for="confirmation-question">What should the seller confirm?</label><textarea id="confirmation-question" name="message" rows="4" maxlength="4000" required></textarea><button type="submit" class="admin-button primary">Send private request</button></form>
 } else {

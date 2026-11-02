@@ -31,7 +31,15 @@ templ LiveCases(p viewmodels.SupportPortalPage) {
 }
 
 templ CaseContent(p viewmodels.SupportPortalPage, root string) {
-		<form class="support-directory-toolbar" method="get" action={ root }><label class="sr-only" for="support-live-search">Search cases</label><input id="support-live-search" name="q" value={ p.Query } placeholder="Search case ID, subject, status or order"/><button class="support-button primary" type="submit">Search</button><a class="support-button outline" href={ root }>Clear</a></form>
+		<form class="support-directory-toolbar" method="get" action={ root }><label class="sr-only" for="support-live-search">Search cases</label><input id="support-live-search" name="q" value={ p.Query } placeholder="Search case ID, subject, status or order"/>
+   if root=="/super-admin/support" {
+    <label class="sr-only" for="support-status-filter">Case status</label><select id="support-status-filter" name="status"><option value="">All statuses</option>
+     for _,status:=range []string{"open","in_progress","waiting_customer","resolved","closed"} {
+      <option value={status} selected?={p.StatusFilter==status}>{components.StatusLabel(status)}</option>
+     }
+    </select><label class="sr-only" for="support-range-filter">Case date range</label><select id="support-range-filter" name="range"><option value="">All time</option><option value="7" selected?={p.Range=="7"}>Last 7 days</option><option value="30" selected?={p.Range=="30"}>Last 30 days</option><option value="90" selected?={p.Range=="90"}>Last 90 days</option></select>
+   }
+   <button class="support-button primary" type="submit">Search</button><a class="support-button outline" href={ root }>Clear</a></form>
 		if p.SelectedCase.DatabaseID == 0 {
 <section class="support-panel"><div class="support-panel-heading"><div><h2>Cases</h2><p>Open a case to read the conversation, reply or update its status.</p></div></div>
 @CompanyCaseTable(p, root)

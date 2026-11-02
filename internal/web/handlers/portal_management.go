@@ -68,6 +68,10 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 		role = domainidentity.RoleSuperAdmin
 	}
 	if section == "settings" || (section == "category-management" && action != "" && action != "assign-products") {
+		if section == "settings" && role == domainidentity.RoleSuperAdmin && r.Method == http.MethodGet && action == "" {
+			h.renderAdmin(w, requestWithPath(r, "/admin/settings"), session.UserID, role, root, h.userDisplayName(r, session.UserID), session.CSRFToken)
+			return true
+		}
 		if r.Method == http.MethodGet {
 			http.Redirect(w, r, root+"/storefront?tab="+map[string]string{"settings": "settings", "category-management": "categories"}[section], http.StatusSeeOther)
 		} else {

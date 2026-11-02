@@ -77,6 +77,7 @@ func (h *LivePortalHandler) adminUserExport(w http.ResponseWriter, r *http.Reque
 	}
 	defer rows.Close()
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Disposition", "attachment; filename=weevcrafts-users.csv")
 	writer := csv.NewWriter(w)
 	_ = writer.Write([]string{"Account ID", "Display name", "Email", "Role", "Status", "Last active", "Created"})
@@ -86,7 +87,7 @@ func (h *LivePortalHandler) adminUserExport(w http.ResponseWriter, r *http.Reque
 			http.Error(w, "User export unavailable", http.StatusServiceUnavailable)
 			return
 		}
-		_ = writer.Write([]string{strconv.FormatInt(user.ID, 10), user.DisplayName, user.Email, strings.Join(user.Roles, ", "), user.Status, user.LastActive, user.CreatedAt})
+		_ = writer.Write([]string{strconv.FormatInt(user.ID, 10), csvSafe(user.DisplayName), csvSafe(user.Email), strings.Join(user.Roles, ", "), user.Status, user.LastActive, user.CreatedAt})
 	}
 	if err := rows.Err(); err != nil {
 		http.Error(w, "User export unavailable", http.StatusServiceUnavailable)

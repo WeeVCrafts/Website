@@ -219,6 +219,9 @@ func accountRole(roles []string) string {
 func userFilterURL(p viewmodels.AdminPage, status, role string) string {
 	u := url.URL{Path: p.PortalRoot + "/users"}
 	query := u.Query()
+	if p.Insights.Days > 0 {
+		query.Set("range", strconv.Itoa(p.Insights.Days))
+	}
 	if strings.TrimSpace(p.Query) != "" {
 		query.Set("q", p.Query)
 	}

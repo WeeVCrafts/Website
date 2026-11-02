@@ -14,7 +14,7 @@ templ PortalDashboardView(p viewmodels.AdminPage) {
 			@components.TaskGuidance("TODAY'S FOCUS", "Reconcile the money queue first", "Review unsettled transactions and settlements, then return here for the next finance handoff.", p.PortalRoot + "/finance", "Open finance")
 		} else if p.IsOperations {
 			@components.TaskGuidance("TODAY'S FOCUS", "Resolve delivery exceptions first", "Review returns and fulfilment exceptions, complete the handoff, then return here for the next priority.", p.PortalRoot + "/returns", "Open returns")
-		} else {
+		} else if !p.CanSecurity {
 			@components.TaskGuidance("TODAY'S FOCUS", "Work the operational queues first", "Open the queue that needs a decision, complete the handoff, then return here for the next priority.", p.PortalRoot + "/orders", "Open orders")
 		}
 		if p.IsFinance {
@@ -34,7 +34,7 @@ templ PortalDashboardView(p viewmodels.AdminPage) {
 			</section>
 			<section class="admin-two-grid">
 				@PortalSellerList(p)
-				<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Create or edit accounts, assign access, and review security activity.</p></div></div></div><nav class="ui-actions" aria-label="Identity and access"><a class="admin-button primary" href={ p.PortalRoot + "/users" }>Manage accounts</a><a class="admin-button secondary" href={ p.PortalRoot + "/roles" }>Assign roles</a><a class="admin-button secondary" href={ p.PortalRoot + "/security" }>Security activity</a></nav></article>
+					<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Review user accounts, roles and audited access changes.</p></div></div></div><img class="superadmin-access-art" src="/assets/images/admin/access.webp" width="150" height="90" alt=""/><nav class="ui-actions" aria-label="Identity and access"><a class="admin-button primary" href={ p.PortalRoot + "/users" }>Manage accounts</a><a class="admin-button secondary" href={ p.PortalRoot + "/roles" }>Assign roles</a><a class="admin-button secondary" href={ p.PortalRoot + "/security" }>Security activity</a></nav></article>
 			</section>
 		} else {
 			<section class="admin-two-grid">
@@ -230,8 +230,12 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 templ PortalInventory(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
+		<section class="superadmin-inventory-layout">
 		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">warehouse</span><div><h2>Marketplace inventory</h2><p>Current variant stock and reservations across Indian sellers.</p></div></div></div>
 			<p class="admin-page-note">Low stock is a signal for variants with 5 or fewer available units. Stock changes preserve reserved units and record an audit reason.</p>
+			if p.CanSecurity {
+			 @SuperAdminQueueFilters(p,"inventory")
+			}
 			<div class="ui-table-region" role="region" tabindex="0" aria-label="Marketplace inventory"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">On hand</th><th scope="col">Reserved</th><th scope="col">Available</th><th scope="col">Stock signal</th><th scope="col">Inventory value</th></tr></thead><tbody>
 				for _, item := range p.Inventory {
 					<tr><th scope="row" class="record-title"><span class="person-cell"><img width="80" height="80" src={ item.Image } alt=""/>{ item.Name }</span></th><td data-label="SKU">{ item.SKU }</td><td data-label="On hand" class="numeric">{ item.Stock }</td><td data-label="Reserved" class="numeric">{ item.Reserved }</td><td data-label="Available" class="numeric">{ item.Available }
@@ -249,6 +253,13 @@ templ PortalInventory(p viewmodels.AdminPage) {
 					@AdminTableEmpty("No active product variants are available.", "Inventory will appear after sellers create products and variants.")
 				}
 		</article>
+		if p.CanSecurity {
+		 @InsightDistribution(p,"Stock health","variants")
+		}
+		</section>
+		if p.CanSecurity {
+@SuperAdminInventoryExtras(p)
+}
 	}
 }
 
@@ -268,14 +279,22 @@ templ PortalOrders(p viewmodels.AdminPage) {
 templ PortalReturns(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
+		if p.CanSecurity {
+@SuperAdminQueueFilters(p,"returns")
+}
 		@PortalReturnList(p)
+		if p.CanSecurity {
+@SuperAdminReturnGuidance(p)
+}
 	}
 }
 
 templ PortalFinance(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		<nav class="workspace-tabs" aria-label="Finance sections">
- <a href={ p.PortalRoot+"/payments" }>Payments</a><a href={ p.PortalRoot+"/failed-payments" }>Failed payments</a><a href={ p.PortalRoot+"/refunds" }>Refunds</a><a href={ p.PortalRoot+"/settlements" }>Settlements</a><a href={ p.PortalRoot+"/commission-rules" }>Commission rules</a><a href={ p.PortalRoot+"/finance-reconciliation" }>Reconciliation</a>
+ for _,tab:=range []struct{Path,Label string}{{"payments","Payments"},{"failed-payments","Failed payments"},{"refunds","Refunds"},{"settlements","Settlements"},{"commission-rules","Commission rules"},{"finance-reconciliation","Reconciliation"}} {
+  <a class={workspaceTabClass(p.Workspace==tab.Path || ((p.Workspace=="finance" || p.Workspace=="") && tab.Path=="payments"))} href={financeSectionURL(p,tab.Path)} aria-current={ariaCurrent(p.Workspace==tab.Path || ((p.Workspace=="finance" || p.Workspace=="") && tab.Path=="payments"))}>{tab.Label}</a>
+ }
  </nav>
  @StatGrid(p)
 		if p.Workspace == "failed-payments" {
@@ -333,16 +352,34 @@ templ PortalMarketing(p viewmodels.AdminPage) {
 
 templ PortalAnalytics(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
-		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div></div>@StatGrid(p)</article>
+		if p.CanSecurity {
+		 @StatGrid(p)
+		 if !userManagementActive(p) {
+		  <section class="admin-two-grid"><article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div>@InsightRange(p)</div><div class="superadmin-rule">Counts reflect available live data. Recent activity and report exports use the selected date range.</div><div class="superadmin-activity-grid">
+for _,stat:=range p.Stats {
+<div><span class="material-symbols-outlined" aria-hidden="true">{stat.Icon}</span><strong>{stat.Value}</strong><span>{stat.Label}</span></div>
+}
+</div></article>@PortalAuditList(p)</section>
+		 }
+		} else {
+		 <article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>Marketplace activity</h2><p>Live counts from the operational database.</p></div></div></div>@StatGrid(p)</article>
+		}
  if p.CanSecurity {
 
-		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span><div><h2>Service configuration</h2><p>Runtime integrations configured for this deployment.</p></div></div></div>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span><div><h2>Service configuration</h2><p>Runtime integrations configured for this deployment.</p></div></div>
+if !userManagementActive(p) {
+<a class="admin-button secondary" href={superAdminExportURL(p,"analytics")}><span class="material-symbols-outlined" aria-hidden="true">download</span>Export report</a>
+}
+</div>
 			<div class="ui-table-region" role="region" tabindex="0" aria-label="Service configuration"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Service</th><th scope="col">Value</th><th scope="col">Purpose</th></tr></thead><tbody>
 				for _, config := range p.Configs {
 					<tr><th scope="row">{ config.Name }</th><td data-label="Value">{ config.Value }</td><td data-label="Purpose">{ config.Detail }</td></tr>
 				}
 			</tbody></table></div>
 		</article>
+ if userManagementActive(p) {
+<section class="admin-panel"><h2>System health</h2><p>Read-only service configuration. Deployment credentials and infrastructure settings remain managed by the operator.</p><nav class="ui-actions" aria-label="System health"><a class="admin-button secondary" href={p.PortalRoot+"/system-health"}>System health</a><a class="admin-button secondary" href={p.PortalRoot+"/search-indexing-health"}>Search health</a><a class="admin-button secondary" href={p.PortalRoot+"/worker-queue-health"}>Worker health</a></nav></section>
+}
  }
 	}
 }
@@ -437,26 +474,41 @@ templ OrderQueueRegion(orders []viewmodels.AdminOrder) {
 }
 
 templ PortalReturnList(p viewmodels.AdminPage) {
-	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Return requests</h2><p>Update return decisions in the persistent operations queue.</p></div></div></div>
-		<div class="portal-return-list">
-			for _, item := range p.Returns {
-				<section class="portal-return-item"><div><strong>{ item.Number } · { item.Customer }</strong><p>Order { item.Product } · { item.Reason }</p><small>Requested { item.Date } · { item.Amount }</small><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></div>
-					if p.Active=="dashboard" {
-<a class="admin-button secondary" href={ p.PortalRoot + "/returns" }>Review return</a>
-} else if item.Status == "pending" {
-						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
-					} else if item.Status == "approved" {
-						<form method="post" action={ p.PortalRoot + "/returns/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="request_id" value={ item.ID }/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark returned order received</button></form>
-					} else {
-						<p class="admin-page-note">This return request is closed for operations updates.</p>
-					}
-				</section>
-			}
-			if len(p.Returns) == 0 && p.DataWarning == "" {
-				@AdminTableEmpty("No return requests are open.", "Customer return requests will appear in this queue.")
-			}
-		</div>
-	</article>
+ if p.CanSecurity && p.Active=="returns" {
+  <article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Return requests</h2><p>Review requests, document decisions and coordinate the next steps.</p></div></div></div>
+   <div class="ui-table-region" role="region" tabindex="0" aria-label="Return requests"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Return ID</th><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Reason</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>
+    for _,item:=range p.Returns {
+     <tr><th scope="row">{item.Number}</th><td data-label="Order">{item.Product}</td><td data-label="Customer">{item.Customer}</td><td data-label="Reason">{item.Reason}<small class="return-request-date">Requested {item.Date} · {item.Amount}</small></td><td data-label="Status"><span class={"ui-status "+components.StatusTone(item.Status)}>{components.StatusLabel(item.Status)}</span></td><td data-label="Actions" class="row-actions"><details><summary>Manage return</summary>@PortalReturnActions(p,item)</details></td></tr>
+    }
+   </tbody></table></div>
+   if len(p.Returns)==0 && p.DataWarning=="" {
+    @AdminTableEmpty("No return requests are open.","Customer return requests will appear here when they are submitted. Use the filters to review other request statuses.")
+   }
+  </article>
+ } else {
+  <article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Return requests</h2><p>Update return decisions in the persistent operations queue.</p></div></div></div>
+   <div class="portal-return-list">
+    for _,item:=range p.Returns {
+     <section class="portal-return-item"><div><strong>{item.Number} · {item.Customer}</strong><p>Order {item.Product} · {item.Reason}</p><small>Requested {item.Date} · {item.Amount}</small><span class={"ui-status "+components.StatusTone(item.Status)}>{components.StatusLabel(item.Status)}</span></div>@PortalReturnActions(p,item)</section>
+    }
+    if len(p.Returns)==0 && p.DataWarning=="" {
+     @AdminTableEmpty("No return requests are open.","Customer return requests will appear in this queue.")
+    }
+   </div>
+  </article>
+ }
+}
+
+templ PortalReturnActions(p viewmodels.AdminPage,item viewmodels.AdminReturn) {
+ if p.Active=="dashboard" {
+  <a class="admin-button secondary" href={p.PortalRoot+"/returns"}>Review return</a>
+ } else if item.Status=="pending" {
+  <form method="post" action={p.PortalRoot+"/returns/status"}><input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="request_id" value={item.ID}/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
+ } else if item.Status=="approved" {
+  <form method="post" action={p.PortalRoot+"/returns/status"}><input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="request_id" value={item.ID}/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark returned order received</button></form>
+ } else {
+  <p class="admin-page-note">This return request is closed for operations updates.</p>
+ }
 }
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {

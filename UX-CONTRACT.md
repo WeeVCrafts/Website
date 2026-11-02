@@ -1,5 +1,29 @@
 # WeevCrafts UX contract
 
+## Super Admin workspaces — 2 November 2026
+
+User Management replaces the four separate sidebar entries for Users, Roles,
+Security and Settings. Internal tabs retain `/super-admin/users`, `/roles`,
+`/security` and `/settings`; related audit and health pages highlight the group.
+This supersedes earlier navigation descriptions requiring separate entries.
+Settings displays supported runtime configuration and health links.
+
+Desktop collapse preserves a 64px icon rail, accessible names and keyboard
+tooltips. Mobile navigation retains focus containment, backdrop/Escape dismissal,
+focus restoration and independently scrollable navigation. Desktop preference
+does not force the mobile drawer open.
+
+Charts use PostgreSQL aggregates with 7/30/90-day URL-backed ranges. Summaries
+are independent of table pagination. Account, inventory, return and support
+filters remain committed in URLs. Read-only CSV exports apply matching filters
+and protect spreadsheet cells from formula interpretation. Database failures
+display unavailable states; zero records display truthful empty states.
+
+Existing mutation endpoints and authorization own all operational changes.
+Account confirmations, audit reasons, session revocation, last-Super-Admin and
+deletion safeguards remain required. Reserved inventory stays protected. Finance
+only exposes existing ledger operations. No database migration is introduced.
+
 ## Seller responsive layout — 23 October 2026
 
 Short seller action labels stay on one line; complete controls move to the next

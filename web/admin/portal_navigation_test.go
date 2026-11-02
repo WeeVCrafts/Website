@@ -16,7 +16,7 @@ func TestRolePortalsRenderDistinctNavigationAndSignedInIdentity(t *testing.T) {
 		visible, invisible []string
 	}{
 		{name: "admin", page: viewmodels.AdminPage{PortalRoot: "/admin", PortalLabel: "Admin", RoleLabel: "Admin", DisplayName: "Maya Admin", CanFinance: true}, visible: []string{"Maya Admin", `href="/admin/orders"`, `href="/admin/support"`, `href="/admin/finance"`}, invisible: []string{`href="/admin/users"`, `href="/admin/security"`, `href="/admin/settings"`}},
-		{name: "super admin", page: viewmodels.AdminPage{PortalRoot: "/super-admin", PortalLabel: "Super Admin", RoleLabel: "Super Admin", DisplayName: "Ravi Admin", CanFinance: true, CanSecurity: true}, visible: []string{`href="/super-admin/users"`, `href="/super-admin/roles"`, `href="/super-admin/security"`, `href="/super-admin/settings"`}, invisible: []string{`href="/super-admin/storefront`}},
+		{name: "super admin", page: viewmodels.AdminPage{PortalRoot: "/super-admin", PortalLabel: "Super Admin", RoleLabel: "Super Admin", DisplayName: "Ravi Admin", CanFinance: true, CanSecurity: true}, visible: []string{`aria-label="User Management"`, `href="/super-admin/users"`, `data-superadmin-toggle`}, invisible: []string{`href="/super-admin/storefront`, `aria-label="Users"`, `aria-label="Roles"`, `aria-label="Security"`, `aria-label="Settings"`}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

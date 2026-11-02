@@ -37,6 +37,25 @@ components:
 
 # WeevCrafts visual standards
 
+## Super Admin reference redesign — 2 November 2026
+
+The eight accepted images in `superadmin-screens/` define the Super Admin visual
+direction: ivory workspace, forest headings, softly tinted summary cards,
+outlined panels and decorative marketplace illustrations. Text, data, SVG charts,
+tables and controls remain native. Decorative WebP assets are separate from data.
+`superadmin.css` scopes these conventions to `.superadmin-body`.
+
+The expanded sidebar retains its existing identity and spacing. At desktop widths
+above 960px it can collapse to a 64px icon rail with labelled links and focus/hover
+tooltips; local storage remembers this presentation preference. Mobile retains
+the existing navigation drawer. User Management groups Accounts, Roles, Security
+and Settings, retaining their existing URLs. Storefront remains excluded.
+
+Controls have 44px touch targets. Complete actions wrap between rows; labels do
+not break within buttons. Tables become labelled records at 720px and below.
+Long identities and descriptive content wrap naturally. Shared Admin, Seller and
+Customer pages retain their established visual conventions.
+
 ## Seller reflow — 23 October 2026
 
 Seller toolbars wrap complete controls instead of compressing button labels.

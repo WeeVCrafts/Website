@@ -5,6 +5,7 @@ import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	Insights                                                                         AdminInsights
 	Pagination                                                                       PortalPagination
 	ActorID                                                                          int64
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
@@ -260,6 +261,7 @@ type SellerTeamMember struct {
 // contact and transaction fields are intentionally minimized or masked to
 // reflect the PRD's support data boundary.
 type SupportPortalPage struct {
+	StatusFilter                                       string
 	Pagination                                         PortalPagination
 	DataWarning                                        string
 	Active, Title, Subtitle, Query, Range, Tab, Notice string

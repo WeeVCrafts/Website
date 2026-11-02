@@ -355,6 +355,18 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	currentRole := roles[0]
+	if r.Method == http.MethodGet && (r.URL.Path == "/super-admin/returns/export" || r.URL.Path == "/super-admin/analytics/export") {
+		if currentRole != domainidentity.RoleSuperAdmin {
+			denyPortalAccess(w, r)
+			return
+		}
+		kind := "reports"
+		if r.URL.Path == "/super-admin/returns/export" {
+			kind = "returns"
+		}
+		h.superAdminExport(w, r, kind)
+		return
+	}
 	if r.URL.Path == "/super-admin/users/export" && r.Method == http.MethodGet {
 		if currentRole != domainidentity.RoleSuperAdmin {
 			denyPortalAccess(w, r)
@@ -795,6 +807,9 @@ func (h *LivePortalHandler) renderWorkspaces(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, actorID int64, role domainidentity.Role, root, displayName, csrfToken string) {
+	if role == domainidentity.RoleSuperAdmin {
+		r = withSuperAdminContext(r)
+	}
 	r = projectionRequest(r)
 	page := h.adminPage(r, actorID, role)
 	page.PortalRoot = root
@@ -820,6 +835,24 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		page.NavActive = page.Workspace
 	}
 	page.Stats = h.portalStats(r, role)
+	if role == domainidentity.RoleSuperAdmin {
+		h.superAdminInsights(r, &page)
+		if isUserManagementWorkspace(page) {
+			page.NavActive = "user-management"
+		}
+		if page.Workspace == "settings" {
+			page.Title = "Settings"
+			page.Subtitle = "Review runtime configuration and service readiness."
+		}
+		if page.Workspace == "roles" {
+			page.Title = "Roles & permissions"
+			page.Subtitle = "Review access assignments and the four account roles."
+		}
+		if page.Active == "analytics" && page.Workspace != "settings" {
+			page.Title = "Analytics & reports"
+			page.Subtitle = "Marketplace activity, operational insights and service readiness."
+		}
+	}
 	page.DataWarning = projectionWarning(r, page.DataWarning)
 	if page.DataWarning != "" {
 		page.Stats = nil
@@ -1154,7 +1187,8 @@ func (h *LivePortalHandler) adminInventory(r *http.Request) []viewmodels.AdminIn
 		JOIN products p ON p.id = pv.product_id
 		LEFT JOIN inventory_stock stock ON stock.variant_id = pv.id
 		WHERE pv.status = 'active' AND ($1='' OR concat_ws(' ',p.name,pv.sku,CASE WHEN COALESCE(stock.available_quantity,0)<=5 THEN 'low_stock' ELSE 'in_stock' END) ILIKE '%'||$1||'%')
-		ORDER BY p.name, pv.id`, portalQuery(r.URL.Query().Get("q")))
+		AND (NOT $3::boolean OR $2='' OR ($2='in_stock' AND COALESCE(stock.available_quantity,0)>5) OR ($2='low_stock' AND COALESCE(stock.available_quantity,0) BETWEEN 1 AND 5) OR ($2='out_of_stock' AND COALESCE(stock.available_quantity,0)=0))
+		ORDER BY p.name, pv.id`, portalQuery(r.URL.Query().Get("q")), stockInsightFilter(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1282,7 +1316,7 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 }
 
 func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminReturn {
-	rows, err := h.projectionRows(r, "admin-returns", `SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.status,o.total_cents FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') ORDER BY rr.created_at DESC,rr.id DESC`, portalQuery(r.URL.Query().Get("q")))
+	rows, err := h.projectionRows(r, "admin-returns", `SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.status,o.total_cents,rr.created_at FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND (NOT $4::boolean OR (($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day')) ORDER BY rr.created_at DESC,rr.id DESC`, portalQuery(r.URL.Query().Get("q")), returnInsightFilter(r), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1292,15 +1326,16 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 		var id int64
 		var number, customer, reason, status string
 		var amount int64
-		if rows.Scan(&id, &number, &customer, &reason, &status, &amount) == nil {
-			result = append(result, viewmodels.AdminReturn{ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Amount: money(amount), Image: "/assets/images/customer/terracotta-lamp.webp"})
+		var created time.Time
+		if rows.Scan(&id, &number, &customer, &reason, &status, &amount, &created) == nil {
+			result = append(result, viewmodels.AdminReturn{ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Date: created.Format("2 Jan 2006"), Amount: money(amount), Image: "/assets/images/customer/terracotta-lamp.webp"})
 		}
 	}
 	return result
 }
 
 func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.AdminTransaction {
-	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r))
+	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) AND (NOT $4::boolean OR pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day') ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1834,8 +1869,8 @@ func (h *LivePortalHandler) adminSettlements(r *http.Request) []viewmodels.Admin
 	       COUNT(DISTINCT sl.order_id) FILTER (WHERE sl.entry_type='sale')
 		FROM seller_settlements ss JOIN sellers s ON s.id=ss.seller_id
 		LEFT JOIN seller_ledger sl ON sl.settlement_id=ss.id
- WHERE ($1='' OR concat_ws(' ',s.display_name,ss.reference,ss.status) ILIKE '%'||$1||'%')
-		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC`, portalQuery(r.URL.Query().Get("q")))
+ WHERE ($1='' OR concat_ws(' ',s.display_name,ss.reference,ss.status) ILIKE '%'||$1||'%') AND (NOT $3::boolean OR ss.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($2::int-1)*INTERVAL '1 day')
+		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC`, portalQuery(r.URL.Query().Get("q")), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1996,7 +2031,7 @@ func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, st
 }
 
 func (h *LivePortalHandler) adminAudit(r *http.Request) []viewmodels.AdminAuditEntry {
-	rows, err := h.projectionRows(r, "admin-audit", `SELECT created_at, COALESCE(actor_id::text,''), action, resource_type, resource_id FROM audit_logs WHERE ($1='' OR concat_ws(' ',actor_id::text,action,resource_type,resource_id) ILIKE '%'||$1||'%') ORDER BY id DESC`, portalQuery(r.URL.Query().Get("q")))
+	rows, err := h.projectionRows(r, "admin-audit", `SELECT created_at, COALESCE(actor_id::text,''), action, resource_type, resource_id FROM audit_logs WHERE ($1='' OR concat_ws(' ',actor_id::text,action,resource_type,resource_id) ILIKE '%'||$1||'%') AND (NOT $3::boolean OR created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($2::int-1)*INTERVAL '1 day') ORDER BY id DESC`, portalQuery(r.URL.Query().Get("q")), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -2702,7 +2737,7 @@ func (h *LivePortalHandler) supportCases(r *http.Request) []viewmodels.SupportPo
 	if selectedID > 0 {
 		projectionKey = "support-selected"
 	}
-	rows, err := h.projectionRows(r, projectionKey, `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role IN ('admin','super_admin','support_agent') ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE WHERE ($1='' OR concat_ws(' ',t.ticket_number,t.subject,u.display_name,COALESCE(o.order_number,''),t.status,t.priority) ILIKE '%'||$1||'%') AND ($2<>'orders' OR t.order_id IS NOT NULL) AND ($3=0 OR t.id=$3) ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")), strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/"), selectedID)
+	rows, err := h.projectionRows(r, projectionKey, `SELECT t.id,t.ticket_number,t.subject,t.user_id,u.display_name,t.priority,t.created_at,t.status,t.message,t.agent_note,COALESCE(o.order_number,''),COALESCE(o.status,''),COALESCE(o.total_cents,0),COALESCE(pa.status,''),COALESCE(reply.body,'') FROM support_tickets t JOIN users u ON u.id=t.user_id LEFT JOIN orders o ON o.id=t.order_id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE LEFT JOIN LATERAL (SELECT body FROM support_ticket_messages WHERE ticket_id=t.id AND author_role IN ('admin','super_admin','support_agent') ORDER BY created_at DESC,id DESC LIMIT 1) reply ON TRUE WHERE ($1='' OR concat_ws(' ',t.ticket_number,t.subject,u.display_name,COALESCE(o.order_number,''),t.status,t.priority) ILIKE '%'||$1||'%') AND ($2<>'orders' OR t.order_id IS NOT NULL) AND ($3=0 OR t.id=$3) AND (NOT $6::boolean OR (($4='' OR t.status=$4) AND ($5::int=0 OR t.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($5::int-1)*INTERVAL '1 day'))) ORDER BY t.created_at DESC,t.id DESC`, portalQuery(r.URL.Query().Get("q")), strings.Trim(strings.TrimPrefix(r.URL.Path, "/support-portal"), "/"), selectedID, supportInsightFilter(r), supportInsightDays(r), superAdminRequest(r) && selectedID == 0)
 	if err != nil {
 		return nil
 	}
