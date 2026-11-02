@@ -147,6 +147,10 @@ func (h *LivePortalHandler) renderSellerSupportLive(w http.ResponseWriter, r *ht
 		http.Error(w, "seller confirmations could not be loaded", http.StatusServiceUnavailable)
 		return
 	}
+	if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*),COUNT(*) FILTER(WHERE sc.status='open') FROM seller_confirmations sc JOIN sellers s ON s.id=sc.seller_id WHERE s.owner_user_id=$1`, userID).Scan(&page.ConfirmationTotal, &page.AwaitingResponse); err != nil {
+		http.Error(w, "Seller summaries unavailable", http.StatusServiceUnavailable)
+		return
+	}
 	page.Confirmations = confirmations
 	if len(page.Confirmations) > 50 {
 		page.Confirmations = page.Confirmations[:50]

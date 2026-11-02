@@ -50,6 +50,9 @@ templ Document(p viewmodels.CustomerPage) {
       <link rel="stylesheet" href={ assets.URL("css/storefront-reference.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/auth-gallery.min.css") }/>
+      if p.SellerNotifications {
+ <link rel="stylesheet" href={ assets.URL("css/seller-reference.min.css") }/>
+ }
       <noscript><style>/* Optional provider controls need JavaScript; native forms remain usable. */[data-firebase-google-panel],[data-firebase-link]{display:none!important}@media(max-width:800px){.storefront-body .filter-sidebar:not(.is-open){display:block}.storefront-body .mobile-filter-toggle{display:none}}</style></noscript>
       <script defer src={ assets.URL("js/storefront-preview.min.js") }></script>
       <script defer src={ assets.URL("js/ui-standards.min.js") }></script>

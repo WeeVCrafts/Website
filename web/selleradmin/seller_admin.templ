@@ -25,9 +25,10 @@ templ Document(p viewmodels.SellerAdminPage) {
       <script defer src={ assets.URL("js/product-media.min.js") }></script>
       <script defer src={ assets.URL("js/seller-workflows.min.js") }></script>
     <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
+<link rel="stylesheet" href={ assets.URL("css/seller-reference.min.css") }/>
 <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
 </head>
-    <body class="seller-body" x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.sellerMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
+    <body class="seller-body" data-seller-page={ p.Active } x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.sellerMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
       <a class="seller-skip-link" href="#seller-main">Skip to main content</a>
       @SellerHeader(p)
       <div class="seller-app">
@@ -64,6 +65,7 @@ templ SellerLegalBottom() {
 templ SellerHeader(p viewmodels.SellerAdminPage) {
   <header class="seller-header">
     <div class="seller-header-main">
+      <button class="seller-collapse-button" data-seller-collapse type="button" aria-label="Collapse sidebar" aria-controls="seller-sidebar" aria-expanded="true"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
       <button class="seller-menu-button" type="button" x-ref="sellerMenu" aria-label="Open seller navigation" aria-controls="seller-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.sellerSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
       <a class="seller-wordmark" href="/seller-admin" aria-label="WeevCrafts seller portal"><img class="seller-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
       <span class="seller-portal-pill">Seller Portal</span>
@@ -89,7 +91,7 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
 }
 
 templ SellerSidebar(p viewmodels.SellerAdminPage) {
-  <aside id="seller-sidebar" class="seller-sidebar" :class="sidebar ? 'is-open' : ''">
+  <aside id="seller-sidebar" class="seller-sidebar" data-navigation-media="(max-width: 960px)" :class="sidebar ? 'is-open' : ''">
     <button class="seller-sidebar-close" type="button" x-ref="sellerSidebarClose" aria-label="Close seller navigation" @click="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
     <div class="seller-profile-mini"><span class="seller-profile-avatar">{ p.Initials }</span><span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/seller-admin/onboarding">Seller application status</a></span></div>
     <nav class="seller-nav" aria-label="Seller portal navigation">
@@ -114,30 +116,31 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
         @SellerNav("support", "Support", "support_agent", p.Active, "/seller-admin/support")
         @SellerNav("settings", "Store profile", "store", p.Active, "/seller-admin/settings")
       }
-      <a class="seller-nav-link" href="/notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications</span></a>
- <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
+      <a class="seller-nav-link" href="/notifications" aria-label="Notifications" data-tooltip="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications</span></a>
+ <a class="seller-nav-link" href="/" aria-label="Go to storefront" data-tooltip="Storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
 
-      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="seller-nav-link" type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
+      <form method="post" action="/logout"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="seller-nav-link" type="submit" aria-label="Log out" data-tooltip="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </nav>
   </aside>
 }
 
 templ SellerNav(key, label, icon, current, href string) {
-  <a class={ sellerNavClass(key, current) } href={ href } aria-current={ ariaCurrent(key == current) }><span class="material-symbols-outlined" aria-hidden="true">{ icon }</span><span>{ label }</span></a>
+  <a class={ sellerNavClass(key, current) } href={ href } aria-label={ label } data-tooltip={ label } aria-current={ ariaCurrent(key == current) }><span class="material-symbols-outlined" aria-hidden="true">{ icon }</span><span>{ label }</span></a>
 }
 
 templ SellerTableEmpty(message, hint string) {
-  <div class="seller-table-empty" role="status"><span class="material-symbols-outlined" aria-hidden="true">search_off</span><strong>{ message }</strong><small>{ hint }</small></div>
+  <div class="seller-table-empty" role="status"><img class="seller-empty-art" src={ sellerEmptyImage(message) } width="360" height="220" alt=""/><strong>{ message }</strong><small>{ hint }</small></div>
 }
 
 templ SellerPageIntro(p viewmodels.SellerAdminPage) {
   <section class={ "seller-page-intro intro-" + p.Active }>
     <div class="seller-breadcrumb"><a href="/seller-admin">Home</a><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span><span>Seller Portal</span><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span><b>{ p.Title }</b></div>
     <div class="seller-intro-copy"><p class="seller-eyebrow">WEEVCRAFTS SELLER PORTAL</p><h1>{ p.Title }</h1><p>{ p.Subtitle }</p></div>
-    <div class="seller-intro-art"><img width="1254" height="1254" src={ sellerIntroImage(p.Active) } alt="Handmade craft detail"/></div>
-    <div class="seller-intro-note">
-      @SellerIntroNote(p.Active)
-    </div>
+    <div class="seller-intro-art"><img width="1440" height="480" src={ sellerIntroImage(p.Active) } alt=""/></div>
+
+    if p.Active=="dashboard" && p.CanInventory {
+ <a class="seller-button primary seller-hero-action" href="/seller-admin/inventory">Manage stock <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+ }
   </section>
 }
 
@@ -161,7 +164,7 @@ templ SellerStatGrid(p viewmodels.SellerAdminPage) {
       <article class={ "seller-stat-card tone-" + sellerToneClass(stat.Tone) }>
         <span class="seller-stat-icon material-symbols-outlined" aria-hidden="true">{ sellerStatIcon(stat.Icon) }</span>
         <div><strong>{ stat.Value }</strong><b>{ stat.Label }</b>
-          if p.Active != "dashboard" {
+          if p.Active == "earnings" || p.Active == "analytics" {
             @SellerStatMeta(stat)
           }
         </div>

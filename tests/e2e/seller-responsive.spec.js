@@ -6,8 +6,8 @@ const routes = ['','/products','/products/new','/inventory','/orders','/earnings
 
 function requireQA(testInfo) {
   const url = new URL(testInfo.project.use.baseURL);
-  if (url.hostname !== '127.0.0.1' || url.port !== '18080' || process.env.WEEVCRAFTS_QA_DATABASE !== 'seller_workflows_20261017') {
-    throw new Error('Use the isolated seller_workflows_20261017 database and local port 18080.');
+  if (url.hostname !== '127.0.0.1' || !['18080','18086'].includes(url.port) || process.env.WEEVCRAFTS_QA_DATABASE !== 'seller_workflows_20261017') {
+    throw new Error('Use the isolated seller_workflows_20261017 database and local port 18080 or 18086.');
   }
 }
 
@@ -37,6 +37,8 @@ test.beforeEach(async ({ page }, testInfo) => {
 });
 
 async function fits(page, label) {
+  await page.waitForLoadState('load');
+  await page.evaluate(() => document.fonts.ready);
   const problems = await page.evaluate(() => {
     const result = [];
     if (document.documentElement.scrollWidth > innerWidth + 1) result.push('document overflow');
@@ -119,7 +121,7 @@ test('navigation, search and product disclosure remain usable with keyboard inpu
     expect(await page.evaluate(() => document.activeElement.closest('#seller-sidebar') !== null)).toBeTruthy();
     await page.keyboard.press('Escape'); await expect(menu).toBeFocused();
     await expect(page.locator('#seller-main')).not.toHaveAttribute('inert', '');
-    const search = page.getByLabel('Search products', { exact: true });
+    const search = page.locator('#portal-product-query');
     await search.fill('SELLER-WORKFLOW'); await search.press('Enter');
     await expect(page).toHaveURL(/q=SELLER-WORKFLOW/);
     await page.locator('.seller-toolbar').getByRole('link', { name: 'Clear', exact: true }).click();

@@ -6,19 +6,25 @@ import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ SupportLive(p viewmodels.SellerSupportPage) {
  @Document(p.Portal) {
- @components.SellerConfirmations(p.Confirmations,"/seller-admin/support",p.Portal.CSRFToken,p.RequestKey,true,p.QueueStatus,p.QueueNext,0)
+ <div class="seller-support-layout"><div class="seller-support-side">
+  <section class="seller-support-summary" aria-label="Support summary"><article class="seller-stat-card tone-green"><span class="material-symbols-outlined seller-stat-icon" aria-hidden="true">mail</span><div><strong>{ strconv.FormatInt(p.ConfirmationTotal,10) }</strong><b>Confirmations</b></div></article><article class="seller-stat-card tone-gold"><span class="material-symbols-outlined seller-stat-icon" aria-hidden="true">schedule</span><div><strong>{ strconv.FormatInt(p.AwaitingResponse,10) }</strong><b>Awaiting response</b></div></article></section>
+  @components.SellerConfirmations(p.Confirmations,"/seller-admin/support",p.Portal.CSRFToken,p.RequestKey,true,p.QueueStatus,p.QueueNext,0)
+  <div class="seller-callout"><p><strong>Need help with an order?</strong><small>Send a request to the marketplace support team.</small></p></div></div>
   <section class="seller-panel seller-support-create">
-   <h2>Create a support request</h2>
+   <div class="seller-panel-heading"><div><h2>Create a support request</h2><p>Share the details so our support team can help.</p></div></div>
    <form class="seller-form-grid seller-support-form" action="/seller-admin/support/create" method="post" enctype="multipart/form-data" novalidate>
     <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/>
     <label><span id="seller-support-order-label">Seller order number (optional)</span><input name="order_number" maxlength="120" placeholder="Order containing your products" aria-labelledby="seller-support-order-label"/></label>
     <label><span id="seller-support-subject-label">Subject</span><input name="subject" minlength="4" maxlength="160" required aria-labelledby="seller-support-subject-label"/></label>
     <label class="seller-form-wide"><span id="seller-support-message-label">Message</span><textarea name="message" minlength="10" maxlength="4000" rows="5" required aria-labelledby="seller-support-message-label"></textarea></label>
-    <label class="seller-form-wide">Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="seller-support-upload-help"/></label>
+    <label class="seller-form-wide seller-upload" data-dropzone>Attachments (optional)<span class="seller-upload-instruction">Browse files or drag images here</span><input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="seller-support-upload-help"/></label>
     <p id="seller-support-upload-help" class="seller-form-wide seller-form-note">Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
+    <p class="seller-form-wide seller-form-note">Your request is shared privately with marketplace support.</p>
     <div class="seller-form-wide seller-support-actions"><button class="seller-button primary" type="submit">Send request</button></div>
    </form>
   </section>
+  </div>
+  if p.Total>0 || p.Portal.Query!="" || p.Status!="" {
   <section class="seller-panel seller-support-requests">
    <h2>{ strconv.Itoa(p.Total) } support requests</h2>
    <form class="seller-toolbar" action="/seller-admin/support" method="get">
@@ -60,7 +66,7 @@ templ SupportLive(p viewmodels.SellerSupportPage) {
       <form class="seller-form-grid seller-support-form seller-support-reply" action="/seller-admin/support/reply" method="post" enctype="multipart/form-data" novalidate>
        <input type="hidden" name="csrf_token" value={ p.Portal.CSRFToken }/><input type="hidden" name="ticket_id" value={ strconv.FormatInt(ticket.ID,10) }/>
        <label class="seller-form-wide"><span id={ "seller-reply-label-" + strconv.FormatInt(ticket.ID,10) }>Reply</span><textarea name="message" rows="4" maxlength="4000" required aria-labelledby={ "seller-reply-label-" + strconv.FormatInt(ticket.ID,10) }></textarea></label>
-       <label class="seller-form-wide">Attachments<input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby={ "seller-reply-upload-help-" + strconv.FormatInt(ticket.ID,10) }/></label>
+       <label class="seller-form-wide seller-upload" data-dropzone>Attachments (optional)<span class="seller-upload-instruction">Browse files or drag images here</span><input type="file" name="attachments" accept="image/jpeg,image/png,image/webp" multiple aria-describedby={ "seller-reply-upload-help-" + strconv.FormatInt(ticket.ID,10) }/></label>
        <p id={ "seller-reply-upload-help-" + strconv.FormatInt(ticket.ID,10) } class="seller-form-wide seller-form-note">Up to three JPG, PNG or WebP images, each up to 10 MB.</p>
        <div class="seller-form-wide seller-support-actions"><button type="submit" class="seller-button primary">Send reply</button></div>
       </form>
@@ -78,5 +84,6 @@ templ SupportLive(p viewmodels.SellerSupportPage) {
     }
    </nav>
   </section>
+  }
  }
 }

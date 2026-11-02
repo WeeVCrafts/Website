@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -58,7 +59,7 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 				http.Error(w, "Updates could not be saved", 503)
 				return true
 			}
-			http.Redirect(w, r, "/notifications", 303)
+			http.Redirect(w, r, notificationFilterURL(r.FormValue("filter")), 303)
 			return true
 		}
 		id, err := strconv.ParseInt(r.FormValue("notification_id"), 10, 64)
@@ -90,8 +91,17 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 		return true
 	}
 	p := viewmodels.CustomerPage{IsCustomer: workspace == "/account", Route: "/notifications", Title: "Notifications", Authenticated: true, UserName: h.userDisplayName(r, session.UserID), UserEmail: h.userEmail(r, session.UserID), CSRFToken: session.CSRFToken, Now: time.Now()}
+	p.SellerNotifications = workspace == "/seller-admin"
+	p.NotificationFilter = "all"
+	if p.SellerNotifications {
+		p.NotificationFilter = notificationFilter(r.URL.Query().Get("filter"))
+		if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*),COUNT(*) FILTER(WHERE read_at IS NULL) FROM notifications WHERE user_id=$1`, session.UserID).Scan(&p.NotificationTotal, &p.NotificationUnread); err != nil {
+			http.Error(w, "Notifications unavailable", 503)
+			return true
+		}
+	}
 	before, _ := strconv.ParseInt(r.URL.Query().Get("before"), 10, 64)
-	rows, err := h.pool.Query(r.Context(), `SELECT id,title,body,link_url,read_at IS NULL,created_at FROM notifications WHERE user_id=$1 AND ($2::bigint=0 OR id<$2) ORDER BY id DESC LIMIT 51`, session.UserID, before)
+	rows, err := h.pool.Query(r.Context(), `SELECT id,title,body,link_url,read_at IS NULL,created_at FROM notifications WHERE user_id=$1 AND ($2::bigint=0 OR id<$2) AND ($3='all' OR ($3='unread' AND read_at IS NULL) OR ($3='orders' AND kind='order') OR ($3='support' AND kind IN ('support','seller_coordination'))) ORDER BY id DESC LIMIT 51`, session.UserID, before, p.NotificationFilter)
 	if err != nil {
 		http.Error(w, "Notifications unavailable. Please retry.", 503)
 		return true
@@ -113,8 +123,23 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 	}
 	if len(p.Notifications) > 50 {
 		p.Notifications = p.Notifications[:50]
-		p.NotificationsNextURL = "/notifications?before=" + strconv.FormatInt(p.Notifications[49].ID, 10)
+		p.NotificationsNextURL = "/notifications?before=" + strconv.FormatInt(p.Notifications[49].ID, 10) + "&filter=" + url.QueryEscape(p.NotificationFilter)
 	}
 	_ = pages.Notifications(p, workspace).Render(r.Context(), w)
 	return true
+}
+
+func notificationFilter(value string) string {
+	switch value {
+	case "unread", "orders", "support":
+		return value
+	}
+	return "all"
+}
+func notificationFilterURL(value string) string {
+	filter := notificationFilter(value)
+	if filter == "all" {
+		return "/notifications"
+	}
+	return "/notifications?filter=" + url.QueryEscape(filter)
 }

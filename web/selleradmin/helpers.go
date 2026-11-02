@@ -303,10 +303,38 @@ func sellerStatCount(length int) string {
 }
 
 func sellerIntroImage(active string) string {
-	if active == "dashboard" || active == "products" {
-		return "/assets/images/customer/hero-studio.webp"
+	switch active {
+	case "returns", "support":
+		return "/assets/images/seller/" + active + ".svg"
+	case "settings":
+		return "/assets/images/seller/store.svg"
+	case "inventory":
+		return "/assets/images/seller/inventory.webp"
+	case "products":
+		return "/assets/images/seller/products.webp"
 	}
-	return "/assets/images/customer/saree-maroon.webp"
+	return "/assets/images/seller/header.webp"
+}
+
+func sellerEmptyImage(message string) string {
+	switch {
+	case message == "No orders yet":
+		return "/assets/images/seller/orders.webp"
+	case strings.Contains(strings.ToLower(message), "inventory"):
+		return "/assets/images/seller/inventory-empty.webp"
+	case strings.Contains(strings.ToLower(message), "settlement"):
+		return "/assets/images/seller/settlements.webp"
+	case strings.Contains(strings.ToLower(message), "product") && strings.Contains(strings.ToLower(message), "found"):
+		return "/assets/images/seller/yarn.webp"
+	case strings.Contains(strings.ToLower(message), "return"):
+		return "/assets/images/seller/returns.svg"
+	case strings.Contains(strings.ToLower(message), "ledger"), strings.Contains(strings.ToLower(message), "settlement"):
+		return "/assets/images/seller/ledger.webp"
+	case strings.Contains(strings.ToLower(message), "support"), strings.Contains(strings.ToLower(message), "confirmation"):
+		return "/assets/images/admin/support.webp"
+	default:
+		return "/assets/images/seller/box.webp"
+	}
 }
 
 func sellerTrendClass(positive bool) string {

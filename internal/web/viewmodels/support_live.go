@@ -3,14 +3,15 @@ package viewmodels
 import domain "github.com/wecratfs/commerce/internal/domain/commerce"
 
 type SellerSupportPage struct {
-	QueueStatus, QueueNext string
-	Portal                 SellerAdminPage
-	Confirmations          []domain.SellerConfirmation
-	RequestKey             string
-	Tickets                []CustomerSupportTicket
-	Status                 string
-	Total                  int
-	PreviousURL, NextURL   string
+	ConfirmationTotal, AwaitingResponse int64
+	QueueStatus, QueueNext              string
+	Portal                              SellerAdminPage
+	Confirmations                       []domain.SellerConfirmation
+	RequestKey                          string
+	Tickets                             []CustomerSupportTicket
+	Status                              string
+	Total                               int
+	PreviousURL, NextURL                string
 }
 
 type ReturnLabelPage struct {

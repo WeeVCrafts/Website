@@ -1,5 +1,37 @@
 # WeevCrafts UX contract
 
+## Seller reference workflows — 2 November 2026
+
+Seller summaries use complete seller-owned datasets independently of search and
+pagination. Database failures remain unavailable states rather than zero counts.
+Product summaries exclude archived products; inventory summaries include active
+variants and preserve the configured strict-below low-stock threshold. Orders
+summarize paid order states. Returns count each request once despite multiple
+seller items; closed means rejected or received.
+
+Return filters are q, status=pending|approved|rejected|received and
+range=all|week|month. Unsupported status/range values normalize to All statuses /
+All time. Filters run before pagination and retain seller ownership. Sellers
+continue to read return and settlement records through existing permissions.
+There is no new seller settlement-creation or refund action.
+
+For sellers, /notifications supports filter=all|unread|orders|support. Support
+includes seller coordination updates. Cursor links preserve the filter. Counts
+cover the recipient's entire inbox, and mark-all-read updates only that recipient.
+Individual read actions retain existing CSRF, ownership and safe-link checks.
+Other roles keep their existing notification presentation.
+
+Profile preview reflects local edits without persistence. Save remains explicit;
+existing audit reasons, uploads, recovery and unsaved-change guards remain.
+The public storefront link appears only for an active seller with an approved
+product, using the storefront's existing maker slug convention. Support counts
+cover all seller confirmations, with open confirmations awaiting a response.
+File dropping enhances the native picker; server attachment limits stay authoritative.
+
+Desktop rail preference uses weevcrafts.seller.sidebar-collapsed. Storage failure
+falls back to usable in-memory state. Mobile drawer state remains independent;
+Escape dismisses a rail tooltip without moving focus into closed navigation.
+
 ## Super Admin workspaces — 2 November 2026
 
 User Management replaces the four separate sidebar entries for Users, Roles,

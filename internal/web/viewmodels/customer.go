@@ -116,6 +116,9 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	SellerNotifications                              bool
+	NotificationFilter                               string
+	NotificationTotal, NotificationUnread            int64
 	AccountURL                                       string
 	ProductQuantity                                  int
 	CheckoutIntentID                                 string

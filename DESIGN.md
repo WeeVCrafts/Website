@@ -37,6 +37,26 @@ components:
 
 # WeevCrafts visual standards
 
+## Seller reference screens — 2 November 2026
+
+The ten supplied seller-admin-screens images define seller content presentation:
+cream paper, forest headings, tinted summary cards, outlined panels and decorative
+craft artwork. seller-reference.css owns this bounded variant after brand.css;
+brand.css continues to own shared identity. Seller content headings use Georgia
+as the reference serif; existing expanded navigation retains its typography,
+spacing, colors, icons and ordering. Generated illustrations are decorative assets,
+never product records, portraits, data charts or controls.
+
+At widths above 960px, a presentation toggle collapses the sidebar to a 64px rail.
+Accessible names and focus/hover tooltips preserve navigation. At 960px and below,
+the existing modal-navigation owner supplies the drawer. Desktop preference is
+stored independently. Summaries use four wide-desktop columns, two tablet columns
+and one phone column. Native record tables retain the existing 720px reflow.
+Support uses confirmations and creation columns; profile uses an editor and preview.
+Earnings retains the full-width ledger above settlements. Short actions remain
+intact while whole controls wrap. Seller notifications use their existing shared
+storefront shell with a seller-scoped reference variant.
+
 ## Super Admin reference redesign — 2 November 2026
 
 The eight accepted images in `superadmin-screens/` define the Super Admin visual

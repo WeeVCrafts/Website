@@ -163,6 +163,7 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
+	ReturnStatus, ReturnRange, StorefrontURL                                         string
 	InventoryFilter, SelectedVariant                                                 string
 	InventoryHistory                                                                 []SellerInventoryTransaction
 	OrderReturnPage                                                                  int

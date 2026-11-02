@@ -1,12 +1,42 @@
 package pages
 
 import (
+ "strconv"
  "github.com/wecratfs/commerce/internal/web/viewmodels"
  "github.com/wecratfs/commerce/web/components"
 )
 
 templ Notifications(p viewmodels.CustomerPage, workspace string) {
  @Document(p) {
+  if p.SellerNotifications {
+   <section class="container notification-inbox seller-notification-view">
+    <header class="seller-notification-hero"><div><p class="eyebrow">YOUR UPDATES</p><h1>Notifications</h1><p>Replies and order updates, with a direct path to the next step.</p></div><img src="/assets/images/seller/bell.svg" alt="" width="300" height="180"/></header>
+    <div class="seller-notification-toolbar"><nav aria-label="Notification filters">
+      <a href="/notifications" aria-current={ notificationCurrent(p.NotificationFilter,"all") }>All updates <span>{ notificationCount(p.NotificationTotal) }</span></a>
+      <a href="/notifications?filter=unread" aria-current={ notificationCurrent(p.NotificationFilter,"unread") }>Unread <span>{ notificationCount(p.NotificationUnread) }</span></a>
+      <a href="/notifications?filter=orders" aria-current={ notificationCurrent(p.NotificationFilter,"orders") }>Orders</a>
+      <a href="/notifications?filter=support" aria-current={ notificationCurrent(p.NotificationFilter,"support") }>Support</a>
+    </nav><form action="/notifications/read" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="all" value="true"/><input type="hidden" name="filter" value={ p.NotificationFilter }/><button class="outline-button" type="submit">Mark all as read</button></form></div>
+    <section class="seller-notification-panel" aria-label="Your updates">
+    if len(p.Notifications)==0 {
+      <div class="seller-notification-empty" role="status"><img src="/assets/images/seller/bell.svg" alt="" width="280" height="170"/>
+       if p.NotificationFilter=="all" || p.NotificationFilter=="unread" {
+ <h2>You're all caught up!</h2>
+ } else {
+ <h2>No matching updates</h2>
+ }
+       <p>Order updates and replies will appear here.</p>
+      </div>
+    } else {
+ @components.NotificationList(p.Notifications,p.CSRFToken)
+ }
+    <p class="seller-notification-note">Important seller updates will be shown here automatically.</p></section>
+    if p.NotificationsNextURL!="" {
+ <a class="outline-button" href={ p.NotificationsNextURL }>Older updates</a>
+ }
+    <a class="text-button seller-notification-back" href={ workspace }><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to your workspace</a>
+   </section>
+  } else {
   <section class="container notification-inbox">
    <a class="text-button" href={ workspace }><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to your workspace</a>
    <header class="notification-heading"><div><p class="eyebrow">YOUR UPDATES</p><h1>Notifications</h1><p>Replies and order updates, with a direct path to the next step.</p></div>
@@ -20,5 +50,9 @@ templ Notifications(p viewmodels.CustomerPage, workspace string) {
  <a class="outline-button" href={ p.NotificationsNextURL }>Older updates</a>
  }
   </section>
+  }
  }
 }
+
+func notificationCount(value int64) string { return strconv.FormatInt(value,10) }
+func notificationCurrent(current, filter string) string { if current==filter { return "page" }; return "false" }

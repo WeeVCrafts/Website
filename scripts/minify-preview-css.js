@@ -18,6 +18,7 @@ const files = [
   "superadmin.css",
   "storefront-editor.css",
   "seller-admin.css",
+  "seller-reference.css",
   "support-portal.css",
 ];
 

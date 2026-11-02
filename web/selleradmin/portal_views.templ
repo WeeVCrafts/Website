@@ -6,20 +6,6 @@ import "github.com/wecratfs/commerce/web/components"
 
 templ PortalDashboard(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		if len(p.Products) == 0 && p.DataWarning == "" && p.CanProductWrite {
-			@components.TaskGuidance("START SELLING", "Create your first product draft", "Add your product details, price and photo. Save your draft, then submit it separately for marketplace review.", "/seller-admin/products/new", "Create product draft")
-		}
-		<nav class="ui-actions" aria-label="Shop actions">
-			if p.CanProductWrite {
-				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
-			}
-			if p.CanFulfill {
-				<a class="seller-button outline" href="/seller-admin/orders">Fulfil orders</a>
-			}
-			if p.CanInventory {
-				<a class="seller-button outline" href="/seller-admin/inventory">Manage stock</a>
-			}
-		</nav>
 		@SellerStatGrid(p)
 		if len(p.LowStock) > 0 {
 			@components.TaskGuidance("STOCK CHECK", sellerInt(len(p.LowStock)) + " variants on this page are running low", "Below your " + sellerInt(p.LowStockThreshold) + " unit threshold. Review available stock and update the items that need attention.", "/seller-admin/inventory?stock=low", "Review low stock")
@@ -28,7 +14,10 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 			<article class="seller-panel">
 				<div class="seller-panel-heading"><div><h2>Products</h2><p>Your latest listings</p></div><a class="seller-panel-link" href="/seller-admin/products">View all products</a></div>
 				if len(p.Products) == 0 && p.DataWarning == "" {
-					@SellerTableEmpty("No products yet", "Create your first draft to start your collection.")
+					@SellerTableEmpty("No products yet", "Create your first draft to start your collection and showcase your handmade crafts on WeevCrafts.")
+                        if p.CanProductWrite {
+ <div class="seller-empty-action"><a class="seller-button primary" href="/seller-admin/products/new">Create product</a></div>
+ }
 				} else {
 					<div class="ui-table-region" role="region" aria-label="Latest products" tabindex="0">
 						<table class="ui-table ui-table--records">
@@ -99,6 +88,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 		if p.SellerStatus != "active" {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}
+        @SellerStatGrid(p)
 		<form class="seller-toolbar" action="/seller-admin/products" method="get">
 			<label class="seller-toolbar-search" for="portal-product-query">Search products<input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/></label><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
@@ -316,6 +306,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 
 templ PortalInventory(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+        @SellerStatGrid(p)
 		if p.CanInventoryWrite {
 			<form class="seller-toolbar low-stock-setting" method="post" action="/seller-admin/inventory/threshold"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><label>Alert when available stock falls below<input type="number" name="low_stock_threshold" min="1" max="100000" value={ sellerInt(p.LowStockThreshold) } required/> units</label><button class="seller-button outline" type="submit">Save threshold</button></form>
 		}
@@ -394,6 +385,7 @@ templ PortalInventory(p viewmodels.SellerAdminPage) {
 
 templ PortalOrders(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+        @SellerStatGrid(p)
 		<form method="get" class="seller-toolbar" aria-label="Filter seller orders">
 			<label>Search orders<input name="q" value={ p.Query } placeholder="Order, customer, product or SKU"/></label>
 			<label for="seller-order-stage">
@@ -528,13 +520,25 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 
 templ PortalReturns(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+        @SellerStatGrid(p)
 		<section class="seller-panel">
+            <div class="seller-panel-heading"><div><h2>Return requests</h2><p>Review customer returns and track their status.</p></div></div>
+            <form method="get" class="seller-toolbar" action="/seller-admin/returns">
+              <label class="seller-toolbar-search">Search returns<input name="q" value={ p.Query } placeholder="Return ID, order or customer"/></label>
+              <label>Status<select name="status"><option value="">All statuses</option>
+              for _, value := range []string{"pending","approved","rejected","received"} {
+ <option value={ value } selected?={ p.ReturnStatus==value }>{ components.StatusLabel(value) }</option>
+ }
+              </select></label>
+              <label>Time period<select name="range"><option value="all" selected?={ p.ReturnRange=="all" }>All time</option><option value="week" selected?={ p.ReturnRange=="week" }>This week</option><option value="month" selected?={ p.ReturnRange=="month" }>This month</option></select></label>
+              <button type="submit" class="seller-button primary">Filter</button><a class="seller-button outline" href="/seller-admin/returns">Reset</a>
+            </form>
 			<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller returns">
 				<table class="ui-table ui-table--records">
 					<thead><tr><th scope="col">Return</th><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Item</th><th scope="col">Reason</th><th scope="col">Requested</th><th scope="col">Status</th></tr></thead>
 					<tbody>
 						for _, item := range p.Returns {
-							<tr><th scope="row">{ item.Number }</th><td data-label="Order">{ item.Order }</td><td data-label="Customer">{ item.Customer }</td><td data-label="Item">{ item.Product }</td><td data-label="Reason">{ item.Reason }</td><td data-label="Requested">{ item.Date }</td><td data-label="Status">{ item.Status }</td></tr>
+							<tr><th scope="row">{ item.Number }</th><td data-label="Order">{ item.Order }</td><td data-label="Customer">{ item.Customer }</td><td data-label="Item">{ item.Product }</td><td data-label="Reason">{ item.Reason }</td><td data-label="Requested">{ item.Date }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td></tr>
 						}
 					</tbody>
 				</table>
@@ -551,10 +555,11 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 		<form class="seller-toolbar" action="/seller-admin/earnings" method="get"><label>Time period<select name="range"><option value="day" selected?={ p.Range == "day" }>Daily</option><option value="week" selected?={ p.Range == "week" }>Weekly</option><option value="month" selected?={ p.Range == "month" }>Monthly</option></select></label><button class="seller-button outline" type="submit">Update</button></form>
 		@SellerStatGrid(p)
 		<section class="seller-earnings-panels">
-			<article class="seller-panel">
-				<div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div></div>
+			<article id="seller-ledger" class="seller-panel">
+				<div class="seller-panel-heading"><div><h2>Seller ledger</h2><p>Recorded transactions for this seller.</p></div><a class="seller-button outline" href="#seller-ledger">View ledger</a></div>
 				if len(p.Ledger) == 0 && p.DataWarning == "" {
 					@SellerTableEmpty("No ledger entries", "Ledger entries appear after an order is paid or adjusted.")
+                    <div class="seller-empty-action"><a class="seller-button primary" href="/seller-admin/orders">View orders</a></div>
 				} else {
 					<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller ledger">
 						<table class="ui-table ui-table--records">
@@ -569,10 +574,11 @@ templ PortalEarnings(p viewmodels.SellerAdminPage) {
 				}
 				@components.PortalPagination(p.LedgerPagination)
 			</article>
-			<article class="seller-panel">
-				<div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div></div>
+			<article id="seller-settlements" class="seller-panel">
+				<div class="seller-panel-heading"><div><h2>Settlements</h2><p>Settlement records for this seller account.</p></div><a class="seller-button outline" href="#seller-settlements">View settlements</a></div>
 				if len(p.Settlements) == 0 && p.DataWarning == "" {
 					@SellerTableEmpty("No settlements", "Settlement records will appear here when available.")
+                    <div class="seller-empty-action"><a class="seller-button primary" href="/seller-admin/support">Contact support</a></div>
 				} else {
 					@SettlementRows(p.Settlements)
 				}
@@ -633,23 +639,34 @@ templ PortalOnboarding(p viewmodels.SellerAdminPage) {
 
 templ PortalSettings(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-		<section class="seller-panel">
+		<div class="seller-profile-layout"><section class="seller-panel">
 			<div class="seller-panel-heading"><div><h2>Your public maker story</h2><p>Share your real place, people and craft. These details appear on your maker storefront.</p></div></div>
-			<form class="seller-form-grid" method="post" action="/seller-admin/settings" enctype="multipart/form-data">
+			<form class="seller-form-grid" data-store-profile novalidate method="post" action="/seller-admin/settings" enctype="multipart/form-data">
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				<label>Studio or maker name<input name="display_name" value={ p.SellerName } minlength="2" maxlength="120" required/></label>
 				<label>Public location (optional)<input name="public_location" value={ p.PublicLocation } maxlength="160" placeholder="Town or city, state"/></label>
 				<label class="seller-form-wide">Your story (optional)<textarea name="public_story" maxlength="4000" rows="6">{ p.PublicStory }</textarea></label>
 				<label class="seller-form-wide">Materials and techniques (optional)<textarea name="public_technique" maxlength="500" rows="3">{ p.PublicTechnique }</textarea></label>
-				<label class="seller-form-wide">Maker or studio portrait (optional, up to 25 MB)<input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" data-main-image/></label><input name="image_url" type="hidden" value={ p.PublicPortrait }/>
+				<label class="seller-form-wide seller-upload" data-dropzone>Maker or studio portrait (optional, up to 25 MB)<span class="seller-upload-instruction">Choose a photo or drag and drop</span><input name="image_file" type="file" accept="image/jpeg,image/png,image/webp" data-main-image/></label><input name="image_url" type="hidden" value={ p.PublicPortrait }/>
 				<div class="seller-form-wide" data-main-image-preview>
 					if p.PublicPortrait!="" {
 						<img class="maker-portrait-preview" src={ p.PublicPortrait } alt="Current public maker portrait"/>
 					}
 				</div>
 				<label class="seller-form-wide">Reason for change<input name="reason" minlength="4" maxlength="1000" required placeholder="For the audit trail"/></label>
-				<div class="seller-form-wide"><button class="seller-button primary" type="submit">Save maker story</button></div>
+				<div class="seller-form-wide"><button class="seller-button primary" type="submit">Save profile changes</button></div>
 			</form>
 		</section>
+        <aside class="seller-profile-preview seller-panel" aria-label="Storefront preview">
+          <div class="seller-panel-heading"><div><h2>Storefront preview</h2><p>How your maker details may appear.</p></div></div>
+          <div class="seller-preview-banner"><img src="/assets/images/seller/store.svg" alt="" width="300" height="150"/></div>
+          <span class="seller-preview-avatar" aria-hidden="true">{ p.Initials }</span>
+          <h3 data-preview-name>{ p.SellerName }</h3><p data-preview-location>{ p.PublicLocation }</p>
+          <dl><div><dt>Studio name</dt><dd data-preview-studio>{ p.SellerName }</dd></div><div><dt>Story</dt><dd data-preview-story>{ sellerOptional(p.PublicStory,p.PublicStory!="") }</dd></div><div><dt>Portrait</dt><dd data-preview-portrait>{ sellerOptional("Added",p.PublicPortrait!="") }</dd></div></dl>
+          if p.StorefrontURL!="" {
+ <a class="seller-button outline" href={ p.StorefrontURL }>View storefront</a>
+ }
+          <p class="seller-form-note">Preview changes appear here. Save profile changes to publish them.</p>
+        </aside></div>
 	}
 }

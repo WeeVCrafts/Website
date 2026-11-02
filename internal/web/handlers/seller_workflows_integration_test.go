@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
 func TestSellerInventoryFiltersAggregateAndHistoryStayScoped(t *testing.T) {
@@ -21,6 +23,20 @@ INSERT INTO inventory_transactions(seller_id,variant_id,actor_id,delta,before_qu
 		t.Fatal(err)
 	}
 	h := NewLivePortalHandler(pool, nil, nil)
+	// Summary values describe the full seller dataset, even on an unmatched page.
+	summaryRequest := projectionRequest(httptest.NewRequest("GET", "/seller-admin/inventory?q=missing&page=99", nil))
+	stats := h.sellerWorkspaceStats(summaryRequest, 910001, viewmodels.SellerAdminPage{Active: "inventory", LowStockThreshold: 5})
+	for i, want := range []string{"2", "8", "3", "1"} {
+		if len(stats) != 4 || stats[i].Value != want {
+			t.Fatalf("inventory summary %d: %+v, want %s", i, stats, want)
+		}
+	}
+	stats = h.sellerWorkspaceStats(summaryRequest, 910001, viewmodels.SellerAdminPage{Active: "products"})
+	for i, want := range []string{"1", "1", "1", "0"} {
+		if len(stats) != 4 || stats[i].Value != want {
+			t.Fatalf("product summary %d: %+v, want %s", i, stats, want)
+		}
+	}
 	for _, filter := range []string{"low", "out"} {
 		r := projectionRequest(httptest.NewRequest("GET", "/seller-admin/inventory?stock="+filter, nil))
 		items := h.sellerInventory(r, 910001, "", 5)

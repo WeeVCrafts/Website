@@ -2322,6 +2322,19 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 			_ = h.queryRow(r, `SELECT public_location,public_story,public_technique,public_portrait FROM sellers WHERE id=$1`, sellerID).Scan(&page.PublicLocation, &page.PublicStory, &page.PublicTechnique, &page.PublicPortrait)
 		}
 	}
+	page.ReturnStatus = sellerReturnStatus(r.URL.Query().Get("status"))
+	page.ReturnRange = sellerReturnRange(r.URL.Query().Get("range"))
+	page.Stats = h.sellerWorkspaceStats(r, sellerID, page)
+	if active == "settings" {
+		page.Title = "Store profile"
+		page.Subtitle = "Manage your maker details and public storefront information."
+	}
+	if active == "settings" && sellerStatus == "active" {
+		var published bool
+		if h.queryRow(r, `SELECT EXISTS(SELECT 1 FROM products WHERE seller_id=$1 AND status='approved')`, sellerID).Scan(&published) == nil && published {
+			page.StorefrontURL = "/makers/" + liveSlug(name)
+		}
+	}
 	page.InventoryFilter = sellerStockFilter(r.URL.Query().Get("stock"))
 	if active == "inventory" {
 		if variantID, err := strconv.ParseInt(r.URL.Query().Get("variant"), 10, 64); err == nil && variantID > 0 {
@@ -2550,9 +2563,9 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 		JOIN order_items oi ON oi.order_id=o.id
 		JOIN product_variants v ON v.id=oi.variant_id
 		JOIN products p ON p.id=v.product_id AND p.seller_id=$1
- WHERE ($2='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status,p.name) ILIKE '%'||$2||'%')
+ WHERE ($2='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status,p.name) ILIKE '%'||$2||'%') AND ($3='' OR rr.status=$3) AND ($4='all' OR rr.created_at>=date_trunc($4,NOW()))
 		GROUP BY rr.id,o.order_number,u.display_name,rr.reason,rr.created_at,rr.status,o.total_cents
-		ORDER BY rr.created_at DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
+		ORDER BY rr.created_at DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerReturnStatus(r.URL.Query().Get("status")), sellerReturnRange(r.URL.Query().Get("range")))
 	if err != nil {
 		return nil
 	}

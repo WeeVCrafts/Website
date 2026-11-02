@@ -88,7 +88,8 @@
       const backdrop = document.querySelector('.' + kind + '-sidebar-backdrop');
       if (!trigger || !close) return;
       let blocked = [], oldOverflow = '', open = false;
-      const small = () => getComputedStyle(trigger).display !== 'none';
+      const navigationMedia = panel.dataset.navigationMedia ? matchMedia(panel.dataset.navigationMedia) : null;
+      const small = () => navigationMedia ? navigationMedia.matches : getComputedStyle(trigger).display !== 'none';
       function restore() {
         blocked.forEach(([element, inert]) => { element.inert = inert; });
         blocked = []; document.body.style.overflow = oldOverflow;
@@ -289,7 +290,7 @@
   const customerFormPath = path => /^\/account\/(profile|addresses(?:\/delete)?|notifications|reviews)$/.test(path) || /^\/support\/(create|customer-reply)$/.test(path) || /^\/privacy\/(consent|requests)$/.test(path) || /^\/orders\/[^/]+\/(cancel|return|refund)$/.test(path);
   // Protect long edits in memory. Do not persist account/product form values locally.
   const dirtyForms = new Set();
-  const dirtySelector = '[data-product-builder], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty], [data-customer-retain]';
+  const dirtySelector = '[data-product-builder], [data-store-profile], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty], [data-customer-retain]';
   function dirtyForm() {
     for (const form of dirtyForms) {
       if (!form.isConnected) { dirtyForms.delete(form); continue; }
@@ -389,7 +390,7 @@
     let productInvalidField = null;
     try {
       const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:customerForm && form.enctype!=='multipart/form-data' ? new URLSearchParams(payload) : payload,signal:controller.signal});
-      if ((customerForm || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
+      if ((customerForm || form.hasAttribute('data-store-profile') || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
         const error = new Error('Your session ended. Your entries are still here. Copy your changes before signing in again.');
         error.customerSession = true; throw error;
       }
