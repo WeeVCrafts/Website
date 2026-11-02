@@ -467,6 +467,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			denyPortalAccess(w, r)
 			return
 		}
+		if r.URL.Path == "/seller-admin/profile" || r.URL.Path == "/seller-admin/account" {
+			http.Redirect(w, r, "/seller-admin/settings", http.StatusSeeOther)
+			return
+		}
 		name := h.userDisplayName(r, session.UserID)
 		if r.URL.Path == "/seller-admin/products/new" || isSellerProductFormPath(r.URL.Path) {
 			h.renderSellerProductForm(w, r, session.UserID, name, true, nil, session.CSRFToken)

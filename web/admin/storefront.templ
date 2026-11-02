@@ -74,7 +74,7 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 				</div>
 			}
 			if m.Draft.ID>0 {
-				<div class="sf-draft-state"><div><strong data-editor-save-state>{ editorDraftState(m.Draft.State) }</strong><small>Draft { fmt.Sprint(m.Draft.ID) } · Saved { m.Draft.Updated.Format("02 Jan, 15:04") } · Version { fmt.Sprint(m.Draft.Version) }</small><span>Customers see published release { fmt.Sprint(m.Published.ID) } until you publish.</span></div><a href={ m.PreviewURL } target="_blank" rel="noopener">Open saved preview <span class="sr-only">in a new tab</span></a><button type="button" class="admin-button primary" data-editor-save hidden disabled?={m.Draft.State!="draft"}>Save draft</button><a class="admin-button secondary" href={editorURL(m,"publishing","")}>Review changes</a></div>
+				<div class="sf-draft-state"><div><strong data-editor-save-state>{ editorDraftState(m.Draft.State) }</strong><small>Draft { fmt.Sprint(m.Draft.ID) } · Saved { m.Draft.Updated.Format("02 Jan, 15:04") } · Version { fmt.Sprint(m.Draft.Version) }</small><span>Customers see published release { fmt.Sprint(m.Published.ID) } until you publish.</span></div><a href={ m.PreviewURL } target="_blank" rel="noopener">Open saved preview <span class="sr-only">in a new tab</span></a><button type="button" class="admin-button primary" data-editor-save hidden disabled?={m.Draft.State!="draft"}>Save draft</button><a class="admin-button secondary" href={editorURL(m,"publishing","")}>Review &amp; publish</a></div>
 				if m.Draft.State!="published" && m.Draft.BaseRelease!=m.Published.ID {
 <p class="sf-message">The published storefront changed after this draft began. You can keep editing, but publishing cannot replace the newer release. Start a new draft from the published design and apply the changes you want to keep.</p>
 }
@@ -177,6 +177,10 @@ templ Storefront(m viewmodels.StorefrontEditor) {
 }
 
 templ StorefrontOutline(m viewmodels.StorefrontEditor) {
+ if m.Tab=="hero" {
+ @StorefrontSlideList(m)
+ } else {
+
 	<h2>Page sections</h2>
 	<p>Select a section to edit. Drag to reorder, or use Move up and Move down.</p>
 	@StorefrontPresetGallery(m)
@@ -210,14 +214,15 @@ templ StorefrontOutline(m viewmodels.StorefrontEditor) {
 		@EditorFields(m)
 		<input type="hidden" name="operation" value="add"/>
 		<label>
-			Section type
+			Row type
 			<select name="type">
 				for _,kind:=range append([]string{"curated","gifts","story","promotion","questions"}, storefront.SectionTypes...) {
 					<option value={ kind }>{ editorPresetName(kind) }</option>
 				}
 			</select>
-		</label><button type="submit" class="admin-button secondary" disabled?={ m.Draft.State!="draft" }>Add section</button>
+		</label><button type="submit" class="admin-button secondary" disabled?={ m.Draft.State!="draft" }>Add row</button>
 	</form>
+ }
 }
 
 templ StorefrontSections(m viewmodels.StorefrontEditor) {
@@ -228,6 +233,7 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 	if m.Section.ID!="" {
 		<h2 tabindex="-1" data-editor-heading>{editorSectionName(m.Section)}</h2><p>{editorKindHint(m.Section.Type)}</p>
 		if m.Section.Type=="products" {
+			<p>Choose products below, or <a href={m.Admin.PortalRoot+"/products"}>manage catalog products and featured status</a>. Catalog edits do not change this row's saved selection.</p>
 			@StorefrontProductSearch(m)
 		}
 		<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
@@ -257,14 +263,14 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 						Product selection
 						<select name="mode">
 							for _,mode:=range []string{"featured","newest","category","selected"} {
-								@EditorChoice("mode", mode, mode, m.Section.Selection.Mode)
+								@EditorChoice("mode", mode, editorProductModeName(mode), m.Section.Selection.Mode)
 							}
 						</select>
 					</label>
 					<label>
 						Category
 						<select name="category">
-							<option value="">Customer chooses a category</option>
+							<option value="">Choose a category</option>
 							for _,c:=range m.Draft.Config.OrderedCategories() {
 								@EditorChoice("category", c.Slug, c.Name, m.Section.Selection.Category)
 							}
@@ -280,7 +286,7 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 					<label>Items<textarea name="items" rows="8">{ editorItems(m.Section.Items) }</textarea></label><small>One item per line: Heading | Text | Image URL | Destination | Image description</small>
 				}
 				<details>
-					<summary>Responsive layout</summary>
+					<summary>Advanced layout</summary>
 					<div class="sf-number-grid">
 						@EditorNumber("Desktop columns", "desktop_columns", m.Section.Responsive.DesktopColumns, 0, 6)
 						@EditorNumber("Tablet columns", "tablet_columns", m.Section.Responsive.TabletColumns, 0, 4)
@@ -298,18 +304,24 @@ templ StorefrontSections(m viewmodels.StorefrontEditor) {
 	}
 }
 
-templ StorefrontHero(m viewmodels.StorefrontEditor) {
+templ StorefrontSlideList(m viewmodels.StorefrontEditor) {
 	<h2>Hero slides</h2>
-	<p>Slides autoplay every four seconds and support swipe. Numbering controls their order.</p>
+	<p>Add a slide, choose its photographs and text, then preview it on mobile and desktop. Visible slides rotate every four seconds.</p>
 	<ul class="sf-items">
-		for _,s:=range m.Draft.Config.Slides {
-			<li><a href={ editorURL(m, "hero", s.ID) } data-editor-target={"slide:"+s.ID}>{ fmt.Sprint(s.Order) } · { s.Title }</a></li>
+		for _,s:=range editorOrderedSlides(m.Draft.Config.Slides) {
+			<li class="sf-visual-row"><a href={ editorURL(m, "hero", s.ID) } data-editor-target={"slide:"+s.ID} aria-current={ariaCurrent(m.Selected==s.ID)}><img src={s.Image} alt="" width="80" height="54" loading="lazy"/><span><b>{s.Title}</b><small>{fmt.Sprint(s.Order)} &middot; {editorVisibility(!s.Hidden)}</small></span></a>
+    <form method="post" action={m.Admin.PortalRoot+"/storefront/save"}>@EditorFields(m)<input type="hidden" name="section" value={s.ID}/><div class="sf-row-actions"><button class="admin-button secondary" type="submit" name="operation" value="up" disabled?={m.Draft.State!="draft"} aria-label={"Move up slide "+s.Title}>Move up</button><button class="admin-button secondary" type="submit" name="operation" value="down" disabled?={m.Draft.State!="draft"} aria-label={"Move down slide "+s.Title}>Move down</button><button class="admin-button secondary" type="submit" name="operation" value="hide" disabled?={m.Draft.State!="draft"}>{editorToggleVisibility(s.Hidden)}</button></div></form>
+   </li>
 		}
 	</ul>
 	<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
 		@EditorFields(m)
 		<button name="operation" value="add" type="submit" class="admin-button secondary" disabled?={ m.Draft.State!="draft" }>Add slide</button>
 	</form>
+}
+
+templ StorefrontHero(m viewmodels.StorefrontEditor) {
+ <h2>Slide content</h2><p>Choose a slide from the outline, edit its content here, then save and preview.</p>
 	if m.Slide.ID!="" {
 		<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
 			@EditorFields(m)
@@ -329,44 +341,47 @@ templ StorefrontHero(m viewmodels.StorefrontEditor) {
 }
 
 templ StorefrontCategories(m viewmodels.StorefrontEditor) {
-	<h2>Categories</h2>
-	<p>Names, photographs and order are published together across the customer storefront. Product assignment stays in Catalog.</p>
-	<ul class="sf-items">
-		for _,c:=range m.Draft.Config.OrderedCategories() {
-			<li>
-				<a href={ editorURL(m, "categories", c.Slug) } data-editor-target={"category:"+c.Slug}>
-					{ fmt.Sprint(c.Order) } · { c.Name }
-					if !c.Visible {
-						(hidden)
-					}
-				</a>
-			</li>
-		}
-	</ul>
-	<details>
-		<summary>Add category</summary>
-		<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
-			@EditorFields(m)
-			<fieldset disabled?={ m.Draft.State!="draft" }>
-				<input type="hidden" name="operation" value="add"/>@EditorInput("Name", "name", "")
-				@EditorInput("Permanent URL slug", "slug", "")
-				<button class="admin-button secondary" type="submit">Add category to draft</button>
-			</fieldset>
-		</form>
-	</details>
-	if m.Category.Slug!="" {
-		<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
-			@EditorFields(m)
-			<fieldset disabled?={ m.Draft.State!="draft" }>
-				@EditorInput("Category name", "name", m.Category.Name)
-				@EditorInput("Photograph URL", "image", m.Category.Image)
-				<label>Description<textarea name="text" rows="4">{ m.Category.Description }</textarea></label>@EditorNumber("Display order", "order", m.Category.Order, 0, 1000000)
-				@EditorCheck("Show in customer discovery", "visible", m.Category.Visible)
-				@EditorSave(m)
-				<button name="operation" value="remove" type="submit" class="admin-button secondary">Remove category from draft</button><small>Publishing rejects removal while products or commission rules still reference this category. Hide it to preserve those assignments.</small>
-			</fieldset>
-		</form>
-	}
+ <h2>Categories</h2><p>Create categories and upload their photographs here. Save a draft, then publish to update discovery and navigation. Assign products after publishing a new category.</p>
+ <div class="sf-category-toolbar"><label>Search categories<input type="search" data-category-search placeholder="Name or URL slug"/></label><button class="admin-button secondary" type="button" data-category-clear hidden>Clear search</button><button class="admin-button primary" type="button" data-dialog-open="sf-add-category" disabled?={m.Draft.State!="draft"}>Add category</button></div>
+ <p data-category-empty role="status" hidden>No matching categories. Clear the search or create a category.</p>
+ <ul class="sf-items sf-category-list">
+  for _,c:=range m.Draft.Config.OrderedCategories() {
+   <li class="sf-visual-row" data-category-name={c.Name+" "+c.Slug}><a href={editorURL(m,"categories",c.Slug)} data-editor-target={"category:"+c.Slug} aria-current={ariaCurrent(m.Selected==c.Slug)}><img src={c.Image} alt="" width="80" height="64" loading="lazy"/><span><b>{c.Name}</b><small>{editorVisibility(c.Visible)} &middot; Order {fmt.Sprint(c.Order)}</small></span><span>Edit</span></a></li>
+  }
+ </ul>
+ if len(m.Draft.Config.Categories)==0 {
+<p>No categories yet. Add your first category and its photograph.</p>
+}
+ if m.Category.Slug!="" {
+  <dialog id="sf-edit-category" class="sf-category-dialog" data-form-dialog data-dialog-auto aria-labelledby="sf-edit-category-title">
+   <h2 id="sf-edit-category-title">Edit category</h2>
+   <form method="post" action={m.Admin.PortalRoot+"/storefront/save"}>
+    @EditorFields(m)<input type="hidden" name="return_to" value={editorURL(m,"categories","")}/>
+    <fieldset disabled?={m.Draft.State!="draft"}>
+     @EditorInput("Category name","name",m.Category.Name)
+     <label>Permanent URL slug<input value={m.Category.Slug} aria-label="Permanent URL slug" aria-describedby="sf-category-slug-help" readonly/></label><small id="sf-category-slug-help">Kept stable so published links and product assignments continue to work.</small>
+     @EditorInput("Photograph URL","image",m.Category.Image)
+     <label>Description<textarea name="text" rows="4">{m.Category.Description}</textarea></label>
+     @EditorNumber("Display order","order",m.Category.Order,0,1000000)
+     @EditorCheck("Show in customer discovery","visible",m.Category.Visible)
+     <small>Referenced categories cannot be removed at publication. Uncheck Show in customer discovery to hide one while retaining product and commission assignments.</small>
+     <div class="sf-row-actions">@EditorSave(m)<button type="submit" name="operation" value="remove" class="admin-button danger" data-confirm={"Remove category "+m.Category.Name+" from this draft? Referenced categories must be hidden instead."}>Remove category from draft</button></div>
+    </fieldset><button type="button" class="admin-button secondary" data-dialog-close>Cancel</button>
+   </form>
+  </dialog>
+ }
+ <dialog id="sf-add-category" class="sf-category-dialog" data-form-dialog aria-labelledby="sf-add-category-title">
+  <h2 id="sf-add-category-title">Add category</h2>
+  <form method="post" action={m.Admin.PortalRoot+"/storefront/save"}>
+   @EditorFields(m)<input type="hidden" name="operation" value="add"/><input type="hidden" name="return_to" value={editorURL(m,"categories","")}/>
+   <fieldset disabled?={m.Draft.State!="draft"}>
+    @EditorInput("Category name","name","") @EditorInput("Permanent URL slug","slug","")<small>Use lowercase words separated by hyphens, such as handwoven-baskets.</small>
+    @EditorInput("Photograph URL","image","")<label>Description<textarea name="text" rows="4"></textarea></label>
+    @EditorNumber("Display order","order",1000,0,1000000) @EditorCheck("Show in customer discovery","visible",true)
+    <div class="sf-row-actions"><button type="button" class="admin-button secondary" data-dialog-close>Cancel</button><button class="admin-button primary" type="submit">Add category to draft</button></div>
+   </fieldset>
+  </form>
+ </dialog>
 }
 
 templ StorefrontMediaLibrary(m viewmodels.StorefrontEditor) {

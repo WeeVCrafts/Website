@@ -34,7 +34,9 @@ templ CategoryManager(m viewmodels.CategoryManagerPage) {
     }
    </section>
   }
-  <section class="admin-panel"><h2>Storefront presentation</h2><p>Category names, images, numbering and visibility are managed through drafts and Super Admin publication.</p><a class="admin-button primary" href={ m.Admin.PortalRoot+"/storefront?tab=categories" }>Manage category presentation in Storefront</a></section>
+  if !m.Admin.CanSecurity {
+   <section class="admin-panel"><h2>Storefront presentation</h2><p>Category names, images, numbering and visibility are managed through drafts and Super Admin publication.</p><a class="admin-button primary ui-wrap-action" href={ m.Admin.PortalRoot+"/storefront?tab=categories" }>Edit category presentation</a></section>
+  }
   <section class="admin-panel">
    <form class="category-search" method="get" action={ m.Action }><label>Search categories<input name="q" value={ m.Query }/></label><button class="admin-button secondary" type="submit">Search</button><a href={ m.Action }>Clear</a></form>
    <p>{ strconv.Itoa(m.Total) } matching categories · Page { strconv.Itoa(m.Page) }</p>

@@ -256,3 +256,57 @@ selections warn without creating inventory. Preview-frame communication checks
 origin, source window and allowed targets. Customer mutations stay disabled in
 previews. Native dialogs contain focus, support Escape and restore their trigger;
 the admin navigation shell does not intercept Escape from an unrelated dialog.
+
+## Guided administration - 2 November 2026
+
+Users owns account creation/editing, Roles owns access assignments, and Security
+shows audit activity and contextual links. Modal cancellation checks unsaved
+changes, restores focus and clears password input. Rejected saves retain values;
+successful account edits preserve validated user-list filters and page state.
+
+Only Super Admin can permanently delete editable storefront drafts, using CSRF
+and expected-version checks. Confirmation identifies the draft and initially
+focuses Cancel. Submitted drafts require Request changes first; published
+versions, immutable releases and media are retained. Deletion is transactional
+and audited. Draft history remains paginated. Category images and presentation
+are saved together in a private draft. Catalog assignments still require a
+published category. Manual product rows retain selected-product order.
+
+Seller profile links target /seller-admin/settings. Owner-authorized profile
+and account bookmarks redirect there. Customer account mutations remain
+customer-only; profile navigation does not grant new roles or ownership.
+
+The shared `TaskGuidance` component may surface one role-appropriate next
+action on authenticated entry points. It must use an existing route and
+permission boundary, remain dismiss-free and optional, and never replace the
+canonical navigation. Responsive operational tables preserve labelled rows or
+focusable overflow rather than introducing a second table implementation.
+
+### Live role workflow audit — 2 November 2026
+
+Customer account recommendations are drawn from the rendered owner-scoped
+orders and address projection. View latest order opens that saved order;
+Open support opens the existing request history. Tracking help carries the
+selected owned order to the existing contact form. No guidance infers payment
+or delivery progress beyond the saved order state.
+
+Seller header search names its real scope. Inventory, orders and returns search
+their existing queues; other seller screens search products. Order-stage and
+stock filters remain submitted with their corresponding header search. Store
+profile marks the current settings route. Escape on an unrelated seller form
+or confirmation must not move focus into a closed navigation drawer.
+
+Super Admin dashboard identity actions open Users, Roles and Security directly,
+using the existing `CanSecurity` gate. Admin category presentation uses a
+wrapping, bounded action at 320px. Server ownership, role checks, CSRF, audit
+reasons, confirmations, money and lifecycle rules remain authoritative.
+
+### Super Admin Storefront removal — 2 November 2026
+
+The owner's subsequent decision supersedes the Super Admin editor workflows
+above. Super Admin no longer sees or operates the current Storefront editor.
+Authenticated legacy GET bookmarks return to the Super Admin dashboard with a
+notice; editor mutations return 410 without changing drafts or published data.
+The same restriction applies if Super Admin uses an `/admin/storefront` alias.
+Admin's existing draft workspace and the published customer shop are retained.
+The earlier screenshot audit documents the UI before this removal.

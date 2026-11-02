@@ -165,6 +165,9 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if requiresCustomerSession(r.URL.Path) && !h.customerRole(userID, r) && !isDraftPreview(r) {
 		roles := h.userRoles(r, userID)
 		destination := applicationauth.LoginDestination(roles)
+		if r.URL.Path == "/account" || r.URL.Path == "/account/profile" {
+			destination = roleAccountDestination(roles)
+		}
 		if destination == "/products" {
 			destination = "/access-unavailable"
 		}
@@ -799,6 +802,9 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		Products: products, Categories: h.categories(r.Context()), Sellers: h.sellers(r.Context()), Brands: h.brands(r.Context()),
 		Authenticated: authenticated, CanCreateSupport: authenticated && h.customerRole(userID, r), CanFollowSeller: authenticated && h.customerRole(userID, r), CSRFToken: csrf, Now: time.Now(), Page: currentPage, Pages: totalPages, TotalResults: totalResults,
 	}
+	if authenticated && !h.customerRole(userID, r) {
+		page.AccountURL = roleAccountDestination(h.userRoles(r, userID))
+	}
 	if r.URL.Path == "/featured-products" {
 		page.Title = "Featured products"
 	}
@@ -1176,7 +1182,9 @@ func (h *LiveStorefrontHandler) loadNotificationPreferences(ctx context.Context,
 func (h *LiveStorefrontHandler) loadCustomerReviews(ctx context.Context, userID int64, page *viewmodels.CustomerPage) error {
 	page.PendingReviews = make([]viewmodels.ProductReview, 0)
 	rows, err := h.pool.Query(ctx, `
-		SELECT DISTINCT p.id, o.id, p.name, p.slug, COALESCE(s.display_name,''), COALESCE(p.image_url,'')
+		SELECT DISTINCT p.id, o.id, p.name, p.slug, COALESCE(s.display_name,''),
+		       COALESCE(NULLIF(NULLIF(p.image_url, ''), '/assets/images/product-unavailable.svg'),
+		                (SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.visibility='public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '')
 		FROM orders o
 		JOIN order_items oi ON oi.order_id=o.id
 		JOIN product_variants pv ON pv.id=oi.variant_id
@@ -1475,7 +1483,9 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	view.CanRequestRefund = view.ReturnStatus == "received" && view.RefundStatus == "" && order.PaymentStatus == "captured" && (order.Status == "paid" || order.Status == "processing" || order.Status == "shipped" || order.Status == "delivered")
 	rows, err := h.pool.Query(ctx, `
 		SELECT COALESCE(p.slug, ''), oi.product_name, oi.unit_price_cents, oi.quantity,oi.sku,oi.line_total_cents,
-		       COALESCE(p.image_url, ''), COALESCE(s.display_name, 'Independent maker')
+		       COALESCE(NULLIF(NULLIF(p.image_url, ''), '/assets/images/product-unavailable.svg'),
+		                (SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.visibility='public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), ''),
+		       COALESCE(s.display_name, 'Independent maker')
 		FROM order_items oi
 		LEFT JOIN product_variants v ON v.id = oi.variant_id
 		LEFT JOIN products p ON p.id = v.product_id
@@ -1514,7 +1524,9 @@ func (h *LiveStorefrontHandler) customerReturns(ctx context.Context, userID int6
 	            ELSE INITCAP(REPLACE(rr.status, '_', ' ')) END,
 		       rr.reason, TO_CHAR(rr.created_at, 'DD Mon YYYY'),
 		       COALESCE((SELECT oi.product_name FROM order_items oi WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), 'Order return'),
-		       COALESCE((SELECT p.image_url FROM order_items oi JOIN product_variants v ON v.id = oi.variant_id JOIN products p ON p.id = v.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), '/assets/images/customer/maker-mithila.webp'),
+		       COALESCE((SELECT COALESCE(NULLIF(NULLIF(p.image_url, ''), '/assets/images/product-unavailable.svg'),
+		                (SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.visibility='public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1), '')
+		        FROM order_items oi JOIN product_variants v ON v.id = oi.variant_id JOIN products p ON p.id = v.product_id WHERE oi.order_id = o.id ORDER BY oi.id LIMIT 1), '/assets/images/product-unavailable.svg'),
 		       o.order_number, o.total_cents, rr.status
 		FROM return_requests rr
 		JOIN orders o ON o.id = rr.order_id
@@ -2247,6 +2259,7 @@ func (h *LiveStorefrontHandler) renderError(w http.ResponseWriter, status int, m
 }
 
 func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product {
+	imageURL := components.ProductImage(product.ImageURL)
 	price := storefrontMoney(product.PriceCents)
 	compare := ""
 	if product.HasCompareAt && product.CompareAtCents > product.PriceCents {
@@ -2260,7 +2273,7 @@ func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product 
 	if product.Rating > 0 {
 		rating = strconv.FormatFloat(product.Rating, 'f', 1, 64)
 	}
-	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, SKU: product.SKU, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: identity.DisplayName(product.Brand), BrandName: identity.DisplayName(product.Brand), Location: "India", Category: product.CategoryName, ImageURL: product.ImageURL, ImageSrcSet: imageSrcSet(product.ImageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
+	return viewmodels.Product{ID: product.ID, VariantID: product.VariantID, SKU: product.SKU, PriceCents: product.PriceCents, Slug: product.Slug, Name: product.Name, Description: product.Description, DeliveryLabel: product.DeliveryLabel, Seller: identity.DisplayName(product.Brand), BrandName: identity.DisplayName(product.Brand), Location: "India", Category: product.CategoryName, ImageURL: imageURL, ImageSrcSet: imageSrcSet(imageURL), Badge: map[bool]string{true: "In stock", false: "Sold out"}[product.Available > 0], Price: price, CompareAt: compare, Discount: discount, Rating: rating, Reviews: product.ReviewCount, InStock: product.Available > 0, CSRFToken: csrf}
 }
 
 func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug string) ([]viewmodels.ProductVariant, error) {

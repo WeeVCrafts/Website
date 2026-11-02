@@ -27,7 +27,7 @@ templ Document(p viewmodels.SellerAdminPage) {
     <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
 <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
 </head>
-    <body class="seller-body" x-data="{sidebar:false}" @keydown.escape.window="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
+    <body class="seller-body" x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.sellerMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#seller-sidebar a, #seller-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
       <a class="seller-skip-link" href="#seller-main">Skip to main content</a>
       @SellerHeader(p)
       <div class="seller-app">
@@ -67,10 +67,10 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
       <button class="seller-menu-button" type="button" x-ref="sellerMenu" aria-label="Open seller navigation" aria-controls="seller-sidebar" :aria-expanded="sidebar" @click="sidebar=true; $nextTick(() => $refs.sellerSidebarClose.focus())"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
       <a class="seller-wordmark" href="/seller-admin" aria-label="WeevCrafts seller portal"><img class="seller-mark" src="/assets/images/brand/weevcrafts-logo.png" alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Crafted in India. Made to be cherished.</small></span></a>
       <span class="seller-portal-pill">Seller Portal</span>
-      <form class="seller-search" action={ sellerPath(p.Active) } method="get">
-        <label class="sr-only" for="seller-search">Search seller portal</label>
+      <form class="seller-search" action={ sellerSearchPath(p.Active) } method="get">
+        <label class="sr-only" for="seller-search">{ sellerSearchLabel(p.Active) }</label>
         <span class="material-symbols-outlined" aria-hidden="true">search</span>
-        <input id="seller-search" name="q" value={ p.Query } placeholder="Search orders, products, payouts, and more..."/>
+        <input id="seller-search" name="q" type="search" value={ p.Query } placeholder={ sellerSearchLabel(p.Active) + "…" }/>
         if p.Active == "orders" && p.Tab != "" {
           <input type="hidden" name="tab" value={ p.Tab }/>
         }
@@ -81,7 +81,7 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
       </form>
 
       @components.NotificationBell()
- <a class="seller-user" href="/seller-admin"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
+ <a class="seller-user" href="/seller-admin/settings"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
       <form class="seller-header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </div>
     <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/makers">Makers</a><span></span><a href="/">Storefront</a></nav>
@@ -112,7 +112,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
  }
  if p.CanManageStore {
         @SellerNav("support", "Support", "support_agent", p.Active, "/seller-admin/support")
-        <a class="seller-nav-link" href="/seller-admin/settings"><span class="material-symbols-outlined" aria-hidden="true">store</span><span>Store profile</span></a>
+        @SellerNav("settings", "Store profile", "store", p.Active, "/seller-admin/settings")
       }
       <a class="seller-nav-link" href="/notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications</span></a>
  <a class="seller-nav-link" href="/" aria-label="Go to storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
@@ -181,6 +181,7 @@ templ SellerStatMeta(stat viewmodels.SellerAdminStat) {
 templ Dashboard(p viewmodels.SellerAdminPage) {
   @Document(p) {
     @SellerStatGrid(p)
+    @components.TaskGuidance("NEXT ACTION", "Start with the work that protects sales", "Process waiting orders, resolve low-stock items, or add the next product your customers can buy.", "/seller-admin/orders", "Open fulfilment")
     <section class="seller-dashboard-grid">
       <article class="seller-panel sales-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">bar_chart</span><span><h2>Sales Overview</h2><p>Track your sales performance over time</p></span></div><select aria-label="Sales period"><option>Last 7 Days</option><option>Last 30 Days</option></select></div><div class="sales-chart"><div class="chart-y"><span>40K</span><span>30K</span><span>20K</span><span>10K</span><span>0</span></div><div class="chart-area"><div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 620 220" role="img" aria-label="Sales trend chart"><path class="chart-fill" d="M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135 L555 205 L15 205 Z"></path><path class="chart-line" d="M15 170 L105 130 L195 148 L285 90 L375 150 L465 105 L555 135"></path><circle cx="15" cy="170" r="5"></circle><circle cx="105" cy="130" r="5"></circle><circle cx="195" cy="148" r="5"></circle><circle cx="285" cy="90" r="5"></circle><circle cx="375" cy="150" r="5"></circle><circle cx="465" cy="105" r="5"></circle><circle cx="555" cy="135" r="5"></circle></svg><div class="chart-x"><span>20 Apr</span><span>21 Apr</span><span>22 Apr</span><span>23 Apr</span><span>24 Apr</span><span>25 Apr</span><span>26 Apr</span></div><b class="chart-tooltip">INR 14,797<br/><small>26 Apr 2024</small></b></div></div><div class="sales-summary"><span><i class="material-symbols-outlined" aria-hidden="true">bar_chart</i><b>INR 1,02,340</b><small>Total Sales<br/>(Last 7 days)</small></span><span><i class="material-symbols-outlined" aria-hidden="true">receipt_long</i><b>28</b><small>Total Orders<br/>(Last 7 days)</small></span><span><i class="material-symbols-outlined" aria-hidden="true">inventory_2</i><b>42</b><small>Products Sold<br/>(Last 7 days)</small></span><span><i class="material-symbols-outlined" aria-hidden="true">trending_up</i><b>INR 3,655</b><small>Average Order<br/>Value</small></span></div></article>
       <article class="seller-panel quick-panel"><div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">bolt</span><span><h2>Quick Actions</h2></span></div></div><div class="seller-quick-actions"><a href="/seller-admin/products?notice=New+product+form+opened"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><b>Add New Product</b><small>List a new handcrafted item</small><i class="material-symbols-outlined" aria-hidden="true">chevron_right</i></a><a href="/seller-admin/inventory?notice=Inventory+manager+opened"><span class="material-symbols-outlined" aria-hidden="true">redeem</span><b>Manage Inventory</b><small>Update stock and variants</small><i class="material-symbols-outlined" aria-hidden="true">chevron_right</i></a><a href="/seller-admin/orders?notice=Pending+orders+opened"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><b>Process Orders</b><small>View and ship pending orders</small><i class="material-symbols-outlined" aria-hidden="true">chevron_right</i></a><a href="/seller-admin/products?tab=approval&amp;notice=Product+approval+tracker+opened"><span class="material-symbols-outlined" aria-hidden="true">arrow_circle_up</span><b>Request Product Approval</b><small>Track approval status</small><i class="material-symbols-outlined" aria-hidden="true">chevron_right</i></a><a href="/seller-admin/settings?notice=Offers+manager+opened"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span><b>Manage Offers</b><small>Create discounts and offers</small><i class="material-symbols-outlined" aria-hidden="true">chevron_right</i></a></div></article>

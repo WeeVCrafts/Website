@@ -6,6 +6,9 @@ import "github.com/wecratfs/commerce/web/components"
 
 templ PortalDashboard(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+		if len(p.Products) == 0 && p.DataWarning == "" && p.CanProductWrite {
+			@components.TaskGuidance("START SELLING", "Create your first product draft", "Add your product details, price and photo. Save your draft, then submit it separately for marketplace review.", "/seller-admin/products/new", "Create product draft")
+		}
 		<nav class="ui-actions" aria-label="Shop actions">
 			if p.CanProductWrite {
 				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
@@ -19,7 +22,7 @@ templ PortalDashboard(p viewmodels.SellerAdminPage) {
 		</nav>
 		@SellerStatGrid(p)
 		if len(p.LowStock) > 0 {
-			<section class="seller-callout" role="status"><p><strong>{ sellerInt(len(p.LowStock)) } variants on this page need a stock check</strong><small>Below your { sellerInt(p.LowStockThreshold) } unit threshold. <a href="/seller-admin/inventory?stock=low">Review stock</a></small></p></section>
+			@components.TaskGuidance("STOCK CHECK", sellerInt(len(p.LowStock)) + " variants on this page are running low", "Below your " + sellerInt(p.LowStockThreshold) + " unit threshold. Review available stock and update the items that need attention.", "/seller-admin/inventory?stock=low", "Review low stock")
 		}
 		<section class="seller-two-grid seller-dashboard-tables">
 			<article class="seller-panel">

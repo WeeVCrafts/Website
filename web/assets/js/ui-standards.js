@@ -35,9 +35,24 @@
     }
     return !first;
   }
+  function trapModalTab(event) {
+    const dialog = event.currentTarget;
+    if (event.key !== 'Tab' || !dialog.open) return;
+    const controls = Array.from(dialog.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')).filter(control => !control.matches(':disabled,input[type=hidden],[tabindex="-1"]') && control.getClientRects().length);
+    const first = controls[0], last = controls[controls.length-1];
+    if (!first) { event.preventDefault(); dialog.focus(); return; }
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+  function bindModalTab(dialog) {
+    if (dialog.dataset.modalTabBound) return;
+    dialog.dataset.modalTabBound = 'true';
+    dialog.addEventListener('keydown',trapModalTab);
+  }
   function confirmAction(message, trigger, actionLabel, options = {}) {
     return new Promise(resolve => {
       const dialog = document.createElement("dialog");
+      bindModalTab(dialog);
       dialog.className = "ui-confirm";
       dialog.dataset.intent = options.intent || "primary";
       dialog.setAttribute("aria-labelledby", "ui-confirm-title");
@@ -118,6 +133,38 @@
       sync();
     });
   }
+  // Native modal dialogs share focus, cancellation and unsaved-edit behavior.
+  function initFormDialogs(root) {
+    root.querySelectorAll('[data-form-dialog]').forEach(dialog => {
+      if (dialog.dataset.dialogBound) return;
+      dialog.dataset.dialogBound = 'true';
+      let trigger;
+      const close = async () => {
+        const forms = Array.from(dialog.querySelectorAll('form'));
+        if (forms.some(form => form.dataset.saving === 'true')) return;
+        if (forms.some(form => dirtyForms.has(form)) && !(await confirmAction('Discard your unsaved changes to this form?', document.activeElement, 'Discard changes', {cancelLabel:'Keep editing',intent:'warning'}))) return;
+        forms.forEach(form => {
+          form.reset(); dirtyForms.delete(form); delete form.dataset.discarded;
+          form.querySelector('.ui-form-error')?.remove();
+          form.dispatchEvent(new CustomEvent('ui:discard', {bubbles:true}));
+        });
+        dialog.close();
+      };
+      document.querySelectorAll('[data-dialog-open]').forEach(button => {
+        if (button.dataset.dialogOpen !== dialog.id) return;
+        button.addEventListener('click', () => { trigger = button; dialog.showModal(); });
+      });
+      dialog.querySelectorAll('[data-dialog-close]').forEach(button => button.addEventListener('click', close));
+      dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+      dialog.addEventListener('close', () => {
+        dialog.querySelectorAll('input[autocomplete="new-password"]').forEach(input => { input.value = ''; input.type = 'password'; });
+        dialog.querySelectorAll('.password-visibility').forEach(button => { button.textContent='Show password'; button.setAttribute('aria-pressed','false'); });
+        (trigger || document.querySelector('[data-category-search]'))?.focus({preventScroll:true});
+      });
+      if (dialog.hasAttribute('data-dialog-auto')) dialog.showModal();
+    });
+    root.querySelectorAll('[data-user-return]').forEach(input => { input.value = location.pathname + location.search; });
+  }
   function initUserDeleteDialogs(root) {
     root.querySelectorAll('[data-user-delete-trigger]').forEach(trigger => {
       if (trigger.dataset.deleteDialogBound) return;
@@ -125,10 +172,9 @@
       if (!dialog) return;
       trigger.dataset.deleteDialogBound = 'true';
       const cancel = dialog.querySelector('[data-user-delete-cancel]');
-      const reason = dialog.querySelector('[name="reason"]');
       trigger.addEventListener('click', () => {
         dialog.showModal();
-        requestAnimationFrame(() => reason?.focus());
+        requestAnimationFrame(() => cancel?.focus());
       });
       cancel?.addEventListener('click', () => dialog.close());
       dialog.addEventListener('cancel', event => { event.preventDefault(); dialog.close(); });
@@ -136,7 +182,10 @@
     });
   }
   function init(root) {
+    if (root.matches?.('dialog')) bindModalTab(root);
+    root.querySelectorAll('dialog').forEach(bindModalTab);
     initRoleNavigation(root);
+    initFormDialogs(root);
     initUserDeleteDialogs(root);
     // Persistent data-entry labels; placeholders remain examples, not labels.
     root.querySelectorAll('input,select,textarea').forEach(field=>{
@@ -196,7 +245,7 @@
         if (confirmation && !form.dataset.confirmed) {
           event.preventDefault(); event.stopImmediatePropagation();
           const submitter = event.submitter || form.querySelector('[type="submit"]');
-          const intent = /\/delete$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
+          const intent = /\/(delete|delete-draft)$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
           if (await confirmAction(confirmation, submitter, submitter?.textContent.trim(), {intent})) {
             if (form.action.endsWith('/users/delete') && !form.querySelector('input[name="confirm"]')) {
               const confirmed = document.createElement('input'); confirmed.type = 'hidden'; confirmed.name = 'confirm'; confirmed.value = 'yes'; form.append(confirmed);
@@ -340,7 +389,7 @@
     let productInvalidField = null;
     try {
       const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:customerForm && form.enctype!=='multipart/form-data' ? new URLSearchParams(payload) : payload,signal:controller.signal});
-      if (customerForm && response.redirected && new URL(response.url).pathname === '/login') {
+      if ((customerForm || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
         const error = new Error('Your session ended. Your entries are still here. Copy your changes before signing in again.');
         error.customerSession = true; throw error;
       }

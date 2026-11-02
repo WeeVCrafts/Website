@@ -109,7 +109,7 @@ func main() {
 			}
 			accountIDs[item.key] = id
 			if item.key == "seller" {
-				if err := tx.QueryRow(ctx, `INSERT INTO sellers (owner_user_id,display_name,status) VALUES ($1,'WeevCrafts Seller','active') ON CONFLICT (owner_user_id) DO UPDATE SET status='active' RETURNING id`, id).Scan(&sellerID); err != nil {
+				if err := tx.QueryRow(ctx, `INSERT INTO sellers (owner_user_id,display_name,status) VALUES ($1,'Weaver''s Touch','active') ON CONFLICT (owner_user_id) DO UPDATE SET display_name='Weaver''s Touch', status='active' RETURNING id`, id).Scan(&sellerID); err != nil {
 					return fmt.Errorf("seller: %w", err)
 				}
 			}

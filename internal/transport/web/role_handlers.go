@@ -3,6 +3,7 @@ package web
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -203,7 +204,20 @@ func (h *Handler) adminRoleUserUpdate(w http.ResponseWriter, r *http.Request) {
 	err = h.roleAdminService.UpdateUser(r.Context(), session.UserID, userID, r.FormValue("email"), r.FormValue("display_name"), r.FormValue("status"), r.FormValue("password"), r.FormValue("reason"))
 	switch {
 	case err == nil:
-		h.redirect(w, r, "/super-admin/users?notice=Account+updated")
+		target := "/super-admin/users"
+		if next, e := url.Parse(r.FormValue("return_to")); e == nil && !next.IsAbs() && next.Host == "" && next.Path == target && !strings.ContainsAny(next.String(), "\\\r\n") {
+			query := url.Values{}
+			for _, key := range []string{"q", "status", "role", "page"} {
+				if value := next.Query().Get(key); value != "" {
+					query.Set(key, value)
+				}
+			}
+			query.Set("notice", "Account updated")
+			target += "?" + query.Encode()
+		} else {
+			target += "?notice=Account+updated"
+		}
+		h.redirect(w, r, target)
 	case errors.Is(err, ports.ErrForbidden):
 		h.renderError(w, 403, "User management restricted", "Only Super Admin can edit accounts.")
 	case errors.Is(err, ports.ErrUserAlreadyExists):

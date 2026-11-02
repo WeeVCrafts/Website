@@ -220,3 +220,42 @@ private authoring preview. Customer pages preserve their approved composition;
 purchase facts and shipping/returns summaries extend existing product controls.
 Runtime owners are storefront-editor.css/js, storefront-preview.js and the shared
 ui-standards controls. Existing tokens and homepage fade remain authoritative.
+
+## Guided administration - 2 November 2026
+
+Retain current operational branding and tokens. Account editing uses the shared
+native modal surface, with readable single-column fields and full-width phone
+layout. Storefront navigation puts Homepage, Slideshow and Categories first;
+More tools contains advanced workspaces. Slide thumbnails and row selection
+belong in the outline beside the edit form and private preview. Category
+creation/editing uses the same modal behavior and existing media library.
+
+Authenticated dashboards use the shared `TaskGuidance` pattern for one
+recommended next action. It is additive guidance, not a replacement for role
+navigation, and must remain readable as a stacked card at narrow widths.
+Operational tables keep native headings on desktop and use the existing
+labelled record layout or horizontal region on mobile; sticky headings apply
+only where the table remains tabular.
+
+### Authenticated browser audit — 2 November 2026
+
+Live customer account guidance uses the customer's latest owned order, or the
+first address/shopping task for an empty account. Live seller guidance points
+to the existing low-stock queue or the first product draft. Reuse `TaskGuidance`
+with its existing semantic tokens; phone actions occupy the full card width.
+Dashboard record links remain visibly underlined in operational shells.
+
+The catalogue banner uses a single block containing the existing photograph
+and copy. Its phone photograph is 100px tall, with full-width copy rather than
+the obsolete two-column banner grid. Footer navigation links reserve at least
+32px of height at every width. Payment activity uses the shared `ui-status`
+palette and `StatusTone`; captured payments keep their explicit text and use
+the existing success tone. `storefront-reference.css` owns banner/footer geometry;
+`ui-standards.css` owns shared guidance, wrapping actions and record links.
+
+### Super Admin editor retirement — 2 November 2026
+
+The owner removed the current Super Admin Storefront editor pending a new brief.
+Hide its navigation and category/promotion shortcuts for Super Admin. Keep the
+published customer storefront and stored releases/drafts intact. No replacement
+customization surface is introduced by this change.

@@ -74,3 +74,19 @@ func TestCustomerPagesRequireExactlyCustomerRole(t *testing.T) {
 		t.Fatal("customer boundary")
 	}
 }
+
+func TestSellerProfileNavigationRetainsRoleAndOwnershipBoundaries(t *testing.T) {
+	if got := roleAccountDestination([]identity.Role{identity.RoleSeller}); got != "/seller-admin/settings" {
+		t.Fatalf("seller account destination: %s", got)
+	}
+	for _, path := range []string{"/seller-admin/settings", "/seller-admin/profile", "/seller-admin/account"} {
+		if !sellerPortalAllowed(path, true, nil) || sellerPortalAllowed(path, false, nil) {
+			t.Fatalf("owner boundary at %s", path)
+		}
+		for _, role := range []identity.Role{identity.RoleCustomer, identity.RoleAdmin, identity.RoleSuperAdmin} {
+			if roleAllowsPortalPath(role, path) {
+				t.Fatalf("%s allowed seller profile", role)
+			}
+		}
+	}
+}

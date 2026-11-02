@@ -223,6 +223,32 @@ func (r *StorefrontRepository) Save(ctx context.Context, actor, id, expected int
 		return storefrontAudit(ctx, tx, actor, id, "draft_saved", "")
 	})
 }
+
+// DeleteDraft removes only editable work. Releases and media have independent
+// lifetimes and must remain available for the live storefront and restoration.
+func (r *StorefrontRepository) DeleteDraft(ctx context.Context, actor, id, expected int64) error {
+	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		if err := storefrontAuthorize(ctx, tx, actor, true); err != nil {
+			return err
+		}
+		var version int64
+		var state string
+		if err := tx.QueryRow(ctx, `SELECT version,state FROM storefront_drafts WHERE id=$1 FOR UPDATE`, id).Scan(&version, &state); err != nil {
+			return err
+		}
+		if version != expected {
+			return storefront.ErrConflict
+		}
+		if state != "draft" {
+			return storefront.ErrLocked
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM storefront_drafts WHERE id=$1`, id); err != nil {
+			return err
+		}
+		return storefrontAudit(ctx, tx, actor, id, "draft_deleted", "Unpublished draft permanently deleted")
+	})
+}
+
 func (r *StorefrontRepository) Transition(ctx context.Context, actor, id, expected int64, action, note string) error {
 	note = strings.TrimSpace(note)
 	if len(note) > 2000 {

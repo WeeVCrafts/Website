@@ -25,6 +25,16 @@ func TestLiveProductPreservesSellerEnteredCustomerFields(t *testing.T) {
 	}
 }
 
+func TestLiveProductUsesHonestFallbackWhenImageIsMissing(t *testing.T) {
+	product := liveProduct(domaincatalog.Product{Slug: "missing-photo", Name: "Missing Photo"}, "csrf")
+	if product.ImageURL != "/assets/images/product-unavailable.svg" {
+		t.Fatalf("ImageURL = %q, want the missing-media fallback", product.ImageURL)
+	}
+	if product.ImageSrcSet != "" {
+		t.Fatalf("ImageSrcSet = %q, want no guessed candidates for the fallback", product.ImageSrcSet)
+	}
+}
+
 func TestLiveTotalsUsesIntegerCents(t *testing.T) {
 	items, shipping, discount, total := liveTotals([]viewmodels.CartItem{{
 		Product: viewmodels.Product{PriceCents: 24900}, Quantity: 2,

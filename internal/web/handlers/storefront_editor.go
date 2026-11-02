@@ -185,6 +185,16 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 		denyPortalAccess(w, r)
 		return true
 	}
+	// The owner retired the Super Admin editor pending a replacement workflow.
+	// Keep published releases and drafts intact; reject every legacy mutation.
+	if super {
+		if r.Method == http.MethodGet || r.Method == http.MethodHead {
+			http.Redirect(w, r, "/super-admin?notice="+url.QueryEscape("The Storefront editor has been removed."), http.StatusSeeOther)
+		} else {
+			http.Error(w, "The Storefront editor has been removed. No changes were saved.", http.StatusGone)
+		}
+		return true
+	}
 	role := domainidentity.RoleAdmin
 	if super {
 		role = domainidentity.RoleSuperAdmin
@@ -252,7 +262,30 @@ func (h *LivePortalHandler) serveStorefrontEditor(w http.ResponseWriter, r *http
 		if values := r.Form["section"]; len(values) > 1 {
 			m.Selected = values[len(values)-1]
 		}
-		if action == "/new" {
+		if action == "/delete-draft" {
+			if !super || root != "/super-admin" {
+				http.Error(w, "Only Super Admin can delete storefront drafts.", http.StatusForbidden)
+				return true
+			}
+			err = repo.DeleteDraft(r.Context(), session.UserID, id, formInt64(r, "version"))
+			if err == nil {
+				http.Redirect(w, r, root+"/storefront?notice=Draft+deleted.+The+published+storefront+is+unchanged.", http.StatusSeeOther)
+				return true
+			}
+			message, code := "The draft could not be deleted. Try again.", http.StatusServiceUnavailable
+			switch {
+			case errors.Is(err, pgx.ErrNoRows):
+				message, code = "This draft no longer exists. Return to Storefront to choose another draft.", http.StatusNotFound
+			case errors.Is(err, storefront.ErrConflict):
+				message, code = "This draft changed. Reload the draft list before deleting it.", http.StatusConflict
+			case errors.Is(err, storefront.ErrLocked):
+				message, code = "Only editable drafts can be deleted. Request changes on submitted drafts first. Published versions are protected.", http.StatusConflict
+			case errors.Is(err, ports.ErrForbidden):
+				message, code = "Only Super Admin can delete storefront drafts.", http.StatusForbidden
+			}
+			http.Error(w, message, code)
+			return true
+		} else if action == "/new" {
 			id, err = repo.NewDraft(r.Context(), session.UserID, formInt64(r, "restore"))
 		} else {
 			m.Draft, err = repo.Draft(r.Context(), session.UserID, id)
@@ -538,6 +571,38 @@ func applyEditorFormValues(r *http.Request, m *viewmodels.StorefrontEditor, mone
 			break
 		}
 	case "hero":
+		if op == "up" || op == "down" || op == "hide" {
+			slices.SortFunc(c.Slides, func(a, b storefront.Slide) int {
+				if a.Order < b.Order {
+					return -1
+				}
+				if a.Order > b.Order {
+					return 1
+				}
+				return strings.Compare(a.ID, b.ID)
+			})
+			for i := range c.Slides {
+				if c.Slides[i].ID != m.Selected {
+					continue
+				}
+				if op == "hide" {
+					c.Slides[i].Hidden = !c.Slides[i].Hidden
+				} else {
+					j := i - 1
+					if op == "down" {
+						j = i + 1
+					}
+					if j >= 0 && j < len(c.Slides) {
+						c.Slides[i], c.Slides[j] = c.Slides[j], c.Slides[i]
+					}
+					for n := range c.Slides {
+						c.Slides[n].Order = (n + 1) * 10
+					}
+				}
+				break
+			}
+			break
+		}
 		if op == "add" {
 			s := storefront.Slide{ID: editorID(), Order: (len(c.Slides) + 1) * 10, Title: "New collection", Image: "/assets/images/customer/craft-banner.webp", Alt: "Indian craft collection", Button: storefront.Link{Label: "Explore", URL: "/products"}}
 			c.Slides = append(c.Slides, s)
@@ -568,7 +633,12 @@ func applyEditorFormValues(r *http.Request, m *viewmodels.StorefrontEditor, mone
 		}
 	case "categories":
 		if op == "add" {
-			s := storefront.Category{Slug: r.FormValue("slug"), Name: r.FormValue("name"), Visible: true, Order: 1000}
+			s := storefront.Category{Slug: strings.TrimSpace(r.FormValue("slug")), Name: strings.TrimSpace(r.FormValue("name")), Image: r.FormValue("image"), Description: r.FormValue("text"), Visible: true, Order: 1000}
+			// Older native clients send only name and slug.
+			if r.FormValue("order") != "" {
+				s.Order = formInt(r, "order")
+				s.Visible = formBool(r, "visible")
+			}
 			c.Categories = append(c.Categories, s)
 			m.Selected = s.Slug
 			break

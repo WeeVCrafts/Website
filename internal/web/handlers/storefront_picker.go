@@ -48,6 +48,17 @@ func (h *LivePortalHandler) storefrontProductPicker(r *http.Request, m *viewmode
 	if e = rows.Err(); e != nil {
 		return e
 	}
+	// Keep saved manual order, ahead of the alphabetic unselected search results.
+	slices.SortStableFunc(m.ProductChoices, func(a, b viewmodels.StorefrontProductChoice) int {
+		ai, bi := slices.Index(selected, a.ID), slices.Index(selected, b.ID)
+		if ai < 0 {
+			ai = len(selected)
+		}
+		if bi < 0 {
+			bi = len(selected)
+		}
+		return ai - bi
+	})
 	m.ProductQuery = query
 	m.ProductTotal = total
 	m.ProductPage = page

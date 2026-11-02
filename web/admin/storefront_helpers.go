@@ -5,9 +5,62 @@ import (
 	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
+
+func editorVisibility(visible bool) string {
+	if visible {
+		return "Visible"
+	}
+	return "Hidden"
+}
+
+func editorHasUnpublished(drafts []storefront.Draft) bool {
+	for _, draft := range drafts {
+		if draft.State != "published" {
+			return true
+		}
+	}
+	return false
+}
+
+func editorProductModeName(mode string) string {
+	switch mode {
+	case "featured":
+		return "Featured products"
+	case "newest":
+		return "New arrivals"
+	case "category":
+		return "Products from a category"
+	case "selected":
+		return "Choose products manually"
+	default:
+		return mode
+	}
+}
+
+func editorToggleVisibility(hidden bool) string {
+	if hidden {
+		return "Show"
+	}
+	return "Hide"
+}
+
+func editorOrderedSlides(slides []storefront.Slide) []storefront.Slide {
+	ordered := slices.Clone(slides)
+	slices.SortFunc(ordered, func(a, b storefront.Slide) int {
+		if a.Order < b.Order {
+			return -1
+		}
+		if a.Order > b.Order {
+			return 1
+		}
+		return strings.Compare(a.ID, b.ID)
+	})
+	return ordered
+}
 
 func editorURL(m viewmodels.StorefrontEditor, tab, id string) string {
 	return m.Admin.PortalRoot + "/storefront?" + url.Values{"draft": {fmt.Sprint(m.Draft.ID)}, "tab": {tab}, "section": {id}}.Encode()
@@ -143,7 +196,7 @@ func editorKindHint(kind string) string {
 	return "Add content, choose its destination, and check the responsive preview."
 }
 func editorHasOutline(m viewmodels.StorefrontEditor) bool {
-	return m.Tab == "homepage" || m.Tab == "template-sections" || m.Tab == "page-sections"
+	return m.Tab == "hero" || m.Tab == "homepage" || m.Tab == "template-sections" || m.Tab == "page-sections"
 }
 func editorBlocking(m viewmodels.StorefrontEditor) bool {
 	for _, f := range m.Readiness {

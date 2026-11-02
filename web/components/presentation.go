@@ -14,7 +14,7 @@ func StatusTone(status string) string {
 		return "danger"
 	case "pending", "pending_payment", "pending_review", "processing", "packing", "shipped", "out_for_delivery", "ready_to_deliver", "in_progress", "waiting_customer", "requested", "under_review":
 		return "warning"
-	case "paid", "approved", "active", "available", "delivered", "resolved", "completed", "success":
+	case "paid", "captured", "approved", "active", "available", "delivered", "resolved", "completed", "success":
 		return "success"
 	default:
 		return "neutral"

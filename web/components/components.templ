@@ -46,7 +46,7 @@ templ Header(p viewmodels.CustomerPage) {
                   <p class="profile-panel-title">Your account</p>
     }
 
-                <a href="/account"><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account & profile</span></a>
+                <a href={p.AccountDestination()}><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account & profile</span></a>
                 <a href="/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Orders & tracking</span></a>
     <a href="/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
                   if p.ProfileIncomplete {
@@ -106,7 +106,7 @@ templ Header(p viewmodels.CustomerPage) {
         }
       </nav>
       <nav class="menu-section" aria-labelledby="menu-account"><h3 id="menu-account">Your account</h3>
-        @MenuLink("/account", "Account & profile", "person")
+        @MenuLink(p.AccountDestination(), "Account & profile", "person")
         @MenuLink("/orders", "Orders & tracking", "local_shipping")
         @MenuLink("/wishlist", "Wishlist", "favorite")
         @MenuLink("/cart", "Shopping bag", "shopping_bag")

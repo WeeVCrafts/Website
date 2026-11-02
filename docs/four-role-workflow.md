@@ -13,6 +13,25 @@ Accounts have one role. Assignments replace the previous role and invalidate exi
 
 Seller role replacement and deletion lock the seller record and check unfinished orders and unresolved returns. Checkout acquires that same seller lock before reading availability. Eligible demotion pauses the storefront while keeping products, media, earnings and order history. Reassigning Seller does not reactivate a suspended profile.
 
+### Seller dashboard rejects an otherwise signed-in seller
+
+`/seller-admin` requires the account's sole role to be `seller` and a business in
+`sellers` whose `owner_user_id` matches that account. A role without an owned
+business is incomplete account data and returns Forbidden. Do not bypass that
+ownership check or attach another person's business by matching an email/name.
+
+After confirming the account's identity, Super Admin can open Roles, find the
+account, choose Change role, keep Seller selected, and save with an audit reason
+and confirmation. The existing transaction creates a missing business with
+Pending status, retains an existing business and its approval state, audits the
+assignment, and revokes sessions. The seller must sign in again. This repair
+does not activate a shop, approve products, or require changing the password.
+
+`TestSellerRoleAssignmentCreatesAndRepairsOwnedProfile` covers new assignment,
+reapplying Seller to incomplete account data, denied non-admin repair, retained
+business identity/status/story, session invalidation and audit events. Use the
+isolated integration database for this test, never production.
+
 ## Private seller confirmations
 
 Customer case → inspect the linked order → request seller confirmation → seller replies → company records delivery issue/follow-up outcome → customer receives a separate reply → company resolves the case.

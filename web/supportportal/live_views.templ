@@ -10,6 +10,7 @@ import (
 templ LiveDashboard(p viewmodels.SupportPortalPage) {
 	@SupportDocument(p) {
 		@SupportStatGrid(p)
+		@components.TaskGuidance("NEXT ACTION", "Start with the case that needs a reply", "Open the case queue to search, update the status, add an internal note, or reply to the customer from one place.", "/support-portal/cases", "Open case queue")
 		<section class="support-panel">
 			<div class="support-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><span><h2>Live case queue</h2><p>Customer names and order details are masked for support.</p></span></div><a href="/support-portal/cases">Open queue</a></div>
 			@LiveSupportCaseTable(p)

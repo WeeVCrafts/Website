@@ -340,6 +340,13 @@ templ LiveAccount(p viewmodels.CustomerPage) {
         if p.Notice != "" {
           <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
         }
+        if len(p.Orders) > 0 {
+          @components.TaskGuidance("YOUR NEXT STEP", "Follow your latest order", "View delivery progress, payment details and order help in one place.", orderPath(p.Orders[0].Number), "View latest order")
+        } else if p.Address.Lines == "" {
+          @components.TaskGuidance("GET READY TO SHOP", "Add your delivery address", "Save your delivery details once to make your first checkout easier.", "/account/addresses", "Add an address")
+        } else {
+          @components.TaskGuidance("YOUR NEXT STEP", "Find your first handmade piece", "Your account is ready. Explore products from independent Indian makers.", "/products", "Browse products")
+        }
         <div class="account-stats"><span><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><b>{ p.OrderCount }</b><small>Orders placed</small></span><span><span class="material-symbols-outlined" aria-hidden="true">favorite</span><b>{ p.WishlistCount }</b><small>Items in wishlist</small></span><span><span class="material-symbols-outlined" aria-hidden="true">reviews</span><b>{ p.ReviewCount }</b><small>Reviews written</small></span><span><span class="material-symbols-outlined" aria-hidden="true">volunteer_activism</span><b>Proud supporter</b><small>Indian artisans</small></span></div>
         <div class="account-cards">
           <section class="account-wide account-order-priority"><h2>Your orders</h2><a href="/orders">View all <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
@@ -363,7 +370,7 @@ templ LiveAccount(p viewmodels.CustomerPage) {
           <section id="preferences"><h2>Notification updates</h2><a href="/notifications">View updates <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Read order updates and replies from company support.</p></section>
           <section id="privacy"><h2>Privacy preferences</h2><a href="/account/privacy">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Review your privacy choices and data requests.</p></section>
           <section id="security"><h2>Security &amp; sessions</h2><a href="/account/security">Manage <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><p>Change your password and protect your account.</p></section>
-          <section class="account-wide account-help"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Need a hand?</h2><p>Our customer care team is here for order, return and product questions.</p></div><a class="outline-button" href="/contact">Contact support</a></section>
+          <section class="account-wide account-help"><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><div><h2>Need a hand?</h2><p>Read replies and manage your order, return and product questions.</p></div><a class="outline-button" href="/account/support">Open support</a></section>
         </div>
       </div>
     </section>
@@ -415,7 +422,7 @@ templ LiveTracking(p viewmodels.CustomerPage) {
       } else {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
       }
-    </div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our customer care team can help with an order update.</p><a href="/contact">Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
+    </div><aside class="returns-aside"><div><span class="material-symbols-outlined" aria-hidden="true">support_agent</span><h2>Need help?</h2><p>Our customer care team can help with an order update.</p><a href={ customerSupportURL(p.SelectedOrder.Number) }>Contact support <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></aside></section>
   }
 }
 

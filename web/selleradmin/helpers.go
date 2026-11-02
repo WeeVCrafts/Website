@@ -200,6 +200,30 @@ func sellerPath(active string) string {
 	return "/seller-admin/" + active
 }
 
+// Search only queues that apply q. Other workspaces lead to the catalogue,
+// rather than accepting a query on a page that cannot show its results.
+func sellerSearchPath(active string) string {
+	switch active {
+	case "inventory", "orders", "returns":
+		return sellerPath(active)
+	default:
+		return "/seller-admin/products"
+	}
+}
+
+func sellerSearchLabel(active string) string {
+	switch active {
+	case "inventory":
+		return "Search inventory by product or SKU"
+	case "orders":
+		return "Search orders"
+	case "returns":
+		return "Search returns"
+	default:
+		return "Search products"
+	}
+}
+
 func sellerWorkspaceTabClass(active bool) string {
 	if active {
 		return "active"

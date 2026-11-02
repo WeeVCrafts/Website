@@ -1,5 +1,11 @@
 # Storefront editor and publishing
 
+**2 November 2026 update:** The owner has retired the current Super Admin
+editor pending a replacement brief. Its navigation and shortcuts are removed;
+legacy bookmarks return to the dashboard and mutations return 410. Published
+customer pages, releases and saved drafts remain intact. The documentation below
+records the retained Admin draft workflow and the historical publishing model.
+
 The Go/templ Storefront workspace lives at `/admin/storefront` and
 `/super-admin/storefront`. The customer site reads a published PostgreSQL release.
 Routine changes use this workspace without rebuilding or deploying the app.
@@ -224,3 +230,45 @@ and counts exclude direct purchases. Both purchase modes retain the same money,
 policy, coupon, stock-locking, reservation and payment verification services.
 Migration rollback must preserve new purchase contexts and saved orders; never
 reclassify active Buy now carts as normal carts or restore a pre-order database.
+
+## Guided homepage and category editing - 2 November 2026
+
+Continue an existing draft from Overview or explicitly create one from the live
+release. Homepage, Slideshow and Categories are primary destinations; the
+remaining workspaces stay in More tools. Add row offers the existing starting
+points and section types. Select a row/slide from the outline or private preview
+to edit its content beside the preview. Move up/down provides keyboard reordering.
+
+Product choices show photographs and a selection count. Move selected products
+to set their manual display order; saved selections remain visible across picker
+pages. Catalog products and featured status have a direct link to Products.
+Category search filters the draft's bounded category list. Add/Edit category
+opens a modal with name, stable slug, description, image library/upload, display
+order and discovery visibility. New category presentation and photograph save
+together. Image uploads show progress and retain the selection for retry.
+
+Super Admin can delete editable drafts from Overview after a permanent-deletion
+confirmation. The server checks current role, CSRF, state and version in a
+transaction and records an audit event without copying draft contents. Submitted
+drafts must first return to Draft; published versions cannot be deleted. Images,
+releases, the live release pointer and commerce records remain unchanged.
+
+Account editing is consolidated in Users with a modal; access assignments remain
+in Roles. Security retains audit activity and links to those owning screens.
+
+Verification for this update: `go test ./...`, the focused PostgreSQL draft
+removal integration test, template generation, CSS/JavaScript builds and the
+strict premium audit passed (zero audit findings). Eleven browser scenarios
+passed: five new Chromium management flows, the account popup in Firefox and
+WebKit, and four existing Chromium guided-editor regressions. Checks covered
+320/390/768/1440px layouts, keyboard focus/cancellation, retained validation
+values, upload failure/retry/progress, manual product order, draft deletion
+protection, private previews, native editor forms and seller profile navigation
+and saving. The account dialog and existing editor accessibility checks reported
+no WCAG 2 A/AA axe violations in their tested scopes.
+
+Verification used the dedicated loopback app on port 18085, the existing
+`storefront_guided_20261017` QA database and a separate
+`weevcrafts-admin-guided-qa` media bucket. No production deployment, customer
+record mutation or credential reset was performed. Real-device/screen-reader
+certification and a production rollout are outside this local verification.

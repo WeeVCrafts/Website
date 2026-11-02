@@ -37,10 +37,17 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 	}
 	relative := strings.Trim(strings.TrimPrefix(path, "/seller-admin"), "/")
 	switch relative {
-	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "onboarding", "support", "terms":
+	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "profile", "account", "onboarding", "support", "terms":
 		return true
 	}
 	return isSellerProductEditPath(relative) || sellerOrderDetailPath(relative)
+}
+
+func roleAccountDestination(roles []domainidentity.Role) string {
+	if len(roles) == 1 && roles[0] == domainidentity.RoleSeller {
+		return "/seller-admin/settings"
+	}
+	return applicationauth.LoginDestination(roles)
 }
 
 func sellerOrderDetailPath(relative string) bool {

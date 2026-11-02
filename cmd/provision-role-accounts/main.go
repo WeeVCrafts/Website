@@ -102,14 +102,14 @@ func main() {
 		var sellerID int64
 		err := tx.QueryRow(ctx, `
 			INSERT INTO sellers (owner_user_id, display_name, status)
-			VALUES ($1, 'WeevCrafts QA Seller', 'active')
-			ON CONFLICT (owner_user_id) DO NOTHING
+			VALUES ($1, 'Weaver''s Touch', 'active')
+			ON CONFLICT (owner_user_id) DO UPDATE SET display_name='Weaver''s Touch', status='active'
 			RETURNING id`, ids["seller"]).Scan(&sellerID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE owner_user_id=$1`, ids["seller"]).Scan(&sellerID)
 		}
 		if err != nil {
-			return fmt.Errorf("create QA seller: %w", err)
+			return fmt.Errorf("create seller: %w", err)
 		}
 
 		return nil

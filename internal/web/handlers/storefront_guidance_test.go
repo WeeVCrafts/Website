@@ -10,6 +10,38 @@ import (
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
+func TestSlideActionsPreserveContentAndHiddenSlides(t *testing.T) {
+	m := viewmodels.StorefrontEditor{Tab: "hero", Selected: "two"}
+	m.Draft.Config = storefront.Defaults()
+	m.Draft.Config.Slides = []storefront.Slide{{ID: "one", Order: 10, Title: "First", Image: "/one.jpg"}, {ID: "two", Order: 20, Title: "Second", Image: "/two.jpg", Hidden: true}}
+	for _, operation := range []string{"up", "hide"} {
+		r := httptest.NewRequest("POST", "/", strings.NewReader(url.Values{"operation": {operation}}.Encode()))
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		_ = r.ParseForm()
+		if err := applyEditorForm(r, &m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if m.Draft.Config.Slides[0].ID != "two" || m.Draft.Config.Slides[0].Hidden || m.Draft.Config.Slides[0].Image != "/two.jpg" || m.Draft.Config.Slides[1].Title != "First" {
+		t.Fatalf("slide action lost content: %+v", m.Draft.Config.Slides)
+	}
+}
+
+func TestCategoryCreationIncludesUploadedImageAndPresentation(t *testing.T) {
+	m := viewmodels.StorefrontEditor{Tab: "categories"}
+	m.Draft.Config = storefront.Defaults()
+	r := httptest.NewRequest("POST", "/", strings.NewReader(url.Values{"operation": {"add"}, "name": {"Studio baskets"}, "slug": {"studio-baskets"}, "image": {"/assets/images/customer/ceramic-mugs.webp"}, "text": {"Handwoven pieces"}, "order": {"75"}, "visible": {"true"}}.Encode()))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	_ = r.ParseForm()
+	if err := applyEditorForm(r, &m); err != nil {
+		t.Fatal(err)
+	}
+	c := m.Draft.Config.Categories[len(m.Draft.Config.Categories)-1]
+	if c.Image == "" || c.Order != 75 || c.Description != "Handwoven pieces" || !c.Visible || m.Selected != c.Slug {
+		t.Fatalf("category presentation lost: %+v", c)
+	}
+}
+
 func TestStructuredNavigationPreservesPlainTextAndRejectsUnsafeDestinations(t *testing.T) {
 	for _, tc := range []struct {
 		rows    string

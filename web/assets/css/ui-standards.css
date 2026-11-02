@@ -35,11 +35,12 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .ui-table-region { max-width: 100%; min-width: 0; overflow: auto; margin-top: 16px; border: 1px solid var(--ui-line); border-radius: 8px; }
 .ui-table { width: 100%; border-collapse: collapse; color: var(--ui-ink); font: 400 14px/1.5 var(--ui-font); }
 .ui-table th { font-weight: 600; background: var(--ui-surface); color: var(--ui-muted); text-align: left; }
+.ui-table:not(.ui-table--records) thead th { position: sticky; top: 0; z-index: 1; }
 .ui-table :is(th,td) { padding: 12px 14px; border-bottom: 1px solid var(--ui-line); vertical-align: top; overflow-wrap: anywhere; }
 .ui-table tbody tr:last-child :is(th,td) { border-bottom: 0; }
 .ui-table tbody tr:hover { background: rgb(98 85 72 / 4%); }
 .ui-table .numeric { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
-.ui-table a { text-decoration: underline; text-underline-offset: 3px; }
+.ui-table a, body:is(.seller-body,.admin-body) .ui-table .record-title a { text-decoration: underline; text-underline-offset: 3px; }
 .ui-table a:hover { color: var(--ui-primary); }
 .ui-table .record-title { min-width: 180px; font-weight: 600; }
 .ui-table .record-title small { display: block; color: var(--ui-muted); font-weight: 400; margin-top: 4px; }
@@ -59,6 +60,16 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .ui-form-section > p { grid-column: 1 / -1; margin: 0; color: var(--ui-muted); }
 .ui-form-section:first-of-type { border-top: 0; }
 .ui-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }
+.task-guidance { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 14px; margin: 0 0 20px; padding: 16px 18px; border: 1px solid var(--ui-line); border-radius: 10px; background: var(--ui-neutral-soft); color: var(--ui-ink); }
+.task-guidance-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; color: var(--ui-primary); background: var(--ui-surface); }
+.task-guidance-copy { min-width: 0; }
+.task-guidance-eyebrow { margin: 0 0 3px; color: var(--ui-primary); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.task-guidance h2 { margin: 0; font-size: 18px; line-height: 1.3; }
+.task-guidance-copy > p:last-child { margin: 4px 0 0; color: var(--ui-muted); line-height: 1.5; }
+.task-guidance-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; max-width:100%; padding: 10px 14px; border: 1px solid var(--ui-primary); border-radius: 6px; color: var(--ui-primary); font-weight: 700; text-decoration: none; white-space: normal; text-align:center; }
+.ui-wrap-action { max-width:100%; white-space:normal; text-align:center; overflow-wrap:anywhere; }
+.task-guidance-action:hover { color: var(--ui-surface); background: var(--ui-primary); }
+.storefront-body #page > .task-guidance { width: min(1240px, calc(100% - 32px)); margin-inline: auto; }
 .ui-preview-foot { margin: 16px 0 0; color: var(--ui-muted); font-size: 14px; }
 .admin-page-heading { min-height: auto; padding-block: 20px; background: none; border: 0; }
 .admin-heading-art, .admin-heading-note, .admin-impact { display: none; }
@@ -74,6 +85,9 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .support-case-update label { display: grid; gap: 8px; }
 .support-case-update :is(input,select) { width: 100%; padding: 10px; border: 1px solid var(--ui-line); border-radius: 6px; background: var(--ui-surface); color: var(--ui-ink); }
 @media (max-width: 720px) {
+  .task-guidance { grid-template-columns: auto minmax(0,1fr); align-items: start; padding: 14px; }
+  .task-guidance-action { grid-column: 1 / -1; justify-self: stretch; }
+  .storefront-body #page > .task-guidance { width: calc(100% - 20px); }
   .ui-form-section { grid-template-columns: minmax(0,1fr); gap: 16px; }
   .seller-form-actions { position: static; }
   .support-case-update { grid-template-columns: minmax(0,1fr); }
@@ -361,3 +375,12 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
 @media(prefers-reduced-motion:reduce) {
   :is(.seller-body,.admin-body) :is(.seller-sidebar,.admin-sidebar) {transition:none;}
 }
+
+/* Account editing uses the shared modal surface rather than table-cell popovers. */
+.user-edit-dialog{width:min(660px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;margin:auto;padding:28px;border:1px solid var(--ui-line);border-radius:12px;background:var(--ui-surface,#fffdf8);color:var(--ui-ink)}
+.user-edit-dialog::backdrop{background:rgb(20 30 25 / .45)}
+.user-edit-dialog .role-user-edit-form{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px;margin:0;padding:0;border:0;min-width:0;width:100%}
+.user-edit-dialog label{display:grid;gap:8px;font-size:16px}.user-edit-dialog :is(input,select){width:100%;min-width:0;min-height:48px;font:inherit;padding:10px 12px;border:1px solid var(--ui-line);border-radius:6px;background:var(--ui-surface);color:var(--ui-ink)}
+.user-edit-dialog h2{margin:0;font-size:24px}.user-edit-dialog p,.user-edit-dialog small{overflow-wrap:anywhere;white-space:normal}.user-dialog-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.user-management-actions-cell{white-space:normal!important}.user-management-actions-cell>.admin-button{margin:4px 4px 4px 0}
+@media(max-width:600px){.user-edit-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:20px}.user-dialog-actions>button{flex:1}}

@@ -11,6 +11,13 @@ templ PortalDashboardView(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
 		if p.IsFinance {
+			@components.TaskGuidance("TODAY'S FOCUS", "Reconcile the money queue first", "Review unsettled transactions and settlements, then return here for the next finance handoff.", p.PortalRoot + "/finance", "Open finance")
+		} else if p.IsOperations {
+			@components.TaskGuidance("TODAY'S FOCUS", "Resolve delivery exceptions first", "Review returns and fulfilment exceptions, complete the handoff, then return here for the next priority.", p.PortalRoot + "/returns", "Open returns")
+		} else {
+			@components.TaskGuidance("TODAY'S FOCUS", "Work the operational queues first", "Open the queue that needs a decision, complete the handoff, then return here for the next priority.", p.PortalRoot + "/orders", "Open orders")
+		}
+		if p.IsFinance {
 			<section class="admin-two-grid">
 				@PortalTransactionTable(p)
 				@PortalSettlementTable(p)
@@ -27,7 +34,7 @@ templ PortalDashboardView(p viewmodels.AdminPage) {
 			</section>
 			<section class="admin-two-grid">
 				@PortalSellerList(p)
-				<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Review user roles and audited access changes.</p></div></div></div><a class="admin-button primary" href={ p.PortalRoot + "/security" }>Manage roles and security</a></article>
+				<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">security</span><div><h2>Identity and access</h2><p>Create or edit accounts, assign access, and review security activity.</p></div></div></div><nav class="ui-actions" aria-label="Identity and access"><a class="admin-button primary" href={ p.PortalRoot + "/users" }>Manage accounts</a><a class="admin-button secondary" href={ p.PortalRoot + "/roles" }>Assign roles</a><a class="admin-button secondary" href={ p.PortalRoot + "/security" }>Security activity</a></nav></article>
 			</section>
 		} else {
 			<section class="admin-two-grid">
@@ -305,14 +312,20 @@ templ PortalSupport(p viewmodels.AdminPage) {
 
 templ PortalMarketing(p viewmodels.AdminPage) {
  @AdminDocument(p) {
-  <section class="admin-panel"><h2>Promotions and coupons</h2><p>Definitions, dates, eligibility and activation are now reviewed through Storefront. Admin prepares drafts; Super Admin publishes them. Usage below remains live.</p><a class="admin-button primary" href={ p.PortalRoot+"/storefront?tab=promotions" }>Manage promotions in Storefront</a></section>
+  if !p.CanSecurity {
+   <section class="admin-panel"><h2>Promotions and coupons</h2><p>Definitions, dates, eligibility and activation are now reviewed through Storefront. Admin prepares drafts; Super Admin publishes them. Usage below remains live.</p><a class="admin-button primary" href={ p.PortalRoot+"/storefront?tab=promotions" }>Manage promotions in Storefront</a></section>
+  }
   <section class="admin-panel"><h2>Promotion usage</h2><div class="ui-table-region" role="region" tabindex="0" aria-label="Promotion usage"><table class="ui-table"><thead><tr><th scope="col">Campaign</th><th scope="col">Code</th><th scope="col">Status</th><th scope="col">Type</th><th scope="col">Redemptions</th><th scope="col">Limit</th></tr></thead><tbody>
    for _,item:=range p.Campaigns {
     <tr><th scope="row">{ item.Name }</th><td>{ item.Code }</td><td>{ item.Status }</td><td>{ item.Type }</td><td>{ item.UsageCount }</td><td>{ item.UsageLimit }</td></tr>
    }
   </tbody></table></div>
   if len(p.Campaigns)==0 {
- @AdminTableEmpty("No promotions are configured.","Create a draft in Storefront to set up a coupon campaign.")
+ if p.CanSecurity {
+  @AdminTableEmpty("No promotions are configured.","Promotion usage will appear here when a campaign is available.")
+ } else {
+  @AdminTableEmpty("No promotions are configured.","Create a draft in Storefront to set up a coupon campaign.")
+ }
  }
   </section>
  }
@@ -348,14 +361,16 @@ templ PortalSecurity(p viewmodels.AdminPage) {
 		} else {
 			@StatGrid(p)
 		}
-		if p.Workspace != "users" {
-			@RoleUserCreateForm(p)
+		if p.Workspace == "users" || p.Workspace == "roles" {
+			@RoleAssignmentList(p)
 		}
-		@RoleAssignmentList(p)
 		if p.Workspace == "roles" {
 			<details class="admin-panel account-controls"><summary>Role permissions</summary>@RolePermissionMatrix()</details>
 		}
 		if p.Workspace != "users" {
+			if p.Workspace != "roles" {
+				<section class="admin-panel"><h2>Account access</h2><p>Edit account details in Users and manage access assignments in Roles.</p><div class="action-row"><a class="admin-button secondary" href={p.PortalRoot+"/users"}>Open Users</a><a class="admin-button secondary" href={p.PortalRoot+"/roles"}>Open Roles</a></div></section>
+			}
 			@PortalAuditList(p)
 		}
 	}

@@ -116,6 +116,7 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	AccountURL                                       string
 	ProductQuantity                                  int
 	CheckoutIntentID                                 string
 	ShoppingCart                                     []CartItem
