@@ -269,3 +269,15 @@ body.superadmin-body {
 }
 @media(prefers-reduced-motion:reduce) {.superadmin-body * {scroll-behavior:auto!important;transition:none!important;animation:none!important;}}
 @media(forced-colors:active) {.superadmin-body .admin-panel,.superadmin-body .admin-stat-card {border-color:CanvasText;}.superadmin-body .admin-stat-card:after {display:none;}}
+
+/* Category authoring uses the shared account dialog and form behavior. */
+.category-publication-dialog .category-image-preview {margin:0;display:grid;justify-items:center;gap:8px;text-align:center;}
+.category-image-preview img {width:130px;height:130px;object-fit:cover;border-radius:50%;}
+.category-publication-dialog .category-checkbox {display:flex;align-items:center;gap:10px;}
+.category-publication-dialog .category-checkbox input {width:20px;min-height:20px;flex:0 0 20px;}
+.category-publication-dialog input[type=file] {width:100%;min-width:0;white-space:normal;}
+.category-publication-dialog figcaption,.category-record-heading p,.category-record-heading h3 {overflow-wrap:anywhere;}
+.category-record-actions {margin-left:auto;}
+.category-publication-dialog [data-category-file] {overflow-wrap:anywhere;margin:0;}
+.category-publication-dialog .admin-product-editor-form {grid-template-columns:minmax(0,1fr);padding:0;gap:16px;}
+@media(max-width:600px){.category-record-actions{margin-left:0;width:100%;}.category-record-actions>*{flex:1;text-align:center;}.category-publication-dialog .action-row>*{flex:1;}}

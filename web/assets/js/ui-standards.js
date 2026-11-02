@@ -160,9 +160,9 @@
       dialog.addEventListener('close', () => {
         dialog.querySelectorAll('input[autocomplete="new-password"]').forEach(input => { input.value = ''; input.type = 'password'; });
         dialog.querySelectorAll('.password-visibility').forEach(button => { button.textContent='Show password'; button.setAttribute('aria-pressed','false'); });
-        (trigger || document.querySelector('[data-category-search]'))?.focus({preventScroll:true});
+        (trigger || document.getElementById(dialog.dataset.dialogReturn) || document.querySelector('[data-category-search]'))?.focus({preventScroll:true});
       });
-      if (dialog.hasAttribute('data-dialog-auto')) dialog.showModal();
+      if (dialog.hasAttribute('data-dialog-auto')) { dialog.removeAttribute('open'); dialog.showModal(); }
     });
     root.querySelectorAll('[data-user-return]').forEach(input => { input.value = location.pathname + location.search; });
   }
@@ -411,6 +411,7 @@
       const message=response.headers.get('Content-Type')?.includes('text/plain') ? html.trim().slice(0,1000) : (doc.querySelector('.profile-error,.seller-form-error,.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
       const error = new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
       error.orderConflict = response.status===409 && form.matches('[data-fulfillment-form]');
+      error.categoryConflict = response.status===409 && form.matches('[data-category-publication]');
       throw error;
     } catch(error) {
       const banner=document.createElement('div'); banner.className='ui-form-error'; banner.role='alert'; banner.tabIndex=-1;
@@ -422,6 +423,9 @@
       if(error.orderConflict) {
         const reload=document.createElement('a'); reload.href=location.pathname+location.search; reload.textContent='Reload latest order';
         banner.append(' ',reload);
+      }
+      if(error.categoryConflict) {
+        const reload=document.createElement('a');const latest=new URL(location.href);latest.searchParams.delete('new');latest.searchParams.delete('edit');reload.href=latest.pathname+latest.search;reload.textContent='Reload latest categories';banner.append(' ',reload);
       }
       form.prepend(banner); banner.focus();
       if (productInvalidField) validate(form);

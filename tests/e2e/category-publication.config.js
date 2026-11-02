@@ -1,0 +1,2 @@
+const base=require('../../playwright.config');
+module.exports={...base,testDir:__dirname,testMatch:'category-publication.spec.js',timeout:180000,expect:{timeout:30000},outputDir:require('node:path').join(require('node:os').tmpdir(),'weevcrafts-category-publication'),use:{...base.use,baseURL:'http://127.0.0.1:18087',reducedMotion:'reduce'},projects:['chromium','firefox','webkit'].map(browserName=>({name:browserName,use:{browserName}}))};

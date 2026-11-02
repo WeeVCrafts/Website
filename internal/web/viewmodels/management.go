@@ -11,8 +11,11 @@ type ManagementPage struct {
 }
 
 type CategoryManagerPage struct {
-	SelectedIDs map[int64]bool
-	ProductPage int
+	ExpectedRelease   int64
+	EditorOpen        bool
+	ReturnURL, NewURL string
+	SelectedIDs       map[int64]bool
+	ProductPage       int
 	ManagementPage
 	Error, EditorAction, EditorReason, SelectedCategory, ProductQuery, ProductPreviousURL, ProductNextURL string
 	Editor                                                                                                ports.ManagementRecord

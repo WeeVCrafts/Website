@@ -366,3 +366,24 @@ notice; editor mutations return 410 without changing drafts or published data.
 The same restriction applies if Super Admin uses an `/admin/storefront` alias.
 Admin's existing draft workspace and the published customer shop are retained.
 The earlier screenshot audit documents the UI before this removal.
+
+### Standalone category publication — 2 November 2026
+
+This approved replacement supersedes the earlier category-authoring restriction
+only. Active Super Admin may create or edit categories from Products. Save category
+publishes immediately; the retired general Storefront editor remains unavailable.
+Admin draft preparation and product-assignment permissions remain unchanged.
+
+The category projection, immutable release, storefront head, media metadata and
+audit event commit atomically under the head lock. Expected-release checks reject
+stale saves. Other published content and historical image references are retained.
+New categories require a photograph; editing may retain an existing or missing
+legacy photograph. Slugs remain fixed after creation. Visibility governs customer
+discovery, while existing category URLs and product editor choices remain valid.
+
+Shared ui-standards owns validation, busy state, retained form values/files,
+confirmation, native dialog focus and unsaved cancellation. Browser previews never
+publish. Rejected saves retain proposals and offer explicit reload on conflicts;
+uncertain network outcomes never trigger an automatic retry. Category forms submit
+multipart data and use existing media normalization and delivery. New failed-upload
+objects are cleaned up without deleting media referenced by prior releases.

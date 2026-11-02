@@ -298,3 +298,12 @@ The owner removed the current Super Admin Storefront editor pending a new brief.
 Hide its navigation and category/promotion shortcuts for Super Admin. Keep the
 published customer storefront and stored releases/drafts intact. No replacement
 customization surface is introduced by this change.
+
+### Standalone Super Admin categories — 2 November 2026
+
+Products links to the existing Categories page without changing the sidebar.
+Category authoring reuses AdminDocument, the shared native form dialog, existing
+forest/ivory tokens and operational typography. Circular 130px previews use the
+same centered crop as customer discovery. Complete actions wrap on phones; forms
+use one column and the dialog owns bounded scrolling. The customer category rail
+retains its existing responsive composition and scroll controls.

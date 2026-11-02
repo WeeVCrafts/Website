@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"bytes"
-	"crypto/rand"
 	"crypto/subtle"
-	"encoding/hex"
 	"errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
@@ -64,7 +62,7 @@ func (h *LivePortalHandler) categoryManagement(w http.ResponseWriter, r *http.Re
 	service := applicationcommerce.NewManagementService(repository)
 	base := root + "/category-management"
 	model := viewmodels.CategoryManagerPage{ManagementPage: viewmodels.ManagementPage{Section: "category-management", Action: base, Page: 1}}
-	model.Admin = viewmodels.AdminPage{Active: "category-management", NavActive: "category-management", Title: "Categories", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, actor), CSRFToken: csrf, CanManageCatalog: true, CanSecurity: role == domainidentity.RoleSuperAdmin, Notice: r.URL.Query().Get("notice")}
+	model.Admin = viewmodels.AdminPage{Active: "category-management", NavActive: "products", Title: "Categories", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, actor), CSRFToken: csrf, CanManageCatalog: true, CanSecurity: role == domainidentity.RoleSuperAdmin, Notice: r.URL.Query().Get("notice")}
 	model.Editor = ports.ManagementRecord{DisplayOrder: 1000, ShowInNavigation: true}
 	responseStatus := http.StatusOK
 	if action != "" {
@@ -73,10 +71,10 @@ func (h *LivePortalHandler) categoryManagement(w http.ResponseWriter, r *http.Re
 			http.Error(w, "Method not allowed", 405)
 			return
 		}
-		r.Body = http.MaxBytesReader(w, r.Body, 6<<20)
+		r.Body = http.MaxBytesReader(w, r.Body, 9<<20)
 		var err error
 		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-			err = r.ParseMultipartForm(6 << 20)
+			err = r.ParseMultipartForm(9 << 20)
 			if r.MultipartForm != nil {
 				defer r.MultipartForm.RemoveAll()
 			}
@@ -84,31 +82,20 @@ func (h *LivePortalHandler) categoryManagement(w http.ResponseWriter, r *http.Re
 			err = r.ParseForm()
 		}
 		if err != nil {
-			http.Error(w, "Choose an image smaller than 5 MiB and try again.", 413)
+			http.Error(w, "Choose a photograph up to 8 MiB and try again.", 413)
 			return
 		}
 		token := r.Form.Get("csrf_token")
 		if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(csrf)) != 1 {
-			http.Error(w, "Invalid CSRF token", 403)
+			http.Error(w, "Your session changed. Reload before saving.", 403)
 			return
 		}
-		oldImageKey := ""
-		if action == "update" || action == "delete" {
-			_ = h.pool.QueryRow(r.Context(), `SELECT image_object_key FROM categories WHERE slug=$1`, r.Form.Get("id")).Scan(&oldImageKey)
-		}
-		mutation := ports.ManagementMutation{Section: "category-management", Action: action, ID: r.Form.Get("id"), Name: r.Form.Get("name"), Reason: r.Form.Get("reason"), ShowInNavigation: r.Form.Get("show_in_navigation") == "true"}
-		mutation.DisplayOrder, err = strconv.Atoi(r.Form.Get("display_order"))
-		if action == "delete" {
-			err = nil
-		}
 		if action == "assign-products" {
-			err = nil
+			model.SelectedCategory = r.Form.Get("id")
 			values := r.URL.Query()
 			values.Set("product_q", r.Form.Get("product_q"))
 			values.Set("product_page", r.Form.Get("product_page"))
 			r.URL.RawQuery = values.Encode()
-			model.SelectedCategory = mutation.ID
-			mutation.Reason = strings.TrimSpace(mutation.Reason)
 			ids := []int64{}
 			seen := map[int64]bool{}
 			for _, raw := range r.Form["product_id"] {
@@ -123,99 +110,45 @@ func (h *LivePortalHandler) categoryManagement(w http.ResponseWriter, r *http.Re
 				}
 			}
 			model.SelectedIDs = seen
-			intent := r.Form.Get("intent")
-			if len(ids) == 0 || len(ids) > 25 || len(mutation.Reason) < 4 || len(mutation.Reason) > 1000 || (intent != "add" && intent != "remove") {
+			reason, intent := strings.TrimSpace(r.Form.Get("reason")), r.Form.Get("intent")
+			if len(ids) == 0 || len(ids) > 25 || len(reason) < 4 || len(reason) > 1000 || (intent != "add" && intent != "remove") {
 				err = ports.ErrManagementValidation
 			}
 			if err == nil {
-				err = repository.AssignCategoryProducts(r.Context(), actor, mutation.ID, intent, mutation.Reason, ids)
+				err = repository.AssignCategoryProducts(r.Context(), actor, model.SelectedCategory, intent, reason, ids)
 			}
+			responseStatus = 503
+			if errors.Is(err, ports.ErrManagementValidation) {
+				responseStatus = 422
+			}
+			if errors.Is(err, ports.ErrManagementConflict) {
+				responseStatus = 409
+				model.Error = "A selected product uses this primary category. Choose a replacement in its editor before removing membership."
+			}
+		} else if role == domainidentity.RoleSuperAdmin && (action == "create" || action == "update") {
+			responseStatus, err = h.saveCategoryPublication(r, actor, &model)
 		} else {
-			if err != nil || mutation.DisplayOrder < 0 || mutation.DisplayOrder > 1000000 {
-				err = ports.ErrManagementValidation
-			}
-			var uploadedKey string
-			if err == nil && action != "delete" {
-				file, _, fileErr := r.FormFile("image_file")
-				if fileErr == nil {
-					input, readErr := io.ReadAll(io.LimitReader(file, (5<<20)+1))
-					file.Close()
-					var output []byte
-					if readErr == nil {
-						output, readErr = normalizeAvatar(input)
-					}
-					if readErr != nil {
-						err = ports.ErrManagementValidation
-						model.Error = "Choose a valid JPEG, PNG or WebP image up to 5 MiB and 16 megapixels."
-					} else if writer, ok := h.categoryStorage.(ports.ObjectStorageWriter); !ok {
-						err = errors.New("storage unavailable")
-						model.Error = "Image storage is unavailable. Your category has not been saved; try again when storage is connected."
-					} else {
-						var version [16]byte
-						if _, err = rand.Read(version[:]); err == nil {
-							filename := hex.EncodeToString(version[:]) + ".jpg"
-							uploadedKey = "categories/" + filename
-							err = writer.PutObject(r.Context(), uploadedKey, "image/jpeg", int64(len(output)), bytes.NewReader(output))
-							mutation.ImageObjectKey = uploadedKey
-							mutation.ImageURL = "/media/categories/" + filename
-							mutation.ReplaceImage = true
-						}
-						if err != nil {
-							model.Error = "The image could not be stored. Your previous image is preserved. Choose the image again and retry."
-						}
-					}
-				} else if !errors.Is(fileErr, http.ErrMissingFile) {
-					err = fileErr
-				}
-			}
-			if err == nil {
-				err = service.Mutate(r.Context(), actor, mutation)
-			}
-			if err != nil && uploadedKey != "" {
-				if storage, ok := h.categoryStorage.(ports.ObjectStorageReader); ok {
-					_ = storage.DeleteObject(r.Context(), uploadedKey)
-				}
-			}
-		}
-		if err == nil {
-			if oldImageKey != "" && (action == "delete" || mutation.ReplaceImage) {
-				if storage, ok := h.categoryStorage.(ports.ObjectStorageReader); ok {
-					_ = storage.DeleteObject(r.Context(), oldImageKey)
-				}
-			}
-			target := base + "?notice=" + url.QueryEscape("Category changes saved.")
-			if model.SelectedCategory != "" {
-				target += "&" + url.Values{"category": {model.SelectedCategory}, "product_q": {r.Form.Get("product_q")}, "product_page": {r.Form.Get("product_page")}}.Encode()
-			}
-			http.Redirect(w, r, target, 303)
+			http.Error(w, "Forbidden", 403)
 			return
 		}
-		responseStatus = 503
-		switch {
-		case errors.Is(err, ports.ErrManagementValidation):
-			responseStatus = 422
-		case errors.Is(err, ports.ErrManagementConflict):
-			responseStatus = 409
-		case errors.Is(err, ports.ErrNotFound):
-			responseStatus = 404
+		if err == nil {
+			v := url.Values{"q": {r.URL.Query().Get("q")}, "page": {r.URL.Query().Get("page")}, "notice": {"Category saved and published."}}
+			if action == "assign-products" {
+				v.Set("notice", "Product assignments saved.")
+				v.Set("category", model.SelectedCategory)
+				v.Set("product_q", r.Form.Get("product_q"))
+				v.Set("product_page", r.Form.Get("product_page"))
+			}
+			http.Redirect(w, r, base+"?"+v.Encode(), 303)
+			return
 		}
-		if errors.Is(err, ports.ErrForbidden) {
+		if responseStatus == 403 {
 			http.Error(w, "Forbidden", 403)
 			return
 		}
 		if model.Error == "" {
-			switch {
-			case errors.Is(err, ports.ErrManagementConflict):
-				model.Error = "This category is still in use, or is a selected product's primary category. Choose a replacement primary category in the product editor before removing it."
-			case errors.Is(err, ports.ErrManagementValidation):
-				model.Error = "Check the name, unique URL slug, order number, selected products and audit reason."
-			default:
-				model.Error = "Changes could not be saved. Your entered details are kept below; please retry."
-			}
+			model.Error = "Changes could not be saved. Check the name, unique URL slug, order and audit reason. Your entries are retained; select your photograph again if using the basic form."
 		}
-		model.EditorReason = mutation.Reason
-		model.Editor = ports.ManagementRecord{ID: mutation.ID, Name: mutation.Name, DisplayOrder: mutation.DisplayOrder, ShowInNavigation: mutation.ShowInNavigation}
-		model.EditorAction = action
 	}
 	if action == "" && r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
@@ -240,6 +173,34 @@ func (h *LivePortalHandler) categoryManagement(w http.ResponseWriter, r *http.Re
 	}
 	if model.Page*25 < model.Total {
 		model.NextURL = pageURL(model.Page + 1)
+	}
+	model.ReturnURL = base + "?" + url.Values{"q": {model.Query}, "page": {strconv.Itoa(model.Page)}}.Encode()
+	model.NewURL = model.ReturnURL + "&new=1"
+	if role == domainidentity.RoleSuperAdmin {
+		if !model.EditorOpen {
+			revision, e := postgres.ReadPublishedStorefront(r.Context(), h.pool)
+			if e != nil {
+				http.Error(w, "Categories could not be loaded", 503)
+				return
+			}
+			model.ExpectedRelease = revision.ID
+			if slug := r.URL.Query().Get("edit"); slug != "" {
+				e = h.pool.QueryRow(r.Context(), `SELECT slug,name,image_url,display_order,show_in_navigation FROM categories WHERE slug=$1`, slug).Scan(&model.Editor.ID, &model.Editor.Name, &model.Editor.ImageURL, &model.Editor.DisplayOrder, &model.Editor.ShowInNavigation)
+				if e != nil {
+					if errors.Is(e, pgx.ErrNoRows) {
+						http.NotFound(w, r)
+					} else {
+						http.Error(w, "Categories could not be loaded", 503)
+					}
+					return
+				}
+				model.EditorOpen = true
+				model.EditorAction = "update"
+			} else if r.URL.Query().Get("new") == "1" {
+				model.EditorOpen = true
+				model.EditorAction = "create"
+			}
+		}
 	}
 	if model.SelectedCategory == "" {
 		model.SelectedCategory = r.URL.Query().Get("category")

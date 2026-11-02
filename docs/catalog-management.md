@@ -1,17 +1,21 @@
 # Homepage and category management
 
-Admin and Super Admin prepare category names, pictures, numeric display order
-and discovery visibility in **Storefront → Categories**. Admin submits drafts;
-Super Admin reviews and publishes them. Customers see the published category
-presentation across navigation, discovery, listings and filters. Lower order
-numbers appear first; slugs break ties and remain fixed. Hiding a category
-removes discovery links without unpublishing products.
+Super Admin opens **Products > Add category** or **Manage categories**. Category
+names, photographs, numeric display order and visibility are saved together;
+**Save category publishes immediately** to homepage circles, navigation, the
+category directory and filters. Lower numbers appear first; slugs break ties and
+remain fixed after creation. Hiding removes customer discovery links without
+unpublishing products or removing existing category URLs and editor choices.
 
-Use **Storefront → Media** for JPEG, PNG and WebP uploads up to 8 MiB /
-16 megapixels, then copy the permanent image URL into the category draft.
-The persistent object store retains normalized JPEGs and responsive variants
-for previews and release history. Upload failures report actionable errors and
-preserve the current published image. See [the editor guide](storefront-editor.md).
+Upload a JPEG, PNG or WebP photograph directly in the category form, up to 8 MiB /
+16 megapixels. A circular preview shows the centered crop before saving. New
+categories require a photograph; editing keeps the current image unless replaced.
+The persistent object store retains normalized JPEGs and responsive variants.
+Storage failures leave published data unchanged. Historical release images remain
+available. A conflicting save offers a reload rather than overwriting newer work.
+
+Admin's existing Storefront draft workspace is retained; direct publication is
+Super Admin only. The general Super Admin Storefront editor remains retired.
 
 Products have one primary category and any number of additional categories.
 The primary continues to control existing reporting and commission calculations.

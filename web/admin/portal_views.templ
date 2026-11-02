@@ -75,7 +75,11 @@ templ PortalProducts(p viewmodels.AdminPage) {
 			<div class="panel-heading">
 				<div><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><div><h2>Product catalog</h2><p>Review submissions and manage published listings.</p></div></div>
 				if p.CanManageCatalog {
-					<a class="admin-button primary" href={ p.PortalRoot + "/products/new" }>Add product</a>
+					<div class="action-row">
+     if p.CanSecurity {
+ <a class="admin-button secondary" href={p.PortalRoot+"/category-management"}>Manage categories</a><a class="admin-button secondary" href={p.PortalRoot+"/category-management?new=1"}>Add category</a>
+ }
+     <a class="admin-button primary" href={ p.PortalRoot + "/products/new" }>Add product</a></div>
 				}
 			</div>
 			<div class="ui-table-region" tabindex="0" role="region" aria-label="Product catalogue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Seller</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Status</th><th scope="col">Submitted</th><th scope="col">Review</th></tr></thead><tbody>

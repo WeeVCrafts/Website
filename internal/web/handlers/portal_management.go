@@ -67,7 +67,8 @@ func (h *LivePortalHandler) serveManagement(w http.ResponseWriter, r *http.Reque
 	if h.hasRole(r, session.UserID, "super_admin") {
 		role = domainidentity.RoleSuperAdmin
 	}
-	if section == "settings" || (section == "category-management" && action != "" && action != "assign-products") {
+	categoryPublication := section == "category-management" && role == domainidentity.RoleSuperAdmin && (action == "create" || action == "update")
+	if section == "settings" || (section == "category-management" && action != "" && action != "assign-products" && !categoryPublication) {
 		if section == "settings" && role == domainidentity.RoleSuperAdmin && r.Method == http.MethodGet && action == "" {
 			h.renderAdmin(w, requestWithPath(r, "/admin/settings"), session.UserID, role, root, h.userDisplayName(r, session.UserID), session.CSRFToken)
 			return true
