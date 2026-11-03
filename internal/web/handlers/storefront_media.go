@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"context"
 	"github.com/jackc/pgx/v5"
@@ -171,6 +174,7 @@ func (h *LivePortalHandler) storefrontMediaList(r *http.Request, m *viewmodels.S
 	return result, rows.Err()
 }
 func (h *LivePortalHandler) StorefrontMedia(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	if r.Method != "GET" && r.Method != "HEAD" {
 		w.Header().Set("Allow", "GET, HEAD")
 		http.Error(w, "Method not allowed", 405)
@@ -196,9 +200,8 @@ func (h *LivePortalHandler) StorefrontMedia(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		w.Header().Set("Cache-Control", "private, no-store")
-	} else {
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 	}
+	originalKey := key
 	var variants map[string]string
 	_ = json.Unmarshal(variantsData, &variants)
 	if width := r.URL.Query().Get("w"); width == "480" || width == "960" {
@@ -211,18 +214,36 @@ func (h *LivePortalHandler) StorefrontMedia(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Image storage unavailable", 503)
 		return
 	}
-	body, info, e := reader.OpenObject(r.Context(), key)
+	serveStorefrontPhotograph(w, r, reader, id, key, originalKey, published)
+}
+
+// Authorization stays in StorefrontMedia; this shared delivery path never caches errors.
+func serveStorefrontPhotograph(w http.ResponseWriter, r *http.Request, reader ports.ObjectStorageContentReader, id, key, originalKey string, published bool) {
+	w.Header().Set("Cache-Control", "no-store")
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	body, info, e := reader.OpenObject(ctx, key)
+	if e != nil && key != originalKey {
+		slog.Warn("storefront media variant read failed", "media_id", id, "width", r.URL.Query().Get("w"))
+		body, info, e = reader.OpenObject(ctx, originalKey)
+	}
 	if e != nil {
+		slog.Warn("storefront media read failed", "media_id", id, "timeout", errors.Is(e, context.DeadlineExceeded))
 		http.Error(w, "Photograph temporarily unavailable", 503)
 		return
 	}
 	defer body.Close()
+	if published {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	}
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if info.ByteSize > 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(info.ByteSize))
 	}
 	if r.Method == "GET" {
-		_, _ = io.Copy(w, io.LimitReader(body, 16<<20))
+		if _, err := io.Copy(w, io.LimitReader(body, 16<<20)); err != nil {
+			slog.Warn("storefront media transfer interrupted", "media_id", id)
+		}
 	}
 }

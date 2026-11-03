@@ -335,3 +335,13 @@ four-second and arrow-removal instructions for the shared hero.
 Generated review photographs live only in ignored root `categories/` and
 `products/` directories, excluded from Docker context and automatic imports.
 They are separate square PNG concepts for manual review and publication.
+
+
+### Homepage category repair — 3 November 2026
+
+Category links form a centered group with 24px gaps when they fit; overflowing
+rows retain start alignment and existing scroll controls. Saved ascending order
+and slug ties remain authoritative. Desktop hero height is 420px from 1024px;
+tablet and phone heights remain unchanged. Published image delivery is versioned
+without rewriting releases. Failed variants try the original once before the
+shared placeholder; errors never receive immutable caching.

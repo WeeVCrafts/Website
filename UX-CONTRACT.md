@@ -407,3 +407,14 @@ profile, wishlist, cart, search suggestions and authentication remain authoritat
 Shipping reflects saved policy; customer catalog records and published visibility
 control category circles and cards. Empty sections remain truthful. No generated
 review image becomes application content without a separate manual upload/save.
+
+
+### Published category photograph recovery — 3 November 2026
+
+Storefront media returns no-store for errors and private previews. Immutable
+caching starts only after a successful published object read. A failed variant
+may use its saved original; the browser also retries the original once before
+its existing placeholder. Retries are bounded. Logs identify media and width,
+never credentials or storage URLs. Category order remains the saved display
+order with slug ties; spacing never changes ordering. Local review packs remain
+excluded from publication and deployment.

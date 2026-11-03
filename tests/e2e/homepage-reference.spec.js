@@ -103,3 +103,43 @@ test('authenticated header retains real cart, wishlist and account actions',asyn
   if(width>800)await expect(page.locator('#wishlist-count')).toBeVisible();
  }
 });
+
+test('category groups stay centered or scroll in order and desktop hero is taller',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ for(const width of [320,390,768,1024,1536]){
+  await page.setViewportSize({width,height:1024});await page.goto('/');await ready(page);
+  expect((await page.locator('[data-hero-slide]').first().boundingBox()).height).toBe(width>=1024?420:width>800?322:370);
+  for(const count of [0,1,2,7,11]){
+   await page.locator('[data-category-track]').evaluate((track,count)=>{
+    const original=track.querySelector('a');if(original)window.categoryFixture=original.cloneNode(true);
+    track.replaceChildren();for(let i=0;i<count;i++){const item=window.categoryFixture.cloneNode(true);item.dataset.fixtureOrder=String(i);item.querySelector('span:last-child').textContent='Category '+i;track.append(item);}
+   },count);
+   await expect.poll(()=>page.locator('[data-category-rail]').evaluate(el=>el.classList.contains('has-overflow')===(el.querySelector('[data-category-track]').scrollWidth>el.clientWidth+2))).toBe(true);
+   await noOverflow(page);
+   if(count===7&&width===1536)await expect(page.locator('[data-category-rail]')).not.toHaveClass(/has-overflow/);
+   if(count===2&&width>=1024){
+    const boxes=await page.locator('[data-category-track] a').evaluateAll(items=>items.map(el=>({left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right})));
+    expect(boxes[1].left-boxes[0].right).toBeCloseTo(24,0);
+    expect(Math.abs((boxes[0].left+boxes[1].right)/2-(width-10)/2)).toBeLessThan(10);
+   }
+   expect(await page.locator('[data-category-track] a').evaluateAll(items=>items.map(el=>el.dataset.fixtureOrder))).toEqual(Array.from({length:count},(_,i)=>String(i)));
+  }
+ }
+});
+
+test('a failed responsive photograph tries its original only once before a placeholder',async({page})=>{
+ await page.goto('/');await ready(page);
+ for(const failOriginal of [false,true]){
+  const id=failOriginal?'item-222222222222222222222222':'item-111111111111111111111111';let originals=0;
+  await page.route('**/media/storefront/'+id+'*',route=>{
+   if(new URL(route.request().url()).searchParams.has('w'))return route.fulfill({status:503,body:'Temporary failure'});
+   originals++;return failOriginal?route.fulfill({status:503,body:'Temporary failure'}):route.fulfill({path:'web/assets/images/customer/ceramic-mugs.webp',contentType:'image/webp'});
+  });
+  await page.evaluate(id=>{const template=document.createElement('template');template.innerHTML='<img id="'+id+'" sizes="140px" srcset="/media/storefront/'+id+'?v=2&w=480 480w" src="/media/storefront/'+id+'?v=2">';window.WVUI.enhance(template.content);document.querySelector('[data-category-track]').append(template.content);},id);
+  const img=page.locator('#'+id);
+  await expect.poll(()=>img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+  await expect(img).toHaveAttribute('data-original-retried','true');
+  await expect(img).toHaveAttribute('src',failOriginal?/product-unavailable.svg$/:/\/media\/storefront\/.*\?v=2$/);
+  expect(originals).toBe(1);
+ }
+});

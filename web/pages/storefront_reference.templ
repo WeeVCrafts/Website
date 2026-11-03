@@ -20,7 +20,7 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
   for _, category := range components.NavigationCategories(p) {
    <a class="discovery-category" href={ "/products?category=" + category.Slug } data-storefront-category={category.Slug}>
     if category.ImageURL != "" {
-     <img style={ "object-position:"+category.ImagePosition } src={ category.ImageURL } srcset={ components.ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:800px) 64px, 130px" alt="" width="110" height="110" loading="lazy"/>
+     <img style={ "object-position:"+category.ImagePosition } src={ components.MediaDeliveryURL(category.ImageURL) } srcset={ components.ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:800px) 76px, 140px" alt="" width="140" height="140" loading="lazy"/>
     } else {
      <span class="category-no-image" aria-hidden="true"><span class="material-symbols-outlined">category</span></span>
     }

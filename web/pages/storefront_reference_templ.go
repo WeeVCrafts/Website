@@ -176,9 +176,9 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var10 string
-				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(category.ImageURL)
+				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.MediaDeliveryURL(category.ImageURL))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 23, Col: 85}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 23, Col: 114}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 				if templ_7745c5c3_Err != nil {
@@ -191,13 +191,13 @@ func HomeCategoryRail(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(components.ResponsiveImageSrcSet(category.ImageURL, ""))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 23, Col: 152}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/storefront_reference.templ`, Line: 23, Col: 181}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" sizes=\"(max-width:800px) 64px, 130px\" alt=\"\" width=\"110\" height=\"110\" loading=\"lazy\"> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" sizes=\"(max-width:800px) 76px, 140px\" alt=\"\" width=\"140\" height=\"140\" loading=\"lazy\"> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"math"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -10,11 +11,37 @@ import (
 	"github.com/wecratfs/commerce/web/assets"
 )
 
-// Only maintained static photographs get build-time variants. Existing media
-// service srcsets and seller-uploaded URLs pass through without transformation.
+// MediaDeliveryURL changes only delivery caching, never stored release references.
+func MediaDeliveryURL(src string) string {
+	if !strings.HasPrefix(src, "/media/storefront/") {
+		return src
+	}
+	u, err := url.Parse(src)
+	if err != nil {
+		return src
+	}
+	q := u.Query()
+	q.Set("v", "2")
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+// Maintained static photographs use build-time variants; published storefront
+// photographs use their saved delivery variants. Custom candidate sets stay intact.
 func ResponsiveImageSrcSet(src, existing string) string {
 	if strings.HasPrefix(src, "/media/storefront/") && existing == "" {
-		return src + "?w=480 480w, " + src + "?w=960 960w, " + src + " 1920w"
+		u, err := url.Parse(MediaDeliveryURL(src))
+		if err != nil {
+			return ""
+		}
+		original := u.String()
+		q := u.Query()
+		q.Set("w", "480")
+		u.RawQuery = q.Encode()
+		small := u.String()
+		q.Set("w", "960")
+		u.RawQuery = q.Encode()
+		return small + " 480w, " + u.String() + " 960w, " + original + " 1920w"
 	}
 	variants, ok := maintainedImageVariants[strings.Split(src, "?")[0]]
 	if !ok {

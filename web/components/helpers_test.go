@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func TestStorefrontDeliveryURLsPreserveQueriesAndInvalidateOldFailures(t *testing.T) {
+	src := "/media/storefront/item-0123456789abcdef01234567?existing=yes"
+	got := ResponsiveImageSrcSet(src, "")
+	for _, part := range []string{"existing=yes&v=2&w=480 480w", "existing=yes&v=2&w=960 960w", "existing=yes&v=2 1920w"} {
+		if !strings.Contains(got, part) {
+			t.Fatalf("missing %q in %q", part, got)
+		}
+	}
+	if MediaDeliveryURL("/media/private/photo?signature=secret") != "/media/private/photo?signature=secret" {
+		t.Fatal("private media changed")
+	}
+	if MediaDeliveryURL(MediaDeliveryURL(src)) != MediaDeliveryURL(src) {
+		t.Fatal("versioning must be stable")
+	}
+}
+
 func TestResponsiveImageSrcSetUpgradesMaintainedLegacyCandidates(t *testing.T) {
 	src := "/assets/images/customer/blue-tote.webp"
 	legacy := "/assets/images/customer/blue-tote-480.webp 480w, " + src + " 1254w"
