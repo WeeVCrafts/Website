@@ -12,7 +12,7 @@ import (
 	"github.com/wecratfs/commerce/web/components"
 )
 
-func TestHeroNavigationUsesSelectorsWithoutArrows(t *testing.T) {
+func TestHeroNavigationUsesSelectorsAndArrows(t *testing.T) {
 	for name, hero := range map[string]templ.Component{
 		"default":    HomeHero(),
 		"configured": StorefrontHero(viewmodels.CustomerPage{}, []storefront.Slide{{ID: "craft", Title: "Craft", Image: "/craft.webp"}}),
@@ -23,8 +23,8 @@ func TestHeroNavigationUsesSelectorsWithoutArrows(t *testing.T) {
 				t.Fatal(err)
 			}
 			html := out.String()
-			if strings.Contains(html, "data-hero-prev") || strings.Contains(html, "data-hero-next") {
-				t.Fatal("hero arrows must not render")
+			if !strings.Contains(html, "data-hero-prev") || !strings.Contains(html, "data-hero-next") {
+				t.Fatal("both hero renderers must retain manual arrows")
 			}
 			if !strings.Contains(html, "data-hero-select") {
 				t.Fatal("accessible slide selectors must remain")

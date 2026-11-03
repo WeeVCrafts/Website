@@ -307,3 +307,31 @@ forest/ivory tokens and operational typography. Circular 130px previews use the
 same centered crop as customer discovery. Complete actions wrap on phones; forms
 use one column and the dialog owns bounded scrolling. The customer category rail
 retains its existing responsive composition and scroll controls.
+
+
+### Homepage reference composition — 3 November 2026
+
+The approved homepage variant is bounded by `homepage-reference` on the customer
+body and its conditional `homepage-reference.css` asset. Other storefront and role
+headers retain their existing composition. Keep the current logo, saved theme,
+fonts, real account state and shared navigation/dialog owners.
+
+Home adds a forest utility bar, compact brand/delivery/search/action row, rounded
+native search and category navigation with Offers. Shipping text derives from the
+published policy; delivery links to shipping information without an invented city
+or unsupported international claim. The hero is inset 24px on desktop, rounded,
+and uses native forest headings with terracotta italic emphasis. Its photographs
+and five existing stories remain the published content. Circles use saved category
+images and reserved frames; no category or product is invented to fill the layout.
+
+Place published trust content once after category discovery and before Featured.
+Retain subsequent homepage sections. Phones use the shared menu drawer, a complete
+search row, scrollable category discovery and wrapping trust tiles. Arrows and
+indicators have 44px targets; mobile arrows sit above the indicator row to prevent
+collisions. `experience.js` owns 3000ms rotation, manual arrows/selectors/swipe,
+450ms crossfade, pause conditions and image readiness. This supersedes earlier
+four-second and arrow-removal instructions for the shared hero.
+
+Generated review photographs live only in ignored root `categories/` and
+`products/` directories, excluded from Docker context and automatic imports.
+They are separate square PNG concepts for manual review and publication.

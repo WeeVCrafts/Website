@@ -341,7 +341,7 @@ func TestStaticAssetsArePubliclyCacheable(t *testing.T) {
 	}
 }
 
-func TestLivePageUsesLocalHTMXAndFragmentSafeShell(t *testing.T) {
+func TestLiveHomeUsesLocalHTMXAndDocumentSearch(t *testing.T) {
 	handler, err := NewHandler(applicationcatalog.NewService(repository{}))
 	if err != nil {
 		t.Fatalf("create handler: %v", err)
@@ -354,8 +354,7 @@ func TestLivePageUsesLocalHTMXAndFragmentSafeShell(t *testing.T) {
 	}
 	body := recorder.Body.String()
 	for _, expected := range []string{
-		`hx-select="#page"`,
-		`hx-target="#page"`,
+		`method="get" action="/search"`,
 		`hx-indicator="#global-search-indicator"`,
 		`<a class="skip-link" href="#page">Skip to content</a>`,
 		`<main id="page"`,
@@ -364,7 +363,7 @@ func TestLivePageUsesLocalHTMXAndFragmentSafeShell(t *testing.T) {
 			t.Fatalf("expected %q in live page response", expected)
 		}
 	}
-	for _, forbidden := range []string{"unpkg.com/htmx", "cdn.jsdelivr.net/npm/alpinejs", `hx-target="body"`} {
+	for _, forbidden := range []string{"unpkg.com/htmx", "cdn.jsdelivr.net/npm/alpinejs", `hx-target="body"`, `hx-get="/search"`} {
 		if strings.Contains(body, forbidden) {
 			t.Fatalf("live page still contains forbidden dependency/target %q", forbidden)
 		}
@@ -394,7 +393,7 @@ func TestLiveProductImagesExposeIntrinsicSizing(t *testing.T) {
 	}
 }
 
-func TestFullPageTemplatesDeclareFragmentShell(t *testing.T) {
+func TestHomepageTemplatesDeclareDocumentShell(t *testing.T) {
 	entries, err := fs.ReadDir(assets, "static")
 	if err != nil {
 		t.Fatalf("read embedded static assets: %v", err)
@@ -412,8 +411,7 @@ func TestFullPageTemplatesDeclareFragmentShell(t *testing.T) {
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	body := recorder.Body.String()
 	for _, expected := range []string{
-		`hx-select="#page"`,
-		`hx-target="#page"`,
+		`method="get" action="/search"`,
 		`hx-indicator="#global-search-indicator"`,
 		`<main id="page"`,
 	} {

@@ -6,7 +6,7 @@ const base=process.env.WEEVCRAFTS_BASE_URL||'http://127.0.0.1:18080';
 const output=path.join(os.tmpdir(),'weevcrafts-catalog-20261016');
 test.use({baseURL:base});
 test.beforeAll(async()=>{
- if(new URL(base).hostname!=='127.0.0.1'||!['18080','18085'].includes(new URL(base).port)||(new URL(base).port==='18085'&&process.env.WEEVCRAFTS_QA_DATABASE!=='storefront_guided_20261017'))throw new Error('Catalog QA requires the isolated app at 127.0.0.1:18080.');
+ if(new URL(base).hostname!=='127.0.0.1'||!['18080','18085','18088'].includes(new URL(base).port)||(new URL(base).port==='18088'&&process.env.WEEVCRAFTS_QA_DATABASE!=='homepage_reference_20261103')||(new URL(base).port==='18085'&&process.env.WEEVCRAFTS_QA_DATABASE!=='storefront_guided_20261017'))throw new Error('Catalog QA requires the isolated app at 127.0.0.1:18080.');
  await fs.mkdir(output,{recursive:true});
 });
 async function ready(page){await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>document.querySelector('[data-hero]')?.dataset.playing!==undefined);}
@@ -14,7 +14,7 @@ async function login(page,account='marketplace01'){
  const response=await page.request.post('/api/v1/auth/login',{data:{email:`demo.${account}@weevcrafts.local`,password:'WeeVCrafts-Demo-2026!'}});expect(response.ok()).toBeTruthy();
 }
 
-test('autoplay advances after four seconds at every supported width without playback buttons',async({page})=>{
+test('autoplay advances after three seconds at every supported width without playback buttons',async({page})=>{
  test.setTimeout(90000);
  const instant=new Date();
  await page.clock.install({time:instant});
@@ -26,26 +26,26 @@ test('autoplay advances after four seconds at every supported width without play
   expect(await page.locator('[data-hero-slide]:not([hidden]) h1').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThan(width>800?38:20);
   await expect(page.locator('[data-hero-autoplay]')).toHaveCount(0);
   await expect(page.locator('[data-hero]')).toHaveAttribute('data-playing','true');
-  await page.clock.runFor(4100);
+  await page.clock.runFor(3100);
   await expect(page.locator('[data-hero-count]')).toHaveText('2 / 5');
   await page.clock.runFor(500);
   await expect(page.locator('[data-hero-slide]:not([hidden])')).toHaveCount(1);
   await expect(page.locator('[data-hero-slide][inert]')).toHaveCount(4);
   if(width===390){
    for(const slide of [3,4,5,1]){
-    await page.clock.runFor(4100);
+    await page.clock.runFor(3100);
     await expect(page.locator('[data-hero-count]')).toHaveText(`${slide} / 5`);
    }
    await page.locator('.home-gifts-band').scrollIntoViewIfNeeded();
    await expect(page.locator('[data-hero]')).toHaveAttribute('data-playing','false');
-   await page.clock.runFor(8200);
+   await page.clock.runFor(6200);
    await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
  }
 });
 
-test('swipe, keyboard focus, hover, reduced motion and failed images keep the current slide usable',async({page})=>{
+test('swipe, keyboard focus, hover and reduced motion keep the current slide usable',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('/');await ready(page);
  const hero=page.locator('[data-hero]');
@@ -55,12 +55,7 @@ test('swipe, keyboard focus, hover, reduced motion and failed images keep the cu
  await expect(hero).toHaveAttribute('data-playing','false');
  await page.locator('[data-hero-select="0"]').press('Enter');
  await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
- await page.route('**/*textiles-banner*',route=>route.abort());
- await page.reload();await ready(page);
- await page.locator('[data-hero-select="1"]').press('Enter');
- await expect(page.locator('[data-hero-status]')).toContainText('could not load');
- await expect(page.locator('[data-hero-count]')).toHaveText('1 / 5');
- await page.unroute('**/*textiles-banner*');
+ // Fresh-context slow/failure coverage lives in homepage-reference.spec.js; this page has already cached the prefetched photograph.
  await page.emulateMedia({reducedMotion:'no-preference'});await page.mouse.move(0,0);
  await page.locator('#global-search').click();
  await expect(hero).toHaveAttribute('data-playing','true');

@@ -5,6 +5,8 @@
 /tmp/
 *.exe
 node_modules/
+/categories/
+/products/
 firebase-debug.log*
 .firebase/
 *-adminsdk-*.json

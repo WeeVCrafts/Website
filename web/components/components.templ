@@ -7,15 +7,21 @@ import (
 
 templ Header(p viewmodels.CustomerPage) {
   <header class="site-header" x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
+    if p.Route=="/" {
+     @HomepageUtility(p)
+    }
     <a class="skip-link" href="#page">Skip to content</a>
     <div class="header-main container">
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
       <a class="wordmark" href="/" aria-label="WeevCrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      if p.Route=="/" {
+       <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
+      }
       <div class="header-tools">
         <div class="search-shell">
-          <form class="global-search" method="get" action="/search" hx-get="/search" hx-select="#page" hx-target="#page" hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit" hx-sync="#page:replace" hx-indicator="#global-search-indicator">
+          <form class="global-search" method="get" action="/search" { headerSearchAttributes(p)... }>
             <label class="sr-only" for="global-search">Search products</label>
             <input id="global-search" name="q" maxlength="200" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-select="unset" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-push-url="false"/>
             <button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button>
@@ -77,13 +83,18 @@ templ Header(p viewmodels.CustomerPage) {
       for _, category := range NavigationCategories(p) {
         <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
       }
-      <a href="/featured-products">Featured products</a>
+      if p.Route!="/" {
+       <a href="/featured-products">Featured products</a>
+      }
       if p.Storefront != nil {
         for _,link:=range p.Storefront.Navigation {
           <a href={ link.URL }>{ link.Label }</a>
         }
       } else {
         <a href="/makers">Meet the Makers</a>
+      }
+      if p.Route=="/" {
+       <a class="homepage-offers" href="/deals"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span>Offers</a>
       }
     </div></nav>
     <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
@@ -212,10 +223,8 @@ templ WishlistMutation(p viewmodels.CustomerPage, product viewmodels.Product, re
 
 
 templ Footer(p viewmodels.CustomerPage) {
-  if p.Storefront!=nil {
-   @StorefrontTrust(p.Storefront.Trust)
-  } else {
-  <section class="trust-strip" aria-label="Shopping with WeevCrafts"><div><span class="material-symbols-outlined" aria-hidden="true">handyman</span><b>Crafted in India</b><small>Independent Indian makers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>Status shown in your orders</small></div><div><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><b>Returns &amp; Refunds</b><small>See our returns policy</small></div><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Artisan made</b><small>Discover the people behind each piece</small></div></section>
+  if p.Route!="/" {
+   @ShoppingTrust(p)
   }
   <footer class="site-footer"><div class="container footer-grid">
     <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {

@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import "github.com/wecratfs/commerce/web/components"
 
 // One responsive introduction shares playback and category state at every width.
 func HomeIntro(p viewmodels.CustomerPage) templ.Component {
@@ -41,6 +42,10 @@ func HomeIntro(p viewmodels.CustomerPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = HomeCategoryRail(p).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.ShoppingTrust(p).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

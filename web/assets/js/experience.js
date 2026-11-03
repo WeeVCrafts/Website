@@ -65,7 +65,7 @@
       const sync = () => {
         clear();
         hero.dataset.playing = String(canPlay());
-        if (canPlay() && slides.length > 1) timer = setTimeout(() => show(active + 1, false), 4000);
+        if (canPlay() && slides.length > 1) timer = setTimeout(() => show(active + 1, false), 3000);
       };
       const ready = img => new Promise(resolve => {
         if (!img) return resolve(true);
@@ -82,6 +82,14 @@
         listeners.signal.addEventListener("abort", failed, {once:true});
         timeout = setTimeout(failed, 8000);
       });
+      // Warm only the next image after the current hero has loaded. This keeps
+      // first-paint priority on the visible hero and avoids an autoplay fetch gap.
+      function prefetchNext() {
+        if (!inView || document.hidden || destroyed || slides.length<2) return;
+        const current=slides[active].querySelector('img');
+        const warm=()=>{if(!destroyed&&inView&&!document.hidden)void ready(slides[(active+1)%slides.length].querySelector('img'));};
+        if(current&&!current.complete)current.addEventListener('load',warm,{once:true,signal:listeners.signal});else warm();
+      }
       async function show(index, manual = true) {
         clear();
         const version = ++request;
@@ -122,6 +130,7 @@
           }).catch(() => {});
         } else settle();
         sync();
+        prefetchNext();
       }
       const on = (element, type, callback, options = {}) => element?.addEventListener(type, callback, {...options, signal:listeners.signal});
       controls.hidden = false;
@@ -144,7 +153,7 @@
         touch = null;
         if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(requested + (dx < 0 ? 1 : -1));
       }, {passive:true});
-      const observer = new IntersectionObserver(entries => { inView = entries[0].isIntersecting; ++request; sync(); }, {threshold:.1});
+      const observer = new IntersectionObserver(entries => { inView = entries[0].isIntersecting; ++request; sync(); prefetchNext(); }, {threshold:.1});
       observer.observe(hero);
       heroControllers.set(hero, {destroy(){ destroyed = true; ++request; clear(); settle(); observer.disconnect(); listeners.abort(); }});
       sync();

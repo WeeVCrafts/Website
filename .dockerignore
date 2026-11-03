@@ -11,6 +11,8 @@ Phases
 !web/assets/images/**/*.png
 *.exe
 node_modules
+categories
+products
 .codebase-memory
 .freebuff
 .vscode

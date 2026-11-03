@@ -387,3 +387,23 @@ publish. Rejected saves retain proposals and offer explicit reload on conflicts;
 uncertain network outcomes never trigger an automatic retry. Category forms submit
 multipart data and use existing media normalization and delivery. New failed-upload
 objects are cleaned up without deleting media referenced by prior releases.
+
+
+### Homepage discovery and three-second slideshow — 3 November 2026
+
+This approved homepage brief supersedes earlier four-second and arrow-removal
+rules. The shared five-slide controller rotates every 3000ms, wraps, and resets its
+interval after manual arrows, selectors or swipe. Hover, keyboard focus, hidden
+tabs and offscreen viewing pause rotation. Reduced motion keeps manual navigation
+without autoplay or crossfade. Inactive content remains inert. The next photograph
+is prefetched only after the visible hero loads; slow or failed photographs retain
+the current usable slide, with accessible failure feedback on manual selection.
+
+Only Home receives the utility/header/hero/category/trust/Featured composition.
+Header search on Home submits through native document navigation so its conditional
+stylesheet and header cannot leak into a content-only search result. Other routes
+retain their existing HTMX search, header and footer trust placement. Shared menu,
+profile, wishlist, cart, search suggestions and authentication remain authoritative.
+Shipping reflects saved policy; customer catalog records and published visibility
+control category circles and cards. Empty sections remain truthful. No generated
+review image becomes application content without a separate manual upload/save.

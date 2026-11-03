@@ -12,6 +12,8 @@ templ HomeHero() {
       @HeroSlide("Traditions that shine.", "Discover brass and metalwork made for meaningful spaces.", "/assets/images/customer/metalwork-banner.webp", "Brass lamps and metalwork in a sunlit interior", "/products?category=brass-metalwork", "Explore metalwork", false)
     </div>
     <div class="hero-controls" data-hero-controls hidden>
+ <button class="hero-arrow hero-prev" type="button" data-hero-prev aria-label="Previous collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button>
+ <button class="hero-arrow hero-next" type="button" data-hero-next aria-label="Next collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
       <div class="hero-slide-selectors" role="group" aria-label="Choose a collection">
         <button type="button" data-hero-select="0" aria-label="Show Indian craft collection" aria-pressed="true"></button>
         <button type="button" data-hero-select="1" aria-label="Show textiles collection" aria-pressed="false"></button>
@@ -30,7 +32,7 @@ templ HeroSlide(title, copy, image, alt, href, action string, first bool) {
   <section class="hero hero-slide" data-hero-slide hidden?={ !first }>
     <div class="hero-copy"><p class="hero-kicker">HANDMADE · AUTHENTIC · MEANINGFUL</p><h1>
       if first {
-        Crafted in India.<br/>Made to be cherished.
+        Crafted in India.<br/>Made to be <em>cherished.</em>
       } else {
         { title }
       }

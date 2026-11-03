@@ -10,6 +10,9 @@ import (
 templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Section) {
 	for _,s:=range storefront.OrderedSections(sections) {
 		if !s.Hidden {
+   if p.Route=="/" && homepageTrustAnchor(sections)==s.ID && s.Type!="categories" {
+    @components.ShoppingTrust(p)
+   }
 			<div id={ "section-" + s.ID } class={ "sf-section",templ.KV("sf-hide-desktop",s.Responsive.HideDesktop),templ.KV("sf-hide-tablet",s.Responsive.HideTablet),templ.KV("sf-hide-mobile",s.Responsive.HideMobile),templ.KV("home-gifts-band",s.Style=="band") } style={ storefrontSectionStyle(s) } data-storefront-section={ s.ID }>
 				if s.Type=="hero" && p.Storefront!=nil {
 					@StorefrontHero(p, p.Storefront.OrderedSlides())
@@ -101,6 +104,9 @@ templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Sectio
 					</section>
 				}
 			</div>
+   if p.Route=="/" && s.Type=="categories" && homepageTrustAnchor(sections)==s.ID {
+    @components.ShoppingTrust(p)
+   }
 		}
 	}
 }
@@ -117,7 +123,11 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
 								if s.ID=="craft" && s.Title=="Crafted in India. Made to be cherished." {
 									Crafted in India.
 									<br/>
-									Made to be cherished.
+									if p.Route=="/" {
+          Made to be <em>cherished.</em>
+         } else {
+          Made to be cherished.
+         }
 								} else {
 									{ s.Title }
 								}
@@ -151,6 +161,8 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
 				}
 			</div>
 			<div class="hero-controls" data-hero-controls hidden>
+    <button class="hero-arrow hero-prev" type="button" data-hero-prev aria-label="Previous collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button>
+    <button class="hero-arrow hero-next" type="button" data-hero-next aria-label="Next collection"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
 				<div class="hero-slide-selectors" role="group" aria-label="Choose a collection">
 					for i,s:=range slides {
 						<button type="button" data-hero-select={ fmt.Sprint(i) } aria-label={ "Show " + s.Title } aria-pressed={ fmt.Sprint(i == 0) }></button>

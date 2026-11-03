@@ -14,6 +14,7 @@ const files = [
   "customer-polish.css",
   "experience.css",
   "storefront-reference.css",
+  "homepage-reference.css",
   "admin.css",
   "superadmin.css",
   "storefront-editor.css",

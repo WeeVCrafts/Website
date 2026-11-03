@@ -14,6 +14,9 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
  <div class="container category-rail" data-category-rail>
  <button class="category-rail-button" type="button" data-category-direction="-1" aria-label="Previous categories" hidden><span aria-hidden="true">←</span></button>
  <nav class="discovery-categories" aria-label="Shop by craft" data-category-track>
+  if p.Route=="/" && len(components.NavigationCategories(p))==0 {
+   <p class="homepage-category-empty">Categories will appear here as collections are published.</p>
+  }
   for _, category := range components.NavigationCategories(p) {
    <a class="discovery-category" href={ "/products?category=" + category.Slug } data-storefront-category={category.Slug}>
     if category.ImageURL != "" {

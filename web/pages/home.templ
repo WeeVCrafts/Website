@@ -1,11 +1,13 @@
 package pages
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import "github.com/wecratfs/commerce/web/components"
 
 // One responsive introduction shares playback and category state at every width.
 templ HomeIntro(p viewmodels.CustomerPage) {
  <div class="responsive-home-intro">
   @HomeHero()
   @HomeCategoryRail(p)
+  @components.ShoppingTrust(p)
  </div>
 }

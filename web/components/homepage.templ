@@ -1,0 +1,15 @@
+package components
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ HomepageUtility(p viewmodels.CustomerPage) {
+ <div class="homepage-utility"><div class="container"><span>Handmade Today, A Kinder Tomorrow. <span class="material-symbols-outlined" aria-hidden="true">eco</span></span><nav aria-label="Delivery and support"><a href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span>{homepageShippingText(p)}</a><a href="/contact">Support</a></nav></div></div>
+}
+
+templ ShoppingTrust(p viewmodels.CustomerPage) {
+ if p.Storefront!=nil {
+  @StorefrontTrust(p.Storefront.Trust)
+ } else {
+  <section class="trust-strip" aria-label="Shopping with WeevCrafts"><div><span class="material-symbols-outlined" aria-hidden="true">handyman</span><b>Crafted in India</b><small>Independent Indian makers</small></div><div><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><b>Secure Payments</b><small>Status shown in your orders</small></div><div><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span><b>Returns &amp; Refunds</b><small>See our returns policy</small></div><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Domestic Delivery</b><small>To serviceable PIN codes</small></div><div><span class="material-symbols-outlined" aria-hidden="true">groups</span><b>Artisan made</b><small>Discover the people behind each piece</small></div></section>
+ }
+}

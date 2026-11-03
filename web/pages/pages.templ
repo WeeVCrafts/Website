@@ -49,6 +49,9 @@ templ Document(p viewmodels.CustomerPage) {
       <link rel="stylesheet" href={ assets.URL("css/experience.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/storefront-reference.min.css") }/>
       <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
+      if p.Route=="/" {
+       <link rel="stylesheet" href={ assets.URL("css/homepage-reference.min.css") }/>
+      }
       <link rel="stylesheet" href={ assets.URL("css/auth-gallery.min.css") }/>
       if p.SellerNotifications {
  <link rel="stylesheet" href={ assets.URL("css/seller-reference.min.css") }/>
@@ -187,7 +190,7 @@ templ Document(p viewmodels.CustomerPage) {
         });
       </script>
     </head>
-    <body style={ storefrontThemeStyle(p) } data-storefront-preview-id={ storefrontPreviewID(p) } data-default-intro-hidden={ fmt.Sprint(p.StorefrontTemplate.HideDefaultIntro) } data-wishlist-enabled={ storefrontFeatureValue(p,"wishlist") } data-quick-view-enabled={ storefrontFeatureValue(p,"quick-view") } data-reviews-enabled={ storefrontFeatureValue(p,"reviews") } data-coupons-enabled={ storefrontFeatureValue(p,"coupons") } class={ "storefront-body", templ.KV("auth-gallery-page", p.Route == "/login") } hx-boost="false" hx-history="false" hx-indicator="#ui-loading" hx-headers={ "{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}" }>
+    <body style={ storefrontThemeStyle(p) } data-storefront-preview-id={ storefrontPreviewID(p) } data-default-intro-hidden={ fmt.Sprint(p.StorefrontTemplate.HideDefaultIntro) } data-wishlist-enabled={ storefrontFeatureValue(p,"wishlist") } data-quick-view-enabled={ storefrontFeatureValue(p,"quick-view") } data-reviews-enabled={ storefrontFeatureValue(p,"reviews") } data-coupons-enabled={ storefrontFeatureValue(p,"coupons") } class={ "storefront-body", templ.KV("homepage-reference", p.Route=="/"), templ.KV("auth-gallery-page", p.Route == "/login") } hx-boost="false" hx-history="false" hx-indicator="#ui-loading" hx-headers={ "{\"X-CSRF-Token\":\"" + p.CSRFToken + "\"}" }>
       <a class="ui-skip-link" href="#page">Skip to main content</a>
       if p.StorefrontPreview {
         <div class="sf-preview-banner" role="status">Private draft preview · shopping actions are disabled</div>
@@ -375,6 +378,9 @@ templ Home(p viewmodels.CustomerPage) {
   @Document(p) {
     if p.Storefront != nil {
       @StorefrontSections(p, p.Storefront.Homepage)
+      if homepageTrustAnchor(p.Storefront.Homepage)=="" {
+       @components.ShoppingTrust(p)
+      }
     } else {
     @HomeIntro(p)
     <section class="container section home-featured">
