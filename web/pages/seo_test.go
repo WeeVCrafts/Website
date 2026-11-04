@@ -81,9 +81,9 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 	}
 	html := body.String()
 	for _, want := range []string{
-		`<title>WeevCrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>`,
-		`property="og:title" content="WeevCrafts | Handmade Indian Arts, Crafts &amp; Sarees"`,
-		`property="og:site_name" content="WeevCrafts"`,
+		`<title>Weevcrafts | Handmade Indian Arts, Crafts &amp; Sarees</title>`,
+		`property="og:title" content="Weevcrafts | Handmade Indian Arts, Crafts &amp; Sarees"`,
+		`property="og:site_name" content="Weevcrafts"`,
 		`name="description" content="` + identity.Description + `"`,
 		`rel="canonical" href="https://weevcrafts.com/"`,
 	} {
@@ -129,8 +129,13 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 			}
 			seen[alias] = true
 		}
-		if !seen["weevcrafts"] || !seen["weevcrafts.com"] {
+		if !seen["weevcrafts.com"] {
 			t.Errorf("missing recognized brand aliases: %v", node.AlternateName)
+		}
+		for _, alias := range node.AlternateName {
+			if strings.EqualFold(alias, identity.Name) {
+				t.Errorf("case-only aliases must not duplicate the preferred brand: %q", alias)
+			}
 		}
 	}
 	if data.Graph[0].Publisher.ID != data.Graph[1].ID {
@@ -145,7 +150,7 @@ func TestHomepageBrandMetadataIsConsistent(t *testing.T) {
 }
 
 func TestPageTitleDoesNotDuplicateBrand(t *testing.T) {
-	for _, title := range []string{"Account · WeevCrafts", "Sign in - WeevCrafts"} {
+	for _, title := range []string{"Account · Weevcrafts", "Sign in - Weevcrafts"} {
 		if got := pageDocumentTitle(viewmodels.CustomerPage{Route: "/login", Title: title}); got != title {
 			t.Errorf("title = %q, want %q", got, title)
 		}

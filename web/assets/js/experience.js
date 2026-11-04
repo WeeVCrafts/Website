@@ -318,6 +318,21 @@
       const media = Array.from(gallery.querySelectorAll("[data-gallery-media]"));
       const thumbnails = Array.from(gallery.querySelectorAll("[data-gallery-select]"));
       const zoom = gallery.querySelector("[data-gallery-zoom]");
+      // Native first-frame previews request metadata/ranges only as thumbnails
+      // enter view. Full gallery video stays deferred until explicitly selected.
+      const previewObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
+        if(!entry.isIntersecting)return;
+        const video=entry.target;previewObserver.unobserve(video);
+        if(!video.canPlayType(video.dataset.contentType)){video.dataset.previewUnavailable='true';return;}
+        if(navigator.connection?.saveData)return;
+        const fallback=()=>{if(!video.dataset.previewReady){video.dataset.previewUnavailable='true';video.removeAttribute('src');video.load();}};
+        const deadline=setTimeout(fallback,12000);
+        video.addEventListener('error',()=>{clearTimeout(deadline);fallback();},{once:true});
+        video.addEventListener('loadedmetadata',()=>{video.currentTime=Math.min(.1,video.duration||.1);},{once:true});
+        video.addEventListener('loadeddata',()=>{clearTimeout(deadline);video.dataset.previewReady='true';},{once:true});
+        video.preload='metadata';video.src=video.dataset.src;delete video.dataset.src;video.load();
+      }),{rootMargin:'80px'});
+      gallery.querySelectorAll('[data-video-thumbnail]').forEach(video=>previewObserver.observe(video));
       let active = 0;
       let gesture;
       const videoFeedback = document.createElement('p'); videoFeedback.className='gallery-video-feedback';videoFeedback.hidden=true;videoFeedback.setAttribute('role','status');
@@ -326,11 +341,12 @@
       function videoState() {
         const video=media[active];videoFeedback.hidden=video.tagName!=='VIDEO';
         if(video.tagName!=='VIDEO')return;
-        retryVideo.hidden=video.dataset.failed!=='true';
-        videoMessage.textContent=video.dataset.failed==='true'?'Video could not load. Choose another image or retry.':video.readyState>=2?'Video ready. Use the playback controls.':'Loading product video…';
+        retryVideo.hidden=video.dataset.failed!=='true'||video.dataset.unsupported==='true';
+        videoMessage.textContent=video.dataset.unsupported==='true'?'Your browser cannot play this video format. You can still view the product photographs.':video.dataset.failed==='true'?'Video could not load. Choose another image or retry.':video.readyState>=2?'Video ready. Use the playback controls.':'Loading product video…';
       }
       media.filter(element=>element.tagName==='VIDEO').forEach(video=>{
-        const failed=()=>{video.dataset.failed='true';videoState();};
+        if(!video.canPlayType(video.querySelector('source')?.type||''))video.dataset.unsupported='true';
+        const failed=()=>{video.dataset.failed='true';if(video.error?.code===4)video.dataset.unsupported='true';videoState();};
         video.addEventListener('error',failed);
         video.querySelectorAll('source').forEach(source=>source.addEventListener('error',failed));
         video.addEventListener('canplay',()=>{delete video.dataset.failed;videoState();});
@@ -382,7 +398,9 @@
         close.type="button";close.className="outline-button";close.textContent="Close image";close.autofocus=true;
         // Fetch the original only when zoom is requested; the in-page gallery
         // can use its smaller responsive candidate without reducing zoom detail.
-        const image=document.createElement("img");image.src=source.src;image.alt=source.alt;
+        const original=new URL(source.src,location.href);
+        if(original.origin===location.origin&&/^\/media\/products\/[1-9]\d*$/.test(original.pathname))original.searchParams.delete('w');
+        const image=document.createElement("img");image.src=original.href;image.alt=source.alt;
         header.append(title,close);dialog.append(header,image);document.body.append(dialog);
         function finish(){dialog.close();dialog.remove();if(zoom.isConnected)zoom.focus({preventScroll:true});}
         close.addEventListener("click",finish);

@@ -15,7 +15,7 @@ templ Header(p viewmodels.CustomerPage) {
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
-      <a class="wordmark" href="/" aria-label="WeevCrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a>
       if p.Route=="/" {
        <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
       }
@@ -130,7 +130,7 @@ templ Header(p viewmodels.CustomerPage) {
         @MenuLink("/returns", "Returns & refunds", "assignment_return")
         @MenuLink("/our-story", "Our story", "auto_stories")
         if !p.Authenticated {
-          @MenuLink("/seller", "Sell on WeevCrafts", "store")
+          @MenuLink("/seller", "Sell on Weevcrafts", "store")
         }
       </nav>
       if p.Authenticated {
@@ -227,8 +227,8 @@ templ Footer(p viewmodels.CustomerPage) {
    @ShoppingTrust(p)
   }
   <footer class="site-footer"><div class="container footer-grid">
-    <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>WeevCrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {
-    <a href={ link.URL } target="_blank" rel="noopener noreferrer" aria-label={ "WeevCrafts on " + link.Name }>{ link.Name }</a>
+    <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {
+    <a href={ link.URL } target="_blank" rel="noopener noreferrer" aria-label={ "Weevcrafts on " + link.Name }>{ link.Name }</a>
     }
 </nav></div>
     if p.Storefront != nil {
@@ -239,7 +239,7 @@ templ Footer(p viewmodels.CustomerPage) {
     <div><h3>About</h3><a href="/our-story">Our Story</a><a href="/makers">Meet the Makers</a><a href="/sustainability">Sustainability</a><a href="/contact">Contact Us</a></div>
     <div class="newsletter"><h3>A little more handmade in your inbox</h3><p>Choose updates on new collections, maker stories and offers.</p><a class="outline-button newsletter-preferences" href="/account/notifications">Manage email preferences <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
     }
-  </div><div class="container footer-bottom"><span>© { p.Now.Year() } WeevCrafts. All rights reserved.</span><nav aria-label="Policies">
+  </div><div class="container footer-bottom"><span>© { p.Now.Year() } Weevcrafts. All rights reserved.</span><nav aria-label="Policies">
  if p.Storefront!=nil {
   for _,link:=range p.Storefront.PolicyLinks {
    <a href={ link.URL }>{ link.Label }</a>

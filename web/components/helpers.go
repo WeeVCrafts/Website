@@ -13,7 +13,7 @@ import (
 
 // MediaDeliveryURL changes only delivery caching, never stored release references.
 func MediaDeliveryURL(src string) string {
-	if !strings.HasPrefix(src, "/media/storefront/") {
+	if !strings.HasPrefix(src, "/media/storefront/") && !isProductPhotograph(src) {
 		return src
 	}
 	u, err := url.Parse(src)
@@ -29,6 +29,20 @@ func MediaDeliveryURL(src string) string {
 // Maintained static photographs use build-time variants; published storefront
 // photographs use their saved delivery variants. Custom candidate sets stay intact.
 func ResponsiveImageSrcSet(src, existing string) string {
+	if isProductPhotograph(src) && existing == "" {
+		u, err := url.Parse(MediaDeliveryURL(src))
+		if err != nil {
+			return ""
+		}
+		q := u.Query()
+		candidates := []string{}
+		for _, width := range []string{"320", "640", "960"} {
+			q.Set("w", width)
+			u.RawQuery = q.Encode()
+			candidates = append(candidates, u.String()+" "+width+"w")
+		}
+		return strings.Join(candidates, ", ")
+	}
 	if strings.HasPrefix(src, "/media/storefront/") && existing == "" {
 		u, err := url.Parse(MediaDeliveryURL(src))
 		if err != nil {
@@ -72,6 +86,27 @@ func ResponsiveImageSrcSet(src, existing string) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+func isProductPhotograph(src string) bool {
+	u, err := url.Parse(src)
+	if err != nil || u.Host != "" || !strings.HasPrefix(u.Path, "/media/products/") {
+		return false
+	}
+	id, err := strconv.ParseInt(strings.TrimPrefix(u.Path, "/media/products/"), 10, 64)
+	return err == nil && id > 0
+}
+
+// Video posters use the product's saved photograph while their first frame loads.
+func ProductImagePreview(src string) string {
+	if !isProductPhotograph(src) {
+		return ProductImage(src)
+	}
+	u, _ := url.Parse(MediaDeliveryURL(src))
+	q := u.Query()
+	q.Set("w", "640")
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 func productImageLoading(priority []bool) string {

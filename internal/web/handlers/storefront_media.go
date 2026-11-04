@@ -228,7 +228,15 @@ func serveStorefrontPhotograph(w http.ResponseWriter, r *http.Request, reader po
 		body, info, e = reader.OpenObject(ctx, originalKey)
 	}
 	if e != nil {
-		slog.Warn("storefront media read failed", "media_id", id, "timeout", errors.Is(e, context.DeadlineExceeded))
+		var facts interface {
+			StorageErrorCode() string
+			StorageHTTPStatus() int
+		}
+		code, status := "unknown", 0
+		if errors.As(e, &facts) {
+			code, status = facts.StorageErrorCode(), facts.StorageHTTPStatus()
+		}
+		slog.Warn("storefront media read failed", "media_id", id, "timeout", errors.Is(e, context.DeadlineExceeded), "storage_code", code, "storage_status", status)
 		http.Error(w, "Photograph temporarily unavailable", 503)
 		return
 	}

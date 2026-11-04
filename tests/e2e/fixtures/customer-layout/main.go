@@ -30,7 +30,7 @@ func main() {
 			}
 		}
 		p := viewmodels.CustomerPage{
-			Route: r.URL.Path, Title: "Customer layout fixture", Brand: "WeevCrafts",
+			Route: r.URL.Path, Title: "Customer layout fixture", Brand: "Weevcrafts",
 			UserName: "Layout customer", UserPhone: "9876543210", AccountUserID: 42, IsCustomer: true, Authenticated: true,
 			CSRFToken: "layout-only", PaymentReady: true, PaymentMode: "razorpay",
 			CartCount: quantity, ItemsTotal: "INR 99,999.00", ShippingTotal: "INR 99.00", DiscountTotal: "INR 0.00", Total: "INR 1,00,098.00",

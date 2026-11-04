@@ -44,7 +44,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a class=\"skip-link\" href=\"#page\">Skip to content</a><div class=\"header-main container\"><div class=\"header-left\"><button class=\"icon-button menu-toggle\" type=\"button\" x-ref=\"menuButton\" aria-label=\"Open navigation menu\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"mobile-menu\" :aria-expanded=\"menu\" @click=\"openMenu($el)\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span><span>Menu</span></button></div><a class=\"wordmark\" href=\"/\" aria-label=\"WeevCrafts home\"><img class=\"wordmark-mark\" src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a class=\"skip-link\" href=\"#page\">Skip to content</a><div class=\"header-main container\"><div class=\"header-left\"><button class=\"icon-button menu-toggle\" type=\"button\" x-ref=\"menuButton\" aria-label=\"Open navigation menu\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"mobile-menu\" :aria-expanded=\"menu\" @click=\"openMenu($el)\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">menu</span><span>Menu</span></button></div><a class=\"wordmark\" href=\"/\" aria-label=\"Weevcrafts home\"><img class=\"wordmark-mark\" src=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -57,7 +57,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"\" width=\"36\" height=\"36\"><span><strong>WeevCrafts</strong><small>Handmade by India’s Makers</small></span></a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -471,7 +471,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if !p.Authenticated {
-			templ_7745c5c3_Err = MenuLink("/seller", "Sell on WeevCrafts", "store").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = MenuLink("/seller", "Sell on Weevcrafts", "store").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1186,7 +1186,7 @@ func Footer(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "\" alt=\"\" width=\"36\" height=\"36\"><span><strong>WeevCrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class=\"socials\" aria-label=\"Social media\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, "\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class=\"socials\" aria-label=\"Social media\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1209,7 +1209,7 @@ func Footer(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var56 string
-			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue("WeevCrafts on " + link.Name)
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue("Weevcrafts on " + link.Name)
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 231, Col: 108}
 			}
@@ -1263,7 +1263,7 @@ func Footer(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, " WeevCrafts. All rights reserved.</span><nav aria-label=\"Policies\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, " Weevcrafts. All rights reserved.</span><nav aria-label=\"Policies\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

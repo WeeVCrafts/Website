@@ -2140,7 +2140,7 @@ func (h *LiveStorefrontHandler) brands(ctx context.Context) []viewmodels.Brand {
 		if rows.Scan(&item.Slug, &item.Name, &item.Products, &item.ImageURL) == nil {
 			item.Name = identity.DisplayName(item.Name)
 			item.Tagline = "Made by independent Indian makers"
-			item.Description = "A live maker brand on WeevCrafts."
+			item.Description = "A live maker brand on Weevcrafts."
 			item.Location = "India"
 			result = append(result, item)
 		}

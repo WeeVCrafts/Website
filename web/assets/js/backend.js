@@ -1,4 +1,4 @@
-/* First-party frontend adapter for the WeevCrafts Go API. */
+/* First-party frontend adapter for the Weevcrafts Go API. */
 (function (global) {
   "use strict";
   const ROOT = "/api/v1";
@@ -37,6 +37,13 @@
     return !value || /^default variant$/i.test(value.trim()) ? "Standard" : value;
   }
 
+  function productPhotographURL(source) {
+    const value=source||'/assets/images/product-unavailable.svg';
+    if(!/^\/media\/products\/[1-9]\d*(?:\?|$)/.test(value))return value;
+    const url=new URL(value,global.location.origin);
+    url.searchParams.set('v','2');url.searchParams.set('w','640');
+    return url.pathname+url.search;
+  }
   function normalizeProduct(row) {
     if (!row) return null;
     const seller = Array.isArray(row.seller) ? row.seller[0] : row.seller;
@@ -53,7 +60,7 @@
       seller: (seller && (seller.display_name || seller.name)) || row.brand || "Independent maker",
       sellerSlug: (seller && seller.slug) || row.seller_slug || "",
       location: (seller && seller.location) || "",
-      image: row.image_url || row.image || "/assets/images/product-unavailable.svg",
+      image: productPhotographURL(row.image_url || row.image),
       priceCents: price,
       compareAtCents: Number(row.compare_at_cents || 0),
       available: Number(variant && variant.inventory_quantity != null ? variant.inventory_quantity : row.available || 0),
@@ -72,7 +79,7 @@
         slug: row.product_slug,
         name: row.product_name,
         seller: row.brand || "Independent maker",
-        image: row.image_url || "/assets/images/product-unavailable.svg",
+        image: productPhotographURL(row.image_url),
         quantity: Number(row.quantity || 0),
         priceCents: Number(row.unit_price_cents || 0),
         variantId: row.variant_id,

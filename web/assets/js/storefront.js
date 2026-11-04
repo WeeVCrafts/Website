@@ -644,7 +644,7 @@
       key: key,
       amount: Number(intent.amount_cents),
       currency: intent.currency,
-      name: "WeevCrafts",
+      name: "Weevcrafts",
       description: "Handmade goods from independent makers",
       order_id: intent.provider_order_id,
       theme: { color: "#1f4b3a" },

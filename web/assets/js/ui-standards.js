@@ -283,7 +283,7 @@
       const fallback=()=> {
         if (img.src.endsWith("/product-unavailable.svg")) return;
         const original = new URL(img.src, location.href);
-        if (original.origin===location.origin && original.pathname.startsWith('/media/storefront/') && !img.dataset.originalRetried) {
+        if (original.origin===location.origin && /^\/media\/(storefront\/|products\/[1-9]\d*$)/.test(original.pathname) && !img.dataset.originalRetried) {
           img.dataset.originalRetried='true'; original.searchParams.delete('w'); original.searchParams.set('v','2');
           img.removeAttribute('srcset'); img.src=original.href; return;
         }

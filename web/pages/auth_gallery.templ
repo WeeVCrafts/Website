@@ -9,7 +9,7 @@ import (
 templ LoginGalleryHeader(p ...viewmodels.CustomerPage) {
   <header class="gallery-header">
     <div class="container gallery-header-inner">
-      <a class="gallery-wordmark" href="/" aria-label="WeevCrafts home"><img src={ galleryStorefrontLogo(p) } alt="" width="64" height="64"/><span>WeevCrafts</span></a>
+      <a class="gallery-wordmark" href="/" aria-label="Weevcrafts home"><img src={ galleryStorefrontLogo(p) } alt="" width="64" height="64"/><span>Weevcrafts</span></a>
       <a class="gallery-browse" href="/"><span>Continue browsing</span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
     </div>
   </header>
@@ -30,7 +30,7 @@ templ LoginGallery(p viewmodels.CustomerPage) {
         }
         @LoginFields(p.CSRFToken, authNext(p.Filters), "login")
         @FirebaseGoogle("login", authNext(p.Filters))
-        <nav class="gallery-account-links" aria-label="Account access"><span>New to WeevCrafts?</span><a href={ authRouteURL("/register", p.Filters) }>Create account</a></nav>
+        <nav class="gallery-account-links" aria-label="Account access"><span>New to Weevcrafts?</span><a href={ authRouteURL("/register", p.Filters) }>Create account</a></nav>
       </div>
     </div>
   </section>
@@ -61,8 +61,8 @@ templ FirebaseGoogle(prefix, next string) {
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>
   </div>
   <form class="utility-form firebase-link-panel" data-firebase-link hidden>
-    <h2>Connect your existing account</h2><p>Confirm your current WeevCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
-    @AuthPasswordField(prefix+"-link-password", "link_password", "Current WeevCrafts password", "current-password", 0, "")
+    <h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
+    @AuthPasswordField(prefix+"-link-password", "link_password", "Current Weevcrafts password", "current-password", 0, "")
     <button class="primary-button full" type="submit">Connect account securely</button>
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>
   </form>

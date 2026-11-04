@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -91,14 +92,35 @@ func (s *S3) OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, p
 	}
 	object, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, ports.ObjectInfo{}, err
+		return nil, ports.ObjectInfo{}, boundedStorageError(err)
 	}
 	stat, err := object.Stat()
 	if err != nil {
 		_ = object.Close()
-		return nil, ports.ObjectInfo{}, err
+		return nil, ports.ObjectInfo{}, boundedStorageError(err)
 	}
 	return object, ports.ObjectInfo{ContentType: stat.ContentType, ByteSize: stat.Size}, nil
+}
+
+type storageReadError struct {
+	cause  error
+	code   string
+	status int
+}
+
+func (e storageReadError) Error() string {
+	return fmt.Sprintf("object storage read failed (%s)", e.code)
+}
+func (e storageReadError) Unwrap() error            { return e.cause }
+func (e storageReadError) StorageErrorCode() string { return e.code }
+func (e storageReadError) StorageHTTPStatus() int   { return e.status }
+func boundedStorageError(err error) error {
+	response := minio.ToErrorResponse(err)
+	code := response.Code
+	if len(code) > 48 || code == "" || strings.IndexFunc(code, func(r rune) bool { return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9') }) >= 0 {
+		code = "TransportError"
+	}
+	return storageReadError{cause: err, code: code, status: response.StatusCode}
 }
 
 func allowedStoredMediaType(contentType string) bool {

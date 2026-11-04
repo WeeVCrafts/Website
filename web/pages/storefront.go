@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"github.com/wecratfs/commerce/internal/domain/storefront"
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"html"
 	"net/url"
@@ -117,9 +118,9 @@ func storefrontImagePosition(p viewmodels.CustomerPage, src string) string {
 }
 func storefrontImageAlt(p viewmodels.CustomerPage, src, alt string) string {
 	if alt != "" {
-		return alt
+		return identity.DisplayName(alt)
 	}
-	return p.MediaAlt[src]
+	return identity.DisplayName(p.MediaAlt[src])
 }
 
 func galleryStorefrontLogo(p []viewmodels.CustomerPage) string {
@@ -168,6 +169,9 @@ func storefrontTextSpans(text string) []storefrontTextSpan {
 	if offset < len(text) {
 		spans = append(spans, storefrontTextSpan{Text: text[offset:]})
 	}
+	for i := range spans {
+		spans[i].Text = identity.DisplayName(spans[i].Text)
+	}
 	return spans
 }
 
@@ -200,13 +204,13 @@ func storefrontTemplateImage(p viewmodels.CustomerPage, fallback string) string 
 }
 func storefrontNativeHeading(p viewmodels.CustomerPage, fallback string) string {
 	if p.StorefrontTemplate.Title != "" {
-		return p.StorefrontTemplate.Title
+		return identity.DisplayName(p.StorefrontTemplate.Title)
 	}
-	return html.UnescapeString(fallback)
+	return identity.DisplayName(html.UnescapeString(fallback))
 }
 func storefrontNativeDescription(p viewmodels.CustomerPage, fallback string) string {
 	if p.StorefrontTemplate.Description != "" {
-		return p.StorefrontTemplate.Description
+		return identity.DisplayName(p.StorefrontTemplate.Description)
 	}
-	return html.UnescapeString(fallback)
+	return identity.DisplayName(html.UnescapeString(fallback))
 }

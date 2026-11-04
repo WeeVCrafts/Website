@@ -47,7 +47,7 @@ func Defaults() Config {
 		{Title: "Shop", Links: []Link{{"All Categories", "/categories"}, {"New Arrivals", "/products?sort=newest"}, {"Home & Living", "/products?category=home"}, {"Thoughtful Gifts", "/products?q=gift"}}},
 		{Title: "Help", Links: []Link{{"Track Order", "/orders"}, {"Returns & Refunds", "/pages/returns"}, {"Shipping Information", "/shipping"}, {"FAQs", "/faq"}}},
 		{Title: "About", Links: []Link{{"Our Story", "/our-story"}, {"Meet the Makers", "/makers"}, {"Sustainability", "/sustainability"}, {"Contact Us", "/contact"}}},
-		{Title: "Stay connected", Text: "Stories from the makers, thoughtful finds and news from WeevCrafts.", Links: []Link{{"Contact us", "/contact"}}},
+		{Title: "Stay connected", Text: "Stories from the makers, thoughtful finds and news from Weevcrafts.", Links: []Link{{"Contact us", "/contact"}}},
 	}
 	for _, kind := range TemplateKinds {
 		c.Templates = append(c.Templates, Template{ID: kind, Kind: kind})

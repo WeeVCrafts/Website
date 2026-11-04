@@ -35,7 +35,7 @@ func LoginGalleryHeader(p ...viewmodels.CustomerPage) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"gallery-header\"><div class=\"container gallery-header-inner\"><a class=\"gallery-wordmark\" href=\"/\" aria-label=\"WeevCrafts home\"><img src=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"gallery-header\"><div class=\"container gallery-header-inner\"><a class=\"gallery-wordmark\" href=\"/\" aria-label=\"Weevcrafts home\"><img src=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -48,7 +48,7 @@ func LoginGalleryHeader(p ...viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" alt=\"\" width=\"64\" height=\"64\"><span>WeevCrafts</span></a> <a class=\"gallery-browse\" href=\"/\"><span>Continue browsing</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" alt=\"\" width=\"64\" height=\"64\"><span>Weevcrafts</span></a> <a class=\"gallery-browse\" href=\"/\"><span>Continue browsing</span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -170,7 +170,7 @@ func LoginGallery(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><span>New to WeevCrafts?</span><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<nav class=\"gallery-account-links\" aria-label=\"Account access\"><span>New to Weevcrafts?</span><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -390,11 +390,11 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Confirm your current WeevCrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = AuthPasswordField(prefix+"-link-password", "link_password", "Current WeevCrafts password", "current-password", 0, "").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = AuthPasswordField(prefix+"-link-password", "link_password", "Current Weevcrafts password", "current-password", 0, "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

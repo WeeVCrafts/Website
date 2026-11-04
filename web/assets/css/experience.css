@@ -81,6 +81,15 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .storefront-body .gallery-main > :is(img,video) { width: 100%; height: 100%; object-fit: contain; }
 .storefront-body [data-gallery-media][hidden] { display: none !important; }
 .storefront-body .gallery-main { touch-action: pan-y pinch-zoom; }
+.storefront-body .detail-grid { grid-template-columns: minmax(0,1fr) minmax(0,.85fr); }
+.storefront-body .gallery { min-width: 0; }
+.storefront-body .detail-copy :is(fieldset,select,.seller-line > span) { min-width: 0; max-width: 100%; }
+.storefront-body .quantity-row { flex-wrap: wrap; }
+.storefront-body .gallery-video-thumb { position: relative; overflow: hidden; }
+.storefront-body .gallery-video-thumb :is(img,video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.storefront-body .gallery-video-thumb video { visibility: hidden; }
+.storefront-body .gallery-video-thumb video[data-preview-ready] { visibility: visible; }
+.storefront-body .gallery-video-thumb > span { position: absolute; inset: 0; display: grid; place-items: center; color: white; background: #0005; text-shadow: 0 1px 3px #000; }
 /* Keep the controls' final geometry before enhancement and without scripts. */
 .storefront-body .hero-controls[hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
 .storefront-body [data-gallery-controls][hidden] { display: none !important; }
@@ -179,10 +188,12 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
   .storefront-body .detail-grid { grid-template-columns: minmax(0,1fr); gap: 24px; }
   .storefront-body .gallery-caption { margin-top: 0; }
   .storefront-body .gallery-main { order: 0; }
-  .storefront-body .thumbs { order: 1; display: flex; overflow-x: auto; gap: 8px; margin-top: 12px; }
+  .storefront-body .thumbs { order: 1; display: flex; flex-direction: row; overflow-x: auto; gap: 8px; margin-top: 12px; padding: 3px; }
   .storefront-body .thumbs button { flex: 0 0 64px; width: 64px; min-height: 64px; }
   .storefront-body .gallery-controls { order: 2; }
   .storefront-body .gallery-caption { order: 3; }
+  .storefront-body .detail-actions > button { padding-inline: 8px; white-space: nowrap; font-size: 14px; gap: 6px; }
+  .storefront-body .detail-actions .material-symbols-outlined { font-size: 18px; }
   .storefront-body .mobile-buy-bar { z-index: 55; grid-template-columns: minmax(0,1fr) minmax(0,1fr); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--surface); }
   .mobile-buy-price { display: flex; grid-column: 1/-1; align-items: center; justify-content: space-between; gap: 12px; font: 600 16px/1.5 var(--sans); }
   .mobile-buy-price small { color: var(--muted); font-size: 13px; font-weight: 400; }

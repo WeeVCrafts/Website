@@ -9,7 +9,7 @@ import (
 
 templ SuperAdminHeading(p viewmodels.AdminPage) {
 	<section class={ "admin-page-heading superadmin-heading","superadmin-heading--"+superAdminArt(p) }>
-		<div class="admin-heading-copy"><p class="admin-eyebrow">WEEVCRAFTS · { p.PortalLabel }</p><h1>{ p.Title }</h1><p>{ p.Subtitle }</p></div>
+		<div class="admin-heading-copy"><p class="admin-eyebrow">Weevcrafts · { p.PortalLabel }</p><h1>{ p.Title }</h1><p>{ p.Subtitle }</p></div>
 		<img class="superadmin-heading-art" src={ assets.URL("images/admin/" + superAdminArt(p) + ".webp") } width="420" height="210" alt=""/>
 	</section>
 }

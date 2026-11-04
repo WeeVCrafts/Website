@@ -442,7 +442,7 @@ func main() {
 
 	serverError := make(chan error, 1)
 	go func() {
-		logger.Info("WeevCrafts server listening", "address", cfg.Address)
+		logger.Info("Weevcrafts server listening", "address", cfg.Address)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverError <- err
 		}

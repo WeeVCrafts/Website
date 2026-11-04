@@ -49,7 +49,10 @@ func ProductImage(url string) string {
 	if strings.TrimSpace(url) == "" {
 		return "/assets/images/product-unavailable.svg"
 	}
-	return url
+	if isProductPhotograph(url) {
+		return ProductImagePreview(url)
+	}
+	return MediaDeliveryURL(url)
 }
 
 func CustomerOption(name string) string {

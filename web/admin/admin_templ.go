@@ -54,7 +54,7 @@ func AdminDocument(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - WeevCrafts ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Weevcrafts ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -181,7 +181,7 @@ func AdminDocument(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"></script><script>\n\n        document.addEventListener(\"DOMContentLoaded\", function () {\n\n          document.querySelectorAll(\".admin-table.wide\").forEach(function (table) {\n\n            var header = table.querySelector(\".table-head\");\n\n            if (!header) return;\n\n            var labels = Array.prototype.map.call(header.children, function (cell) { return cell.textContent.trim(); });\n\n            table.querySelectorAll(\".table-row\").forEach(function (row) {\n\n              Array.prototype.forEach.call(row.children, function (cell, index) {\n\n                cell.dataset.label = labels[index] || \"Details\";\n\n              });\n\n            });\n\n          });\n\n        });\n\n      </script><link rel=\"stylesheet\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"></script><script>\r\n\r\n        document.addEventListener(\"DOMContentLoaded\", function () {\r\n\r\n          document.querySelectorAll(\".admin-table.wide\").forEach(function (table) {\r\n\r\n            var header = table.querySelector(\".table-head\");\r\n\r\n            if (!header) return;\r\n\r\n            var labels = Array.prototype.map.call(header.children, function (cell) { return cell.textContent.trim(); });\r\n\r\n            table.querySelectorAll(\".table-row\").forEach(function (row) {\r\n\r\n              Array.prototype.forEach.call(row.children, function (cell, index) {\r\n\r\n                cell.dataset.label = labels[index] || \"Details\";\r\n\r\n              });\r\n\r\n            });\r\n\r\n          });\r\n\r\n        });\r\n\r\n      </script><link rel=\"stylesheet\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -278,7 +278,7 @@ func AdminDocument(p viewmodels.AdminPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<section class=\"admin-page-heading\"><div class=\"admin-heading-copy\"><p class=\"admin-eyebrow\">WEEVCRAFTS · ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<section class=\"admin-page-heading\"><div class=\"admin-heading-copy\"><p class=\"admin-eyebrow\">Weevcrafts · ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -427,7 +427,7 @@ func Sidebar(p viewmodels.AdminPage) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue("WeevCrafts " + p.PortalLabel)
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue("Weevcrafts " + p.PortalLabel)
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/admin/admin.templ`, Line: 175, Col: 91}
 		}
@@ -435,7 +435,7 @@ func Sidebar(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>WeevCrafts</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -775,7 +775,7 @@ func AdminHeader(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" aria-label=\"WeevCrafts\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><strong>WeevCrafts</strong></a> <span class=\"admin-portal-pill\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" aria-label=\"Weevcrafts\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><strong>Weevcrafts</strong></a> <span class=\"admin-portal-pill\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -3406,7 +3406,7 @@ func AdminFooter(p viewmodels.AdminPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 300, "\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>WeevCrafts</strong><small>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 300, "\"><img class=\"brand-mark\" src=\"/assets/images/brand/weevcrafts-logo.png\" alt=\"\" width=\"36\" height=\"36\"><span><strong>Weevcrafts</strong><small>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

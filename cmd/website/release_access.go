@@ -35,7 +35,7 @@ func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 				actualUser, actualPassword := sha256.Sum256([]byte(user)), sha256.Sum256([]byte(password))
 				expectedUser, expectedPassword := sha256.Sum256([]byte(cfg.StagingUsername)), sha256.Sum256([]byte(cfg.StagingPassword))
 				if !ok || subtle.ConstantTimeCompare(actualUser[:], expectedUser[:]) != 1 || subtle.ConstantTimeCompare(actualPassword[:], expectedPassword[:]) != 1 {
-					w.Header().Set("WWW-Authenticate", `Basic realm="WeevCrafts staging", charset="UTF-8"`)
+					w.Header().Set("WWW-Authenticate", `Basic realm="Weevcrafts staging", charset="UTF-8"`)
 					http.Error(w, "Staging authentication required", http.StatusUnauthorized)
 					return
 				}

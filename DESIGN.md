@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: WeevCrafts
+name: Weevcrafts
 description: An Indian craft marketplace with an editorial storefront and calm operational workspaces.
 colors:
   primary: "#123f32"
@@ -345,3 +345,26 @@ and slug ties remain authoritative. Desktop hero height is 420px from 1024px;
 tablet and phone heights remain unchanged. Published image delivery is versioned
 without rewriting releases. Failed variants try the original once before the
 shared placeholder; errors never receive immutable caching.
+
+### Customer media and product reflow — 3 November 2026
+
+Uploaded product photographs use bounded 320/640/960px delivery variants. Compact
+cart, wishlist and order views use a 640px preview; enlargement requests the saved
+original. Preserve photograph proportions and phone-camera EXIF orientation.
+Mobile product thumbnails form one horizontal scrolling row. Keep the product
+columns shrinkable and short purchase actions on one line at 320px.
+
+Video thumbnails reserve their frame and show the saved product photograph until
+a native first frame becomes available. A play symbol distinguishes them from
+photographs. Failed/unsupported previews retain that photograph; selecting a video
+keeps explicit controls, status feedback and photograph navigation available.
+
+### Preferred brand and homepage introduction — 3 November 2026
+
+The preferred public spelling is **Weevcrafts**. This supersedes earlier casing
+in this document. Use it in wordmarks, shared shells, page titles, metadata,
+editorial copy and account messages. Retain the accepted colors, fonts, logo mark
+and hero composition. Immediately after the homepage hero, render the small
+server-rendered heading “Discover Weevcrafts — Handmade Crafts from India” and
+the owner's marketplace introduction. Published records remain historical;
+normalize legacy editorial spellings in presentation without changing link targets.

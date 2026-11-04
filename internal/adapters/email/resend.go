@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -30,8 +31,13 @@ func NewResend(key, from, replyTo string) (*Resend, error) {
 	if key == "" || !validHeader(key) || !validHeader(from) {
 		return nil, errors.New("Resend configuration incomplete")
 	}
-	if _, err := mail.ParseAddress(from); err != nil {
+	sender, err := mail.ParseAddress(from)
+	if err != nil {
 		return nil, errors.New("Resend sender invalid")
+	}
+	if preferred := identity.DisplayName(sender.Name); preferred != sender.Name {
+		sender.Name = preferred
+		from = sender.String()
 	}
 	if replyTo != "" {
 		if _, err := mail.ParseAddress(replyTo); err != nil || !validHeader(replyTo) {
@@ -47,14 +53,14 @@ func (s *Resend) Send(ctx context.Context, message ports.EmailMessage) error {
 	if err != nil || recipient.Address != message.To || !validHeader(message.To) || !validHeader(message.Subject) || actionErr != nil || action.Host == "" || (action.Scheme != "https" && !(action.Scheme == "http" && (action.Hostname() == "localhost" || action.Hostname() == "127.0.0.1"))) || action.User != nil {
 		return errors.New("email message invalid")
 	}
-	label, intro := "View account update", "An update is available in your WeevCrafts account."
+	label, intro := "View account update", "An update is available in your Weevcrafts account."
 	if strings.Contains(strings.ToLower(message.Subject), "reset") {
 		label = "Reset password"
-		intro = "We received a request to reset your WeevCrafts password. Use the secure link below to choose a new password."
+		intro = "We received a request to reset your Weevcrafts password. Use the secure link below to choose a new password."
 	}
 	if strings.Contains(strings.ToLower(message.Subject), "verify") {
 		label = "Verify email"
-		intro = "Confirm your email address to protect your WeevCrafts account."
+		intro = "Confirm your email address to protect your Weevcrafts account."
 	}
 	if message.Body != "" {
 		intro = message.Body

@@ -162,3 +162,8 @@
  .storefront-body.homepage-reference .header-main .header-actions>a,.storefront-body.homepage-reference .header-main .profile-toggle {min-width:54px;}
  .storefront-body.homepage-reference .reference-hero .hero-copy>p:not(.hero-kicker) {max-width:500px;}
 }
+
+.homepage-introduction {max-width:980px;margin:20px auto 4px;padding-inline:24px;text-align:center;}
+.homepage-introduction h2 {margin:0;font:600 clamp(20px,2vw,26px)/1.25 var(--serif);color:var(--forest);}
+.homepage-introduction p {margin:8px 0 0;font:400 14px/1.6 var(--sans);color:var(--muted);}
+@media(max-width:800px){.homepage-introduction {margin-top:16px;padding-inline:16px;}}

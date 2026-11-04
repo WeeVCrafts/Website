@@ -3,6 +3,7 @@ package components
 import (
  "fmt"
  "github.com/wecratfs/commerce/internal/web/viewmodels"
+ "github.com/wecratfs/commerce/internal/identity"
 )
 
 templ NotificationBell() {
@@ -17,7 +18,7 @@ templ NotificationList(items []viewmodels.CustomerNotification, csrf string) {
  for _, item := range items {
   <article class="notification-card" data-unread={ fmt.Sprint(item.Unread) }>
    <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
-   <div><h2>{ item.Title }</h2><p>{ item.Body }</p><time>{ item.Date }</time>
+   <div><h2>{ identity.DisplayName(item.Title) }</h2><p>{ identity.DisplayName(item.Body) }</p><time>{ item.Date }</time>
     if item.Unread {
  <span class="notification-unread">Unread</span>
  } else {

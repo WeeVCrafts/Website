@@ -514,8 +514,8 @@
  .storefront-body .reference-hero .hero-slide-selectors button[aria-pressed=true]::after { background:var(--forest); }
  .home-arrivals-track { grid-auto-columns:calc((100% - 12px)/2); gap:12px; }
  .home-category-editorial { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
- .home-category-editorial > .product-card:first-child { grid-column:span 2; grid-row:auto; display:grid; grid-template-columns:1fr 1fr; }
- .home-category-editorial > .product-card:first-child .product-media { min-height:200px; }
+ .home-category-editorial > .product-card:first-child { grid-column:auto; grid-row:auto; display:flex; flex-direction:column; }
+ .home-category-editorial > .product-card:first-child .product-media { flex:none; min-height:0; }
  .home-gift-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
  .home-gift-grid .product-card { display:flex; }
  .home-gift-grid .product-media { height:auto; min-height:0; }

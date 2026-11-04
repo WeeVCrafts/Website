@@ -1,4 +1,4 @@
-# WeevCrafts UX contract
+# Weevcrafts UX contract
 
 ## Seller reference workflows — 2 November 2026
 
@@ -418,3 +418,28 @@ its existing placeholder. Retries are bounded. Logs identify media and width,
 never credentials or storage URLs. Category order remains the saved display
 order with slug ties; spacing never changes ordering. Local review packs remain
 excluded from publication and deployment.
+
+### Customer media resilience — 3 November 2026
+
+Authorize every uploaded-media request before consulting disposable derivatives.
+Keep originals and catalog assignments unchanged. Bound derivative memory, decode
+dimensions and concurrent resizing. Private previews and failed reads use
+no-store. Native video byte ranges stream through the existing approved-media
+boundary rather than buffering the full upload before responding.
+
+Defer full gallery videos until selection. Load first-frame thumbnails only near
+the viewport, respect reduced-data preference, and retain the saved product photo
+if decoding fails or exceeds the preview deadline. Unsupported playback explains
+the problem; loading failures keep retry and photo navigation available. Gallery
+arrows, thumbnail keyboard navigation, enlargement dismissal and focus restoration
+must continue to work at narrow widths and reflow.
+
+### Preferred brand presentation — 3 November 2026
+
+Use Weevcrafts consistently in customer, seller and company shells, browser titles,
+Open Graph site names, organization/site metadata, and platform-authored copy.
+The concise homepage introduction follows the hero in both published and fallback
+renderers and appears once. Keep the existing hero typography, controls and timing.
+Legacy editorial copy is normalized for display; URLs and historical records keep
+their stored values. No external social profiles are configured or included in
+this change, as confirmed by the owner.

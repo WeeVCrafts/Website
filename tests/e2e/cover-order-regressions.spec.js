@@ -33,7 +33,7 @@ test('persistent covers, clean demo confirmation and synchronized fulfilment', a
   try {
     const created = await seller.context.request.post('/seller-admin/products', {
       maxRedirects: 0,
-      multipart: { csrf_token: seller.token, name: 'Persistent cover QA', slug, brand_name: 'WeevCrafts', brand_slug: 'weevcrafts', category_name: 'Crafts', category_slug: 'crafts', description: 'A product used only in the isolated image persistence test.', sku: 'COVER-' + suffix, price_rupees: '199.00', initial_stock: '10', image_url: '', image_file: { name: 'cover.png', mimeType: 'image/png', buffer: png } }
+      multipart: { csrf_token: seller.token, name: 'Persistent cover QA', slug, brand_name: 'Weevcrafts', brand_slug: 'weevcrafts', category_name: 'Crafts', category_slug: 'crafts', description: 'A product used only in the isolated image persistence test.', sku: 'COVER-' + suffix, price_rupees: '199.00', initial_stock: '10', image_url: '', image_file: { name: 'cover.png', mimeType: 'image/png', buffer: png } }
     });
     expect(created.status(), await created.text()).toBe(303);
     const editURL = created.headers().location;

@@ -1,23 +1,24 @@
 package components
 
 import "github.com/wecratfs/commerce/internal/domain/storefront"
+import "github.com/wecratfs/commerce/internal/identity"
 
 templ StorefrontFooterGroups(groups []storefront.LinkGroup) {
 	for _,group:=range groups {
 		<div>
-			<h3>{ group.Title }</h3>
+			<h3>{ identity.DisplayName(group.Title) }</h3>
 			if group.Text!="" {
-				<p>{ group.Text }</p>
+				<p>{ identity.DisplayName(group.Text) }</p>
 			}
 			for _,link:=range group.Links {
-				<a href={ link.URL }>{ link.Label }</a>
+				<a href={ link.URL }>{ identity.DisplayName(link.Label) }</a>
 			}
 		</div>
 	}
 }
 
 templ StorefrontTrust(items []storefront.Tile) {
-	<section class="trust-strip" aria-label="Shopping with WeevCrafts">
+	<section class="trust-strip" aria-label="Shopping with Weevcrafts">
 		for _,item:=range items {
 			<div>
 				if item.Image!="" {
@@ -25,7 +26,7 @@ templ StorefrontTrust(items []storefront.Tile) {
 				} else {
 					<span class="material-symbols-outlined" aria-hidden="true">{ storefrontTrustIcon(item.Title) }</span>
 				}
-				<b>{ item.Title }</b><small>{ item.Text }</small>
+				<b>{ identity.DisplayName(item.Title) }</b><small>{ identity.DisplayName(item.Text) }</small>
 				if item.URL!="" {
 					<a href={ item.URL }>Learn more<span class="sr-only">about { item.Title }</span></a>
 				}

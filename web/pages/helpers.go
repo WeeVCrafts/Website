@@ -73,7 +73,7 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 	if p.Route != "/" {
 		return ""
 	}
-	aliases := []string{"WeeVCrafts", "weevcrafts", "weevcrafts.com"}
+	aliases := []string{"weevcrafts.com"}
 	organizationID := pageCanonicalURL(p) + "#organization"
 	data := map[string]any{
 		"@context": "https://schema.org",
@@ -129,7 +129,7 @@ func pageDocumentTitle(p viewmodels.CustomerPage) string {
 	if p.Route == "/" {
 		return identity.HomeTitle
 	}
-	title := strings.TrimSpace(p.Title)
+	title := identity.DisplayName(strings.TrimSpace(p.Title))
 	if title == "" {
 		return identity.Name
 	}
@@ -148,7 +148,7 @@ func pageDescription(p viewmodels.CustomerPage) string {
 		return identity.Description
 	}
 	if description := strings.TrimSpace(p.Description); description != "" {
-		return description
+		return identity.DisplayName(description)
 	}
 	if p.StorefrontPage != nil {
 		for _, section := range p.StorefrontPage.Sections {
@@ -157,19 +157,19 @@ func pageDescription(p viewmodels.CustomerPage) string {
 				if len(text) > 160 {
 					text = append(text[:157], '.', '.', '.')
 				}
-				return string(text)
+				return identity.DisplayName(string(text))
 			}
 		}
 	}
 	if strings.TrimSpace(p.Title) != "" {
-		return p.Title + " at " + identity.Name + "."
+		return identity.DisplayName(p.Title) + " at " + identity.Name + "."
 	}
 	return identity.Description
 }
 
 func pageOGDescription(p viewmodels.CustomerPage) string {
 	if strings.TrimSpace(p.Product.Description) != "" && strings.HasPrefix(p.Route, "/products/") {
-		return p.Product.Description
+		return identity.DisplayName(p.Product.Description)
 	}
 	return pageDescription(p)
 }
@@ -761,7 +761,7 @@ func paymentStateHeading(state string) string {
 func paymentStateCopy(state string) string {
 	switch state {
 	case "success":
-		return "The payment gateway confirmed the transaction and WeevCrafts has recorded it against your order."
+		return "The payment gateway confirmed the transaction and Weevcrafts has recorded it against your order."
 	case "failed":
 		return "You can retry with another method or contact support with the reference below. No duplicate order will be created."
 	default:

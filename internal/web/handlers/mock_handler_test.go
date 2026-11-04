@@ -18,7 +18,7 @@ func TestMockCustomerRoutes(t *testing.T) {
 			if res.Code != http.StatusOK {
 				t.Fatalf("status = %d, want 200", res.Code)
 			}
-			if !strings.Contains(res.Body.String(), "WeevCrafts") {
+			if !strings.Contains(res.Body.String(), "Weevcrafts") {
 				t.Fatal("response does not contain public brand")
 			}
 		})
@@ -143,7 +143,7 @@ func TestMockPRDScreenRouteMatrix(t *testing.T) {
 		prefix string
 		paths  []string
 	}{
-		{name: "customer", prefix: "WeevCrafts", paths: []string{
+		{name: "customer", prefix: "Weevcrafts", paths: []string{
 			"/", "/search?q=saree", "/products?category=sarees", "/categories", "/brands", "/brands/mithila-arts", "/products/chanderi-royal", "/makers/mithila-arts", "/deals", "/about", "/contact", "/faq", "/privacy", "/terms", "/returns", "/shipping",
 			"/register", "/login", "/forgot-password", "/reset-password", "/verify-email", "/account/security", "/account", "/account/profile", "/account/addresses", "/account/notifications", "/account/privacy", "/account/reviews", "/orders", "/orders/WC2504267819", "/tracking", "/returns/RET123456/label", "/wishlist", "/cart", "/checkout", "/payments", "/payments/success", "/payments/failed", "/payments/pending",
 		}},
@@ -219,7 +219,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/", want: []string{"Featured from our makers", "Meet the Makers", "/assets/images/customer/craft-banner.webp"}},
 		{route: "/categories", want: []string{"Browse by craft", "Shop by craft", "Gifts that feel personal"}},
 		{route: "/brands", want: []string{"Explore brands with a story", "Mithila Arts", "Weaver&#39;s Touch"}},
-		{route: "/brands/mithila-arts", want: []string{"WEEVCRAFTS BRAND PROFILE", "Independent maker brand", "Pieces from Mithila Arts"}},
+		{route: "/brands/mithila-arts", want: []string{"Weevcrafts BRAND PROFILE", "Independent maker brand", "Pieces from Mithila Arts"}},
 		{route: "/search?q=handloom+sarees", want: []string{"Filters", "handloom sarees", `class="product-card"`}},
 		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More to explore"}},
 		{route: "/wishlist", want: []string{"items in your wishlist", "View product", "You may also love"}},
@@ -236,7 +236,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/account", want: []string{"Profile information", "Security &amp; sessions", "Need a hand?"}},
 		{route: "/login", want: []string{"Sign in", "Your saved pieces and orders, in one place.", "Continue with Google", "Username or email", "current-password"}},
 		{route: "/faq", want: []string{"Frequently asked questions", "How do I know a product is handmade?"}},
-		{route: "/contact", want: []string{"Contact WeevCrafts", "Send us a note"}},
+		{route: "/contact", want: []string{"Contact Weevcrafts", "Send us a note"}},
 		{route: "/account/security", want: []string{"Security and sessions", "Two-step verification"}},
 		{route: "/account/privacy", want: []string{"Privacy preferences", "Data access request"}},
 		{route: "/account/reviews", want: []string{"Reviews to write", "Publish review"}},

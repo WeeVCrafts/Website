@@ -2,11 +2,20 @@ package pages
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 import "github.com/wecratfs/commerce/web/components"
+import "github.com/wecratfs/commerce/internal/identity"
+
+templ HomepageBrandIntroduction() {
+ <section class="homepage-introduction" aria-labelledby="homepage-introduction-title">
+  <h2 id="homepage-introduction-title">Discover {identity.Name} — Handmade Crafts from India</h2>
+  <p>{identity.Name} is an online marketplace for handmade Indian arts, crafts, textiles, home décor and thoughtful gifts. Explore unique creations from independent Indian makers.</p>
+ </section>
+}
 
 // One responsive introduction shares playback and category state at every width.
 templ HomeIntro(p viewmodels.CustomerPage) {
  <div class="responsive-home-intro">
   @HomeHero()
+  @HomepageBrandIntroduction()
   @HomeCategoryRail(p)
   @components.ShoppingTrust(p)
  </div>

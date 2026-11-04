@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func TestUploadedProductPhotographsHaveResponsiveDelivery(t *testing.T) {
+	src := "/media/products/17"
+	got := ResponsiveImageSrcSet(src, "")
+	for _, part := range []string{"v=2&w=320 320w", "v=2&w=640 640w", "v=2&w=960 960w"} {
+		if !strings.Contains(got, part) {
+			t.Fatalf("missing %s in %s", part, got)
+		}
+	}
+	for _, src := range []string{"/media/products/17/preview", "https://private.example/photo", "/media/products/not-an-id"} {
+		if ResponsiveImageSrcSet(src, "") != "" || MediaDeliveryURL(src) != src {
+			t.Fatalf("private/custom media changed: %s", src)
+		}
+	}
+}
+
 func TestStorefrontDeliveryURLsPreserveQueriesAndInvalidateOldFailures(t *testing.T) {
 	src := "/media/storefront/item-0123456789abcdef01234567?existing=yes"
 	got := ResponsiveImageSrcSet(src, "")

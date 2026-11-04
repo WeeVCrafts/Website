@@ -121,7 +121,7 @@ func main() {
 			if _, err := tx.Exec(ctx, `INSERT INTO categories (slug,name) VALUES ($1,initcap($1)) ON CONFLICT DO NOTHING`, item.category); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, `INSERT INTO brands (slug,name) VALUES ('weevcrafts','WeevCrafts') ON CONFLICT DO NOTHING`); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO brands (slug,name) VALUES ('weevcrafts','Weevcrafts') ON CONFLICT DO NOTHING`); err != nil {
 				return err
 			}
 			var productID int64

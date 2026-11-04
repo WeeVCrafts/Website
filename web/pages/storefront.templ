@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"github.com/wecratfs/commerce/internal/domain/storefront"
+	"github.com/wecratfs/commerce/internal/identity"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/components"
 )
@@ -16,6 +17,9 @@ templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Sectio
 			<div id={ "section-" + s.ID } class={ "sf-section",templ.KV("sf-hide-desktop",s.Responsive.HideDesktop),templ.KV("sf-hide-tablet",s.Responsive.HideTablet),templ.KV("sf-hide-mobile",s.Responsive.HideMobile),templ.KV("home-gifts-band",s.Style=="band") } style={ storefrontSectionStyle(s) } data-storefront-section={ s.ID }>
 				if s.Type=="hero" && p.Storefront!=nil {
 					@StorefrontHero(p, p.Storefront.OrderedSlides())
+                    if p.Route=="/" {
+                     @HomepageBrandIntroduction()
+                    }
 				} else if s.Type=="categories" {
 					@HomeCategoryRail(p)
 				} else if s.Type=="products" {
@@ -24,7 +28,7 @@ templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Sectio
 						if s.Selection.Mode=="category" && s.Selection.Category=="" {
 							<nav class="home-category-selectors" aria-label="Choose a product category">
 								for _,c:=range components.NavigationCategories(p) {
-									<a href={ storefrontCategoryURL(p, s.ID, c.Slug) } aria-current={ categoryCurrent(c.Slug == p.HomeSelectedCategory) }>{ c.Name }</a>
+										<a href={ storefrontCategoryURL(p, s.ID, c.Slug) } aria-current={ categoryCurrent(c.Slug == p.HomeSelectedCategory) }>{ identity.DisplayName(c.Name) }</a>
 								}
 							</nav>
 						}
@@ -66,7 +70,7 @@ templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Sectio
 							</picture>
 						}
 						<div>
-							<h2 id={ "heading-" + s.ID }>{ s.Title }</h2>
+							<h2 id={ "heading-" + s.ID }>{ identity.DisplayName(s.Title) }</h2>
 							for _,paragraph:=range contentParagraphs(s.Text) {
 								if paragraph!="" {
 									<p>
@@ -118,7 +122,7 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
 				for i,s:=range slides {
 					<section class="hero hero-slide" data-hero-slide data-storefront-slide={s.ID} hidden?={ i!=0 }>
 						<div class="hero-copy">
-							<p class="hero-kicker">{ s.Kicker }</p>
+							<p class="hero-kicker">{ identity.DisplayName(s.Kicker) }</p>
 							<h1>
 								if s.ID=="craft" && s.Title=="Crafted in India. Made to be cherished." {
 									Crafted in India.
@@ -129,16 +133,16 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
           Made to be cherished.
          }
 								} else {
-									{ s.Title }
+									{ identity.DisplayName(s.Title) }
 								}
 							</h1>
-							<p>{ s.Text }</p>
+							<p>{ identity.DisplayName(s.Text) }</p>
 							<div class="hero-actions">
 								if s.Button.URL!="" {
-									<a class="primary-button" href={ s.Button.URL }>{ s.Button.Label } <span aria-hidden="true">→</span></a>
+									<a class="primary-button" href={ s.Button.URL }>{ identity.DisplayName(s.Button.Label) } <span aria-hidden="true">→</span></a>
 								}
 								if s.Secondary.URL!="" {
-									<a class="outline-button" href={ s.Secondary.URL }>{ s.Secondary.Label }</a>
+									<a class="outline-button" href={ s.Secondary.URL }>{ identity.DisplayName(s.Secondary.Label) }</a>
 								}
 							</div>
 						</div>

@@ -755,11 +755,11 @@ func (h *LivePortalHandler) userRoles(r *http.Request, userID int64) []domainide
 
 func (h *LivePortalHandler) userDisplayName(r *http.Request, userID int64) string {
 	if h.pool == nil || userID <= 0 {
-		return "WeevCrafts account"
+		return "Weevcrafts account"
 	}
 	var name string
 	if err := h.queryRow(r, `SELECT display_name FROM users WHERE id=$1`, userID).Scan(&name); err != nil || strings.TrimSpace(name) == "" {
-		return "WeevCrafts account"
+		return "Weevcrafts account"
 	}
 	return identity.DisplayName(name)
 }
