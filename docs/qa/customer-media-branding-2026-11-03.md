@@ -29,3 +29,11 @@ Photograph derivatives are disposable and bounded; originals remain available
 for zoom and are never overwritten. Saved editorial text is normalized only
 for display. URLs, account identities, credentials and historical releases stay
 unchanged. Payment recovery work is a separate release.
+
+Published revisions: `6d4fa94` and follow-up `9e56f5c`. The follow-up fixes a
+legacy saved About heading found by production inspection and normalizes templ
+input newlines so Windows generation matches Linux CI. CI passes at `9e56f5c`.
+Coolify runs that exact revision. Public Home, Our Story and About return 200
+with the preferred name; readiness returns 200. The observed product cover's
+320-pixel version is 32,772 bytes, versus its 3,032,247-byte original. Missing
+product and storefront media return 404 with `no-store`.

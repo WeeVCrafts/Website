@@ -49,6 +49,20 @@ func TestRefundRecoveryNeverPostsAndFindsOriginalReceipt(t *testing.T) {
 	}
 }
 
+func TestReviewRefundRecoverySelectsCurrentAuthorizedAttempt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Error("refund lookup must not POST")
+		}
+		fmt.Fprint(w, `{"items":[{"id":"rfnd_old","payment_id":"pay_fixture","receipt":"payment-review-7","amount":1000,"currency":"INR","status":"failed"},{"id":"rfnd_new","payment_id":"pay_fixture","receipt":"pr-7-2","amount":1000,"currency":"INR","status":"processed"}]}`)
+	}))
+	defer server.Close()
+	refund, err := NewGateway("test", "secret", "webhook", server.URL).LookupRefund(context.Background(), ports.PaymentRefundRecord{ID: 7, ProviderPaymentID: "pay_fixture", Receipt: "pr-7-2"})
+	if err != nil || refund.ProviderRefundID != "rfnd_new" {
+		t.Fatalf("recovery selected stale authorization: %+v %v", refund, err)
+	}
+}
+
 func TestRefundRecoveryRejectsAmbiguousReceipt(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"items":[{"id":"rfnd_one","receipt":"refund-7"},{"id":"rfnd_two","receipt":"refund-7"}]}`)

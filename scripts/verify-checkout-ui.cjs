@@ -10,12 +10,12 @@ async function main(){
   await page.locator('.mobile-buy-bar button').last().click();await page.waitForURL(/\/checkout$/);
   const fields={recipient_name:'UI QA Customer',phone:'9876543210',line1:'10 Isolated QA Street',city:'Bengaluru',state:'Karnataka',postal_code:'560034'};
   for(const [name,value]of Object.entries(fields))await page.locator('#checkout-address-form [name="'+name+'"]').fill(value);
-  await page.getByRole('button',{name:'Continue to delivery'}).click();await page.getByRole('button',{name:'Continue to payment'}).click();
-  assert.match(await page.locator('.checkout-card[data-step="3"]').textContent(),/local|simulat/i);
-  await page.getByRole('button',{name:'Continue to review'}).click();
+  await page.getByRole('button',{name:'Review & pay'}).click();
+  assert.match(await page.locator('.checkout-card[data-step="2"]').textContent(),/local|simulat/i);
+
   await page.route('**/api/v1/checkout',async route=>{if(route.request().method()==='POST')creations++;await route.continue();});
   await page.locator('[data-backend-action="checkout"]').evaluate(button=>{button.click();button.click();});
-  await page.waitForURL(/\/orders\/[^/]+\/confirmation$/, {timeout:30000});assert.equal(creations,1);
+  await page.waitForURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/, {timeout:30000});assert.equal(creations,1);
   assert(await page.locator('.order-confirmation').isVisible());const url=page.url();const confirmation=await page.locator('.order-confirmation').textContent();
   assert.match(confirmation,/simulat|no (real )?money|no payment/i);
   await page.reload();assert.equal(page.url(),url);assert(await page.locator('.order-confirmation').isVisible());
@@ -24,9 +24,9 @@ async function main(){
   // and retry must reuse it rather than creating another order.
   await page.goto('/products/blue-pottery');await page.locator('.mobile-buy-bar button').last().click();await page.waitForURL(/\/checkout$/);
   for(const [name,value]of Object.entries(fields))await page.locator('#checkout-address-form [name="'+name+'"]').fill(value);
-  await page.getByRole('button',{name:'Continue to delivery'}).click();await page.getByRole('button',{name:'Continue to payment'}).click();await page.getByRole('button',{name:'Continue to review'}).click();
+  await page.getByRole('button',{name:'Review & pay'}).click();
   await page.route('**/api/v1/payments/demo-capture/*',route=>route.fulfill({status:503,contentType:'application/json',body:'{"error":{"message":"QA simulated provider unavailable"}}'}));
-  await page.locator('[data-backend-action="checkout"]').click();await page.waitForURL(/\/orders\/[^/]+\/confirmation$/);
+  await page.locator('[data-backend-action="checkout"]').click();await page.waitForURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/);
   const pendingURL=page.url();assert.match(await page.locator('.order-confirmation').textContent(),/Payment pending/);assert.equal(creations,2);
   await page.getByRole('link',{name:'View order',exact:true}).click();await page.waitForURL(/\/orders\/[^/]+$/);
   await page.unroute('**/api/v1/payments/demo-capture/*');await page.locator('[data-retry-payment]').click();

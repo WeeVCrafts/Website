@@ -31,9 +31,9 @@ async function addressAndReview(page){
  if(await page.locator('[data-checkout-address-select]').count())await page.locator('[data-checkout-address-select]').selectOption('');
  const form=page.locator('#checkout-address-form');
  for(const [name,value] of Object.entries({recipient_name:'Workflow Customer',phone:'9876543210',line1:'12 Craft Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'}))await form.locator(`[name="${name}"]`).fill(value);
- await page.getByRole('button',{name:'Continue to delivery'}).click();
- await page.getByRole('button',{name:'Continue to payment'}).click();
- await page.getByRole('button',{name:'Continue to review'}).click();
+ await page.getByRole('button',{name:'Review & pay'}).click();
+
+
 }
 async function placeMockOrder(page,result){
  // Exercise non-success outcomes through the isolated payment API; checkout's
@@ -43,7 +43,7 @@ async function placeMockOrder(page,result){
   const response=await page.request.post(endpoint,{headers:route.request().headers()});
   await route.fulfill({response});
  },{times:1});
- await page.getByRole('button',{name:'Place order',exact:true}).click();
+ await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
  await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/,{timeout:30000});
  const number=decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
  await page.getByRole('link',{name:'View order details',exact:true}).click();
@@ -98,10 +98,10 @@ test.describe.serial('Professional customer workflow in an isolated local store'
   test.setTimeout(180000);await login(page);await addPieces(page,2);await addressAndReview(page);
   await page.getByRole('button',{name:'Edit address',exact:true}).click();
   await expect(page.locator('[name="line1"]')).toHaveValue('12 Craft Lane');
-  await page.locator('[name="line1"]').fill('14 Craft Lane');await page.getByRole('button',{name:'Continue to delivery'}).click();
+  await page.locator('[name="line1"]').fill('14 Craft Lane');await page.getByRole('button',{name:'Review & pay'}).click();
   await expect(page.locator('[data-step="2"]')).toContainText('2 items from 1 maker');
-  await page.getByRole('button',{name:'Back to address'}).press('Enter');await expect(page.locator('[data-step="1"] h2')).toBeFocused();
-  await page.getByRole('button',{name:'Continue to delivery'}).click();await page.getByRole('button',{name:'Continue to payment'}).click();await page.getByRole('button',{name:'Continue to review'}).click();
+  await page.getByRole('button',{name:'Edit address'}).press('Enter');await expect(page.locator('[data-step="1"] h2')).toBeFocused();
+  await page.getByRole('button',{name:'Review & pay'}).click();
   await expect(page.locator('[data-checkout-address-summary]')).toContainText('14 Craft Lane');
   if(process.env.WEEVCRAFTS_REVIEW_DIR)await page.screenshot({path:path.join(process.env.WEEVCRAFTS_REVIEW_DIR,'customer-checkout-review.png')});
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();await expect(page.getByRole('button',{name:'Edit address',exact:true})).toBeVisible();
@@ -123,13 +123,13 @@ test.describe.serial('Professional customer workflow in an isolated local store'
   await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();if(process.env.WEEVCRAFTS_REVIEW_DIR)await page.screenshot({path:path.join(process.env.WEEVCRAFTS_REVIEW_DIR,'customer-tracking-mobile.png')});
   await emailFor(request,'Your Weevcrafts order has shipped',number);
  });
- test('Pending mock payment resumes the saved order; failure is clearly labelled',async({page})=>{
+ test('Pending payment and a failed provider attempt both retain safe continuation',async({page})=>{
   await login(page);await addPieces(page);await addressAndReview(page);const pending=await placeMockOrder(page,'pending');
   await page.getByRole('button',{name:'Continue payment',exact:true}).click();
   await expect(page).toHaveURL(new RegExp('/orders/'+pending+'/confirmation'));
   await page.getByRole('link',{name:'View order details',exact:true}).click();await expect(page.locator('.order-detail-status')).toContainText('Confirmed');
-  await addPieces(page);await addressAndReview(page);await placeMockOrder(page,'fail');await expect(page.locator('.order-detail-status')).toContainText(/failed|not completed/i);
-  await expect(page.getByRole('button',{name:'Continue payment',exact:true})).toHaveCount(0);
+  await addPieces(page);await addressAndReview(page);await placeMockOrder(page,'fail');await expect(page.locator('.order-detail-status')).toContainText(/awaiting payment/i);
+  await expect(page.getByRole('button',{name:'Continue payment',exact:true})).toBeVisible();
  });
  test('Delivered purchases support verified reviews, returns and a linked support request',async({page})=>{
   await login(page);const number=sql("SELECT order_number FROM orders WHERE status='delivered' LIMIT 1");expect(number).not.toBe('');

@@ -199,7 +199,7 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
   .mobile-buy-price small { color: var(--muted); font-size: 13px; font-weight: 400; }
   .storefront-body:has(.mobile-buy-bar) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
   .storefront-body.ui-keyboard-open:has(.mobile-buy-bar) { padding-bottom: 0; }
-  .storefront-body .steps { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; }
+  .storefront-body .steps { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; }
   .storefront-body .steps > span { flex-direction: column; gap: 4px; text-align: center; }
   .storefront-body .steps > i { display: none; }
   .storefront-body .steps > span b { font-size: 13px; }

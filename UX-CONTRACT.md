@@ -443,3 +443,26 @@ renderers and appears once. Keep the existing hero typography, controls and timi
 Legacy editorial copy is normalized for display; URLs and historical records keep
 their stored values. No external social profiles are configured or included in
 this change, as confirmed by the owner.
+# Checkout recovery contract
+
+- Address validation and a policy-based PIN/quote check precede Review & pay.
+  Recoverable failures retain entered fields. Save address for later uses the
+  existing address workflow and suppresses identical saved-address duplicates.
+- Payment attempts have independent provider identities. One failed attempt
+  does not expire an otherwise payable order. Server totals and ownership remain
+  authoritative; existing submit guards and checkout idempotency stay in force.
+- Confirmation refreshes every 15 seconds while visible and pending, offers a
+  manual check, retains saved content on failure, and continues the same order
+  only while its reservation/payment state remains payable. Razorpay receives
+  saved contact details; browser callbacks never establish capture themselves.
+- Late/additional captures are recorded durably and hold fulfilment and payout.
+  Active finance actors may revalidate stock or explicitly authorize the captured
+  payment's refund with a reason. These refunds do not invent a merchandise return.
+  Uncertain submissions are reconciled through provider reads, never retried by
+  sending another refund POST. Normal customer refunds keep existing eligibility.
+- Live payment activation requires separate authorization after sandbox checks.
+  Production verification is read-only; checkout fixtures use isolated QA data.
+- A provider-confirmed failed review refund can receive a new finance
+  authorization. It uses a distinct receipt and binds the request to the failed
+  provider refund ID. Replayed old forms cannot authorize another submission;
+  prior refund identity and the new reason remain in the audit trail.

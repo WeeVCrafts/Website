@@ -1146,15 +1146,20 @@ func (r *CommerceRepository) ListOrders(ctx context.Context, userID int64, limit
 
 func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNumber string) (domaincommerce.OrderDetail, error) {
 	var detail domaincommerce.OrderDetail
+	var addressData []byte
 	if err := r.pool.QueryRow(ctx, `
 		SELECT o.id, o.order_number, o.status, o.currency, o.subtotal_cents,
 		       o.shipping_cents, o.discount_cents, o.total_cents, o.created_at,
-		       COALESCE((SELECT pa.status FROM payment_attempts pa WHERE pa.order_id = o.id ORDER BY pa.id DESC LIMIT 1), '')
+		       COALESCE((SELECT pa.status FROM payment_attempts pa WHERE pa.order_id = o.id ORDER BY pa.id DESC LIMIT 1), ''),o.payment_review_required,o.address_snapshot,
+		       (o.status='pending_payment' AND NOT o.payment_review_required AND EXISTS(SELECT 1 FROM payment_attempts pa JOIN inventory_reservations ir ON ir.order_id=pa.order_id WHERE pa.order_id=o.id AND pa.status IN ('created','pending') AND ir.status='active' AND ir.expires_at>NOW()))
 		FROM orders o
-		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.DiscountCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus); err != nil {
+		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.DiscountCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus, &detail.PaymentReview, &addressData, &detail.CanPay); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domaincommerce.OrderDetail{}, ports.ErrOrderNotFound
 		}
+		return domaincommerce.OrderDetail{}, err
+	}
+	if err := json.Unmarshal(addressData, &detail.Contact); err != nil {
 		return domaincommerce.OrderDetail{}, err
 	}
 	rows, err := r.pool.Query(ctx, `SELECT product_name, sku, quantity, unit_price_cents, line_total_cents FROM order_items WHERE order_id = $1 ORDER BY id`, detail.ID)
@@ -1204,13 +1209,14 @@ func (r *CommerceRepository) CancelOrder(ctx context.Context, userID int64, orde
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var orderID, reservationID int64
 		var status string
-		if err := tx.QueryRow(transactionContext, `SELECT id, status FROM orders WHERE user_id = $1 AND order_number = $2 FOR UPDATE`, userID, orderNumber).Scan(&orderID, &status); err != nil {
+		var review bool
+		if err := tx.QueryRow(transactionContext, `SELECT id, status, payment_review_required FROM orders WHERE user_id = $1 AND order_number = $2 FOR UPDATE`, userID, orderNumber).Scan(&orderID, &status, &review); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrOrderNotFound
 			}
 			return err
 		}
-		if status != "pending_payment" {
+		if status != "pending_payment" || review {
 			return ports.ErrInvalidState
 		}
 		if err := tx.QueryRow(transactionContext, `SELECT id FROM inventory_reservations WHERE order_id = $1 AND status = 'active' FOR UPDATE`, orderID).Scan(&reservationID); err != nil {
@@ -1233,11 +1239,11 @@ func (r *CommerceRepository) ReleaseExpiredReservations(ctx context.Context, lim
 	}
 	err = WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		rows, queryErr := tx.Query(transactionContext, `
-			SELECT id, order_id
-			FROM inventory_reservations
-			WHERE status = 'active' AND expires_at <= NOW()
-			ORDER BY id
-			FOR UPDATE SKIP LOCKED
+			SELECT ir.id, ir.order_id
+			FROM orders o JOIN inventory_reservations ir ON ir.order_id=o.id
+			WHERE o.status='pending_payment' AND ir.status = 'active' AND ir.expires_at <= NOW()
+			ORDER BY ir.id
+			FOR UPDATE OF o SKIP LOCKED
 			LIMIT $1`, limit)
 		if queryErr != nil {
 			return queryErr

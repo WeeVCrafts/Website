@@ -512,6 +512,40 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
   }
   startAdminOrderRefresh();
+  function startPaymentConfirmationRefresh() {
+    const region=document.querySelector('[data-payment-confirmation]');
+    if(!region || region.dataset.refreshStarted)return;
+    region.dataset.refreshStarted='true';
+    const button=region.querySelector('[data-check-payment-status]');
+    const feedback=region.querySelector('[data-payment-refresh-feedback]');
+    let busy=false,active=true;
+    const refresh=async(manual=false)=>{
+      if(busy||document.hidden||!active)return;
+      if(!manual && region.querySelector('[data-confirmation-content]')?.dataset.paymentPending!=='true')return;
+      busy=true;button.disabled=true;
+      feedback.textContent='Checking the recorded payment status…';
+      try{
+        const response=await fetch('/ui/orders/status?view=confirmation&order='+encodeURIComponent(region.dataset.orderNumber),{credentials:'same-origin',cache:'no-store',headers:{Accept:'text/html'},signal:AbortSignal.timeout(20000)});
+        if(!response.ok||response.redirected)throw Error('Could not verify payment status. Your last saved status remains below. Check again before paying.');
+        const fragment=document.createRange().createContextualFragment(await response.text());
+        const next=fragment.querySelector('[data-confirmation-content]');
+        if(!next)throw Error('Payment update was incomplete. Check again before paying.');
+        const current=region.querySelector('[data-confirmation-content]');
+        const oldConfig=current.querySelector('#checkout-payment-config');
+        const nextConfig=next.querySelector('#checkout-payment-config');
+        if(nextConfig && !nextConfig.dataset.contactEmail && oldConfig?.dataset.contactEmail)nextConfig.dataset.contactEmail=oldConfig.dataset.contactEmail;
+        if(!current.contains(document.activeElement))current.replaceWith(next);
+        feedback.textContent=refreshTime();
+      }catch(error){feedback.textContent=error.message;}
+      finally{busy=false;button.disabled=false;}
+    };
+    button.addEventListener('click',()=>refresh(true));
+    const timer=setInterval(()=>refresh(),15000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
+    window.addEventListener('pagehide',()=>{active=false;clearInterval(timer);},{once:true});
+    setTimeout(()=>refresh(),1500);
+  }
+  startPaymentConfirmationRefresh();
   function startLiveOrderView() {
     const sellerList = location.pathname === '/seller-admin/orders';
     const sellerDetail = /^\/seller-admin\/orders\/[^/]+$/.test(location.pathname);

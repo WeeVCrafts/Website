@@ -296,6 +296,9 @@ type OrderItem struct {
 
 type OrderDetail struct {
 	Order
+	PaymentReview bool               `json:"payment_review_required"`
+	CanPay        bool               `json:"can_pay"`
+	Contact       AddressInput       `json:"-"`
 	Items         []OrderItem        `json:"items"`
 	PaymentStatus string             `json:"payment_status"`
 	Fulfillments  []OrderFulfillment `json:"fulfillments"`

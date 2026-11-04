@@ -169,6 +169,9 @@ func (r *PaymentRepository) CompleteRefund(ctx context.Context, refundID int64, 
 			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET status = 'refunded', updated_at = NOW() WHERE order_id = $1 AND status = 'captured'`, orderID); err != nil {
 				return err
 			}
+			if _, err := tx.Exec(transactionContext, `UPDATE provider_payment_attempts p SET status='refunded',updated_at=NOW() FROM payment_attempts pa WHERE p.payment_attempt_id=pa.id AND p.provider_payment_id=pa.provider_payment_id AND pa.order_id=$1 AND pa.status='refunded'`, orderID); err != nil {
+				return err
+			}
 			if _, err := tx.Exec(transactionContext, `UPDATE orders SET status = 'refunded', updated_at = NOW() WHERE id = $1 AND status = $2`, orderID, orderStatus); err != nil {
 				return err
 			}

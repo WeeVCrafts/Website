@@ -516,7 +516,7 @@ templ PortalReturnActions(p viewmodels.AdminPage,item viewmodels.AdminReturn) {
 }
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {
-	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Payable amounts reconciled from captured orders and commission rules.</p></div></div>
+	<article class="admin-panel"><p><a class="admin-button secondary" href={p.PortalRoot+"/payment-reviews"}>Review captured payment exceptions</a></p><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Payable amounts reconciled from captured orders and commission rules.</p></div></div>
 		if p.CanFinance {
 			<form method="post" action={ p.SettlementRoot + "/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Create settlement batches</button></form>
 		}

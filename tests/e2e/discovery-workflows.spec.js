@@ -74,8 +74,8 @@ test('checkout callback stays pending until signed capture; receipt stays privat
  await expect(page).toHaveURL(/\/cart$/);
  await ready(page,'/checkout');
  for(const [name,value] of Object.entries({recipient_name:'Discovery customer',phone:'9876543210',line1:'12 Test Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'}))await page.locator(`#checkout-address-form [name=${name}]`).fill(value);
- for(const label of ['Continue to delivery','Continue to payment','Continue to review'])await page.getByRole('button',{name:label,exact:true}).click();
- await page.getByRole('button',{name:'Place order',exact:true}).click();
+ for(const label of ['Review & pay'])await page.getByRole('button',{name:label,exact:true}).click();
+ await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
  await page.waitForFunction(()=>window.qaPaymentOpened);
  const options=await page.evaluate(()=>({order_id:window.qaPaymentOptions.order_id,amount:window.qaPaymentOptions.amount,currency:window.qaPaymentOptions.currency}));
  const payment='pay_discovery_'+Date.now();

@@ -9387,7 +9387,7 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 730, "</h1><p>A little closer to something handmade.</p><div class=\"steps\" role=\"list\" aria-label=\"Checkout progress\"><span :class=\"checkoutStep >= 1 ? 'active' : ''\" role=\"listitem\"><i>1</i><b>Address</b></span><i></i><span :class=\"checkoutStep >= 2 ? 'active' : ''\" role=\"listitem\"><i>2</i><b>Delivery</b></span><i></i><span :class=\"checkoutStep >= 3 ? 'active' : ''\" role=\"listitem\"><i>3</i><b>Payment</b></span><i></i><span :class=\"checkoutStep >= 4 ? 'active' : ''\" role=\"listitem\"><i>4</i><b>Review</b></span></div></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 730, "</h1><p>A little closer to something handmade.</p><div class=\"steps\" role=\"list\" aria-label=\"Checkout progress\"><span class=\"active\" role=\"listitem\"><i>1</i><b>Address</b></span><i></i><span :class=\"checkoutStep >= 2 ? 'active' : ''\" role=\"listitem\"><i>2</i><b>Review &amp; pay</b></span></div></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -9732,14 +9732,14 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 762, "\" autocomplete=\"postal-code\" required inputmode=\"numeric\" pattern=\"[1-9][0-9]{5}\" minlength=\"6\" maxlength=\"6\" title=\"Enter a valid six-digit Indian PIN code\"></label> <label>Delivery country<input value=\"India\" disabled><input name=\"country_code\" type=\"hidden\" value=\"IN\"></label> <datalist id=\"indian-states\"><option value=\"Andhra Pradesh\"></option><option value=\"Assam\"></option><option value=\"Bihar\"></option><option value=\"Delhi\"></option><option value=\"Goa\"></option><option value=\"Gujarat\"></option><option value=\"Haryana\"></option><option value=\"Karnataka\"></option><option value=\"Kerala\"></option><option value=\"Madhya Pradesh\"></option><option value=\"Maharashtra\"></option><option value=\"Odisha\"></option><option value=\"Punjab\"></option><option value=\"Rajasthan\"></option><option value=\"Tamil Nadu\"></option><option value=\"Telangana\"></option><option value=\"Uttar Pradesh\"></option><option value=\"Uttarakhand\"></option><option value=\"West Bengal\"></option></datalist> <button class=\"primary-button full\" type=\"button\" data-checkout-step=\"2\" @click=\"if (WVUI.validate($el.form)) checkoutStep=2\">Continue to delivery <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></form></section><section class=\"checkout-card checkout-step-card\" data-step=\"2\" x-show=\"checkoutStep === 2\"><header><h2><span>2</span> Delivery &amp; order details</h2><span class=\"muted\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 762, "\" autocomplete=\"postal-code\" required inputmode=\"numeric\" pattern=\"[1-9][0-9]{5}\" minlength=\"6\" maxlength=\"6\" title=\"Enter a valid six-digit Indian PIN code\"></label> <label>Delivery country<input value=\"India\" disabled><input name=\"country_code\" type=\"hidden\" value=\"IN\"></label> <datalist id=\"indian-states\"><option value=\"Andhra Pradesh\"></option><option value=\"Assam\"></option><option value=\"Bihar\"></option><option value=\"Delhi\"></option><option value=\"Goa\"></option><option value=\"Gujarat\"></option><option value=\"Haryana\"></option><option value=\"Karnataka\"></option><option value=\"Kerala\"></option><option value=\"Madhya Pradesh\"></option><option value=\"Maharashtra\"></option><option value=\"Odisha\"></option><option value=\"Punjab\"></option><option value=\"Rajasthan\"></option><option value=\"Tamil Nadu\"></option><option value=\"Telangana\"></option><option value=\"Uttar Pradesh\"></option><option value=\"Uttarakhand\"></option><option value=\"West Bengal\"></option></datalist> <button class=\"primary-button full\" type=\"button\" data-checkout-review>Review &amp; pay <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button> <button class=\"outline-button full\" type=\"button\" data-checkout-save-address>Save address for later</button><p data-checkout-address-feedback role=\"status\"></p></form></section><section class=\"checkout-card checkout-step-card\" data-step=\"2\" x-show=\"checkoutStep === 2\" x-cloak><header><h2><span>2</span> Review &amp; pay</h2><span class=\"muted\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var559 string
 				templ_7745c5c3_Var559, templ_7745c5c3_Err = templ.JoinStringErrs(checkoutItemsLabel(p.CartCount))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1121, Col: 213}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1123, Col: 111}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var559))
 				if templ_7745c5c3_Err != nil {
@@ -9752,13 +9752,13 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				var templ_7745c5c3_Var560 string
 				templ_7745c5c3_Var560, templ_7745c5c3_Err = templ.JoinStringErrs(checkoutMakersLabel(p.Cart))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1121, Col: 250}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1123, Col: 148}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var560))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 764, "</span></header><button class=\"text-button checkout-back\" type=\"button\" data-checkout-step=\"1\" @click=\"checkoutStep=1\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span>Back to address</button>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 764, "</span></header><button class=\"text-button checkout-back\" type=\"button\" data-checkout-step=\"1\" @click=\"checkoutStep=1\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span>Edit address</button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -9766,154 +9766,108 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 765, "<button class=\"primary-button full\" type=\"button\" data-checkout-step=\"3\" @click=\"checkoutStep=3\">Continue to payment <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button></section><section class=\"checkout-card checkout-step-card\" data-step=\"3\" x-show=\"checkoutStep === 3\"><header><h2><span>3</span> Payment method</h2></header><button class=\"text-button checkout-back\" type=\"button\" data-checkout-step=\"2\" @click=\"checkoutStep=2\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span>Back to delivery</button><div id=\"checkout-payment-config\" data-payment-mode=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 765, "<div class=\"checkout-review\"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Total payable</strong><span data-quote-total>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var561 string
-				templ_7745c5c3_Var561, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.PaymentMode)
+				templ_7745c5c3_Var561, templ_7745c5c3_Err = templ.JoinStringErrs(p.Total)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1124, Col: 426}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1126, Col: 223}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var561)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var561))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 766, "\" data-payment-public-key=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 766, "</span></p></div><div id=\"checkout-payment-config\" data-payment-mode=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var562 string
-				templ_7745c5c3_Var562, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.PaymentPublicKey)
+				templ_7745c5c3_Var562, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.PaymentMode)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1124, Col: 473}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1127, Col: 77}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var562)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 767, "\" hidden></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 767, "\" data-payment-public-key=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				if p.NoPaymentDemo {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 768, "<div class=\"utility-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div><button class=\"primary-button full\" type=\"button\" data-checkout-step=\"4\" @click=\"checkoutStep=4\">Continue to review <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else if p.PaymentReady {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 769, "<div class=\"checkout-payment-methods\" aria-label=\"Available payment methods\"><span>Razorpay</span><span>UPI</span><span>VISA</span><span>Mastercard</span><span>RuPay</span></div>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if p.PaymentMode == "local" {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 770, "<div class=\"utility-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">science</span><p>Local test payments are enabled. Placing the order completes a simulated payment. No money is charged.</p></div>")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					} else if razorpayTestMode(p) {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 771, "<div class=\"utility-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">science</span><p><strong>Razorpay test mode.</strong> Use test payment details only. No real money will be charged.</p></div>")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 772, "<div class=\"utility-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">lock</span><p>Pay securely through Razorpay. Available payment options appear in its checkout window.</p></div>")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 773, " <button class=\"primary-button full\" type=\"button\" data-checkout-step=\"4\" @click=\"checkoutStep=4\">Continue to review <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 774, "<div class=\"utility-callout is-error\" role=\"alert\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">error</span><p>Payments are temporarily unavailable. Your cart is saved. Please try again later or contact support.</p></div><button class=\"primary-button full\" type=\"button\" disabled>Payment unavailable</button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
+				var templ_7745c5c3_Var563 string
+				templ_7745c5c3_Var563, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.PaymentPublicKey)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1127, Col: 124}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 775, "</section><section class=\"checkout-card checkout-step-card\" data-step=\"4\" x-show=\"checkoutStep === 4\"><header><h2><span>4</span> Review &amp; place order</h2>")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var563)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				if p.NoPaymentDemo {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 776, "<span class=\"muted\">Demo order · no payment</span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 777, "<span class=\"muted\">Payment is completed securely next</span>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 778, "</header><button class=\"text-button checkout-back\" type=\"button\" data-checkout-step=\"3\" @click=\"checkoutStep=3\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_back</span>Back to payment</button><div class=\"checkout-review\"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span><button class=\"text-button\" type=\"button\" data-checkout-step=\"1\" @click=\"checkoutStep=1\">Edit address</button></p><p><strong>Payment</strong><span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if p.NoPaymentDemo {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 779, "No payment · demo mode")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else {
-					var templ_7745c5c3_Var563 string
-					templ_7745c5c3_Var563, templ_7745c5c3_Err = templ.JoinStringErrs(paymentMethodLabel(p.PaymentMode))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1153, Col: 49}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var563))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 780, "</span><button class=\"text-button\" type=\"button\" data-checkout-step=\"3\" @click=\"checkoutStep=3\">Edit payment</button></p><p><strong>Total payable</strong><span data-quote-total>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 768, "\" data-contact-email=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var564 string
-				templ_7745c5c3_Var564, templ_7745c5c3_Err = templ.JoinStringErrs(p.Total)
+				templ_7745c5c3_Var564, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.UserEmail)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1155, Col: 196}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1127, Col: 158}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var564))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var564)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 781, "</span></p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 769, "\" hidden></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if p.NoPaymentDemo {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 782, "<button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout-no-payment\">Place demo order <span class=\"material-symbols-outlined\" aria-hidden=\"true\">science</span></button>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 770, "<div class=\"utility-callout\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">science</span><p>Demo checkout. Your order is saved pending payment. No money is collected.</p></div><button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout-no-payment\">Place demo order</button>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else if p.PaymentReady {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 783, "<button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout\">Place order <span class=\"material-symbols-outlined\" aria-hidden=\"true\">check</span></button>")
+					if p.PaymentMode == "local" {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 771, "<p class=\"utility-notice\">Local test payment. No money is charged.</p>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					} else if razorpayTestMode(p) {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 772, "<p class=\"utility-notice\">Razorpay test mode. Use test payment details only. No real money is charged.</p>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					} else {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 773, "<p>Pay securely through Razorpay. Available payment methods appear in its checkout window.</p>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 774, " <button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout\">Pay &amp; place order <span class=\"material-symbols-outlined\" aria-hidden=\"true\">lock</span></button>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 784, "<button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout\" disabled>Place order <span class=\"material-symbols-outlined\" aria-hidden=\"true\">check</span></button>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 775, "<p class=\"utility-notice is-error\" role=\"alert\">Payments are temporarily unavailable. Your cart is saved.</p><button class=\"primary-button full\" type=\"button\" data-backend-action=\"checkout\" disabled>Payment unavailable</button>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 785, "<p data-backend-message role=\"status\"></p></section></div><aside class=\"summary checkout-summary\"><h2>Order summary (")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 776, "<p data-backend-message role=\"status\"></p></section></div><aside class=\"summary checkout-summary\"><h2>Order summary (")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var565 string
-				templ_7745c5c3_Var565, templ_7745c5c3_Err = templ.JoinStringErrs(p.CartCount)
+				templ_7745c5c3_Var565, templ_7745c5c3_Err = templ.JoinStringErrs(checkoutItemsLabel(p.CartCount))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 78}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 98}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var565))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 786, " items)</h2><div class=\"summary-items\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 777, ")</h2><div class=\"summary-items\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -9921,72 +9875,72 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 787, "</div><p>Subtotal <b data-quote-subtotal>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 778, "</div><p>Subtotal <b data-quote-subtotal>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var566 string
 				templ_7745c5c3_Var566, templ_7745c5c3_Err = templ.JoinStringErrs(p.ItemsTotal)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 203}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 217}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var566))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 788, "</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 779, "</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var567 string
 				templ_7745c5c3_Var567, templ_7745c5c3_Err = templ.JoinStringErrs(p.ShippingTotal)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 314}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 328}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var567))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 789, "</b></p><p class=\"discount\">Coupon discount <b data-quote-discount>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 780, "</b></p><p class=\"discount\">Coupon discount <b data-quote-discount>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var568 string
 				templ_7745c5c3_Var568, templ_7745c5c3_Err = templ.JoinStringErrs(p.DiscountTotal)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 400}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 414}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var568))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 790, "</b></p><div class=\"checkout-coupon\"><label for=\"checkout-coupon-code\">Coupon code</label><input id=\"checkout-coupon-code\" name=\"coupon_code\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 781, "</b></p><div class=\"checkout-coupon\"><label for=\"checkout-coupon-code\">Coupon code</label><input id=\"checkout-coupon-code\" name=\"coupon_code\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var569 string
 				templ_7745c5c3_Var569, templ_7745c5c3_Err = templ.ResolveAttributeValue(p.CouponCode)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 564}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 578}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var569)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 791, "\" autocomplete=\"off\" maxlength=\"40\" placeholder=\"Enter code\"><button type=\"button\" class=\"outline-button\" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr><h3>Total payable <strong data-quote-total>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 782, "\" autocomplete=\"off\" maxlength=\"40\" placeholder=\"Enter code\"><button type=\"button\" class=\"outline-button\" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr><h3>Total payable <strong data-quote-total>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var570 string
 				templ_7745c5c3_Var570, templ_7745c5c3_Err = templ.JoinStringErrs(p.Total)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1165, Col: 841}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1146, Col: 855}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var570))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 792, "</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 783, "</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -10022,20 +9976,20 @@ func CheckoutComplete(p viewmodels.CustomerPage) templ.Component {
 			templ_7745c5c3_Var571 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 793, "<section class=\"container checkout-complete\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span><h1>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 784, "<section class=\"container checkout-complete\" role=\"status\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">check_circle</span><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var572 string
 		templ_7745c5c3_Var572, templ_7745c5c3_Err = templ.JoinStringErrs(storefrontNativeHeading(p, "Preview order placed"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1172, Col: 194}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/pages.templ`, Line: 1153, Col: 194}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var572))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 794, "</h1><p>This is a UI-only order preview. No payment or shipping request was sent.</p><a class=\"primary-button\" href=\"/orders\">View your orders <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 785, "</h1><p>This is a UI-only order preview. No payment or shipping request was sent.</p><a class=\"primary-button\" href=\"/orders\">View your orders <span class=\"material-symbols-outlined\" aria-hidden=\"true\">arrow_forward</span></a></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

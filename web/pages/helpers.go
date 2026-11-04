@@ -545,6 +545,9 @@ func firstOrder(orders []viewmodels.Order) viewmodels.Order {
 }
 
 func orderStatusTitle(order viewmodels.Order) string {
+	if order.PaymentReview {
+		return "Payment received — review in progress."
+	}
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
 	case "packing":
 		return "Your maker is packing your order."
@@ -570,6 +573,9 @@ func orderStatusTitle(order viewmodels.Order) string {
 }
 
 func orderStatusCopy(order viewmodels.Order) string {
+	if order.PaymentReview {
+		return "Your captured payment is recorded. Fulfilment and payout are held while our team reviews stock or a refund. Do not pay again."
+	}
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
 	case "packing":
 		return "Your maker is preparing the parcel for its next journey."

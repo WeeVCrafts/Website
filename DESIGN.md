@@ -368,3 +368,16 @@ and hero composition. Immediately after the homepage hero, render the small
 server-rendered heading “Discover Weevcrafts — Handmade Crafts from India” and
 the owner's marketplace introduction. Published records remain historical;
 normalize legacy editorial spellings in presentation without changing link targets.
+# Checkout and payment recovery
+
+Checkout uses two numbered steps: Address, then Review & pay. Retain the current
+storefront shell, tokens and native controls. Items, shipping, coupon feedback
+and server-calculated totals remain visible before payment. Narrow progress
+indicators use two equal columns; short action labels stay intact.
+
+Confirmation keeps a visible Check payment status control, live feedback and
+the last saved content during errors. Captured payments awaiting finance review
+use explicit review copy and never display a fulfilment success or payment retry.
+Finance payment reviews use existing AdminDocument, semantic labelled records,
+audit-reason forms and the shared confirmation owner. Finance stays active in
+navigation; the sidebar design is unchanged.

@@ -91,6 +91,9 @@ type CartItem struct {
 }
 
 type Order struct {
+	PaymentReview                                      bool
+	CanPay                                             bool
+	ContactName, ContactPhone                          string
 	DetailsURL                                         string
 	Shipments                                          []domaincommerce.OrderFulfillment
 	Number, Status, State, Payment, Date, PaymentState string

@@ -36,6 +36,7 @@ type PaymentRefund struct {
 }
 
 type PaymentRefundRecord struct {
+	Receipt           string
 	SubmissionState   string
 	ID                int64
 	OrderID           int64
@@ -93,4 +94,35 @@ type PaymentOrderRecord struct {
 type PaymentOrderRepository interface {
 	GetPaymentOrder(ctx context.Context, userID int64, orderNumber string) (PaymentOrderRecord, error)
 	AttachProviderOrder(ctx context.Context, userID int64, orderNumber string, providerOrder PaymentOrder) (PaymentOrderRecord, error)
+}
+
+// Read-only provider recovery. Implementations must never create or capture a
+// payment while looking up the attempts attached to an existing provider order.
+type PaymentStatusGateway interface {
+	LookupPayments(context.Context, PaymentOrderRecord) ([]PaymentWebhook, error)
+}
+type PaymentRecoveryRepository interface {
+	ClaimPaymentReconciliation(context.Context, int) ([]PaymentOrderRecord, error)
+	ClaimOrderPaymentReconciliation(context.Context, int64, string) (bool, error)
+}
+
+type PaymentPayabilityRepository interface {
+	PaymentOrderPayable(context.Context, int64, string) (bool, error)
+}
+
+type PaymentReviewCase struct {
+	ID, OrderID, AmountCents                                              int64
+	OrderNumber, OrderStatus, ProviderPaymentID, Currency, Reason, Status string
+	ResolutionReason, RefundSubmissionState, ProviderRefundID             string
+	CanApprove                                                            bool
+}
+type PaymentReviewRepository interface {
+	ListPaymentReviews(context.Context, int64, int) ([]PaymentReviewCase, error)
+	ApprovePaymentReview(context.Context, int64, int64, string) error
+	BeginReviewRefund(context.Context, int64, int64, string) (PaymentRefundRecord, error)
+	AuthorizeReviewRefundRetry(context.Context, int64, int64, string, string) error
+	ClaimReviewRefundSubmission(context.Context, int64) (bool, error)
+	CompleteReviewRefund(context.Context, int64, PaymentRefund) error
+	MarkReviewRefundUncertain(context.Context, int64) error
+	ClaimReviewRefundReconciliation(context.Context, int) ([]PaymentRefundRecord, error)
 }

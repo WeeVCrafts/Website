@@ -67,10 +67,11 @@ for (const width of [320,390,720,1440]) {
     await coupon.fill('INVALID');
     await page.locator('[data-preview-quote]').click();
     await expect(page.locator('#ui-toast')).toContainText('Coupon is not available');
+    await coupon.fill('');
     for (const [name,value] of Object.entries({line1:'12 Craft Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'})) await page.locator(`[name="${name}"]`).fill(value);
-    await page.getByRole('button',{name:'Continue to delivery',exact:true}).click();
+    await page.getByRole('button',{name:'Review & pay',exact:true}).click();
     await expect(page.locator('.checkout-card[data-step="2"]')).toBeVisible();
-    await page.getByRole('button',{name:'Back to address',exact:true}).click();
+    await page.getByRole('button',{name:'Edit address',exact:true}).click();
     await expect(page.locator('[name=line1]')).toHaveValue('12 Craft Lane');
   });
 }

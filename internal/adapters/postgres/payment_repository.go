@@ -58,6 +58,13 @@ func (r *PaymentRepository) AttachProviderOrder(ctx context.Context, userID int6
 		if orderStatus != "pending_payment" {
 			return ports.ErrPaymentState
 		}
+		var reserved bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM inventory_reservations WHERE order_id=$1 AND status='active' AND expires_at>NOW())`, orderID).Scan(&reserved); err != nil {
+			return err
+		}
+		if !reserved {
+			return ports.ErrPaymentState
+		}
 		result, err := tx.Exec(transactionContext, `
 			UPDATE payment_attempts
 			SET provider_order_id = $1, status = 'pending', updated_at = NOW()
@@ -124,7 +131,7 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 		}
 		var orderID, expectedAmount int64
 		var expectedCurrency string
-		if err := tx.QueryRow(transactionContext, `SELECT order_id, amount_cents, currency FROM payment_attempts WHERE provider_order_id = $1 FOR UPDATE`, webhook.ProviderOrderID).Scan(&orderID, &expectedAmount, &expectedCurrency); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT o.id, pa.amount_cents, pa.currency FROM orders o JOIN payment_attempts pa ON pa.order_id=o.id WHERE pa.provider_order_id = $1 FOR UPDATE OF o, pa`, webhook.ProviderOrderID).Scan(&orderID, &expectedAmount, &expectedCurrency); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				_, updateErr := tx.Exec(transactionContext, `UPDATE payment_webhook_events SET processed_at = NOW() WHERE event_id = $1`, webhook.EventID)
 				return updateErr
@@ -143,54 +150,8 @@ func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.Pa
 			_, err := tx.Exec(transactionContext, `UPDATE payment_webhook_events SET processed_at = NOW() WHERE event_id = $1`, webhook.EventID)
 			return err
 		}
-		if webhook.EventType == "payment.captured" || webhook.EventType == "order.paid" {
-			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'captured', updated_at = NOW() WHERE order_id = $2 AND (provider_payment_id IS NULL OR provider_payment_id = $1)`, webhook.ProviderPaymentID, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = $1 AND status = 'pending_payment'`, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `INSERT INTO order_status_history (order_id, from_status, to_status, reason) SELECT $1, 'pending_payment', 'paid', 'payment webhook captured' WHERE NOT EXISTS (SELECT 1 FROM order_status_history WHERE order_id = $1 AND to_status = 'paid')`, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `UPDATE inventory_stock i SET reserved_quantity = reserved_quantity - ri.quantity, updated_at = NOW() FROM inventory_reservation_items ri JOIN inventory_reservations r ON r.id = ri.reservation_id WHERE r.order_id = $1 AND r.status = 'active' AND i.variant_id = ri.variant_id`, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `UPDATE inventory_reservations SET status = 'committed', updated_at = NOW() WHERE order_id = $1 AND status = 'active'`, orderID); err != nil {
-				return err
-			}
-			if err := recordSellerSalesLedger(transactionContext, tx, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `INSERT INTO outbox_events(event_type,aggregate_type,aggregate_id,payload) SELECT 'OrderPaid','Order',order_number,jsonb_build_object('order_number',order_number) FROM orders WHERE id=$1 AND status='paid' ON CONFLICT(event_type,aggregate_id) WHERE event_type='OrderPaid' DO NOTHING`, orderID); err != nil {
-				return err
-			}
-		} else if webhook.EventType == "payment.failed" {
-			result, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = 'failed', updated_at = NOW() WHERE order_id = $2 AND status IN ('created', 'pending', 'authorized')`, webhook.ProviderPaymentID, orderID)
-			if err != nil {
-				return err
-			}
-			if result.RowsAffected() == 0 {
-				_, err := tx.Exec(transactionContext, `UPDATE payment_webhook_events SET processed_at = NOW() WHERE event_id = $1`, webhook.EventID)
-				return err
-			}
-			if _, err := releaseReservation(transactionContext, tx, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `UPDATE orders SET status = 'payment_failed', updated_at = NOW() WHERE id = $1 AND status = 'pending_payment'`, orderID); err != nil {
-				return err
-			}
-			if _, err := tx.Exec(transactionContext, `INSERT INTO order_status_history (order_id, from_status, to_status, reason) SELECT $1, 'pending_payment', 'payment_failed', 'payment webhook failed' WHERE NOT EXISTS (SELECT 1 FROM order_status_history WHERE order_id = $1 AND to_status = 'payment_failed')`, orderID); err != nil {
-				return err
-			}
-		} else if webhook.EventType == "payment.authorized" || webhook.EventType == "payment.pending" {
-			status := "pending"
-			if webhook.EventType == "payment.authorized" {
-				status = "authorized"
-			}
-			if _, err := tx.Exec(transactionContext, `UPDATE payment_attempts SET provider_payment_id = $1, status = $2, updated_at = NOW() WHERE order_id = $3 AND status IN ('created', 'pending', 'authorized') AND (provider_payment_id IS NULL OR provider_payment_id = $1)`, webhook.ProviderPaymentID, status, orderID); err != nil {
-				return err
-			}
+		if err := applyProviderPayment(transactionContext, tx, orderID, webhook); err != nil {
+			return err
 		}
 		metadata, _ := json.Marshal(map[string]string{"event_type": webhook.EventType, "provider_order_id": webhook.ProviderOrderID})
 		if _, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (action, resource_type, resource_id, request_id, metadata) VALUES ('payment.webhook_processed', 'order', $1, $2, $3)`, fmt.Sprint(orderID), ports.RequestID(transactionContext), metadata); err != nil {

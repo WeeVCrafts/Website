@@ -29,10 +29,22 @@ func (s *OrderService) Create(ctx context.Context, userID int64, orderNumber str
 	if err != nil {
 		return domaincommerce.PaymentIntent{}, err
 	}
+	if record.OrderStatus != "pending_payment" || (record.PaymentStatus != "created" && record.PaymentStatus != "pending") || record.AmountCents <= 0 || record.Currency == "" {
+		return domaincommerce.PaymentIntent{}, ports.ErrPaymentState
+	}
+	if payable, ok := s.repository.(ports.PaymentPayabilityRepository); ok {
+		allowed, err := payable.PaymentOrderPayable(ctx, userID, orderNumber)
+		if err != nil {
+			return domaincommerce.PaymentIntent{}, err
+		}
+		if !allowed {
+			return domaincommerce.PaymentIntent{}, ports.ErrPaymentState
+		}
+	}
 	if record.ProviderOrderID != "" {
 		return mapPaymentIntent(record), nil
 	}
-	if record.OrderStatus != "pending_payment" || record.PaymentStatus != "created" || record.AmountCents <= 0 || record.Currency == "" {
+	if record.PaymentStatus != "created" {
 		return domaincommerce.PaymentIntent{}, ports.ErrPaymentState
 	}
 	providerOrder, err := s.gateway.CreateOrder(ctx, ports.PaymentOrderRequest{

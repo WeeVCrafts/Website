@@ -24,11 +24,11 @@ async function checkout(page,fail=false){
  const select=page.locator('[data-checkout-address-select]');if(await select.count())await select.selectOption('');
  const form=page.locator('#checkout-address-form');
  for(const [name,value] of Object.entries({recipient_name:'QA Customer',phone:'9876543210',line1:'12 Craft Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'}))await form.locator(`[name="${name}"]`).fill(value);
- await page.getByRole('button',{name:'Continue to delivery'}).click();
- await page.getByRole('button',{name:'Continue to payment'}).click();
- await page.getByRole('button',{name:'Continue to review'}).click();
+ await page.getByRole('button',{name:'Review & pay'}).click();
+
+
  if(fail)await page.route('**/dev/payments/*/capture',route=>route.fulfill({status:503,contentType:'application/json',body:'{"message":"Temporary payment outage"}'}),{times:1});
- await page.getByRole('button',{name:'Place order',exact:true}).click();
+ await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
  await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/,{timeout:30000});
  const number=decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
  if(!fail){

@@ -224,7 +224,7 @@ func TestMockCustomerResponsibilities(t *testing.T) {
 		{route: "/products/chanderi-royal", want: []string{"Add to cart", "Product details", "Reviews", "More to explore"}},
 		{route: "/wishlist", want: []string{"items in your wishlist", "View product", "You may also love"}},
 		{route: "/cart", want: []string{"Order summary", "Proceed to checkout", "supporting independent makers"}},
-		{route: "/checkout", want: []string{"Delivery address", "Payment method", "Place order"}},
+		{route: "/checkout", want: []string{"Delivery address", "Review &amp; pay", "Payment unavailable"}},
 		{route: "/orders", want: []string{"View order", "Past orders", "Orders"}},
 		{route: "/tracking", want: []string{"Track your order", "Shipment in transit", "Tracking ID: 149730248756"}},
 		{route: "/payments", want: []string{"Payment checkout", "Recent payment activity", "Failed"}},

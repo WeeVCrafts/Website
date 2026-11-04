@@ -40,6 +40,7 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
+	paymentReviews     paymentReviewOperations
 	storefrontPreview  *LiveStorefrontHandler
 	categoryStorage    ports.ObjectStorage
 	localMode          bool
@@ -341,7 +342,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.serveNotifications(w, r) {
 		return
 	}
-	if h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
+	if h.servePaymentReviews(w, r) || h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
 		return
 	}
 	session, ok := h.session(r)
@@ -1335,7 +1336,11 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 }
 
 func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.AdminTransaction {
-	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) AND (NOT $4::boolean OR pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day') ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r), insightDays(r), superAdminRequest(r))
+	source := "payment_attempts"
+	if transactionProjectionStatus(r) == "failed" {
+		source = failedPaymentActivitySQL
+	}
+	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM `+source+` pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) AND (NOT $4::boolean OR pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day') ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1961,7 +1966,7 @@ func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int
 	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
 		return err
 	}
-	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger WHERE status='open' AND settlement_id IS NULL GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
+	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger sl WHERE status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required) GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
 	if err != nil {
 		return err
 	}
@@ -1985,7 +1990,7 @@ func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int
 		if err := tx.QueryRow(r.Context(), `INSERT INTO seller_settlements(seller_id,period_start,period_end,gross_cents,commission_cents,net_cents,status,reference) VALUES($1,$2,$3,$4,$5,$6,'pending',$7) RETURNING id`, item.sellerID, item.start, item.end, item.gross, item.commission, item.net, reference).Scan(&settlementID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL`, settlementID, item.sellerID); err != nil {
+		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger sl SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required)`, settlementID, item.sellerID); err != nil {
 			return err
 		}
 	}
@@ -2001,14 +2006,26 @@ func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, st
 		return err
 	}
 	defer tx.Rollback(r.Context())
+	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
+		return err
+	}
 	var current string
 	if err := tx.QueryRow(r.Context(), `SELECT status FROM seller_settlements WHERE id=$1 FOR UPDATE`, id).Scan(&current); err != nil {
 		return err
 	}
-	validTransition := current == "pending" && status == "approved" ||
+	validTransition := current == "pending" && (status == "approved" || status == "failed") ||
 		current == "approved" && (status == "paid" || status == "failed")
 	if !validTransition {
 		return fmt.Errorf("invalid state transition from %s to %s", current, status)
+	}
+	if status == "approved" || status == "paid" {
+		var blocked bool
+		if err := tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM seller_ledger sl JOIN orders o ON o.id=sl.order_id WHERE sl.settlement_id=$1 AND (o.payment_review_required OR (sl.entry_type='sale' AND o.status='refunded' AND NOT EXISTS(SELECT 1 FROM seller_ledger refund WHERE refund.order_id=o.id AND refund.seller_id=sl.seller_id AND refund.entry_type='refund' AND refund.settlement_id=$1))))`, id).Scan(&blocked); err != nil {
+			return err
+		}
+		if blocked {
+			return fmt.Errorf("payment review or refund changes block this settlement; resolve the review or mark the batch failed before recreating it")
+		}
 	}
 	if _, err := tx.Exec(r.Context(), `UPDATE seller_settlements SET status=$1,updated_at=NOW() WHERE id=$2`, status, id); err != nil {
 		return err

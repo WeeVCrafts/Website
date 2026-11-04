@@ -38,6 +38,9 @@ import (
 // visual system while sourcing their state from the live application services.
 // The transport/web handler remains responsible for mutations and API routes.
 type LiveStorefrontHandler struct {
+	paymentRecovery interface {
+		Refresh(context.Context, int64, string) error
+	}
 	catalog            *applicationcatalog.Service
 	search             *applicationcatalog.SearchService
 	cart               *applicationcommerce.CartService
@@ -361,6 +364,16 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			// Payment state is authoritative; never show arbitrary response bodies
 			// from a legacy notice query parameter on this screen.
 			page.Notice = ""
+			switch r.URL.Query().Get("payment") {
+			case "pending":
+				page.Notice = "Your order is saved. Its recorded payment status and next steps are shown below."
+			case "incomplete":
+				page.Notice = "The payment window closed. Check the recorded status before continuing payment."
+			case "verification-unavailable":
+				page.Notice = "Payment verification could not finish. Your order is saved. Check payment status before trying again."
+			case "provider-unavailable":
+				page.Notice = "The payment provider could not be reached. Your order is saved. Check payment status before trying again."
+			}
 			component = pages.OrderConfirmation(page)
 		} else if strings.HasSuffix(r.URL.Path, "/invoice") {
 			if r.URL.Query().Get("format") == "pdf" {
@@ -426,8 +439,31 @@ func (h *LiveStorefrontHandler) orderStatusRefresh(w http.ResponseWriter, r *htt
 		http.Error(w, "Order status is temporarily unavailable", http.StatusServiceUnavailable)
 		return
 	}
+	if h.paymentRecovery != nil && (detail.Status == "pending_payment" || detail.Status == "payment_failed") && !detail.PaymentReview {
+		if err := h.paymentRecovery.Refresh(r.Context(), userID, number); err != nil {
+			http.Error(w, "Payment verification is temporarily unavailable. Your saved order has not changed. Try checking again.", http.StatusServiceUnavailable)
+			return
+		}
+		detail, err = h.orders.Get(r.Context(), userID, number)
+		if err != nil {
+			http.Error(w, "Order status is temporarily unavailable", http.StatusServiceUnavailable)
+			return
+		}
+	}
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if r.URL.Query().Get("view") == "confirmation" {
+		page := viewmodels.CustomerPage{SelectedOrder: refreshOrderView(detail), PaymentMode: h.paymentMode, PaymentPublicKey: h.paymentPublicKey, PaymentReady: h.paymentReady, NoPaymentDemo: h.noPaymentDemo}
+		_ = pages.OrderConfirmationContent(page).Render(r.Context(), w)
+		return
+	}
 	_ = pages.OrderStatusRegion(refreshOrderView(detail)).Render(r.Context(), w)
+}
+
+func (h *LiveStorefrontHandler) SetPaymentRecovery(recovery interface {
+	Refresh(context.Context, int64, string) error
+}) {
+	h.paymentRecovery = recovery
 }
 
 func orderShowsFulfillment(orderStatus, paymentStatus string) bool {
@@ -448,7 +484,7 @@ func refreshOrderView(detail domaincommerce.OrderDetail) viewmodels.Order {
 			displayStatus = domaincommerce.FulfillmentProgress(detail.Fulfillments)
 		}
 	}
-	view := viewmodels.Order{Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
+	view := viewmodels.Order{CanPay: detail.CanPay, PaymentReview: detail.PaymentReview, ContactName: detail.Contact.RecipientName, ContactPhone: detail.Contact.Phone, Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
 	for _, item := range detail.Items {
 		view.Items = append(view.Items, viewmodels.CartItem{Product: viewmodels.Product{Name: item.ProductName, SKU: item.SKU, PriceCents: item.UnitPriceCents, Price: storefrontMoney(item.UnitPriceCents)}, Quantity: item.Quantity})
 	}
@@ -518,10 +554,16 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 	}
 	addressIDText := strings.TrimSpace(r.Form.Get("address_id"))
 	if addressIDText == "" {
-		_, err = h.pool.Exec(r.Context(), `
+		err = postgres.WithinTransaction(r.Context(), h.pool, func(ctx context.Context, tx pgx.Tx) error {
+			if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('saved-address:'||$1::bigint::text,0))`, userID); err != nil {
+				return err
+			}
+			_, err := tx.Exec(ctx, `
 			INSERT INTO addresses (user_id, recipient_name, phone, line1, line2, city, state, postal_code, country_code)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-			userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode)
+			SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9 WHERE NOT EXISTS(SELECT 1 FROM addresses WHERE user_id=$1 AND recipient_name=$2 AND phone=$3 AND line1=$4 AND line2=$5 AND city=$6 AND state=$7 AND postal_code=$8 AND country_code=$9)`,
+				userID, address.RecipientName, address.Phone, address.Line1, address.Line2, address.City, address.State, address.PostalCode, address.CountryCode)
+			return err
+		})
 	} else {
 		var addressID int64
 		addressID, err = strconv.ParseInt(addressIDText, 10, 64)
@@ -1457,11 +1499,12 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	status := displayOrderStatus(displayStatus)
 	payment := displayPaymentStatus(order.PaymentStatus, order.Status)
 	view := viewmodels.Order{
+		CanPay: order.CanPay, PaymentReview: order.PaymentReview, ContactName: order.Contact.RecipientName, ContactPhone: order.Contact.Phone,
 		Shipments: order.Fulfillments,
 		Number:    order.OrderNumber, Status: status, State: order.Status, Payment: payment, PaymentState: order.PaymentStatus,
 		Date: order.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(order.TotalCents),
 		Subtotal: storefrontMoney(order.SubtotalCents), Shipping: storefrontMoney(order.ShippingCents), Discount: storefrontMoney(order.DiscountCents),
-		CanCancel:        order.Status == "pending_payment",
+		CanCancel:        order.Status == "pending_payment" && !order.PaymentReview,
 		CanRequestReturn: order.Status == "delivered",
 	}
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {

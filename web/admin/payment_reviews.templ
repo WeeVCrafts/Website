@@ -1,0 +1,54 @@
+package admin
+
+import (
+ "fmt"
+ "github.com/wecratfs/commerce/internal/ports"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ PaymentReviews(p viewmodels.AdminPage, cases []ports.PaymentReviewCase, failedID int64, reason string) {
+ @AdminDocument(p) {
+  <div class="admin-toolbar"><a class="admin-button secondary" href={p.PortalRoot+"/finance"}>Back to finance</a><a class="admin-button secondary" href={p.PortalRoot+"/payment-reviews"}>Refresh saved status</a></div>
+  <article class="admin-panel"><h2>Captured payment exceptions</h2><p>Showing up to 100 cases, open cases first. Refund authorization is separate from merchandise returns. A saved decision never sends a second refund request.</p>
+   <div class="ui-table-region" role="region" tabindex="0" aria-label="Payment review cases"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Payment</th><th scope="col">Reason</th><th scope="col">Status</th><th scope="col">Decision</th></tr></thead><tbody>
+    for _,c:=range cases {
+     <tr><th scope="row">{c.OrderNumber}<small>{c.OrderStatus}</small></th><td data-label="Payment">{c.ProviderPaymentID}<br/>{c.Currency} {fmt.Sprintf("%d.%02d",c.AmountCents/100,c.AmountCents%100)}</td><td data-label="Reason">{c.Reason}</td><td data-label="Status">{c.Status}
+      if c.Status=="refund_pending" {
+       <small>Refund: {c.RefundSubmissionState}. Check provider status before any further action.</small>
+      }
+     </td><td data-label="Decision" class="row-actions">
+      if c.Status=="open" {
+       <form method="post" action={p.PortalRoot+"/payment-reviews/approve"} data-confirm="Revalidate current stock and fulfil this captured payment? Refund it instead if fulfilment is unsuitable.">
+        <input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="review_id" value={fmt.Sprint(c.ID)}/><label>Audit reason<textarea name="reason" required minlength="3" maxlength="500">{ paymentReviewReason(c.ID,failedID,reason) }</textarea></label>
+        if c.CanApprove {
+         <button class="admin-button primary" type="submit">Revalidate stock &amp; fulfil</button>
+        } else {
+         <p>This case cannot be fulfilled automatically.</p>
+        }
+       </form>
+       <form method="post" action={p.PortalRoot+"/payment-reviews/refund"} data-confirm="Authorize a full refund of this captured payment? This sends a refund request to the payment provider.">
+        <input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="review_id" value={fmt.Sprint(c.ID)}/><label>Refund authorization reason<textarea name="reason" required minlength="3" maxlength="500">{ paymentReviewReason(c.ID,failedID,reason) }</textarea></label><button class="admin-button danger" type="submit">Authorize refund</button>
+       </form>
+      } else if c.Status=="refund_pending" && c.RefundSubmissionState=="failed" {
+       <form method="post" action={p.PortalRoot+"/payment-reviews/refund-retry"} data-confirm="The provider confirmed that the previous refund failed. Authorize one new refund request for this captured payment?">
+        <input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="review_id" value={fmt.Sprint(c.ID)}/><input type="hidden" name="expected_refund_id" value={c.ProviderRefundID}/><label>New refund authorization reason<textarea name="reason" required minlength="3" maxlength="500">{paymentReviewReason(c.ID,failedID,reason)}</textarea></label><button class="admin-button danger" type="submit">Authorize new refund attempt</button>
+       </form>
+      } else {
+       <p>{c.ResolutionReason}</p>
+       if c.ProviderRefundID!="" {
+        <small>{c.ProviderRefundID}</small>
+       }
+      }
+     </td></tr>
+    }
+   </tbody></table></div>
+   if len(cases)==0 {
+    <p class="admin-page-note">No captured payment exceptions need review.</p>
+   }
+  </article>
+ }
+}
+
+func paymentReviewReason(id,failedID int64,reason string) string {
+ if id==failedID { return reason }; return ""
+}

@@ -101,11 +101,11 @@ async function createMockPaidOrder(page, email) {
     const field = page.locator(`#checkout-address-form input[name="${name}"]`);
     if (await field.inputValue() === "") await field.fill(value);
   }
-  await page.getByRole("button", { name: /Continue to delivery/ }).click();
-  await page.getByRole("button", { name: /Continue to payment/ }).click();
-  await page.getByRole("button", { name: /Continue to review/ }).click();
+  await page.getByRole("button", { name: /Review & pay/ }).click();
+
+
   const checkoutResponse = page.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
-  await page.getByRole("button", { name: /Place order/ }).click();
+  await page.getByRole("button", { name: /Pay & place order/ }).click();
   expect((await checkoutResponse).ok()).toBeTruthy();
   const capture = page.getByRole("button", { name: "Simulate successful payment" });
   await expect(capture).toBeVisible();
@@ -1229,9 +1229,9 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const country = customer.locator('#checkout-address-form input[name="country_code"]');
     await expect(country).toHaveValue("IN");
     await expect(customer.getByLabel("Delivery country")).toBeDisabled();
-    await customer.getByRole("button", { name: /Continue to delivery/ }).click();
-    await customer.getByRole("button", { name: /Continue to payment/ }).click();
-    await customer.getByRole("button", { name: /Continue to review/ }).click();
+    await customer.getByRole("button", { name: /Review & pay/ }).click();
+
+
     await customer.getByLabel("Coupon code").fill(couponCode);
     const quoteResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout/quote") && response.request().method() === "GET");
     await customer.getByRole("button", { name: "Apply coupon" }).click();
@@ -1239,7 +1239,7 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(customer.locator("[data-quote-discount]")).not.toHaveText("INR 0.00");
     const checkoutRequest = customer.waitForRequest(request => request.url().includes("/api/v1/checkout") && request.method() === "POST");
     const checkoutResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
-    await customer.getByRole("button", { name: /Place order/ }).click();
+    await customer.getByRole("button", { name: /Pay & place order/ }).click();
     const checkoutPayload = JSON.parse((await checkoutRequest).postData());
     expect(checkoutPayload.address.phone).toBe("9876543210");
     expect(checkoutPayload.address.country_code).toBe("IN");

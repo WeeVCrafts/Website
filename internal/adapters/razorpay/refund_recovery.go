@@ -40,6 +40,9 @@ func (g *Gateway) LookupRefund(ctx context.Context, record ports.PaymentRefundRe
 		return result.refund(), nil
 	}
 	receipt := fmt.Sprintf("refund-%d", record.ID)
+	if record.Receipt != "" {
+		receipt = record.Receipt
+	}
 	var match *recoveryRefund
 	for page := 0; page < 10; page++ {
 		var result struct {

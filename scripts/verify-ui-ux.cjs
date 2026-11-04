@@ -100,10 +100,10 @@ async function main() {
     });
     await check('real options: selected price/SKU, unavailable controls and missing media',async()=>{
       await page.goto('/products/blue-tote');const select=page.locator('#detail-variant');
-      await select.selectOption(await select.locator('option').filter({hasText:'Extra large · unavailable'}).getAttribute('value'));
+      await select.selectOption(await select.locator('option').filter({hasText:'Extra large Â· unavailable'}).getAttribute('value'));
       assert(await page.locator('.mobile-buy-bar button').first().isDisabled());
       assert.equal(await page.locator('[data-mobile-price]').textContent(),await select.locator('option:checked').getAttribute('data-price'));
-      await select.selectOption(await select.locator('option').filter({hasText:'Large · natural cotton'}).getAttribute('value'));assert.equal(await page.locator('.mobile-buy-bar button').first().isDisabled(),false);
+      await select.selectOption(await select.locator('option').filter({hasText:'Large Â· natural cotton'}).getAttribute('value'));assert.equal(await page.locator('.mobile-buy-bar button').first().isDisabled(),false);
       assert.equal(await page.locator('[data-selected-variant-sku]').textContent(),'UI-QA-TOTE-LARGE');
       await page.goto('/products/ui-qa-missing-media');await page.waitForFunction(()=>document.querySelector('[data-gallery-media]').src.includes('product-unavailable.svg'));
       assert(await page.locator('.mobile-buy-bar button').first().isDisabled());
@@ -120,22 +120,22 @@ async function main() {
       await page.goto('/products');await page.getByRole('button',{name:'Search',exact:true}).click();await page.locator('#global-search').fill('tote');
       await page.getByRole('button',{name:'Clear product search'}).click();assert.equal(await page.locator('#global-search').inputValue(),'');
       const before=page.url();await page.locator('#global-search').evaluate(input=>{
-        input.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));input.value='布';
+        input.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));input.value='å¸ƒ';
         input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true,cancelable:true}));
       });assert.equal(page.url(),before);
       await page.locator('#global-search').evaluate(input=>input.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true})));
     });
     await check('checkout: inline error, retained address, step focus and Back',async()=>{
       await page.goto('/checkout');const name=page.locator('[name="recipient_name"]');
-      await name.fill('');await page.getByRole('button',{name:'Continue to delivery'}).click();
+      await name.fill('');await page.getByRole('button',{name:'Review & pay'}).click();
       assert.equal(await name.getAttribute('aria-invalid'),'true');assert(await name.evaluate(element=>element===document.activeElement));
-      await name.fill('UI QA Customer');await page.getByRole('button',{name:'Continue to delivery'}).click();
+      await name.fill('UI QA Customer');await page.getByRole('button',{name:'Review & pay'}).click();
       if (!(await page.locator('.checkout-card[data-step="2"]').isVisible())) {
-        await page.locator('[name="phone"]').fill('9876543210');await page.getByRole('button',{name:'Continue to delivery'}).click();
+        await page.locator('[name="phone"]').fill('9876543210');await page.getByRole('button',{name:'Review & pay'}).click();
       }
       await page.locator('.checkout-card[data-step="2"]').waitFor({state:'visible'});
       assert(await page.locator('.checkout-card[data-step="2"] h2').evaluate(element=>element===document.activeElement));
-      await page.getByRole('button',{name:'Back to address'}).click();assert.equal(await name.inputValue(),'UI QA Customer');
+      await page.getByRole('button',{name:'Edit address'}).click();assert.equal(await name.inputValue(),'UI QA Customer');
     });
     await check('no uncaught storefront errors',async()=>assert.deepEqual(errors,[]));
     await context.close();

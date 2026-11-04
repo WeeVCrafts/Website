@@ -60,11 +60,11 @@ test('persistent covers, clean demo confirmation and synchronized fulfilment', a
     for (const [name, value] of Object.entries({ recipient_name: 'Cover QA Customer', phone: '9876543210', line1: '12 QA Road', city: 'Hyderabad', state: 'Telangana', postal_code: '500001' })) {
       await customer.page.locator('#checkout-address-form [name="' + name + '"]').fill(value);
     }
-    await customer.page.getByRole('button', { name: /Continue to delivery/ }).click();
-    await customer.page.getByRole('button', { name: /Continue to payment/ }).click();
-    await customer.page.getByRole('button', { name: /Continue to review/ }).click();
-    await customer.page.getByRole('button', { name: /Place order/, exact: false }).click();
-    await expect(customer.page).toHaveURL(/\/orders\/[^/]+\/confirmation$/);
+    await customer.page.getByRole('button', { name: /Review & pay/ }).click();
+
+
+    await customer.page.getByRole('button', { name: /Pay & place order/, exact: false }).click();
+    await expect(customer.page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/);
     await expect(customer.page.locator('.confirmation-summary')).toContainText('Payment completed');
     await expect(customer.page.locator('main')).not.toContainText('<!doctype');
     const number = /\/orders\/([^/]+)\/confirmation/.exec(customer.page.url())[1];

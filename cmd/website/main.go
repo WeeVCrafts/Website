@@ -166,6 +166,7 @@ func main() {
 	paymentService := applicationpayment.NewService(webhookVerifier, paymentRepository)
 	checkoutPaymentService := applicationpayment.NewCheckoutVerificationService(paymentGateway, paymentRepository, paymentRepository)
 	refundService := applicationpayment.NewRefundService(refundGateway, paymentRepository)
+	paymentReviewService := applicationpayment.NewReviewService(refundGateway, paymentRepository)
 	mediaStorage, storageErr := storageadapter.NewS3WithCARegion(cfg.S3Address, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3Secure, cfg.S3CACert, cfg.S3Region)
 	if storageErr != nil {
 		logger.Warn("S3 media adapter unavailable", "error", storageErr)
@@ -238,6 +239,16 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
+	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		reconcileContext, cancel := context.WithTimeout(ctx, 50*time.Second)
+		defer cancel()
+		_, paymentErr := paymentOrderService.Reconcile(reconcileContext, 20)
+		_, reviewErr := paymentReviewService.Reconcile(reconcileContext, 20)
+		if paymentErr != nil || reviewErr != nil {
+			logger.Warn("payment recovery requires attention")
+		}
+		return errors.Join(paymentErr, reviewErr)
+	})
 	go worker.RunPeriodic(workerContext, 5*time.Minute, func(ctx context.Context) error {
 		reconcileContext, cancel := context.WithTimeout(ctx, 2*time.Minute)
 		defer cancel()
@@ -374,6 +385,7 @@ func main() {
 	// development failure/pending controls disabled in production.
 	registerDemoPaymentCapture(mux, cfg, localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+	portalHandler.SetPaymentReviews(paymentReviewService)
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetCategoryStorage(mediaStorage)
 	mux.HandleFunc("/media/categories/", portalHandler.CategoryMedia)
@@ -389,6 +401,7 @@ func main() {
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
 	storefrontHandler.SetProfileStorage(mediaStorage)
+	storefrontHandler.SetPaymentRecovery(paymentOrderService)
 	portalHandler.SetStorefrontPreview(storefrontHandler)
 	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)

@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const baseURL = process.env.WEEVCRAFTS_BASE_URL || '';
 const isolated = process.env.WEEVCRAFTS_RAZORPAY_QA === 'true' &&
-  /^http:\/\/(localhost|127\.0\.0\.1):18083$/.test(baseURL);
+  /^http:\/\/(localhost|127\.0\.0\.1):(18083|18089)$/.test(baseURL);
 
 test.describe('Razorpay sandbox in the isolated payment QA store', () => {
   test.skip(!isolated, 'Requires the disposable payment database, port 18083 and explicit sandbox opt-in.');
@@ -31,16 +31,17 @@ test.describe('Razorpay sandbox in the isolated payment QA store', () => {
     for (const [name, value] of Object.entries({ recipient_name: 'Payment Test Customer', phone: '9000090000', line1: '1 Test Lane', city: 'Bengaluru', state: 'Karnataka', postal_code: '560034' })) {
       await page.locator(`#checkout-address-form [name="${name}"]`).fill(value);
     }
-    await page.getByRole('button', { name: 'Continue to delivery', exact: true }).press('Enter');
-    await page.getByRole('button', { name: 'Continue to payment', exact: true }).click();
+    await page.getByRole('button', { name: 'Review & pay', exact: true }).press('Enter');
+
     await expect(page.getByText('Razorpay test mode.', { exact: false })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
     await page.screenshot({ path: testInfo.outputPath('checkout-test-mode-390.png'), fullPage: true });
-    await page.getByRole('button', { name: 'Continue to review', exact: true }).click();
-    await page.getByRole('button', { name: 'Place order', exact: true }).click();
+
+    await page.getByRole('button', { name: 'Pay & place order', exact: true }).click();
     await page.setViewportSize({ width: 1440, height: 1000 });
     const provider = page.frameLocator('iframe.razorpay-checkout-frame');
-    await provider.getByPlaceholder('Mobile number', { exact: true }).fill('9000090000');
+    const contactField = provider.getByPlaceholder('Mobile number', { exact: true });
+    if (await contactField.isVisible()) await contactField.fill('9000090000');
     // Razorpay also advances automatically after a valid test mobile number.
     const contactContinue = provider.getByTestId('contact-overlay-container').getByRole('button', { name: 'Continue', exact: true });
     if (await contactContinue.isVisible()) await contactContinue.click({ timeout: 3000 }).catch(() => {});
@@ -52,8 +53,7 @@ test.describe('Razorpay sandbox in the isolated payment QA store', () => {
     const verificationPromise = page.waitForRequest(r => r.url().endsWith('/payment/verify') && r.method() === 'POST');
     await bank.getByRole('button', { name: 'Success', exact: true }).click();
     const verification = (await verificationPromise).postDataJSON();
-    await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation$/, { timeout: 30_000 });
-    await expect(page.getByText('Payment pending', { exact: true }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/, { timeout: 30_000 });
 
     // Localhost cannot receive provider deliveries. Fetch the real sandbox
     // capture and replay a signed webhook locally; this is not evidence of
@@ -66,6 +66,9 @@ test.describe('Razorpay sandbox in the isolated payment QA store', () => {
     }, { timeout: 30_000 }).toBe('captured');
     expect(payment.order_id).toBe(verification.provider_order_id);
     expect(payment.currency).toBe('INR');
+    // Recovery must obtain capture from the real provider even without a webhook.
+    await page.locator('[data-check-payment-status]').click();
+    await expect(page.getByRole('heading', { name: 'Order placed successfully!' })).toBeVisible({timeout:75000});
     const raw = JSON.stringify({ entity: 'event', event: 'payment.captured', payload: { payment: { entity: payment } } });
     const headers = { 'Content-Type': 'application/json', 'X-Razorpay-Event-Id': 'qa_capture_' + payment.id,
       'X-Razorpay-Signature': createHmac('sha256', env.RAZORPAY_WEBHOOK_SECRET).update(raw).digest('hex') };

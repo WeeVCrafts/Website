@@ -177,6 +177,7 @@ type Order struct {
 	DeliveredAt            pgtype.Timestamptz `json:"delivered_at"`
 	ShippingDiscountCents  pgtype.Int8        `json:"shipping_discount_cents"`
 	SellerFinanceSnapshot  []byte             `json:"seller_finance_snapshot"`
+	PaymentReviewRequired  bool               `json:"payment_review_required"`
 }
 
 type OrderItem struct {
@@ -228,6 +229,8 @@ type PaymentAttempt struct {
 	FailureCode       string             `json:"failure_code"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	NextReconcileAt   pgtype.Timestamptz `json:"next_reconcile_at"`
+	ReconcileAttempts int32              `json:"reconcile_attempts"`
 }
 
 type PaymentRefund struct {
@@ -246,6 +249,26 @@ type PaymentRefund struct {
 	SubmissionStartedAt pgtype.Timestamptz `json:"submission_started_at"`
 	NextReconcileAt     pgtype.Timestamptz `json:"next_reconcile_at"`
 	ReconcileAttempts   int32              `json:"reconcile_attempts"`
+}
+
+type PaymentReviewCase struct {
+	ID                    int64              `json:"id"`
+	OrderID               int64              `json:"order_id"`
+	PaymentAttemptID      int64              `json:"payment_attempt_id"`
+	ProviderPaymentID     string             `json:"provider_payment_id"`
+	AmountCents           int64              `json:"amount_cents"`
+	Currency              string             `json:"currency"`
+	Reason                string             `json:"reason"`
+	Status                string             `json:"status"`
+	ResolutionReason      string             `json:"resolution_reason"`
+	ResolvedBy            pgtype.Int8        `json:"resolved_by"`
+	RefundSubmissionState string             `json:"refund_submission_state"`
+	RefundAttempt         int32              `json:"refund_attempt"`
+	ProviderRefundID      pgtype.Text        `json:"provider_refund_id"`
+	NextReconcileAt       pgtype.Timestamptz `json:"next_reconcile_at"`
+	ReconcileAttempts     int32              `json:"reconcile_attempts"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 }
 
 type PaymentWebhookEvent struct {
@@ -333,6 +356,16 @@ type ProductVariant struct {
 	Status         string             `json:"status"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ProviderPaymentAttempt struct {
+	Provider          string             `json:"provider"`
+	ProviderPaymentID string             `json:"provider_payment_id"`
+	PaymentAttemptID  int64              `json:"payment_attempt_id"`
+	Status            string             `json:"status"`
+	AmountCents       int64              `json:"amount_cents"`
+	Currency          string             `json:"currency"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Role struct {

@@ -3,16 +3,30 @@ package api
 import (
 	"errors"
 	"net/http"
+	"regexp"
+	"strings"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
 func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	session, ok := h.session(r)
 	if r.Method != http.MethodGet || !ok || h.cart == nil || h.orders == nil {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "Sign in to preview your checkout.")
 		return
+	}
+	if pin := strings.TrimSpace(r.URL.Query().Get("postal_code")); pin != "" {
+		if !regexp.MustCompile(`^[1-9][0-9]{5}$`).MatchString(pin) {
+			writeError(w, http.StatusUnprocessableEntity, "PIN_INVALID", "Enter a valid six-digit Indian PIN code.")
+			return
+		}
+		if revision, exists := storefront.Current(r.Context()); exists && !revision.Config.Settings.Policy.Serves(pin) {
+			writeError(w, http.StatusUnprocessableEntity, "PIN_UNSERVICEABLE", "Delivery is not currently available to this PIN code. Your cart is saved.")
+			return
+		}
 	}
 	var cart domaincommerce.Cart
 	var err error

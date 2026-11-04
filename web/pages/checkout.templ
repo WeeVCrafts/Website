@@ -2,6 +2,7 @@ package pages
 
 import (
  "github.com/wecratfs/commerce/internal/web/viewmodels"
+ "fmt"
 )
 
 // Checkout route boundary; implementation is in pages.templ.
@@ -10,9 +11,19 @@ templ checkoutBoundary() { <span hidden>checkout</span>
 
 templ OrderConfirmation(p viewmodels.CustomerPage) {
  @Document(p) {
-  <section class="container order-confirmation" aria-labelledby="confirmation-title">
+  <section class="container order-confirmation" data-payment-confirmation data-order-number={p.SelectedOrder.Number} aria-labelledby="confirmation-title">
+   <div class="order-live-controls"><button class="outline-button" type="button" data-check-payment-status>Check payment status</button><p data-payment-refresh-feedback role="status">Your saved payment status is shown below.</p></div>
+   @OrderConfirmationContent(p)
+  </section>
+ }
+}
+
+templ OrderConfirmationContent(p viewmodels.CustomerPage) {
+  <div data-confirmation-content data-payment-pending={fmt.Sprint(!p.NoPaymentDemo && !p.SelectedOrder.PaymentReview && (p.SelectedOrder.State=="pending_payment" || p.SelectedOrder.State=="payment_failed"))}>
    <div class="confirmation-art" aria-hidden="true"><svg width="160" height="140" viewBox="0 0 160 140" fill="none"><ellipse cx="80" cy="84" rx="66" ry="49" fill="#e6efdf"/><path d="M42 49h76l5 72H37l5-72Z" stroke="currentColor" stroke-width="3"/><path d="M60 56V34a20 20 0 0 1 40 0v22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="85" r="22" fill="currentColor"/><path d="m68 85 8 8 17-18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="m20 67-8-3m128 0 8-3M20 88H9m131 0h11" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
-   if p.SelectedOrder.PaymentState!="captured" || p.SelectedOrder.State=="cancelled" || p.SelectedOrder.State=="refunded" {
+   if p.SelectedOrder.PaymentReview {
+    <h1 id="confirmation-title">Payment received — review in progress</h1><p class="confirmation-lead">Your captured payment is safely recorded. Our team must review stock or arrange a refund before fulfilment. Do not pay again.</p>
+   } else if p.SelectedOrder.PaymentState!="captured" || p.SelectedOrder.State=="cancelled" || p.SelectedOrder.State=="refunded" {
     <h1 id="confirmation-title">Your order is saved</h1><p class="confirmation-lead">Open your order to review its recorded payment status and available next steps.</p>
 
 } else {
@@ -54,8 +65,8 @@ Awaiting delivery
    </ol>
    <div class="confirmation-actions"><a class="primary-button" href={ "/orders/"+p.SelectedOrder.Number }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><a class="outline-button" href={ "/orders/"+p.SelectedOrder.Number+"/invoice?format=pdf" }>Download receipt</a><a class="outline-button" href="/products">Continue shopping</a></div>
    <p class="confirmation-help">Need a hand? <a href={ customerSupportURL(p.SelectedOrder.Number) }>Contact support</a></p>
-  </section>
- }
+  @OrderPaymentRecovery(p)
+  </div>
 }
 
 func confirmationStep(done bool) string {
@@ -64,6 +75,7 @@ return "done"}; return ""
 }
 
 func confirmationPayment(order viewmodels.Order) string {
+ if order.PaymentReview {return "Payment received — under review"}
  if order.State=="refunded" || order.RefundStatus=="processed" {return "Payment refunded"}
  if order.PaymentState=="captured" {return "Payment completed"}
  if order.PaymentState=="failed" || order.State=="payment_failed" {return "Payment failed"}

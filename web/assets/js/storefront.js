@@ -609,7 +609,8 @@
 
   function paymentReceipt(orderNumber, message, localSimulator) {
     // Confirmation always reads the committed payment/order state from the server.
-    global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation");
+    const outcome = ['pending','incomplete','verification-unavailable','provider-unavailable'].includes(message) ? message : 'pending';
+    global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation?payment=" + outcome);
   }
 
   function loadRazorpay() {
@@ -617,10 +618,12 @@
     if (razorpayLoader) return razorpayLoader;
     razorpayLoader = new Promise((resolve, reject) => {
       const script = document.createElement("script");
+      const fail = () => { clearTimeout(timer); script.remove(); razorpayLoader = null; reject(new Error("The payment provider could not be reached. Your order is saved. Check its status before trying again.")); };
+      const timer = setTimeout(fail,20000);
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
-      script.onload = () => global.Razorpay ? resolve() : reject(new Error("The payment window could not be loaded."));
-      script.onerror = () => { razorpayLoader = null; reject(new Error("The payment provider could not be reached. Your order is saved.")); };
+      script.onload = () => { clearTimeout(timer); if (global.Razorpay) resolve(); else fail(); };
+      script.onerror = fail;
       document.head.appendChild(script);
     });
     return razorpayLoader;
@@ -647,26 +650,28 @@
       name: "Weevcrafts",
       description: "Handmade goods from independent makers",
       order_id: intent.provider_order_id,
+      prefill: {name: document.querySelector('#checkout-address-form [name="recipient_name"]')?.value || config?.dataset.contactName || '', contact: document.querySelector('#checkout-address-form [name="phone"]')?.value || config?.dataset.contactPhone || '', email: config?.dataset.contactEmail || ''},
       theme: { color: "#1f4b3a" },
-      modal: { ondismiss: () => paymentReceipt(orderNumber, "Your order is saved. Payment was not completed; check the order status before trying again.", false) },
+      modal: { ondismiss: () => paymentReceipt(orderNumber, "incomplete", false) },
       handler: async function (response) {
         try {
           await ensureBackend().verifyPayment(orderNumber, response);
-          paymentReceipt(orderNumber, "Payment details were verified securely. The provider is confirming capture; your order status will update shortly.", false);
+          paymentReceipt(orderNumber, "pending", false);
         } catch (error) {
-          paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
+          paymentReceipt(orderNumber, "verification-unavailable", false);
         }
       }
     });
     checkout.on("payment.failed", function () {
-      paymentReceipt(orderNumber, "The payment was not completed. Your order is saved; check its current status for the latest update.", false);
+      notice("This payment attempt was not completed. You can retry in the payment window. Your saved order remains the same.", true);
     });
     checkout.open();
   }
 
   async function previewCheckoutQuote() {
     const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
-    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store" });
+    const pin = document.querySelector('#checkout-address-form [name="postal_code"]')?.value.trim() || '';
+    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + (pin?'&postal_code='+encodeURIComponent(pin):'') + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(20000) });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error?.message || "Could not preview checkout. Please try again.");
     const quote = unwrap(body);
@@ -738,7 +743,7 @@
         try {
           await beginPayment(orderNumber);
         } catch (paymentError) {
-          paymentReceipt(orderNumber, paymentError.message + " Your order is saved; check its current status before trying again.", false);
+          paymentReceipt(orderNumber, "provider-unavailable", false);
         }
       }
     } catch (error) {
@@ -756,6 +761,35 @@
   }
 
   function bindActions() {
+    const reviewButton=document.querySelector('[data-checkout-review]');
+    reviewButton?.addEventListener('click',async()=>{
+      const form=document.getElementById('checkout-address-form');
+      if(reviewButton.disabled || !global.WVUI.validate(form))return;
+      reviewButton.disabled=true;global.WVUI?.busy(reviewButton,true);
+      const feedback=document.querySelector('[data-checkout-address-feedback]');
+      try{
+        if(feedback)feedback.textContent='Checking delivery and your final total…';
+        await previewCheckoutQuote();
+        global.Alpine.$data(document.getElementById('page')).checkoutStep=2;
+        if(feedback)feedback.textContent='';
+        await global.Alpine.nextTick();
+        requestAnimationFrame(()=>{const heading=document.querySelector('.checkout-card[data-step="2"] h2');if(heading){heading.tabIndex=-1;heading.focus();}});
+      }catch(error){if(feedback)feedback.textContent=error.message;else notice(error.message,true);}
+      finally{reviewButton.disabled=false;global.WVUI?.busy(reviewButton,false);}
+    });
+    const saveAddress=document.querySelector('[data-checkout-save-address]');
+    saveAddress?.addEventListener('click',async()=>{
+      const form=document.getElementById('checkout-address-form');const feedback=document.querySelector('[data-checkout-address-feedback]');
+      if(saveAddress.disabled||!global.WVUI.validate(form))return;
+      saveAddress.disabled=true;global.WVUI?.busy(saveAddress,true);
+      try{
+        const response=await fetch('/account/addresses',{method:'POST',credentials:'same-origin',body:new URLSearchParams(new FormData(form)),signal:AbortSignal.timeout(20000)});
+        if(response.redirected&&new URL(response.url).pathname==='/login')throw Error('Your session ended. Your address entries remain here. Sign in before saving.');
+        if(!response.ok)throw Error('Address could not be saved. Your entries remain here. Check your saved addresses before retrying.');
+        feedback.textContent='Address saved for later. Your checkout is still here.';
+      }catch(error){feedback.textContent=error.message;}
+      finally{saveAddress.disabled=false;global.WVUI?.busy(saveAddress,false);}
+    });
     document.addEventListener('click',async event=>{
       const button=event.target.closest('[data-retry-payment]');
       if (!button || button.disabled) return;

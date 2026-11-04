@@ -1083,7 +1083,7 @@ templ Checkout(p viewmodels.CustomerPage) {
       <div class="checkout-topbar"><a class="checkout-brand" href="/"><img src={ assets.URL("images/brand/weevcrafts-logo.png") } alt="" width="32" height="32"/><span>Weevcrafts</span></a><span class="checkout-secure"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Secure checkout</span></div>
       @Breadcrumb("Home", "Checkout")
       <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>{ storefrontNativeHeading(p,"Checkout") }</h1><p>A little closer to something handmade.</p>
-      <div class="steps" role="list" aria-label="Checkout progress"><span :class="checkoutStep >= 1 ? 'active' : ''" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Delivery</b></span><i></i><span :class="checkoutStep >= 3 ? 'active' : ''" role="listitem"><i>3</i><b>Payment</b></span><i></i><span :class="checkoutStep >= 4 ? 'active' : ''" role="listitem"><i>4</i><b>Review</b></span></div>
+      <div class="steps" role="list" aria-label="Checkout progress"><span class="active" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Review &amp; pay</b></span></div>
     </section>
     if p.CheckoutIntentID!="" {
 <div class="container utility-callout" data-checkout-intent={p.CheckoutIntentID}><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><p><strong>Buying this item only</strong>Your other cart items are saved. <a href="/cart">View your shopping cart</a></p></div>
@@ -1115,54 +1115,35 @@ templ Checkout(p viewmodels.CustomerPage) {
             <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
             <datalist id="indian-states"><option value="Andhra Pradesh"/><option value="Assam"/><option value="Bihar"/><option value="Delhi"/><option value="Goa"/><option value="Gujarat"/><option value="Haryana"/><option value="Karnataka"/><option value="Kerala"/><option value="Madhya Pradesh"/><option value="Maharashtra"/><option value="Odisha"/><option value="Punjab"/><option value="Rajasthan"/><option value="Tamil Nadu"/><option value="Telangana"/><option value="Uttar Pradesh"/><option value="Uttarakhand"/><option value="West Bengal"/></datalist>
-            <button class="primary-button full" type="button" data-checkout-step="2" @click="if (WVUI.validate($el.form)) checkoutStep=2">Continue to delivery <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="primary-button full" type="button" data-checkout-review>Review &amp; pay <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="outline-button full" type="button" data-checkout-save-address>Save address for later</button><p data-checkout-address-feedback role="status"></p>
           </form>
         </section>
-        <section class="checkout-card checkout-step-card" data-step="2" x-show="checkoutStep === 2"><header><h2><span>2</span> Delivery &amp; order details</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
-          <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to address</button>
-        @CheckoutItems(p.Cart)<button class="primary-button full" type="button" data-checkout-step="3" @click="checkoutStep=3">Continue to payment <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></section>
-        <section class="checkout-card checkout-step-card" data-step="3" x-show="checkoutStep === 3"><header><h2><span>3</span> Payment method</h2></header><button class="text-button checkout-back" type="button" data-checkout-step="2" @click="checkoutStep=2"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to delivery</button><div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } hidden></div>
+        <section class="checkout-card checkout-step-card" data-step="2" x-show="checkoutStep === 2" x-cloak>
+          <header><h2><span>2</span> Review &amp; pay</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
+          <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Edit address</button>
+          @CheckoutItems(p.Cart)
+          <div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Total payable</strong><span data-quote-total>{ p.Total }</span></p></div>
+          <div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } data-contact-email={p.UserEmail} hidden></div>
           if p.NoPaymentDemo {
-            <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Demo checkout enabled</strong>No payment will be collected. The order will be saved as pending payment for testing.</p></div>
-            <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Demo checkout. Your order is saved pending payment. No money is collected.</p></div>
+            <button class="primary-button full" type="button" data-backend-action="checkout-no-payment">Place demo order</button>
           } else if p.PaymentReady {
-            <div class="checkout-payment-methods" aria-label="Available payment methods"><span>Razorpay</span><span>UPI</span><span>VISA</span><span>Mastercard</span><span>RuPay</span></div>
-            if p.PaymentMode == "local" {
-              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Local test payments are enabled. Placing the order completes a simulated payment. No money is charged.</p></div>
+            if p.PaymentMode=="local" {
+              <p class="utility-notice">Local test payment. No money is charged.</p>
             } else if razorpayTestMode(p) {
-              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p><strong>Razorpay test mode.</strong> Use test payment details only. No real money will be charged.</p></div>
+              <p class="utility-notice">Razorpay test mode. Use test payment details only. No real money is charged.</p>
             } else {
-              <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">lock</span><p>Pay securely through Razorpay. Available payment options appear in its checkout window.</p></div>
+              <p>Pay securely through Razorpay. Available payment methods appear in its checkout window.</p>
             }
-            <button class="primary-button full" type="button" data-checkout-step="4" @click="checkoutStep=4">Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="primary-button full" type="button" data-backend-action="checkout">Pay &amp; place order <span class="material-symbols-outlined" aria-hidden="true">lock</span></button>
           } else {
-            <div class="utility-callout is-error" role="alert"><span class="material-symbols-outlined" aria-hidden="true">error</span><p>Payments are temporarily unavailable. Your cart is saved. Please try again later or contact support.</p></div>
-            <button class="primary-button full" type="button" disabled>Payment unavailable</button>
+            <p class="utility-notice is-error" role="alert">Payments are temporarily unavailable. Your cart is saved.</p><button class="primary-button full" type="button" data-backend-action="checkout" disabled>Payment unavailable</button>
           }
+          <p data-backend-message role="status"></p>
         </section>
-        <section class="checkout-card checkout-step-card" data-step="4" x-show="checkoutStep === 4"><header><h2><span>4</span> Review &amp; place order</h2>
-            if p.NoPaymentDemo {
-              <span class="muted">Demo order · no payment</span>
-            } else {
-          <span class="muted">Payment is completed securely next</span>
-            }
-          </header><button class="text-button checkout-back" type="button" data-checkout-step="3" @click="checkoutStep=3"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to payment</button><div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span><button class="text-button" type="button" data-checkout-step="1" @click="checkoutStep=1">Edit address</button></p><p><strong>Payment</strong><span>
-            if p.NoPaymentDemo {
-              No payment · demo mode
-            } else {
-              { paymentMethodLabel(p.PaymentMode) }
-            }
-          </span><button class="text-button" type="button" data-checkout-step="3" @click="checkoutStep=3">Edit payment</button></p><p><strong>Total payable</strong><span data-quote-total>{ p.Total }</span></p></div>
-          if p.NoPaymentDemo {
-            <button class="primary-button full" type="button" data-backend-action="checkout-no-payment">Place demo order <span class="material-symbols-outlined" aria-hidden="true">science</span></button>
-          } else if p.PaymentReady {
-            <button class="primary-button full" type="button" data-backend-action="checkout">Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>
-          } else {
-            <button class="primary-button full" type="button" data-backend-action="checkout" disabled>Place order <span class="material-symbols-outlined" aria-hidden="true">check</span></button>
-          }
-          <p data-backend-message role="status"></p></section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ p.CartCount } items)</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ p.ItemsTotal }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ p.ShippingTotal }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ p.DiscountTotal }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ p.ItemsTotal }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ p.ShippingTotal }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ p.DiscountTotal }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
     </section>
     }
   }

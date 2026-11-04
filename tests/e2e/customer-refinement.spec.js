@@ -35,9 +35,9 @@ async function checkoutReview(page) {
   const form = page.locator('#checkout-address-form');
   if (await page.locator('[data-checkout-address-select]').count()) await page.locator('[data-checkout-address-select]').selectOption('');
   for (const [name, value] of Object.entries({recipient_name: 'Customer workflow QA', phone: '+919876543210', line1: '12 Craft Lane', city: 'Pune', state: 'Maharashtra', postal_code: '411001'})) await form.locator(`[name=${name}]`).fill(value);
-  await page.getByRole('button', {name: 'Continue to delivery'}).click();
-  await page.getByRole('button', {name: 'Continue to payment'}).click();
-  await page.getByRole('button', {name: 'Continue to review'}).click();
+  await page.getByRole('button', {name: 'Review & pay'}).click();
+
+
 }
 async function addItem(page) {
   await page.goto('/products/' + product); await ready(page);
@@ -51,8 +51,8 @@ async function placeOrder(page, outcome = 'capture') {
     const response = await route.fetch({url: base + '/dev/payments/' + number + '/' + outcome});
     await route.fulfill({response});
   }, {times: 1});
-  await page.getByRole('button', {name: 'Place order', exact: true}).click();
-  await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation$/, {timeout: 30000});
+  await page.getByRole('button', {name: 'Pay & place order', exact: true}).click();
+  await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/, {timeout: 30000});
   return decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
 }
 
@@ -93,16 +93,16 @@ test('order history filters before paging, retains navigation, and never invents
   const cancel = page.locator('[data-server-orders]').getByRole('button',{name:'Cancel order',exact:true});
   await cancel.click(); await expect(page.getByRole('dialog')).toBeVisible(); await page.keyboard.press('Escape'); await expect(cancel).toBeFocused();
 
-  await expect(page.locator('.order-result-summary')).toHaveText('Showing 1–20 of 55 orders');
+  await expect(page.locator('.order-result-summary')).toHaveText('Showing 1â€“20 of 55 orders');
   await expect(page.getByRole('link', {name: 'All orders (55)', exact: true})).toBeVisible();
   await page.getByRole('link', {name: 'Next page', exact: true}).click();
-  await expect(page.locator('.order-result-summary')).toHaveText('Showing 21–40 of 55 orders');
+  await expect(page.locator('.order-result-summary')).toHaveText('Showing 21â€“40 of 55 orders');
   await page.locator('.compact-order a').first().click();
   await expect(page.getByRole('link', {name: 'Back to orders', exact: true})).toHaveAttribute('href', '/orders?page=2');
   await page.getByRole('link', {name: 'Back to orders', exact: true}).click(); await expect(page).toHaveURL(/page=2/);
   await page.getByRole('link', {name: 'Delivered (5)', exact: true}).click();
   await expect(page.locator('[data-server-orders] .order-card')).toHaveCount(5);
-  await page.goto('/orders?status=delivered&page=999'); await expect(page.locator('.order-result-summary')).toHaveText('Showing 1–5 of 5 orders');
+  await page.goto('/orders?status=delivered&page=999'); await expect(page.locator('.order-result-summary')).toHaveText('Showing 1â€“5 of 5 orders');
   for (const state of ['success', 'failed', 'pending']) {
     await page.goto('/payments/' + state); await expect(page).toHaveURL(base + '/payments');
     await expect(page.locator('.payment-state-links')).toHaveCount(0);
@@ -146,9 +146,9 @@ test('shopping and checkout keep chosen options, prevent duplicates, and deliver
   await page.getByRole('button', {name: 'Edit address', exact: true}).click();
   await expect(page.locator('[name=line1]')).toHaveValue('12 Craft Lane');
   await page.locator('[name=line1]').fill('14 Craft Lane');
-  await page.getByRole('button', {name: 'Continue to delivery'}).click();
-  await page.getByRole('button', {name: 'Back to address'}).press('Enter'); await expect(page.locator('[data-step="1"] h2')).toBeFocused();
-  await page.getByRole('button', {name: 'Continue to delivery'}).click(); await page.getByRole('button', {name: 'Continue to payment'}).click(); await page.getByRole('button', {name: 'Continue to review'}).click();
+  await page.getByRole('button', {name: 'Review & pay'}).click();
+  await page.getByRole('button', {name: 'Edit address'}).press('Enter'); await expect(page.locator('[data-step="1"] h2')).toBeFocused();
+  await page.getByRole('button', {name: 'Review & pay'}).click();
   await expect(page.locator('[data-checkout-address-summary]')).toContainText('14 Craft Lane');
   await page.setViewportSize({width: 390, height: 844}); await screenshot(page, 'checkout-390');
   const number = await placeOrder(page); await expect(page.locator('.confirmation-summary')).toContainText('Payment completed');
@@ -274,8 +274,8 @@ test('unavailable payments and storage provide honest, saved-record recovery', a
   await page.goto('/checkout'); await ready(page);
   const form = page.locator('#checkout-address-form');
   for (const [name,value] of Object.entries({recipient_name:'Unavailable QA',phone:'+919876543210',line1:'19 Craft Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'})) await form.locator(`[name=${name}]`).fill(value);
-  await page.getByRole('button',{name:'Continue to delivery'}).click();await page.getByRole('button',{name:'Continue to payment'}).click();
-  await expect(page.getByRole('button',{name:'Payment unavailable',exact:true})).toBeDisabled();await expect(page.locator('[data-step="3"]')).toContainText('Your cart is saved');
+  await page.getByRole('button',{name:'Review & pay'}).click();
+  await expect(page.getByRole('button',{name:'Payment unavailable',exact:true})).toBeDisabled();await expect(page.locator('[data-step="2"]')).toContainText('Your cart is saved');
   await page.goto('/contact'); await ready(page); const support=page.locator('[data-customer-support-create]');const subject='Saved support after media failure '+Date.now();
   await support.locator('[name=subject]').fill(subject);await support.locator('[name=message]').fill('This request must remain saved when object storage fails.');await support.locator('[name="attachments[]"]').setInputFiles(path.join(__dirname,'../../web/assets/images/brand/favicon.png'));
   await support.getByRole('button',{name:'Send support request'}).click();await expect(page).toHaveURL(/\/account\/support\?ticket_id=/);
@@ -291,13 +291,13 @@ test('stock changes, uncertain checkout completion and session expiry retain saf
   const before=sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')");
   try {
     sql('UPDATE inventory_stock SET available_quantity=0 WHERE variant_id='+id);
-    await page.getByRole('button',{name:'Place order',exact:true}).click();
-    await expect(page.getByRole('button',{name:'Place order',exact:true})).toBeEnabled();
+    await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Pay & place order',exact:true})).toBeEnabled();
     expect(sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')")).toBe(before);
     await expect(page.locator('[name=line1]')).toHaveValue('12 Craft Lane');
   } finally {sql('UPDATE inventory_stock SET available_quantity='+available+' WHERE variant_id='+id);}
   await page.route('**/api/v1/checkout',async route=>{await route.fetch();await route.abort('connectionfailed');},{times:1});
-  await page.getByRole('button',{name:'Place order',exact:true}).click();await expect(page.getByRole('button',{name:'Place order',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Pay & place order',exact:true}).click();await expect(page.getByRole('button',{name:'Pay & place order',exact:true})).toBeEnabled();
   const number=await placeOrder(page);await expect(page.locator('.confirmation-summary')).toContainText('Payment completed');
   expect(Number(sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')"))).toBe(Number(before)+1);
   expect(sql("SELECT count(*) FROM addresses WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"') AND line1='12 Craft Lane'")).toBe('1');
@@ -339,8 +339,8 @@ test('quick view retries failed reads and supports native selection and keyboard
 test('privacy requests, consent and deliberate deletion work for an isolated customer',async({page,browserName})=>{
   test.skip(browserName!=='chromium');const kind='privacy-'+Date.now();
   expect((await page.request.post('/api/v1/auth/register',{data:{email:email(kind),password,display_name:'Privacy QA customer',phone:'+919876543210',accepted_terms:true}})).ok()).toBeTruthy();await login(page,kind);await page.goto('/privacy/center');await ready(page);
-  const request=page.locator('form[action="/privacy/requests"]');await request.locator('[name=request_type]').selectOption('access');await request.locator('[name=details]').fill('Please provide access to my isolated QA account data.');await request.getByRole('button',{name:'Submit request',exact:true}).click();await expect(page.locator('.saved-address').filter({hasText:'access · open'}).first()).toBeVisible();
-  const consent=page.locator('form[action="/privacy/consent"]').filter({has:page.locator('[name=purpose][value=analytics]')});await consent.getByRole('button').click();await expect(page.getByText('analytics · granted',{exact:true})).toBeVisible();
+  const request=page.locator('form[action="/privacy/requests"]');await request.locator('[name=request_type]').selectOption('access');await request.locator('[name=details]').fill('Please provide access to my isolated QA account data.');await request.getByRole('button',{name:'Submit request',exact:true}).click();await expect(page.locator('.saved-address').filter({hasText:'access Â· open'}).first()).toBeVisible();
+  const consent=page.locator('form[action="/privacy/consent"]').filter({has:page.locator('[name=purpose][value=analytics]')});await consent.getByRole('button').click();await expect(page.getByText('analytics Â· granted',{exact:true})).toBeVisible();
   await request.locator('[name=request_type]').selectOption('deletion');await request.locator('[name=details]').fill('Delete this disposable QA account and its eligible data.');await request.getByRole('button',{name:'Submit request',exact:true}).click();
   const deletion=page.getByRole('button',{name:'Delete eligible data',exact:true});await expect(deletion).toBeVisible();await deletion.click();await expect(page.getByRole('dialog')).toBeVisible();await page.keyboard.press('Escape');await expect(deletion).toBeFocused();
   await deletion.click();await page.getByRole('dialog').getByRole('button',{name:'Delete eligible data',exact:true}).click();await expect(page).toHaveURL(/\/login/);

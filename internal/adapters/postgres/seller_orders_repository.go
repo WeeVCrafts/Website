@@ -67,9 +67,10 @@ func (r *CommerceRepository) UpdateSellerFulfillmentWithRevision(ctx context.Con
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var orderID int64
 		var currentStatus, overallStatus string
+		var paymentReview bool
 		var revision int64
 		err := tx.QueryRow(transactionContext, `
-			SELECT o.id, COALESCE(sf.status, 'pending'), o.status, COALESCE(sf.revision, 0)
+			SELECT o.id, COALESCE(sf.status, 'pending'), o.status, COALESCE(sf.revision, 0),o.payment_review_required
 			FROM orders o
 			JOIN sellers s ON s.id = $2 AND s.status = 'active'
 			LEFT JOIN seller_fulfillments sf ON sf.order_id = o.id AND sf.seller_id = s.id
@@ -81,12 +82,15 @@ func (r *CommerceRepository) UpdateSellerFulfillmentWithRevision(ctx context.Con
 				WHERE oi.order_id = o.id AND p.seller_id = s.id
 			  )
 			  AND (s.owner_user_id = $3 )
-			FOR UPDATE OF o`, orderNumber, sellerID, userID).Scan(&orderID, &currentStatus, &overallStatus, &revision)
+			FOR UPDATE OF o`, orderNumber, sellerID, userID).Scan(&orderID, &currentStatus, &overallStatus, &revision, &paymentReview)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrOrderNotFound
 		}
 		if err != nil {
 			return err
+		}
+		if paymentReview {
+			return ports.ErrInvalidState
 		}
 		var existingCarrier, existingTracking, existingNote string
 		if lockErr := tx.QueryRow(transactionContext, `SELECT status,revision,COALESCE(carrier,''),COALESCE(tracking_number,''),COALESCE(last_note,'') FROM seller_fulfillments WHERE seller_id=$1 AND order_id=$2 FOR UPDATE`, sellerID, orderID).Scan(&currentStatus, &revision, &existingCarrier, &existingTracking, &existingNote); lockErr != nil && !errors.Is(lockErr, pgx.ErrNoRows) {
