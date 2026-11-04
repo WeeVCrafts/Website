@@ -1,0 +1,15 @@
+{"version":9,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.63.0","options":{},"platform":"win32","wallTime":1791543068742,"monotonicTime":214017.01,"sdkLanguage":"javascript","title":"manual-recovery.spec.js:95 › AUTH-010--seller-owner"}
+{"type":"before","callId":"call@207","startTime":225088.596,"class":"APIRequestContext","method":"fetch","params":{"url":"/login","method":"POST","formData":[{"name":"email","value":"qa.recovery.auth-010.seller-owner.1791543068961@weevcrafts.local"},{"name":"password","value":"WeeVCrafts-Demo-2026!"},{"name":"csrf_token","value":"ARaS3mcMNmpOqw_mQaeiJOoigkVnLIRAWyV65F1alRc"}],"maxRedirects":0},"stepId":"pw:api@79"}
+{"type":"log","callId":"call@207","time":225094.667,"message":"→ POST http://127.0.0.1:18080/login"}
+{"type":"log","callId":"call@207","time":225094.706,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"}
+{"type":"log","callId":"call@207","time":225094.742,"message":"  accept: */*"}
+{"type":"log","callId":"call@207","time":225094.759,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@207","time":225094.773,"message":"  content-type: application/x-www-form-urlencoded"}
+{"type":"log","callId":"call@207","time":225094.784,"message":"  content-length: 160"}
+{"type":"log","callId":"call@207","time":225094.799,"message":"  cookie: wecratfs_csrf=ARaS3mcMNmpOqw_mQaeiJOoigkVnLIRAWyV65F1alRc"}
+{"type":"log","callId":"call@207","time":225481.338,"message":"← 401 Unauthorized"}
+{"type":"log","callId":"call@207","time":225481.365,"message":"  content-type: text/html; charset=utf-8"}
+{"type":"log","callId":"call@207","time":225481.37,"message":"  x-request-id: 20261009T105119.861904450Z"}
+{"type":"log","callId":"call@207","time":225481.377,"message":"  date: Fri, 09 Oct 2026 10:51:20 GMT"}
+{"type":"log","callId":"call@207","time":225481.381,"message":"  transfer-encoding: chunked"}
+{"type":"after","callId":"call@207","endTime":225482.01,"result":{"response":{"url":"http://127.0.0.1:18080/login","status":401,"statusText":"Unauthorized","headers":[{"name":"Content-Type","value":"text/html; charset=utf-8"},{"name":"X-Request-Id","value":"20261009T105119.861904450Z"},{"name":"Date","value":"Fri, 09 Oct 2026 10:51:20 GMT"},{"name":"Transfer-Encoding","value":"chunked"}],"serverAddr":{"ipAddress":"127.0.0.1","port":18080},"timing":{"startTime":1791543079818,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":0,"secureConnectionStart":-1,"connectEnd":2.819000000017695,"requestStart":2.819000000017695,"responseStart":387.59900000001653},"responseEndTiming":388.15300000002026,"fetchUid":"cdf8ae5a67c66c99b03c43e8d429dcd9"}}}

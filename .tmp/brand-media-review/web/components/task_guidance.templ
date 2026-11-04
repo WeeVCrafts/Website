@@ -1,0 +1,17 @@
+package components
+
+// TaskGuidance keeps the first useful action visible without changing the
+// route, permission, or data contracts of the surrounding page.
+templ TaskGuidance(eyebrow, title, body, href, label string) {
+  <aside class="task-guidance" aria-label="Recommended next action">
+    <span class="task-guidance-icon material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+    <div class="task-guidance-copy">
+      <p class="task-guidance-eyebrow">{ eyebrow }</p>
+      <h2>{ title }</h2>
+      <p>{ body }</p>
+    </div>
+    if href != "" && label != "" {
+      <a class="task-guidance-action" href={ href }>{ label }<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+    }
+  </aside>
+}

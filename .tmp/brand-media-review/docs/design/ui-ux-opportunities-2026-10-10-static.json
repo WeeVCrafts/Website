@@ -1,0 +1,986 @@
+{
+  "findings": [
+    {
+      "category": "unresolved",
+      "file": "design/logo-concepts/index.html",
+      "line": 64,
+      "message": "Native select is used without an explicit ownership decision.",
+      "remediation": "Record Select/Listbox as native or reuse the authored canonical owner.",
+      "ruleId": "ownership.native-select-undecided",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "design/logo-concepts/index.html",
+      "line": 66,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/05dbff95e8efbeef0e961be3c63d18d8d58216b7.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/05dbff95e8efbeef0e961be3c63d18d8d58216b7.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/1098ccafffa95eec9c1217592132a0fcf16c81b2.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/2ed29ad1eacf4c991986c1e26514d1e0dff7d49d.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/48bca01c9ab0dc1a5c39b456225643dfcbe7d3ab.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/49a6142a1a54338afd5d23a714740d47ef717487.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7a954a0e2f4a254e8d8b343ae2dc8b9d0e90d451.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7a954a0e2f4a254e8d8b343ae2dc8b9d0e90d451.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7cd682b2598eca4deda288650d5baa6f374a206c.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7cd682b2598eca4deda288650d5baa6f374a206c.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/86b987e72638a4a0dee90cbfd2509a7d61702ab6.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/b4af7ba8b62b388e4dc2c1a8a7647dc0ee414dfb.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/ec6b81c12f9e884fdc0011e5bc3b7fb3adcf2186.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/ec6b81c12f9e884fdc0011e5bc3b7fb3adcf2186.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/05a0a2f51dca9386acba656c30240b16832ea1a2.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/432e0bff16521b3cfd4dff3b349e34f5a73b41ab.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5919980fdd7d64c275403d0ad95987cf0ad097e6.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/6b8b5930924f9da779cacee66441db0aeb9ad161.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/7c0c8324dab8bb63e666db17f3f0232d895b1f2d.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/7c0c8324dab8bb63e666db17f3f0232d895b1f2d.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/8d0e7132316079b96603e8a8714e7c10162bc700.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/935a7c682ec693e2b7b81f3141cdf877e87dfd1a.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/97e41017ba50ad778462bab0199a229d17db21c1.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/97e41017ba50ad778462bab0199a229d17db21c1.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/f77a5ca6876b310931c9563015f88bcfffc1949f.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/f77a5ca6876b310931c9563015f88bcfffc1949f.html",
+      "line": 120,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/05dbff95e8efbeef0e961be3c63d18d8d58216b7.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/05dbff95e8efbeef0e961be3c63d18d8d58216b7.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/1098ccafffa95eec9c1217592132a0fcf16c81b2.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/1098ccafffa95eec9c1217592132a0fcf16c81b2.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/1c93ca30cdcc95188a68700e1955f1a2c64f3e45.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/1c93ca30cdcc95188a68700e1955f1a2c64f3e45.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/286ac659346691ed9649382f9e2d0dbee7c59ec1.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/286ac659346691ed9649382f9e2d0dbee7c59ec1.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/2ed29ad1eacf4c991986c1e26514d1e0dff7d49d.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/2ed29ad1eacf4c991986c1e26514d1e0dff7d49d.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/48bca01c9ab0dc1a5c39b456225643dfcbe7d3ab.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/48bca01c9ab0dc1a5c39b456225643dfcbe7d3ab.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/49a6142a1a54338afd5d23a714740d47ef717487.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/49a6142a1a54338afd5d23a714740d47ef717487.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/502acbb998475300d7fb248fb85c0777448fb918.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/502acbb998475300d7fb248fb85c0777448fb918.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/66342e12d5f2fba514035bb92235be92303ab844.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/66342e12d5f2fba514035bb92235be92303ab844.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7a954a0e2f4a254e8d8b343ae2dc8b9d0e90d451.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7a954a0e2f4a254e8d8b343ae2dc8b9d0e90d451.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7cd682b2598eca4deda288650d5baa6f374a206c.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/7cd682b2598eca4deda288650d5baa6f374a206c.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/86b987e72638a4a0dee90cbfd2509a7d61702ab6.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/86b987e72638a4a0dee90cbfd2509a7d61702ab6.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/8ca1ef5537b9ec1a6d509607fd96cba6506ca33a.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/8ca1ef5537b9ec1a6d509607fd96cba6506ca33a.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/b4af7ba8b62b388e4dc2c1a8a7647dc0ee414dfb.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/b4af7ba8b62b388e4dc2c1a8a7647dc0ee414dfb.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/d4f17c43e786c42bfae55edf7eba425a85c74369.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/d4f17c43e786c42bfae55edf7eba425a85c74369.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/e8d262dffb694390db66ca9c00c4ac6500636d1b.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/e8d262dffb694390db66ca9c00c4ac6500636d1b.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/ec6b81c12f9e884fdc0011e5bc3b7fb3adcf2186.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/ec6b81c12f9e884fdc0011e5bc3b7fb3adcf2186.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/fc997cfc0d714c0de2716ce010ffe62608e3d3b0.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/fc997cfc0d714c0de2716ce010ffe62608e3d3b0.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/05a0a2f51dca9386acba656c30240b16832ea1a2.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/05a0a2f51dca9386acba656c30240b16832ea1a2.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/1848e8d46a9d3ee113e515eae4a619ffed19b783.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/1848e8d46a9d3ee113e515eae4a619ffed19b783.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/2315f3c0d916b875b98d242dec811ec945452d42.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/2315f3c0d916b875b98d242dec811ec945452d42.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/432e0bff16521b3cfd4dff3b349e34f5a73b41ab.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/432e0bff16521b3cfd4dff3b349e34f5a73b41ab.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5018fc361e68cb0811e3a28dc5a8e69c415e08f5.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5018fc361e68cb0811e3a28dc5a8e69c415e08f5.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5919980fdd7d64c275403d0ad95987cf0ad097e6.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5919980fdd7d64c275403d0ad95987cf0ad097e6.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5977a9bc23fcc174f412143a51d4c7c28a6f46b3.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5977a9bc23fcc174f412143a51d4c7c28a6f46b3.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5e0e2dd294bb89fcd4b5a093d84a3e9e10f8d431.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5e0e2dd294bb89fcd4b5a093d84a3e9e10f8d431.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/6b8b5930924f9da779cacee66441db0aeb9ad161.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/6b8b5930924f9da779cacee66441db0aeb9ad161.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/7c0c8324dab8bb63e666db17f3f0232d895b1f2d.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/7c0c8324dab8bb63e666db17f3f0232d895b1f2d.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/8d0e7132316079b96603e8a8714e7c10162bc700.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/8d0e7132316079b96603e8a8714e7c10162bc700.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/935a7c682ec693e2b7b81f3141cdf877e87dfd1a.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/935a7c682ec693e2b7b81f3141cdf877e87dfd1a.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/97e41017ba50ad778462bab0199a229d17db21c1.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/97e41017ba50ad778462bab0199a229d17db21c1.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/9d9f371fa24d3ac59b0b19b991460f229856c5a3.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/9d9f371fa24d3ac59b0b19b991460f229856c5a3.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/b243180b60451ebcfbdf842fd24c6b13721c6de9.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/b243180b60451ebcfbdf842fd24c6b13721c6de9.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/b67e79b6498b53a5107fdd0f7725929af484a7e7.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/b67e79b6498b53a5107fdd0f7725929af484a7e7.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/f77a5ca6876b310931c9563015f88bcfffc1949f.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/f77a5ca6876b310931c9563015f88bcfffc1949f.html",
+      "line": 120,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "tmp/header-customer.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "tmp/header-customer.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "tmp/header-customer.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "tmp/header-guest.html",
+      "line": 1,
+      "message": "Application-owned form does not declare its validation owner.",
+      "remediation": "Add noValidate/novalidate and implement the canonical validation contract.",
+      "ruleId": "form.novalidate-missing",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-final/.playwright-artifacts-3/traces/resources/5deef943cb62d49a27d01a06e27a1459a14ee926.css",
+      "line": 1,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "docs/qa/QA-20261009-01/chromium-retest/.playwright-artifacts-3/traces/resources/5deef943cb62d49a27d01a06e27a1459a14ee926.css",
+      "line": 1,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "web/assets/css/seller-admin.css",
+      "line": 285,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "web/assets/css/seller-admin.min.css",
+      "line": 1,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "web/assets/css/support-portal.css",
+      "line": 119,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "web/assets/css/support-portal.min.css",
+      "line": 1,
+      "message": "Scrollbar theme does not provide both standards-based scrollbar properties.",
+      "remediation": "Add global scrollbar-color and scrollbar-width standards properties plus fallbacks.",
+      "ruleId": "scrollbar.webkit-only",
+      "severity": "error"
+    }
+  ],
+  "mode": "strict",
+  "projectRoot": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts",
+  "schemaVersion": 1,
+  "summary": {
+    "errors": 108,
+    "total": 108,
+    "unresolved": 1,
+    "violations": 107,
+    "warnings": 0
+  }
+}

@@ -1,0 +1,321 @@
+/* First-party frontend adapter for the Weevcrafts Go API. */
+(function (global) {
+  "use strict";
+  const ROOT = "/api/v1";
+
+  function messageFrom(response, payload) {
+    if (typeof payload === "string" && payload && !/[<>]/.test(payload)) return payload;
+    const detail = payload && payload.error;
+    return (payload && (payload.message || payload.msg || payload.error_description || (typeof detail === "string" ? detail : detail && detail.message))) ||
+      (response && response.statusText) || "The request could not be completed.";
+  }
+
+  async function readJSON(response) {
+    const text = await response.text();
+    let body = {};
+    if (text) {
+      try { body = JSON.parse(text); } catch (_) {
+        const error = new Error("The service could not complete this request. Please check the current status and try again.");
+        error.status = response.status;
+        throw error;
+      }
+    }
+    if (!response.ok) {
+      const error = new Error(messageFrom(response, body.error || body));
+      error.status = response.status;
+      error.code = (body.error || body).code;
+      throw error;
+    }
+    return body;
+  }
+
+  function unwrap(payload) {
+    return payload && Object.prototype.hasOwnProperty.call(payload, "data") ? payload.data : payload;
+  }
+
+  function customerOption(value) {
+    return !value || /^default variant$/i.test(value.trim()) ? "Standard" : value;
+  }
+
+  function productPhotographURL(source) {
+    const value=source||'/assets/images/product-unavailable.svg';
+    if(!/^\/media\/products\/[1-9]\d*(?:\?|$)/.test(value))return value;
+    const url=new URL(value,global.location.origin);
+    url.searchParams.set('v','2');url.searchParams.set('w','640');
+    return url.pathname+url.search;
+  }
+  function normalizeProduct(row) {
+    if (!row) return null;
+    const seller = Array.isArray(row.seller) ? row.seller[0] : row.seller;
+    const variants = row.variants || row.product_variants || [];
+    const variant = Array.isArray(variants) ? variants[0] : variants;
+    const price = Number(variant && variant.price_cents != null ? variant.price_cents : row.price_cents || 0);
+    return {
+      id: row.id,
+      variantId: (variant && (variant.id || variant.variant_id)) || row.variant_id,
+      optionLabel: customerOption((variant && variant.option_label) || row.option_label),
+      slug: row.slug || row.product_slug || "",
+      name: row.name || row.product_name || "Handmade product",
+      description: row.description || "",
+      seller: (seller && (seller.display_name || seller.name)) || row.brand || "Independent maker",
+      sellerSlug: (seller && seller.slug) || row.seller_slug || "",
+      location: (seller && seller.location) || "",
+      image: productPhotographURL(row.image_url || row.image),
+      priceCents: price,
+      compareAtCents: Number(row.compare_at_cents || 0),
+      available: Number(variant && variant.inventory_quantity != null ? variant.inventory_quantity : row.available || 0),
+      category: (row.category && row.category.name) || row.category_name || "",
+      categorySlug: (row.category && row.category.slug) || row.category_slug || "",
+      brand: (row.brand && row.brand.name) || row.brand_name || "",
+      brandSlug: (row.brand && row.brand.slug) || row.brand_slug || "",
+      rating: Number(row.rating || 0),
+      reviews: Number(row.review_count || 0)
+    };
+  }
+
+  function normalizeCartItem(row) {
+    if (row.product_slug || row.product_name) {
+      return {
+        slug: row.product_slug,
+        name: row.product_name,
+        seller: row.brand || "Independent maker",
+        image: productPhotographURL(row.image_url),
+        quantity: Number(row.quantity || 0),
+        priceCents: Number(row.unit_price_cents || 0),
+        variantId: row.variant_id,
+        optionLabel: customerOption(row.variant_name || row.option_label),
+        available: Number(row.available || 0)
+      };
+    }
+    const variant = Array.isArray(row.variant) ? row.variant[0] : row.variant;
+    const product = variant && (Array.isArray(variant.product) ? variant.product[0] : variant.product);
+    const normalized = normalizeProduct(Object.assign({}, product || {}, {
+      variants: variant ? [variant] : []
+    }));
+    return Object.assign(normalized || {}, {
+      quantity: Number(row.quantity || 0),
+      variantId: variant && variant.id
+    });
+  }
+
+  class CustomBackend {
+    constructor() {
+      let pageCSRF = "";
+      try { pageCSRF = JSON.parse(document.body.getAttribute("hx-headers") || "{}")["X-CSRF-Token"] || ""; }
+      catch (_) { pageCSRF = ""; }
+      this.base = "";
+      this.csrf = pageCSRF;
+      this.readController = new AbortController();
+      // Cancel startup reads before navigation tears down the old document.
+      // Writes remain untouched; the server owns every mutation outcome.
+      global.addEventListener('beforeunload',()=>this.readController.abort());
+      global.addEventListener('pagehide',()=>this.readController.abort());
+      global.addEventListener('pageshow',event=>{if(event.persisted)this.readController=new AbortController();});
+      const resumeRead = () => { if (!document.hidden && this.readController.signal.aborted) this.readController=new AbortController(); };
+      // A cancelled unsaved-changes navigation can leave this document active.
+      global.addEventListener('pointerdown',resumeRead);
+      global.addEventListener('keydown',resumeRead);
+    }
+    async call(path, options) {
+      const opts = options || {};
+      // Async startup can resume after pagehide. Do not start another read in a
+      // discarded document (WebKit reports it as an access-control failure).
+      if ((opts.method || 'GET') === 'GET' && this.readController.signal.aborted) {
+        throw new DOMException('Page navigation cancelled the read.', 'AbortError');
+      }
+      const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+      if (opts.authenticated) headers["X-CSRF-Token"] = this.csrf;
+      const response = await fetch(this.base + path, {
+        method: opts.method || "GET", headers, credentials: "include",
+        signal: opts.signal || ((opts.method || 'GET') === 'GET' ? this.readController.signal : undefined),
+        body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
+      });
+      return readJSON(response);
+    }
+
+    async signIn(input) {
+      if (global.WeevCraftsFirebase && !input.nativeOnly) return global.WeevCraftsFirebase.signIn(this, input, () => this.signIn(Object.assign({},input,{nativeOnly:true})));
+      const { nativeOnly, authRoot, ...credentials } = input;
+      const result = await this.call(ROOT + "/auth/login", { method: "POST", body: credentials });
+      this.csrf = result.csrf_token || "";
+      return result;
+    }
+
+    async signUp(input) {
+      if (global.WeevCraftsFirebase && !input.nativeOnly) return global.WeevCraftsFirebase.signUp(this, input, () => this.signUp(Object.assign({},input,{nativeOnly:true})));
+      const result = await this.call(ROOT + "/auth/register", {
+        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true, next: input.next || "" }
+      });
+      this.csrf = result.csrf_token || "";
+      return result;
+    }
+
+    async recover(email) { const legacy=()=>this.call(ROOT + "/auth/password-reset/request", { method: "POST", body: { email: email } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.recover(email,legacy) : legacy(); }
+    async updatePassword(password, token) { const legacy=()=>this.call(ROOT + "/auth/password-reset/confirm", { method: "POST", body: { token: token, password: password } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.action(password,legacy) : legacy(); }
+    async verifyEmail(token) { const legacy=()=>this.call(ROOT + "/auth/email-verification/confirm", { method: "POST", body: { token: token } }); return global.WeevCraftsFirebase ? global.WeevCraftsFirebase.action(null,legacy) : legacy(); }
+
+    async signOut() {
+      await this.call(ROOT + "/auth/logout", { method: "POST", authenticated: true, body: {} });
+      this.csrf = "";
+    }
+
+    async currentUser() {
+      try { return Boolean(unwrap(await this.call(ROOT + "/auth/session"))); }
+      catch (error) { if (error.status === 401) return null; throw error; }
+    }
+
+    async products(filters) {
+      const input = filters || {};
+      const endpoint = input.query ? "/search" : "/products";
+      const query = new URLSearchParams();
+      if (input.query) query.set("q", input.query);
+      const categories = input.categories || [];
+      if (input.category && input.category !== "offers" && categories.length <= 1) query.set("category", input.category);
+      if (input.sort) query.set("sort", input.sort);
+      if (input.limit) query.set("limit", String(input.limit));
+      if (input.offset) query.set("offset", String(input.offset));
+      const result = await this.call(ROOT + endpoint + (query.size ? "?" + query.toString() : ""));
+      let products = (unwrap(result) || []).map(normalizeProduct);
+      if (input.category === "offers") products = products.filter((product) => product.compareAtCents > product.priceCents);
+      return products;
+    }
+
+    async product(slug) { return normalizeProduct(unwrap(await this.call(ROOT + "/products/" + encodeURIComponent(slug)))); }
+
+    async cart(options) {
+      const payload = unwrap(await this.call(ROOT + "/cart"));
+      if(options?.countsOnly)return {id:payload?.id,items:(payload?.items||[]).map(normalizeCartItem)};
+      const items = [];
+      for (const item of (payload && payload.items) || []) {
+        const product = await this.product(item.product_slug);
+        items.push(Object.assign(product, {
+          quantity: Number(item.quantity),
+          variantId: item.variant_id,
+          optionLabel: customerOption(item.variant_name || product.optionLabel),
+          priceCents: Number(item.unit_price_cents),
+          available: Number(item.available || 0)
+        }));
+      }
+      return { id: payload && payload.id, items: items };
+    }
+
+    async changeCart(slug, delta, variantID) {
+      await fetch(this.base + "/ui/cart/" + encodeURIComponent(slug), {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
+        body: new URLSearchParams({ delta: String(delta), variant_id: String(variantID || "") }).toString()
+      }).then(async function (response) { if (!response.ok) throw new Error(messageFrom(response, await response.json().catch(function () { return {}; }))); });
+      return this.cart();
+    }
+
+    async removeCart(slug, variantID) {
+      await fetch(this.base + "/ui/cart/" + encodeURIComponent(slug), {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
+        body: new URLSearchParams({ remove: "true", variant_id: String(variantID || "") }).toString()
+      }).then(async function (response) { if (!response.ok) throw new Error(messageFrom(response, await response.json().catch(function () { return {}; }))); });
+      return this.cart();
+    }
+
+    async addCart(slug, quantity, selectedVariantId) {
+      const product = await this.product(slug);
+      if (!product || !product.variantId) throw new Error("This product is unavailable for your cart.");
+      const variantId = Number(selectedVariantId) || Number(product.variantId);
+      await this.call(ROOT + "/cart/add", {
+        method: "POST", authenticated: true,
+        body: { variant_id: variantId, quantity: Number(quantity || 1) }
+      });
+      return this.cart();
+    }
+    async moveCartToWishlist(slug, variantID) {
+      const response = await fetch(this.base + "/ui/wishlist/" + encodeURIComponent(slug), {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRF-Token": this.csrf, "HX-Request": "true" },
+        body: new URLSearchParams({ source: "cart", variant_id: String(variantID || "") }).toString()
+      });
+      if (!response.ok) throw new Error("The item could not be moved to the wishlist.");
+      return this.cart();
+    }
+
+    async wishlistSummary() {
+      return unwrap(await this.call(ROOT + "/wishlist")) || [];
+    }
+
+    async wishlist() {
+      const payload = await this.wishlistSummary();
+      const result = [];
+      for (const item of payload || []) result.push(await this.product(item.slug));
+      return result;
+    }
+
+    async addWishlist(slug) {
+      const product = await this.product(slug);
+      if (!product || !Number.isSafeInteger(product.id) || product.id <= 0) throw new Error("This product is unavailable. Refresh the page and try again.");
+      await this.call(ROOT + "/wishlist/add", { method: "POST", authenticated: true, body: { product_id: product.id } });
+    }
+
+    async removeWishlist(slug) {
+      const product = await this.product(slug);
+      if (!product || !Number.isSafeInteger(product.id) || product.id <= 0) throw new Error("This product is unavailable. Refresh the page and try again.");
+      await this.call(ROOT + "/wishlist/" + product.id, { method: "DELETE", authenticated: true });
+    }
+
+    async buyNow(slug, quantity, selectedVariantId, key) {
+      const product=await this.product(slug);
+      const variantId=Number(selectedVariantId)||Number(product?.variantId);
+      if(!variantId)throw new Error('Choose an available product option.');
+      return unwrap(await this.call(ROOT+'/checkout/intents',{method:'POST',authenticated:true,headers:{'Idempotency-Key':key},body:{variant_id:variantId,quantity:Number(quantity||1)}}));
+    }
+    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
+	}
+    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
+	}
+    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+      if (!cartID) cartID = unwrap(await this.call(ROOT + "/cart")).id;
+	  return this.call(ROOT + path, {
+        method: "POST", authenticated: true,
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: { cart_id: cartID, idempotency_key: idempotencyKey, address: {
+          recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
+          line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
+          postal_code: address.postal_code, country_code: address.country_code || "IN"
+        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
+      });
+    }
+
+    async createPayment(orderNumber) {
+      return this.call(ROOT + "/orders/" + encodeURIComponent(orderNumber) + "/payment", {
+        method: "POST", authenticated: true, body: {}
+      });
+    }
+
+    async verifyPayment(orderNumber, payment) {
+      return this.call(ROOT + "/orders/" + encodeURIComponent(orderNumber) + "/payment/verify", {
+        method: "POST", authenticated: true, body: {
+          provider_order_id: payment.razorpay_order_id,
+          provider_payment_id: payment.razorpay_payment_id,
+          signature: payment.razorpay_signature
+        }
+      });
+    }
+
+    async localPayment(orderNumber, action) {
+      if (!["capture", "fail", "pending"].includes(action)) throw new Error("Unknown local payment action.");
+      const path = action === "capture" ? "/api/v1/payments/demo-capture/" + encodeURIComponent(orderNumber) : "/dev/payments/" + encodeURIComponent(orderNumber) + "/" + action;
+      const response = await fetch(path, {
+        method: "POST", credentials: "include", headers: { "X-CSRF-Token": this.csrf }
+      });
+      return readJSON(response);
+    }
+
+    async orders() { return unwrap(await this.call(ROOT + "/orders")) || []; }
+  }
+
+  async function create() {
+    return new CustomBackend();
+  }
+
+  global.WeevCraftsBackend = { create: create, normalizeProduct: normalizeProduct, normalizeCartItem: normalizeCartItem };
+})(window);

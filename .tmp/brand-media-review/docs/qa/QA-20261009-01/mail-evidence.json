@@ -1,0 +1,144 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/manual-mail.spec.js",
+      "--reporter=list,json",
+      "--output=docs/qa/QA-20261009-01/mail"
+    ],
+    "configFile": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\playwright.config.js",
+    "rootDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/mail",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "manual-mail.spec.js",
+      "file": "manual-mail.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "INT-014--qa-and-technical-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [
+                {
+                  "type": "account",
+                  "description": "customer=demo.customer07@weevcrafts.local; order_number=WC-20261009-103325.578355830-7"
+                },
+                {
+                  "type": "account",
+                  "description": "mailpit_message=Pz5PLYvbwHoYog6XegRZ6g; subject=Your Weevcrafts order has been received"
+                },
+                {
+                  "type": "account",
+                  "description": "mailpit_message=UMxMm8moynWtieFtTKLiZF; subject=Your Weevcrafts order has shipped"
+                }
+              ],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2685,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:00:46.460Z",
+                  "annotations": [
+                    {
+                      "type": "account",
+                      "description": "customer=demo.customer07@weevcrafts.local; order_number=WC-20261009-103325.578355830-7"
+                    },
+                    {
+                      "type": "account",
+                      "description": "mailpit_message=Pz5PLYvbwHoYog6XegRZ6g; subject=Your Weevcrafts order has been received"
+                    },
+                    {
+                      "type": "account",
+                      "description": "mailpit_message=UMxMm8moynWtieFtTKLiZF; subject=Your Weevcrafts order has shipped"
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f6b9b4095a1639e50a0e-801d7a70901c57c9d1e6",
+          "file": "manual-mail.spec.js",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T11:00:44.390Z",
+    "duration": 5027.447,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

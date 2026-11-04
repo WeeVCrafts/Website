@@ -1,0 +1,27 @@
+{"version":9,"type":"context-options","origin":"library","browserName":"","playwrightVersion":"1.63.0","options":{},"platform":"win32","wallTime":1791543082926,"monotonicTime":228201.434,"sdkLanguage":"javascript","title":"manual-recovery.spec.js:118 › AUTH-014--seller-owner"}
+{"type":"before","callId":"call@280","startTime":233668.164,"class":"APIRequestContext","method":"fetch","params":{"url":"/logout","method":"POST","formData":[{"name":"csrf_token","value":"oIn1B9OpQ4XdE3T1pj8gWu1ODdFAoP-nja4iSMCyvlM"}],"maxRedirects":0},"stepId":"pw:api@43"}
+{"type":"log","callId":"call@280","time":233673.063,"message":"→ POST http://127.0.0.1:18080/logout"}
+{"type":"log","callId":"call@280","time":233673.09,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"}
+{"type":"log","callId":"call@280","time":233673.099,"message":"  accept: */*"}
+{"type":"log","callId":"call@280","time":233673.107,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@280","time":233673.114,"message":"  content-type: application/x-www-form-urlencoded"}
+{"type":"log","callId":"call@280","time":233673.121,"message":"  content-length: 54"}
+{"type":"log","callId":"call@280","time":233673.129,"message":"  cookie: wecratfs_csrf=gl13RQYFsxePNWWJvEUyszP9IHysX6zKWR0_pdlGOqk; wecratfs_session=XkOvUt7Fzw4CuuGtHpI86JtlG1IRvXhi-S6PLodiJXM"}
+{"type":"log","callId":"call@280","time":233694.839,"message":"← 403 Forbidden"}
+{"type":"log","callId":"call@280","time":233694.876,"message":"  x-request-id: 20261009T105128.412121885Z"}
+{"type":"log","callId":"call@280","time":233694.895,"message":"  date: Fri, 09 Oct 2026 10:51:28 GMT"}
+{"type":"log","callId":"call@280","time":233694.908,"message":"  content-length: 0"}
+{"type":"after","callId":"call@280","endTime":233695.142,"result":{"response":{"url":"http://127.0.0.1:18080/logout","status":403,"statusText":"Forbidden","headers":[{"name":"X-Request-Id","value":"20261009T105128.412121885Z"},{"name":"Date","value":"Fri, 09 Oct 2026 10:51:28 GMT"},{"name":"Content-Length","value":"0"}],"serverAddr":{"ipAddress":"127.0.0.1","port":18080},"timing":{"startTime":1791543088397,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":0,"secureConnectionStart":-1,"connectEnd":2.7110000000102445,"requestStart":2.7110000000102445,"responseStart":18.729000000021188},"responseEndTiming":20.800000000017462,"fetchUid":"e5a688fae5b7865e5451bd6d03f0eaaf"}}}
+{"type":"before","callId":"call@282","startTime":233701.189,"class":"APIRequestContext","method":"fetch","params":{"url":"/seller-admin","method":"GET","maxRedirects":0},"stepId":"pw:api@45"}
+{"type":"log","callId":"call@282","time":233704.253,"message":"→ GET http://127.0.0.1:18080/seller-admin"}
+{"type":"log","callId":"call@282","time":233704.283,"message":"  user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"}
+{"type":"log","callId":"call@282","time":233704.292,"message":"  accept: */*"}
+{"type":"log","callId":"call@282","time":233704.319,"message":"  accept-encoding: gzip,deflate,br"}
+{"type":"log","callId":"call@282","time":233704.327,"message":"  cookie: wecratfs_csrf=gl13RQYFsxePNWWJvEUyszP9IHysX6zKWR0_pdlGOqk; wecratfs_session=XkOvUt7Fzw4CuuGtHpI86JtlG1IRvXhi-S6PLodiJXM"}
+{"type":"log","callId":"call@282","time":233710.886,"message":"← 303 See Other"}
+{"type":"log","callId":"call@282","time":233710.911,"message":"  content-type: text/html; charset=utf-8"}
+{"type":"log","callId":"call@282","time":233710.923,"message":"  location: /login?next=%2Fseller-admin"}
+{"type":"log","callId":"call@282","time":233710.931,"message":"  x-request-id: 20261009T105128.435108913Z"}
+{"type":"log","callId":"call@282","time":233710.94,"message":"  date: Fri, 09 Oct 2026 10:51:28 GMT"}
+{"type":"log","callId":"call@282","time":233710.95,"message":"  content-length: 54"}
+{"type":"after","callId":"call@282","endTime":233711.09,"result":{"response":{"url":"http://127.0.0.1:18080/seller-admin","status":303,"statusText":"See Other","headers":[{"name":"Content-Type","value":"text/html; charset=utf-8"},{"name":"Location","value":"/login?next=%2Fseller-admin"},{"name":"X-Request-Id","value":"20261009T105128.435108913Z"},{"name":"Date","value":"Fri, 09 Oct 2026 10:51:28 GMT"},{"name":"Content-Length","value":"54"}],"serverAddr":{"ipAddress":"127.0.0.1","port":18080},"timing":{"startTime":1791543088429,"domainLookupStart":-1,"domainLookupEnd":-1,"connectStart":-1,"secureConnectionStart":-1,"connectEnd":-1,"requestStart":0.7270000000135042,"responseStart":6.095000000001164},"responseEndTiming":6.782999999995809,"fetchUid":"42faedffc53a00bdb67ae4fd07579af3"}}}

@@ -1,0 +1,45 @@
+package pages
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ ReturnLabelLive(p viewmodels.ReturnLabelPage) {
+ @Document(p.Customer) {
+  <style>@media print {header,footer,.return-print-controls{display:none!important}.return-slip{border:1px solid #222;padding:16px;color:#000;background:#fff}body{background:#fff}}</style>
+  <main class="container" style="padding:32px 0">
+   <div class="return-print-controls"><a href="/returns">Back to returns</a><button type="button" onclick="window.print()">Print return slip</button></div>
+   <article class="return-slip">
+    <h1>Return authorization slip</h1>
+    <p>Return #{ p.ID } · Order { p.OrderNumber }</p>
+    <dl><dt>Status</dt><dd>{ p.Status }</dd><dt>Requested</dt><dd>{ p.Created }</dd><dt>Reason</dt><dd>{ p.Reason }</dd></dl>
+    <h2>Customer</h2><p>{ p.CustomerName }</p>
+    <address>
+     for _, line := range p.SenderLines {
+      <span>{ line }</span><br/>
+     }
+    </address>
+    <h2>Order items</h2>
+    <table><thead><tr><th>Product</th><th>SKU</th><th>Quantity</th><th>Seller</th></tr></thead><tbody>
+     for _, item := range p.Items {
+      <tr><td>{ item.Name }</td><td>{ item.SKU }</td><td>{ item.Quantity }</td><td>{ item.Seller }</td></tr>
+     }
+    </tbody></table>
+    <h2>Return destination</h2>
+    if len(p.Destinations) > 0 {
+     for _, line := range p.Destinations {
+      <p>{ line }</p>
+     }
+    } else {
+     <p>A return destination has not been recorded. Contact support with this return number before dispatching items.</p>
+    }
+    if p.Instructions != "" {
+     <h2>Marketplace shipping instructions</h2><p style="white-space:pre-wrap">{ p.Instructions }</p>
+    }
+    if p.SupportEmail != "" {
+     <p>Support: <a href={ templ.SafeURL("mailto:" + p.SupportEmail) }>{ p.SupportEmail }</a></p>
+    }
+    <p class="return-print-controls"><a href="/account/support">Contact support about this return</a></p>
+    <p>This slip records your approved return. It is not a prepaid carrier label. Include the return number when arranging delivery with support.</p>
+   </article>
+  </main>
+ }
+}

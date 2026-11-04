@@ -1,0 +1,119 @@
+package web
+
+import (
+	"errors"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+
+	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	"github.com/wecratfs/commerce/internal/identity"
+	"github.com/wecratfs/commerce/internal/ports"
+)
+
+func (h *Handler) sellerOrders(w http.ResponseWriter, r *http.Request) {
+	if h.sellerOrderService == nil || r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	orders, err := h.sellerOrderService.List(r.Context(), session.UserID)
+	if errors.Is(err, ports.ErrForbidden) {
+		h.renderError(w, http.StatusForbidden, "Orders access denied", "Your seller account does not have order-read permission.")
+		return
+	}
+	if err != nil {
+		h.renderError(w, http.StatusServiceUnavailable, "Orders unavailable", "We could not load the live seller order queue.")
+		return
+	}
+	h.render(w, http.StatusOK, "seller-orders", pageData{
+		Brand: identity.Name, Tagline: identity.Tagline, Description: identity.Description,
+		Title: "Seller orders · " + identity.Name, Authenticated: true, AccountUserID: session.UserID,
+		CSRFToken: session.CSRFToken, SellerOrders: orders,
+	})
+}
+
+func (h *Handler) sellerOrderFulfill(w http.ResponseWriter, r *http.Request) {
+	if h.sellerOrderService == nil || r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	session, ok := h.sessionFromRequest(r)
+	if !ok {
+		h.redirect(w, r, "/login")
+		return
+	}
+	if !h.validSessionCSRF(r, session) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	sellerID, err := strconv.ParseInt(strings.TrimSpace(r.FormValue("seller_id")), 10, 64)
+	if err != nil || sellerID <= 0 {
+		h.renderError(w, http.StatusUnprocessableEntity, "Fulfilment request invalid", "Choose a valid seller order.")
+		return
+	}
+	carrier := strings.TrimSpace(r.FormValue("carrier"))
+	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) == "" {
+		h.renderError(w, http.StatusUnprocessableEntity, "Carrier name required", "Enter the carrier name when choosing Other.")
+		return
+	}
+	if strings.EqualFold(carrier, "Other") && strings.TrimSpace(r.FormValue("custom_carrier")) != "" {
+		carrier = strings.TrimSpace(r.FormValue("custom_carrier"))
+	}
+	expectedRevision := int64(-1)
+	if rawRevision := strings.TrimSpace(r.FormValue("expected_revision")); rawRevision != "" {
+		if parsed, parseErr := strconv.ParseInt(rawRevision, 10, 64); parseErr != nil || parsed < 0 {
+			h.renderError(w, http.StatusUnprocessableEntity, "Fulfilment details invalid", "Reload the order before saving this update.")
+			return
+		} else {
+			expectedRevision = parsed
+		}
+	}
+	orderNumber := strings.TrimSpace(r.FormValue("order_number"))
+	err = h.sellerOrderService.UpdateFulfillmentWithRevision(r.Context(), session.UserID, sellerID, orderNumber, r.FormValue("status"), carrier, r.FormValue("tracking_number"), r.FormValue("note"), expectedRevision)
+	if err != nil {
+		switch {
+		case errors.Is(err, applicationcommerce.ErrInvalidSellerFulfillment):
+			h.renderError(w, http.StatusUnprocessableEntity, "Fulfilment details invalid", "Choose the next available status and provide tracking details before shipping.")
+		case errors.Is(err, ports.ErrForbidden):
+			h.renderError(w, http.StatusForbidden, "Fulfilment access denied", "Your seller account does not have order-fulfilment permission.")
+		case errors.Is(err, ports.ErrOrderNotFound):
+			h.renderError(w, http.StatusNotFound, "Seller order unavailable", "That order is not part of your seller workspace.")
+		case errors.Is(err, ports.ErrInvalidState):
+			if r.Header.Get("X-UI-Form") == "true" {
+				h.renderError(w, http.StatusConflict, "Order stage changed", "This order can only move to its next fulfilment stage. Your entered details are preserved. Reload the latest order before saving.")
+				return
+			}
+			h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "This order can only move to its next fulfilment stage."))
+		case errors.Is(err, ports.ErrFulfillmentConflict), errors.Is(err, applicationcommerce.ErrStaleSellerFulfillment):
+			if r.Header.Get("X-UI-Form") == "true" {
+				h.renderError(w, http.StatusConflict, "Order changed", "This order changed in another session. Your entered details are preserved. Reload the latest order before saving.")
+				return
+			}
+			h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "This order changed in another session. Review the latest stage and try again."))
+		default:
+			h.renderError(w, http.StatusServiceUnavailable, "Fulfilment unavailable", "We could not save that fulfilment update.")
+		}
+		return
+	}
+	h.redirect(w, r, sellerOrderReturnURL(r, orderNumber, "Fulfilment update saved."))
+}
+
+func sellerOrderReturnURL(r *http.Request, number, notice string) string {
+	query := url.Values{"notice": {notice}}
+	if q := r.FormValue("return_query"); len(q) <= 200 {
+		query.Set("q", q)
+	}
+	if tab := r.FormValue("return_tab"); len(tab) <= 30 {
+		query.Set("tab", tab)
+	}
+	if page, err := strconv.Atoi(r.FormValue("return_page")); err == nil && page > 0 && page <= 1000000 {
+		query.Set("page", strconv.Itoa(page))
+	}
+	return "/seller-admin/orders/" + url.PathEscape(number) + "?" + query.Encode()
+}

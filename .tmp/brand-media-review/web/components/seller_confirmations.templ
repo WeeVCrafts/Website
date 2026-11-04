@@ -1,0 +1,84 @@
+package components
+
+import (
+ "fmt"
+ domain "github.com/wecratfs/commerce/internal/domain/commerce"
+)
+
+templ SellerConfirmations(items []domain.SellerConfirmation, root, csrf, key string, seller bool, status, next string, ticketID int64) {
+ <section class="coordination" aria-labelledby="coordination-heading">
+  <header><h2 id="coordination-heading">Seller confirmations</h2><p>Private order coordination. Open requests need a seller response.</p></header>
+ <form method="get" action={ root } class="coordination-filter">
+ if ticketID>0 {
+ <input type="hidden" name="ticket_id" value={ fmt.Sprint(ticketID) }/>
+}
+ <label for="coordination-status">Request status</label>
+ <select name="coordination_status" id="coordination-status"><option value="" selected?={ status=="" }>All requests</option><option value="open" selected?={ status=="open" }>Open</option><option value="answered" selected?={ status=="answered" }>Answered</option><option value="closed" selected?={ status=="closed" }>Closed</option></select><button type="submit" class="admin-button">Filter requests</button>
+ </form>
+if len(items)==0 {
+<div class="ui-empty-state" role="status"><h3>No seller confirmations yet</h3><p>Order-linked requests and replies will appear here.</p></div>
+}
+  for _, item := range items {
+<article class="coordination-card" id={ fmt.Sprintf("confirmation-%d",item.ID) }>
+    <header><h3>{ item.CaseNumber } · { item.SellerName }
+</h3><span class={ "ui-status "+confirmationTone(item.Status) }>{ StatusLabel(item.Status) }
+</span></header>
+    <p><strong>Order { item.OrderNumber }
+</strong></p>
+    <ul>
+for _, name := range item.Items {
+<li>{ name }
+</li>
+}
+</ul>
+    <dl class="coordination-tracking"><div><dt>Fulfilment</dt><dd>{ StatusLabel(item.FulfillmentStatus) }
+</dd></div><div><dt>Carrier</dt><dd>
+if item.Carrier!="" {
+ { item.Carrier }
+} else {
+Not recorded
+}
+</dd></div><div><dt>Tracking number</dt><dd>
+if item.TrackingNumber!="" {
+ { item.TrackingNumber }
+} else {
+Not recorded
+}
+</dd></div></dl>
+    <details><summary>Seller fulfilment history</summary>
+     if len(item.History)==0 {
+      <p>No seller updates have been recorded.</p>
+     }
+     for _, event := range item.History {
+      <div class="coordination-message"><strong>{ StatusLabel(event.Status) }</strong><p>{ event.Carrier } · { event.TrackingNumber }</p><p>{ event.Note }</p><time>{ event.CreatedAt.Format("02 Jan 2006, 15:04") }</time></div>
+     }
+    </details>
+    <div class="coordination-message"><strong>Company request</strong><p>{ item.Question }
+</p><time datetime={ item.CreatedAt.Format("2006-01-02T15:04:05Z07:00") }>{ item.CreatedAt.Format("02 Jan 2006, 15:04") }
+</time></div>
+for _, message := range item.Messages {
+<div class="coordination-message"><strong>{ message.Author }
+</strong><p>{ message.Body }
+</p><time datetime={ message.CreatedAt.Format("2006-01-02T15:04:05Z07:00") }>{ message.CreatedAt.Format("02 Jan 2006, 15:04") }
+</time></div>
+}
+    if item.Status=="closed" {
+<p><strong>Follow-up outcome:</strong> { item.CloseReason }
+</p>
+} else if seller {
+<form action={ root+"/confirmations/reply" } method="post"><input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="confirmation_id" value={ fmt.Sprint(item.ID) }/><input type="hidden" name="request_key" value={ key+fmt.Sprint(item.ID) }/><label for={ fmt.Sprintf("confirmation-reply-%d",item.ID) }>Reply to company support</label><textarea id={ fmt.Sprintf("confirmation-reply-%d",item.ID) } name="message" rows="3" maxlength="4000" required></textarea><button type="submit" class="seller-button primary">Send confirmation</button></form>
+} else {
+     <a class="admin-button" href={ root+"?ticket_id="+fmt.Sprint(item.TicketID) }>Open customer case</a>
+     if item.Status == "answered" {
+     <form action={ root+"/confirmations/close" } method="post" data-confirm="Close this seller request with the recorded outcome?"><input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="confirmation_id" value={ fmt.Sprint(item.ID) }/><input type="hidden" name="ticket_id" value={ fmt.Sprint(item.TicketID) }/><label for={ fmt.Sprintf("confirmation-outcome-%d",item.ID) }>Delivery issue or follow-up outcome</label><textarea id={ fmt.Sprintf("confirmation-outcome-%d",item.ID) } name="reason" minlength="4" maxlength="1000" required rows="3"></textarea><button type="submit" class="admin-button primary">Record outcome & close request</button></form>
+     } else {
+      <p>Awaiting the seller’s confirmation before recording a closing outcome.</p>
+     }
+}
+   </article>
+}
+ if next!="" {
+ <a class="admin-button" href={ next }>Older requests</a>
+ }
+ </section>
+}

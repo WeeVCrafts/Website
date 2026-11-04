@@ -1,0 +1,89 @@
+{
+  "keyboards": [
+    {
+      "browser": "chromium",
+      "version": "153.0.8010.12",
+      "route": "/seller-admin",
+      "selector": ".seller-panel:nth-child(1) > .seller-table-scroll",
+      "width": 348,
+      "scrollWidth": 620,
+      "tabIndex": -1,
+      "role": null,
+      "reachable": true
+    },
+    {
+      "browser": "firefox",
+      "version": "155.0",
+      "route": "/seller-admin",
+      "selector": ".seller-panel:nth-child(1) > .seller-table-scroll",
+      "width": 348,
+      "scrollWidth": 620,
+      "tabIndex": -1,
+      "role": null,
+      "reachable": true
+    },
+    {
+      "browser": "webkit",
+      "version": "26.6",
+      "route": "/seller-admin",
+      "selector": ".seller-panel:nth-child(1) > .seller-table-scroll",
+      "width": 348,
+      "scrollWidth": 620,
+      "tabIndex": -1,
+      "role": null,
+      "reachable": false
+    }
+  ],
+  "visual": [
+    {
+      "route": "/seller-admin/products/new",
+      "screenshot": "screenshots/seller-editor-390-confirm.png",
+      "pricingLabels": [
+        "Title",
+        "CategoryChoose a category ArtsCraftsHomeQA CraftsQA CraftsQA CraftsQA CraftsQA CraftsQA CraftsQA CraftsQA CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsQA Reported CraftsTextilesWellness",
+        "SKU",
+        "Price (paise)",
+        "Compare-at price in paise",
+        "Unit cost (paise, optional)",
+        "Stock quantity",
+        "Upload product image (PNG or JPEG)",
+        "Or Product Image URL",
+        "Delivery note",
+        "Description",
+        "Drop images or videos here or choose files"
+      ]
+    },
+    {
+      "route": "/seller-admin",
+      "teamLinks": 0,
+      "returnLinks": 0
+    },
+    {
+      "route": "/support-portal/orders",
+      "heading": "Orders linked to cases",
+      "breadcrumb": "Home\nchevron_right\nOrders\nchevron_right\nOrder #WC2504267831"
+    },
+    {
+      "route": "/category/ui-audit-missing-20261009",
+      "status": 200
+    },
+    {
+      "route": "/brands/ui-audit-missing-20261009",
+      "status": 200
+    }
+  ],
+  "media": [
+    {
+      "src": "http://127.0.0.1:8080/media/products/120/preview",
+      "source": "/media/products/120/preview",
+      "alt": "",
+      "status": 404
+    },
+    {
+      "src": "http://127.0.0.1:8080/media/products/18",
+      "source": "/media/products/18",
+      "alt": "",
+      "status": 404
+    }
+  ]
+}

@@ -1,0 +1,6344 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: role-portals.spec.js >> role-specific portals >> super-admin: landing, boundaries and responsive layouts
+- Location: tests\e2e\role-portals.spec.js:42:5
+
+# Error details
+
+```
+Test timeout of 60000ms exceeded.
+```
+
+```
+Error: page.screenshot: Test timeout of 60000ms exceeded.
+Call log:
+  - taking page screenshot
+  - waiting for fonts to load...
+  - fonts loaded
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [active] [ref=f5e1]:
+  - link "Skip to main content" [ref=f5e2]:
+    - /url: "#admin-main"
+  - generic [ref=f5e3]:
+    - complementary [ref=f5e4]:
+      - link "Weevcrafts Super Admin Portal" [ref=f5e5]:
+        - /url: /super-admin
+        - generic [ref=f5e6]:
+          - strong [ref=f5e7]: Weevcrafts
+          - generic [ref=f5e8]: Crafted in India. Made to be cherished.
+      - navigation "Admin navigation" [ref=f5e9]:
+        - link "Dashboard" [ref=f5e10]:
+          - /url: /super-admin
+          - generic [aria-hidden] [ref=f5e11]: space_dashboard
+        - link "Sellers" [ref=f5e13]:
+          - /url: /super-admin/sellers
+          - generic [aria-hidden] [ref=f5e14]: groups
+        - link "Products" [ref=f5e16]:
+          - /url: /super-admin/products
+          - generic [aria-hidden] [ref=f5e17]: inventory_2
+        - link "Brands" [ref=f5e19]:
+          - /url: /super-admin/brands
+          - generic [aria-hidden] [ref=f5e20]: store
+        - link "Categories" [ref=f5e22]:
+          - /url: /super-admin/category-management
+          - generic [aria-hidden] [ref=f5e23]: category
+        - link "Inventory" [ref=f5e25]:
+          - /url: /super-admin/inventory
+          - generic [aria-hidden] [ref=f5e26]: warehouse
+        - link "Orders" [ref=f5e28]:
+          - /url: /super-admin/orders
+          - generic [aria-hidden] [ref=f5e29]: local_shipping
+        - link "Returns" [ref=f5e31]:
+          - /url: /super-admin/returns
+          - generic [aria-hidden] [ref=f5e32]: undo
+        - link "Customers" [ref=f5e34]:
+          - /url: /super-admin/customers
+          - generic [aria-hidden] [ref=f5e35]: people
+        - link "Support" [ref=f5e37]:
+          - /url: /super-admin/support
+          - generic [aria-hidden] [ref=f5e38]: support_agent
+        - link "Reviews" [ref=f5e40]:
+          - /url: /super-admin/reviews
+          - generic [aria-hidden] [ref=f5e41]: reviews
+        - link "Marketing & Content" [ref=f5e43]:
+          - /url: /super-admin/marketing
+          - generic [aria-hidden] [ref=f5e44]: campaign
+        - link "Finance" [ref=f5e46]:
+          - /url: /super-admin/finance
+          - generic [aria-hidden] [ref=f5e47]: payments
+        - link "Commission rules" [ref=f5e49]:
+          - /url: /super-admin/commission-rules
+          - generic [aria-hidden] [ref=f5e50]: percent
+        - link "Security & Roles" [ref=f5e52]:
+          - /url: /super-admin/security
+          - generic [aria-hidden] [ref=f5e53]: admin_panel_settings
+        - link "Analytics & Health" [ref=f5e55]:
+          - /url: /super-admin/analytics
+          - generic [aria-hidden] [ref=f5e56]: monitoring
+        - link "Settings" [ref=f5e58]:
+          - /url: /super-admin/settings
+          - generic [aria-hidden] [ref=f5e59]: settings
+      - generic [ref=f5e61]:
+        - generic [aria-hidden] [ref=f5e62]: park
+        - heading "Empowering Indian Crafts Across India" [level=2] [ref=f5e63]: EmpoweringIndian CraftsAcross India
+        - paragraph [ref=f5e64]: More artisans.Brighter futures.
+        - link "View marketplace" [ref=f5e65]:
+          - /url: /super-admin/analytics
+          - text: View marketplace
+          - generic [aria-hidden] [ref=f5e66]: arrow_forward
+    - generic [ref=f5e67]:
+      - banner [ref=f5e68]:
+        - generic [ref=f5e69]: Super Admin Portal
+        - generic [ref=f5e70]:
+          - generic [ref=f5e71]: Search the admin portal
+          - generic [aria-hidden] [ref=f5e72]: search
+          - textbox "Search the admin portal" [ref=f5e73]:
+            - /placeholder: Search orders, sellers, products, customers or tickets...
+        - link "Switch workspace" [ref=f5e74]:
+          - /url: /workspaces
+          - generic [aria-hidden] [ref=f5e75]: apps
+        - generic [ref=f5e76]:
+          - generic [ref=f5e77]: SA
+          - generic [ref=f5e78]:
+            - strong [ref=f5e79]: Super Admin One
+            - generic [ref=f5e80]: Super Admin
+        - button "Log out" [ref=f5e82] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f5e83]: logout
+      - main [ref=f5e85]:
+        - generic [ref=f5e86]:
+          - generic [ref=f5e87]:
+            - paragraph [ref=f5e88]: WEEVCRAFTS · Super Admin Portal
+            - heading "Security" [level=1] [ref=f5e89]
+            - paragraph [ref=f5e90]: Live marketplace operations backed by PostgreSQL.
+          - img "Indian craft detail" [ref=f5e92]
+          - generic [ref=f5e94]:
+            - text: More artisans.More stories.
+            - strong [ref=f5e95]: A kindertomorrow.
+        - generic [ref=f5e96]:
+          - article [ref=f5e97]:
+            - generic [aria-hidden] [ref=f5e98]: groups
+            - generic [ref=f5e99]:
+              - strong [ref=f5e100]: "110"
+              - generic [ref=f5e101]: User accounts
+              - generic [ref=f5e102]:
+                - generic [aria-hidden] [ref=f5e103]: arrow_downward
+                - text: Live current
+          - article [ref=f5e104]:
+            - generic [aria-hidden] [ref=f5e105]: admin_panel_settings
+            - generic [ref=f5e106]:
+              - strong [ref=f5e107]: "76"
+              - generic [ref=f5e108]: Operational role assignments
+              - generic [ref=f5e109]:
+                - generic [aria-hidden] [ref=f5e110]: arrow_downward
+                - text: Live current
+          - article [ref=f5e111]:
+            - generic [aria-hidden] [ref=f5e112]: history
+            - generic [ref=f5e113]:
+              - strong [ref=f5e114]: "167"
+              - generic [ref=f5e115]: Recorded audit events
+              - generic [ref=f5e116]:
+                - generic [aria-hidden] [ref=f5e117]: arrow_downward
+                - text: Live current
+          - article [ref=f5e118]:
+            - generic [aria-hidden] [ref=f5e119]: support_agent
+            - generic [ref=f5e120]:
+              - strong [ref=f5e121]: "4"
+              - generic [ref=f5e122]: Open support cases
+              - generic [ref=f5e123]:
+                - generic [aria-hidden] [ref=f5e124]: arrow_downward
+                - text: Live current
+        - article [ref=f5e125]:
+          - generic [ref=f5e127]:
+            - generic [aria-hidden] [ref=f5e128]: person_add
+            - generic [ref=f5e129]:
+              - heading "Create a user account" [level=2] [ref=f5e130]
+              - paragraph [ref=f5e131]: Create a working login and assign its first role. Super Admin accounts stay bootstrap-controlled.
+          - generic [ref=f5e132]:
+            - generic [ref=f5e133]:
+              - text: Full name
+              - textbox "Full name" [ref=f5e134]
+            - generic [ref=f5e135]:
+              - text: Email address
+              - textbox "Email address" [ref=f5e136]
+            - generic [ref=f5e137]:
+              - text: Initial password
+              - textbox "Initial password Use at least 12 characters and share it securely." [ref=f5e138]
+              - generic [ref=f5e139]: Use at least 12 characters and share it securely.
+            - generic [ref=f5e140]:
+              - text: Initial role
+              - combobox "Initial role" [ref=f5e141]:
+                - option "Customer" [selected]
+                - option "Seller owner"
+                - option "Seller staff"
+                - option "Marketplace admin"
+                - option "Support agent"
+                - option "Finance operator"
+                - option "Returns operations"
+            - generic [ref=f5e142]:
+              - text: Reason
+              - textbox "Reason" [ref=f5e143]:
+                - /placeholder: Required for the audit trail
+            - button "Create account" [ref=f5e144] [cursor=pointer]
+        - article [ref=f5e145]:
+          - generic [ref=f5e147]:
+            - generic [aria-hidden] [ref=f5e148]: manage_accounts
+            - generic [ref=f5e149]:
+              - heading "Live role assignments" [level=2] [ref=f5e150]
+              - paragraph [ref=f5e151]: Changes are saved to PostgreSQL with an audit reason. Super Admin access is bootstrap-controlled.
+          - generic [ref=f5e152]:
+            - generic [ref=f5e153]:
+              - text: Find an account
+              - searchbox "Find an account" [ref=f5e154]
+            - button "Search" [ref=f5e155] [cursor=pointer]
+          - generic [ref=f5e156]:
+            - generic [ref=f5e157]:
+              - generic [ref=f5e158]:
+                - strong [ref=f5e159]: QA suspension returns-operations
+                - generic [ref=f5e160]: qa.suspension.returns-operations.1791543932057@weevcrafts.local
+                - generic [ref=f5e161]: "User #110 · suspended"
+                - generic [ref=f5e162]: operations_returns
+              - generic [ref=f5e165]:
+                - heading "Edit account" [level=3] [ref=f5e166]
+                - generic [ref=f5e167]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e168]: QA suspension returns-operations
+                - generic [ref=f5e169]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e170]: qa.suspension.returns-operations.1791543932057@weevcrafts.local
+                  - generic [ref=f5e171]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e172]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e173]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e174]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e175]
+                  - generic [ref=f5e176]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e177]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e178]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e179] [cursor=pointer]
+              - status [ref=f5e180]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e182]:
+                - generic [ref=f5e183]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e184]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e185] [cursor=pointer]
+            - generic [ref=f5e186]:
+              - generic [ref=f5e187]:
+                - strong [ref=f5e188]: QA suspension finance-operator
+                - generic [ref=f5e189]: qa.suspension.finance-operator.1791543920498@weevcrafts.local
+                - generic [ref=f5e190]: "User #109 · suspended"
+                - generic [ref=f5e191]: finance_operator
+              - generic [ref=f5e194]:
+                - heading "Edit account" [level=3] [ref=f5e195]
+                - generic [ref=f5e196]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e197]: QA suspension finance-operator
+                - generic [ref=f5e198]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e199]: qa.suspension.finance-operator.1791543920498@weevcrafts.local
+                  - generic [ref=f5e200]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e201]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e202]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e203]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e204]
+                  - generic [ref=f5e205]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e206]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e207]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e208] [cursor=pointer]
+              - status [ref=f5e209]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e211]:
+                - generic [ref=f5e212]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e213]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e214] [cursor=pointer]
+            - generic [ref=f5e215]:
+              - generic [ref=f5e216]:
+                - strong [ref=f5e217]: QA suspension support-agent
+                - generic [ref=f5e218]: qa.suspension.support-agent.1791543909190@weevcrafts.local
+                - generic [ref=f5e219]: "User #108 · suspended"
+                - generic [ref=f5e220]: support_agent
+              - generic [ref=f5e223]:
+                - heading "Edit account" [level=3] [ref=f5e224]
+                - generic [ref=f5e225]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e226]: QA suspension support-agent
+                - generic [ref=f5e227]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e228]: qa.suspension.support-agent.1791543909190@weevcrafts.local
+                  - generic [ref=f5e229]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e230]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e231]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e232]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e233]
+                  - generic [ref=f5e234]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e235]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e236]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e237] [cursor=pointer]
+              - status [ref=f5e238]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e240]:
+                - generic [ref=f5e241]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e242]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e243] [cursor=pointer]
+            - generic [ref=f5e244]:
+              - generic [ref=f5e245]:
+                - strong [ref=f5e246]: QA suspension super-admin
+                - generic [ref=f5e247]: qa.suspension.super-admin.1791543897601@weevcrafts.local
+                - generic [ref=f5e248]: "User #107 · suspended"
+                - generic [ref=f5e249]: super_admin
+              - generic [ref=f5e252]:
+                - heading "Edit account" [level=3] [ref=f5e253]
+                - generic [ref=f5e254]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e255]: QA suspension super-admin
+                - generic [ref=f5e256]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e257]: qa.suspension.super-admin.1791543897601@weevcrafts.local
+                  - generic [ref=f5e258]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e259]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e260]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e261]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e262]
+                  - generic [ref=f5e263]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e264]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e265]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e266] [cursor=pointer]
+              - status [ref=f5e267]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e269]:
+                - generic [ref=f5e270]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e271]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e272] [cursor=pointer]
+            - generic [ref=f5e273]:
+              - generic [ref=f5e274]:
+                - strong [ref=f5e275]: QA suspension marketplace-admin
+                - generic [ref=f5e276]: qa.suspension.marketplace-admin.1791543885540@weevcrafts.local
+                - generic [ref=f5e277]: "User #106 · suspended"
+                - generic [ref=f5e278]: marketplace_admin
+              - generic [ref=f5e281]:
+                - heading "Edit account" [level=3] [ref=f5e282]
+                - generic [ref=f5e283]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e284]: QA suspension marketplace-admin
+                - generic [ref=f5e285]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e286]: qa.suspension.marketplace-admin.1791543885540@weevcrafts.local
+                  - generic [ref=f5e287]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e288]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e289]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e290]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e291]
+                  - generic [ref=f5e292]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e293]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e294]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e295] [cursor=pointer]
+              - status [ref=f5e296]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e298]:
+                - generic [ref=f5e299]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e300]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e301] [cursor=pointer]
+            - generic [ref=f5e302]:
+              - generic [ref=f5e303]:
+                - strong [ref=f5e304]: QA suspension seller-staff
+                - generic [ref=f5e305]: qa.suspension.seller-staff.1791543874284@weevcrafts.local
+                - generic [ref=f5e306]: "User #105 · suspended"
+                - generic [ref=f5e307]: seller_staff
+              - generic [ref=f5e310]:
+                - heading "Edit account" [level=3] [ref=f5e311]
+                - generic [ref=f5e312]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e313]: QA suspension seller-staff
+                - generic [ref=f5e314]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e315]: qa.suspension.seller-staff.1791543874284@weevcrafts.local
+                  - generic [ref=f5e316]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e317]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e318]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e319]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e320]
+                  - generic [ref=f5e321]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e322]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e323]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e324] [cursor=pointer]
+              - status [ref=f5e325]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e327]:
+                - generic [ref=f5e328]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e329]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e330] [cursor=pointer]
+            - generic [ref=f5e331]:
+              - generic [ref=f5e332]:
+                - strong [ref=f5e333]: QA suspension seller-owner
+                - generic [ref=f5e334]: qa.suspension.seller-owner.1791543861049@weevcrafts.local
+                - generic [ref=f5e335]: "User #104 · suspended"
+                - generic [ref=f5e336]: seller_owner
+              - generic [ref=f5e339]:
+                - heading "Edit account" [level=3] [ref=f5e340]
+                - generic [ref=f5e341]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e342]: QA suspension seller-owner
+                - generic [ref=f5e343]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e344]: qa.suspension.seller-owner.1791543861049@weevcrafts.local
+                  - generic [ref=f5e345]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e346]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e347]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e348]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e349]
+                  - generic [ref=f5e350]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e351]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e352]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e353] [cursor=pointer]
+              - status [ref=f5e354]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e356]:
+                - generic [ref=f5e357]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e358]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e359] [cursor=pointer]
+            - generic [ref=f5e360]:
+              - generic [ref=f5e361]:
+                - strong [ref=f5e362]: QA suspension customer
+                - generic [ref=f5e363]: qa.suspension.customer.1791543849101@weevcrafts.local
+                - generic [ref=f5e364]: "User #103 · suspended"
+                - generic [ref=f5e365]: customer
+              - generic [ref=f5e368]:
+                - heading "Edit account" [level=3] [ref=f5e369]
+                - generic [ref=f5e370]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e371]: QA suspension customer
+                - generic [ref=f5e372]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e373]: qa.suspension.customer.1791543849101@weevcrafts.local
+                  - generic [ref=f5e374]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e375]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e376]:
+                    - option "Active"
+                    - option "Suspended" [selected]
+                - generic [ref=f5e377]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e378]
+                  - generic [ref=f5e379]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e380]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e381]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e382] [cursor=pointer]
+              - status [ref=f5e383]: This account is suspended and cannot receive role changes.
+              - generic [ref=f5e385]:
+                - generic [ref=f5e386]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e387]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e388] [cursor=pointer]
+            - generic [ref=f5e389]:
+              - generic [ref=f5e390]:
+                - strong [ref=f5e391]: QA returns-operations
+                - generic [ref=f5e392]: qa.recovery.auth-012.returns-operations.1791543834271@weevcrafts.local
+                - generic [ref=f5e393]: "User #102 · active"
+                - generic [ref=f5e394]: operations_returns
+              - generic [ref=f5e397]:
+                - heading "Edit account" [level=3] [ref=f5e398]
+                - generic [ref=f5e399]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e400]: QA returns-operations
+                - generic [ref=f5e401]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e402]: qa.recovery.auth-012.returns-operations.1791543834271@weevcrafts.local
+                  - generic [ref=f5e403]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e404]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e405]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e406]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e407]
+                  - generic [ref=f5e408]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e409]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e410]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e411] [cursor=pointer]
+              - generic [ref=f5e413]:
+                - generic [ref=f5e414]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e415]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e416]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e417]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e418]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e419]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e420] [cursor=pointer]
+              - generic [ref=f5e422]:
+                - generic [ref=f5e423]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e424]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e425] [cursor=pointer]
+            - generic [ref=f5e426]:
+              - generic [ref=f5e427]:
+                - strong [ref=f5e428]: QA returns-operations
+                - generic [ref=f5e429]: qa.recovery.auth-011.returns-operations.1791543819376@weevcrafts.local
+                - generic [ref=f5e430]: "User #101 · active"
+                - generic [ref=f5e431]: operations_returns
+              - generic [ref=f5e434]:
+                - heading "Edit account" [level=3] [ref=f5e435]
+                - generic [ref=f5e436]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e437]: QA returns-operations
+                - generic [ref=f5e438]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e439]: qa.recovery.auth-011.returns-operations.1791543819376@weevcrafts.local
+                  - generic [ref=f5e440]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e441]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e442]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e443]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e444]
+                  - generic [ref=f5e445]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e446]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e447]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e448] [cursor=pointer]
+              - generic [ref=f5e450]:
+                - generic [ref=f5e451]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e452]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e453]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e454]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e455]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e456]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e457] [cursor=pointer]
+              - generic [ref=f5e459]:
+                - generic [ref=f5e460]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e461]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e462] [cursor=pointer]
+            - generic [ref=f5e463]:
+              - generic [ref=f5e464]:
+                - strong [ref=f5e465]: QA returns-operations
+                - generic [ref=f5e466]: qa.recovery.auth-014.returns-operations.1791543812607@weevcrafts.local
+                - generic [ref=f5e467]: "User #100 · active"
+                - generic [ref=f5e468]: operations_returns
+              - generic [ref=f5e471]:
+                - heading "Edit account" [level=3] [ref=f5e472]
+                - generic [ref=f5e473]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e474]: QA returns-operations
+                - generic [ref=f5e475]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e476]: qa.recovery.auth-014.returns-operations.1791543812607@weevcrafts.local
+                  - generic [ref=f5e477]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e478]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e479]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e480]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e481]
+                  - generic [ref=f5e482]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e483]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e484]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e485] [cursor=pointer]
+              - generic [ref=f5e487]:
+                - generic [ref=f5e488]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e489]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e490]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e491]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e492]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e493]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e494] [cursor=pointer]
+              - generic [ref=f5e496]:
+                - generic [ref=f5e497]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e498]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e499] [cursor=pointer]
+            - generic [ref=f5e500]:
+              - generic [ref=f5e501]:
+                - strong [ref=f5e502]: QA returns-operations
+                - generic [ref=f5e503]: qa.recovery.auth-010.returns-operations.1791543798019@weevcrafts.local
+                - generic [ref=f5e504]: "User #99 · active"
+                - generic [ref=f5e505]: operations_returns
+              - generic [ref=f5e508]:
+                - heading "Edit account" [level=3] [ref=f5e509]
+                - generic [ref=f5e510]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e511]: QA returns-operations
+                - generic [ref=f5e512]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e513]: qa.recovery.auth-010.returns-operations.1791543798019@weevcrafts.local
+                  - generic [ref=f5e514]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e515]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e516]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e517]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e518]
+                  - generic [ref=f5e519]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e520]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e521]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e522] [cursor=pointer]
+              - generic [ref=f5e524]:
+                - generic [ref=f5e525]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e526]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e527]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e528]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e529]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e530]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e531] [cursor=pointer]
+              - generic [ref=f5e533]:
+                - generic [ref=f5e534]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e535]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e536] [cursor=pointer]
+            - generic [ref=f5e537]:
+              - generic [ref=f5e538]:
+                - strong [ref=f5e539]: QA returns-operations
+                - generic [ref=f5e540]: qa.recovery.auth-009.returns-operations.1791543791487@weevcrafts.local
+                - generic [ref=f5e541]: "User #98 · active"
+                - generic [ref=f5e542]: operations_returns
+              - generic [ref=f5e545]:
+                - heading "Edit account" [level=3] [ref=f5e546]
+                - generic [ref=f5e547]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e548]: QA returns-operations
+                - generic [ref=f5e549]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e550]: qa.recovery.auth-009.returns-operations.1791543791487@weevcrafts.local
+                  - generic [ref=f5e551]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e552]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e553]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e554]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e555]
+                  - generic [ref=f5e556]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e557]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e558]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e559] [cursor=pointer]
+              - generic [ref=f5e561]:
+                - generic [ref=f5e562]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e563]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e564]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e565]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e566]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e567]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e568] [cursor=pointer]
+              - generic [ref=f5e570]:
+                - generic [ref=f5e571]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e572]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e573] [cursor=pointer]
+            - generic [ref=f5e574]:
+              - generic [ref=f5e575]:
+                - strong [ref=f5e576]: QA returns-operations
+                - generic [ref=f5e577]: qa.recovery.auth-008.returns-operations.1791543784695@weevcrafts.local
+                - generic [ref=f5e578]: "User #97 · active"
+                - generic [ref=f5e579]: operations_returns
+              - generic [ref=f5e582]:
+                - heading "Edit account" [level=3] [ref=f5e583]
+                - generic [ref=f5e584]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e585]: QA returns-operations
+                - generic [ref=f5e586]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e587]: qa.recovery.auth-008.returns-operations.1791543784695@weevcrafts.local
+                  - generic [ref=f5e588]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e589]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e590]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e591]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e592]
+                  - generic [ref=f5e593]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e594]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e595]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e596] [cursor=pointer]
+              - generic [ref=f5e598]:
+                - generic [ref=f5e599]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e600]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e601]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e602]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e603]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e604]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e605] [cursor=pointer]
+              - generic [ref=f5e607]:
+                - generic [ref=f5e608]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e609]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e610] [cursor=pointer]
+            - generic [ref=f5e611]:
+              - generic [ref=f5e612]:
+                - strong [ref=f5e613]: QA finance-operator
+                - generic [ref=f5e614]: qa.recovery.auth-012.finance-operator.1791543766746@weevcrafts.local
+                - generic [ref=f5e615]: "User #96 · active"
+                - generic [ref=f5e616]: finance_operator
+              - generic [ref=f5e619]:
+                - heading "Edit account" [level=3] [ref=f5e620]
+                - generic [ref=f5e621]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e622]: QA finance-operator
+                - generic [ref=f5e623]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e624]: qa.recovery.auth-012.finance-operator.1791543766746@weevcrafts.local
+                  - generic [ref=f5e625]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e626]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e627]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e628]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e629]
+                  - generic [ref=f5e630]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e631]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e632]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e633] [cursor=pointer]
+              - generic [ref=f5e635]:
+                - generic [ref=f5e636]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e637]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e638]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e639]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e640]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e641]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e642] [cursor=pointer]
+              - generic [ref=f5e644]:
+                - generic [ref=f5e645]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e646]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e647] [cursor=pointer]
+            - generic [ref=f5e648]:
+              - generic [ref=f5e649]:
+                - strong [ref=f5e650]: QA finance-operator
+                - generic [ref=f5e651]: qa.recovery.auth-011.finance-operator.1791543752614@weevcrafts.local
+                - generic [ref=f5e652]: "User #95 · active"
+                - generic [ref=f5e653]: finance_operator
+              - generic [ref=f5e656]:
+                - heading "Edit account" [level=3] [ref=f5e657]
+                - generic [ref=f5e658]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e659]: QA finance-operator
+                - generic [ref=f5e660]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e661]: qa.recovery.auth-011.finance-operator.1791543752614@weevcrafts.local
+                  - generic [ref=f5e662]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e663]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e664]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e665]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e666]
+                  - generic [ref=f5e667]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e668]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e669]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e670] [cursor=pointer]
+              - generic [ref=f5e672]:
+                - generic [ref=f5e673]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e674]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e675]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e676]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e677]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e678]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e679] [cursor=pointer]
+              - generic [ref=f5e681]:
+                - generic [ref=f5e682]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e683]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e684] [cursor=pointer]
+            - generic [ref=f5e685]:
+              - generic [ref=f5e686]:
+                - strong [ref=f5e687]: QA finance-operator
+                - generic [ref=f5e688]: qa.recovery.auth-014.finance-operator.1791543746095@weevcrafts.local
+                - generic [ref=f5e689]: "User #94 · active"
+                - generic [ref=f5e690]: finance_operator
+              - generic [ref=f5e693]:
+                - heading "Edit account" [level=3] [ref=f5e694]
+                - generic [ref=f5e695]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e696]: QA finance-operator
+                - generic [ref=f5e697]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e698]: qa.recovery.auth-014.finance-operator.1791543746095@weevcrafts.local
+                  - generic [ref=f5e699]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e700]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e701]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e702]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e703]
+                  - generic [ref=f5e704]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e705]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e706]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e707] [cursor=pointer]
+              - generic [ref=f5e709]:
+                - generic [ref=f5e710]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e711]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e712]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e713]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e714]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e715]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e716] [cursor=pointer]
+              - generic [ref=f5e718]:
+                - generic [ref=f5e719]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e720]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e721] [cursor=pointer]
+            - generic [ref=f5e722]:
+              - generic [ref=f5e723]:
+                - strong [ref=f5e724]: QA finance-operator
+                - generic [ref=f5e725]: qa.recovery.auth-010.finance-operator.1791543732008@weevcrafts.local
+                - generic [ref=f5e726]: "User #93 · active"
+                - generic [ref=f5e727]: finance_operator
+              - generic [ref=f5e730]:
+                - heading "Edit account" [level=3] [ref=f5e731]
+                - generic [ref=f5e732]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e733]: QA finance-operator
+                - generic [ref=f5e734]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e735]: qa.recovery.auth-010.finance-operator.1791543732008@weevcrafts.local
+                  - generic [ref=f5e736]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e737]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e738]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e739]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e740]
+                  - generic [ref=f5e741]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e742]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e743]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e744] [cursor=pointer]
+              - generic [ref=f5e746]:
+                - generic [ref=f5e747]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e748]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e749]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e750]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e751]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e752]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e753] [cursor=pointer]
+              - generic [ref=f5e755]:
+                - generic [ref=f5e756]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e757]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e758] [cursor=pointer]
+            - generic [ref=f5e759]:
+              - generic [ref=f5e760]:
+                - strong [ref=f5e761]: QA finance-operator
+                - generic [ref=f5e762]: qa.recovery.auth-009.finance-operator.1791543725263@weevcrafts.local
+                - generic [ref=f5e763]: "User #92 · active"
+                - generic [ref=f5e764]: finance_operator
+              - generic [ref=f5e767]:
+                - heading "Edit account" [level=3] [ref=f5e768]
+                - generic [ref=f5e769]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e770]: QA finance-operator
+                - generic [ref=f5e771]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e772]: qa.recovery.auth-009.finance-operator.1791543725263@weevcrafts.local
+                  - generic [ref=f5e773]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e774]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e775]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e776]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e777]
+                  - generic [ref=f5e778]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e779]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e780]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e781] [cursor=pointer]
+              - generic [ref=f5e783]:
+                - generic [ref=f5e784]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e785]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e786]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e787]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e788]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e789]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e790] [cursor=pointer]
+              - generic [ref=f5e792]:
+                - generic [ref=f5e793]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e794]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e795] [cursor=pointer]
+            - generic [ref=f5e796]:
+              - generic [ref=f5e797]:
+                - strong [ref=f5e798]: QA finance-operator
+                - generic [ref=f5e799]: qa.recovery.auth-008.finance-operator.1791543718750@weevcrafts.local
+                - generic [ref=f5e800]: "User #91 · active"
+                - generic [ref=f5e801]: finance_operator
+              - generic [ref=f5e804]:
+                - heading "Edit account" [level=3] [ref=f5e805]
+                - generic [ref=f5e806]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e807]: QA finance-operator
+                - generic [ref=f5e808]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e809]: qa.recovery.auth-008.finance-operator.1791543718750@weevcrafts.local
+                  - generic [ref=f5e810]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e811]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e812]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e813]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e814]
+                  - generic [ref=f5e815]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e816]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e817]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e818] [cursor=pointer]
+              - generic [ref=f5e820]:
+                - generic [ref=f5e821]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e822]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e823]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e824]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e825]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e826]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e827] [cursor=pointer]
+              - generic [ref=f5e829]:
+                - generic [ref=f5e830]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e831]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e832] [cursor=pointer]
+            - generic [ref=f5e833]:
+              - generic [ref=f5e834]:
+                - strong [ref=f5e835]: QA support-agent
+                - generic [ref=f5e836]: qa.recovery.auth-012.support-agent.1791543704230@weevcrafts.local
+                - generic [ref=f5e837]: "User #90 · active"
+                - generic [ref=f5e838]: support_agent
+              - generic [ref=f5e841]:
+                - heading "Edit account" [level=3] [ref=f5e842]
+                - generic [ref=f5e843]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e844]: QA support-agent
+                - generic [ref=f5e845]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e846]: qa.recovery.auth-012.support-agent.1791543704230@weevcrafts.local
+                  - generic [ref=f5e847]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e848]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e849]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e850]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e851]
+                  - generic [ref=f5e852]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e853]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e854]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e855] [cursor=pointer]
+              - generic [ref=f5e857]:
+                - generic [ref=f5e858]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e859]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e860]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e861]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e862]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e863]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e864] [cursor=pointer]
+              - generic [ref=f5e866]:
+                - generic [ref=f5e867]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e868]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e869] [cursor=pointer]
+            - generic [ref=f5e870]:
+              - generic [ref=f5e871]:
+                - strong [ref=f5e872]: QA support-agent
+                - generic [ref=f5e873]: qa.recovery.auth-011.support-agent.1791543690935@weevcrafts.local
+                - generic [ref=f5e874]: "User #89 · active"
+                - generic [ref=f5e875]: support_agent
+              - generic [ref=f5e878]:
+                - heading "Edit account" [level=3] [ref=f5e879]
+                - generic [ref=f5e880]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e881]: QA support-agent
+                - generic [ref=f5e882]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e883]: qa.recovery.auth-011.support-agent.1791543690935@weevcrafts.local
+                  - generic [ref=f5e884]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e885]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e886]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e887]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e888]
+                  - generic [ref=f5e889]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e890]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e891]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e892] [cursor=pointer]
+              - generic [ref=f5e894]:
+                - generic [ref=f5e895]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e896]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e897]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e898]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e899]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e900]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e901] [cursor=pointer]
+              - generic [ref=f5e903]:
+                - generic [ref=f5e904]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e905]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e906] [cursor=pointer]
+            - generic [ref=f5e907]:
+              - generic [ref=f5e908]:
+                - strong [ref=f5e909]: QA support-agent
+                - generic [ref=f5e910]: qa.recovery.auth-014.support-agent.1791543684473@weevcrafts.local
+                - generic [ref=f5e911]: "User #88 · active"
+                - generic [ref=f5e912]: support_agent
+              - generic [ref=f5e915]:
+                - heading "Edit account" [level=3] [ref=f5e916]
+                - generic [ref=f5e917]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e918]: QA support-agent
+                - generic [ref=f5e919]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e920]: qa.recovery.auth-014.support-agent.1791543684473@weevcrafts.local
+                  - generic [ref=f5e921]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e922]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e923]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e924]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e925]
+                  - generic [ref=f5e926]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e927]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e928]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e929] [cursor=pointer]
+              - generic [ref=f5e931]:
+                - generic [ref=f5e932]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e933]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e934]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e935]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e936]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e937]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e938] [cursor=pointer]
+              - generic [ref=f5e940]:
+                - generic [ref=f5e941]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e942]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e943] [cursor=pointer]
+            - generic [ref=f5e944]:
+              - generic [ref=f5e945]:
+                - strong [ref=f5e946]: QA support-agent
+                - generic [ref=f5e947]: qa.recovery.auth-010.support-agent.1791543670250@weevcrafts.local
+                - generic [ref=f5e948]: "User #87 · active"
+                - generic [ref=f5e949]: support_agent
+              - generic [ref=f5e952]:
+                - heading "Edit account" [level=3] [ref=f5e953]
+                - generic [ref=f5e954]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e955]: QA support-agent
+                - generic [ref=f5e956]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e957]: qa.recovery.auth-010.support-agent.1791543670250@weevcrafts.local
+                  - generic [ref=f5e958]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e959]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e960]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e961]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e962]
+                  - generic [ref=f5e963]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e964]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e965]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e966] [cursor=pointer]
+              - generic [ref=f5e968]:
+                - generic [ref=f5e969]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e970]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e971]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e972]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e973]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e974]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e975] [cursor=pointer]
+              - generic [ref=f5e977]:
+                - generic [ref=f5e978]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e979]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e980] [cursor=pointer]
+            - generic [ref=f5e981]:
+              - generic [ref=f5e982]:
+                - strong [ref=f5e983]: QA support-agent
+                - generic [ref=f5e984]: qa.recovery.auth-009.support-agent.1791543663376@weevcrafts.local
+                - generic [ref=f5e985]: "User #86 · active"
+                - generic [ref=f5e986]: support_agent
+              - generic [ref=f5e989]:
+                - heading "Edit account" [level=3] [ref=f5e990]
+                - generic [ref=f5e991]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e992]: QA support-agent
+                - generic [ref=f5e993]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e994]: qa.recovery.auth-009.support-agent.1791543663376@weevcrafts.local
+                  - generic [ref=f5e995]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e996]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e997]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e998]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e999]
+                  - generic [ref=f5e1000]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1001]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1002]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1003] [cursor=pointer]
+              - generic [ref=f5e1005]:
+                - generic [ref=f5e1006]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1007]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1008]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1009]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1010]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1011]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1012] [cursor=pointer]
+              - generic [ref=f5e1014]:
+                - generic [ref=f5e1015]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1016]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1017] [cursor=pointer]
+            - generic [ref=f5e1018]:
+              - generic [ref=f5e1019]:
+                - strong [ref=f5e1020]: QA support-agent
+                - generic [ref=f5e1021]: qa.recovery.auth-008.support-agent.1791543656459@weevcrafts.local
+                - generic [ref=f5e1022]: "User #85 · active"
+                - generic [ref=f5e1023]: support_agent
+              - generic [ref=f5e1026]:
+                - heading "Edit account" [level=3] [ref=f5e1027]
+                - generic [ref=f5e1028]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1029]: QA support-agent
+                - generic [ref=f5e1030]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1031]: qa.recovery.auth-008.support-agent.1791543656459@weevcrafts.local
+                  - generic [ref=f5e1032]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1033]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1034]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1035]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1036]
+                  - generic [ref=f5e1037]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1038]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1039]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1040] [cursor=pointer]
+              - generic [ref=f5e1042]:
+                - generic [ref=f5e1043]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1044]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1045]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1046]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1047]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1048]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1049] [cursor=pointer]
+              - generic [ref=f5e1051]:
+                - generic [ref=f5e1052]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1053]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1054] [cursor=pointer]
+            - generic [ref=f5e1055]:
+              - generic [ref=f5e1056]:
+                - strong [ref=f5e1057]: QA super-admin
+                - generic [ref=f5e1058]: qa.recovery.auth-012.super-admin.1791543637669@weevcrafts.local
+                - generic [ref=f5e1059]: "User #84 · active"
+                - generic [ref=f5e1060]: super_admin
+              - generic [ref=f5e1063]:
+                - heading "Edit account" [level=3] [ref=f5e1064]
+                - generic [ref=f5e1065]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1066]: QA super-admin
+                - generic [ref=f5e1067]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1068]: qa.recovery.auth-012.super-admin.1791543637669@weevcrafts.local
+                  - generic [ref=f5e1069]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1070]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1071]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1072]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1073]
+                  - generic [ref=f5e1074]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1075]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1076]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1077] [cursor=pointer]
+              - generic [ref=f5e1079]:
+                - generic [ref=f5e1080]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1081]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1082]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1083]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1084]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1085]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1086] [cursor=pointer]
+              - generic [ref=f5e1088]:
+                - generic [ref=f5e1089]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1090]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1091] [cursor=pointer]
+            - generic [ref=f5e1092]:
+              - generic [ref=f5e1093]:
+                - strong [ref=f5e1094]: QA super-admin
+                - generic [ref=f5e1095]: qa.recovery.auth-011.super-admin.1791543624309@weevcrafts.local
+                - generic [ref=f5e1096]: "User #83 · active"
+                - generic [ref=f5e1097]: super_admin
+              - generic [ref=f5e1100]:
+                - heading "Edit account" [level=3] [ref=f5e1101]
+                - generic [ref=f5e1102]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1103]: QA super-admin
+                - generic [ref=f5e1104]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1105]: qa.recovery.auth-011.super-admin.1791543624309@weevcrafts.local
+                  - generic [ref=f5e1106]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1107]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1108]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1109]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1110]
+                  - generic [ref=f5e1111]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1112]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1113]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1114] [cursor=pointer]
+              - generic [ref=f5e1116]:
+                - generic [ref=f5e1117]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1118]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1119]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1120]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1121]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1122]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1123] [cursor=pointer]
+              - generic [ref=f5e1125]:
+                - generic [ref=f5e1126]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1127]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1128] [cursor=pointer]
+            - generic [ref=f5e1129]:
+              - generic [ref=f5e1130]:
+                - strong [ref=f5e1131]: QA super-admin
+                - generic [ref=f5e1132]: qa.recovery.auth-014.super-admin.1791543617962@weevcrafts.local
+                - generic [ref=f5e1133]: "User #82 · active"
+                - generic [ref=f5e1134]: super_admin
+              - generic [ref=f5e1137]:
+                - heading "Edit account" [level=3] [ref=f5e1138]
+                - generic [ref=f5e1139]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1140]: QA super-admin
+                - generic [ref=f5e1141]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1142]: qa.recovery.auth-014.super-admin.1791543617962@weevcrafts.local
+                  - generic [ref=f5e1143]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1144]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1145]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1146]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1147]
+                  - generic [ref=f5e1148]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1149]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1150]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1151] [cursor=pointer]
+              - generic [ref=f5e1153]:
+                - generic [ref=f5e1154]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1155]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1156]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1157]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1158]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1159]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1160] [cursor=pointer]
+              - generic [ref=f5e1162]:
+                - generic [ref=f5e1163]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1164]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1165] [cursor=pointer]
+            - generic [ref=f5e1166]:
+              - generic [ref=f5e1167]:
+                - strong [ref=f5e1168]: QA super-admin
+                - generic [ref=f5e1169]: qa.recovery.auth-010.super-admin.1791543601514@weevcrafts.local
+                - generic [ref=f5e1170]: "User #81 · active"
+                - generic [ref=f5e1171]: super_admin
+              - generic [ref=f5e1174]:
+                - heading "Edit account" [level=3] [ref=f5e1175]
+                - generic [ref=f5e1176]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1177]: QA super-admin
+                - generic [ref=f5e1178]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1179]: qa.recovery.auth-010.super-admin.1791543601514@weevcrafts.local
+                  - generic [ref=f5e1180]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1181]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1182]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1183]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1184]
+                  - generic [ref=f5e1185]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1186]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1187]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1188] [cursor=pointer]
+              - generic [ref=f5e1190]:
+                - generic [ref=f5e1191]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1192]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1193]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1194]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1195]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1196]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1197] [cursor=pointer]
+              - generic [ref=f5e1199]:
+                - generic [ref=f5e1200]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1201]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1202] [cursor=pointer]
+            - generic [ref=f5e1203]:
+              - generic [ref=f5e1204]:
+                - strong [ref=f5e1205]: QA super-admin
+                - generic [ref=f5e1206]: qa.recovery.auth-009.super-admin.1791543594118@weevcrafts.local
+                - generic [ref=f5e1207]: "User #80 · active"
+                - generic [ref=f5e1208]: super_admin
+              - generic [ref=f5e1211]:
+                - heading "Edit account" [level=3] [ref=f5e1212]
+                - generic [ref=f5e1213]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1214]: QA super-admin
+                - generic [ref=f5e1215]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1216]: qa.recovery.auth-009.super-admin.1791543594118@weevcrafts.local
+                  - generic [ref=f5e1217]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1218]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1219]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1220]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1221]
+                  - generic [ref=f5e1222]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1223]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1224]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1225] [cursor=pointer]
+              - generic [ref=f5e1227]:
+                - generic [ref=f5e1228]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1229]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1230]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1231]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1232]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1233]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1234] [cursor=pointer]
+              - generic [ref=f5e1236]:
+                - generic [ref=f5e1237]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1238]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1239] [cursor=pointer]
+            - generic [ref=f5e1240]:
+              - generic [ref=f5e1241]:
+                - strong [ref=f5e1242]: QA super-admin
+                - generic [ref=f5e1243]: qa.recovery.auth-008.super-admin.1791543584317@weevcrafts.local
+                - generic [ref=f5e1244]: "User #79 · active"
+                - generic [ref=f5e1245]: super_admin
+              - generic [ref=f5e1248]:
+                - heading "Edit account" [level=3] [ref=f5e1249]
+                - generic [ref=f5e1250]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1251]: QA super-admin
+                - generic [ref=f5e1252]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1253]: qa.recovery.auth-008.super-admin.1791543584317@weevcrafts.local
+                  - generic [ref=f5e1254]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1255]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1256]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1257]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1258]
+                  - generic [ref=f5e1259]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1260]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1261]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1262] [cursor=pointer]
+              - generic [ref=f5e1264]:
+                - generic [ref=f5e1265]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1266]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1267]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1268]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1269]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1270]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1271] [cursor=pointer]
+              - generic [ref=f5e1273]:
+                - generic [ref=f5e1274]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1275]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1276] [cursor=pointer]
+            - generic [ref=f5e1277]:
+              - generic [ref=f5e1278]:
+                - strong [ref=f5e1279]: QA marketplace-admin
+                - generic [ref=f5e1280]: qa.recovery.auth-012.marketplace-admin.1791543570432@weevcrafts.local
+                - generic [ref=f5e1281]: "User #78 · active"
+                - generic [ref=f5e1282]: marketplace_admin
+              - generic [ref=f5e1285]:
+                - heading "Edit account" [level=3] [ref=f5e1286]
+                - generic [ref=f5e1287]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1288]: QA marketplace-admin
+                - generic [ref=f5e1289]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1290]: qa.recovery.auth-012.marketplace-admin.1791543570432@weevcrafts.local
+                  - generic [ref=f5e1291]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1292]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1293]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1294]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1295]
+                  - generic [ref=f5e1296]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1297]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1298]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1299] [cursor=pointer]
+              - generic [ref=f5e1301]:
+                - generic [ref=f5e1302]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1303]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1304]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1305]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1306]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1307]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1308] [cursor=pointer]
+              - generic [ref=f5e1310]:
+                - generic [ref=f5e1311]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1312]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1313] [cursor=pointer]
+            - generic [ref=f5e1314]:
+              - generic [ref=f5e1315]:
+                - strong [ref=f5e1316]: QA marketplace-admin
+                - generic [ref=f5e1317]: qa.recovery.auth-011.marketplace-admin.1791543557159@weevcrafts.local
+                - generic [ref=f5e1318]: "User #77 · active"
+                - generic [ref=f5e1319]: marketplace_admin
+              - generic [ref=f5e1322]:
+                - heading "Edit account" [level=3] [ref=f5e1323]
+                - generic [ref=f5e1324]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1325]: QA marketplace-admin
+                - generic [ref=f5e1326]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1327]: qa.recovery.auth-011.marketplace-admin.1791543557159@weevcrafts.local
+                  - generic [ref=f5e1328]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1329]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1330]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1331]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1332]
+                  - generic [ref=f5e1333]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1334]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1335]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1336] [cursor=pointer]
+              - generic [ref=f5e1338]:
+                - generic [ref=f5e1339]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1340]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1341]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1342]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1343]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1344]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1345] [cursor=pointer]
+              - generic [ref=f5e1347]:
+                - generic [ref=f5e1348]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1349]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1350] [cursor=pointer]
+            - generic [ref=f5e1351]:
+              - generic [ref=f5e1352]:
+                - strong [ref=f5e1353]: QA marketplace-admin
+                - generic [ref=f5e1354]: qa.recovery.auth-014.marketplace-admin.1791543550599@weevcrafts.local
+                - generic [ref=f5e1355]: "User #76 · active"
+                - generic [ref=f5e1356]: marketplace_admin
+              - generic [ref=f5e1359]:
+                - heading "Edit account" [level=3] [ref=f5e1360]
+                - generic [ref=f5e1361]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1362]: QA marketplace-admin
+                - generic [ref=f5e1363]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1364]: qa.recovery.auth-014.marketplace-admin.1791543550599@weevcrafts.local
+                  - generic [ref=f5e1365]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1366]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1367]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1368]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1369]
+                  - generic [ref=f5e1370]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1371]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1372]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1373] [cursor=pointer]
+              - generic [ref=f5e1375]:
+                - generic [ref=f5e1376]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1377]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1378]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1379]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1380]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1381]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1382] [cursor=pointer]
+              - generic [ref=f5e1384]:
+                - generic [ref=f5e1385]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1386]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1387] [cursor=pointer]
+            - generic [ref=f5e1388]:
+              - generic [ref=f5e1389]:
+                - strong [ref=f5e1390]: QA marketplace-admin
+                - generic [ref=f5e1391]: qa.recovery.auth-010.marketplace-admin.1791543536049@weevcrafts.local
+                - generic [ref=f5e1392]: "User #75 · active"
+                - generic [ref=f5e1393]: marketplace_admin
+              - generic [ref=f5e1396]:
+                - heading "Edit account" [level=3] [ref=f5e1397]
+                - generic [ref=f5e1398]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1399]: QA marketplace-admin
+                - generic [ref=f5e1400]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1401]: qa.recovery.auth-010.marketplace-admin.1791543536049@weevcrafts.local
+                  - generic [ref=f5e1402]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1403]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1404]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1405]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1406]
+                  - generic [ref=f5e1407]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1408]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1409]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1410] [cursor=pointer]
+              - generic [ref=f5e1412]:
+                - generic [ref=f5e1413]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1414]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1415]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1416]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1417]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1418]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1419] [cursor=pointer]
+              - generic [ref=f5e1421]:
+                - generic [ref=f5e1422]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1423]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1424] [cursor=pointer]
+            - generic [ref=f5e1425]:
+              - generic [ref=f5e1426]:
+                - strong [ref=f5e1427]: QA marketplace-admin
+                - generic [ref=f5e1428]: qa.recovery.auth-009.marketplace-admin.1791543528685@weevcrafts.local
+                - generic [ref=f5e1429]: "User #74 · active"
+                - generic [ref=f5e1430]: marketplace_admin
+              - generic [ref=f5e1433]:
+                - heading "Edit account" [level=3] [ref=f5e1434]
+                - generic [ref=f5e1435]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1436]: QA marketplace-admin
+                - generic [ref=f5e1437]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1438]: qa.recovery.auth-009.marketplace-admin.1791543528685@weevcrafts.local
+                  - generic [ref=f5e1439]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1440]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1441]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1442]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1443]
+                  - generic [ref=f5e1444]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1445]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1446]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1447] [cursor=pointer]
+              - generic [ref=f5e1449]:
+                - generic [ref=f5e1450]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1451]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1452]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1453]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1454]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1455]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1456] [cursor=pointer]
+              - generic [ref=f5e1458]:
+                - generic [ref=f5e1459]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1460]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1461] [cursor=pointer]
+            - generic [ref=f5e1462]:
+              - generic [ref=f5e1463]:
+                - strong [ref=f5e1464]: QA marketplace-admin
+                - generic [ref=f5e1465]: qa.recovery.auth-008.marketplace-admin.1791543522058@weevcrafts.local
+                - generic [ref=f5e1466]: "User #73 · active"
+                - generic [ref=f5e1467]: marketplace_admin
+              - generic [ref=f5e1470]:
+                - heading "Edit account" [level=3] [ref=f5e1471]
+                - generic [ref=f5e1472]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1473]: QA marketplace-admin
+                - generic [ref=f5e1474]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1475]: qa.recovery.auth-008.marketplace-admin.1791543522058@weevcrafts.local
+                  - generic [ref=f5e1476]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1477]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1478]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1479]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1480]
+                  - generic [ref=f5e1481]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1482]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1483]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1484] [cursor=pointer]
+              - generic [ref=f5e1486]:
+                - generic [ref=f5e1487]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1488]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1489]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1490]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1491]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1492]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1493] [cursor=pointer]
+              - generic [ref=f5e1495]:
+                - generic [ref=f5e1496]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1497]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1498] [cursor=pointer]
+            - generic [ref=f5e1499]:
+              - generic [ref=f5e1500]:
+                - strong [ref=f5e1501]: QA seller-staff
+                - generic [ref=f5e1502]: qa.recovery.auth-012.seller-staff.1791543507831@weevcrafts.local
+                - generic [ref=f5e1503]: "User #72 · active"
+                - generic [ref=f5e1504]: seller_staff
+              - generic [ref=f5e1507]:
+                - heading "Edit account" [level=3] [ref=f5e1508]
+                - generic [ref=f5e1509]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1510]: QA seller-staff
+                - generic [ref=f5e1511]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1512]: qa.recovery.auth-012.seller-staff.1791543507831@weevcrafts.local
+                  - generic [ref=f5e1513]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1514]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1515]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1516]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1517]
+                  - generic [ref=f5e1518]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1519]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1520]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1521] [cursor=pointer]
+              - generic [ref=f5e1523]:
+                - generic [ref=f5e1524]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1525]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1526]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1527]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1528]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1529]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1530] [cursor=pointer]
+              - generic [ref=f5e1532]:
+                - generic [ref=f5e1533]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1534]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1535] [cursor=pointer]
+            - generic [ref=f5e1536]:
+              - generic [ref=f5e1537]:
+                - strong [ref=f5e1538]: QA seller-staff
+                - generic [ref=f5e1539]: qa.recovery.auth-011.seller-staff.1791543494163@weevcrafts.local
+                - generic [ref=f5e1540]: "User #71 · active"
+                - generic [ref=f5e1541]: seller_staff
+              - generic [ref=f5e1544]:
+                - heading "Edit account" [level=3] [ref=f5e1545]
+                - generic [ref=f5e1546]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1547]: QA seller-staff
+                - generic [ref=f5e1548]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1549]: qa.recovery.auth-011.seller-staff.1791543494163@weevcrafts.local
+                  - generic [ref=f5e1550]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1551]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1552]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1553]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1554]
+                  - generic [ref=f5e1555]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1556]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1557]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1558] [cursor=pointer]
+              - generic [ref=f5e1560]:
+                - generic [ref=f5e1561]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1562]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1563]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1564]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1565]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1566]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1567] [cursor=pointer]
+              - generic [ref=f5e1569]:
+                - generic [ref=f5e1570]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1571]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1572] [cursor=pointer]
+            - generic [ref=f5e1573]:
+              - generic [ref=f5e1574]:
+                - strong [ref=f5e1575]: QA seller-staff
+                - generic [ref=f5e1576]: qa.recovery.auth-014.seller-staff.1791543487732@weevcrafts.local
+                - generic [ref=f5e1577]: "User #70 · active"
+                - generic [ref=f5e1578]: seller_staff
+              - generic [ref=f5e1581]:
+                - heading "Edit account" [level=3] [ref=f5e1582]
+                - generic [ref=f5e1583]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1584]: QA seller-staff
+                - generic [ref=f5e1585]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1586]: qa.recovery.auth-014.seller-staff.1791543487732@weevcrafts.local
+                  - generic [ref=f5e1587]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1588]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1589]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1590]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1591]
+                  - generic [ref=f5e1592]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1593]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1594]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1595] [cursor=pointer]
+              - generic [ref=f5e1597]:
+                - generic [ref=f5e1598]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1599]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1600]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1601]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1602]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1603]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1604] [cursor=pointer]
+              - generic [ref=f5e1606]:
+                - generic [ref=f5e1607]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1608]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1609] [cursor=pointer]
+            - generic [ref=f5e1610]:
+              - generic [ref=f5e1611]:
+                - strong [ref=f5e1612]: QA seller-staff
+                - generic [ref=f5e1613]: qa.recovery.auth-010.seller-staff.1791543472827@weevcrafts.local
+                - generic [ref=f5e1614]: "User #69 · active"
+                - generic [ref=f5e1615]: seller_staff
+              - generic [ref=f5e1618]:
+                - heading "Edit account" [level=3] [ref=f5e1619]
+                - generic [ref=f5e1620]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1621]: QA seller-staff
+                - generic [ref=f5e1622]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1623]: qa.recovery.auth-010.seller-staff.1791543472827@weevcrafts.local
+                  - generic [ref=f5e1624]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1625]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1626]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1627]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1628]
+                  - generic [ref=f5e1629]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1630]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1631]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1632] [cursor=pointer]
+              - generic [ref=f5e1634]:
+                - generic [ref=f5e1635]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1636]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1637]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1638]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1639]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1640]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1641] [cursor=pointer]
+              - generic [ref=f5e1643]:
+                - generic [ref=f5e1644]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1645]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1646] [cursor=pointer]
+            - generic [ref=f5e1647]:
+              - generic [ref=f5e1648]:
+                - strong [ref=f5e1649]: QA seller-staff
+                - generic [ref=f5e1650]: qa.recovery.auth-009.seller-staff.1791543466285@weevcrafts.local
+                - generic [ref=f5e1651]: "User #68 · active"
+                - generic [ref=f5e1652]: seller_staff
+              - generic [ref=f5e1655]:
+                - heading "Edit account" [level=3] [ref=f5e1656]
+                - generic [ref=f5e1657]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1658]: QA seller-staff
+                - generic [ref=f5e1659]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1660]: qa.recovery.auth-009.seller-staff.1791543466285@weevcrafts.local
+                  - generic [ref=f5e1661]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1662]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1663]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1664]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1665]
+                  - generic [ref=f5e1666]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1667]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1668]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1669] [cursor=pointer]
+              - generic [ref=f5e1671]:
+                - generic [ref=f5e1672]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1673]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1674]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1675]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1676]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1677]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1678] [cursor=pointer]
+              - generic [ref=f5e1680]:
+                - generic [ref=f5e1681]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1682]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1683] [cursor=pointer]
+            - generic [ref=f5e1684]:
+              - generic [ref=f5e1685]:
+                - strong [ref=f5e1686]: QA seller-staff
+                - generic [ref=f5e1687]: qa.recovery.auth-008.seller-staff.1791543459737@weevcrafts.local
+                - generic [ref=f5e1688]: "User #67 · active"
+                - generic [ref=f5e1689]: seller_staff
+              - generic [ref=f5e1692]:
+                - heading "Edit account" [level=3] [ref=f5e1693]
+                - generic [ref=f5e1694]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1695]: QA seller-staff
+                - generic [ref=f5e1696]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1697]: qa.recovery.auth-008.seller-staff.1791543459737@weevcrafts.local
+                  - generic [ref=f5e1698]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1699]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1700]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1701]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1702]
+                  - generic [ref=f5e1703]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1704]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1705]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1706] [cursor=pointer]
+              - generic [ref=f5e1708]:
+                - generic [ref=f5e1709]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1710]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1711]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1712]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1713]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1714]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1715] [cursor=pointer]
+              - generic [ref=f5e1717]:
+                - generic [ref=f5e1718]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1719]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1720] [cursor=pointer]
+            - generic [ref=f5e1721]:
+              - generic [ref=f5e1722]:
+                - strong [ref=f5e1723]: QA seller-owner
+                - generic [ref=f5e1724]: qa.recovery.auth-012.seller-owner.1791543443761@weevcrafts.local
+                - generic [ref=f5e1725]: "User #66 · active"
+                - generic [ref=f5e1726]: seller_owner
+              - generic [ref=f5e1729]:
+                - heading "Edit account" [level=3] [ref=f5e1730]
+                - generic [ref=f5e1731]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1732]: QA seller-owner
+                - generic [ref=f5e1733]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1734]: qa.recovery.auth-012.seller-owner.1791543443761@weevcrafts.local
+                  - generic [ref=f5e1735]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1736]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1737]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1738]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1739]
+                  - generic [ref=f5e1740]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1741]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1742]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1743] [cursor=pointer]
+              - generic [ref=f5e1745]:
+                - generic [ref=f5e1746]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1747]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1748]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1749]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1750]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1751]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1752] [cursor=pointer]
+              - generic [ref=f5e1754]:
+                - generic [ref=f5e1755]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1756]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1757] [cursor=pointer]
+            - generic [ref=f5e1758]:
+              - generic [ref=f5e1759]:
+                - strong [ref=f5e1760]: QA seller-owner
+                - generic [ref=f5e1761]: qa.recovery.auth-011.seller-owner.1791543429452@weevcrafts.local
+                - generic [ref=f5e1762]: "User #65 · active"
+                - generic [ref=f5e1763]: seller_owner
+              - generic [ref=f5e1766]:
+                - heading "Edit account" [level=3] [ref=f5e1767]
+                - generic [ref=f5e1768]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1769]: QA seller-owner
+                - generic [ref=f5e1770]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1771]: qa.recovery.auth-011.seller-owner.1791543429452@weevcrafts.local
+                  - generic [ref=f5e1772]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1773]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1774]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1775]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1776]
+                  - generic [ref=f5e1777]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1778]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1779]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1780] [cursor=pointer]
+              - generic [ref=f5e1782]:
+                - generic [ref=f5e1783]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1784]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1785]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1786]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1787]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1788]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1789] [cursor=pointer]
+              - generic [ref=f5e1791]:
+                - generic [ref=f5e1792]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1793]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1794] [cursor=pointer]
+            - generic [ref=f5e1795]:
+              - generic [ref=f5e1796]:
+                - strong [ref=f5e1797]: QA seller-owner
+                - generic [ref=f5e1798]: qa.recovery.auth-014.seller-owner.1791543422029@weevcrafts.local
+                - generic [ref=f5e1799]: "User #64 · active"
+                - generic [ref=f5e1800]: seller_owner
+              - generic [ref=f5e1803]:
+                - heading "Edit account" [level=3] [ref=f5e1804]
+                - generic [ref=f5e1805]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1806]: QA seller-owner
+                - generic [ref=f5e1807]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1808]: qa.recovery.auth-014.seller-owner.1791543422029@weevcrafts.local
+                  - generic [ref=f5e1809]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1810]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1811]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1812]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1813]
+                  - generic [ref=f5e1814]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1815]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1816]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1817] [cursor=pointer]
+              - generic [ref=f5e1819]:
+                - generic [ref=f5e1820]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1821]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1822]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1823]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1824]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1825]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1826] [cursor=pointer]
+              - generic [ref=f5e1828]:
+                - generic [ref=f5e1829]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1830]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1831] [cursor=pointer]
+            - generic [ref=f5e1832]:
+              - generic [ref=f5e1833]:
+                - strong [ref=f5e1834]: QA seller-owner
+                - generic [ref=f5e1835]: qa.recovery.auth-010.seller-owner.1791543401584@weevcrafts.local
+                - generic [ref=f5e1836]: "User #63 · active"
+                - generic [ref=f5e1837]: seller_owner
+              - generic [ref=f5e1840]:
+                - heading "Edit account" [level=3] [ref=f5e1841]
+                - generic [ref=f5e1842]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1843]: QA seller-owner
+                - generic [ref=f5e1844]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1845]: qa.recovery.auth-010.seller-owner.1791543401584@weevcrafts.local
+                  - generic [ref=f5e1846]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1847]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1848]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1849]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1850]
+                  - generic [ref=f5e1851]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1852]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1853]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1854] [cursor=pointer]
+              - generic [ref=f5e1856]:
+                - generic [ref=f5e1857]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1858]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1859]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1860]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1861]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1862]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1863] [cursor=pointer]
+              - generic [ref=f5e1865]:
+                - generic [ref=f5e1866]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1867]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1868] [cursor=pointer]
+            - generic [ref=f5e1869]:
+              - generic [ref=f5e1870]:
+                - strong [ref=f5e1871]: QA seller-owner
+                - generic [ref=f5e1872]: qa.recovery.auth-009.seller-owner.1791543394367@weevcrafts.local
+                - generic [ref=f5e1873]: "User #62 · active"
+                - generic [ref=f5e1874]: seller_owner
+              - generic [ref=f5e1877]:
+                - heading "Edit account" [level=3] [ref=f5e1878]
+                - generic [ref=f5e1879]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1880]: QA seller-owner
+                - generic [ref=f5e1881]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1882]: qa.recovery.auth-009.seller-owner.1791543394367@weevcrafts.local
+                  - generic [ref=f5e1883]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1884]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1885]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1886]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1887]
+                  - generic [ref=f5e1888]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1889]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1890]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1891] [cursor=pointer]
+              - generic [ref=f5e1893]:
+                - generic [ref=f5e1894]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1895]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1896]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1897]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1898]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1899]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1900] [cursor=pointer]
+              - generic [ref=f5e1902]:
+                - generic [ref=f5e1903]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1904]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1905] [cursor=pointer]
+            - generic [ref=f5e1906]:
+              - generic [ref=f5e1907]:
+                - strong [ref=f5e1908]: QA seller-owner
+                - generic [ref=f5e1909]: qa.recovery.auth-008.seller-owner.1791543386301@weevcrafts.local
+                - generic [ref=f5e1910]: "User #61 · active"
+                - generic [ref=f5e1911]: seller_owner
+              - generic [ref=f5e1914]:
+                - heading "Edit account" [level=3] [ref=f5e1915]
+                - generic [ref=f5e1916]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1917]: QA seller-owner
+                - generic [ref=f5e1918]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1919]: qa.recovery.auth-008.seller-owner.1791543386301@weevcrafts.local
+                  - generic [ref=f5e1920]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1921]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1922]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1923]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1924]
+                  - generic [ref=f5e1925]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1926]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1927]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1928] [cursor=pointer]
+              - generic [ref=f5e1930]:
+                - generic [ref=f5e1931]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1932]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1933]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1934]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1935]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1936]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1937] [cursor=pointer]
+              - generic [ref=f5e1939]:
+                - generic [ref=f5e1940]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1941]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1942] [cursor=pointer]
+            - generic [ref=f5e1943]:
+              - generic [ref=f5e1944]:
+                - strong [ref=f5e1945]: QA customer
+                - generic [ref=f5e1946]: qa.recovery.auth-012.customer.1791543371130@weevcrafts.local
+                - generic [ref=f5e1947]: "User #60 · active"
+                - generic [ref=f5e1948]: customer
+              - generic [ref=f5e1951]:
+                - heading "Edit account" [level=3] [ref=f5e1952]
+                - generic [ref=f5e1953]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1954]: QA customer
+                - generic [ref=f5e1955]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1956]: qa.recovery.auth-012.customer.1791543371130@weevcrafts.local
+                  - generic [ref=f5e1957]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1958]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1959]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1960]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1961]
+                  - generic [ref=f5e1962]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e1963]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1964]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e1965] [cursor=pointer]
+              - generic [ref=f5e1967]:
+                - generic [ref=f5e1968]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e1969]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e1970]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e1971]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e1972]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e1973]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e1974] [cursor=pointer]
+              - generic [ref=f5e1976]:
+                - generic [ref=f5e1977]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e1978]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e1979] [cursor=pointer]
+            - generic [ref=f5e1980]:
+              - generic [ref=f5e1981]:
+                - strong [ref=f5e1982]: QA customer
+                - generic [ref=f5e1983]: qa.recovery.auth-011.customer.1791543357669@weevcrafts.local
+                - generic [ref=f5e1984]: "User #59 · active"
+                - generic [ref=f5e1985]: customer
+              - generic [ref=f5e1988]:
+                - heading "Edit account" [level=3] [ref=f5e1989]
+                - generic [ref=f5e1990]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e1991]: QA customer
+                - generic [ref=f5e1992]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e1993]: qa.recovery.auth-011.customer.1791543357669@weevcrafts.local
+                  - generic [ref=f5e1994]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e1995]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e1996]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e1997]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e1998]
+                  - generic [ref=f5e1999]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2000]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2001]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2002] [cursor=pointer]
+              - generic [ref=f5e2004]:
+                - generic [ref=f5e2005]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2006]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2007]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2008]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2009]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2010]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2011] [cursor=pointer]
+              - generic [ref=f5e2013]:
+                - generic [ref=f5e2014]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2015]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2016] [cursor=pointer]
+            - generic [ref=f5e2017]:
+              - generic [ref=f5e2018]:
+                - strong [ref=f5e2019]: QA customer
+                - generic [ref=f5e2020]: qa.recovery.auth-014.customer.1791543350508@weevcrafts.local
+                - generic [ref=f5e2021]: "User #58 · active"
+                - generic [ref=f5e2022]: customer
+              - generic [ref=f5e2025]:
+                - heading "Edit account" [level=3] [ref=f5e2026]
+                - generic [ref=f5e2027]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2028]: QA customer
+                - generic [ref=f5e2029]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2030]: qa.recovery.auth-014.customer.1791543350508@weevcrafts.local
+                  - generic [ref=f5e2031]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2032]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2033]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2034]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2035]
+                  - generic [ref=f5e2036]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2037]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2038]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2039] [cursor=pointer]
+              - generic [ref=f5e2041]:
+                - generic [ref=f5e2042]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2043]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2044]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2045]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2046]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2047]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2048] [cursor=pointer]
+              - generic [ref=f5e2050]:
+                - generic [ref=f5e2051]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2052]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2053] [cursor=pointer]
+            - generic [ref=f5e2054]:
+              - generic [ref=f5e2055]:
+                - strong [ref=f5e2056]: QA customer
+                - generic [ref=f5e2057]: qa.recovery.auth-010.customer.1791543332931@weevcrafts.local
+                - generic [ref=f5e2058]: "User #57 · active"
+                - generic [ref=f5e2059]: customer
+              - generic [ref=f5e2062]:
+                - heading "Edit account" [level=3] [ref=f5e2063]
+                - generic [ref=f5e2064]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2065]: QA customer
+                - generic [ref=f5e2066]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2067]: qa.recovery.auth-010.customer.1791543332931@weevcrafts.local
+                  - generic [ref=f5e2068]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2069]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2070]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2071]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2072]
+                  - generic [ref=f5e2073]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2074]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2075]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2076] [cursor=pointer]
+              - generic [ref=f5e2078]:
+                - generic [ref=f5e2079]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2080]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2081]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2082]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2083]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2084]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2085] [cursor=pointer]
+              - generic [ref=f5e2087]:
+                - generic [ref=f5e2088]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2089]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2090] [cursor=pointer]
+            - generic [ref=f5e2091]:
+              - generic [ref=f5e2092]:
+                - strong [ref=f5e2093]: QA customer
+                - generic [ref=f5e2094]: qa.recovery.auth-009.customer.1791543325663@weevcrafts.local
+                - generic [ref=f5e2095]: "User #56 · active"
+                - generic [ref=f5e2096]: customer
+              - generic [ref=f5e2099]:
+                - heading "Edit account" [level=3] [ref=f5e2100]
+                - generic [ref=f5e2101]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2102]: QA customer
+                - generic [ref=f5e2103]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2104]: qa.recovery.auth-009.customer.1791543325663@weevcrafts.local
+                  - generic [ref=f5e2105]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2106]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2107]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2108]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2109]
+                  - generic [ref=f5e2110]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2111]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2112]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2113] [cursor=pointer]
+              - generic [ref=f5e2115]:
+                - generic [ref=f5e2116]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2117]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2118]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2119]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2120]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2121]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2122] [cursor=pointer]
+              - generic [ref=f5e2124]:
+                - generic [ref=f5e2125]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2126]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2127] [cursor=pointer]
+            - generic [ref=f5e2128]:
+              - generic [ref=f5e2129]:
+                - strong [ref=f5e2130]: QA customer
+                - generic [ref=f5e2131]: qa.recovery.auth-008.customer.1791543318172@weevcrafts.local
+                - generic [ref=f5e2132]: "User #55 · active"
+                - generic [ref=f5e2133]: customer
+              - generic [ref=f5e2136]:
+                - heading "Edit account" [level=3] [ref=f5e2137]
+                - generic [ref=f5e2138]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2139]: QA customer
+                - generic [ref=f5e2140]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2141]: qa.recovery.auth-008.customer.1791543318172@weevcrafts.local
+                  - generic [ref=f5e2142]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2143]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2144]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2145]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2146]
+                  - generic [ref=f5e2147]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2148]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2149]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2150] [cursor=pointer]
+              - generic [ref=f5e2152]:
+                - generic [ref=f5e2153]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2154]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2155]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2156]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2157]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2158]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2159] [cursor=pointer]
+              - generic [ref=f5e2161]:
+                - generic [ref=f5e2162]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2163]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2164] [cursor=pointer]
+            - generic [ref=f5e2165]:
+              - generic [ref=f5e2166]:
+                - strong [ref=f5e2167]: QA customer
+                - generic [ref=f5e2168]: qa.recovery.auth-012.customer.1791543133473@weevcrafts.local
+                - generic [ref=f5e2169]: "User #54 · active"
+                - generic [ref=f5e2170]: customer
+              - generic [ref=f5e2173]:
+                - heading "Edit account" [level=3] [ref=f5e2174]
+                - generic [ref=f5e2175]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2176]: QA customer
+                - generic [ref=f5e2177]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2178]: qa.recovery.auth-012.customer.1791543133473@weevcrafts.local
+                  - generic [ref=f5e2179]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2180]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2181]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2182]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2183]
+                  - generic [ref=f5e2184]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2185]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2186]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2187] [cursor=pointer]
+              - generic [ref=f5e2189]:
+                - generic [ref=f5e2190]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2191]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2192]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2193]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2194]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2195]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2196] [cursor=pointer]
+              - generic [ref=f5e2198]:
+                - generic [ref=f5e2199]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2200]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2201] [cursor=pointer]
+            - generic [ref=f5e2202]:
+              - generic [ref=f5e2203]:
+                - strong [ref=f5e2204]: QA customer
+                - generic [ref=f5e2205]: qa.recovery.auth-011.customer.1791543120314@weevcrafts.local
+                - generic [ref=f5e2206]: "User #53 · active"
+                - generic [ref=f5e2207]: customer
+              - generic [ref=f5e2210]:
+                - heading "Edit account" [level=3] [ref=f5e2211]
+                - generic [ref=f5e2212]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2213]: QA customer
+                - generic [ref=f5e2214]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2215]: qa.recovery.auth-011.customer.1791543120314@weevcrafts.local
+                  - generic [ref=f5e2216]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2217]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2218]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2219]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2220]
+                  - generic [ref=f5e2221]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2222]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2223]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2224] [cursor=pointer]
+              - generic [ref=f5e2226]:
+                - generic [ref=f5e2227]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2228]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2229]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2230]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2231]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2232]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2233] [cursor=pointer]
+              - generic [ref=f5e2235]:
+                - generic [ref=f5e2236]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2237]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2238] [cursor=pointer]
+            - generic [ref=f5e2239]:
+              - generic [ref=f5e2240]:
+                - strong [ref=f5e2241]: QA seller-owner
+                - generic [ref=f5e2242]: qa.recovery.auth-012.seller-owner.1791543102430@weevcrafts.local
+                - generic [ref=f5e2243]: "User #52 · active"
+                - generic [ref=f5e2244]: seller_owner
+              - generic [ref=f5e2247]:
+                - heading "Edit account" [level=3] [ref=f5e2248]
+                - generic [ref=f5e2249]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2250]: QA seller-owner
+                - generic [ref=f5e2251]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2252]: qa.recovery.auth-012.seller-owner.1791543102430@weevcrafts.local
+                  - generic [ref=f5e2253]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2254]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2255]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2256]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2257]
+                  - generic [ref=f5e2258]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2259]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2260]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2261] [cursor=pointer]
+              - generic [ref=f5e2263]:
+                - generic [ref=f5e2264]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2265]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2266]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2267]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2268]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2269]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2270] [cursor=pointer]
+              - generic [ref=f5e2272]:
+                - generic [ref=f5e2273]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2274]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2275] [cursor=pointer]
+            - generic [ref=f5e2276]:
+              - generic [ref=f5e2277]:
+                - strong [ref=f5e2278]: QA seller-owner
+                - generic [ref=f5e2279]: qa.recovery.auth-011.seller-owner.1791543089050@weevcrafts.local
+                - generic [ref=f5e2280]: "User #51 · active"
+                - generic [ref=f5e2281]: seller_owner
+              - generic [ref=f5e2284]:
+                - heading "Edit account" [level=3] [ref=f5e2285]
+                - generic [ref=f5e2286]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2287]: QA seller-owner
+                - generic [ref=f5e2288]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2289]: qa.recovery.auth-011.seller-owner.1791543089050@weevcrafts.local
+                  - generic [ref=f5e2290]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2291]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2292]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2293]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2294]
+                  - generic [ref=f5e2295]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2296]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2297]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2298] [cursor=pointer]
+              - generic [ref=f5e2300]:
+                - generic [ref=f5e2301]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2302]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2303]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2304]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2305]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2306]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2307] [cursor=pointer]
+              - generic [ref=f5e2309]:
+                - generic [ref=f5e2310]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2311]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2312] [cursor=pointer]
+            - generic [ref=f5e2313]:
+              - generic [ref=f5e2314]:
+                - strong [ref=f5e2315]: QA seller-owner
+                - generic [ref=f5e2316]: qa.recovery.auth-014.seller-owner.1791543083098@weevcrafts.local
+                - generic [ref=f5e2317]: "User #50 · active"
+                - generic [ref=f5e2318]: seller_owner
+              - generic [ref=f5e2321]:
+                - heading "Edit account" [level=3] [ref=f5e2322]
+                - generic [ref=f5e2323]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2324]: QA seller-owner
+                - generic [ref=f5e2325]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2326]: qa.recovery.auth-014.seller-owner.1791543083098@weevcrafts.local
+                  - generic [ref=f5e2327]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2328]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2329]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2330]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2331]
+                  - generic [ref=f5e2332]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2333]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2334]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2335] [cursor=pointer]
+              - generic [ref=f5e2337]:
+                - generic [ref=f5e2338]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2339]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2340]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2341]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2342]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2343]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2344] [cursor=pointer]
+              - generic [ref=f5e2346]:
+                - generic [ref=f5e2347]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2348]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2349] [cursor=pointer]
+            - generic [ref=f5e2350]:
+              - generic [ref=f5e2351]:
+                - strong [ref=f5e2352]: QA seller-owner
+                - generic [ref=f5e2353]: qa.recovery.auth-010.seller-owner.1791543068961@weevcrafts.local
+                - generic [ref=f5e2354]: "User #49 · active"
+                - generic [ref=f5e2355]: seller_owner
+              - generic [ref=f5e2358]:
+                - heading "Edit account" [level=3] [ref=f5e2359]
+                - generic [ref=f5e2360]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2361]: QA seller-owner
+                - generic [ref=f5e2362]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2363]: qa.recovery.auth-010.seller-owner.1791543068961@weevcrafts.local
+                  - generic [ref=f5e2364]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2365]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2366]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2367]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2368]
+                  - generic [ref=f5e2369]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2370]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2371]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2372] [cursor=pointer]
+              - generic [ref=f5e2374]:
+                - generic [ref=f5e2375]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2376]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2377]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2378]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2379]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2380]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2381] [cursor=pointer]
+              - generic [ref=f5e2383]:
+                - generic [ref=f5e2384]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2385]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2386] [cursor=pointer]
+            - generic [ref=f5e2387]:
+              - generic [ref=f5e2388]:
+                - strong [ref=f5e2389]: QA seller-owner
+                - generic [ref=f5e2390]: qa.recovery.auth-009.seller-owner.1791543062744@weevcrafts.local
+                - generic [ref=f5e2391]: "User #48 · active"
+                - generic [ref=f5e2392]: seller_owner
+              - generic [ref=f5e2395]:
+                - heading "Edit account" [level=3] [ref=f5e2396]
+                - generic [ref=f5e2397]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2398]: QA seller-owner
+                - generic [ref=f5e2399]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2400]: qa.recovery.auth-009.seller-owner.1791543062744@weevcrafts.local
+                  - generic [ref=f5e2401]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2402]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2403]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2404]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2405]
+                  - generic [ref=f5e2406]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2407]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2408]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2409] [cursor=pointer]
+              - generic [ref=f5e2411]:
+                - generic [ref=f5e2412]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2413]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2414]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2415]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2416]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2417]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2418] [cursor=pointer]
+              - generic [ref=f5e2420]:
+                - generic [ref=f5e2421]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2422]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2423] [cursor=pointer]
+            - generic [ref=f5e2424]:
+              - generic [ref=f5e2425]:
+                - strong [ref=f5e2426]: QA seller-owner
+                - generic [ref=f5e2427]: qa.recovery.auth-008.seller-owner.1791543054998@weevcrafts.local
+                - generic [ref=f5e2428]: "User #47 · active"
+                - generic [ref=f5e2429]: seller_owner
+              - generic [ref=f5e2432]:
+                - heading "Edit account" [level=3] [ref=f5e2433]
+                - generic [ref=f5e2434]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2435]: QA seller-owner
+                - generic [ref=f5e2436]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2437]: qa.recovery.auth-008.seller-owner.1791543054998@weevcrafts.local
+                  - generic [ref=f5e2438]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2439]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2440]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2441]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2442]
+                  - generic [ref=f5e2443]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2444]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2445]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2446] [cursor=pointer]
+              - generic [ref=f5e2448]:
+                - generic [ref=f5e2449]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2450]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2451]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2452]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2453]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2454]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2455] [cursor=pointer]
+              - generic [ref=f5e2457]:
+                - generic [ref=f5e2458]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2459]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2460] [cursor=pointer]
+            - generic [ref=f5e2461]:
+              - generic [ref=f5e2462]:
+                - strong [ref=f5e2463]: QA customer
+                - generic [ref=f5e2464]: qa.recovery.auth-012.customer.1791542932936@weevcrafts.local
+                - generic [ref=f5e2465]: "User #46 · active"
+                - generic [ref=f5e2466]: customer
+              - generic [ref=f5e2469]:
+                - heading "Edit account" [level=3] [ref=f5e2470]
+                - generic [ref=f5e2471]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2472]: QA customer
+                - generic [ref=f5e2473]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2474]: qa.recovery.auth-012.customer.1791542932936@weevcrafts.local
+                  - generic [ref=f5e2475]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2476]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2477]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2478]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2479]
+                  - generic [ref=f5e2480]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2481]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2482]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2483] [cursor=pointer]
+              - generic [ref=f5e2485]:
+                - generic [ref=f5e2486]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2487]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2488]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2489]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2490]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2491]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2492] [cursor=pointer]
+              - generic [ref=f5e2494]:
+                - generic [ref=f5e2495]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2496]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2497] [cursor=pointer]
+            - generic [ref=f5e2498]:
+              - generic [ref=f5e2499]:
+                - strong [ref=f5e2500]: QA customer
+                - generic [ref=f5e2501]: qa.recovery.auth-011.customer.1791542919967@weevcrafts.local
+                - generic [ref=f5e2502]: "User #45 · active"
+                - generic [ref=f5e2503]: customer
+              - generic [ref=f5e2506]:
+                - heading "Edit account" [level=3] [ref=f5e2507]
+                - generic [ref=f5e2508]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2509]: QA customer
+                - generic [ref=f5e2510]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2511]: qa.recovery.auth-011.customer.1791542919967@weevcrafts.local
+                  - generic [ref=f5e2512]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2513]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2514]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2515]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2516]
+                  - generic [ref=f5e2517]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2518]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2519]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2520] [cursor=pointer]
+              - generic [ref=f5e2522]:
+                - generic [ref=f5e2523]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2524]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2525]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2526]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2527]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2528]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2529] [cursor=pointer]
+              - generic [ref=f5e2531]:
+                - generic [ref=f5e2532]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2533]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2534] [cursor=pointer]
+            - generic [ref=f5e2535]:
+              - generic [ref=f5e2536]:
+                - strong [ref=f5e2537]: QA customer
+                - generic [ref=f5e2538]: qa.recovery.auth-014.customer.1791542913697@weevcrafts.local
+                - generic [ref=f5e2539]: "User #44 · active"
+                - generic [ref=f5e2540]: customer
+              - generic [ref=f5e2543]:
+                - heading "Edit account" [level=3] [ref=f5e2544]
+                - generic [ref=f5e2545]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2546]: QA customer
+                - generic [ref=f5e2547]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2548]: qa.recovery.auth-014.customer.1791542913697@weevcrafts.local
+                  - generic [ref=f5e2549]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2550]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2551]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2552]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2553]
+                  - generic [ref=f5e2554]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2555]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2556]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2557] [cursor=pointer]
+              - generic [ref=f5e2559]:
+                - generic [ref=f5e2560]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2561]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2562]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2563]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2564]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2565]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2566] [cursor=pointer]
+              - generic [ref=f5e2568]:
+                - generic [ref=f5e2569]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2570]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2571] [cursor=pointer]
+            - generic [ref=f5e2572]:
+              - generic [ref=f5e2573]:
+                - strong [ref=f5e2574]: QA customer
+                - generic [ref=f5e2575]: qa.recovery.auth-010.customer.1791542899882@weevcrafts.local
+                - generic [ref=f5e2576]: "User #43 · active"
+                - generic [ref=f5e2577]: customer
+              - generic [ref=f5e2580]:
+                - heading "Edit account" [level=3] [ref=f5e2581]
+                - generic [ref=f5e2582]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2583]: QA customer
+                - generic [ref=f5e2584]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2585]: qa.recovery.auth-010.customer.1791542899882@weevcrafts.local
+                  - generic [ref=f5e2586]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2587]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2588]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2589]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2590]
+                  - generic [ref=f5e2591]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2592]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2593]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2594] [cursor=pointer]
+              - generic [ref=f5e2596]:
+                - generic [ref=f5e2597]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2598]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2599]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2600]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2601]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2602]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2603] [cursor=pointer]
+              - generic [ref=f5e2605]:
+                - generic [ref=f5e2606]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2607]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2608] [cursor=pointer]
+            - generic [ref=f5e2609]:
+              - generic [ref=f5e2610]:
+                - strong [ref=f5e2611]: QA customer
+                - generic [ref=f5e2612]: qa.recovery.auth-009.customer.1791542894926@weevcrafts.local
+                - generic [ref=f5e2613]: "User #42 · active"
+                - generic [ref=f5e2614]: customer
+              - generic [ref=f5e2617]:
+                - heading "Edit account" [level=3] [ref=f5e2618]
+                - generic [ref=f5e2619]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2620]: QA customer
+                - generic [ref=f5e2621]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2622]: qa.recovery.auth-009.customer.1791542894926@weevcrafts.local
+                  - generic [ref=f5e2623]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2624]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2625]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2626]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2627]
+                  - generic [ref=f5e2628]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2629]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2630]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2631] [cursor=pointer]
+              - generic [ref=f5e2633]:
+                - generic [ref=f5e2634]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2635]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2636]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2637]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2638]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2639]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2640] [cursor=pointer]
+              - generic [ref=f5e2642]:
+                - generic [ref=f5e2643]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2644]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2645] [cursor=pointer]
+            - generic [ref=f5e2646]:
+              - generic [ref=f5e2647]:
+                - strong [ref=f5e2648]: QA customer
+                - generic [ref=f5e2649]: qa.recovery.auth-008.customer.1791542889260@weevcrafts.local
+                - generic [ref=f5e2650]: "User #41 · active"
+                - generic [ref=f5e2651]: customer
+              - generic [ref=f5e2654]:
+                - heading "Edit account" [level=3] [ref=f5e2655]
+                - generic [ref=f5e2656]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2657]: QA customer
+                - generic [ref=f5e2658]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2659]: qa.recovery.auth-008.customer.1791542889260@weevcrafts.local
+                  - generic [ref=f5e2660]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2661]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2662]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2663]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2664]
+                  - generic [ref=f5e2665]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2666]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2667]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2668] [cursor=pointer]
+              - generic [ref=f5e2670]:
+                - generic [ref=f5e2671]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2672]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2673]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2674]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2675]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2676]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2677] [cursor=pointer]
+              - generic [ref=f5e2679]:
+                - generic [ref=f5e2680]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2681]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2682] [cursor=pointer]
+            - generic [ref=f5e2683]:
+              - generic [ref=f5e2684]:
+                - strong [ref=f5e2685]: QA seller-owner
+                - generic [ref=f5e2686]: qa.recovery.auth-011.seller-owner.1791542827173@weevcrafts.local
+                - generic [ref=f5e2687]: "User #40 · active"
+                - generic [ref=f5e2688]: seller_owner
+              - generic [ref=f5e2691]:
+                - heading "Edit account" [level=3] [ref=f5e2692]
+                - generic [ref=f5e2693]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2694]: QA seller-owner
+                - generic [ref=f5e2695]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2696]: qa.recovery.auth-011.seller-owner.1791542827173@weevcrafts.local
+                  - generic [ref=f5e2697]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2698]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2699]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2700]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2701]
+                  - generic [ref=f5e2702]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2703]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2704]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2705] [cursor=pointer]
+              - generic [ref=f5e2707]:
+                - generic [ref=f5e2708]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2709]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2710]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2711]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2712]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2713]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2714] [cursor=pointer]
+              - generic [ref=f5e2716]:
+                - generic [ref=f5e2717]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2718]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2719] [cursor=pointer]
+            - generic [ref=f5e2720]:
+              - generic [ref=f5e2721]:
+                - strong [ref=f5e2722]: QA seller-owner
+                - generic [ref=f5e2723]: qa.recovery.auth-014.seller-owner.1791542821129@weevcrafts.local
+                - generic [ref=f5e2724]: "User #39 · active"
+                - generic [ref=f5e2725]: seller_owner
+              - generic [ref=f5e2728]:
+                - heading "Edit account" [level=3] [ref=f5e2729]
+                - generic [ref=f5e2730]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2731]: QA seller-owner
+                - generic [ref=f5e2732]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2733]: qa.recovery.auth-014.seller-owner.1791542821129@weevcrafts.local
+                  - generic [ref=f5e2734]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2735]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2736]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2737]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2738]
+                  - generic [ref=f5e2739]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2740]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2741]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2742] [cursor=pointer]
+              - generic [ref=f5e2744]:
+                - generic [ref=f5e2745]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2746]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2747]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2748]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2749]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2750]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2751] [cursor=pointer]
+              - generic [ref=f5e2753]:
+                - generic [ref=f5e2754]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2755]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2756] [cursor=pointer]
+            - generic [ref=f5e2757]:
+              - generic [ref=f5e2758]:
+                - strong [ref=f5e2759]: QA seller-owner
+                - generic [ref=f5e2760]: qa.recovery.auth-010.seller-owner.1791542803080@weevcrafts.local
+                - generic [ref=f5e2761]: "User #38 · active"
+                - generic [ref=f5e2762]: seller_owner
+              - generic [ref=f5e2765]:
+                - heading "Edit account" [level=3] [ref=f5e2766]
+                - generic [ref=f5e2767]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2768]: QA seller-owner
+                - generic [ref=f5e2769]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2770]: qa.recovery.auth-010.seller-owner.1791542803080@weevcrafts.local
+                  - generic [ref=f5e2771]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2772]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2773]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2774]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2775]
+                  - generic [ref=f5e2776]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2777]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2778]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2779] [cursor=pointer]
+              - generic [ref=f5e2781]:
+                - generic [ref=f5e2782]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2783]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2784]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2785]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2786]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2787]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2788] [cursor=pointer]
+              - generic [ref=f5e2790]:
+                - generic [ref=f5e2791]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2792]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2793] [cursor=pointer]
+            - generic [ref=f5e2794]:
+              - generic [ref=f5e2795]:
+                - strong [ref=f5e2796]: QA seller-owner
+                - generic [ref=f5e2797]: qa.recovery.auth-009.seller-owner.1791542795109@weevcrafts.local
+                - generic [ref=f5e2798]: "User #37 · active"
+                - generic [ref=f5e2799]: seller_owner
+              - generic [ref=f5e2802]:
+                - heading "Edit account" [level=3] [ref=f5e2803]
+                - generic [ref=f5e2804]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2805]: QA seller-owner
+                - generic [ref=f5e2806]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2807]: qa.recovery.auth-009.seller-owner.1791542795109@weevcrafts.local
+                  - generic [ref=f5e2808]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2809]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2810]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2811]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2812]
+                  - generic [ref=f5e2813]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2814]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2815]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2816] [cursor=pointer]
+              - generic [ref=f5e2818]:
+                - generic [ref=f5e2819]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2820]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2821]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2822]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2823]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2824]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2825] [cursor=pointer]
+              - generic [ref=f5e2827]:
+                - generic [ref=f5e2828]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2829]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2830] [cursor=pointer]
+            - generic [ref=f5e2831]:
+              - generic [ref=f5e2832]:
+                - strong [ref=f5e2833]: QA seller-owner
+                - generic [ref=f5e2834]: qa.recovery.auth-008.seller-owner.1791542788055@weevcrafts.local
+                - generic [ref=f5e2835]: "User #36 · active"
+                - generic [ref=f5e2836]: seller_owner
+              - generic [ref=f5e2839]:
+                - heading "Edit account" [level=3] [ref=f5e2840]
+                - generic [ref=f5e2841]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2842]: QA seller-owner
+                - generic [ref=f5e2843]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2844]: qa.recovery.auth-008.seller-owner.1791542788055@weevcrafts.local
+                  - generic [ref=f5e2845]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2846]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2847]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2848]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2849]
+                  - generic [ref=f5e2850]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2851]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2852]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2853] [cursor=pointer]
+              - generic [ref=f5e2855]:
+                - generic [ref=f5e2856]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2857]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2858]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2859]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2860]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2861]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2862] [cursor=pointer]
+              - generic [ref=f5e2864]:
+                - generic [ref=f5e2865]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2866]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2867] [cursor=pointer]
+            - generic [ref=f5e2868]:
+              - generic [ref=f5e2869]:
+                - strong [ref=f5e2870]: QA customer
+                - generic [ref=f5e2871]: qa.recovery.auth-012.customer.1791542664927@weevcrafts.local
+                - generic [ref=f5e2872]: "User #35 · active"
+                - generic [ref=f5e2873]: customer
+              - generic [ref=f5e2876]:
+                - heading "Edit account" [level=3] [ref=f5e2877]
+                - generic [ref=f5e2878]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2879]: QA customer
+                - generic [ref=f5e2880]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2881]: qa.recovery.auth-012.customer.1791542664927@weevcrafts.local
+                  - generic [ref=f5e2882]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2883]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2884]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2885]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2886]
+                  - generic [ref=f5e2887]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2888]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2889]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2890] [cursor=pointer]
+              - generic [ref=f5e2892]:
+                - generic [ref=f5e2893]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2894]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2895]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2896]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2897]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2898]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2899] [cursor=pointer]
+              - generic [ref=f5e2901]:
+                - generic [ref=f5e2902]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2903]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2904] [cursor=pointer]
+            - generic [ref=f5e2905]:
+              - generic [ref=f5e2906]:
+                - strong [ref=f5e2907]: QA customer
+                - generic [ref=f5e2908]: qa.recovery.auth-011.customer.1791542540247@weevcrafts.local
+                - generic [ref=f5e2909]: "User #34 · active"
+                - generic [ref=f5e2910]: customer
+              - generic [ref=f5e2913]:
+                - heading "Edit account" [level=3] [ref=f5e2914]
+                - generic [ref=f5e2915]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2916]: QA customer
+                - generic [ref=f5e2917]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2918]: qa.recovery.auth-011.customer.1791542540247@weevcrafts.local
+                  - generic [ref=f5e2919]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2920]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2921]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2922]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2923]
+                  - generic [ref=f5e2924]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2925]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2926]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2927] [cursor=pointer]
+              - generic [ref=f5e2929]:
+                - generic [ref=f5e2930]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2931]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2932]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2933]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2934]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2935]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2936] [cursor=pointer]
+              - generic [ref=f5e2938]:
+                - generic [ref=f5e2939]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2940]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2941] [cursor=pointer]
+            - generic [ref=f5e2942]:
+              - generic [ref=f5e2943]:
+                - strong [ref=f5e2944]: QA customer
+                - generic [ref=f5e2945]: qa.recovery.auth-014.customer.1791542534118@weevcrafts.local
+                - generic [ref=f5e2946]: "User #33 · active"
+                - generic [ref=f5e2947]: customer
+              - generic [ref=f5e2950]:
+                - heading "Edit account" [level=3] [ref=f5e2951]
+                - generic [ref=f5e2952]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2953]: QA customer
+                - generic [ref=f5e2954]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2955]: qa.recovery.auth-014.customer.1791542534118@weevcrafts.local
+                  - generic [ref=f5e2956]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2957]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2958]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2959]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2960]
+                  - generic [ref=f5e2961]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2962]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2963]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e2964] [cursor=pointer]
+              - generic [ref=f5e2966]:
+                - generic [ref=f5e2967]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e2968]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e2969]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e2970]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e2971]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e2972]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e2973] [cursor=pointer]
+              - generic [ref=f5e2975]:
+                - generic [ref=f5e2976]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e2977]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e2978] [cursor=pointer]
+            - generic [ref=f5e2979]:
+              - generic [ref=f5e2980]:
+                - strong [ref=f5e2981]: QA customer
+                - generic [ref=f5e2982]: qa.recovery.auth-010.customer.1791542510357@weevcrafts.local
+                - generic [ref=f5e2983]: "User #32 · active"
+                - generic [ref=f5e2984]: customer
+              - generic [ref=f5e2987]:
+                - heading "Edit account" [level=3] [ref=f5e2988]
+                - generic [ref=f5e2989]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e2990]: QA customer
+                - generic [ref=f5e2991]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e2992]: qa.recovery.auth-010.customer.1791542510357@weevcrafts.local
+                  - generic [ref=f5e2993]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e2994]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e2995]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e2996]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e2997]
+                  - generic [ref=f5e2998]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e2999]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3000]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3001] [cursor=pointer]
+              - generic [ref=f5e3003]:
+                - generic [ref=f5e3004]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3005]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3006]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3007]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3008]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3009]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3010] [cursor=pointer]
+              - generic [ref=f5e3012]:
+                - generic [ref=f5e3013]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3014]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3015] [cursor=pointer]
+            - generic [ref=f5e3016]:
+              - generic [ref=f5e3017]:
+                - strong [ref=f5e3018]: QA customer
+                - generic [ref=f5e3019]: qa.recovery.auth-009.customer.1791542500975@weevcrafts.local
+                - generic [ref=f5e3020]: "User #31 · active"
+                - generic [ref=f5e3021]: customer
+              - generic [ref=f5e3024]:
+                - heading "Edit account" [level=3] [ref=f5e3025]
+                - generic [ref=f5e3026]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3027]: QA customer
+                - generic [ref=f5e3028]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3029]: qa.recovery.auth-009.customer.1791542500975@weevcrafts.local
+                  - generic [ref=f5e3030]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3031]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3032]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3033]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3034]
+                  - generic [ref=f5e3035]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3036]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3037]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3038] [cursor=pointer]
+              - generic [ref=f5e3040]:
+                - generic [ref=f5e3041]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3042]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3043]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3044]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3045]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3046]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3047] [cursor=pointer]
+              - generic [ref=f5e3049]:
+                - generic [ref=f5e3050]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3051]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3052] [cursor=pointer]
+            - generic [ref=f5e3053]:
+              - generic [ref=f5e3054]:
+                - strong [ref=f5e3055]: QA customer
+                - generic [ref=f5e3056]: qa.recovery.auth-008.customer.1791542491231@weevcrafts.local
+                - generic [ref=f5e3057]: "User #30 · active"
+                - generic [ref=f5e3058]: customer
+              - generic [ref=f5e3061]:
+                - heading "Edit account" [level=3] [ref=f5e3062]
+                - generic [ref=f5e3063]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3064]: QA customer
+                - generic [ref=f5e3065]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3066]: qa.recovery.auth-008.customer.1791542491231@weevcrafts.local
+                  - generic [ref=f5e3067]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3068]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3069]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3070]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3071]
+                  - generic [ref=f5e3072]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3073]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3074]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3075] [cursor=pointer]
+              - generic [ref=f5e3077]:
+                - generic [ref=f5e3078]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3079]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3080]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3081]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3082]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3083]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3084] [cursor=pointer]
+              - generic [ref=f5e3086]:
+                - generic [ref=f5e3087]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3088]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3089] [cursor=pointer]
+            - generic [ref=f5e3090]:
+              - generic [ref=f5e3091]:
+                - strong [ref=f5e3092]: Deleted account
+                - generic [ref=f5e3093]: deleted+29@invalid.weevcrafts.local
+                - generic [ref=f5e3094]: "User #29 · deleted"
+                - generic [ref=f5e3095]: No roles
+              - status [ref=f5e3097]: This account was deleted and retained for order and audit history.
+            - generic [ref=f5e3098]:
+              - generic [ref=f5e3099]:
+                - strong [ref=f5e3100]: Deleted account
+                - generic [ref=f5e3101]: deleted+28@invalid.weevcrafts.local
+                - generic [ref=f5e3102]: "User #28 · deleted"
+                - generic [ref=f5e3103]: No roles
+              - status [ref=f5e3105]: This account was deleted and retained for order and audit history.
+            - generic [ref=f5e3106]:
+              - generic [ref=f5e3107]:
+                - strong [ref=f5e3108]: Deleted account
+                - generic [ref=f5e3109]: deleted+27@invalid.weevcrafts.local
+                - generic [ref=f5e3110]: "User #27 · deleted"
+                - generic [ref=f5e3111]: No roles
+              - status [ref=f5e3113]: This account was deleted and retained for order and audit history.
+            - generic [ref=f5e3114]:
+              - generic [ref=f5e3115]:
+                - strong [ref=f5e3116]: Deleted account
+                - generic [ref=f5e3117]: deleted+26@invalid.weevcrafts.local
+                - generic [ref=f5e3118]: "User #26 · deleted"
+                - generic [ref=f5e3119]: No roles
+              - status [ref=f5e3121]: This account was deleted and retained for order and audit history.
+            - generic [ref=f5e3122]:
+              - generic [ref=f5e3123]:
+                - strong [ref=f5e3124]: Deleted account
+                - generic [ref=f5e3125]: deleted+25@invalid.weevcrafts.local
+                - generic [ref=f5e3126]: "User #25 · deleted"
+                - generic [ref=f5e3127]: No roles
+              - status [ref=f5e3129]: This account was deleted and retained for order and audit history.
+            - generic [ref=f5e3130]:
+              - generic [ref=f5e3131]:
+                - strong [ref=f5e3132]: Returns Operator
+                - generic [ref=f5e3133]: demo.operations01@weevcrafts.local
+                - generic [ref=f5e3134]: "User #24 · active"
+                - generic [ref=f5e3135]: operations_returns
+              - generic [ref=f5e3138]:
+                - heading "Edit account" [level=3] [ref=f5e3139]
+                - generic [ref=f5e3140]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3141]: Returns Operator
+                - generic [ref=f5e3142]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3143]: demo.operations01@weevcrafts.local
+                  - generic [ref=f5e3144]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3145]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3146]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3147]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3148]
+                  - generic [ref=f5e3149]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3150]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3151]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3152] [cursor=pointer]
+              - generic [ref=f5e3154]:
+                - generic [ref=f5e3155]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3156]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3157]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3158]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3159]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3160]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3161] [cursor=pointer]
+              - generic [ref=f5e3163]:
+                - generic [ref=f5e3164]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3165]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3166] [cursor=pointer]
+            - generic [ref=f5e3167]:
+              - generic [ref=f5e3168]:
+                - strong [ref=f5e3169]: Settlement Operator
+                - generic [ref=f5e3170]: demo.finance02@weevcrafts.local
+                - generic [ref=f5e3171]: "User #23 · active"
+                - generic [ref=f5e3172]: finance_operator
+              - generic [ref=f5e3175]:
+                - heading "Edit account" [level=3] [ref=f5e3176]
+                - generic [ref=f5e3177]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3178]: Settlement Operator
+                - generic [ref=f5e3179]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3180]: demo.finance02@weevcrafts.local
+                  - generic [ref=f5e3181]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3182]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3183]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3184]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3185]
+                  - generic [ref=f5e3186]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3187]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3188]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3189] [cursor=pointer]
+              - generic [ref=f5e3191]:
+                - generic [ref=f5e3192]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3193]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3194]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3195]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3196]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3197]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3198] [cursor=pointer]
+              - generic [ref=f5e3200]:
+                - generic [ref=f5e3201]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3202]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3203] [cursor=pointer]
+            - generic [ref=f5e3204]:
+              - generic [ref=f5e3205]:
+                - strong [ref=f5e3206]: Finance Operator
+                - generic [ref=f5e3207]: demo.finance01@weevcrafts.local
+                - generic [ref=f5e3208]: "User #22 · active"
+                - generic [ref=f5e3209]: finance_operator
+              - generic [ref=f5e3212]:
+                - heading "Edit account" [level=3] [ref=f5e3213]
+                - generic [ref=f5e3214]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3215]: Finance Operator
+                - generic [ref=f5e3216]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3217]: demo.finance01@weevcrafts.local
+                  - generic [ref=f5e3218]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3219]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3220]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3221]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3222]
+                  - generic [ref=f5e3223]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3224]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3225]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3226] [cursor=pointer]
+              - generic [ref=f5e3228]:
+                - generic [ref=f5e3229]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3230]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3231]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3232]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3233]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3234]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3235] [cursor=pointer]
+              - generic [ref=f5e3237]:
+                - generic [ref=f5e3238]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3239]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3240] [cursor=pointer]
+            - generic [ref=f5e3241]:
+              - generic [ref=f5e3242]:
+                - strong [ref=f5e3243]: Rohan Support
+                - generic [ref=f5e3244]: demo.support02@weevcrafts.local
+                - generic [ref=f5e3245]: "User #21 · active"
+                - generic [ref=f5e3246]: support_agent
+              - generic [ref=f5e3249]:
+                - heading "Edit account" [level=3] [ref=f5e3250]
+                - generic [ref=f5e3251]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3252]: Rohan Support
+                - generic [ref=f5e3253]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3254]: demo.support02@weevcrafts.local
+                  - generic [ref=f5e3255]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3256]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3257]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3258]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3259]
+                  - generic [ref=f5e3260]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3261]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3262]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3263] [cursor=pointer]
+              - generic [ref=f5e3265]:
+                - generic [ref=f5e3266]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3267]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3268]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3269]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3270]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3271]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3272] [cursor=pointer]
+              - generic [ref=f5e3274]:
+                - generic [ref=f5e3275]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3276]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3277] [cursor=pointer]
+            - generic [ref=f5e3278]:
+              - generic [ref=f5e3279]:
+                - strong [ref=f5e3280]: Aditi Support
+                - generic [ref=f5e3281]: demo.support01@weevcrafts.local
+                - generic [ref=f5e3282]: "User #20 · active"
+                - generic [ref=f5e3283]: support_agent
+              - generic [ref=f5e3286]:
+                - heading "Edit account" [level=3] [ref=f5e3287]
+                - generic [ref=f5e3288]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3289]: Aditi Support
+                - generic [ref=f5e3290]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3291]: demo.support01@weevcrafts.local
+                  - generic [ref=f5e3292]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3293]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3294]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3295]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3296]
+                  - generic [ref=f5e3297]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3298]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3299]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3300] [cursor=pointer]
+              - generic [ref=f5e3302]:
+                - generic [ref=f5e3303]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3304]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3305]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3306]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3307]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3308]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3309] [cursor=pointer]
+              - generic [ref=f5e3311]:
+                - generic [ref=f5e3312]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3313]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3314] [cursor=pointer]
+            - generic [ref=f5e3315]:
+              - generic [ref=f5e3316]:
+                - strong [ref=f5e3317]: Super Admin Two
+                - generic [ref=f5e3318]: demo.super02@weevcrafts.local
+                - generic [ref=f5e3319]: "User #19 · active"
+                - generic [ref=f5e3320]: super_admin
+              - generic [ref=f5e3323]:
+                - heading "Edit account" [level=3] [ref=f5e3324]
+                - generic [ref=f5e3325]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3326]: Super Admin Two
+                - generic [ref=f5e3327]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3328]: demo.super02@weevcrafts.local
+                  - generic [ref=f5e3329]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3330]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3331]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3332]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3333]
+                  - generic [ref=f5e3334]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3335]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3336]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3337] [cursor=pointer]
+              - generic [ref=f5e3339]:
+                - generic [ref=f5e3340]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3341]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3342]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3343]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3344]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3345]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3346] [cursor=pointer]
+              - generic [ref=f5e3348]:
+                - generic [ref=f5e3349]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3350]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3351] [cursor=pointer]
+            - generic [ref=f5e3352]:
+              - generic [ref=f5e3353]:
+                - strong [ref=f5e3354]: Super Admin One
+                - generic [ref=f5e3355]: demo.super01@weevcrafts.local
+                - generic [ref=f5e3356]: "User #18 · active"
+                - generic [ref=f5e3357]: super_admin
+              - generic [ref=f5e3360]:
+                - heading "Edit account" [level=3] [ref=f5e3361]
+                - generic [ref=f5e3362]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3363]: Super Admin One
+                - generic [ref=f5e3364]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3365]: demo.super01@weevcrafts.local
+                  - generic [ref=f5e3366]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3367]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3368]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3369]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3370]
+                  - generic [ref=f5e3371]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3372]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3373]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3374] [cursor=pointer]
+              - generic [ref=f5e3376]:
+                - generic [ref=f5e3377]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3378]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3379]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3380]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3381]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3382]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3383] [cursor=pointer]
+            - generic [ref=f5e3384]:
+              - generic [ref=f5e3385]:
+                - strong [ref=f5e3386]: Marketplace Content
+                - generic [ref=f5e3387]: demo.marketplace03@weevcrafts.local
+                - generic [ref=f5e3388]: "User #17 · active"
+                - generic [ref=f5e3389]: marketplace_admin
+              - generic [ref=f5e3392]:
+                - heading "Edit account" [level=3] [ref=f5e3393]
+                - generic [ref=f5e3394]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3395]: Marketplace Content
+                - generic [ref=f5e3396]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3397]: demo.marketplace03@weevcrafts.local
+                  - generic [ref=f5e3398]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3399]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3400]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3401]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3402]
+                  - generic [ref=f5e3403]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3404]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3405]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3406] [cursor=pointer]
+              - generic [ref=f5e3408]:
+                - generic [ref=f5e3409]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3410]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3411]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3412]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3413]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3414]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3415] [cursor=pointer]
+              - generic [ref=f5e3417]:
+                - generic [ref=f5e3418]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3419]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3420] [cursor=pointer]
+            - generic [ref=f5e3421]:
+              - generic [ref=f5e3422]:
+                - strong [ref=f5e3423]: Marketplace Operations
+                - generic [ref=f5e3424]: demo.marketplace02@weevcrafts.local
+                - generic [ref=f5e3425]: "User #16 · active"
+                - generic [ref=f5e3426]: marketplace_admin
+              - generic [ref=f5e3429]:
+                - heading "Edit account" [level=3] [ref=f5e3430]
+                - generic [ref=f5e3431]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3432]: Marketplace Operations
+                - generic [ref=f5e3433]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3434]: demo.marketplace02@weevcrafts.local
+                  - generic [ref=f5e3435]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3436]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3437]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3438]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3439]
+                  - generic [ref=f5e3440]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3441]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3442]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3443] [cursor=pointer]
+              - generic [ref=f5e3445]:
+                - generic [ref=f5e3446]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3447]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3448]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3449]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3450]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3451]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3452] [cursor=pointer]
+              - generic [ref=f5e3454]:
+                - generic [ref=f5e3455]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3456]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3457] [cursor=pointer]
+            - generic [ref=f5e3458]:
+              - generic [ref=f5e3459]:
+                - strong [ref=f5e3460]: Marketplace Reviewer
+                - generic [ref=f5e3461]: demo.marketplace01@weevcrafts.local
+                - generic [ref=f5e3462]: "User #15 · active"
+                - generic [ref=f5e3463]: marketplace_admin
+              - generic [ref=f5e3466]:
+                - heading "Edit account" [level=3] [ref=f5e3467]
+                - generic [ref=f5e3468]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3469]: Marketplace Reviewer
+                - generic [ref=f5e3470]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3471]: demo.marketplace01@weevcrafts.local
+                  - generic [ref=f5e3472]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3473]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3474]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3475]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3476]
+                  - generic [ref=f5e3477]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3478]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3479]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3480] [cursor=pointer]
+              - generic [ref=f5e3482]:
+                - generic [ref=f5e3483]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3484]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3485]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3486]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3487]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3488]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3489] [cursor=pointer]
+              - generic [ref=f5e3491]:
+                - generic [ref=f5e3492]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3493]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3494] [cursor=pointer]
+            - generic [ref=f5e3495]:
+              - generic [ref=f5e3496]:
+                - strong [ref=f5e3497]: Dev Shah Staff
+                - generic [ref=f5e3498]: demo.staff03@weevcrafts.local
+                - generic [ref=f5e3499]: "User #14 · active"
+                - generic [ref=f5e3500]: seller_staff
+              - generic [ref=f5e3503]:
+                - heading "Edit account" [level=3] [ref=f5e3504]
+                - generic [ref=f5e3505]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3506]: Dev Shah Staff
+                - generic [ref=f5e3507]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3508]: demo.staff03@weevcrafts.local
+                  - generic [ref=f5e3509]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3510]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3511]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3512]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3513]
+                  - generic [ref=f5e3514]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3515]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3516]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3517] [cursor=pointer]
+              - generic [ref=f5e3519]:
+                - generic [ref=f5e3520]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3521]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3522]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3523]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3524]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3525]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3526] [cursor=pointer]
+              - generic [ref=f5e3528]:
+                - generic [ref=f5e3529]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3530]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3531] [cursor=pointer]
+            - generic [ref=f5e3532]:
+              - generic [ref=f5e3533]:
+                - strong [ref=f5e3534]: Nisha Kapoor Staff
+                - generic [ref=f5e3535]: demo.staff02@weevcrafts.local
+                - generic [ref=f5e3536]: "User #13 · active"
+                - generic [ref=f5e3537]: seller_staff
+              - generic [ref=f5e3540]:
+                - heading "Edit account" [level=3] [ref=f5e3541]
+                - generic [ref=f5e3542]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3543]: Nisha Kapoor Staff
+                - generic [ref=f5e3544]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3545]: demo.staff02@weevcrafts.local
+                  - generic [ref=f5e3546]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3547]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3548]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3549]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3550]
+                  - generic [ref=f5e3551]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3552]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3553]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3554] [cursor=pointer]
+              - generic [ref=f5e3556]:
+                - generic [ref=f5e3557]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3558]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3559]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3560]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3561]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3562]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3563] [cursor=pointer]
+              - generic [ref=f5e3565]:
+                - generic [ref=f5e3566]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3567]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3568] [cursor=pointer]
+            - generic [ref=f5e3569]:
+              - generic [ref=f5e3570]:
+                - strong [ref=f5e3571]: Arjun Nair Staff
+                - generic [ref=f5e3572]: demo.staff01@weevcrafts.local
+                - generic [ref=f5e3573]: "User #12 · active"
+                - generic [ref=f5e3574]: seller_staff
+              - generic [ref=f5e3577]:
+                - heading "Edit account" [level=3] [ref=f5e3578]
+                - generic [ref=f5e3579]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3580]: Arjun Nair Staff
+                - generic [ref=f5e3581]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3582]: demo.staff01@weevcrafts.local
+                  - generic [ref=f5e3583]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3584]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3585]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3586]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3587]
+                  - generic [ref=f5e3588]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3589]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3590]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3591] [cursor=pointer]
+              - generic [ref=f5e3593]:
+                - generic [ref=f5e3594]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3595]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3596]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3597]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3598]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3599]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3600] [cursor=pointer]
+              - generic [ref=f5e3602]:
+                - generic [ref=f5e3603]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3604]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3605] [cursor=pointer]
+            - generic [ref=f5e3606]:
+              - generic [ref=f5e3607]:
+                - strong [ref=f5e3608]: CraftVilla Owner
+                - generic [ref=f5e3609]: demo.owner03@weevcrafts.local
+                - generic [ref=f5e3610]: "User #11 · active"
+                - generic [ref=f5e3611]: seller_owner
+              - generic [ref=f5e3614]:
+                - heading "Edit account" [level=3] [ref=f5e3615]
+                - generic [ref=f5e3616]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3617]: CraftVilla Owner
+                - generic [ref=f5e3618]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3619]: demo.owner03@weevcrafts.local
+                  - generic [ref=f5e3620]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3621]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3622]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3623]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3624]
+                  - generic [ref=f5e3625]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3626]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3627]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3628] [cursor=pointer]
+              - generic [ref=f5e3630]:
+                - generic [ref=f5e3631]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3632]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3633]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3634]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3635]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3636]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3637] [cursor=pointer]
+              - generic [ref=f5e3639]:
+                - generic [ref=f5e3640]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3641]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3642] [cursor=pointer]
+            - generic [ref=f5e3643]:
+              - generic [ref=f5e3644]:
+                - strong [ref=f5e3645]: Mithila Arts Owner
+                - generic [ref=f5e3646]: demo.owner02@weevcrafts.local
+                - generic [ref=f5e3647]: "User #10 · active"
+                - generic [ref=f5e3648]: seller_owner
+              - generic [ref=f5e3651]:
+                - heading "Edit account" [level=3] [ref=f5e3652]
+                - generic [ref=f5e3653]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3654]: Mithila Arts Owner
+                - generic [ref=f5e3655]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3656]: demo.owner02@weevcrafts.local
+                  - generic [ref=f5e3657]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3658]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3659]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3660]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3661]
+                  - generic [ref=f5e3662]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3663]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3664]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3665] [cursor=pointer]
+              - generic [ref=f5e3667]:
+                - generic [ref=f5e3668]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3669]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3670]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3671]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3672]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3673]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3674] [cursor=pointer]
+              - generic [ref=f5e3676]:
+                - generic [ref=f5e3677]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3678]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3679] [cursor=pointer]
+            - generic [ref=f5e3680]:
+              - generic [ref=f5e3681]:
+                - strong [ref=f5e3682]: Aditi Rao
+                - generic [ref=f5e3683]: demo.owner01@weevcrafts.local
+                - generic [ref=f5e3684]: "User #9 · active"
+                - generic [ref=f5e3685]: seller_owner
+              - generic [ref=f5e3688]:
+                - heading "Edit account" [level=3] [ref=f5e3689]
+                - generic [ref=f5e3690]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3691]: Aditi Rao
+                - generic [ref=f5e3692]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3693]: demo.owner01@weevcrafts.local
+                  - generic [ref=f5e3694]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3695]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3696]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3697]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3698]
+                  - generic [ref=f5e3699]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3700]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3701]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3702] [cursor=pointer]
+              - generic [ref=f5e3704]:
+                - generic [ref=f5e3705]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3706]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3707]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3708]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3709]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3710]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3711] [cursor=pointer]
+              - generic [ref=f5e3713]:
+                - generic [ref=f5e3714]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3715]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3716] [cursor=pointer]
+            - generic [ref=f5e3717]:
+              - generic [ref=f5e3718]:
+                - strong [ref=f5e3719]: Vikram Das
+                - generic [ref=f5e3720]: demo.customer08@weevcrafts.local
+                - generic [ref=f5e3721]: "User #8 · active"
+                - generic [ref=f5e3722]: customer
+              - generic [ref=f5e3725]:
+                - heading "Edit account" [level=3] [ref=f5e3726]
+                - generic [ref=f5e3727]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3728]: Vikram Das
+                - generic [ref=f5e3729]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3730]: demo.customer08@weevcrafts.local
+                  - generic [ref=f5e3731]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3732]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3733]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3734]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3735]
+                  - generic [ref=f5e3736]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3737]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3738]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3739] [cursor=pointer]
+              - generic [ref=f5e3741]:
+                - generic [ref=f5e3742]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3743]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3744]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3745]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3746]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3747]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3748] [cursor=pointer]
+              - generic [ref=f5e3750]:
+                - generic [ref=f5e3751]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3752]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3753] [cursor=pointer]
+            - generic [ref=f5e3754]:
+              - generic [ref=f5e3755]:
+                - strong [ref=f5e3756]: Meera Joshi
+                - generic [ref=f5e3757]: demo.customer07@weevcrafts.local
+                - generic [ref=f5e3758]: "User #7 · active"
+                - generic [ref=f5e3759]: customer
+              - generic [ref=f5e3762]:
+                - heading "Edit account" [level=3] [ref=f5e3763]
+                - generic [ref=f5e3764]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3765]: Meera Joshi
+                - generic [ref=f5e3766]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3767]: demo.customer07@weevcrafts.local
+                  - generic [ref=f5e3768]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3769]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3770]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3771]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3772]
+                  - generic [ref=f5e3773]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3774]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3775]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3776] [cursor=pointer]
+              - generic [ref=f5e3778]:
+                - generic [ref=f5e3779]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3780]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3781]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3782]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3783]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3784]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3785] [cursor=pointer]
+              - generic [ref=f5e3787]:
+                - generic [ref=f5e3788]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3789]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3790] [cursor=pointer]
+            - generic [ref=f5e3791]:
+              - generic [ref=f5e3792]:
+                - strong [ref=f5e3793]: Rahul Menon
+                - generic [ref=f5e3794]: demo.customer06@weevcrafts.local
+                - generic [ref=f5e3795]: "User #6 · active"
+                - generic [ref=f5e3796]: customer
+              - generic [ref=f5e3799]:
+                - heading "Edit account" [level=3] [ref=f5e3800]
+                - generic [ref=f5e3801]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3802]: Rahul Menon
+                - generic [ref=f5e3803]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3804]: demo.customer06@weevcrafts.local
+                  - generic [ref=f5e3805]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3806]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3807]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3808]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3809]
+                  - generic [ref=f5e3810]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3811]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3812]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3813] [cursor=pointer]
+              - generic [ref=f5e3815]:
+                - generic [ref=f5e3816]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3817]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3818]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3819]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3820]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3821]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3822] [cursor=pointer]
+              - generic [ref=f5e3824]:
+                - generic [ref=f5e3825]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3826]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3827] [cursor=pointer]
+            - generic [ref=f5e3828]:
+              - generic [ref=f5e3829]:
+                - strong [ref=f5e3830]: Sophia Lee
+                - generic [ref=f5e3831]: demo.customer05@weevcrafts.local
+                - generic [ref=f5e3832]: "User #5 · active"
+                - generic [ref=f5e3833]: customer
+              - generic [ref=f5e3836]:
+                - heading "Edit account" [level=3] [ref=f5e3837]
+                - generic [ref=f5e3838]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3839]: Sophia Lee
+                - generic [ref=f5e3840]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3841]: demo.customer05@weevcrafts.local
+                  - generic [ref=f5e3842]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3843]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3844]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3845]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3846]
+                  - generic [ref=f5e3847]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3848]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3849]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3850] [cursor=pointer]
+              - generic [ref=f5e3852]:
+                - generic [ref=f5e3853]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3854]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3855]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3856]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3857]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3858]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3859] [cursor=pointer]
+              - generic [ref=f5e3861]:
+                - generic [ref=f5e3862]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3863]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3864] [cursor=pointer]
+            - generic [ref=f5e3865]:
+              - generic [ref=f5e3866]:
+                - strong [ref=f5e3867]: Kavita Rao
+                - generic [ref=f5e3868]: demo.customer04@weevcrafts.local
+                - generic [ref=f5e3869]: "User #4 · active"
+                - generic [ref=f5e3870]: customer
+              - generic [ref=f5e3873]:
+                - heading "Edit account" [level=3] [ref=f5e3874]
+                - generic [ref=f5e3875]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3876]: Kavita Rao
+                - generic [ref=f5e3877]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3878]: demo.customer04@weevcrafts.local
+                  - generic [ref=f5e3879]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3880]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3881]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3882]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3883]
+                  - generic [ref=f5e3884]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3885]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3886]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3887] [cursor=pointer]
+              - generic [ref=f5e3889]:
+                - generic [ref=f5e3890]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3891]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3892]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3893]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3894]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3895]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3896] [cursor=pointer]
+              - generic [ref=f5e3898]:
+                - generic [ref=f5e3899]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3900]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3901] [cursor=pointer]
+            - generic [ref=f5e3902]:
+              - generic [ref=f5e3903]:
+                - strong [ref=f5e3904]: Arjun Nair
+                - generic [ref=f5e3905]: demo.customer03@weevcrafts.local
+                - generic [ref=f5e3906]: "User #3 · active"
+                - generic [ref=f5e3907]: customer
+              - generic [ref=f5e3910]:
+                - heading "Edit account" [level=3] [ref=f5e3911]
+                - generic [ref=f5e3912]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3913]: Arjun Nair
+                - generic [ref=f5e3914]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3915]: demo.customer03@weevcrafts.local
+                  - generic [ref=f5e3916]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3917]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3918]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3919]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3920]
+                  - generic [ref=f5e3921]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3922]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3923]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3924] [cursor=pointer]
+              - generic [ref=f5e3926]:
+                - generic [ref=f5e3927]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3928]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3929]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3930]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3931]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3932]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3933] [cursor=pointer]
+              - generic [ref=f5e3935]:
+                - generic [ref=f5e3936]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3937]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3938] [cursor=pointer]
+            - generic [ref=f5e3939]:
+              - generic [ref=f5e3940]:
+                - strong [ref=f5e3941]: Sneha Iyer
+                - generic [ref=f5e3942]: demo.customer02@weevcrafts.local
+                - generic [ref=f5e3943]: "User #2 · active"
+                - generic [ref=f5e3944]: customer
+              - generic [ref=f5e3947]:
+                - heading "Edit account" [level=3] [ref=f5e3948]
+                - generic [ref=f5e3949]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3950]: Sneha Iyer
+                - generic [ref=f5e3951]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3952]: demo.customer02@weevcrafts.local
+                  - generic [ref=f5e3953]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3954]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3955]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3956]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3957]
+                  - generic [ref=f5e3958]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3959]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3960]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3961] [cursor=pointer]
+              - generic [ref=f5e3963]:
+                - generic [ref=f5e3964]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e3965]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e3966]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e3967]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e3968]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3969]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e3970] [cursor=pointer]
+              - generic [ref=f5e3972]:
+                - generic [ref=f5e3973]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e3974]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e3975] [cursor=pointer]
+            - generic [ref=f5e3976]:
+              - generic [ref=f5e3977]:
+                - strong [ref=f5e3978]: Priya Sharma
+                - generic [ref=f5e3979]: demo.customer01@weevcrafts.local
+                - generic [ref=f5e3980]: "User #1 · active"
+                - generic [ref=f5e3981]: customer
+              - generic [ref=f5e3984]:
+                - heading "Edit account" [level=3] [ref=f5e3985]
+                - generic [ref=f5e3986]:
+                  - text: Display name
+                  - textbox "Display name" [ref=f5e3987]: Priya Sharma
+                - generic [ref=f5e3988]:
+                  - text: Email
+                  - textbox "Email Changing the email clears its verified status. The user must verify the new address." [ref=f5e3989]: demo.customer01@weevcrafts.local
+                  - generic [ref=f5e3990]: Changing the email clears its verified status. The user must verify the new address.
+                - generic [ref=f5e3991]:
+                  - text: Account status
+                  - combobox "Account status" [ref=f5e3992]:
+                    - option "Active" [selected]
+                    - option "Suspended"
+                - generic [ref=f5e3993]:
+                  - text: Reset password
+                  - textbox "Reset password Leave blank to keep the current password. A new password signs out existing sessions." [ref=f5e3994]
+                  - generic [ref=f5e3995]: Leave blank to keep the current password. A new password signs out existing sessions.
+                - generic [ref=f5e3996]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e3997]:
+                    - /placeholder: Required for the audit trail
+                - button "Save account" [ref=f5e3998] [cursor=pointer]
+              - generic [ref=f5e4000]:
+                - generic [ref=f5e4001]:
+                  - text: Role
+                  - combobox "Role" [ref=f5e4002]:
+                    - option "Customer" [selected]
+                    - option "Seller owner"
+                    - option "Seller staff"
+                    - option "Marketplace admin"
+                    - option "Support agent"
+                    - option "Finance operator"
+                    - option "Returns operations"
+                - generic [ref=f5e4003]:
+                  - text: Action
+                  - combobox "Action" [ref=f5e4004]:
+                    - option "Grant" [selected]
+                    - option "Revoke"
+                - generic [ref=f5e4005]:
+                  - text: Reason
+                  - textbox "Reason" [ref=f5e4006]:
+                    - /placeholder: Required for the audit trail
+                - button "Save role change" [ref=f5e4007] [cursor=pointer]
+              - generic [ref=f5e4009]:
+                - generic [ref=f5e4010]:
+                  - text: Delete reason
+                  - textbox "Delete reason" [ref=f5e4011]:
+                    - /placeholder: Required for the audit trail
+                - button "Delete account" [ref=f5e4012] [cursor=pointer]
+        - article [ref=f5e4013]:
+          - generic [ref=f5e4015]:
+            - generic [aria-hidden] [ref=f5e4016]: history
+            - generic [ref=f5e4017]:
+              - heading "Recent audit events" [level=2] [ref=f5e4018]
+              - paragraph [ref=f5e4019]: Recorded administrative and operational changes.
+          - generic [ref=f5e4020]:
+            - generic [ref=f5e4021]:
+              - generic [ref=f5e4022]: Time
+              - generic [ref=f5e4023]: Actor
+              - generic [ref=f5e4024]: Action
+              - generic [ref=f5e4025]: Record
+            - generic [ref=f5e4026]:
+              - generic [ref=f5e4027]: 9 Oct 2026, 11:13
+              - generic [ref=f5e4028]: "18"
+              - strong [ref=f5e4029]: management.save
+              - generic [ref=f5e4030]: "settings #"
+            - generic [ref=f5e4031]:
+              - generic [ref=f5e4032]: 9 Oct 2026, 11:13
+              - generic [ref=f5e4033]: "18"
+              - strong [ref=f5e4034]: management.save
+              - generic [ref=f5e4035]: "settings #"
+            - generic [ref=f5e4036]:
+              - generic [ref=f5e4037]: 9 Oct 2026, 11:13
+              - generic [ref=f5e4038]: "18"
+              - strong [ref=f5e4039]: management.delete
+              - generic [ref=f5e4040]: "brands #backend-qa-brand-1791544431522"
+            - generic [ref=f5e4041]:
+              - generic [ref=f5e4042]: 9 Oct 2026, 11:13
+              - generic [ref=f5e4043]: "18"
+              - strong [ref=f5e4044]: management.update
+              - generic [ref=f5e4045]: "brands #backend-qa-brand-1791544431522"
+            - generic [ref=f5e4046]:
+              - generic [ref=f5e4047]: 9 Oct 2026, 11:13
+              - generic [ref=f5e4048]: "18"
+              - strong [ref=f5e4049]: management.create
+              - generic [ref=f5e4050]: "brands #backend-qa-brand-1791544431522"
+            - generic [ref=f5e4051]:
+              - generic [ref=f5e4052]: 9 Oct 2026, 11:13
+              - strong [ref=f5e4053]: payment.webhook_processed
+              - generic [ref=f5e4054]: "order #11"
+            - generic [ref=f5e4055]:
+              - generic [ref=f5e4056]: 9 Oct 2026, 11:12
+              - generic [ref=f5e4057]: "9"
+              - strong [ref=f5e4058]: support.seller_ticket_replied
+              - generic [ref=f5e4059]: "support_ticket #6"
+            - generic [ref=f5e4060]:
+              - generic [ref=f5e4061]: 9 Oct 2026, 11:12
+              - generic [ref=f5e4062]: "9"
+              - strong [ref=f5e4063]: support.seller_ticket_created
+              - generic [ref=f5e4064]: "support_ticket #6"
+            - generic [ref=f5e4065]:
+              - generic [ref=f5e4066]: 9 Oct 2026, 11:09
+              - generic [ref=f5e4067]: "18"
+              - strong [ref=f5e4068]: management.save
+              - generic [ref=f5e4069]: "settings #"
+            - generic [ref=f5e4070]:
+              - generic [ref=f5e4071]: 9 Oct 2026, 11:09
+              - generic [ref=f5e4072]: "18"
+              - strong [ref=f5e4073]: management.save
+              - generic [ref=f5e4074]: "settings #"
+            - generic [ref=f5e4075]:
+              - generic [ref=f5e4076]: 9 Oct 2026, 11:09
+              - generic [ref=f5e4077]: "18"
+              - strong [ref=f5e4078]: management.delete
+              - generic [ref=f5e4079]: "brands #backend-qa-brand-1791544182235"
+            - generic [ref=f5e4080]:
+              - generic [ref=f5e4081]: 9 Oct 2026, 11:09
+              - generic [ref=f5e4082]: "18"
+              - strong [ref=f5e4083]: management.update
+              - generic [ref=f5e4084]: "brands #backend-qa-brand-1791544182235"
+            - generic [ref=f5e4085]:
+              - generic [ref=f5e4086]: 9 Oct 2026, 11:09
+              - generic [ref=f5e4087]: "18"
+              - strong [ref=f5e4088]: management.create
+              - generic [ref=f5e4089]: "brands #backend-qa-brand-1791544182235"
+            - generic [ref=f5e4090]:
+              - generic [ref=f5e4091]: 9 Oct 2026, 11:05
+              - generic [ref=f5e4092]: "18"
+              - strong [ref=f5e4093]: identity.user_updated
+              - generic [ref=f5e4094]: "user #110"
+            - generic [ref=f5e4095]:
+              - generic [ref=f5e4096]: 9 Oct 2026, 11:05
+              - generic [ref=f5e4097]: "18"
+              - strong [ref=f5e4098]: identity.user_updated
+              - generic [ref=f5e4099]: "user #109"
+            - generic [ref=f5e4100]:
+              - generic [ref=f5e4101]: 9 Oct 2026, 11:05
+              - generic [ref=f5e4102]: "18"
+              - strong [ref=f5e4103]: identity.user_updated
+              - generic [ref=f5e4104]: "user #108"
+            - generic [ref=f5e4105]:
+              - generic [ref=f5e4106]: 9 Oct 2026, 11:05
+              - generic [ref=f5e4107]: "18"
+              - strong [ref=f5e4108]: identity.user_updated
+              - generic [ref=f5e4109]: "user #107"
+            - generic [ref=f5e4110]:
+              - generic [ref=f5e4111]: 9 Oct 2026, 11:04
+              - generic [ref=f5e4112]: "18"
+              - strong [ref=f5e4113]: identity.user_updated
+              - generic [ref=f5e4114]: "user #106"
+            - generic [ref=f5e4115]:
+              - generic [ref=f5e4116]: 9 Oct 2026, 11:04
+              - generic [ref=f5e4117]: "18"
+              - strong [ref=f5e4118]: identity.user_updated
+              - generic [ref=f5e4119]: "user #105"
+            - generic [ref=f5e4120]:
+              - generic [ref=f5e4121]: 9 Oct 2026, 11:04
+              - generic [ref=f5e4122]: "18"
+              - strong [ref=f5e4123]: identity.user_updated
+              - generic [ref=f5e4124]: "user #104"
+            - generic [ref=f5e4125]:
+              - generic [ref=f5e4126]: 9 Oct 2026, 11:04
+              - generic [ref=f5e4127]: "18"
+              - strong [ref=f5e4128]: identity.user_updated
+              - generic [ref=f5e4129]: "user #103"
+            - generic [ref=f5e4130]:
+              - generic [ref=f5e4131]: 9 Oct 2026, 11:04
+              - generic [ref=f5e4132]: "102"
+              - strong [ref=f5e4133]: auth.password_reset
+              - generic [ref=f5e4134]: "user #102"
+            - generic [ref=f5e4135]:
+              - generic [ref=f5e4136]: 9 Oct 2026, 11:03
+              - generic [ref=f5e4137]: "101"
+              - strong [ref=f5e4138]: auth.password_reset
+              - generic [ref=f5e4139]: "user #101"
+            - generic [ref=f5e4140]:
+              - generic [ref=f5e4141]: 9 Oct 2026, 11:03
+              - generic [ref=f5e4142]: "99"
+              - strong [ref=f5e4143]: auth.login_failed
+              - generic [ref=f5e4144]: "user #99"
+            - generic [ref=f5e4145]:
+              - generic [ref=f5e4146]: 9 Oct 2026, 11:03
+              - generic [ref=f5e4147]: "99"
+              - strong [ref=f5e4148]: auth.password_reset
+              - generic [ref=f5e4149]: "user #99"
+            - generic [ref=f5e4150]:
+              - generic [ref=f5e4151]: 9 Oct 2026, 11:03
+              - generic [ref=f5e4152]: "96"
+              - strong [ref=f5e4153]: auth.password_reset
+              - generic [ref=f5e4154]: "user #96"
+            - generic [ref=f5e4155]:
+              - generic [ref=f5e4156]: 9 Oct 2026, 11:02
+              - generic [ref=f5e4157]: "95"
+              - strong [ref=f5e4158]: auth.password_reset
+              - generic [ref=f5e4159]: "user #95"
+            - generic [ref=f5e4160]:
+              - generic [ref=f5e4161]: 9 Oct 2026, 11:02
+              - generic [ref=f5e4162]: "93"
+              - strong [ref=f5e4163]: auth.login_failed
+              - generic [ref=f5e4164]: "user #93"
+            - generic [ref=f5e4165]:
+              - generic [ref=f5e4166]: 9 Oct 2026, 11:02
+              - generic [ref=f5e4167]: "93"
+              - strong [ref=f5e4168]: auth.password_reset
+              - generic [ref=f5e4169]: "user #93"
+            - generic [ref=f5e4170]:
+              - generic [ref=f5e4171]: 9 Oct 2026, 11:01
+              - generic [ref=f5e4172]: "90"
+              - strong [ref=f5e4173]: auth.password_reset
+              - generic [ref=f5e4174]: "user #90"
+            - generic [ref=f5e4175]:
+              - generic [ref=f5e4176]: 9 Oct 2026, 11:01
+              - generic [ref=f5e4177]: "89"
+              - strong [ref=f5e4178]: auth.password_reset
+              - generic [ref=f5e4179]: "user #89"
+            - generic [ref=f5e4180]:
+              - generic [ref=f5e4181]: 9 Oct 2026, 11:01
+              - generic [ref=f5e4182]: "87"
+              - strong [ref=f5e4183]: auth.login_failed
+              - generic [ref=f5e4184]: "user #87"
+            - generic [ref=f5e4185]:
+              - generic [ref=f5e4186]: 9 Oct 2026, 11:01
+              - generic [ref=f5e4187]: "87"
+              - strong [ref=f5e4188]: auth.password_reset
+              - generic [ref=f5e4189]: "user #87"
+            - generic [ref=f5e4190]:
+              - generic [ref=f5e4191]: 9 Oct 2026, 11:00
+              - generic [ref=f5e4192]: "84"
+              - strong [ref=f5e4193]: auth.password_reset
+              - generic [ref=f5e4194]: "user #84"
+            - generic [ref=f5e4195]:
+              - generic [ref=f5e4196]: 9 Oct 2026, 11:00
+              - generic [ref=f5e4197]: "83"
+              - strong [ref=f5e4198]: auth.password_reset
+              - generic [ref=f5e4199]: "user #83"
+            - generic [ref=f5e4200]:
+              - generic [ref=f5e4201]: 9 Oct 2026, 11:00
+              - generic [ref=f5e4202]: "81"
+              - strong [ref=f5e4203]: auth.login_failed
+              - generic [ref=f5e4204]: "user #81"
+            - generic [ref=f5e4205]:
+              - generic [ref=f5e4206]: 9 Oct 2026, 11:00
+              - generic [ref=f5e4207]: "81"
+              - strong [ref=f5e4208]: auth.password_reset
+              - generic [ref=f5e4209]: "user #81"
+            - generic [ref=f5e4210]:
+              - generic [ref=f5e4211]: 9 Oct 2026, 10:59
+              - generic [ref=f5e4212]: "78"
+              - strong [ref=f5e4213]: auth.password_reset
+              - generic [ref=f5e4214]: "user #78"
+            - generic [ref=f5e4215]:
+              - generic [ref=f5e4216]: 9 Oct 2026, 10:59
+              - generic [ref=f5e4217]: "77"
+              - strong [ref=f5e4218]: auth.password_reset
+              - generic [ref=f5e4219]: "user #77"
+            - generic [ref=f5e4220]:
+              - generic [ref=f5e4221]: 9 Oct 2026, 10:59
+              - generic [ref=f5e4222]: "75"
+              - strong [ref=f5e4223]: auth.login_failed
+              - generic [ref=f5e4224]: "user #75"
+            - generic [ref=f5e4225]:
+              - generic [ref=f5e4226]: 9 Oct 2026, 10:59
+              - generic [ref=f5e4227]: "75"
+              - strong [ref=f5e4228]: auth.password_reset
+              - generic [ref=f5e4229]: "user #75"
+            - generic [ref=f5e4230]:
+              - generic [ref=f5e4231]: 9 Oct 2026, 10:58
+              - generic [ref=f5e4232]: "72"
+              - strong [ref=f5e4233]: auth.password_reset
+              - generic [ref=f5e4234]: "user #72"
+            - generic [ref=f5e4235]:
+              - generic [ref=f5e4236]: 9 Oct 2026, 10:58
+              - generic [ref=f5e4237]: "71"
+              - strong [ref=f5e4238]: auth.password_reset
+              - generic [ref=f5e4239]: "user #71"
+            - generic [ref=f5e4240]:
+              - generic [ref=f5e4241]: 9 Oct 2026, 10:58
+              - generic [ref=f5e4242]: "69"
+              - strong [ref=f5e4243]: auth.login_failed
+              - generic [ref=f5e4244]: "user #69"
+            - generic [ref=f5e4245]:
+              - generic [ref=f5e4246]: 9 Oct 2026, 10:58
+              - generic [ref=f5e4247]: "69"
+              - strong [ref=f5e4248]: auth.password_reset
+              - generic [ref=f5e4249]: "user #69"
+            - generic [ref=f5e4250]:
+              - generic [ref=f5e4251]: 9 Oct 2026, 10:57
+              - generic [ref=f5e4252]: "66"
+              - strong [ref=f5e4253]: auth.password_reset
+              - generic [ref=f5e4254]: "user #66"
+            - generic [ref=f5e4255]:
+              - generic [ref=f5e4256]: 9 Oct 2026, 10:57
+              - generic [ref=f5e4257]: "65"
+              - strong [ref=f5e4258]: auth.password_reset
+              - generic [ref=f5e4259]: "user #65"
+            - generic [ref=f5e4260]:
+              - generic [ref=f5e4261]: 9 Oct 2026, 10:56
+              - generic [ref=f5e4262]: "63"
+              - strong [ref=f5e4263]: auth.login_failed
+              - generic [ref=f5e4264]: "user #63"
+            - generic [ref=f5e4265]:
+              - generic [ref=f5e4266]: 9 Oct 2026, 10:56
+              - generic [ref=f5e4267]: "63"
+              - strong [ref=f5e4268]: auth.password_reset
+              - generic [ref=f5e4269]: "user #63"
+            - generic [ref=f5e4270]:
+              - generic [ref=f5e4271]: 9 Oct 2026, 10:56
+              - generic [ref=f5e4272]: "60"
+              - strong [ref=f5e4273]: auth.password_reset
+              - generic [ref=f5e4274]: "user #60"
+        - navigation "Record pagination" [ref=f5e4275]:
+          - generic [ref=f5e4276]: Page 1 of 4 · 167 records
+          - link "Next page" [ref=f5e4277]:
+            - /url: /super-admin/security?page=2
+      - contentinfo [ref=f5e4278]:
+        - link "Weevcrafts Super Admin Portal" [ref=f5e4279]:
+          - /url: /super-admin
+          - generic [ref=f5e4280]:
+            - strong [ref=f5e4281]: Weevcrafts
+            - generic [ref=f5e4282]: Super Admin Portal
+        - generic [ref=f5e4283]: Handmade in India · Delivery to serviceable PIN codes across India
+        - link "Switch workspace" [ref=f5e4284]:
+          - /url: /workspaces
+```
+
+# Test source
+
+```ts
+  1   | const { test, expect } = require("@playwright/test");
+  2   | const fs = require("node:fs");
+  3   | const path = require("node:path");
+  4   | 
+  5   | const password = process.env.WEEVCRAFTS_ROLE_TEST_PASSWORD || "WeeVCrafts-Demo-2026!";
+  6   | const accountSet = process.env.WEEVCRAFTS_ROLE_TEST_ACCOUNT_SET || "demo";
+  7   | const viewportWidths = [360, 390, 768, 1024, 1440];
+  8   | const demoAccounts = [
+  9   |   { id: "customer", email: "demo.customer01@weevcrafts.local", name: "Priya Sharma", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
+  10  |   { id: "seller-owner", email: "demo.owner01@weevcrafts.local", name: "Aditi Rao", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
+  11  |   { id: "seller-staff", email: "demo.staff01@weevcrafts.local", name: "Arjun Nair Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
+  12  |   { id: "marketplace-admin", email: "demo.marketplace01@weevcrafts.local", name: "Marketplace Reviewer", landing: "/marketplace-admin", page: "/marketplace-admin/products", roleText: "Marketplace Admin", forbidden: "/super-admin" },
+  13  |   { id: "super-admin", email: "demo.super01@weevcrafts.local", name: "Super Admin One", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/support-portal" },
+  14  |   { id: "finance", email: "demo.finance01@weevcrafts.local", name: "Finance Operator", landing: "/finance-portal", page: "/finance-portal/refunds", roleText: "Finance Operator", forbidden: "/operations-portal" },
+  15  |   { id: "operations", email: "demo.operations01@weevcrafts.local", name: "Returns Operator", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
+  16  |   { id: "support", email: "demo.support01@weevcrafts.local", name: "Aditi Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
+  17  | ];
+  18  | 
+  19  | const launchAccounts = [
+  20  |   { id: "customer", email: "customer@weevcrafts.test", name: "QA Customer", landing: "/account", page: "/returns", roleText: "My account", forbidden: "/super-admin" },
+  21  |   { id: "seller-owner", email: "seller@weevcrafts.test", name: "QA Seller", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Owner", forbidden: "/finance-portal" },
+  22  |   { id: "seller-staff", email: "sellerstaff@weevcrafts.test", name: "QA Seller Staff", landing: "/seller-admin", page: "/seller-admin/products/new", roleText: "Seller Staff", forbidden: "/seller-admin/team" },
+  23  |   { id: "marketplace-admin", email: "marketplaceadmin@weevcrafts.test", name: "QA Marketplace Admin", landing: "/marketplace-admin", page: "/marketplace-admin/products", roleText: "Marketplace Admin", forbidden: "/super-admin" },
+  24  |   { id: "super-admin", email: "superadmin@weevcrafts.test", name: "QA Super Admin", landing: "/super-admin", page: "/super-admin/security", roleText: "Super Admin", forbidden: "/support-portal" },
+  25  |   { id: "finance", email: "finance@weevcrafts.test", name: "QA Finance", landing: "/finance-portal", page: "/finance-portal/refunds", roleText: "Finance Operator", forbidden: "/operations-portal" },
+  26  |   { id: "operations", email: "operations@weevcrafts.test", name: "QA Operations", landing: "/operations-portal", page: "/operations-portal/returns", roleText: "Returns Operations", forbidden: "/finance-portal" },
+  27  |   { id: "support", email: "support@weevcrafts.test", name: "QA Support", landing: "/support-portal", page: "/support-portal/cases", roleText: "Support Agent", forbidden: "/seller-admin" },
+  28  | ];
+  29  | 
+  30  | const accounts = accountSet === "launch" ? launchAccounts : demoAccounts;
+  31  | 
+  32  | async function signIn(page, email, landing) {
+  33  |   await page.goto("/login");
+  34  |   await page.locator("#page input[name=\"email\"]").fill(email);
+  35  |   await page.locator("#page input[name=\"password\"]").fill(password);
+  36  |   await page.getByRole("button", { name: /sign in/i }).click();
+  37  |   await page.waitForURL(url => url.pathname.replace(/\/$/, "") === landing.replace(/\/$/, ""), { timeout: 30_000 });
+  38  | }
+  39  | 
+  40  | test.describe("role-specific portals", () => {
+  41  |   for (const account of accounts) {
+  42  |     test(`${account.id}: landing, boundaries and responsive layouts`, async ({ page }, testInfo) => {
+  43  |       const browserErrors = [];
+  44  |       page.on("pageerror", error => browserErrors.push(error.message));
+  45  |       page.on("console", message => { if (message.type() === "error") browserErrors.push(message.text()); });
+  46  |       page.on("response", response => {
+  47  |         if (response.status() === 404) browserErrors.push(`404 ${new URL(response.url()).pathname}`);
+  48  |       });
+  49  |       await signIn(page, account.email, account.landing);
+  50  |       const landingPattern = new RegExp(`${account.landing.replaceAll("/", "\\/")}\\/?$`);
+  51  |       await expect(page).toHaveURL(landingPattern);
+  52  |       await expect(page.locator("body")).toContainText(account.name);
+  53  |       await expect(page.locator("body")).toContainText(account.roleText);
+  54  | 
+  55  |       const forbidden = await page.request.get(account.forbidden, { maxRedirects: 0 });
+  56  |       expect(forbidden.status(), `expected ${account.id} to be blocked from ${account.forbidden}`).toBe(403);
+  57  | 
+  58  |       for (const width of viewportWidths) {
+  59  |         await page.setViewportSize({ width, height: 1000 });
+  60  |         const response = await page.goto(account.page);
+  61  |         expect(response && response.status(), `${account.id} page ${account.page} at ${width}px`).toBe(200);
+  62  | 
+  63  |         if (width <= 820 && account.id !== "customer") {
+  64  |           const menu = page.locator('button[aria-label="Open seller navigation"], button[aria-label="Open admin navigation"], button[aria-label="Open support navigation"]').first();
+  65  |           await expect(menu).toBeVisible();
+  66  |           await menu.click();
+  67  |           await expect(menu).toHaveAttribute("aria-expanded", "true");
+  68  |           const sidebarId = account.id.startsWith("seller") ? "seller-sidebar" : account.id === "support" ? "support-sidebar" : "admin-sidebar";
+  69  |           const close = page.locator(`#${sidebarId} button[aria-label^="Close"]`);
+  70  |           await expect(close).toBeVisible();
+  71  |           await close.click();
+  72  |           await expect(menu).toHaveAttribute("aria-expanded", "false");
+  73  |         }
+  74  | 
+  75  |         const dimensions = await page.evaluate(() => ({
+  76  |           viewport: window.innerWidth,
+  77  |           document: document.documentElement.scrollWidth,
+  78  |           body: document.body.scrollWidth,
+  79  |         }));
+  80  |         expect(dimensions.document, `${account.id} document overflow at ${width}px: ${JSON.stringify(dimensions)}`).toBeLessThanOrEqual(width + 1);
+  81  |         expect(dimensions.body, `${account.id} body overflow at ${width}px: ${JSON.stringify(dimensions)}`).toBeLessThanOrEqual(width + 1);
+  82  | 
+  83  |         const screenshotPath = testInfo.outputPath(`${account.id}-${width}.png`);
+  84  |         fs.mkdirSync(path.dirname(screenshotPath), { recursive: true });
+> 85  |         await page.screenshot({ path: screenshotPath });
+      |                    ^ Error: page.screenshot: Test timeout of 60000ms exceeded.
+  86  |       }
+  87  | 
+  88  |       if (account.id === "seller-staff") {
+  89  |         await expect(page.getByRole("navigation", { name: "Seller portal navigation" })).not.toContainText("Team");
+  90  |       }
+  91  |       if (account.id === "seller-owner") {
+  92  |         await page.goto("/seller-admin");
+  93  |         const policies = page.getByRole("navigation", { name: "Policies" });
+  94  |         await expect(policies.getByRole("link", { name: "Seller Terms & Conditions" })).toBeVisible();
+  95  |         await expect(policies.getByRole("link", { name: "Privacy Policy" })).toBeVisible();
+  96  |         await policies.getByRole("link", { name: "Seller Terms & Conditions" }).click();
+  97  |         await expect(page).toHaveURL(/\/seller-admin\/terms$/);
+  98  |         await expect(page.getByRole("heading", { name: "6. Code of conduct & account termination" })).toBeVisible();
+  99  |         await page.getByRole("navigation", { name: "Policies" }).getByRole("link", { name: "Privacy Policy" }).click();
+  100 |         await expect(page).toHaveURL(/\/privacy$/);
+  101 |         await expect(page.locator("body")).toContainText("Privacy policy");
+  102 |       }
+  103 |       if (account.id === "super-admin") {
+  104 |         await expect(page.getByRole("navigation", { name: "Admin navigation" })).toContainText("Security & Roles");
+  105 |       }
+  106 |       expect(browserErrors, `${account.id} browser errors`).toEqual([]);
+  107 |     });
+  108 |   }
+  109 | });
+  110 | 
+```

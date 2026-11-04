@@ -1,0 +1,200 @@
+package admin
+
+import (
+	"fmt"
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+	"github.com/wecratfs/commerce/web/assets"
+	"github.com/wecratfs/commerce/web/components"
+)
+
+templ SuperAdminHeading(p viewmodels.AdminPage) {
+	<section class={ "admin-page-heading superadmin-heading","superadmin-heading--"+superAdminArt(p) }>
+		<div class="admin-heading-copy"><p class="admin-eyebrow">Weevcrafts · { p.PortalLabel }</p><h1>{ p.Title }</h1><p>{ p.Subtitle }</p></div>
+		<img class="superadmin-heading-art" src={ assets.URL("images/admin/" + superAdminArt(p) + ".webp") } width="420" height="210" alt=""/>
+	</section>
+}
+
+templ UserManagementNavigation(p viewmodels.AdminPage) {
+	if userManagementActive(p) {
+		<nav class="workspace-tabs user-management-navigation" aria-label="User Management sections">
+			for _, section := range []struct{Label,Path,Icon string}{{"Accounts","users","manage_accounts"},{"Roles","roles","badge"},{"Security","security","verified_user"},{"Settings","settings","settings"}} {
+				<a class={ workspaceTabClass(userManagementSection(p) == section.Label) } href={ p.PortalRoot + "/" + section.Path } aria-current={ ariaCurrent(userManagementSection(p) == section.Label) }><span class="material-symbols-outlined" aria-hidden="true">{ section.Icon }</span>{ section.Label }</a>
+			}
+		</nav>
+	}
+}
+
+templ InsightRange(p viewmodels.AdminPage) {
+	<form method="get" class="insight-range" aria-label="Chart date range">
+		<input type="hidden" name="q" value={ p.Query }/>
+		if p.StatusFilter!="" {
+			<input type="hidden" name="status" value={ p.StatusFilter }/>
+		}
+		if p.RoleFilter!="" {
+			<input type="hidden" name="role" value={ p.RoleFilter }/>
+		}
+		<label class="sr-only" for="insight-range">Chart date range</label>
+		<select id="insight-range" name="range"><option value="7" selected?={ p.Insights.Days==7 }>Last 7 days</option><option value="30" selected?={ p.Insights.Days==30 }>Last 30 days</option><option value="90" selected?={ p.Insights.Days==90 }>Last 90 days</option></select>
+		<button class="admin-button secondary" type="submit">Apply</button>
+	</form>
+}
+
+templ InsightTrend(p viewmodels.AdminPage, title, description string, currency bool) {
+	<article class="admin-panel insight-trend">
+		<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">monitoring</span><div><h2>{ title }</h2><p>{ description }</p></div></div>@InsightRange(p)
+</div>
+		if p.Insights.Available && len(p.Insights.Trend)>0 {
+			<svg class="insight-line-chart" viewBox="0 0 620 225" role="img" aria-label={ title + ". Use View chart data for exact values." }>
+				<defs><linearGradient id="insight-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6fc28d" stop-opacity=".45"></stop><stop offset="100%" stop-color="#6fc28d" stop-opacity=".04"></stop></linearGradient></defs>
+				for _, step := range []int{0,1,2,3,4} {
+					<line x1="50" x2="590" y1={ fmt.Sprint(190 - step*39) } y2={ fmt.Sprint(190 - step*39) } stroke="#e7eae4"></line>
+					<text x="42" y={ fmt.Sprint(194 - step*39) } text-anchor="end">{ chartValue(chartMaximum(p.Insights.Trend)*int64(step)/4,currency) }</text>
+				}
+				<polygon points={ chartArea(p.Insights.Trend) } fill="url(#insight-area)"></polygon>
+				<polyline points={ chartPoints(p.Insights.Trend) } fill="none" stroke="#16804b" stroke-width="3" stroke-linejoin="round"></polyline>
+				<text x="50" y="215">{ p.Insights.Trend[0].Label }</text><text x="590" y="215" text-anchor="end">{ p.Insights.Trend[len(p.Insights.Trend)-1].Label }</text>
+			</svg>
+			<details class="insight-data">
+				<summary>View chart data</summary>
+				<div class="ui-table-region" tabindex="0" role="region" aria-label={ title + " data" }>
+					<table class="ui-table">
+						<thead><tr><th scope="col">Date</th><th scope="col">{ title }</th></tr></thead>
+						<tbody>
+							for _,point:=range p.Insights.Trend {
+								<tr><th scope="row">{ point.Label }</th><td>{ chartValue(point.Value,currency) }</td></tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</details>
+		} else {
+			<p class="insight-unavailable">Chart data is unavailable. Refresh to try again.</p>
+		}
+	</article>
+}
+
+templ InsightDistribution(p viewmodels.AdminPage, title, unit string) {
+	<article class="admin-panel insight-distribution">
+		<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">donut_large</span><div><h2>{ title }</h2><p>Overview of { unit }.</p></div></div></div>
+		if p.Insights.Available {
+			<div class="insight-donut-layout">
+				<div class="insight-donut">
+					<svg viewBox="0 0 140 140" role="img" aria-label={ fmt.Sprintf("%s: %d %s", title, chartTotal(p.Insights.Distribution), unit) }>
+						<circle cx="70" cy="70" r="54" fill="none" stroke="#e0eade" stroke-width="20"></circle>
+						for i,item:=range p.Insights.Distribution {
+							<circle cx="70" cy="70" r="54" pathLength="100" fill="none" stroke={ item.Color } stroke-width="20" stroke-dasharray={ sliceDash(p.Insights.Distribution, i) } stroke-dashoffset={ sliceOffset(p.Insights.Distribution, i) } transform="rotate(-90 70 70)"></circle>
+						}
+					</svg><span><strong>{ fmt.Sprint(chartTotal(p.Insights.Distribution)) }</strong><small>{ unit }</small></span>
+				</div>
+				<dl class="insight-legend">
+					for i,item:=range p.Insights.Distribution {
+						<div><dt><svg width="10" height="10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill={ item.Color }></circle></svg>{ components.StatusLabel(item.Label) }</dt><dd>{ fmt.Sprint(item.Value) } <small>({ slicePercent(p.Insights.Distribution,i) })</small></dd></div>
+					}
+				</dl>
+			</div>
+			if chartTotal(p.Insights.Distribution)==0 {
+				<p class="insight-unavailable">No matching { unit } yet.</p>
+			}
+		} else {
+			<p class="insight-unavailable">Summary unavailable. Refresh to try again.</p>
+		}
+	</article>
+}
+
+templ SuperAdminCharts(p viewmodels.AdminPage) {
+	if p.CanSecurity && p.Workspace=="users" {
+		<section class="superadmin-chart-grid" aria-label="Account insights">@InsightTrend(p, "User growth", "New user registrations in the selected period.", false)
+@InsightDistribution(p, "Users by role", "users")
+</section>
+	} else if p.CanSecurity && p.Active=="finance" {
+		<section class="superadmin-chart-grid superadmin-finance-charts" aria-label="Finance insights">
+			@InsightTrend(p, "Payment volume", "Captured payments in the selected period (INR).", true)
+			@InsightDistribution(p, "Settlement status", "settlement batches")
+			<article class="admin-panel insight-refunds">
+				<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">undo</span><div><h2>Refunds overview</h2><p>Recorded refunded payments.</p></div></div></div>
+				if p.Insights.Available && len(p.Stats)>2 {
+					<strong class="insight-refund-total">{ p.Stats[2].Value }</strong>
+					<p>Total refunds · { p.Range }</p>
+					<svg viewBox="0 0 600 115" role="img" aria-label="Daily refunded payment counts">
+						<line x1="10" x2="590" y1="100" y2="100" stroke="#e7daca"></line>
+						for i,point:=range p.Insights.RefundTrend {
+							<rect x={ refundBarX(i, len(p.Insights.RefundTrend)) } y={ refundBarY(p.Insights.RefundTrend, i) } width={ refundBarWidth(len(p.Insights.RefundTrend)) } height={ refundBarHeight(p.Insights.RefundTrend, i) } rx="2" fill="#bb9377"><title>{ point.Label }: { fmt.Sprint(point.Value) }</title></rect>
+						}
+					</svg>
+					<a class="panel-link" href={ p.PortalRoot + "/refunds" }>View refunds</a>
+				} else {
+					<p class="insight-unavailable">Refund data is unavailable.</p>
+				}
+			</article>
+		</section>
+	}
+}
+
+templ SuperAdminInventoryExtras(p viewmodels.AdminPage) {
+	<section class="superadmin-inventory-extras">
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">trending_up</span><div><h2>Inventory quick actions</h2><p>Manage availability.</p></div></div></div><a class="superadmin-rule superadmin-quick-link" href={ p.PortalRoot + "/products" }><strong>Manage product catalog</strong><span>Create or edit product variants</span></a><a class="superadmin-rule superadmin-quick-link" href={ p.PortalRoot + "/audit-logs?q=inventory" }><strong>Inventory change history</strong><span>Inspect audited adjustments</span></a></article>
+		<article class="admin-panel">
+			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">history</span><div><h2>Recent stock changes</h2><p>Latest recorded inventory adjustments.</p></div></div></div>
+			if len(p.Insights.RecentStock)==0 {
+				<p class="insight-unavailable">No stock changes have been recorded.</p>
+			}
+			<ol class="stock-activity">
+				for _,item:=range p.Insights.RecentStock {
+					<li><div><strong>{ item.Product }</strong><small>{ item.SKU } · { item.Reason }</small><time>{ item.Date }</time></div><b>{ fmt.Sprintf("%+d",item.Delta) }</b></li>
+				}
+			</ol>
+		</article>
+		<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">layers</span><div><h2>Stock rules</h2><p>Keep inventory under control.</p></div></div></div><div class="superadmin-rule"><strong>Low-stock threshold</strong><p>5 or fewer available units.</p></div><div class="superadmin-rule"><strong>Reservation protection</strong><p>Reserved stock stays protected.</p></div><a class="admin-button secondary" href={ p.PortalRoot + "/products" }>Manage product catalog</a></article>
+	</section>
+}
+
+templ SuperAdminReturnGuidance(p viewmodels.AdminPage) {
+	<section class="superadmin-return-guidance"><article class="admin-panel"><h2>Return resolution workflow</h2><p>A clear process for every customer request.</p><ol><li><span class="material-symbols-outlined" aria-hidden="true">description</span><strong>Review request</strong><small>Check order and reason</small></li><li><span class="material-symbols-outlined" aria-hidden="true">forum</span><strong>Confirm with seller</strong><small>Record the seller decision</small></li><li><span class="material-symbols-outlined" aria-hidden="true">task_alt</span><strong>Resolve & notify</strong><small>Update status and customer</small></li></ol></article><article class="admin-panel"><h2>Operations note</h2><p class="superadmin-rule">Return decisions preserve the original order. Include a reason, relevant seller response, and customer update.</p><a class="panel-link" href={ p.PortalRoot + "/support" }>Open support</a></article></section>
+}
+
+templ SuperAdminEmpty(message, hint string) {
+	<div class="superadmin-empty" role="status"><img src={ assets.URL("images/admin/package.webp") } width="220" height="147" alt="" loading="lazy"/><strong>{ message }</strong><p>{ hint }</p></div>
+}
+
+templ SuperAdminQueueFilters(p viewmodels.AdminPage, kind string) {
+	<form method="get" class="superadmin-queue-filters" aria-label={ "Filter " + kind }>
+		<label><span class="sr-only">Search { kind }</span><input type="search" name="q" value={ p.Query } maxlength="120" placeholder={ "Search " + kind + "..." }/></label>
+		if kind=="returns" {
+			<label>
+				<span class="sr-only">Return status</span>
+				<select name="status">
+					<option value="">All statuses</option>
+					for _,status:=range []string{"pending","approved","rejected","received"} {
+						<option value={ status } selected?={ p.StatusFilter==status }>{ components.StatusLabel(status) }</option>
+					}
+				</select>
+			</label>
+			<label>
+				<span class="sr-only">Return date range</span>
+				<select name="range">
+					for _,days:=range []int{7,30,90} {
+						<option value={ fmt.Sprint(days) } selected?={ p.Insights.Days==days }>Last { fmt.Sprint(days) } days</option>
+					}
+				</select>
+			</label>
+		}
+		if kind=="inventory" {
+			<label>
+				<span class="sr-only">Stock status</span>
+				<select name="stock">
+					<option value="">All stock statuses</option>
+					for _,status:=range []string{"in_stock","low_stock","out_of_stock"} {
+						<option value={ status } selected?={ p.StatusFilter==status }>{ components.StatusLabel(status) }</option>
+					}
+				</select>
+			</label>
+		}
+		<button type="submit" class="admin-button primary">Apply filters</button>
+		if p.Query!="" || p.StatusFilter!="" {
+			<a class="admin-button secondary" href={ p.PortalRoot + "/" + p.Active }>Clear</a>
+		}
+		if kind=="returns" {
+			<a class="admin-button secondary" href={ superAdminExportURL(p, "returns") }><span class="material-symbols-outlined" aria-hidden="true">download</span>Export</a>
+		}
+	</form>
+}

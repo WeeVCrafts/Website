@@ -1,0 +1,42 @@
+bin/weevcrafts.exe: go1.27.1
+	path	github.com/wecratfs/commerce/cmd/website
+	mod	github.com/wecratfs/commerce	v0.0.0-20261009093037-e85361179897+dirty	
+	dep	github.com/a-h/templ	v0.3.1020	h1:ypAT/L5ySWEnZ6Zft/5yfoWXYYkhFNvEFOeeqecg4tw=
+	dep	github.com/cespare/xxhash/v2	v2.2.0	h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
+	dep	github.com/dgryski/go-rendezvous	v0.0.0-20200823014737-9f7001d12a5f	h1:lO4WD4F/rVNCu3HqELle0jiPLLBs70cWOduZpkS1E78=
+	dep	github.com/dustin/go-humanize	v1.0.1	h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
+	dep	github.com/go-ini/ini	v1.67.0	h1:z6ZrTEZqSWOTyH2FlglNbNgARyHG8oLW9gMELqKr06A=
+	dep	github.com/go-pdf/fpdf	v0.9.0	h1:PPvSaUuo1iMi9KkaAn90NuKi+P4gwMedWPHhj8YlJQw=
+	dep	github.com/google/uuid	v1.6.0	h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+	dep	github.com/jackc/pgpassfile	v1.0.0	h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
+	dep	github.com/jackc/pgservicefile	v0.0.0-20240606120523-5a60cdf6a761	h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
+	dep	github.com/jackc/pgx/v5	v5.7.2	h1:mLoDLV6sonKlvjIEsV56SkWNCnuNv531l94GaIzO+XI=
+	dep	github.com/jackc/puddle/v2	v2.2.2	h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
+	dep	github.com/klauspost/compress	v1.18.0	h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
+	dep	github.com/klauspost/cpuid/v2	v2.2.11	h1:0OwqZRYI2rFrjS4kvkDnqJkKHdHaRnCm68/DY4OxRzU=
+	dep	github.com/klauspost/crc32	v1.3.0	h1:sSmTt3gUt81RP655XGZPElI0PelVTZ6YwCRnPSupoFM=
+	dep	github.com/minio/crc64nvme	v1.1.0	h1:e/tAguZ+4cw32D+IO/8GSf5UVr9y+3eJcxZI2WOO/7Q=
+	dep	github.com/minio/md5-simd	v1.1.2	h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
+	dep	github.com/minio/minio-go/v7	v7.0.97	h1:lqhREPyfgHTB/ciX8k2r8k0D93WaFqxbJX36UZq5occ=
+	dep	github.com/philhofer/fwd	v1.2.0	h1:e6DnBTl7vGY+Gz322/ASL4Gyp1FspeMvx1RNDoToZuM=
+	dep	github.com/redis/go-redis/v9	v9.7.0	h1:HhLSs+B6O021gwzl+locl0zEDnyNkxMtf/Z3NNBMa9E=
+	dep	github.com/rs/xid	v1.6.0	h1:fV591PaemRlL6JfRxGDEPl69wICngIQ3shQtzfy2gxU=
+	dep	github.com/tinylib/msgp	v1.3.0	h1:ULuf7GPooDaIlbyvgAxBV/FI7ynli6LZ1/nVUNu+0ww=
+	dep	golang.org/x/crypto	v0.48.0	h1:/VRzVqiRSggnhY7gNRxPauEQ5Drw9haKdM0jqfcCFts=
+	dep	golang.org/x/net	v0.51.0	h1:94R/GTO7mt3/4wIKpcR5gkGmRLOuE/2hNGeWq/GBIFo=
+	dep	golang.org/x/sync	v0.19.0	h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
+	dep	golang.org/x/sys	v0.41.0	h1:Ivj+2Cp/ylzLiEU89QhWblYnOE9zerudt9Ftecq2C6k=
+	dep	golang.org/x/text	v0.34.0	h1:oL/Qq0Kdaqxa1KbNeMKwQq0reLCCaFtqu2eNuSeNHbk=
+	dep	gopkg.in/yaml.v3	v3.0.1	h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	DefaultGODEBUG=tracebacklabels=0,x509sslcertoverrideplatform=0
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=windows
+	build	GOAMD64=v1
+	build	vcs=git
+	build	vcs.revision=e853611798973f9197efc007357f19b1bbc5e261
+	build	vcs.time=2026-10-09T09:30:37Z
+	build	vcs.modified=true

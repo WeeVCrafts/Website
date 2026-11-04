@@ -1,0 +1,62 @@
+package admin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ StorefrontPromotions(m viewmodels.StorefrontEditor) {
+	<h2>Promotions and coupons</h2>
+	<p>Definitions and activation require publication. Existing redemptions and usage counters are preserved when publishing or restoring a design.</p>
+	<ul class="sf-items">
+		for _,p:=range m.Draft.Config.Promotions {
+			<li><a href={ editorURL(m, "promotions", p.Key) }>{ p.Name } · { p.Status }</a></li>
+		}
+	</ul>
+	<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
+		@EditorFields(m)
+		<button type="submit" name="operation" value="add" class="admin-button secondary" disabled?={ m.Draft.State!="draft" }>Add promotion</button>
+	</form>
+	if m.Promotion.Key!="" {
+		@StorefrontProductSearch(m)
+		<form method="post" action={ m.Admin.PortalRoot + "/storefront/save" }>
+			@EditorFields(m)
+			<fieldset disabled?={ m.Draft.State!="draft" }>
+				@EditorInput("Promotion name", "name", m.Promotion.Name)
+				<label>Description<textarea name="description" rows="4">{ m.Promotion.Description }</textarea></label>
+				<label>
+					Discount type
+					<select name="kind" data-promotion-kind>
+						for _,kind:=range []string{"percentage","fixed","free_shipping"} {
+							@EditorChoice("kind", kind, kind, m.Promotion.Kind)
+						}
+					</select>
+				</label>
+				<label data-discount-label><span data-discount-caption>Discount value</span><input type="number" name="value" value={ editorPromotionValue(m.Promotion) } min="0" max="1000000" step="0.01" data-discount-value required/></label>
+				<label>
+					Activation
+					<select name="status">
+						for _,status:=range []string{"draft","active","archived"} {
+							@EditorChoice("status", status, status, m.Promotion.Status)
+						}
+					</select>
+				</label>
+				<label>Start date (India)<input type="date" name="starts_at" value={ editorDate(m.Promotion.StartsAt, false) }/></label>
+				<label>End date, inclusive (India)<input type="date" name="ends_at" value={ editorDate(m.Promotion.EndsAt, true) }/></label>
+				@EditorNumber("Promotion usage limit (0 means unlimited)", "usage_limit", int(m.Promotion.UsageLimit), 0, 100000000)
+				<label>
+					Eligibility
+					<select name="target_mode">
+						@EditorChoice("target_mode", "all", "All products", m.Promotion.TargetMode)
+						@EditorChoice("target_mode", "products", "Selected products", m.Promotion.TargetMode)
+					</select>
+				</label>
+				@StorefrontProductChoices(m)
+				<h3>Coupon</h3>
+				@EditorInput("Code", "code", editorCoupon(m.Promotion).Code)
+				@EditorNumber("Coupon usage limit (0 means unlimited)", "coupon_limit", int(editorCoupon(m.Promotion).UsageLimit), 0, 100000000)
+				@EditorCheck("Coupon active", "coupon_active", editorCoupon(m.Promotion).Active)
+				<small>Each customer may redeem a coupon once under the existing shopping rules. Coupons already used keep their history.</small>
+				@EditorSave(m)
+			</fieldset>
+		</form>
+	}
+	<p><a href={ m.Admin.PortalRoot + "/marketing" }>View existing promotion usage</a></p>
+}

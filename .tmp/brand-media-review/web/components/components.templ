@@ -1,0 +1,299 @@
+package components
+
+import (
+  "fmt"
+  "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ Header(p viewmodels.CustomerPage) {
+  <header class="site-header" x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
+    if p.Route=="/" {
+     @HomepageUtility(p)
+    }
+    <a class="skip-link" href="#page">Skip to content</a>
+    <div class="header-main container">
+      <div class="header-left">
+        <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
+      </div>
+      <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      if p.Route=="/" {
+       <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
+      }
+      <div class="header-tools">
+        <div class="search-shell">
+          <form class="global-search" method="get" action="/search" { headerSearchAttributes(p)... }>
+            <label class="sr-only" for="global-search">Search products</label>
+            <input id="global-search" name="q" maxlength="200" value={ p.Query } placeholder="Search for sarees, home decor, gifts and more..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-suggestions" hx-get="/ui/search-suggest" hx-select="unset" hx-target="#search-suggestions" hx-swap="innerHTML" hx-trigger="input changed delay:300ms" hx-sync="this:replace" hx-indicator="#global-search-indicator" hx-push-url="false"/>
+            <button type="submit" aria-label="Search"><span class="material-symbols-outlined search-icon" aria-hidden="true">search</span><span id="global-search-indicator" class="search-indicator htmx-indicator material-symbols-outlined" aria-hidden="true">progress_activity</span></button>
+          </form>
+          <div id="search-suggestions" class="search-suggestions" role="listbox" hidden></div>
+        </div>
+        <div class="header-actions">
+          @WishlistAction(p)
+ if p.Authenticated {
+ @NotificationBell()
+ }
+          <a href="/cart" id="cart-count" data-backend-counter title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+          if p.Authenticated {
+          <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
+            <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Open profile menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
+              if p.AvatarURL != "" {
+    <img class="header-avatar" src={ p.AvatarURL } width="36" height="36" alt="Your profile photo"/>
+              } else {
+                <span class="material-symbols-outlined" aria-hidden="true">person</span>
+    }
+
+              <span class="account-label">Account</span><span class="material-symbols-outlined account-chevron" aria-hidden="true">expand_more</span>
+            </button>
+            <nav id="profile-dropdown" class="profile-panel" x-ref="profilePanel" hidden :hidden="!profile" x-cloak aria-label="Profile menu">
+                if p.UserName != "" {
+    <p class="profile-panel-title">{ p.UserName }</p>
+                } else {
+                  <p class="profile-panel-title">Your account</p>
+    }
+
+                <a href={p.AccountDestination()}><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account & profile</span></a>
+                <a href="/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Orders & tracking</span></a>
+    <a href="/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
+                  if p.ProfileIncomplete {
+    <em aria-label="Complete your profile">1</em>
+    }
+
+                </span></a>
+    <form class="profile-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
+
+            </nav>
+          </div>
+          } else {
+            <a class="profile-toggle guest-sign-in" href="/login" aria-label="Sign in"><span class="material-symbols-outlined" aria-hidden="true">person</span><span class="account-label">Sign in</span></a>
+          }
+        </div>
+      </div>
+          if p.Authenticated {
+    <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button></form>
+    }
+
+    </div>
+    @CartDrawer(p)
+    <nav class="storefront-nav" aria-label="Category navigation"><div class="container storefront-nav-inner">
+      <button class="all-categories" type="button" aria-haspopup="dialog" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span>All Categories</button>
+      if p.Category == "natural-care" || p.Category == "slow-living" || p.Category == "home-wellbeing" {
+        <a href={ "/category/" + p.Category } aria-current="page">{ LegacyCategoryLabel(p.Category) }</a>
+      }
+      for _, category := range NavigationCategories(p) {
+        <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
+      }
+      if p.Route!="/" {
+       <a href="/featured-products">Featured products</a>
+      }
+      if p.Storefront != nil {
+        for _,link:=range p.Storefront.Navigation {
+          <a href={ link.URL }>{ link.Label }</a>
+        }
+      } else {
+        <a href="/makers">Meet the Makers</a>
+      }
+      if p.Route=="/" {
+       <a class="homepage-offers" href="/deals"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span>Offers</a>
+      }
+    </div></nav>
+    <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
+      <div class="mobile-menu-heading"><h2 id="menu-title">Explore the store</h2><button class="mobile-menu-close" type="button" aria-label="Close navigation" autofocus @click="closeMenu()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+      <nav class="menu-section" aria-labelledby="menu-shop"><h3 id="menu-shop">Shop</h3>
+        @MenuLink("/", "Home", "home")
+ @MenuLink("/products", "Shop all products", "storefront")
+        @MenuLink("/categories", "Browse categories", "category")
+        for _,category:=range NavigationCategories(p) {
+ @MenuLink("/products?category="+category.Slug,category.Name,"category")
+ }
+        @MenuLink("/featured-products", "Featured products", "star")
+        @MenuLink("/products?category=offers", "Offers", "local_offer")
+        if p.Storefront != nil {
+          for _,link:=range p.Storefront.Navigation {
+            @MenuLink(link.URL,link.Label,"arrow_forward")
+          }
+        } else {
+          @MenuLink("/makers", "Meet the makers", "handyman")
+        }
+      </nav>
+      <nav class="menu-section" aria-labelledby="menu-account"><h3 id="menu-account">Your account</h3>
+        @MenuLink(p.AccountDestination(), "Account & profile", "person")
+        @MenuLink("/orders", "Orders & tracking", "local_shipping")
+        @MenuLink("/wishlist", "Wishlist", "favorite")
+        @MenuLink("/cart", "Shopping bag", "shopping_bag")
+        if p.IsCustomer {
+          @MenuLink("/notifications", "Notifications", "notifications")
+        }
+      </nav>
+      <nav class="menu-section" aria-labelledby="menu-help"><h3 id="menu-help">Help & about</h3>
+        @MenuLink("/contact", "Contact us", "chat_bubble")
+        @MenuLink("/returns", "Returns & refunds", "assignment_return")
+        @MenuLink("/our-story", "Our story", "auto_stories")
+        if !p.Authenticated {
+          @MenuLink("/seller", "Sell on Weevcrafts", "store")
+        }
+      </nav>
+      if p.Authenticated {
+    <form class="mobile-menu-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit">Sign out</button></form>
+    }
+
+    </dialog>
+  </header>
+    }
+
+
+templ CartDrawer(p viewmodels.CustomerPage) {
+  <dialog id="cart-drawer" class="cart-drawer" aria-labelledby="cart-drawer-title" data-backend-cart-drawer>
+    <div class="cart-drawer-shell">
+      <header class="cart-drawer-header">
+        <div><p class="eyebrow">YOUR BAG</p><h2 id="cart-drawer-title">Shopping bag</h2><p data-cart-drawer-count>{ p.CartCount } items from independent Indian makers</p></div>
+        <button class="icon-button cart-drawer-close" type="button" data-cart-drawer-close aria-label="Close shopping bag"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      </header>
+      <div class="cart-drawer-items" data-cart-drawer-items>
+        if p.Authenticated && p.CartCount > 0 {
+    <p class="empty-state">Loading your shopping bag…</p>
+        } else if p.Authenticated {
+    <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><h3>Your cart is empty</h3><p>Browse handmade treasures and bring a little India home.</p><a class="primary-button" href="/products">Continue shopping</a></div>
+        } else {
+          <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">person</span><h3>Sign in to see your cart</h3><p>Your saved items will follow you across devices.</p><a class="primary-button" href="/login">Sign in</a></div>
+    }
+
+      </div>
+      <footer class="cart-drawer-footer" data-cart-drawer-summary hidden>
+        <p><span>Subtotal</span><b data-cart-drawer-subtotal>₹0</b></p>
+        <p><span>Delivery</span><b data-cart-drawer-shipping>₹0</b></p>
+        <p class="cart-drawer-total"><span>Total</span><strong data-cart-drawer-total>₹0</strong></p>
+        <a class="primary-button full" href="/cart">View full cart <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+        <a class="outline-button full" href="/checkout">Proceed to checkout</a>
+      </footer>
+    </div>
+  </dialog>
+    }
+
+
+templ MenuLink(href string, label string, icon string) {
+  <a href={ href } @click="closeMenu()" :aria-current="window.location.pathname + window.location.search === $el.pathname + $el.search ? 'page' : null"><span class="material-symbols-outlined" aria-hidden="true">{ icon }</span><span>{ label }</span><span class="material-symbols-outlined menu-link-arrow" aria-hidden="true">chevron_right</span></a>
+    }
+
+
+templ WishlistAction(p viewmodels.CustomerPage) {
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+    }
+
+
+templ DetailWishlistButton(product viewmodels.Product) {
+  <button class={ "gallery-heart " + productHeartClass(product.Saved) } type="button" data-product-slug={ product.Slug } data-product-name={ product.Name } aria-label={ productHeartLabel(product.Name,product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productWishlistValues(product.Saved) } hx-target="#wishlist-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this">@WishlistHeartIcon()</button>
+    }
+
+templ WishlistHeartIcon() {
+  <svg class="wishlist-heart-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+}
+
+
+templ CartMutation(p viewmodels.CustomerPage) {
+  @CartMutationMessage(p, "Added to cart")
+}
+
+templ CartMutationMessage(p viewmodels.CustomerPage, message string) {
+  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML" title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+  @WishlistCountMutation(p)
+  <div id="ui-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
+    }
+
+
+templ WishlistCountMutation(p viewmodels.CustomerPage) {
+  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML" title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+    }
+
+
+templ RatingStars(rating string) {
+  for i := 0; i < ratingStars(rating); i++ {
+    <span class="material-symbols-outlined" aria-hidden="true">star</span>
+    }
+
+}
+
+templ WishlistMutation(p viewmodels.CustomerPage, product viewmodels.Product, remove bool, actions ...bool) {
+  if !remove {
+    @ProductCard(product, len(actions) == 0 || actions[0])
+  }
+  @WishlistCountMutation(p)
+  <div id="ui-toast" hx-swap-oob="innerHTML" role="status">Wishlist updated</div>
+    }
+
+
+templ Footer(p viewmodels.CustomerPage) {
+  if p.Route!="/" {
+   @ShoppingTrust(p)
+  }
+  <footer class="site-footer"><div class="container footer-grid">
+    <div class="footer-brand"><a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade. People. A Kinder Tomorrow.</small></span></a><nav class="socials" aria-label="Social media">for _, link := range p.SocialLinks {
+    <a href={ link.URL } target="_blank" rel="noopener noreferrer" aria-label={ "Weevcrafts on " + link.Name }>{ link.Name }</a>
+    }
+</nav></div>
+    if p.Storefront != nil {
+      @StorefrontFooterGroups(p.Storefront.FooterGroups)
+    } else {
+    <div><h3>Shop</h3><a href="/categories">All Categories</a><a href="/products?sort=newest">New Arrivals</a><a href="/products?category=home">Home &amp; Living</a><a href="/products?q=gift">Thoughtful Gifts</a></div>
+    <div><h3>Help</h3><a href="/orders">Track Order</a><a href="/returns">Returns &amp; Refunds</a><a href="/shipping">Shipping Information</a><a href="/faq">FAQs</a></div>
+    <div><h3>About</h3><a href="/our-story">Our Story</a><a href="/makers">Meet the Makers</a><a href="/sustainability">Sustainability</a><a href="/contact">Contact Us</a></div>
+    <div class="newsletter"><h3>A little more handmade in your inbox</h3><p>Choose updates on new collections, maker stories and offers.</p><a class="outline-button newsletter-preferences" href="/account/notifications">Manage email preferences <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div>
+    }
+  </div><div class="container footer-bottom"><span>© { p.Now.Year() } Weevcrafts. All rights reserved.</span><nav aria-label="Policies">
+ if p.Storefront!=nil {
+  for _,link:=range p.Storefront.PolicyLinks {
+   <a href={ link.URL }>{ link.Label }</a>
+  }
+ } else {
+  <a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a>
+ }
+ </nav></div></footer>
+    }
+
+
+templ ProductCard(product viewmodels.Product, showAction bool, priority ...bool) {
+  <article class={ "product-card", templ.KV("product-card--compact", !showAction) } data-product={ product.Slug } data-action={ showAction }>
+    <div class="product-media"><a href={ "/products/" + product.Slug } tabindex="-1" aria-hidden="true"><img src={ ProductImage(product.ImageURL) } alt={ product.Name } loading={ productImageLoading(priority) } fetchpriority={ productImagePriority(priority) } width="640" height="640" srcset={ ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="(max-width:360px) calc(100vw - 32px), (max-width:720px) calc((100vw - 44px) / 2), (max-width:1024px) 30vw, 280px"/></a><button class={ productHeartClass(product.Saved) } type="button" data-product-slug={ product.Slug } data-product-name={ product.Name } aria-label={ productHeartLabel(product.Name, product.Saved) } aria-pressed={ product.Saved } hx-post={ "/ui/wishlist/" + product.Slug } hx-vals={ productCardWishlistValues(product.Saved, showAction) } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="closest article" hx-swap="outerHTML" hx-indicator="#ui-loading" hx-disabled-elt="this">@WishlistHeartIcon()</button><span class="badge">{ product.Badge }</span></div>
+    <div class="product-copy"><h3><a href={ "/products/" + product.Slug }>{ product.Name }</a></h3><p>By { product.Seller }</p>if product.Reviews > 0 {
+    <div class="rating" aria-label={ product.Rating + " out of 5 stars" }>@RatingStars(product.Rating) <span>{ product.Rating } ({ product.Reviews })</span></div>
+    } else {
+      <p class="product-review-empty">No reviews yet</p>
+    }
+
+    <div class="card-price-row"><div class="price"><strong>{ product.Price }</strong><del>{ product.CompareAt }</del>
+      if product.Discount != "" {
+    <mark>{ product.Discount }</mark>
+    }
+
+    </div>
+    <span class={ "card-stock", templ.KV("card-stock--out", !product.InStock) }><span aria-hidden="true">●</span>
+      if product.InStock {
+        In stock
+      } else {
+        Sold out
+      }
+    </span></div>
+    <div class="card-actions">
+    if showAction {
+    <a class="outline-button quick-view-link" href={ "/products/" + product.Slug } data-quick-view aria-label={ "Quick view " + product.Name }>Quick view</a>
+    }
+
+    if showAction && ProductCardCanAdd(product) {
+    <button class="outline-button add-button" type="button" data-variant-id={ product.Variants[0].ID } hx-post={ "/ui/cart/" + product.Slug } hx-headers={ "{\"X-CSRF-Token\":\"" + product.CSRFToken + "\"}" } hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button>
+    } else if showAction && product.InStock && len(product.Variants) > 1 {
+    <a class="outline-button add-button" href={ "/products/" + product.Slug }>Choose options</a>
+    } else if showAction && product.InStock {
+    <a class="outline-button add-button" href={ "/products/" + product.Slug }>Choose options</a>
+    } else if showAction {
+    <button class="outline-button add-button" type="button" disabled>Sold out</button>
+    }
+
+    </div>
+    </div>
+  </article>
+    }
+
+
+templ CategoryCard(category viewmodels.Category) {
+  <a class="category-card" href={ "/products?category=" + category.Slug }><img style={ "object-position:"+category.ImagePosition } src={ category.ImageURL } srcset={ ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:720px) 45vw, 320px" alt="" loading="lazy" decoding="async" width="320" height="320"/><span><strong>{ category.Name }</strong><small>{ category.Description }</small><b>Explore { category.Name } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a>
+    }

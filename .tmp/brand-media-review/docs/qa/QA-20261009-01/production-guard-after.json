@@ -1,0 +1,118 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "tests/e2e/production-guards.spec.js",
+      "--reporter=list,json",
+      "--output=docs/qa/QA-20261009-01/guard-after"
+    ],
+    "configFile": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\playwright.config.js",
+    "rootDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/guard-after",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "production-guards.spec.js",
+      "file": "production-guards.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "INT-027--qa-and-technical-operator",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8806,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T10:39:44.600Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2dff4ce10eb42cc683a4-0ca7bbc999eb35e407a2",
+          "file": "production-guards.spec.js",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T10:39:43.228Z",
+    "duration": 10914.993,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

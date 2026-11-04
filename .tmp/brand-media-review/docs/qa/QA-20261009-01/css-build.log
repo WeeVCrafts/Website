@@ -1,0 +1,15 @@
+
+> css:build
+> tailwindcss -i ./web/assets/css/source.css -o ./internal/transport/web/static/app.css --minify && npm run css:preview
+
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+Rebuilding...
+
+Done in 3855ms.
+
+> css:preview
+> node ./scripts/minify-preview-css.js
+

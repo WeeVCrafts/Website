@@ -1,0 +1,140 @@
+
+Running 27 tests using 1 worker
+
+
+
+(node:5708) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[1/27] [chromium] › tests\e2e\secure-customer.spec.js:32:1 › customer login, wishlist toggle persistence, failure and rapid-click states
+[2/27] [chromium] › tests\e2e\secure-customer.spec.js:78:1 › private profile upload, preview, persistence, reminder and validation
+[3/27] [chromium] › tests\e2e\secure-customer.spec.js:119:1 › social settings are persistent, safe and Super Admin controlled
+[4/27] [chromium] › tests\e2e\secure-customer.spec.js:138:1 › role replacement removes prior privileges and revokes existing sessions
+[5/27] [chromium] › tests\e2e\secure-customer.spec.js:159:1 › cross-account orders, addresses, wishlist and privileged operations stay isolated
+[6/27] [chromium] › tests\e2e\secure-customer.spec.js:182:1 › all role portals remove switching and customer mobile polish stays usable
+[7/27] [chromium] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+  1) [chromium] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 404
+
+      232 |     expect((await page.request.get(`/orders/${number}/invoice`)).status()).toBe(200);
+      233 |     expect((await other.request.get(`/orders/${number}/invoice`)).status()).toBe(404);
+    > 234 |     expect((await other.request.get('/finance-portal/reconciliation', { maxRedirects: 0 })).status()).toBe(403);
+          |                                                                                                       ^
+      235 |     await otherContext.clearCookies(); await login(other, 'support01');
+      236 |     expect((await other.request.get(`/support/attachments/${attachment}`)).status()).toBe(200);
+      237 |   } finally { await otherContext.close(); }
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\secure-customer.spec.js:234:103
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-chromium\error-context.md
+
+
+(node:5748) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[8/27] [chromium] › tests\e2e\secure-customer.spec.js:240:1 › suspension, password replacement and deletion invalidate existing sessions
+[9/27] [chromium] › tests\e2e\secure-customer.spec.js:256:1 › JavaScript and server forms share safe customer return destinations
+
+(node:4268) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[10/27] [firefox] › tests\e2e\secure-customer.spec.js:32:1 › customer login, wishlist toggle persistence, failure and rapid-click states
+[11/27] [firefox] › tests\e2e\secure-customer.spec.js:78:1 › private profile upload, preview, persistence, reminder and validation
+[12/27] [firefox] › tests\e2e\secure-customer.spec.js:119:1 › social settings are persistent, safe and Super Admin controlled
+[13/27] [firefox] › tests\e2e\secure-customer.spec.js:138:1 › role replacement removes prior privileges and revokes existing sessions
+[14/27] [firefox] › tests\e2e\secure-customer.spec.js:159:1 › cross-account orders, addresses, wishlist and privileged operations stay isolated
+[15/27] [firefox] › tests\e2e\secure-customer.spec.js:182:1 › all role portals remove switching and customer mobile polish stays usable
+[16/27] [firefox] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+  2) [firefox] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 404
+
+      232 |     expect((await page.request.get(`/orders/${number}/invoice`)).status()).toBe(200);
+      233 |     expect((await other.request.get(`/orders/${number}/invoice`)).status()).toBe(404);
+    > 234 |     expect((await other.request.get('/finance-portal/finance-reconciliation', { maxRedirects: 0 })).status()).toBe(403);
+          |                                                                                                       ^
+      235 |     await otherContext.clearCookies(); await login(other, 'support01');
+      236 |     expect((await other.request.get(`/support/attachments/${attachment}`)).status()).toBe(200);
+      237 |   } finally { await otherContext.close(); }
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\secure-customer.spec.js:234:103
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-firefox\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-firefox\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-firefox\error-context.md
+
+
+(node:20280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[17/27] [firefox] › tests\e2e\secure-customer.spec.js:240:1 › suspension, password replacement and deletion invalidate existing sessions
+[18/27] [firefox] › tests\e2e\secure-customer.spec.js:256:1 › JavaScript and server forms share safe customer return destinations
+
+(node:17428) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[19/27] [webkit] › tests\e2e\secure-customer.spec.js:32:1 › customer login, wishlist toggle persistence, failure and rapid-click states
+[20/27] [webkit] › tests\e2e\secure-customer.spec.js:78:1 › private profile upload, preview, persistence, reminder and validation
+[21/27] [webkit] › tests\e2e\secure-customer.spec.js:119:1 › social settings are persistent, safe and Super Admin controlled
+[22/27] [webkit] › tests\e2e\secure-customer.spec.js:138:1 › role replacement removes prior privileges and revokes existing sessions
+[23/27] [webkit] › tests\e2e\secure-customer.spec.js:159:1 › cross-account orders, addresses, wishlist and privileged operations stay isolated
+[24/27] [webkit] › tests\e2e\secure-customer.spec.js:182:1 › all role portals remove switching and customer mobile polish stays usable
+[25/27] [webkit] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries
+  3) [webkit] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 404
+
+      232 |     expect((await page.request.get(`/orders/${number}/invoice`)).status()).toBe(200);
+      233 |     expect((await other.request.get(`/orders/${number}/invoice`)).status()).toBe(404);
+    > 234 |     expect((await other.request.get('/finance-portal/finance-reconciliation', { maxRedirects: 0 })).status()).toBe(403);
+          |                                                                                                       ^
+      235 |     await otherContext.clearCookies(); await login(other, 'support01');
+      236 |     expect((await other.request.get(`/support/attachments/${attachment}`)).status()).toBe(200);
+      237 |   } finally { await otherContext.close(); }
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\secure-customer.spec.js:234:103
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-webkit\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-webkit\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\..\AppData\Local\Temp\weevcrafts-playwright\secure-customer-two-seller-ee79f-receipts-enforce-boundaries-webkit\error-context.md
+
+
+
+(node:9704) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[26/27] [webkit] › tests\e2e\secure-customer.spec.js:240:1 › suspension, password replacement and deletion invalidate existing sessions
+[27/27] [webkit] › tests\e2e\secure-customer.spec.js:256:1 › JavaScript and server forms share safe customer return destinations
+  3 failed
+    [chromium] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+    [firefox] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+    [webkit] › tests\e2e\secure-customer.spec.js:205:1 › two sellers, staff permissions, private support attachments and receipts enforce boundaries 
+  24 passed (5.1m)

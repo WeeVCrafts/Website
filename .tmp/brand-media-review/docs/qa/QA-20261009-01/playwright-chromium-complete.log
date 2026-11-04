@@ -1,0 +1,155 @@
+
+Running 66 tests using 1 worker
+
+(node:16612) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--customer (4.5s)
+  ok  2 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--seller-owner (3.5s)
+  ok  3 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--seller-staff (3.6s)
+  ok  4 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--marketplace-admin (3.1s)
+  ok  5 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--super-admin (3.3s)
+  ok  6 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--support-agent (3.0s)
+  ok  7 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--finance-operator (2.4s)
+  ok  8 tests\e2e\manual-matrix.spec.js:126:3 › NAV-002--returns-operations (2.7s)
+  x   9 tests\e2e\manual-matrix.spec.js:148:1 › GST-020--guest (221ms)
+(node:4392) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 10 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--customer (7.8s)
+  ok 11 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--customer (6.6s)
+  ok 12 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--customer (17.3s)
+  ok 13 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--customer (7.7s)
+  ok 14 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--customer (13.6s)
+  ok 15 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--customer (14.6s)
+  ok 16 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--seller-owner (8.1s)
+  ok 17 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--seller-owner (7.6s)
+  ok 18 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--seller-owner (19.5s)
+  ok 19 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--seller-owner (8.0s)
+  ok 20 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--seller-owner (14.2s)
+  ok 21 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--seller-owner (15.6s)
+  ok 22 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--seller-staff (6.9s)
+  ok 23 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--seller-staff (6.5s)
+  ok 24 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--seller-staff (14.3s)
+  ok 25 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--seller-staff (6.8s)
+  ok 26 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--seller-staff (13.4s)
+  ok 27 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--seller-staff (14.2s)
+  ok 28 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--marketplace-admin (6.8s)
+  ok 29 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--marketplace-admin (7.4s)
+  ok 30 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--marketplace-admin (14.0s)
+  ok 31 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--marketplace-admin (7.1s)
+  ok 32 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--marketplace-admin (13.3s)
+  ok 33 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--marketplace-admin (13.4s)
+  ok 34 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--super-admin (7.4s)
+  ok 35 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--super-admin (9.8s)
+  ok 36 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--super-admin (16.2s)
+  ok 37 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--super-admin (6.6s)
+  ok 38 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--super-admin (13.3s)
+  ok 39 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--super-admin (17.8s)
+  ok 40 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--support-agent (8.0s)
+  ok 41 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--support-agent (6.7s)
+  ok 42 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--support-agent (13.7s)
+  ok 43 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--support-agent (6.9s)
+  ok 44 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--support-agent (13.3s)
+  ok 45 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--support-agent (14.0s)
+  ok 46 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--finance-operator (7.0s)
+  ok 47 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--finance-operator (6.5s)
+  ok 48 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--finance-operator (13.8s)
+  ok 49 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--finance-operator (6.8s)
+  ok 50 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--finance-operator (14.1s)
+  ok 51 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--finance-operator (17.3s)
+  ok 52 tests\e2e\manual-recovery.spec.js:79:3 › AUTH-008--returns-operations (7.4s)
+  ok 53 tests\e2e\manual-recovery.spec.js:90:3 › AUTH-009--returns-operations (6.4s)
+  ok 54 tests\e2e\manual-recovery.spec.js:100:3 › AUTH-010--returns-operations (14.3s)
+  ok 55 tests\e2e\manual-recovery.spec.js:123:3 › AUTH-014--returns-operations (7.0s)
+  ok 56 tests\e2e\manual-recovery.spec.js:136:3 › AUTH-011--returns-operations (14.7s)
+  ok 57 tests\e2e\manual-recovery.spec.js:162:3 › AUTH-012--returns-operations (14.3s)
+  ok 58 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--customer (12.5s)
+  ok 59 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--seller-owner (13.1s)
+  ok 60 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--seller-staff (11.5s)
+  ok 61 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--marketplace-admin (12.0s)
+  ok 62 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--super-admin (11.6s)
+  ok 63 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--support-agent (11.2s)
+  ok 64 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--finance-operator (11.3s)
+  ok 65 tests\e2e\manual-security.spec.js:29:3 › AUTH-006--returns-operations (12.3s)
+  x  66 tests\e2e\manual-security.spec.js:60:1 › enabled local payment helper still processes an owned QA order (6.0s)
+
+
+  1) tests\e2e\manual-matrix.spec.js:148:1 › GST-020--guest ────────────────────────────────────────
+
+    Error: /category/missing-qa-1791543313523
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 200
+
+      150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {
+      151 |     const response = await request.get(route);
+    > 152 |     expect.soft(response.status(), route).toBe(404);
+          |                                           ^
+      153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);
+      154 |   }
+      155 | });
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\manual-matrix.spec.js:152:43
+
+    Error: /brands/missing-qa-1791543313523
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 404
+    Received: 200
+
+      150 |   for (const route of [`/products/${missing}`, `/category/${missing}`, `/brands/${missing}`, `/${missing}`]) {
+      151 |     const response = await request.get(route);
+    > 152 |     expect.soft(response.status(), route).toBe(404);
+          |                                           ^
+      153 |     expect(await response.text()).not.toMatch(/panic:|SQLSTATE|password_hash/);
+      154 |   }
+      155 | });
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\manual-matrix.spec.js:152:43
+
+    Error Context: docs\qa\QA-20261009-01\chromium-complete\manual-matrix-GST-020--guest\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\chromium-complete\manual-matrix-GST-020--guest\trace.zip
+    Usage:
+
+        npx playwright show-trace docs\qa\QA-20261009-01\chromium-complete\manual-matrix-GST-020--guest\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests\e2e\manual-security.spec.js:60:1 › enabled local payment helper still processes an owned QA order 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "pending_payment"
+    Received: "payment_failed"
+
+      61 |   await login(page, 'demo.customer01@weevcrafts.local', '/account');
+      62 |   const csrf = await page.locator('input[name="csrf_token"]').first().inputValue();
+    > 63 |   expect(sql("SELECT status FROM orders WHERE order_number='WCDEMO1001'")).toBe('pending_payment');
+         |                                                                            ^
+      64 |   const response = await page.request.post('/dev/payments/WCDEMO1001/capture', { headers: { 'X-CSRF-Token': csrf } });
+      65 |   expect(response.status()).toBe(200);
+      66 |   expect((await response.json()).processed).toBe(true);
+        at C:\Users\Vinay\Downloads\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\WeeVCrafts\tests\e2e\manual-security.spec.js:63:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\chromium-complete\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: docs\qa\QA-20261009-01\chromium-complete\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    docs\qa\QA-20261009-01\chromium-complete\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\trace.zip
+    Usage:
+
+        npx playwright show-trace docs\qa\QA-20261009-01\chromium-complete\manual-security-enabled-lo-9dfc3-processes-an-owned-QA-order\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Slow test file: tests\e2e\manual-recovery.spec.js (8.8m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  2 failed
+    tests\e2e\manual-matrix.spec.js:148:1 › GST-020--guest ─────────────────────────────────────────
+    tests\e2e\manual-security.spec.js:60:1 › enabled local payment helper still processes an owned QA order 
+  64 passed (11.1m)

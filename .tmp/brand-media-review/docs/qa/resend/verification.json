@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-10",
+  "sender_domain": "mail.weevcrafts.com",
+  "domain_status": "verified",
+  "tls": "enforced",
+  "hello": "delivered",
+  "verification_template": "delivered",
+  "reset_template": "delivered",
+  "go_suite": "passed",
+  "firebase_live_email_actions": "passed",
+  "postgres_recovery_ownership": "passed",
+  "templ_check": "passed",
+  "human_google_popup": "pending",
+  "human_ui_registration_reset": "pending",
+  "firebase_ui_chromium_firefox_webkit": "passed",
+  "header_three_browsers_nine_widths": "passed",
+  "preview": "healthy localhost:8080, volumes preserved"
+}

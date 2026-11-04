@@ -1,0 +1,1108 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config=tests/e2e/browser-matrix.config.js",
+      "--reporter=list,json",
+      "--output=docs/qa/QA-20261009-01/browser-matrix"
+    ],
+    "configFile": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\browser-matrix.config.js",
+    "rootDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/browser-matrix",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Firefox",
+        "name": "Firefox",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "role-portals.spec.js",
+          "seller-support-live.spec.js",
+          "integration-gaps.spec.js"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/docs/qa/QA-20261009-01/browser-matrix",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "WebKit",
+        "name": "WebKit",
+        "testDir": "C:/Users/Vinay/Downloads/WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e/WeeVCrafts/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "role-portals.spec.js",
+          "seller-support-live.spec.js",
+          "integration-gaps.spec.js"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "integration-gaps.spec.js",
+      "file": "integration-gaps.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "category selection can be cleared and product structured data is valid",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16185,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:09:13.331Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-f0b72a3c02b8e53309cd",
+          "file": "integration-gaps.spec.js",
+          "line": 14,
+          "column": 1
+        },
+        {
+          "title": "admin directories persist catalog changes and settings affect storefront",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14386,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:09:32.406Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-dc111934e11eec2ee099",
+          "file": "integration-gaps.spec.js",
+          "line": 27,
+          "column": 1
+        },
+        {
+          "title": "marketplace cannot change commissions and finance can open the editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9378,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:09:46.839Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-b0e03c76014d5313752b",
+          "file": "integration-gaps.spec.js",
+          "line": 78,
+          "column": 1
+        },
+        {
+          "title": "category selection can be cleared and product structured data is valid",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8892,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:13:26.681Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-ffdd61d816bd14042a33",
+          "file": "integration-gaps.spec.js",
+          "line": 14,
+          "column": 1
+        },
+        {
+          "title": "admin directories persist catalog changes and settings affect storefront",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22947,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:13:36.528Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-daeee472844dd3952c12",
+          "file": "integration-gaps.spec.js",
+          "line": 27,
+          "column": 1
+        },
+        {
+          "title": "marketplace cannot change commissions and finance can open the editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13375,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:13:59.574Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "691dcca0f9495e23fef1-d92a39802f69d9e8fd31",
+          "file": "integration-gaps.spec.js",
+          "line": 78,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "role-portals.spec.js",
+      "file": "role-portals.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "role-specific portals",
+          "file": "role-portals.spec.js",
+          "line": 40,
+          "column": 6,
+          "specs": [
+            {
+              "title": "customer: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12820,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:09:56.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-68cc0e8708e81edffd74",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "seller-owner: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14756,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:10:09.266Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-c47b2bc3845de6d6f5ad",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "seller-staff: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14887,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:10:24.142Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-f344e04950708aab019c",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "marketplace-admin: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21339,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:10:39.121Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-543a0fb0b06e001e8225",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "super-admin: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 57321,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:11:00.535Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-b7a1a7e682c578b97afa",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "finance: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 17626,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:11:57.923Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-a20d8b5e83b11daa9924",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "operations: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18170,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:12:15.684Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-9c06c0e29a9ccd2823bb",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "support: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Firefox",
+                  "projectName": "Firefox",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12789,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:12:33.909Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-6a2962c3530343a37090",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "customer: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14609,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:14:13.210Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-b8f24799b04a574740c2",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "seller-owner: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 24357,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:14:27.913Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-093d342afd6cd3fc137e",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "seller-staff: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 17841,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:14:52.439Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-8d2b6fff4661ca239102",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "marketplace-admin: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 22805,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:15:10.409Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-9020608be8797853e2c0",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "super-admin: landing, boundaries and responsive layouts",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 72881,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\role-portals.spec.js",
+                            "column": 20,
+                            "line": 85
+                          },
+                          "message": "Error: page.screenshot: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n\n  83 |         const screenshotPath = testInfo.outputPath(`${account.id}-${width}.png`);\n  84 |         fs.mkdirSync(path.dirname(screenshotPath), { recursive: true });\n> 85 |         await page.screenshot({ path: screenshotPath });\n     |                    ^\n  86 |       }\n  87 |\n  88 |       if (account.id === \"seller-staff\") {\n    at C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\tests\\e2e\\role-portals.spec.js:85:20"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:15:33.429Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\browser-matrix\\role-portals-role-specific-005c9-ries-and-responsive-layouts-WebKit\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "C:\\Users\\Vinay\\Downloads\\WeeVCrafts-b297e8f594b5f563329a519e26bcf22ab246181e\\WeeVCrafts\\docs\\qa\\QA-20261009-01\\browser-matrix\\role-portals-role-specific-005c9-ries-and-responsive-layouts-WebKit\\trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-ce26ebecd423f1205f0b",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "finance: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 16769,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:16:51.293Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-cd2b442a012ae3aeac86",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "operations: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18148,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:17:08.585Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-fd65f5046189de6382a8",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            },
+            {
+              "title": "support: landing, boundaries and responsive layouts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "WebKit",
+                  "projectName": "WebKit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14105,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-09T11:17:26.792Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4d83a0cdbb4f634b3496-42d3d502f3aa42b683eb",
+              "file": "role-portals.spec.js",
+              "line": 42,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "seller-support-live.spec.js",
+      "file": "seller-support-live.spec.js",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "seller support saves a real request and reply across reloads",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11027,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:12:46.789Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-c9f34e7414d2a25a0a9d",
+          "file": "seller-support-live.spec.js",
+          "line": 17,
+          "column": 1
+        },
+        {
+          "title": "seller staff cannot access seller owner support",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6535,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:12:57.920Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-1b3217f687cc91619b89",
+          "file": "seller-support-live.spec.js",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "customer cannot access seller owner support",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Firefox",
+              "projectName": "Firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8301,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:13:04.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-4136d64ade1c6323d145",
+          "file": "seller-support-live.spec.js",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "seller support saves a real request and reply across reloads",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12210,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:17:40.993Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-687c6c4cc89854567e30",
+          "file": "seller-support-live.spec.js",
+          "line": 17,
+          "column": 1
+        },
+        {
+          "title": "seller staff cannot access seller owner support",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4479,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:17:53.281Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-90ed834b84d8c78a3a3f",
+          "file": "seller-support-live.spec.js",
+          "line": 44,
+          "column": 3
+        },
+        {
+          "title": "customer cannot access seller owner support",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "WebKit",
+              "projectName": "WebKit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6325,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-09T11:17:57.850Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6b22d77a7c5fea00d9d4-5143c70aad55abf8580a",
+          "file": "seller-support-live.spec.js",
+          "line": 44,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-09T11:09:11.463Z",
+    "duration": 533225.488,
+    "expected": 27,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

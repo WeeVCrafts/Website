@@ -1,0 +1,34 @@
+root = "."
+tmp_dir = "tmp/air"
+
+[build]
+cmd = "node scripts/dev-build.cjs"
+entrypoint = ["./tmp/air/website"]
+include_dir = ["cmd", "internal", "web", "scripts"]
+include_file = ["go.mod", "go.sum", "package.json", "tailwind.config.js", ".env", ".air.toml"]
+include_ext = ["go", "templ", "css", "js", "cjs", "json", "webp", "png", "jpg", "jpeg", "svg", "woff2"]
+exclude_dir = ["node_modules", "tmp", "bin", "web/assets/images/customer/responsive"]
+exclude_file = ["web/components/image_variants_generated.go", "internal/transport/web/static/app.css"]
+exclude_regex = ["_templ\\.go$", "_test\\.go$", "\\.min\\.(css|js)$"]
+exclude_unchanged = true
+delay = 600
+stop_on_error = true
+send_interrupt = true
+kill_delay = "1s"
+log = "build-errors.log"
+
+[build.windows]
+entrypoint = ["tmp\\air\\website.exe"]
+
+[log]
+time = true
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true
+
+[proxy]
+enabled = true
+proxy_port = 8090
+app_port = 8080
+app_start_timeout = 60000

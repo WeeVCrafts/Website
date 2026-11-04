@@ -1,0 +1,15 @@
+package pages
+
+templ StorefrontRichText(text string) {
+ for _,span:=range storefrontTextSpans(text) {
+  if span.Kind=="strong" {
+   <strong>{ span.Text }</strong>
+  } else if span.Kind=="em" {
+   <em>{ span.Text }</em>
+  } else if span.Kind=="link" {
+   <a href={ span.URL }>{ span.Text }</a>
+  } else {
+   { span.Text }
+  }
+ }
+}

@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-15",
+  "profile": "Chromium, cold cache, 390x844, DPR 1, 150ms latency, 1.6Mbps down, 4x CPU; 3 navigations per route. Local lab only; eventMaxMs is not INP.",
+  "before": {
+    "navigations": [
+      {
+        "route": "/",
+        "run": 1,
+        "lcp": 2704,
+        "cls": 0.030844921943166837,
+        "longTaskMs": 489,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 443.7000000178814,
+        "bytes": 674276,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "lcp": 2064,
+        "cls": 0.03016500205949339,
+        "longTaskMs": 227,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 275.09999999403954,
+        "bytes": 674276,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "lcp": 2076,
+        "cls": 0.034275446270961726,
+        "longTaskMs": 103,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 279.2000000178814,
+        "bytes": 674276,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 1,
+        "lcp": 2604,
+        "cls": 0.002649757682416077,
+        "longTaskMs": 0,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 857.4000000059605,
+        "bytes": 671270,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 2,
+        "lcp": 2004,
+        "cls": 0.002649757682416077,
+        "longTaskMs": 175,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 156.09999999403954,
+        "bytes": 671270,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 3,
+        "lcp": 1936,
+        "cls": 0.002649757682416077,
+        "longTaskMs": 59,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 146.69999998807907,
+        "bytes": 671270,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 1,
+        "lcp": 2508,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 398,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 579,
+        "bytes": 579608,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 2,
+        "lcp": 2036,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 304,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 97,
+        "bytes": 579608,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 3,
+        "lcp": 2068,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 0,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 288.59999999403954,
+        "bytes": 579608,
+        "overflow": false
+      }
+    ],
+    "secondHero": {
+      "url": "/assets/images/customer/saree-maroon.webp",
+      "width": 348,
+      "bytes": 347134
+    },
+    "filter": {
+      "target": "page",
+      "mainPreserved": true,
+      "introPreserved": false,
+      "eventMaxMs": 0,
+      "responseBytes": 50487,
+      "elapsedMs": 1195
+    }
+  },
+  "after": {
+    "navigations": [
+      {
+        "route": "/",
+        "run": 1,
+        "lcp": 2604,
+        "cls": 0.003763230800691002,
+        "longTaskMs": 270,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 634.0999999940395,
+        "bytes": 656464,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "lcp": 2004,
+        "cls": 0.003763230800691002,
+        "longTaskMs": 0,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 144.19999998807907,
+        "bytes": 656464,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "lcp": 2120,
+        "cls": 0.003763230800691002,
+        "longTaskMs": 178,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/hero-studio-480.webp?v=0df2bb1b9a4ef15e",
+        "ttfb": 355.2000000178814,
+        "bytes": 656464,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 1,
+        "lcp": 3216,
+        "cls": 0.002649757682416077,
+        "longTaskMs": 65,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 1290.800000011921,
+        "bytes": 671460,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 2,
+        "lcp": 2236,
+        "cls": 0.002649757682416077,
+        "longTaskMs": 201,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 416.40000000596046,
+        "bytes": 671460,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 3,
+        "lcp": 2080,
+        "cls": 0.002641724794306231,
+        "longTaskMs": 248,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/responsive/blue-tote-320.webp?v=fb1d15b31b9c7009",
+        "ttfb": 325.5,
+        "bytes": 671460,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 1,
+        "lcp": 3068,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 63,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 1264.4000000059605,
+        "bytes": 579798,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 2,
+        "lcp": 2224,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 73,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 409.19999998807907,
+        "bytes": 579798,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 3,
+        "lcp": 2336,
+        "cls": 0.0036507188483222265,
+        "longTaskMs": 127,
+        "eventMaxMs": 0,
+        "lcpURL": "http://127.0.0.1:18080/assets/images/customer/blue-tote-480.webp?v=63056f686bdfeeaa",
+        "ttfb": 613.4000000059605,
+        "bytes": 579798,
+        "overflow": false
+      }
+    ],
+    "secondHero": {
+      "url": "/assets/images/customer/saree-maroon-480.webp",
+      "width": 348,
+      "bytes": 30370
+    },
+    "filter": {
+      "target": "listing-content",
+      "mainPreserved": true,
+      "introPreserved": false,
+      "bannerPreserved": true,
+      "eventMaxMs": 0,
+      "responseBytes": 26285,
+      "elapsedMs": 1154
+    }
+  },
+  "errors": {
+    "before": [],
+    "after": []
+  }
+}

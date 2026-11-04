@@ -1,0 +1,271 @@
+package postgres
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
+	"github.com/wecratfs/commerce/internal/ports"
+)
+
+type RoleAdministrationRepository struct {
+	pool *pgxpool.Pool
+}
+
+func NewRoleAdministrationRepository(pool *pgxpool.Pool) *RoleAdministrationRepository {
+	return &RoleAdministrationRepository{pool: pool}
+}
+
+func (r *RoleAdministrationRepository) ListRoleAssignments(ctx context.Context, actorID int64, query string) ([]domainidentity.RoleAssignment, error) {
+	if err := r.requireSuperAdmin(ctx, actorID); err != nil {
+		return nil, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT u.id, u.email, u.display_name, u.status,
+		       COALESCE(array_agg(ur.role_slug ORDER BY ur.role_slug) FILTER (WHERE ur.role_slug IS NOT NULL), ARRAY[]::text[]),
+		       to_char(u.created_at AT TIME ZONE 'Asia/Kolkata','DD Mon YYYY'),
+		       COALESCE(to_char(MAX(sm.last_seen_at) AT TIME ZONE 'Asia/Kolkata','DD Mon YYYY, HH12:MI AM'),'Never')
+		FROM users u
+		LEFT JOIN user_roles ur ON ur.user_id = u.id
+		LEFT JOIN sessions_metadata sm ON sm.user_id = u.id
+		WHERE u.status <> 'deleted'
+		  AND ($1 = '' OR u.email ILIKE '%' || $1 || '%' OR u.display_name ILIKE '%' || $1 || '%' OR EXISTS (SELECT 1 FROM user_roles search_role WHERE search_role.user_id = u.id AND search_role.role_slug ILIKE '%' || $1 || '%'))
+		GROUP BY u.id, u.email, u.display_name, u.status
+		ORDER BY u.created_at DESC, u.id DESC
+		LIMIT 200`, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	assignments := make([]domainidentity.RoleAssignment, 0)
+	for rows.Next() {
+		var assignment domainidentity.RoleAssignment
+		if err := rows.Scan(&assignment.ID, &assignment.Email, &assignment.DisplayName, &assignment.Status, &assignment.Roles, &assignment.CreatedAt, &assignment.LastActive); err != nil {
+			return nil, err
+		}
+		assignments = append(assignments, assignment)
+	}
+	return assignments, rows.Err()
+}
+
+func (r *RoleAdministrationRepository) UpdateRoleAssignment(ctx context.Context, actorID, userID, sellerID int64, role domainidentity.Role, grant bool, reason string) error {
+	if err := r.requireSuperAdmin(ctx, actorID); err != nil {
+		return err
+	}
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
+			return err
+		}
+		var status string
+		if err := tx.QueryRow(transactionContext, `SELECT status FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&status); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrNotFound
+			}
+			return err
+		}
+		if status != "active" {
+			return ports.ErrRoleState
+		}
+		if !grant {
+			return ports.ErrRoleState
+		}
+		var protected bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='super_admin')`, userID).Scan(&protected); err != nil {
+			return err
+		}
+		if protected && role != domainidentity.RoleSuperAdmin {
+			var others bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.status='active' AND ur.role_slug='super_admin' AND u.id<>$1)`, userID).Scan(&others); err != nil {
+				return err
+			}
+			if !others {
+				return ports.ErrRoleState
+			}
+		}
+		if !domainidentity.ValidRole(role) || sellerID != 0 {
+			return ports.ErrRoleState
+		}
+		if role != domainidentity.RoleSeller {
+			if err := guardSellerRoleExit(transactionContext, tx, userID); err != nil {
+				return err
+			}
+		}
+		// Replacement is atomic: never leave an account with combined privileges.
+		var previousRoles []string
+		if err := tx.QueryRow(transactionContext, `SELECT COALESCE(array_agg(role_slug ORDER BY role_slug),ARRAY[]::text[]) FROM user_roles WHERE user_id=$1`, userID).Scan(&previousRoles); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM user_roles WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE seller_users SET status='revoked',updated_at=NOW() WHERE user_id=$1 AND status='active'`, userID); err != nil {
+			return err
+		}
+		if role == domainidentity.RoleSeller {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) SELECT id,display_name,'pending' FROM users WHERE id=$1 ON CONFLICT(owner_user_id) DO NOTHING`, userID); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2)`, userID, string(role)); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET sessions_revoked_at=NOW() WHERE id=$1`, userID); err != nil {
+			return err
+		}
+		action := "identity.role_replaced"
+		metadata, _ := json.Marshal(map[string]any{"previous_roles": previousRoles, "role": role, "grant": grant, "seller_id": sellerID, "reason": reason})
+		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, $2, 'user', $3, $4, $5)`, fmt.Sprint(actorID), action, fmt.Sprint(userID), ports.RequestID(transactionContext), metadata)
+		return err
+	})
+}
+
+func (r *RoleAdministrationRepository) CreateRoleUser(ctx context.Context, actorID int64, email, displayName, passwordHash string, role domainidentity.Role, sellerID int64, reason string) (int64, error) {
+	var userID int64
+	if err := r.requireSuperAdmin(ctx, actorID); err != nil {
+		return 0, err
+	}
+	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
+			return err
+		}
+		if !domainidentity.ValidRole(role) || sellerID != 0 {
+			return ports.ErrRoleState
+		}
+		if err := tx.QueryRow(transactionContext, `INSERT INTO users (email, display_name, status, email_verified_at) VALUES ($1, $2, 'active', NOW()) RETURNING id`, email, displayName).Scan(&userID); err != nil {
+			if isUniqueViolation(err) {
+				return ports.ErrUserAlreadyExists
+			}
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO credentials (user_id, password_hash) VALUES ($1, $2)`, userID, passwordHash); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO user_roles (user_id, role_slug) VALUES ($1, $2)`, userID, string(role)); err != nil {
+			return err
+		}
+		if role == domainidentity.RoleSeller {
+			if _, err := tx.Exec(transactionContext, `INSERT INTO sellers(owner_user_id,display_name,status) VALUES($1,$2,'pending')`, userID, displayName); err != nil {
+				return err
+			}
+		}
+		metadata, _ := json.Marshal(map[string]any{"role": role, "seller_id": sellerID, "reason": reason})
+		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'identity.user_created', 'user', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(userID), ports.RequestID(transactionContext), metadata)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
+func (r *RoleAdministrationRepository) DeleteRoleUser(ctx context.Context, actorID, userID int64, reason string) error {
+	if err := r.requireSuperAdmin(ctx, actorID); err != nil {
+		return err
+	}
+	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		if err := lockRoleAdministrator(transactionContext, tx, actorID); err != nil {
+			return err
+		}
+		var status string
+		if err := tx.QueryRow(transactionContext, `SELECT status FROM users WHERE id=$1 FOR UPDATE`, userID).Scan(&status); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ports.ErrNotFound
+			}
+			return err
+		}
+		roles := make([]string, 0)
+		rows, err := tx.Query(transactionContext, `SELECT role_slug FROM user_roles WHERE user_id=$1 ORDER BY role_slug`, userID)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			var role string
+			if err := rows.Scan(&role); err != nil {
+				rows.Close()
+				return err
+			}
+			roles = append(roles, role)
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return err
+		}
+		rows.Close()
+		if err := guardSellerRoleExit(transactionContext, tx, userID); err != nil {
+			return err
+		}
+		if actorID == userID || status == "deleted" {
+			return ports.ErrRoleState
+		}
+		for _, role := range roles {
+			if role == string(domainidentity.RoleSuperAdmin) {
+				var activeAdmins int
+				if err := tx.QueryRow(transactionContext, `SELECT COUNT(*) FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.status='active' AND ur.role_slug=$1`, string(domainidentity.RoleSuperAdmin)).Scan(&activeAdmins); err != nil {
+					return err
+				}
+				if activeAdmins <= 1 {
+					return ports.ErrRoleState
+				}
+			}
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO firebase_deletion_queue(firebase_uid) SELECT firebase_uid FROM firebase_identities WHERE user_id=$1 ON CONFLICT DO NOTHING`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM firebase_identities WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM customer_push_subscriptions WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM user_avatars WHERE user_id=$1`, userID); err != nil {
+			return err
+		}
+		// Account removal is intentionally physical. Foreign keys with protected
+		// history (orders, support, fulfilment and similar records) reject the
+		// delete below and are translated into a clear operational conflict.
+		if _, err := tx.Exec(transactionContext, `DELETE FROM sellers WHERE owner_user_id=$1`, userID); err != nil {
+			if isForeignKeyViolation(err) {
+				return ports.ErrUserHasProtectedRecords
+			}
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `DELETE FROM users WHERE id=$1`, userID); err != nil {
+			if isForeignKeyViolation(err) {
+				return ports.ErrUserHasProtectedRecords
+			}
+			return err
+		}
+		metadata, _ := json.Marshal(map[string]any{"roles": roles, "reason": reason})
+		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'identity.user_deleted', 'user', $2, $3, $4)`, fmt.Sprint(actorID), fmt.Sprint(userID), ports.RequestID(transactionContext), metadata)
+		return err
+	})
+}
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+}
+
+func isForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23503"
+}
+
+func (r *RoleAdministrationRepository) requireSuperAdmin(ctx context.Context, actorID int64) error {
+	var allowed bool
+	if err := r.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM user_roles ur JOIN users u ON u.id=ur.user_id WHERE u.status='active' AND ur.user_id = $1 AND ur.role_slug = $2)`, actorID, string(domainidentity.RoleSuperAdmin)).Scan(&allowed); err != nil {
+		return err
+	}
+	if !allowed {
+		return ports.ErrForbidden
+	}
+	return nil
+}
+
+var _ ports.RoleAdministrationRepository = (*RoleAdministrationRepository)(nil)

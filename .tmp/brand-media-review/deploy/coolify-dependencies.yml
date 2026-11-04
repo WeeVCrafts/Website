@@ -1,0 +1,65 @@
+services:
+  weevcrafts-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_CA_CERT_B64: ${POSTGRES_CA_CERT_B64}
+      POSTGRES_CERT_B64: ${POSTGRES_CERT_B64}
+      POSTGRES_KEY_B64: ${POSTGRES_KEY_B64}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    entrypoint: ["/bin/sh", "-ec"]
+    command: |
+      mkdir -p /var/lib/postgresql/certs
+      printf '%s' "$${POSTGRES_CA_CERT_B64}" | base64 -d > /var/lib/postgresql/certs/ca.crt
+      printf '%s' "$${POSTGRES_CERT_B64}" | base64 -d > /var/lib/postgresql/certs/server.crt
+      printf '%s' "$${POSTGRES_KEY_B64}" | base64 -d > /var/lib/postgresql/certs/server.key
+      chown -R postgres:postgres /var/lib/postgresql/certs
+      chmod 600 /var/lib/postgresql/certs/server.key
+      exec docker-entrypoint.sh postgres -c ssl=on -c ssl_ca_file=/var/lib/postgresql/certs/ca.crt -c ssl_cert_file=/var/lib/postgresql/certs/server.crt -c ssl_key_file=/var/lib/postgresql/certs/server.key
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - weevcrafts-postgres-data:/var/lib/postgresql/data
+
+  weevcrafts-redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["/bin/sh", "-ec", "exec redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - weevcrafts-redis-data:/data
+
+  weevcrafts-minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_CERT_B64: ${MINIO_CERT_B64}
+      MINIO_KEY_B64: ${MINIO_KEY_B64}
+    entrypoint: ["/bin/sh", "-ec"]
+    command: |
+      mkdir -p /root/.minio/certs
+      printf '%s' "$${MINIO_CERT_B64}" | base64 -d > /root/.minio/certs/public.crt
+      printf '%s' "$${MINIO_KEY_B64}" | base64 -d > /root/.minio/certs/private.key
+      chmod 600 /root/.minio/certs/private.key
+      exec minio server /data --console-address ":9001"
+    volumes:
+      - weevcrafts-minio-data:/data
+
+volumes:
+  weevcrafts-postgres-data:
+  weevcrafts-redis-data:
+  weevcrafts-minio-data:
