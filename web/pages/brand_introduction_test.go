@@ -58,3 +58,14 @@ func TestEditorialBrandNormalizationRetainsStoredTextAndLinkTargets(t *testing.T
 		t.Fatal("metadata retained legacy brand")
 	}
 }
+
+func TestInfoPageNormalizesSavedLegacyHeading(t *testing.T) {
+	var output bytes.Buffer
+	page := viewmodels.CustomerPage{Route: "/about", Title: "About WeevCrafts"}
+	if err := InfoPage(page).Render(t.Context(), &output); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(output.String(), "About WeevCrafts") || !strings.Contains(output.String(), "About Weevcrafts") {
+		t.Fatal("saved About title retained old spelling")
+	}
+}

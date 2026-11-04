@@ -3,6 +3,7 @@ package pages
 import "github.com/wecratfs/commerce/web/components"
 
 import (
+	"github.com/wecratfs/commerce/internal/identity"
   "strconv"
   "strings"
 
@@ -89,12 +90,12 @@ templ AuthHeading(kicker, title, copy string) {
 templ InfoPage(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container utility-shell info-shell">
-      @Breadcrumb("Home", p.Title)
+      @Breadcrumb("Home", identity.DisplayName(p.Title))
       if p.Notice != "" {
         <div class="utility-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
       }
       <div class="info-hero">
-        <div><p class="eyebrow">Weevcrafts GUIDE</p><h1>{ p.Title }</h1><p>Clear, helpful information for choosing, receiving and caring for something handmade.</p></div>
+        <div><p class="eyebrow">Weevcrafts GUIDE</p><h1>{ identity.DisplayName(p.Title) }</h1><p>Clear, helpful information for choosing, receiving and caring for something handmade.</p></div>
         <img src="/assets/images/customer/maker-mithila.webp" alt="Indian craft studio" width="1254" height="1254"/>
       </div>
       if p.Route == "/faq" {
