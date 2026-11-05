@@ -22,13 +22,13 @@ func TestDatabasePoolConfigManagedCA(t *testing.T) {
 		t.Fatal(err)
 	}
 	ca := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
-	cfg := Config{DatabaseURL: "postgres://app:secret@postgres.railway.internal/db?sslmode=verify-full", DatabaseCACert: ca}
+	cfg := Config{DatabaseURL: "postgres://app:secret@postgres.internal/db?sslmode=verify-full", DatabaseCACert: ca}
 	pool, err := cfg.DatabasePoolConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
 	tls := pool.ConnConfig.TLSConfig
-	if tls == nil || tls.InsecureSkipVerify || tls.ServerName != "postgres.railway.internal" || tls.RootCAs == nil {
+	if tls == nil || tls.InsecureSkipVerify || tls.ServerName != "postgres.internal" || tls.RootCAs == nil {
 		t.Fatal("managed CA must preserve full TLS verification")
 	}
 	parsed, err := x509.ParseCertificate(der)

@@ -1,7 +1,8 @@
 # Razorpay test payments
 
-The [hosted release verification](hosted-release-2026-10-28.md) records the
-GitHub deployment, live signature checks and provider webhook delivery.
+The [historical hosted release verification](hosted-release-2026-10-28.md) records
+the 28 October deployment, signature checks and provider webhook delivery. Current
+Hostinger VPS/Coolify configuration requires fresh verification.
 
 The application uses Standard Checkout, server-created Orders API orders and
 HMAC-verified callbacks. Only verified capture webhooks mark orders paid.
@@ -10,7 +11,7 @@ Dashboard toggle alone does not change the application's mode.
 
 ## Configuration
 
-Keep these values in the ignored local `.env` or Railway service variables:
+Keep these values in the ignored local `.env` or Coolify private service variables:
 
 | Variable | Test configuration |
 | --- | --- |
@@ -35,7 +36,7 @@ An enabled **test** webhook was saved for
 `https://weevcrafts.com/webhooks/razorpay`, subscribing to `payment.captured`,
 `payment.authorized` and `payment.failed`. Its secret matches the local config.
 At the time of the local checks below, hosted delivery had not been verified.
-It requires the updated app and matching variables on Railway. Localhost cannot
+That historical release required the updated app and matching hosted variables. Localhost cannot
 receive that public webhook directly.
 
 The handler verifies the original bytes using `X-Razorpay-Signature` and uses

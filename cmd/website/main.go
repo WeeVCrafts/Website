@@ -388,6 +388,7 @@ func main() {
 	portalHandler.SetPaymentReviews(paymentReviewService)
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetCategoryStorage(mediaStorage)
+	portalHandler.SetSettlementStorage(mediaStorage)
 	mux.HandleFunc("/media/categories/", portalHandler.CategoryMedia)
 	mux.HandleFunc("/media/storefront/", portalHandler.StorefrontMedia)
 	mux.HandleFunc("/storefront/preview/", portalHandler.StorefrontPreview)
@@ -481,11 +482,11 @@ func main() {
 }
 
 func developmentPaymentHelpersEnabled(cfg config.Config) bool {
-	return cfg.Environment != "production" && cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local")
+	return !strings.EqualFold(strings.TrimSpace(cfg.Environment), "production") && cfg.LocalMode && strings.EqualFold(cfg.PaymentMode, "local")
 }
 
 func registerDemoPaymentCapture(mux *http.ServeMux, cfg config.Config, capture http.HandlerFunc) {
-	if !strings.EqualFold(cfg.PaymentMode, "local") {
+	if !developmentPaymentHelpersEnabled(cfg) {
 		return
 	}
 	mux.HandleFunc("/api/v1/payments/demo-capture/", func(w http.ResponseWriter, r *http.Request) {

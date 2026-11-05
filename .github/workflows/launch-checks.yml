@@ -28,11 +28,13 @@ jobs:
     env:
       DATABASE_URL: postgres://ci:isolated-ci-only@localhost:5432/weevcrafts_ci?sslmode=disable
       REDIS_ADDR: localhost:6379
+      PROJECTION_DATABASE_URL: postgres://ci:isolated-ci-only@localhost:5432/weevcrafts_projections_20261009?sslmode=disable
+      FINANCE_DATABASE_URL: postgres://ci:isolated-ci-only@localhost:5432/weevcrafts_finance_20261104?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.10'
           check-latest: true
       - uses: actions/setup-node@v4
         with:
@@ -41,16 +43,25 @@ jobs:
       - run: npm ci
       - run: go install github.com/a-h/templ/cmd/templ@v0.3.1020
       - run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
-      - run: templ generate
+      - run: templ generate -path . -w 2
+      - run: npm run assets:images
       - run: npm run css:build
+      - run: npm run test:assets
       - name: Verify generated templates
         run: git diff --exit-code -- ':(glob)**/*_templ.go'
+      - name: Verify generated assets
+        run: git diff --exit-code -- internal/transport/web/static/app.css web/assets web/components/image_variants_generated.go
       - run: bash scripts/check-sqlc-generated.sh
       - run: bash scripts/check-architecture.sh
+      - name: Create isolated projection and finance databases
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE weevcrafts_projections_20261009'
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE weevcrafts_finance_20261104'
       - run: go vet ./...
       - run: go test -p 1 ./...
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test -c tests/e2e/customer-layout.config.js
+      - run: npx playwright test -c tests/e2e/finance-controls.config.js
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -60,7 +71,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x'
+          go-version: '1.26.10'
           check-latest: true
       - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
       - uses: gitleaks/gitleaks-action@v2

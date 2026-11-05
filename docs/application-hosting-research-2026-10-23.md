@@ -1,3 +1,5 @@
+> **Historical hosting research:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # WeevCrafts: complete application hosting comparison
 
 Research checked: 23 October 2026. Scope: hosting the existing Go application, website, API, background processing, PostgreSQL, Redis, and media storage. Recommendations are assessments for this repository; prices are published rates or explicitly labeled estimates, not provider quotations.

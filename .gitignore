@@ -20,3 +20,8 @@ test-results/
 /seller-admin-qa-final2/profile*/
 /support-portal-qa-final/profile*/
 web/static/
+
+# Local review snapshots and agent scratch state
+/.tmp/
+/.taskplane/
+/playwright-report/

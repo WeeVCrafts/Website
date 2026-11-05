@@ -1,3 +1,5 @@
+> **Historical workflow implementation notes:** Mock/local payment and verification statements below describe earlier releases. Current production uses Razorpay and truthful persisted state; developer fixtures remain isolated. Use the [current handbook](operations-handbook.md), [four-role contract](four-role-workflow.md) and [candidate register](release-candidate-2026-11-04.md) for operating instructions and current evidence.
+
 # Customer workflow update
 
 The storefront keeps the existing Go, templ, JavaScript and shared forest/cream design. The installed frontend-design-premium workflow, frontend-design prerequisite and Emil's motion guidance informed the changes; DESIGN.md and UX-CONTRACT.md describe the shared rules.

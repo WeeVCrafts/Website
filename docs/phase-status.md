@@ -2,10 +2,12 @@
 
 # WeevCrafts phase status
 
-**Current status:** The local live demo runs from `cmd/website` with PostgreSQL-backed customer, seller, marketplace-admin, super-admin, and support workflows. The responsive storefront UI is retained, while local integrations remain deterministic and production integrations are opt-in.
+**Current status — 4 November 2026:** The application uses the real Go/templ/PostgreSQL/Redis services. Normal startup preserves data and does not seed accounts or products. The current model has Customer, Seller, Admin and Super Admin; Seller Admin is the Seller workspace. Hostinger VPS/Coolify is the selected production host.
 
-**Current gate:** Local frontend V1 — complete; full production-release gates remain open
-**Completion estimate:** 100% of the requested locally verifiable frontend scope; approximately 45% of the broader production-release gate set.
+**Current gate:** Release-candidate cleanup and verification are in progress. No current completion percentage or production approval is asserted. Use the [candidate evidence register](release-candidate-2026-11-04.md), [current handbook](operations-handbook.md) and [reconciled backlog](production-readiness-backlog-2026-11-04.csv).
+
+**Historical record:** The sections below retain dated implementation notes. Their demo, eight-role, Railway and completion statements describe earlier releases and do not override current contracts.
+
 **Source PRD:** [`../Prd.md`](../Prd.md)
 **Execution plan:** [`../Phases/README.md`](../Phases/README.md)
 

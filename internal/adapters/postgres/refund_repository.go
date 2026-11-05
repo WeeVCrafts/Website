@@ -45,6 +45,12 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 		if err != nil {
 			return err
 		}
+		// Publish the pending liability under the same lock used by settlement
+		// approval/payment and refund ledger updates. Keep order/payment locks
+		// first, matching provider capture and refund completion lock order.
+		if _, err := tx.Exec(transactionContext, `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
+			return err
+		}
 		var returnReceived bool
 		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM return_requests WHERE order_id=$1 AND status='received')`, orderID).Scan(&returnReceived); err != nil {
 			return err

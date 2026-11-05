@@ -1,3 +1,5 @@
+> **Historical verification:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # Catalog update verification — 16 October 2026
 
 The updated local Docker application is available at `http://localhost:8080`.

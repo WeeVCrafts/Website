@@ -57,7 +57,7 @@ func NewS3WithCARegion(endpoint, accessKey, secretKey, bucket string, secure boo
 }
 
 func (s *S3) CreateUploadURL(ctx context.Context, request ports.UploadRequest) (ports.UploadURL, error) {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(request.ObjectKey) || request.MaxBytes <= 0 || request.MaxBytes > 25<<20 {
+	if s == nil || s.client == nil || s.bucket == "" || !validProductObjectKey(request.ObjectKey) || request.MaxBytes <= 0 || request.MaxBytes > 25<<20 {
 		return ports.UploadURL{}, errors.New("invalid upload request")
 	}
 	presigned, err := s.client.PresignedPutObject(ctx, s.bucket, request.ObjectKey, 15*time.Minute)
@@ -68,7 +68,7 @@ func (s *S3) CreateUploadURL(ctx context.Context, request ports.UploadRequest) (
 }
 
 func (s *S3) InspectObject(ctx context.Context, objectKey string) (ports.ObjectInfo, error) {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) {
+	if s == nil || s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) {
 		return ports.ObjectInfo{}, errors.New("invalid object key")
 	}
 	info, err := s.client.StatObject(ctx, s.bucket, objectKey, minio.StatObjectOptions{})
@@ -79,7 +79,7 @@ func (s *S3) InspectObject(ctx context.Context, objectKey string) (ports.ObjectI
 }
 
 func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteSize int64, body io.Reader) error {
-	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) || !allowedStoredMediaType(contentType) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
+	if s == nil || s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) || !allowedStoredObjectType(objectKey, contentType, byteSize) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
 		return errors.New("invalid object upload")
 	}
 	_, err := s.client.PutObject(ctx, s.bucket, objectKey, body, byteSize, minio.PutObjectOptions{ContentType: contentType})
@@ -87,7 +87,7 @@ func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteS
 }
 
 func (s *S3) OpenObject(ctx context.Context, objectKey string) (io.ReadCloser, ports.ObjectInfo, error) {
-	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
+	if s == nil || s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
 		return nil, ports.ObjectInfo{}, errors.New("invalid object read")
 	}
 	object, err := s.client.GetObject(ctx, s.bucket, objectKey, minio.GetObjectOptions{})
@@ -129,7 +129,7 @@ func allowedStoredMediaType(contentType string) bool {
 }
 
 func (s *S3) CreateDownloadURL(ctx context.Context, objectKey string, lifetime time.Duration) (ports.DownloadURL, error) {
-	if s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) || lifetime <= 0 || lifetime > 24*time.Hour {
+	if s == nil || s.client == nil || s.bucket == "" || !validProductObjectKey(objectKey) || lifetime <= 0 || lifetime > 24*time.Hour {
 		return ports.DownloadURL{}, errors.New("invalid download request")
 	}
 	presigned, err := s.client.PresignedGetObject(ctx, s.bucket, objectKey, lifetime, nil)
@@ -140,14 +140,14 @@ func (s *S3) CreateDownloadURL(ctx context.Context, objectKey string, lifetime t
 }
 
 func (s *S3) DeleteObject(ctx context.Context, objectKey string) error {
-	if s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
+	if s == nil || s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) {
 		return errors.New("invalid object key")
 	}
 	return s.client.RemoveObject(ctx, s.bucket, objectKey, minio.RemoveObjectOptions{})
 }
 
 func (s *S3) EnsureBucket(ctx context.Context) error {
-	if s.client == nil || s.bucket == "" {
+	if s == nil || s.client == nil || s.bucket == "" {
 		return errors.New("storage bucket is not configured")
 	}
 	exists, err := s.client.BucketExists(ctx, s.bucket)
@@ -172,6 +172,15 @@ func validProductObjectKey(value string) bool {
 		!strings.ContainsAny(value, "\\\n\r\t")
 }
 
+var financeObjectKeyPattern = regexp.MustCompile(`^finance/settlements/[1-9][0-9]*/[a-f0-9]{48}$`)
+
+func allowedStoredObjectType(key, contentType string, size int64) bool {
+	if financeObjectKeyPattern.MatchString(key) {
+		return size <= 5<<20 && (contentType == "application/pdf" || contentType == "image/png" || contentType == "image/jpeg")
+	}
+	return allowedStoredMediaType(contentType)
+}
+
 var supportObjectKeyPattern = regexp.MustCompile(`^support/[1-9][0-9]*/[a-f0-9]{32}$`)
 var avatarObjectKeyPattern = regexp.MustCompile(`^avatars/[1-9][0-9]*/[a-f0-9]{32}$`)
 var categoryObjectKeyPattern = regexp.MustCompile(`^categories/[a-f0-9]{32}\.jpg$`)
@@ -180,5 +189,5 @@ var storefrontObjectKeyPattern = regexp.MustCompile(`^storefront/item-[a-f0-9]{2
 // Private support files are streamed through an ownership-checked application
 // endpoint. Product presigned upload/download endpoints remain product-only.
 func validStoredObjectKey(value string) bool {
-	return validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value)
+	return financeObjectKeyPattern.MatchString(value) || validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value)
 }

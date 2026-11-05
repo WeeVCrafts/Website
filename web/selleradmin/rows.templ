@@ -31,7 +31,11 @@ templ LedgerRows(items []viewmodels.SellerAdminLedger) {
 
 templ SettlementRows(items []viewmodels.SellerAdminSettlement) {
   for _, item := range items {
-    <div class="settlement-item"><i></i><span><b>Settlement { item.Number }</b><strong>{ item.Amount }</strong><small>{ item.Orders }</small><em class={ "seller-chip " + sellerStatusClass(item.Status) }>{ item.Status }</em><small>{ item.Date }</small></span></div>
+    <div class="settlement-item"><i></i><span><b>Settlement { item.Number }</b><strong>{ item.Amount }</strong><small>{ item.Orders }</small><em class={ "seller-chip " + sellerStatusClass(item.Status) }>{ item.Status }</em><small>{ item.Date }</small><small>{ item.EvidenceState }</small>
+      if item.BankReference!="" {
+       <small>Bank reference { item.BankReference } · transfer date { item.TransferDate }</small>
+      }
+    </span></div>
   }
 }
 

@@ -1,3 +1,5 @@
+> **Historical test specification:** These 9 October eight-role cases retain their original evidence. Current release coverage uses the four-role matrix in the [candidate register](release-candidate-2026-11-04.md). Do not execute retired role, bootstrap or publication procedures against business data.
+
 # WeevCrafts manual test cases
 
 Prepared on 9 October 2026 from source revision `e853611798973f9197efc007357f19b1bbc5e261`.

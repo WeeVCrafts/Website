@@ -1,3 +1,5 @@
+> **Historical deployment evidence:** This report describes the 28 October Railway release. Hostinger VPS/Coolify is the current target. Historical success does not establish the current deployed SHA, provider mode or release readiness. Use the [release checklist](release-checklist.md).
+
 # Hosted payment and SEO release — 28 October 2026
 
 ## Deployment

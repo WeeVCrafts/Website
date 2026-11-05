@@ -25,68 +25,67 @@ JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
 rate limits. Both the browser and the server-side pages use this application as
 the only backend.
 
-## Deploy on Railway
+## Deploy on Hostinger VPS with Coolify
 
-The root `Dockerfile` builds and runs the Go application. Add PostgreSQL,
-Redis, and a Railway Storage Bucket to the same production environment. The
-current Railway resources are named `Postgres`, `Redis`, and
-`weevcrafts-media`. The app applies its embedded PostgreSQL migrations at
-startup.
+The production target is Hostinger VPS managed through Coolify. Build the root
+`Dockerfile` from the reviewed Git revision. One unprivileged Go service serves
+the storefront, role portals, API and media; Node.js is used only during build.
+Expose application port 8080 through Coolify's HTTPS proxy. Standard `PORT` and
+`WECRATFS_ADDR` remain supported. Configure `/health/ready` as the health check.
+The application applies embedded PostgreSQL migrations during startup.
 
-`.railway/railway.ts` keeps the app service linked to this repository, sets the
-`/health/ready` health check, and wires the resource variables. Install the
-Railway SDK with `npm install`, then review configuration with
-`railway config plan`. Review the exact plan before explicitly applying it with
-`railway config apply`.
-The app service variables should resolve to:
+Use separate production PostgreSQL, Redis and private S3-compatible media storage.
+[`deploy/coolify-dependencies.yml`](deploy/coolify-dependencies.yml) supplies the
+dependency definitions; review private networking, TLS certificates, credentials,
+persistence and backups before applying it. Local Compose is development-only.
+Set these variables privately in Coolify; never commit production values:
 
 ```text
-DATABASE_URL=${{Postgres.DATABASE_URL}}?sslmode=verify-full
-DATABASE_CA_CERT=<public PEM certificate from the managed Postgres root CA>
-REDIS_URL=${{Redis.REDIS_URL}}
-S3_ADDR=${{weevcrafts-media.ENDPOINT}}
-S3_ACCESS_KEY=${{weevcrafts-media.ACCESS_KEY_ID}}
-S3_SECRET_KEY=${{weevcrafts-media.SECRET_ACCESS_KEY}}
-S3_BUCKET=${{weevcrafts-media.BUCKET}}
-S3_SECURE=true
 WECRATFS_ENV=production
+WECRATFS_PUBLIC_CONTENT_APPROVED=false
+WECRATFS_PUBLIC_URL=https://weevcrafts.com
 WECRATFS_SECURE_COOKIES=true
 WECRATFS_LOCAL_MODE=false
+WECRATFS_NO_PAYMENT_DEMO=false
 WECRATFS_PAYMENT_MODE=razorpay
-WECRATFS_PUBLIC_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}
+DATABASE_URL=postgres://<user>:<password>@<private-host>/<database>?sslmode=verify-full
+DATABASE_CA_CERT=<trusted public PEM CA if needed>
+REDIS_URL=redis://:<password>@<private-host>:6379
+S3_ADDR=<private TLS storage endpoint>
+S3_ACCESS_KEY=<dedicated application key>
+S3_SECRET_KEY=<dedicated application secret>
+S3_BUCKET=<private media bucket>
+S3_SECURE=true
+S3_CA_CERT=<trusted public PEM CA if needed>
+RAZORPAY_KEY_ID=<approved provider key>
+RAZORPAY_KEY_SECRET=<private provider secret>
+RAZORPAY_WEBHOOK_SECRET=<private webhook secret>
 ```
 
-Normal startup uses the existing Razorpay integration. Configure its real credentials
-and verified webhook before accepting payments. Missing credentials leave checkout
-unavailable; the app does not substitute simulated payment success. Keep secrets in
-Railway variables or the private local environment, never in this repository.
+Use live Razorpay credentials for real-money trading and a verified webhook at
+`https://weevcrafts.com/webhooks/razorpay`. Missing payment credentials leave
+checkout unavailable; no simulated success is substituted. Isolated staging uses
+separate data, storage, Redis, identity and Razorpay test credentials. Never send
+staging mail or notifications to production users.
 
-For Railway's Postgres SSL template, export the public certificate at
-`/var/lib/postgresql/data/certs/root.crt` from the Postgres service and set
-`DATABASE_CA_CERT` through `railway variable set DATABASE_CA_CERT --stdin`.
-Use the private database hostname covered by that certificate; production
-requires `sslmode=verify-full`. The app trusts this CA without disabling
-certificate or hostname verification. Refresh the variable if the CA rotates.
-The Dockerfile cache IDs are scoped to the existing Website service; update the
-IDs if moving the app to a different Railway service.
+Configure SMTP or Resend for application-owned verification/reset and transaction
+emails; see [mail integration](docs/resend-integration.md). Firebase sign-in and
+Meilisearch are optional. PostgreSQL remains the catalog/search authority.
+Media uploads require configured durable storage; back it up with PostgreSQL.
 
-Generate a public domain for the app service in Railway Networking. The app
-binds to Railway's `PORT`, marks session cookies secure in production, and
-uses the public domain for account recovery links. Set `WECRATFS_PUBLIC_URL`
-to your canonical `https://` domain if you add a custom domain. Product media
-uploads and public reads are proxied through the app, so the bucket endpoint can
-remain private to the Railway environment.
+Before deploying, verify the exact image revision, migrations, production
+configuration, restore evidence and release gates. See
+[deployment security](docs/deployment-security.md) and the
+[production readiness audit](docs/production-readiness-audit-2026-11-04.md).
+A local build or green CI does not establish that the deployed environment is ready.
 
-PostgreSQL and Redis are required. Meilisearch and S3-compatible object storage
-are optional: customer search always uses PostgreSQL, while product media uploads need
-storage configured. Set `MEILI_ADDR` and `MEILI_API_KEY` for Meilisearch; set
-`S3_ADDR`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, and `S3_SECURE` for
-your S3-compatible storage. Configure SMTP with `WECRATFS_SMTP_ADDR`,
-`WECRATFS_SMTP_USERNAME`, `WECRATFS_SMTP_PASSWORD`, and `WECRATFS_SMTP_FROM` to
-enable email verification and password recovery. Set `RAZORPAY_KEY_ID`,
-`RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET`, then configure the
-provider webhook to `https://<your-domain>/webhooks/razorpay` before accepting
-live payments.
+Production defaults to a publication hold. Information/policy pages and new
+checkout return a truthful unavailable response while
+`WECRATFS_PUBLIC_CONTENT_APPROVED=false`. Existing orders, provider callbacks,
+login and account recovery remain available. Install the owner's approved
+policies, contact details, support hours and permitted content, review the exact
+release, and retain approval evidence before explicitly enabling this variable.
+The variable records an operator decision; it does not approve content itself.
 
 ## Run locally (1-Click)
 
@@ -168,6 +167,9 @@ go run ./cmd/rebuild-search
 
 ## Development
 
+Use Go 1.26.10 or newer within the supported Go 1.26 series. The module, CI and
+container build require this security patch level.
+
 Templates and checked-in CSS are build artifacts. When their sources change:
 
 ```sh
@@ -202,11 +204,12 @@ sqlc generate -f sqlc.yaml
 bash scripts/check-sqlc-generated.sh
 ```
 
-### Clean local accounts
+### Local accounts and isolated fixtures
 
-Normal startup bootstraps an empty database with three accounts and no products. Existing accounts are preserved on later starts. See [the clean-start guide](docs/local-clean-start.md) for credentials and the explicit local reset. The larger `seed-demo` profile is opt-in and adds demo data.
-
-See [the customer workflow update](docs/customer-workflow-update.md) for checkout corrections, account security, mock payments, delivery progress, notification setup and isolated regression checks.
+Normal startup preserves existing data and accounts. It does not seed products,
+create demo accounts or reset the database. See [local startup](docs/local-clean-start.md).
+Demo seeding and account provisioning are explicit operator tools for isolated
+local test environments. Never run them against production business data.
 
 ## Current account and operations model
 
@@ -235,14 +238,12 @@ TLS with dedicated credentials, TLS object storage and configured payment provid
 the server's production validation remains enabled. No remote deployment is implied
 by a successful local container build.
 
-## Storefront editor
+## Category publication and storefront content
 
-Open **Storefront** in the Admin or Super Admin portal. Admins create drafts,
-preview them and submit them for review. Super Admins publish reviewed changes
-or request corrections. Customers see only the published release. Routine
-content and shopping-setting changes do not require a deployment.
-
-See [Storefront editor and publishing](docs/storefront-editor.md) for controls,
-permissions, media retention, checkout policies and rollout verification.
+The general Storefront editor is retired. Super Admin manages categories through
+the current Category Management workspace; category saves publish immediately.
+Review content and permitted photographs before saving. See
+[category and catalog management](docs/catalog-management.md) and
+[current publication behavior](docs/storefront-editor.md).
 
 Catalog discovery and product entry behavior: [workflow notes](docs/discovery-workflows.md).

@@ -102,8 +102,11 @@ func (h *LivePortalHandler) superAdminInsights(r *http.Request, p *viewmodels.Ad
 	case "finance":
 		values, ok = counts(`SELECT COALESCE(SUM(amount_cents) FILTER(WHERE pa.status='captured'),0),COUNT(*) FILTER(WHERE pa.status='failed'),COUNT(*) FILTER(WHERE pa.status='refunded'),COALESCE(SUM(amount_cents) FILTER(WHERE pa.status='refunded'),0) FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($1::int-1)*INTERVAL '1 day' AND ($2='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$2||'%')`, p.Insights.Days, q)
 		if ok {
-			if failed, valid := counts(`SELECT COUNT(*) FROM `+failedPaymentActivitySQL+` pa JOIN orders o ON o.id=pa.order_id WHERE pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($1::int-1)*INTERVAL '1 day' AND ($2='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$2||'%')`, p.Insights.Days, q); valid {
-				values[1] = failed[0]
+			var failed int64
+			if err := h.queryRow(r, `SELECT COUNT(*) FROM `+failedPaymentActivitySQL+` pa JOIN orders o ON o.id=pa.order_id WHERE pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($1::int-1)*INTERVAL '1 day' AND ($2='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$2||'%')`, p.Insights.Days, q).Scan(&failed); err == nil {
+				values[1] = failed
+			} else {
+				ok = false
 			}
 			p.Stats = []viewmodels.AdminStat{{Icon: "payments", Label: "Captured order totals", Value: money(values[0])}, stat("error_outline", "Failed payment attempts", values[1]), stat("undo", "Refunded payments", values[2]), {Icon: "currency_rupee", Label: "Refunded amount", Value: money(values[3])}}
 			p.Insights.Total = money(values[0])

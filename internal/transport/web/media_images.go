@@ -30,10 +30,10 @@ type productPhotograph struct {
 
 var photographWorkers = make(chan struct{}, 2)
 
-func cachedProductPhotograph(id int64, width int) []byte {
+func cachedProductPhotograph(identity string, width int) []byte {
 	productPhotographs.Lock()
 	defer productPhotographs.Unlock()
-	key := fmt.Sprintf("%d/%d", id, width)
+	key := fmt.Sprintf("%s/%d", identity, width)
 	entry, ok := productPhotographs.entries[key]
 	if ok && time.Now().Before(entry.expires) {
 		return entry.data
@@ -44,13 +44,13 @@ func cachedProductPhotograph(id int64, width int) []byte {
 	}
 	return nil
 }
-func rememberProductPhotograph(id int64, width int, data []byte) {
+func rememberProductPhotograph(identity string, width int, data []byte) {
 	if len(data) > 1<<20 {
 		return
 	}
 	productPhotographs.Lock()
 	defer productPhotographs.Unlock()
-	key := fmt.Sprintf("%d/%d", id, width)
+	key := fmt.Sprintf("%s/%d", identity, width)
 	if _, ok := productPhotographs.entries[key]; ok {
 		return
 	}

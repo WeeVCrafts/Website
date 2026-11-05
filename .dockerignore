@@ -16,7 +16,6 @@ products
 .codebase-memory
 .freebuff
 .vscode
-.railway
 Weevcrafts_Screens
 customer-qa
 customer-qa-final
@@ -31,3 +30,6 @@ firebase-debug.log*
 *-adminsdk-*.json
 *service-account*.json
 firebase-admin*.json
+
+.tmp
+.taskplane

@@ -29,9 +29,9 @@ existing categories and cannot create taxonomy or submit cross-listing fields.
 These actions retain server role checks, CSRF protection and audit records.
 
 The homepage shares one responsive hero across all widths. It advances every
-four seconds and has arrows, slide selectors and touch swipe, with no Pause/Play
+three seconds and has arrows, slide selectors and touch swipe, with no Pause/Play
 buttons as requested. Hover and keyboard focus pause rotation; leaving the hero
-resumes a fresh four-second interval. Selecting/swiping a slide starts a fresh
+resumes a fresh three-second interval. Selecting/swiping a slide starts a fresh
 interval unless another pause condition applies. Hidden tabs and offscreen
 heroes pause; reduced-motion users use manual navigation. Failed images do not
 replace the current slide with a blank frame.

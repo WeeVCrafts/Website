@@ -1,0 +1,36 @@
+title = "WeevCrafts secret detection"
+
+[extend]
+useDefault = true
+
+# These exact deterministic values are published local Garage fixtures, not
+# private credentials. Production explicitly rejects their application keys.
+# Keep all default detection rules enabled and do not exempt entire files.
+[[allowlists]]
+description = "Published deterministic local storage fixtures"
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = [
+  '''^GK0123456789abcdef01234567$''',
+  '''^0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef$''',
+]
+
+# Firebase's browser API key is public client configuration. Server credentials,
+# service-account keys and other GCP keys remain covered by the default rules.
+# Pin this exception to the existing published value; key changes need review.
+# Production owner must still verify key restrictions and Firebase rules.
+[[allowlists]]
+description = "Firebase browser API key field in optional development overlay"
+targetRules = ["gcp-api-key", "generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)compose\.firebase\.yaml$''']
+regexTarget = "line"
+regexes = ['''WECRATFS_FIREBASE_API_KEY:\s*AIzaSyCkg2fq2AfTMdrowp6nOYZrTZXLnyKaPMI''']
+
+[[allowlists]]
+description = "Synthetic private object identifier in avatar boundary test"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)internal/adapters/storage/avatar_test\.go$''']
+regexTarget = "secret"
+regexes = ['''^(avatars/123/)?0123456789abcdef0123456789abcdef$''']

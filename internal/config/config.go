@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	PublicContentApproved   bool
 	OperationalMetricsToken string
 	Staging                 bool
 	StagingUsername         string
@@ -47,17 +48,14 @@ type Config struct {
 }
 
 func FromEnv() Config {
-	environment := env("WECRATFS_ENV", "development")
+	environment := strings.ToLower(strings.TrimSpace(env("WECRATFS_ENV", "development")))
 	port := env("PORT", "8080")
 	publicURL := env("WECRATFS_PUBLIC_URL", "")
-	if publicURL == "" {
-		if domain := env("RAILWAY_PUBLIC_DOMAIN", ""); domain != "" {
-			publicURL = "https://" + domain
-		} else {
-			publicURL = "http://localhost:8080"
-		}
+	if publicURL == "" && !strings.EqualFold(environment, "production") {
+		publicURL = "http://localhost:8080"
 	}
 	return Config{
+		PublicContentApproved:   boolEnv("WECRATFS_PUBLIC_CONTENT_APPROVED", false),
 		OperationalMetricsToken: env("WECRATFS_METRICS_TOKEN", ""),
 		Staging:                 boolEnv("WECRATFS_STAGING", false),
 		StagingUsername:         env("WECRATFS_STAGING_USERNAME", ""),

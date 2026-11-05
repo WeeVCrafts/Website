@@ -1,3 +1,5 @@
+> **Retired release procedure:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # Railway release procedure
 
 The Website service deploys `main` from `WeevCrafts/Website`. Its Dockerfile cache mounts require IDs scoped to that service. A build failure before compilation was traced to mounts without those IDs and corrected.

@@ -1,3 +1,5 @@
+> **Isolated developer reference only:** Normal startup does not seed accounts or products. The demo Compose profile and eight-role instructions below are historical. Never run fixture provisioning against business data or use these accounts as production credentials. Use the [current four-role handbook](operations-handbook.md) for real operations.
+
 # Local demo accounts
 
 Run the seed workflow before signing in:

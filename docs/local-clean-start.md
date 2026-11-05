@@ -20,7 +20,7 @@ maintenance reference only. It is not part of startup and was not run for the
 
 # Clean local application
 
-The local app starts with exactly three active accounts, one seller studio and no products, addresses or orders.
+**Historical reset result, not current startup behavior:** The earlier explicitly reset local database contained three active accounts, one seller studio and no products, addresses or orders. Current startup does not create these accounts. Never run this destructive procedure against business data.
 
 | Role | Email |
 | --- | --- |
@@ -32,7 +32,7 @@ All three local accounts use `WeeVCrafts-Local-2026!`. `WECRATFS_RESET_PASSWORD`
 
 Historical clean/demo Compose profiles have been removed from normal configuration.
 
-Super Admin has a dedicated **User Management** navigation entry at `/super-admin/users`. Search by name, email or role, filter by status, review live account metrics, and expand **Manage** to edit account details, suspend/reactivate, reset passwords, change roles or permanently delete non-protected accounts. Changes require an audit reason. Password/role changes revoke existing sessions; changing an email clears email verification. A hard delete is refused when protected order, support or operational references still exist. Super Admin access remains bootstrap-controlled.
+Super Admin has a dedicated **User Management** navigation entry at `/super-admin/users`. Search by name, email or role, filter by status, review live account metrics, and expand **Manage** to edit account details, suspend/reactivate, reset passwords, change roles or permanently delete non-protected accounts. Changes require an audit reason. Password/role changes revoke existing sessions; changing an email clears email verification. A hard delete is refused when protected order, support or operational references still exist. Current Super Admin access follows the four-role account-administration contract; the last-active-Super-Admin safeguard remains enforced.
 
 Authenticated customer, seller and admin headers expose a visible top-right **Log out** action at desktop and mobile widths. It submits POST with a session CSRF token.
 

@@ -2,6 +2,7 @@
   "name": "weevcrafts-ui",
   "private": true,
   "scripts": {
+    "test:assets": "node --test scripts/minify-preview-css.test.cjs",
     "dev": "node scripts/dev.cjs",
     "dev:docker": "node scripts/dev.cjs --docker",
     "dev:setup": "go install github.com/air-verse/air@v1.67.4",
@@ -26,7 +27,6 @@
     "axe-core": "4.14.0",
     "clean-css": "5.3.3",
     "esbuild": "0.28.2",
-    "railway": "^3.11.0",
     "sharp": "0.35.5",
     "tailwindcss": "3.4.17"
   }

@@ -138,23 +138,57 @@ func (s *MediaService) ResolvePublicURL(ctx context.Context, mediaID int64) (str
 }
 
 func (s *MediaService) OpenPublicMedia(ctx context.Context, mediaID int64) (io.ReadCloser, ports.ObjectInfo, error) {
+	media, err := s.ResolvePublicMedia(ctx, mediaID)
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	return media.Open(ctx)
+}
+
+// PublicMedia is a request-scoped, repository-authorized public media record.
+// Its fields stay private so callers cannot substitute an arbitrary object key.
+type PublicMedia struct {
+	record domaincommerce.MediaRecord
+	reader ports.ObjectStorageContentReader
+}
+
+// ResolvePublicMedia checks current catalogue visibility without opening the
+// original object. Call it for every request before consulting derived bytes.
+func (s *MediaService) ResolvePublicMedia(ctx context.Context, mediaID int64) (PublicMedia, error) {
 	lifecycle, _, err := s.lifecycle()
 	if err != nil || mediaID <= 0 {
-		return nil, ports.ObjectInfo{}, ErrInvalidMedia
+		return PublicMedia{}, ErrInvalidMedia
 	}
 	record, err := lifecycle.GetPublicMedia(ctx, mediaID)
 	if err != nil {
-		return nil, ports.ObjectInfo{}, err
+		return PublicMedia{}, err
 	}
 	reader, ok := s.storage.(ports.ObjectStorageContentReader)
 	if !ok {
+		return PublicMedia{}, ErrInvalidMedia
+	}
+	return PublicMedia{record: record, reader: reader}, nil
+}
+
+// CacheKey binds a derivative to the authorized immutable object identity and
+// recorded metadata. A replacement record cannot inherit a former derivative.
+func (m PublicMedia) CacheKey() string {
+	return fmt.Sprintf("%d/%q/%q/%d/%d", m.record.ID, m.record.ObjectKey, m.record.ContentType, m.record.ByteSize, m.record.CreatedAt.UnixNano())
+}
+
+func (m PublicMedia) Info() ports.ObjectInfo {
+	return ports.ObjectInfo{ContentType: m.record.ContentType, ByteSize: m.record.ByteSize}
+}
+
+func (m PublicMedia) Open(ctx context.Context) (io.ReadCloser, ports.ObjectInfo, error) {
+	if m.reader == nil {
 		return nil, ports.ObjectInfo{}, ErrInvalidMedia
 	}
-	body, info, err := reader.OpenObject(ctx, record.ObjectKey)
+	body, info, err := m.reader.OpenObject(ctx, m.record.ObjectKey)
 	if err != nil {
 		return nil, ports.ObjectInfo{}, err
 	}
-	if info.ContentType != record.ContentType || info.ByteSize != record.ByteSize {
+	if info != m.Info() {
 		_ = body.Close()
 		return nil, ports.ObjectInfo{}, ErrInvalidMedia
 	}

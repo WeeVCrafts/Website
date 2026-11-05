@@ -23,7 +23,7 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 		h.notFound(w, r)
 		return
 	}
-	body, info, err := h.mediaService.OpenPublicMedia(r.Context(), id)
+	media, err := h.mediaService.ResolvePublicMedia(r.Context(), id)
 	if errors.Is(err, ports.ErrNotFound) {
 		h.notFound(w, r)
 		return
@@ -32,7 +32,20 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 		h.renderError(w, http.StatusServiceUnavailable, "Media unavailable", "This product image is temporarily unavailable.")
 		return
 	}
-	h.serveMedia(w, r, id, body, info, true)
+	info := media.Info()
+	if width := photographWidth(r, info, true); width != 0 {
+		if data := cachedProductPhotograph(media.CacheKey(), width); data != nil {
+			mediaHeaders(w, "image/jpeg", true)
+			http.ServeContent(w, r, "product-photograph", time.Time{}, bytes.NewReader(data))
+			return
+		}
+	}
+	body, info, err := media.Open(r.Context())
+	if err != nil {
+		h.renderError(w, http.StatusServiceUnavailable, "Media unavailable", "This product image is temporarily unavailable.")
+		return
+	}
+	h.serveMedia(w, r, id, body, info, true, media.CacheKey())
 }
 
 func (h *Handler) ownedMediaPreview(w http.ResponseWriter, r *http.Request, mediaID string) {
@@ -63,7 +76,7 @@ func (h *Handler) ownedMediaPreview(w http.ResponseWriter, r *http.Request, medi
 	h.serveMedia(w, r, id, body, info, false)
 }
 
-func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int64, body io.ReadCloser, info ports.ObjectInfo, public bool) {
+func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int64, body io.ReadCloser, info ports.ObjectInfo, public bool, identity ...string) {
 	defer body.Close()
 	w.Header().Set("Cache-Control", "no-store")
 	if info.ByteSize <= 0 || info.ByteSize > 25<<20 {
@@ -79,10 +92,14 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 			return
 		}
 	}
-	width, _ := strconv.Atoi(r.URL.Query().Get("w"))
-	variant := public && strings.HasPrefix(info.ContentType, "image/") && (width == 320 || width == 640 || width == 960)
+	key := strconv.FormatInt(mediaID, 10)
+	if len(identity) > 0 {
+		key = identity[0]
+	}
+	width := photographWidth(r, info, public)
+	variant := width != 0
 	if variant {
-		if data := cachedProductPhotograph(mediaID, width); data != nil {
+		if data := cachedProductPhotograph(key, width); data != nil {
 			mediaHeaders(w, "image/jpeg", true)
 			http.ServeContent(w, r, "product-photograph", time.Time{}, bytes.NewReader(data))
 			return
@@ -97,11 +114,19 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 		if resized, err := productPhotographVariant(data, width); err == nil && len(resized) < len(data) {
 			data = resized
 			info.ContentType = "image/jpeg"
-			rememberProductPhotograph(mediaID, width, data)
+			rememberProductPhotograph(key, width, data)
 		}
 	}
 	mediaHeaders(w, info.ContentType, public)
 	http.ServeContent(w, r, "product-media-"+strconv.FormatInt(mediaID, 10), time.Time{}, bytes.NewReader(data))
+}
+
+func photographWidth(r *http.Request, info ports.ObjectInfo, public bool) int {
+	width, _ := strconv.Atoi(r.URL.Query().Get("w"))
+	if public && info.ByteSize > 0 && info.ByteSize <= 25<<20 && strings.HasPrefix(info.ContentType, "image/") && (width == 320 || width == 640 || width == 960) {
+		return width
+	}
+	return 0
 }
 
 func mediaHeaders(w http.ResponseWriter, contentType string, public bool) {

@@ -1,3 +1,5 @@
+> **Historical integration/deployment observations:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # Resend integration — 10 October 2026
 
 Resend is the optional server-side transactional sender. Firebase Admin creates private verification and reset links; the Go application renders `internal/adapters/email/templates/action.html` as branded HTML with a text alternative. Firebase's blocked template editor is not required. Its default hosted action page applies the one-time link and returns to `https://weevcrafts.com/`. That domain still serves Shopify; no production website cutover was performed.

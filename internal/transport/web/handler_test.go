@@ -336,7 +336,7 @@ func TestStaticAssetsArePubliclyCacheable(t *testing.T) {
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected static asset status 200, got %d", recorder.Code)
 	}
-	if got := recorder.Header().Get("Cache-Control"); got != "public, max-age=31536000, immutable" {
+	if got := recorder.Header().Get("Cache-Control"); got != "public, no-cache" {
 		t.Fatalf("unexpected cache header: %q", got)
 	}
 }

@@ -1,3 +1,5 @@
+> **Historical provider observations:** This 10 October report includes old Shopify/domain, plan and provider-state observations. Current hosting is Hostinger VPS/Coolify. Verify actual Firebase settings, recovery links and recipient isolation on the release candidate; historical accepted requests do not prove current delivery. See the [release checklist](release-checklist.md).
+
 # Firebase customer integration — 10 October 2026
 
 The local Go/Docker preview uses Firebase project `weevcrafts-708af` on its existing Spark plan. No billing upgrade, production website deployment, database reset or bulk customer import was performed. The selected public return address is `https://weevcrafts.com/`; that domain currently serves a separate Shopify site, so the Firebase-hosted email action handler remains in use.

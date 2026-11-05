@@ -1,3 +1,5 @@
+> **Historical checkpoints:** Dated deployment, verification and remaining-work statements below describe their recorded revisions. Current hosting is Hostinger VPS/Coolify; MFA is owner-deferred. Use the [candidate register](release-candidate-2026-11-04.md) and [release checklist](release-checklist.md), not these checkpoint results, for release decisions.
+
 # Production launch implementation
 
 ## Phase 1 checkpoint — 31 October 2026

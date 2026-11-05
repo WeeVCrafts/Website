@@ -3,10 +3,10 @@
 TEMPL_VERSION := v0.3.1020
 
 templ-generate:
-	go run github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION) generate ./web/...
+	go run github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION) generate -path . -w 2
 
 templ-check:
-	go run github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION) generate --check ./web/...
+	go run github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION) generate -path . --check -w 2
 
 css-build:
 	npm run css:build

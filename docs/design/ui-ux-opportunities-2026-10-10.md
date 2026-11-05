@@ -1,3 +1,5 @@
+> **Historical design recommendations:** Role, typography and sample-data observations describe the recorded release and do not replace accepted current designs or the [four-role handbook](../operations-handbook.md). No production readiness verdict follows from this report.
+
 # WeevCrafts UI/UX opportunities — 10 October 2026
 
 This is a recommendation report, not an implementation or release approval. Application code and business records were not changed. Local demo sign-in sessions were used to inspect authenticated screens.

@@ -4,7 +4,7 @@ WeevCrafts is a Go modular monolith. PostgreSQL owns authoritative business
 state; Redis, Meilisearch, S3-compatible storage, and payment providers are
 replaceable infrastructure behind ports.
 
-The Railway app runs from the root `Dockerfile`. One Go server renders the
+The application runs on Hostinger VPS/Coolify from the root `Dockerfile`. One Go server renders the
 storefront and portals and serves the same-origin `/api/v1` endpoints used for
 browser interactions; there is no separate frontend deployment or provider
 switch.
@@ -64,6 +64,10 @@ Run `bash scripts/check-architecture.sh` from the repository root. It scans
 the business-boundary packages for forbidden provider imports and fails on a
 match.
 
-For Railway, provide PostgreSQL and Redis reference variables as `DATABASE_URL`
-and `REDIS_URL`. The service binds to Railway's `PORT`, retries both dependency
-connections during startup, and reports readiness at `/health/ready`.
+Provide PostgreSQL and Redis connections as `DATABASE_URL` and `REDIS_URL` through
+Coolify's private environment variables. Set `WECRATFS_PUBLIC_URL` explicitly to
+the canonical HTTPS domain. The service supports standard `PORT`, retries both
+dependency connections during startup, and reports readiness at `/health/ready`.
+The production manifest and ingress require environment verification; local
+Compose defaults are not production configuration. See the
+[release checklist](release-checklist.md).

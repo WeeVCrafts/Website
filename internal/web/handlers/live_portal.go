@@ -43,6 +43,7 @@ type LivePortalHandler struct {
 	paymentReviews     paymentReviewOperations
 	storefrontPreview  *LiveStorefrontHandler
 	categoryStorage    ports.ObjectStorage
+	settlementStorage  ports.ObjectStorage
 	localMode          bool
 	pool               *pgxpool.Pool
 	sessions           *applicationauth.SessionService
@@ -340,6 +341,9 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.serveNotifications(w, r) {
+		return
+	}
+	if h.serveSettlementEvidence(w, r) {
 		return
 	}
 	if h.servePaymentReviews(w, r) || h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
@@ -1243,7 +1247,7 @@ func (h *LivePortalHandler) adminSellers(r *http.Request) []viewmodels.AdminSell
 		var name, status string
 		var created time.Time
 		if rows.Scan(&id, &name, &status, &created) == nil {
-			result = append(result, viewmodels.AdminSeller{ID: strconv.FormatInt(id, 10), Name: name, Status: status, Applied: created.Format("2 Jan 2006"), Image: "/assets/images/customer/maker-mithila.webp"})
+			result = append(result, viewmodels.AdminSeller{ID: strconv.FormatInt(id, 10), Name: name, Status: status, Applied: created.Format("2 Jan 2006"), Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result
@@ -1329,7 +1333,7 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 		var amount int64
 		var created time.Time
 		if rows.Scan(&id, &number, &customer, &reason, &status, &amount, &created) == nil {
-			result = append(result, viewmodels.AdminReturn{ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Date: created.Format("2 Jan 2006"), Amount: money(amount), Image: "/assets/images/customer/terracotta-lamp.webp"})
+			result = append(result, viewmodels.AdminReturn{ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Date: created.Format("2 Jan 2006"), Amount: money(amount), Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result
@@ -1867,186 +1871,6 @@ func (h *LivePortalHandler) adminCampaigns(r *http.Request) []viewmodels.AdminCa
 	return result
 }
 
-func (h *LivePortalHandler) adminSettlements(r *http.Request) []viewmodels.AdminSettlement {
-	rows, err := h.projectionRows(r, "admin-settlements", `
-		SELECT ss.id,s.display_name,ss.reference,ss.gross_cents,ss.commission_cents,ss.net_cents,ss.status,
-		       ss.period_start,ss.period_end,
-	       COUNT(DISTINCT sl.order_id) FILTER (WHERE sl.entry_type='sale')
-		FROM seller_settlements ss JOIN sellers s ON s.id=ss.seller_id
-		LEFT JOIN seller_ledger sl ON sl.settlement_id=ss.id
- WHERE ($1='' OR concat_ws(' ',s.display_name,ss.reference,ss.status) ILIKE '%'||$1||'%') AND (NOT $3::boolean OR ss.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($2::int-1)*INTERVAL '1 day')
-		GROUP BY ss.id,s.display_name ORDER BY ss.id DESC`, portalQuery(r.URL.Query().Get("q")), insightDays(r), superAdminRequest(r))
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
-	result := make([]viewmodels.AdminSettlement, 0)
-	for rows.Next() {
-		var item viewmodels.AdminSettlement
-		var id, gross, commission, amount, orderCount int64
-		var periodStart, periodEnd time.Time
-		if rows.Scan(&id, &item.Seller, &item.Reference, &gross, &commission, &amount, &item.Status, &periodStart, &periodEnd, &orderCount) == nil {
-			item.ID = strconv.FormatInt(id, 10)
-			item.Orders = strconv.FormatInt(orderCount, 10)
-			item.Gross, item.Commission, item.Amount = money(gross), money(commission), money(amount)
-			item.Date = periodEnd.Format("2 Jan 2006")
-			item.Period = periodStart.Format("2 Jan 2006") + " – " + periodEnd.Format("2 Jan 2006")
-			result = append(result, item)
-		}
-	}
-	return result
-}
-
-func isSettlementMutationPath(path string) bool {
-	return path == "/admin/finance/settlements/create" || path == "/admin/finance/settlements/status" ||
-		path == "/super-admin/finance/settlements/create" || path == "/super-admin/finance/settlements/status"
-}
-
-func (h *LivePortalHandler) adminSettlementMutation(w http.ResponseWriter, r *http.Request) {
-	root, role := "/admin/finance", "admin"
-	if strings.HasPrefix(r.URL.Path, "/super-admin/") {
-		root, role = "/super-admin/finance", "super_admin"
-	}
-	session, ok := h.session(r)
-	if !ok {
-		redirectToLogin(w, r)
-		return
-	}
-	if r.Method != http.MethodPost || !h.hasRole(r, session.UserID, role) {
-		denyPortalAccess(w, r)
-		return
-	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid settlement request", http.StatusBadRequest)
-		return
-	}
-	if subtle.ConstantTimeCompare([]byte(session.CSRFToken), []byte(r.Form.Get("csrf_token"))) != 1 {
-		denyPortalAccess(w, r)
-		return
-	}
-	action := strings.TrimPrefix(r.URL.Path, root+"/settlements/")
-	var err error
-	if action == "create" {
-		err = h.createSettlementBatches(r, session.UserID)
-	} else if action == "status" {
-		id, parseErr := strconv.ParseInt(strings.TrimSpace(r.Form.Get("settlement_id")), 10, 64)
-		status := strings.TrimSpace(r.Form.Get("status"))
-		if parseErr != nil || id <= 0 || (status != "approved" && status != "paid" && status != "failed") {
-			err = fmt.Errorf("invalid settlement decision")
-		} else {
-			err = h.updateSettlementStatus(r, id, status, session.UserID)
-		}
-	} else {
-		http.NotFound(w, r)
-		return
-	}
-	if err != nil {
-		http.Error(w, "settlement could not be updated: "+err.Error(), http.StatusConflict)
-		return
-	}
-	_, _ = h.pool.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,$2,'seller_settlement',$3,$4,jsonb_build_object('status',$5::text))`, strconv.FormatInt(session.UserID, 10), "settlement."+action, r.Form.Get("settlement_id"), r.Header.Get("X-Request-ID"), r.Form.Get("status"))
-	destination := root + "?workspace=settlements&notice=Settlement+workflow+saved"
-	if root == "/finance-portal" {
-		destination = root + "/settlements?notice=Settlement+workflow+saved"
-	}
-	http.Redirect(w, r, destination, http.StatusSeeOther)
-}
-
-type settlementBatch struct {
-	sellerID, gross, commission, net int64
-	start, end                       time.Time
-}
-
-func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int64) error {
-	tx, err := h.pool.Begin(r.Context())
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(r.Context())
-	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
-		return err
-	}
-	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger sl WHERE status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required) GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
-	if err != nil {
-		return err
-	}
-	batches := make([]settlementBatch, 0)
-	for rows.Next() {
-		var item settlementBatch
-		if err := rows.Scan(&item.sellerID, &item.gross, &item.commission, &item.net, &item.start, &item.end); err != nil {
-			rows.Close()
-			return err
-		}
-		batches = append(batches, item)
-	}
-	if err := rows.Err(); err != nil {
-		rows.Close()
-		return err
-	}
-	rows.Close()
-	for _, item := range batches {
-		reference := fmt.Sprintf("SETTLE-%d-%s", item.sellerID, time.Now().UTC().Format("20060102T150405.000000000Z"))
-		var settlementID int64
-		if err := tx.QueryRow(r.Context(), `INSERT INTO seller_settlements(seller_id,period_start,period_end,gross_cents,commission_cents,net_cents,status,reference) VALUES($1,$2,$3,$4,$5,$6,'pending',$7) RETURNING id`, item.sellerID, item.start, item.end, item.gross, item.commission, item.net, reference).Scan(&settlementID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger sl SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required)`, settlementID, item.sellerID); err != nil {
-			return err
-		}
-	}
-	if _, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,'settlement.batch_created','seller_settlement','batch',$2,jsonb_build_object('batch_count',$3::integer))`, strconv.FormatInt(actorID, 10), r.Header.Get("X-Request-ID"), len(batches)); err != nil {
-		return err
-	}
-	return tx.Commit(r.Context())
-}
-
-func (h *LivePortalHandler) updateSettlementStatus(r *http.Request, id int64, status string, actorID int64) error {
-	tx, err := h.pool.Begin(r.Context())
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(r.Context())
-	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
-		return err
-	}
-	var current string
-	if err := tx.QueryRow(r.Context(), `SELECT status FROM seller_settlements WHERE id=$1 FOR UPDATE`, id).Scan(&current); err != nil {
-		return err
-	}
-	validTransition := current == "pending" && (status == "approved" || status == "failed") ||
-		current == "approved" && (status == "paid" || status == "failed")
-	if !validTransition {
-		return fmt.Errorf("invalid state transition from %s to %s", current, status)
-	}
-	if status == "approved" || status == "paid" {
-		var blocked bool
-		if err := tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM seller_ledger sl JOIN orders o ON o.id=sl.order_id WHERE sl.settlement_id=$1 AND (o.payment_review_required OR (sl.entry_type='sale' AND o.status='refunded' AND NOT EXISTS(SELECT 1 FROM seller_ledger refund WHERE refund.order_id=o.id AND refund.seller_id=sl.seller_id AND refund.entry_type='refund' AND refund.settlement_id=$1))))`, id).Scan(&blocked); err != nil {
-			return err
-		}
-		if blocked {
-			return fmt.Errorf("payment review or refund changes block this settlement; resolve the review or mark the batch failed before recreating it")
-		}
-	}
-	if _, err := tx.Exec(r.Context(), `UPDATE seller_settlements SET status=$1,updated_at=NOW() WHERE id=$2`, status, id); err != nil {
-		return err
-	}
-	switch status {
-	case "paid":
-		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET status='settled' WHERE settlement_id=$1 AND status='open'`, id); err != nil {
-			return err
-		}
-	case "failed":
-		if _, err := tx.Exec(r.Context(), `UPDATE seller_ledger SET settlement_id=NULL WHERE settlement_id=$1 AND status='open'`, id); err != nil {
-			return err
-		}
-	}
-	_, err = tx.Exec(r.Context(), `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,$2,'seller_settlement',$3,$4,jsonb_build_object('previous_status',$5::text,'status',$6::text))`, strconv.FormatInt(actorID, 10), "settlement."+status, strconv.FormatInt(id, 10), r.Header.Get("X-Request-ID"), current, status)
-	if err != nil {
-		return err
-	}
-	return tx.Commit(r.Context())
-}
-
 func (h *LivePortalHandler) adminAudit(r *http.Request) []viewmodels.AdminAuditEntry {
 	rows, err := h.projectionRows(r, "admin-audit", `SELECT created_at, COALESCE(actor_id::text,''), action, resource_type, resource_id FROM audit_logs WHERE ($1='' OR concat_ws(' ',actor_id::text,action,resource_type,resource_id) ILIKE '%'||$1||'%') AND (NOT $3::boolean OR created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($2::int-1)*INTERVAL '1 day') ORDER BY id DESC`, portalQuery(r.URL.Query().Get("q")), insightDays(r), superAdminRequest(r))
 	if err != nil {
@@ -2308,29 +2132,31 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	}
 	rangeLabel := map[string]string{"day": "Today", "week": "This week", "month": "This month"}[period]
 	page := viewmodels.SellerAdminPage{LocalDeliverySimulation: h.localMode, Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: period, RangeLabel: rangeLabel, Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus, LowStockThreshold: lowStockThreshold}
-	if sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
+	if (active == "dashboard" || active == "products") && sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
 		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
 		if page.Products == nil {
 			page.DataWarning = joinPortalWarning(page.DataWarning, "The product list could not be loaded. Refresh the page to try again.")
 		}
 	}
-	if sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions) {
+	if (active == "dashboard" || active == "inventory") && sellerPortalAllowed("/seller-admin/inventory", isOwner, permissions) {
 		page.Inventory = h.sellerInventory(r, sellerID, portalQuery(page.Query), lowStockThreshold)
 		if page.Inventory == nil {
 			page.DataWarning = joinPortalWarning(page.DataWarning, "The inventory list could not be loaded. Refresh the page to try again.")
 		}
 	}
-	if sellerPortalAllowed("/seller-admin/orders", isOwner, permissions) {
+	if (active == "dashboard" || active == "orders") && sellerPortalAllowed("/seller-admin/orders", isOwner, permissions) {
 		page.Orders = h.sellerOrders(r, sellerID)
 	}
-	if sellerPortalAllowed("/seller-admin/returns", isOwner, permissions) {
+	if active == "returns" && sellerPortalAllowed("/seller-admin/returns", isOwner, permissions) {
 		page.Returns = h.sellerReturns(r, sellerID)
 	}
-	if sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions) {
+	if (active == "dashboard" || active == "analytics" || active == "earnings") && sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions) {
 		page.Stats = h.sellerStats(r, sellerID, period)
-		page.TopProducts = h.sellerTopProducts(r, sellerID, period)
+		if active == "analytics" {
+			page.TopProducts = h.sellerTopProducts(r, sellerID, period)
+		}
 	}
-	if sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions) {
+	if active == "earnings" && sellerPortalAllowed("/seller-admin/analytics", isOwner, permissions) {
 		page.Ledger = h.sellerLedger(r, sellerID)
 		page.Settlements = h.sellerSettlements(r, sellerID)
 	}
@@ -2524,7 +2350,7 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 		} else if available < int64(threshold) {
 			status = "Low stock"
 		}
-		result = append(result, viewmodels.SellerAdminInventory{VariantID: strconv.FormatInt(variantID, 10), Name: name, SKU: sku, Variant: variant, Location: "India", Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Reorder: strconv.Itoa(threshold), Status: status, IsLowStock: available < int64(threshold), Image: "/assets/images/customer/madhubani-tree.webp"})
+		result = append(result, viewmodels.SellerAdminInventory{VariantID: strconv.FormatInt(variantID, 10), Name: name, SKU: sku, Variant: variant, Location: "India", Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Reorder: strconv.Itoa(threshold), Status: status, IsLowStock: available < int64(threshold), Image: "/assets/images/product-unavailable.svg"})
 	}
 	if rows.Err() != nil {
 		return nil
@@ -2556,7 +2382,7 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		var created time.Time
 		var total, items, revision int64
 		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &items, &revision) == nil {
-			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Status: status, NextStatus: nextFulfillmentStatus(status), Revision: strconv.FormatInt(revision, 10), Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/customer/madhubani-tree.webp"})
+			result = append(result, viewmodels.SellerAdminOrder{SellerID: strconv.FormatInt(sellerID, 10), Number: number, Date: created.Format("2 Jan 2006"), Customer: customer, Items: strconv.FormatInt(items, 10), Value: money(total), Type: "Domestic", Status: status, NextStatus: nextFulfillmentStatus(status), Revision: strconv.FormatInt(revision, 10), Payment: displayPaymentStatus(payment, ""), Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result
@@ -2594,7 +2420,7 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 		var created time.Time
 		var amount int64
 		if rows.Scan(&id, &order, &customer, &reason, &created, &status, &amount, &product) == nil {
-			result = append(result, viewmodels.SellerAdminReturn{Number: fmt.Sprintf("RTN-%d", id), Order: order, Customer: maskName(customer), Product: product, Reason: reason, Date: created.Format("2 Jan 2006"), Status: status, Amount: money(amount), Image: "/assets/images/customer/madhubani-tree.webp"})
+			result = append(result, viewmodels.SellerAdminReturn{Number: fmt.Sprintf("RTN-%d", id), Order: order, Customer: maskName(customer), Product: product, Reason: reason, Date: created.Format("2 Jan 2006"), Status: status, Amount: money(amount), Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result
@@ -2633,18 +2459,30 @@ func (h *LivePortalHandler) sellerLedger(r *http.Request, sellerID int64) []view
 }
 
 func (h *LivePortalHandler) sellerSettlements(r *http.Request, sellerID int64) []viewmodels.SellerAdminSettlement {
-	rows, err := h.projectionRows(r, "seller-settlements", `SELECT reference,net_cents,status,period_end FROM seller_settlements WHERE seller_id=$1 AND ($2='' OR concat_ws(' ',reference,status) ILIKE '%'||$2||'%') ORDER BY id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
+	rows, err := h.projectionRows(r, "seller-settlements", `SELECT reference,net_cents,status,period_end,COALESCE(bank_reference,''),COALESCE(to_char(transfer_date,'YYYY-MM-DD'),''),manual_controls_version,transfer_evidence_key IS NOT NULL FROM seller_settlements WHERE seller_id=$1 AND ($2='' OR concat_ws(' ',reference,status) ILIKE '%'||$2||'%') ORDER BY id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")))
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
-	result := make([]viewmodels.SellerAdminSettlement, 0)
+	result := []viewmodels.SellerAdminSettlement{}
 	for rows.Next() {
-		var ref, status string
-		var amount int64
+		var item viewmodels.SellerAdminSettlement
+		var amount, controls int64
 		var date time.Time
-		if rows.Scan(&ref, &amount, &status, &date) == nil {
-			result = append(result, viewmodels.SellerAdminSettlement{Number: ref, Amount: money(amount), Status: status, Date: date.Format("2 Jan 2006")})
+		var transfer bool
+		if rows.Scan(&item.Number, &amount, &item.Status, &date, &item.BankReference, &item.TransferDate, &controls, &transfer) == nil {
+			item.Amount, item.Date = money(amount), date.Format("2 Jan 2006")
+			item.EvidenceState = "Manual transfer not confirmed"
+			if transfer {
+				item.EvidenceState = "Transfer evidence under independent review"
+			}
+			if item.Status == "paid" {
+				item.EvidenceState = "Manual bank transfer confirmed"
+			}
+			if item.Status == "paid" && controls == 0 {
+				item.EvidenceState = "Historical paid status: transfer evidence requires reconciliation"
+			}
+			result = append(result, item)
 		}
 	}
 	return result

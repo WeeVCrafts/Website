@@ -92,6 +92,11 @@ type AdminReturn struct {
 }
 
 type AdminSettlement struct {
+	VerificationNote                                                                      string
+	PreparedBy, ApprovedBy                                                                int64
+	Revision, PayeeVersion, PayeeName, BankName, AccountLast4, RoutingCode                string
+	BankReference, TransferDate, TransferAmount, EvidenceState                            string
+	HasPayee, HasTransfer, LegacyPaid                                                     bool
 	ID, Seller, Reference, Orders, Gross, Commission, Amount, Status, Date, Period, Image string
 }
 
@@ -249,7 +254,8 @@ type SellerAdminLedger struct {
 }
 
 type SellerAdminSettlement struct {
-	Number, Amount, Orders, Status, Date string
+	Number, Amount, Orders, Status, Date       string
+	BankReference, TransferDate, EvidenceState string
 }
 
 type SellerTeamMember struct {

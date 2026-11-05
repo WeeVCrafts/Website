@@ -139,7 +139,7 @@ func canonicalHostRedirect(next http.Handler, canonical string, environment stri
 		}
 		host := strings.ToLower(strings.Split(r.Host, ":")[0])
 		canonicalHost := strings.ToLower(canonicalURL.Hostname())
-		if host != "" && host != canonicalHost && (strings.HasSuffix(host, ".up.railway.app") || strings.HasPrefix(host, "www.")) {
+		if host == "www."+canonicalHost {
 			location := *canonicalURL
 			location.Path = r.URL.Path
 			location.RawQuery = r.URL.RawQuery

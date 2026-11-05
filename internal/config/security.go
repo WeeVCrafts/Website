@@ -35,6 +35,12 @@ func (c Config) ValidateSecurity() error {
 	if c.LocalMode || c.NoPaymentDemo {
 		return errors.New("development features are unavailable in production")
 	}
+	if c.PaymentMode != "razorpay" {
+		return errors.New("production requires the Razorpay payment provider")
+	}
+	if !c.Staging && c.RazorpayKeyID != "" && !strings.HasPrefix(c.RazorpayKeyID, "rzp_live_") {
+		return errors.New("production requires live Razorpay keys; sandbox keys require isolated staging")
+	}
 	database, err := url.Parse(c.DatabaseURL)
 	if err != nil || database.User == nil {
 		return errors.New("production requires configured database credentials")
@@ -46,7 +52,8 @@ func (c Config) ValidateSecurity() error {
 	if database.Query().Get("sslmode") != "verify-full" {
 		return errors.New("production database connections require sslmode=verify-full")
 	}
-	if c.S3AccessKey == "" || c.S3SecretKey == "" || c.S3AccessKey == "wecratfs" || c.S3SecretKey == "wecratfs-local-only" {
+	if c.S3AccessKey == "" || c.S3SecretKey == "" || c.S3AccessKey == "wecratfs" || c.S3SecretKey == "wecratfs-local-only" ||
+		c.S3AccessKey == "GK0123456789abcdef01234567" || c.S3SecretKey == "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" {
 		return errors.New("production requires dedicated object storage credentials")
 	}
 	if !c.S3Secure {

@@ -108,7 +108,7 @@ func run() error {
 			if _, err := tx.Exec(ctx, `UPDATE sessions_metadata SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL`, id); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, `INSERT INTO audit_logs(action,resource_type,resource_id,metadata) VALUES('identity.designated_account_synced','user',$1,jsonb_build_object('reason','Owner requested designated credentials for local and Railway','username',$2::text,'role',$3::text))`, fmt.Sprint(id), item.Username, string(item.Role)); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO audit_logs(action,resource_type,resource_id,metadata) VALUES('identity.designated_account_synced','user',$1,jsonb_build_object('reason','Owner requested designated account credentials','username',$2::text,'role',$3::text))`, fmt.Sprint(id), item.Username, string(item.Role)); err != nil {
 				return err
 			}
 		}

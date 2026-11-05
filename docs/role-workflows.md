@@ -1,3 +1,5 @@
+> **Historical role guide:** The eight-role/team model below is retired. Use [four-role operations](four-role-workflow.md) and the [current handbook](operations-handbook.md). Login uses username/email plus password; the server chooses the stored role. Historical procedures are not current operator instructions.
+
 # Role workflows
 
 Each account has one assigned role and opens its portal after sign-in. Customer sign-in opens the product listing. Operational portals have responsive navigation: a fixed sidebar on desktop and an accessible drawer on narrow screens. There is no workspace chooser or switch control.

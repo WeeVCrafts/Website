@@ -306,7 +306,7 @@ templ PortalFinance(p viewmodels.AdminPage) {
 		} else if p.Workspace == "refunds" {
 			<p class="admin-page-note">Showing payment attempts recorded as refunded.</p>
 		} else if p.Workspace == "settlements" {
-			<p class="admin-page-note">Settlement batches use captured order ledger entries. Payout actions simulate status changes and do not transfer money.</p>
+			<p class="admin-page-note">Settlement batches use captured order ledger entries. Record external bank transfers with independent approval and private evidence.</p>
 		}
 		<section class="admin-two-grid">
 			@PortalSettlementTable(p)
@@ -516,33 +516,76 @@ templ PortalReturnActions(p viewmodels.AdminPage,item viewmodels.AdminReturn) {
 }
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {
-	<article class="admin-panel"><p><a class="admin-button secondary" href={p.PortalRoot+"/payment-reviews"}>Review captured payment exceptions</a></p><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Payable amounts reconciled from captured orders and commission rules.</p></div></div>
-		if p.CanFinance {
-			<form method="post" action={ p.SettlementRoot + "/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Create settlement batches</button></form>
-		}
-	</div>
-		<div class="ui-table-region" role="region" tabindex="0" aria-label="Seller settlements"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Seller</th><th scope="col">Reference</th><th scope="col">Orders</th><th scope="col">Gross</th><th scope="col">Commission</th><th scope="col">Payable</th><th scope="col">Status</th><th scope="col">Period</th><th scope="col">Actions</th></tr></thead><tbody>
-			for _, item := range p.Settlements {
-				<tr><th scope="row">{ item.Seller }</th><td data-label="Reference">{ item.Reference }</td><td data-label="Orders" class="numeric">{ item.Orders }</td><td data-label="Gross" class="numeric">{ item.Gross }</td><td data-label="Commission" class="numeric">{ item.Commission }</td><td data-label="Payable" class="numeric">{ item.Amount }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td><td data-label="Period">{ item.Period }</td><td data-label="Actions" class="row-actions">
-					if p.CanFinance && item.Status == "pending" {
-						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="approved"/><button class="admin-button secondary" type="submit">Approve</button></form>
-					} else if p.CanFinance && item.Status == "approved" {
-						<form method="post" action={ p.SettlementRoot + "/settlements/status" } data-confirm="Record this mock payout as paid? No bank transfer will be made."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="paid"/><button class="admin-button primary" type="submit">Record mock payout</button></form>
-						<form method="post" action={ p.SettlementRoot + "/settlements/status" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="status" value="failed"/><button class="admin-button danger" type="submit">Mark failed</button></form>
-					} else {
-						<span>—</span>
-					}
-				</td></tr>
-			}
-		</tbody></table></div>
-			if len(p.Settlements) == 0 && p.DataWarning == "" {
-				@AdminTableEmpty("No settlement records yet.", "Create a batch after captured seller orders appear in the ledger.")
-			}
-	</article>
+ <article class="admin-panel">
+  <p><a class="admin-button secondary" href={ p.PortalRoot+"/payment-reviews" }>Review captured payment exceptions</a></p>
+  <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Record manual bank transfers made outside Weevcrafts. No button sends money.</p></div></div>
+   if p.CanFinance {
+    <form method="post" action={ p.SettlementRoot+"/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Prepare settlement batches</button></form>
+   }
+  </div>
+  <p class="admin-page-note">A preparer records the recipient. A different operator verifies and approves it. After the preparer makes the bank transfer and uploads proof, the approver verifies that proof and confirms paid.</p>
+  <div class="ui-table-region" role="region" tabindex="0" aria-label="Seller settlements"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Seller</th><th scope="col">Reference</th><th scope="col">Orders</th><th scope="col">Gross</th><th scope="col">Commission</th><th scope="col">Payable</th><th scope="col">Status and evidence</th><th scope="col">Period</th><th scope="col">Actions</th></tr></thead><tbody>
+   for _, item := range p.Settlements {
+    <tr><th scope="row">{ item.Seller }</th><td data-label="Reference">{ item.Reference }</td><td data-label="Orders" class="numeric">{ item.Orders }</td><td data-label="Gross" class="numeric">{ item.Gross }</td><td data-label="Commission" class="numeric">{ item.Commission }</td><td data-label="Payable" class="numeric">{ item.Amount }</td><td data-label="Status and evidence"><span class={ "ui-status "+components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span><p>{ item.EvidenceState }</p>
+     if item.HasPayee {
+      <p>{ item.VerificationNote }</p><p>{ item.PayeeName } · { item.BankName } · account ending { item.AccountLast4 } · { item.RoutingCode } · version { item.PayeeVersion }</p>
+      <a href={ p.SettlementRoot+"/settlements/evidence?kind=payee&settlement_id="+item.ID }>Download private recipient evidence</a>
+     }
+     if item.HasTransfer {
+      <p>Bank reference { item.BankReference } · transferred { item.TransferDate }</p>
+      <a href={ p.SettlementRoot+"/settlements/evidence?kind=transfer&settlement_id="+item.ID }>Download private transfer evidence</a>
+     }
+    </td><td data-label="Period">{ item.Period }</td><td data-label="Actions" class="row-actions">@PortalSettlementActions(p,item)</td></tr>
+   }
+  </tbody></table></div>
+  if len(p.Settlements)==0 && p.DataWarning=="" {
+   @AdminTableEmpty("No settlement records yet.","Prepare a batch after captured seller orders appear in the ledger.")
+  }
+ </article>
+}
+
+templ PortalSettlementFields(p viewmodels.AdminPage,item viewmodels.AdminSettlement) {
+ <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="settlement_id" value={ item.ID }/><input type="hidden" name="revision" value={ item.Revision }/>
+}
+
+templ PortalSettlementActions(p viewmodels.AdminPage,item viewmodels.AdminSettlement) {
+ if p.CanFinance && (item.Status=="pending" || item.Status=="approved") {
+  if !item.HasTransfer && (item.PreparedBy==0 || item.PreparedBy==p.ActorID) {
+   <details><summary>Prepare recipient for approval</summary><form method="post" enctype="multipart/form-data" action={ p.SettlementRoot+"/settlements/prepare" }>
+    @PortalSettlementFields(p,item)
+    <label>Account holder<input name="payee_name" value={ item.PayeeName } minlength="2" maxlength="160" required/></label>
+    <label>Bank name<input name="bank_name" value={ item.BankName } minlength="2" maxlength="120" required/></label>
+    <label>Last four account digits<input name="account_last4" value={ item.AccountLast4 } inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" required/></label>
+    <label>IFSC<input name="routing_code" value={ item.RoutingCode } pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}" minlength="11" maxlength="11" required/></label>
+    <label>Recipient verification instructions<textarea name="verification_note" minlength="4" maxlength="1000" required>{ item.VerificationNote }</textarea></label>
+    <label>Private recipient evidence<input type="file" name="payee_evidence" accept="application/pdf,image/png,image/jpeg" required/></label><small>PDF, PNG or JPEG up to 5 MiB. The approver must verify the seller and full bank details against this private document. Saving resets approval.</small>
+    <button class="admin-button secondary" type="submit">Save recipient version</button>
+   </form></details>
+  }
+  if item.Status=="pending" && item.HasPayee && item.PreparedBy!=p.ActorID {
+   <form method="post" action={ p.SettlementRoot+"/settlements/status" }>@PortalSettlementFields(p,item)<input type="hidden" name="status" value="approved"/><label><input type="checkbox" name="verified_payee" value="yes" required/>I independently verified the seller, bank recipient and payable amount.</label><button class="admin-button primary" type="submit">Approve recipient and batch</button></form>
+  }
+  if item.Status=="approved" && !item.HasTransfer && item.PreparedBy==p.ActorID {
+   <details><summary>Record completed bank transfer</summary><form method="post" enctype="multipart/form-data" action={ p.SettlementRoot+"/settlements/transfer" }>@PortalSettlementFields(p,item)
+    <label>Transferred amount in paise<input name="transfer_amount_cents" type="number" min="1" step="1" value={ item.TransferAmount } required/></label><small>Must equal approved payable { item.Amount }. 100 paise = INR 1.</small>
+    <label>Transfer date<input name="transfer_date" type="date" required/></label><label>Bank UTR/reference<input name="bank_reference" minlength="4" maxlength="120" required/></label>
+    <label>Private transfer evidence<input type="file" name="transfer_evidence" accept="application/pdf,image/png,image/jpeg" required/></label><small>PDF, PNG or JPEG up to 5 MiB. Record only a completed external bank transfer to the approved recipient.</small>
+    <button class="admin-button secondary" type="submit">Submit transfer evidence</button>
+   </form></details>
+  }
+  if item.Status=="approved" && item.HasTransfer && item.ApprovedBy==p.ActorID && item.PreparedBy!=p.ActorID {
+   <form method="post" action={ p.SettlementRoot+"/settlements/status" } data-confirm="Confirm the bank transfer evidence matches the approved recipient and amount? This records payment and does not send money.">@PortalSettlementFields(p,item)<input type="hidden" name="status" value="paid"/><label><input type="checkbox" name="verified_transfer" value="yes" required/>I independently verified the completed bank transfer.</label><button class="admin-button primary" type="submit">Confirm transfer paid</button></form>
+  }
+  if !item.HasTransfer {
+   <form method="post" action={ p.SettlementRoot+"/settlements/status" }>@PortalSettlementFields(p,item)<input type="hidden" name="status" value="failed"/><button class="admin-button danger" type="submit">Cancel batch before transfer</button></form>
+  }
+ } else {
+  <span>Closed settlement</span>
+ }
 }
 
 templ PortalTransactionTable(p viewmodels.AdminPage) {
-	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><h2>Payment attempts</h2><p>Transactions from the configured mock or payment provider.</p></div></div></div>
+	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><h2>Payment attempts</h2><p>Payment attempts reported by the configured provider.</p></div></div></div>
 		<div class="ui-table-region" role="region" tabindex="0" aria-label="TransactionTable"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Date</th><th scope="col">Order</th><th scope="col">Amount</th><th scope="col">Status</th></tr></thead><tbody>
 			for _, item := range p.Transactions {
 				<tr><td data-label="Date"><strong>{ item.Date }</strong></td><td data-label="Order">{ item.Reference }</td><td data-label="Amount">{ item.Amount }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td></tr>

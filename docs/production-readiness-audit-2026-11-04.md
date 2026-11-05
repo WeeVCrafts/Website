@@ -1,5 +1,7 @@
 # Weevcrafts production readiness audit and task register
 
+> **Historical assessment; superseded decisions:** This audit assessed `d259b18`. The cleanup review starts at `6b2c936`; use the [candidate register](release-candidate-2026-11-04.md) and reconciled CSV for current disposition. On 4 November the owner selected Hostinger VPS/Coolify, retained username/email plus password with server-derived role, declined MFA, required separate payout operators, and undertook to supply approved content. SEC-01/SEC-02 are owner-deferred exceptions, not completed controls. The original findings and priorities below remain historical evidence; implementation and fresh verification must be recorded separately.
+
 Audit date: 4 November 2026, India time. Source baseline: `d259b18ac55c7905fb0669ef20cee7946527a6d1`, plus the inspected working tree. This is an assessment and backlog, not a production release approval. No application code, business records, infrastructure, payments or existing designs were changed by this audit.
 
 ## Assessment

@@ -1,3 +1,5 @@
+> **Historical QA/sample catalog tool:** This is not an approved merchant import or production launch procedure. Its eight-role list, sample prices and supplied photographs must not become real listings or credentials. Keep existing test tools isolated. Use the [actual-inventory importer](catalog-management.md) and [current handbook](operations-handbook.md); owner approval of facts, stock and media rights is required.
+
 # Launch catalog and role accounts
 
 `cmd/seed-launch` creates ten photo-matched catalog listings and provisions six QA accounts. It is safe to rerun for the same account emails and product slugs. Passwords are read from environment variables at runtime; they are not in Git history. The command changes credentials for the six listed emails, so run it only when credential rotation is intended.

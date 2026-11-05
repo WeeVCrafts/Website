@@ -41,6 +41,32 @@ func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 				}
 			}
 		}
+		if strings.EqualFold(cfg.Environment, "production") && !cfg.PublicContentApproved && requiresPublishedContent(r.URL.Path) {
+			w.Header().Set("Cache-Control", "private, no-store")
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+			w.Header().Set("Retry-After", "3600")
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = w.Write([]byte(`{"error":{"code":"PUBLICATION_PENDING","message":"Checkout is unavailable while marketplace information awaits publication."}}`))
+			} else {
+				http.Error(w, "Marketplace information is awaiting publication. Please try again later.", http.StatusServiceUnavailable)
+			}
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// Withhold unapproved information on both current and legacy paths. Keep
+// existing orders, provider callbacks and account recovery available.
+func requiresPublishedContent(path string) bool {
+	if strings.HasPrefix(path, "/pages/") {
+		return true
+	}
+	switch path {
+	case "/about", "/our-story", "/sustainability", "/press", "/careers", "/contact", "/faq", "/shipping", "/returns-policy", "/size-guide", "/terms", "/privacy", "/seller-admin/terms", "/checkout", "/api/v1/checkout", "/api/v1/checkout/intents", "/api/v1/checkout/no-payment":
+		return true
+	}
+	return false
 }

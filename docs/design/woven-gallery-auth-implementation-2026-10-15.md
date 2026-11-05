@@ -1,3 +1,5 @@
+> **Historical implementation report:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](../operations-handbook.md) and [release checklist](../release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # Woven Gallery sign-in
 
 The user selected concept C, then explicitly requested username/password fields inside the mobile prompt and Continue with Google on both surfaces. The updated [reference](woven-gallery-auth-concept-2026-10-15.png) records those changes. Development stays on `main`. Local implementation and Air verification are complete; the user subsequently authorized pushing this change to GitHub and verifying Railway's automatic production deployment. The preceding production release is `523484c066f8758472554cc4b7ac4aae5dc8a926`.

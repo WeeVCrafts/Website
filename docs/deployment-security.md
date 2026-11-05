@@ -4,6 +4,13 @@ This local update implements application safeguards. It does not deploy or certi
 
 ## Required configuration
 
+Keep `WECRATFS_PUBLIC_CONTENT_APPROVED=false` until the owner's approved policies,
+contacts, hours and permitted content are installed and verified on the exact
+release. Production withholds current/legacy information pages and new checkout
+while this gate is closed. Existing orders, account recovery and provider
+callbacks remain available. Record content approval before explicitly setting
+the variable to true; a configuration flag is not evidence of that approval.
+
 Set `WECRATFS_ENV=production`, `WECRATFS_PUBLIC_URL=https://your-store-domain`, and `WECRATFS_SECURE_COOKIES=true`. Terminate TLS at a controlled ingress, redirect HTTP to HTTPS, and configure HSTS there after verifying all required subdomains support HTTPS. Restrict direct access to the application port and health/metrics endpoints.
 
 The application fails startup in production if the public URL/cookies are insecure, the database uses missing/development credentials, `DATABASE_URL` does not include `sslmode=verify-full`, object storage uses missing/development credentials, or `S3_SECURE` is false. Configure the trusted database CA as required by your provider. For a private TLS-enabled S3-compatible endpoint, provide its public CA in `S3_CA_CERT`; never disable TLS verification to make a self-managed object store work. Local/demo feature flags are forcibly disabled in production and local payment helper endpoints are not registered. Use the real payment provider configuration for production; never seed demo users there.
@@ -11,6 +18,11 @@ The application fails startup in production if the public URL/cookies are insecu
 Use separate, least-privilege credentials for the database, private object bucket, Redis, search and email. Keep secrets in the deployment secret store, rotate them, and restrict who can read them. Do not copy `.env`, `.env.kuma.local`, development passwords, customer uploads or session material into source control or build logs. Restrict Redis and search to private infrastructure; use authentication and encrypted transport supported by their adapters/providers. The search index must contain public catalog data only.
 
 Keep Adminer, Uptime Kuma, Mailpit and the Garage admin API off the public internet. Local ports bind to `127.0.0.1`; remote administration needs a private network or authenticated tunnel. Adminer additionally requires database login; Kuma has its own persisted administrator login. Neither tool inherits marketplace roles. Disable public bucket access and anonymous listing; avatars are served by the application only after owner authentication.
+
+Non-staging production rejects configured Razorpay test or unknown key IDs;
+private staging requires Razorpay test keys. Missing payment credentials leave
+checkout unavailable, without substituting simulated success. Verify actual live
+account activation, webhook delivery and settlement destination separately.
 
 ## Data and recovery
 

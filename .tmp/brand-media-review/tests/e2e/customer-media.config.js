@@ -1,2 +1,0 @@
-const base=require('../../playwright.config');
-module.exports={...base,testDir:__dirname,testMatch:'customer-media.spec.js',timeout:240000,outputDir:require('node:path').join(require('node:os').tmpdir(),'weev-customer-media'),use:{...base.use,baseURL:'http://127.0.0.1:18088',navigationTimeout:45000,reducedMotion:'reduce'},projects:['chromium','firefox','webkit'].map(browserName=>({name:browserName,use:{browserName}}))};

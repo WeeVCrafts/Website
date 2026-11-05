@@ -1,2 +1,0 @@
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS sessions_revoked_at TIMESTAMPTZ;

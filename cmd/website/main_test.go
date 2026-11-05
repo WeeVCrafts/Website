@@ -47,14 +47,21 @@ type fakeRateLimiter struct {
 	keys    []string
 }
 
-func TestDemoCaptureOnlyAvailableForConfiguredDemoProvider(t *testing.T) {
-	for _, mode := range []string{"local", "razorpay"} {
+func TestDemoCaptureRequiresExplicitLocalDevelopment(t *testing.T) {
+	for _, tc := range []struct {
+		env, mode   string
+		local, want bool
+	}{
+		{"production", "local", true, false}, {"Production", "local", true, false},
+		{"production", "razorpay", false, false}, {"development", "local", false, false},
+		{"development", "local", true, true}, {"development", "razorpay", true, false},
+	} {
 		mux := http.NewServeMux()
 		calls := 0
-		registerDemoPaymentCapture(mux, config.Config{Environment: "production", PaymentMode: mode}, func(w http.ResponseWriter, r *http.Request) {
+		registerDemoPaymentCapture(mux, config.Config{Environment: tc.env, PaymentMode: tc.mode, LocalMode: tc.local}, func(w http.ResponseWriter, r *http.Request) {
 			calls++
-			if r.URL.Path != "/dev/payments/owned-order/capture" || r.Header.Get("X-CSRF-Token") != "test-token" || r.Method != http.MethodPost {
-				t.Fatalf("capture did not preserve authentication request: %s", r.URL.Path)
+			if r.URL.Path != "/dev/payments/owned-order/capture" || r.Header.Get("X-CSRF-Token") != "test-token" {
+				t.Fatal("capture changed authentication request")
 			}
 			w.WriteHeader(http.StatusNoContent)
 		})
@@ -62,17 +69,18 @@ func TestDemoCaptureOnlyAvailableForConfiguredDemoProvider(t *testing.T) {
 		r.Header.Set("X-CSRF-Token", "test-token")
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, r)
-		if mode == "local" && (w.Code != 204 || calls != 1) {
-			t.Fatal("production demo checkout is unavailable")
-		}
-		if mode != "local" && (w.Code != 404 || calls != 0) {
-			t.Fatal("demo capture exposed for real payment provider")
+		if tc.want {
+			if w.Code != 204 || calls != 1 {
+				t.Fatal("local fixture capture unavailable")
+			}
+		} else if w.Code != 404 || calls != 0 {
+			t.Fatalf("demo capture exposed for %+v", tc)
 		}
 		for _, path := range []string{"/api/v1/payments/demo-capture/owned-order/fail", "/dev/payments/owned-order/fail", "/api/v1/payments/demo-capture/"} {
 			w = httptest.NewRecorder()
 			mux.ServeHTTP(w, httptest.NewRequest(http.MethodPost, path, nil))
 			if w.Code != 404 {
-				t.Fatalf("invalid demo route exposed: %s", path)
+				t.Fatalf("invalid route exposed: %s", path)
 			}
 		}
 	}

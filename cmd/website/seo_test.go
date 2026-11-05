@@ -100,7 +100,7 @@ func TestSitemapDatabaseFailureDoesNotPublishIncompleteCatalog(t *testing.T) {
 func TestCanonicalRedirectPreservesDiscoveryPathAndQuery(t *testing.T) {
 	called := false
 	h := canonicalHostRedirect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { called = true; w.WriteHeader(204) }), "https://weevcrafts.com", "production")
-	for _, host := range []string{"www.weevcrafts.com", "website-example.up.railway.app"} {
+	for _, host := range []string{"www.weevcrafts.com"} {
 		r := httptest.NewRequest(http.MethodGet, "https://"+host+"/products/blue-bowl?option=2", nil)
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)

@@ -1,3 +1,5 @@
+> **Historical eight-role audit:** Findings and verdicts describe the 9 October release. Current roles and operations are documented in the [handbook](operations-handbook.md). This report is not a fresh visual, accessibility or production certification.
+
 # WeevCrafts UI/UX review — 9 October 2026
 
 ## Implementation integrity verdict

@@ -1,3 +1,5 @@
+> **Historical implementation report:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](../operations-handbook.md) and [release checklist](../release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # WeevCrafts branding and responsive homepage — 15 October 2026
 
 Implementation on `main`, fast-forwarded from `020f058` to the approved existing `b4968a7`. No additional branch, database migration or business API change. Existing local volumes and catalogue were retained. The user subsequently authorized publishing the branding/header update through GitHub's existing Railway integration. New login and guest-popup redesigns require separate concept approval and are outside this release.

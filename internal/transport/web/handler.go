@@ -214,15 +214,21 @@ func newHandler(catalogService *applicationcatalog.Service, authService *applica
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(r.URL.Path, "/assets/") {
+		w.Header().Set("Cache-Control", "no-store")
 		if serveUploadedAsset(w, r) {
 			return
 		}
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		name := strings.TrimPrefix(r.URL.Path, "/assets/")
+		if !prepareEmbeddedAsset(w, r, previewassets.FS, name, previewassets.URL(name)) {
+			return
+		}
 		h.previewStatic.ServeHTTP(w, r)
 		return
 	}
 	if strings.HasPrefix(r.URL.Path, "/static/") {
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		if !prepareEmbeddedAsset(w, r, assets, "static/"+strings.TrimPrefix(r.URL.Path, "/static/"), "") {
+			return
+		}
 		h.static.ServeHTTP(w, r)
 		return
 	}
@@ -447,7 +453,7 @@ func serveUploadedAsset(w http.ResponseWriter, r *http.Request) bool {
 		http.NotFound(w, r)
 		return true
 	}
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	w.Header().Set("Cache-Control", "public, no-cache")
 	http.ServeFile(w, r, path)
 	return true
 }

@@ -6,9 +6,15 @@ legacy bookmarks return to the dashboard and mutations return 410. Published
 customer pages, releases and saved drafts remain intact. The documentation below
 records the retained Admin draft workflow and the historical publishing model.
 
-The Go/templ Storefront workspace lives at `/admin/storefront` and
-`/super-admin/storefront`. The customer site reads a published PostgreSQL release.
-Routine changes use this workspace without rebuilding or deploying the app.
+## Current operator instructions
+
+The general Super Admin Storefront editor is retired. Do not follow the historical publish/restore procedure below. Retained Admin drafts do not provide a current Super Admin publishing path. Leave published releases and drafts intact until the owner approves a replacement workflow.
+
+Super Admin manages categories through **Products > Add category / Manage categories**. **Save category publishes immediately.** Read [catalog management](catalog-management.md) and the [current handbook](operations-handbook.md). Owner approval is required for other homepage, policy and navigation changes; never reopen retired mutation routes to make a change.
+
+## Historical editor record
+
+The retained customer renderer reads a published PostgreSQL release. The following sections describe earlier editor releases and their verification, not an available current publication procedure.
 
 ## Roles and workflow
 

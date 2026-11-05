@@ -1,3 +1,5 @@
+> **Historical SEO report:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
+
 # Brand search discovery — 17 October 2026
 
 The preferred public name is **WeevCrafts**, on `https://weevcrafts.com/`.
