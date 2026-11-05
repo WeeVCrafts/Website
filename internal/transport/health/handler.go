@@ -24,6 +24,8 @@ func NewHandlerWithMetrics(probes map[string]Probe, metrics func() any) *Handler
 }
 
 func (h *Handler) Metrics(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 	if h.metrics == nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "metrics unavailable"})
 		return

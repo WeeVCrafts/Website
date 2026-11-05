@@ -312,10 +312,17 @@ func main() {
 		return cleanupErr
 	})
 	defer stopWorker()
+	httpMetrics := metricsadapter.NewHTTPMetrics()
 	healthHandler := healthTransport.NewHandlerWithMetrics(map[string]healthTransport.Probe{
 		"postgresql": func(ctx context.Context) error { return postgres.Ping(ctx, pool) },
 		"redis":      func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },
-	}, func() any { return searchMetrics.Snapshot() })
+	}, func() any {
+		return metricsadapter.OperationalSnapshot{
+			SearchSnapshot: searchMetrics.Snapshot(),
+			HTTP:           httpMetrics.Snapshot(),
+			DatabasePool:   metricsadapter.SnapshotPool(pool.Stat()),
+		}
+	})
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health/live", healthHandler.Live)
@@ -447,7 +454,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg),
+		Handler:           httpMetrics.Middleware(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

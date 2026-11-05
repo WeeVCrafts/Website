@@ -54,8 +54,27 @@ func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 			}
 			return
 		}
+		if !cfg.CheckoutEnabled && isNewCheckout(r.URL.Path) {
+			w.Header().Set("Cache-Control", "private, no-store")
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+			w.Header().Set("Retry-After", "3600")
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_, _ = w.Write([]byte(`{"error":{"code":"CHECKOUT_UNAVAILABLE","message":"New checkout is currently unavailable. Please try again later."}}`))
+			} else {
+				http.Error(w, "New checkout is currently unavailable. Please try again later.", http.StatusServiceUnavailable)
+			}
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// Existing order payment/recovery and signed callbacks do not create a new
+// marketplace checkout and must remain reachable while this release gate is off.
+func isNewCheckout(path string) bool {
+	return path == "/checkout" || strings.HasPrefix(path, "/checkout/") || path == "/api/v1/checkout" || strings.HasPrefix(path, "/api/v1/checkout/")
 }
 
 // Withhold unapproved information on both current and legacy paths. Keep

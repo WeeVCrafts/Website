@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	CheckoutEnabled         bool
 	PublicContentApproved   bool
 	OperationalMetricsToken string
 	Staging                 bool
@@ -55,6 +56,7 @@ func FromEnv() Config {
 		publicURL = "http://localhost:8080"
 	}
 	return Config{
+		CheckoutEnabled:         boolEnv("WECRATFS_CHECKOUT_ENABLED", false),
 		PublicContentApproved:   boolEnv("WECRATFS_PUBLIC_CONTENT_APPROVED", false),
 		OperationalMetricsToken: env("WECRATFS_METRICS_TOKEN", ""),
 		Staging:                 boolEnv("WECRATFS_STAGING", false),

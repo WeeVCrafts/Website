@@ -11,6 +11,13 @@ while this gate is closed. Existing orders, account recovery and provider
 callbacks remain available. Record content approval before explicitly setting
 the variable to true; a configuration flag is not evidence of that approval.
 
+Keep `WECRATFS_CHECKOUT_ENABLED=false` independently while payment activation and
+launch approval are pending. Publishing approved information does not open new
+checkout. Enabling this switch in production requires approved content and
+complete Razorpay order/webhook credentials; isolated staging retains its private
+access and test-key safeguards. Existing orders and signed callbacks are not
+blocked by this new-checkout switch.
+
 Set `WECRATFS_ENV=production`, `WECRATFS_PUBLIC_URL=https://your-store-domain`, and `WECRATFS_SECURE_COOKIES=true`. Terminate TLS at a controlled ingress, redirect HTTP to HTTPS, and configure HSTS there after verifying all required subdomains support HTTPS. Restrict direct access to the application port and health/metrics endpoints.
 
 The application fails startup in production if the public URL/cookies are insecure, the database uses missing/development credentials, `DATABASE_URL` does not include `sslmode=verify-full`, object storage uses missing/development credentials, or `S3_SECURE` is false. Configure the trusted database CA as required by your provider. For a private TLS-enabled S3-compatible endpoint, provide its public CA in `S3_CA_CERT`; never disable TLS verification to make a self-managed object store work. Local/demo feature flags are forcibly disabled in production and local payment helper endpoints are not registered. Use the real payment provider configuration for production; never seed demo users there.

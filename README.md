@@ -43,6 +43,7 @@ Set these variables privately in Coolify; never commit production values:
 ```text
 WECRATFS_ENV=production
 WECRATFS_PUBLIC_CONTENT_APPROVED=false
+WECRATFS_CHECKOUT_ENABLED=false
 WECRATFS_PUBLIC_URL=https://weevcrafts.com
 WECRATFS_SECURE_COOKIES=true
 WECRATFS_LOCAL_MODE=false
@@ -86,6 +87,22 @@ login and account recovery remain available. Install the owner's approved
 policies, contact details, support hours and permitted content, review the exact
 release, and retain approval evidence before explicitly enabling this variable.
 The variable records an operator decision; it does not approve content itself.
+Approved information can be published independently of new checkout:
+`WECRATFS_CHECKOUT_ENABLED` defaults to false in every environment. While false,
+new checkout pages and APIs return HTTP 503 before order/reservation handlers run.
+Existing orders, payment recovery and signed provider callbacks remain available.
+Enabling checkout in production requires approved content and nonempty Razorpay
+order and webhook credentials; live/test key safeguards continue to apply.
+
+Production `/health/metrics` requires the dedicated bearer token configured as
+`WECRATFS_METRICS_TOKEN` (at least 32 characters). It preserves existing search
+counters and adds `http` and `database_pool` resource counters. HTTP groups use
+a fixed vocabulary, not raw URLs, queries, customer IDs, headers or SQL. Histogram
+buckets are cumulative milliseconds; counters reset on application restart and
+exclude health probes/metrics requests. Pool counters include workers and probes;
+pool acquisitions are not SQL-statement counts or committed transactions.
+These are operational observations, not
+visitor, MAU, billing or persistent audit records. Responses require no-store.
 
 ## Run locally (1-Click)
 

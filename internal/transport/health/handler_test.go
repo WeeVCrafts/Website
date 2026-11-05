@@ -9,6 +9,15 @@ import (
 	"testing"
 )
 
+func TestMetricsAreNeverCacheable(t *testing.T) {
+	h := NewHandlerWithMetrics(nil, func() any { return map[string]int{"requests": 2} })
+	w := httptest.NewRecorder()
+	h.Metrics(w, httptest.NewRequest("GET", "/health/metrics", nil))
+	if w.Code != 200 || w.Header().Get("Cache-Control") != "private, no-store" || !strings.Contains(w.Header().Get("X-Robots-Tag"), "noindex") {
+		t.Fatalf("unsafe metrics response: %d %v", w.Code, w.Header())
+	}
+}
+
 func TestLiveIsIndependentOfDependencies(t *testing.T) {
 	handler := NewHandler(map[string]Probe{
 		"database": func(context.Context) error { return errors.New("database is down") },

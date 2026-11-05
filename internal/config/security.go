@@ -25,6 +25,14 @@ func (c Config) ValidateSecurity() error {
 	if !strings.EqualFold(c.Environment, "production") {
 		return nil
 	}
+	if c.CheckoutEnabled {
+		if !c.PublicContentApproved {
+			return errors.New("checkout requires approved public content")
+		}
+		if strings.TrimSpace(c.RazorpayKeyID) == "" || strings.TrimSpace(c.RazorpayKeySecret) == "" || strings.TrimSpace(c.RazorpayWebhookSecret) == "" {
+			return errors.New("checkout requires complete Razorpay order and webhook credentials")
+		}
+	}
 	public, err := url.Parse(c.PublicURL)
 	if err != nil || public.Scheme != "https" || public.Host == "" || public.User != nil {
 		return errors.New("production requires an HTTPS public URL")
