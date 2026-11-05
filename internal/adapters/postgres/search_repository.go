@@ -62,6 +62,9 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		orderBy = "array_position($11::bigint[],p.id),p.id"
 	}
 	var total int
+	// Full-text and exact-SKU matches have positive scores by definition. Run
+	// the more expensive fuzzy score predicate only for fuzzy candidates; keep
+	// the identical predicate in rows, totals and facets below.
 	if err := r.pool.QueryRow(ctx, `
 		SELECT COUNT(DISTINCT p.id)
 		FROM products p
@@ -78,7 +81,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
+		  AND ($1 = '' OR (sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR (p.id IN (SELECT product_id FROM catalog_search_candidates($1)) AND catalog_search_score(sd,$1)>0)))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -110,7 +113,7 @@ func (r *ProductSearchRepository) SearchWithOptions(ctx context.Context, options
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
+		  AND ($1 = '' OR (sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR (p.id IN (SELECT product_id FROM catalog_search_candidates($1)) AND catalog_search_score(sd,$1)>0)))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
@@ -163,7 +166,7 @@ func (r *ProductSearchRepository) SearchFacets(ctx context.Context, options port
 		) pv ON TRUE
 		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
 		WHERE p.status = 'approved'
-		  AND ($1 = '' OR ((sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR p.id IN (SELECT product_id FROM catalog_search_candidates($1))) AND catalog_search_score(sd,$1)>0))
+		  AND ($1 = '' OR (sd.document @@ plainto_tsquery('simple',$1) OR lower(btrim($1))=ANY(sd.skus) OR (p.id IN (SELECT product_id FROM catalog_search_candidates($1)) AND catalog_search_score(sd,$1)>0)))
 		  AND (COALESCE(cardinality($2::text[]), 0) = 0 OR EXISTS(SELECT 1 FROM product_categories selected_category WHERE selected_category.product_id=p.id AND selected_category.category_slug=ANY($2::text[])))
 		  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR p.brand_slug = ANY($3::text[]))
 		  AND ($4 = '' OR ($4 = 'under-1500' AND pv.price_cents < 150000) OR ($4 = 'under-1000' AND pv.price_cents < 100000)
