@@ -35,7 +35,7 @@ async function main() {
     await client.send('Network.enable');
     await client.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750});
     await client.send('Emulation.setCPUThrottlingRate',{rate:4});
-    const navigations=[];
+    const navigations=[],warmNavigations=[];
     for (const route of ['/', '/products', '/products/blue-tote']) {
       for (let run=1;run<=3;run++) {
         await client.send('Network.clearBrowserCache');
@@ -52,8 +52,13 @@ async function main() {
         navigations.push({route,run,...metric});
         if (run===1) await page.screenshot({path:path.join(output,`${label}-${route==='/'?'home':route.slice(1).replaceAll('/','-')}-390.png`)});
       }
+      await page.goto(target+route,{waitUntil:'networkidle'});
+      warmNavigations.push(await page.evaluate(route=>({route,
+        bytes:performance.getEntriesByType('resource').reduce((sum,entry)=>sum+entry.transferSize,0),
+        imageBytes:performance.getEntriesByType('resource').filter(entry=>entry.initiatorType==='img').reduce((sum,entry)=>sum+entry.transferSize,0)
+      }),route));
       console.log(route+' measured');
-      await fs.writeFile(path.join(output,label+'.json'),JSON.stringify({navigations,errors},null,2));
+      await fs.writeFile(path.join(output,label+'.json'),JSON.stringify({navigations,warmNavigations,errors},null,2));
     }
     await page.goto(target+'/',{waitUntil:'networkidle'});
     await page.getByRole('button',{name:'Next collection',exact:true}).click();
@@ -82,7 +87,7 @@ async function main() {
       await page.goto(target+route,{waitUntil:'networkidle'});
       await page.screenshot({path:path.join(output,`${label}-${route==='/'?'home':route.slice(1).replaceAll('/','-')}-1440.png`)});
     }
-    const result={profile:'Chromium, cold cache, 390x844, DPR 1, 150ms latency, 1.6Mbps down, 4x CPU; 3 navigations per route. Local lab only; eventMaxMs is not INP.',navigations,secondHero,filter,errors};
+    const result={profile:'Chromium, cold cache, 390x844, DPR 1, 150ms latency, 1.6Mbps down, 4x CPU; 3 cold navigations and 1 warm navigation per route. Local lab only; eventMaxMs is not INP.',navigations,warmNavigations,secondHero,filter,errors};
     await fs.writeFile(path.join(output,label+'.json'),JSON.stringify(result,null,2));
     console.log(JSON.stringify({label,secondHero,filter,errors}));
   } finally {await browser.close();}

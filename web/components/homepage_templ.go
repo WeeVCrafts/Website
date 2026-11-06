@@ -31,20 +31,20 @@ func HomepageUtility(p viewmodels.CustomerPage) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"homepage-utility\"><div class=\"container\"><span>Handmade Today, A Kinder Tomorrow. <span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span></span><nav aria-label=\"Delivery and support\"><a href=\"/shipping\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"homepage-utility\"><div class=\"container\"><a class=\"homepage-shipping\" href=\"/shipping\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(homepageShippingText(p))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/homepage.templ`, Line: 6, Col: 334}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/homepage.templ`, Line: 6, Col: 204}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a><a href=\"/contact\">Support</a></nav></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</a><span class=\"homepage-slogan\">Handmade Today, A Kinder Tomorrow. <span class=\"material-symbols-outlined\" aria-hidden=\"true\">eco</span></span><a class=\"homepage-support\" href=\"/contact\">Support</a></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

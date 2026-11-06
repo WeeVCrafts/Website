@@ -17,6 +17,11 @@ templ HomeSectionEmpty(copy string) {
 }
 
 templ HomeProductSections(p viewmodels.CustomerPage) {
+ @HomeNewArrivals(p)
+ @HomeCategoryAndGifts(p)
+}
+
+templ HomeNewArrivals(p viewmodels.CustomerPage) {
  <section class="container section home-arrivals" data-product-rail aria-labelledby="home-arrivals-title">
   @HomeSectionHeader("home-arrivals-title","New arrivals","Fresh additions to discover and make your own.","/products?sort=newest&availability=in-stock")
   if len(p.HomeNewArrivals)==0 {
@@ -26,6 +31,9 @@ templ HomeProductSections(p viewmodels.CustomerPage) {
    <div id="home-arrivals-track" class="home-arrivals-track" data-rail-track tabindex="0" role="region" aria-label="New arrivals products" data-backend-products="new-arrivals">@ProductCards(p.HomeNewArrivals,false)</div>
   }
  </section>
+}
+
+templ HomeCategoryAndGifts(p viewmodels.CustomerPage) {
  <section id="home-by-category" class="container section home-by-category" aria-labelledby="home-category-title">
   @HomeSectionHeader("home-category-title","Shop by category","Find your next piece, one craft at a time.","/products?category="+p.HomeSelectedCategory+"&availability=in-stock")
   <nav class="home-category-selectors" aria-label="Choose a product category">

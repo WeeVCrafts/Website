@@ -1,7 +1,6 @@
 package pages
 
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
-import "github.com/wecratfs/commerce/web/components"
 import "github.com/wecratfs/commerce/internal/identity"
 
 templ HomepageBrandIntroduction() {
@@ -17,6 +16,5 @@ templ HomeIntro(p viewmodels.CustomerPage) {
   @HomeHero()
   @HomepageBrandIntroduction()
   @HomeCategoryRail(p)
-  @components.ShoppingTrust(p)
  </div>
 }

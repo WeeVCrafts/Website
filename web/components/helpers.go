@@ -203,10 +203,16 @@ func LegacyCategoryLabel(category string) string {
 }
 
 func storefrontLogo(p viewmodels.CustomerPage) string {
+	logo := "/assets/images/brand/weevcrafts-logo.png"
 	if p.Storefront != nil && p.Storefront.Theme.Logo != "" {
-		return p.Storefront.Theme.Logo
+		logo = p.Storefront.Theme.Logo
 	}
-	return "/assets/images/brand/weevcrafts-logo.png"
+	// Use the existing content-versioned asset delivery for maintained logos.
+	// Uploaded, external, and query-bearing references retain their saved URL.
+	if strings.HasPrefix(logo, "/assets/") && !strings.ContainsAny(logo, "?#") {
+		return assets.URL(strings.TrimPrefix(logo, "/assets/"))
+	}
+	return logo
 }
 
 func storefrontTrustIcon(title string) string {

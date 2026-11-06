@@ -2,7 +2,9 @@ package web
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -36,6 +38,7 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 	if width := photographWidth(r, info, true); width != 0 {
 		if data := cachedProductPhotograph(media.CacheKey(), width); data != nil {
 			mediaHeaders(w, "image/jpeg", true)
+			photographETag(w, data)
 			http.ServeContent(w, r, "product-photograph", time.Time{}, bytes.NewReader(data))
 			return
 		}
@@ -101,6 +104,7 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 	if variant {
 		if data := cachedProductPhotograph(key, width); data != nil {
 			mediaHeaders(w, "image/jpeg", true)
+			photographETag(w, data)
 			http.ServeContent(w, r, "product-photograph", time.Time{}, bytes.NewReader(data))
 			return
 		}
@@ -118,7 +122,16 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 		}
 	}
 	mediaHeaders(w, info.ContentType, public)
+	if public && strings.HasPrefix(info.ContentType, "image/") {
+		photographETag(w, data)
+	}
 	http.ServeContent(w, r, "product-media-"+strconv.FormatInt(mediaID, 10), time.Time{}, bytes.NewReader(data))
+}
+
+// Hash the delivered representation, so original and resized bytes never share
+// a validator. ServeContent handles conditional GET, HEAD, and range requests.
+func photographETag(w http.ResponseWriter, data []byte) {
+	w.Header().Set("ETag", fmt.Sprintf(`"%x"`, sha256.Sum256(data)))
 }
 
 func photographWidth(r *http.Request, info ports.ObjectInfo, public bool) int {

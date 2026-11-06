@@ -19,10 +19,9 @@ async function main(){
    let additions=0;
    await page.route('**/api/v1/cart/add',async route=>{additions++;await new Promise(resolve=>setTimeout(resolve,250));await route.continue();});
    await page.locator('.mobile-buy-bar button').first().click();
-   await page.locator('#cart-drawer[open]').waitFor();assert.equal(additions,1);
-   assert.match(await page.locator('[data-cart-drawer-items]').textContent(),/Large · natural cotton/);
-   await page.keyboard.press('Escape');assert.equal(await page.locator('#cart-drawer').getAttribute('open'),null);
-   await page.goto('/cart');await page.waitForFunction(()=>window.weevcraftsBackend);
+   // Add to cart uses the current full cart page; Buy now owns its separate intent.
+   await page.waitForURL(/\/cart$/);assert.equal(additions,1);
+   await page.waitForFunction(()=>window.weevcraftsBackend);
    const row=()=>page.locator('#cart-layout .cart-line').filter({hasText:'Large · natural cotton'});
    assert.equal((await row().locator('output').textContent()).trim(),'1');
    let changes=0;
@@ -51,7 +50,7 @@ async function main(){
    await page.locator('[data-filter-panel] input[name="price"][value="1000-2500"]').check();await page.waitForURL(/price=1000-2500/);await page.keyboard.press('Escape');
    await page.locator('.product-card').first().waitFor();
    const prices=await page.locator('.product-card .price strong').allTextContents();assert(prices.length>0);assert(prices.every(price=>{const amount=Number(price.replace(/[^0-9.]/g,''));return amount>=1000&&amount<=2500;}));
-   results.push({engine,pass:true,durationSeconds:(Date.now()-started)/1000,timing:'automated task run, not a participant-study time',checks:'chosen option, cart drawer/Escape, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget'});
+   results.push({engine,pass:true,durationSeconds:(Date.now()-started)/1000,timing:'automated task run, not a participant-study time',checks:'chosen option, cart navigation, serialized row changes, authoritative total, removal focus, confirmed Wishlist retrieval, native Back/query, home piece within budget'});
    console.log(engine+' shopping interactions PASS');
   }catch(error){
    const state=await page.evaluate(()=>({url:location.pathname,dialogs:Array.from(document.querySelectorAll('dialog[open]')).map(element=>element.id),heartDisabled:document.querySelector('.gallery-heart')?.disabled})).catch(()=>null);

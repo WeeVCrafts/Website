@@ -3,7 +3,7 @@ package components
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ HomepageUtility(p viewmodels.CustomerPage) {
- <div class="homepage-utility"><div class="container"><span>Handmade Today, A Kinder Tomorrow. <span class="material-symbols-outlined" aria-hidden="true">eco</span></span><nav aria-label="Delivery and support"><a href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span>{homepageShippingText(p)}</a><a href="/contact">Support</a></nav></div></div>
+ <div class="homepage-utility"><div class="container"><a class="homepage-shipping" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span>{homepageShippingText(p)}</a><span class="homepage-slogan">Handmade Today, A Kinder Tomorrow. <span class="material-symbols-outlined" aria-hidden="true">eco</span></span><a class="homepage-support" href="/contact">Support</a></div></div>
 }
 
 templ ShoppingTrust(p viewmodels.CustomerPage) {

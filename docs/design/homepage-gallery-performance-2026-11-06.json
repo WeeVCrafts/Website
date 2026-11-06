@@ -1,0 +1,232 @@
+{
+  "date": "2026-11-06",
+  "profile": "Chromium, cold cache, 390x844, DPR 1, 150ms latency, 1.6Mbps down, 4x CPU; 3 cold navigations and 1 warm navigation per route. Local lab only; eventMaxMs is not INP.",
+  "rows": [
+    {
+      "route": "/",
+      "before": {
+        "lcpMs": 3772,
+        "cls": 0.007796320837357651,
+        "resourceBytes": 1057738,
+        "overflow": false
+      },
+      "after": {
+        "lcpMs": 3488,
+        "cls": 0.006330345979051084,
+        "resourceBytes": 1061829,
+        "overflow": false
+      },
+      "warmBeforeLogoVersioning": {
+        "route": "/",
+        "bytes": 67734,
+        "imageBytes": 67734
+      },
+      "warmAfter": {
+        "route": "/",
+        "bytes": 756,
+        "imageBytes": 756
+      }
+    },
+    {
+      "route": "/products",
+      "before": {
+        "lcpMs": 2944,
+        "cls": 0.0048098672347578406,
+        "resourceBytes": 923940,
+        "overflow": false
+      },
+      "after": {
+        "lcpMs": 3556,
+        "cls": 0.0048098672347578406,
+        "resourceBytes": 927673,
+        "overflow": false
+      },
+      "warmBeforeLogoVersioning": {
+        "route": "/products",
+        "bytes": 67734,
+        "imageBytes": 67734
+      },
+      "warmAfter": {
+        "route": "/products",
+        "bytes": 756,
+        "imageBytes": 756
+      }
+    },
+    {
+      "route": "/products/blue-tote",
+      "before": {
+        "lcpMs": 3072,
+        "cls": 0.0023210295206410802,
+        "resourceBytes": 828452,
+        "overflow": false
+      },
+      "after": {
+        "lcpMs": 2820,
+        "cls": 0.0023210295206410802,
+        "resourceBytes": 832185,
+        "overflow": false
+      },
+      "warmBeforeLogoVersioning": {
+        "route": "/products/blue-tote",
+        "bytes": 66978,
+        "imageBytes": 66978
+      },
+      "warmAfter": {
+        "route": "/products/blue-tote",
+        "bytes": 14158,
+        "imageBytes": 14158
+      }
+    }
+  ],
+  "errors": [],
+  "samples": {
+    "before": [
+      {
+        "route": "/",
+        "run": 1,
+        "lcp": 5276,
+        "cls": 0.007796320837357651,
+        "bytes": 1057738,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "lcp": 3772,
+        "cls": 0.007796320837357651,
+        "bytes": 1057738,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "lcp": 3276,
+        "cls": 0.007796320837357651,
+        "bytes": 1057738,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 1,
+        "lcp": 3260,
+        "cls": 0.0048098672347578406,
+        "bytes": 923940,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 2,
+        "lcp": 2916,
+        "cls": 0.0048098672347578406,
+        "bytes": 923940,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 3,
+        "lcp": 2944,
+        "cls": 0.0048098672347578406,
+        "bytes": 923940,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 1,
+        "lcp": 3072,
+        "cls": 0.0023210295206410802,
+        "bytes": 828452,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 2,
+        "lcp": 3108,
+        "cls": 0.0023210295206410802,
+        "bytes": 828452,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 3,
+        "lcp": 2632,
+        "cls": 0.0023210295206410802,
+        "bytes": 828452,
+        "overflow": false
+      }
+    ],
+    "after": [
+      {
+        "route": "/",
+        "run": 1,
+        "lcp": 4672,
+        "cls": 0.011388620706002179,
+        "bytes": 1061829,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 2,
+        "lcp": 3096,
+        "cls": 0.006330345979051084,
+        "bytes": 1061829,
+        "overflow": false
+      },
+      {
+        "route": "/",
+        "run": 3,
+        "lcp": 3488,
+        "cls": 0.006330345979051084,
+        "bytes": 1061829,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 1,
+        "lcp": 3940,
+        "cls": 0.0048098672347578406,
+        "bytes": 927673,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 2,
+        "lcp": 3484,
+        "cls": 0.0048098672347578406,
+        "bytes": 927673,
+        "overflow": false
+      },
+      {
+        "route": "/products",
+        "run": 3,
+        "lcp": 3556,
+        "cls": 0.0048098672347578406,
+        "bytes": 927673,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 1,
+        "lcp": 3360,
+        "cls": 0.0023210295206410802,
+        "bytes": 832185,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 2,
+        "lcp": 2820,
+        "cls": 0.0023210295206410802,
+        "bytes": 832185,
+        "overflow": false
+      },
+      {
+        "route": "/products/blue-tote",
+        "run": 3,
+        "lcp": 2764,
+        "cls": 0.0023210295206410802,
+        "bytes": 832185,
+        "overflow": false
+      }
+    ]
+  }
+}

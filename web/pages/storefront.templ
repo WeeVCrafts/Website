@@ -9,11 +9,8 @@ import (
 )
 
 templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Section) {
-	for _,s:=range storefront.OrderedSections(sections) {
+	for _,s:=range storefrontDisplaySections(p,sections) {
 		if !s.Hidden {
-   if p.Route=="/" && homepageTrustAnchor(sections)==s.ID && s.Type!="categories" {
-    @components.ShoppingTrust(p)
-   }
 			<div id={ "section-" + s.ID } class={ "sf-section",templ.KV("sf-hide-desktop",s.Responsive.HideDesktop),templ.KV("sf-hide-tablet",s.Responsive.HideTablet),templ.KV("sf-hide-mobile",s.Responsive.HideMobile),templ.KV("home-gifts-band",s.Style=="band") } style={ storefrontSectionStyle(s) } data-storefront-section={ s.ID }>
 				if s.Type=="hero" && p.Storefront!=nil {
 					@StorefrontHero(p, p.Storefront.OrderedSlides())
@@ -108,7 +105,7 @@ templ StorefrontSections(p viewmodels.CustomerPage, sections []storefront.Sectio
 					</section>
 				}
 			</div>
-   if p.Route=="/" && s.Type=="categories" && homepageTrustAnchor(sections)==s.ID {
+   if p.Route=="/" && homepageTrustAnchor(sections)==s.ID {
     @components.ShoppingTrust(p)
    }
 		}

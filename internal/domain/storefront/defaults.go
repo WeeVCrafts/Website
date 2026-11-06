@@ -13,8 +13,8 @@ func Defaults() Config {
 	c.Homepage = []Section{
 		{ID: "hero", Type: "hero", Order: 10},
 		{ID: "categories", Type: "categories", Order: 20},
-		{ID: "featured", Type: "products", Order: 30, Title: "Featured from our makers", Text: "Handpicked pieces, made with love across India.", Button: Link{"View all", "/products"}, Style: "grid", Selection: Selection{Mode: "featured", Limit: 6, Available: true}, Responsive: r},
-		{ID: "arrivals", Type: "products", Order: 40, Title: "New arrivals", Text: "Fresh additions to discover and make your own.", Button: Link{"View all", "/products?sort=newest&availability=in-stock"}, Style: "rail", Selection: Selection{Mode: "newest", Limit: 8, Available: true}, Responsive: r},
+		{ID: "featured", Type: "products", Order: 40, Title: "Featured from our makers", Text: "Handpicked pieces, made with love across India.", Button: Link{"View all", "/products"}, Style: "grid", Selection: Selection{Mode: "featured", Limit: 6, Available: true}, Responsive: r},
+		{ID: "arrivals", Type: "products", Order: 30, Title: "New arrivals", Text: "Fresh additions to discover and make your own.", Button: Link{"View all", "/products?sort=newest&availability=in-stock"}, Style: "rail", Selection: Selection{Mode: "newest", Limit: 8, Available: true}, Responsive: r},
 		{ID: "by-category", Type: "products", Order: 50, Title: "Shop by category", Text: "Find your next piece, one craft at a time.", Style: "editorial", Selection: Selection{Mode: "category", Limit: 5, Available: true}, Responsive: r},
 		{ID: "gifts", Type: "products", Order: 60, Title: "Gifts under ₹1,500", Text: "Thoughtful pieces for the people you cherish.", Style: "band", Selection: Selection{Mode: "category", Category: "gifts", Limit: 6, Available: true, MaxPrice: 149999}, Responsive: r},
 		{ID: "makers", Type: "makers", Order: 70, Title: "Meet the Makers", Text: "Incredible people. Timeless skills. Brighter tomorrows.", Button: Link{"View all makers", "/makers"}},

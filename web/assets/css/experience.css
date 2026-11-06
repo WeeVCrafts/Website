@@ -82,7 +82,13 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .storefront-body [data-gallery-media][hidden] { display: none !important; }
 .storefront-body .gallery-main { touch-action: pan-y pinch-zoom; }
 .storefront-body .detail-grid { grid-template-columns: minmax(0,1fr) minmax(0,.85fr); }
-.storefront-body .gallery { min-width: 0; }
+.storefront-body .gallery { min-width: 0; container-type: inline-size; align-content: start; grid-template-areas: "thumbs media" ". controls" ". caption" ". feedback"; grid-template-rows: auto auto auto auto; }
+.storefront-body .gallery > .thumbs { grid-area: thumbs; min-height: 0; align-self: start; max-height: calc(100cqi - 82px); overflow-y: auto; padding: 3px; }
+.storefront-body .gallery > .thumbs img { max-width: 100%; }
+.storefront-body .gallery > .gallery-main { grid-area: media; min-width: 0; align-self: start; }
+.storefront-body .gallery > .gallery-controls { grid-area: controls; }
+.storefront-body .gallery > .gallery-caption { grid-area: caption; margin: 0; }
+.storefront-body .gallery > .gallery-video-feedback { grid-area: feedback; }
 .storefront-body .detail-copy :is(fieldset,select,.seller-line > span) { min-width: 0; max-width: 100%; }
 .storefront-body .quantity-row { flex-wrap: wrap; }
 .storefront-body .gallery-video-thumb { position: relative; overflow: hidden; }
@@ -92,10 +98,18 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .storefront-body .gallery-video-thumb > span { position: absolute; inset: 0; display: grid; place-items: center; color: white; background: #0005; text-shadow: 0 1px 3px #000; }
 /* Keep the controls' final geometry before enhancement and without scripts. */
 .storefront-body .hero-controls[hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
-.storefront-body [data-gallery-controls][hidden] { display: none !important; }
+.storefront-body [data-gallery-controls][hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
+.storefront-body .gallery[data-gallery-single] [data-gallery-controls] { display: none !important; }
 .gallery-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
-.gallery-controls button { min-width: 44px; min-height: 44px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); }
-.gallery-controls output { font: 400 14px/1.5 var(--sans); font-variant-numeric: tabular-nums; }
+.gallery-controls button { flex: 0 0 44px; min-width: 44px; min-height: 44px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--forest); }
+.gallery-controls output { flex: 0 0 auto; min-width: 7ch; white-space: nowrap; overflow-wrap: normal; word-break: normal; text-align: center; font: 400 14px/1.5 var(--sans); font-variant-numeric: tabular-nums; }
+.gallery-media-feedback { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; padding: 24px; text-align: center; background: var(--surface-2); color: var(--ink); z-index: 1; }
+.gallery-media-feedback[hidden] { display: none; }
+.gallery-media-feedback p { margin: 0; }
+.gallery-main[aria-busy=true] > [data-gallery-media] { visibility: hidden; }
+.media-lightbox .lightbox-frame { position: relative; height: min(70dvh,800px); }
+.media-lightbox .lightbox-frame img { height: 100%; }
+.gallery-zoom:disabled { opacity: .55; cursor: wait; }
 .gallery-zoom { position: absolute; bottom: 12px; right: 12px; z-index: 2; }
 .storefront-body .gallery-zoom:not([hidden]) { display: grid; place-items: center; min-width: 44px; min-height: 44px; background: var(--surface); color: var(--forest); border: 1px solid var(--line); }
 .media-lightbox { width: min(1100px,calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--surface); }
@@ -189,6 +203,8 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
   .storefront-body .gallery-caption { margin-top: 0; }
   .storefront-body .gallery-main { order: 0; }
   .storefront-body .thumbs { order: 1; display: flex; flex-direction: row; overflow-x: auto; gap: 8px; margin-top: 12px; padding: 3px; }
+  .storefront-body .gallery > .thumbs { align-self: stretch; min-width: 0; max-width: 100%; max-height: none; overflow-y: hidden; }
+  .storefront-body .gallery > .gallery-main { align-self: stretch; width: 100%; }
   .storefront-body .thumbs button { flex: 0 0 64px; width: 64px; min-height: 64px; }
   .storefront-body .gallery-controls { order: 2; }
   .storefront-body .gallery-caption { order: 3; }

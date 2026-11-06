@@ -335,6 +335,33 @@
       gallery.querySelectorAll('[data-video-thumbnail]').forEach(video=>previewObserver.observe(video));
       let active = 0;
       let gesture;
+      const frame = gallery.querySelector(".gallery-main");
+      const imageFeedback = document.createElement('div');
+      imageFeedback.className = 'gallery-media-feedback'; imageFeedback.hidden = true;
+      const imageMessage = document.createElement('p');
+      const retryImage = document.createElement('button'); retryImage.type='button'; retryImage.className='outline-button'; retryImage.textContent='Retry image'; retryImage.hidden=true;
+      imageFeedback.append(imageMessage,retryImage); frame.append(imageFeedback);
+      function imageState() {
+        const image=media[active];
+        if(image.tagName!=='IMG') {imageFeedback.hidden=true;frame.removeAttribute('aria-busy');return;}
+        const ready=image.complete&&image.naturalWidth>0;
+        const failed=image.dataset.failed==='true'||(image.complete&&!!image.getAttribute('src')&&!image.naturalWidth);
+        frame.setAttribute('aria-busy',String(!ready&&!failed));
+        imageFeedback.hidden=ready; retryImage.hidden=!failed; zoom.disabled=!ready;
+        imageMessage.textContent=failed?'This image could not load. Retry or choose another image.':ready?'':'Loading product image…';
+        gallery.querySelector('[data-gallery-status]').textContent=ready?'Showing image '+(active+1)+' of '+media.length: imageMessage.textContent;
+      }
+      media.filter(element=>element.tagName==='IMG').forEach(image=>{
+        image.addEventListener('load',()=>{delete image.dataset.failed;if(image===media[active])imageState();});
+        image.addEventListener('error',()=>{image.dataset.failed='true';if(image===media[active])imageState();});
+      });
+      retryImage.addEventListener('click',()=>{
+        const image=media[active]; delete image.dataset.failed;
+        const src=image.getAttribute('src'), srcset=image.getAttribute('srcset');
+        image.removeAttribute('srcset');image.removeAttribute('src');
+        if(srcset)image.setAttribute('srcset',srcset);image.setAttribute('src',src);
+        imageState();
+      });
       const videoFeedback = document.createElement('p'); videoFeedback.className='gallery-video-feedback';videoFeedback.hidden=true;videoFeedback.setAttribute('role','status');
       const videoMessage=document.createElement('span'), retryVideo=document.createElement('button');retryVideo.type='button';retryVideo.textContent='Retry video';retryVideo.hidden=true;
       videoFeedback.append(videoMessage,retryVideo);gallery.append(videoFeedback);
@@ -367,8 +394,10 @@
         gallery.querySelector("[data-gallery-count]").textContent = (active+1) + " / " + media.length;
         zoom.hidden = media[active].tagName === "VIDEO";
         if (announce) gallery.querySelector("[data-gallery-status]").textContent = "Showing " + (media[active].tagName === "VIDEO" ? "video" : "image") + " " + (active+1) + " of " + media.length;
+        imageState();
       }
       gallery.querySelector("[data-gallery-controls]").hidden = media.length < 2;
+      gallery.toggleAttribute('data-gallery-single',media.length<2);
       thumbnails.forEach((button,i)=>button.addEventListener("click",()=>show(i)));
       gallery.querySelector("[data-gallery-prev]").addEventListener("click",()=>show(active-1));
       gallery.querySelector("[data-gallery-next]").addEventListener("click",()=>show(active+1));
@@ -378,7 +407,6 @@
         show(event.key==="Home"?0:event.key==="End"?media.length-1:active+(event.key==="ArrowRight"?1:-1));
         thumbnails[active].focus({preventScroll:true});
       });
-      const frame = gallery.querySelector(".gallery-main");
       frame.addEventListener("pointerdown",event=>{
         if (!event.isPrimary || event.pointerType==="mouse" || event.target.closest("button,video")) return;
         gesture={id:event.pointerId,x:event.clientX,y:event.clientY};
@@ -400,8 +428,22 @@
         // can use its smaller responsive candidate without reducing zoom detail.
         const original=new URL(source.src,location.href);
         if(original.origin===location.origin&&/^\/media\/products\/[1-9]\d*$/.test(original.pathname))original.searchParams.delete('w');
-        const image=document.createElement("img");image.src=original.href;image.alt=source.alt;
-        header.append(title,close);dialog.append(header,image);document.body.append(dialog);
+        const image=document.createElement("img");image.alt=source.alt;
+        const lightboxFrame=document.createElement('div');lightboxFrame.className='lightbox-frame';
+        const feedback=document.createElement('div');feedback.className='gallery-media-feedback';
+        const message=document.createElement('p');message.setAttribute('role','status');
+        const retry=document.createElement('button');retry.type='button';retry.className='outline-button';retry.textContent='Retry image';
+        feedback.append(message,retry);lightboxFrame.append(image,feedback);
+        function enlargedState() {
+          const ready=image.complete&&image.naturalWidth>0,failed=image.dataset.failed==='true';
+          lightboxFrame.setAttribute('aria-busy',String(!ready&&!failed));feedback.hidden=ready;retry.hidden=!failed;
+          message.textContent=failed?'Enlarged image could not load. Retry image.':'Loading enlarged image…';
+        }
+        image.addEventListener('load',()=>{delete image.dataset.failed;enlargedState();});
+        image.addEventListener('error',()=>{image.dataset.failed='true';enlargedState();});
+        retry.addEventListener('click',()=>{delete image.dataset.failed;image.removeAttribute('src');image.src=original.href;enlargedState();});
+        image.src=original.href;enlargedState();
+        header.append(title,close);dialog.append(header,lightboxFrame);document.body.append(dialog);
         function finish(){dialog.close();dialog.remove();if(zoom.isConnected)zoom.focus({preventScroll:true});}
         close.addEventListener("click",finish);
         dialog.addEventListener("cancel",event=>{event.preventDefault();finish();});
@@ -505,12 +547,12 @@
   document.addEventListener('click',async event=>{
     const button=event.target.closest('[data-product-share]');if(!button || button.disabled)return;
     const url=location.origin+location.pathname;const status=document.querySelector('[data-share-status]');
-    button.disabled=true;
+    button.disabled=true;window.WVUI?.busy(button,true);
     try {
       if (navigator.share) await navigator.share({title:button.dataset.shareTitle,url});
       else {await navigator.clipboard.writeText(url);status.textContent='Product link copied.';}
     } catch(error) {if(error.name!=='AbortError') status.textContent='Could not share this piece. Copy the page address from your browser.';}
-    finally {button.disabled=false;}
+    finally {button.disabled=false;window.WVUI?.busy(button,false);}
   });
   document.addEventListener("htmx:beforeRequest",event=>{
     const originatingEvent=event.detail.requestConfig?.triggeringEvent;

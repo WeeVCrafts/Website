@@ -229,7 +229,7 @@ The mobile editorial banner is a text-free recomposition of the existing craft h
 
 This amendment supersedes the manual-only desktop hero and static mobile introduction above. One responsive five-slide carousel preserves the accepted photographs and compact mobile composition. Autoplay advances every four seconds. The user's explicit follow-up removes Pause/Play buttons; retain arrows, selectors and swipe. Hover, keyboard focus, hidden tabs, offscreen viewing and reduced motion pause automatic rotation. Inactive slides remain inert and later images are deferred.
 
-Keep the current shared palette, typography and product-card family. Homepage order is hero, administrator-managed circular category links, Featured compact grid, New arrivals scrolling rail, Shop by category editorial selection, Gifts under ₹1,500 background band, makers, then existing collections. Category photographs reserve their circular frames. Product sections show real approved availability, with honest empty states until inventory is supplied. Mobile cards retain two columns. Operational category management reuses existing portal forms, native selects, checkboxes, notices and tables; no new design system is introduced.
+Keep the current shared palette, typography and product-card family. Homepage order is hero, administrator-managed circular category links, New arrivals scrolling rail, Featured compact grid, Shop by category editorial selection, Gifts under ₹1,500 background band, makers, then existing collections. Category photographs reserve their circular frames. Product sections show real approved availability, with honest empty states until inventory is supplied. Mobile cards retain two columns. Operational category management reuses existing portal forms, native selects, checkboxes, notices and tables; no new design system is introduced.
 
 ## Storefront editor
 
@@ -324,7 +324,8 @@ and uses native forest headings with terracotta italic emphasis. Its photographs
 and five existing stories remain the published content. Circles use saved category
 images and reserved frames; no category or product is invented to fill the layout.
 
-Place published trust content once after category discovery and before Featured.
+Place published trust content once after Curated Collections and before the footer.
+If Collections is absent or hidden, place trust after all homepage content.
 Retain subsequent homepage sections. Phones use the shared menu drawer, a complete
 search row, scrollable category discovery and wrapping trust tiles. Arrows and
 indicators have 44px targets; mobile arrows sit above the indicator row to prevent
@@ -381,3 +382,16 @@ use explicit review copy and never display a fulfilment success or payment retry
 Finance payment reviews use existing AdminDocument, semantic labelled records,
 audit-reason forms and the shared confirmation owner. Finance stays active in
 navigation; the sidebar design is unchanged.
+
+### Homepage and product media refinement — 6 November 2026
+
+New arrivals immediately precedes Featured from our makers, including saved
+release previews. The utility bar places shipping left, the slogan at the center
+and Support right. At 1100px and below, hide the slogan and retain both links;
+phones use a single compact row. The shipping amount remains policy-driven.
+
+Desktop gallery thumbnails, square photograph, controls and origin caption own
+explicit grid areas. Navigation remains beneath the photograph; media counts
+never wrap. Phones keep a bounded horizontal thumbnail rail. Photo and zoom
+loading and error states reserve media geometry and offer Retry. Gallery errors
+are owned by the gallery rather than the shared missing-image replacement.

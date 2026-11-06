@@ -278,6 +278,9 @@
       });
     });
     root.querySelectorAll("img").forEach(img => {
+      // Gallery owns loading, failure, and Retry. Replacing its source here
+      // would turn a failed photograph into a successful fallback response.
+      if (img.matches('[data-gallery-media],.media-lightbox img')) return;
       if (img.dataset.fallbackBound) return;
       img.dataset.fallbackBound="true";
       const fallback=()=> {
