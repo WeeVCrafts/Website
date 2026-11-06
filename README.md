@@ -184,6 +184,20 @@ go run ./cmd/rebuild-search
 
 ## Development
 
+`main` is the only development and deployment branch for this repository.
+Use the existing `main` checkout for changes and synchronize a clean working tree
+with `git pull --ff-only origin main`. Check changes before pushing to
+`origin/main`; preserve published history and use revert commits for corrections.
+Do not create feature branches unless the owner changes this policy.
+
+Set Coolify's repository branch to `main` for `WeeVCrafts/Website`, with the root
+`Dockerfile` and application port 8080. Other integrations must also consume
+`main`, or images built from a verified `main` revision. GitHub's default branch
+does not change an integration's explicitly configured branch or pinned commit.
+Verify successful checks on the exact revision, the running deployment SHA and
+`/health/ready` after each release. Branch selection does not enable publication
+or checkout; the existing production release gates still apply.
+
 Use Go 1.26.10 or newer within the supported Go 1.26 series. The module, CI and
 container build require this security patch level.
 

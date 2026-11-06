@@ -4,6 +4,19 @@
 
 Read README.md and the relevant docs before changing behavior. WeevCrafts is a Go marketplace with server-rendered templ pages, JavaScript, Tailwind CSS, PostgreSQL, and Redis. Preserve this stack and existing shared UI conventions. Inspect the working tree first and preserve unrelated in-progress changes.
 
+## Single-branch development
+
+The owner requires `main` as the only development and deployment branch. Work in
+the existing `main` checkout; do not create feature branches or branch-based
+worktrees unless the owner explicitly changes this instruction. Synchronize with
+`git pull --ff-only origin main` before starting when the working tree is clean.
+Preserve concurrent/uncommitted work, run the relevant checks, and push reviewed
+commits to `origin/main` when authorized. Never force-push or rewrite published
+history; use revert commits for corrections. Coolify and any other integration
+for this repository must use `main`; verify the exact deployed revision and
+readiness before reporting a deployment as complete. Keep recovery tags and
+backups; they are not development branches.
+
 ## Required skill selection
 
 The user requested a global skill library for this project and future projects. Whenever a requirement benefits from an installed skill, select and read it before planning or implementation. Use `C:/Users/Vinay/.codex/skills/requested-skill-library/SKILL.md` to find the appropriate entry. The inventory and dependency status are in `C:/Users/Vinay/.codex/skill-library/README.md` and `inventory.json`.
