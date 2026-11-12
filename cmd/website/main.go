@@ -218,9 +218,11 @@ func main() {
 			logger.Error("Firebase configuration unavailable", "error", err)
 			os.Exit(1)
 		}
+		firebaseProvider.WithWebAPIKey(os.Getenv("WECRATFS_FIREBASE_API_KEY"))
 		firebaseRepository := postgres.NewFirebaseRepository(pool)
 		firebaseService := applicationauth.NewFirebaseService(firebaseProvider, firebaseRepository, authService, userRepository)
 		recoveryService.WithFirebaseEmails(firebaseProvider, firebaseRepository, cfg.PublicURL+"/")
+		authService.WithFirebaseUsernameLogin(firebaseService)
 		apiHandler.WithFirebase(firebaseService)
 		sessionService.WithSessionChecker(firebaseService)
 		sessionService.WithRevocationCleanup(func(ctx context.Context, userID int64, sessionID string) error {

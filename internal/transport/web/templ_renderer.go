@@ -132,12 +132,14 @@ func legacyCustomerPage(name string, data pageData) viewmodels.CustomerPage {
 		Sort: data.SearchSort, Page: data.SearchPage, Pages: pages, Brand: data.Brand, Tagline: data.Tagline, Description: data.Description,
 		CSRFToken: data.CSRFToken, Authenticated: data.Authenticated, Notice: data.Notice,
 		AccountUserID: data.AccountUserID,
-		Products:      products, Product: legacyProduct(data.Product), Cart: legacyCartItems(data.Cart),
+		AuthError:     data.Error, FormUsername: data.FormUsername, FormEmail: data.FormEmail,
+		FormName: data.FormName, FormPhone: data.FormPhone, FormConsent: data.FormConsent, UsernameInvalid: data.UsernameInvalid, FirebaseAction: data.FirebaseAction,
+		Products: products, Product: legacyProduct(data.Product), Cart: legacyCartItems(data.Cart),
 		CartCount: data.Cart.ItemCount, SavedProducts: legacyWishlist(data.Wishlist),
 		WishlistCount: len(data.Wishlist), Orders: legacyOrders(data.Orders),
 		PrivacyCenter: data.PrivacyCenter,
 		Brands:        legacyBrands(data.Brands),
-		Filters:       url.Values{"q": {data.SearchQuery}, "category": {data.SearchCategory}, "sort": {data.SearchSort}},
+		Filters:       url.Values{"q": {data.SearchQuery}, "category": {data.SearchCategory}, "sort": {data.SearchSort}, "token": {data.ActionToken}, "next": {data.AuthNext}},
 	}
 	// This transport receives a selected filter but no category directory.
 	// Keep it as a removable checkbox; the live storefront provides the full directory.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	identity "github.com/wecratfs/commerce/internal/domain/identity"
@@ -25,11 +26,32 @@ func (r *FirebaseRepository) FirebaseEmailRecipient(ctx context.Context, id int6
 	return recipient, err == nil, err
 }
 
+func (r *FirebaseRepository) RecoveryEmailExists(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(email) = $1)`, email).Scan(&exists)
+	return exists, err
+}
+
 func (r *FirebaseRepository) FirebaseVerificationAllowed(ctx context.Context, email string) (bool, error) {
 	var allowed bool
 	err := r.pool.QueryRow(ctx, `SELECT NOT EXISTS(SELECT 1 FROM users WHERE email=$1) OR EXISTS(SELECT 1 FROM users u WHERE u.email=$1 AND u.status='active' AND (SELECT count(*) FROM user_roles WHERE user_id=u.id)=1 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=u.id AND role_slug='customer'))`, email).Scan(&allowed)
 	return allowed, err
 }
+func (r *FirebaseRepository) FirebaseCustomerByUsername(ctx context.Context, username string) (identity.User, string, error) {
+	var user identity.User
+	var uid string
+	err := r.pool.QueryRow(ctx, `
+		SELECT u.id, u.email, u.display_name, u.status, u.created_at, f.firebase_uid
+		FROM users u JOIN firebase_identities f ON f.user_id = u.id
+		WHERE u.username = $1 AND u.status = 'active'
+		  AND (SELECT array_agg(role_slug) FROM user_roles WHERE user_id = u.id) = ARRAY['customer']::text[]
+	`, username).Scan(&user.ID, &user.Email, &user.DisplayName, &user.Status, &user.CreatedAt, &uid)
+	if err == nil {
+		user.Roles = []identity.Role{identity.RoleCustomer}
+	}
+	return user, uid, err
+}
+
 func (r *FirebaseRepository) FirebaseBinding(ctx context.Context, id int64) (string, string, error) {
 	var uid, email string
 	err := r.pool.QueryRow(ctx, `SELECT f.firebase_uid,u.email FROM firebase_identities f JOIN users u ON u.id=f.user_id WHERE u.id=$1`, id).Scan(&uid, &email)
@@ -38,7 +60,7 @@ func (r *FirebaseRepository) FirebaseBinding(ctx context.Context, id int64) (str
 	}
 	return uid, email, err
 }
-func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.FirebaseIdentity, phone string, terms bool, linkID int64) (identity.User, error) {
+func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.FirebaseIdentity, phone, username string, terms bool, linkID int64) (identity.User, error) {
 	var u identity.User
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
 		// Serialize creation/linking of the same email without changing other users.
@@ -51,11 +73,14 @@ func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.Fi
 			if !terms {
 				return applicationauth.ErrFirebaseTerms
 			}
+			if username == "" {
+				return applicationauth.ErrInvalidUsername
+			}
 			name := strings.TrimSpace(proof.Name)
 			if len([]rune(name)) > 120 {
 				name = ""
 			}
-			err = tx.QueryRow(ctx, `INSERT INTO users(email,display_name,phone,status,email_verified_at) VALUES($1,$2,$3,'active',CASE WHEN $4 THEN NOW() ELSE NULL END) RETURNING id,email,display_name,status,created_at`, proof.Email, name, phone, proof.EmailVerified).Scan(&u.ID, &u.Email, &u.DisplayName, &u.Status, &u.CreatedAt)
+			err = tx.QueryRow(ctx, `INSERT INTO users(email,display_name,phone,status,email_verified_at,username) VALUES($1,$2,$3,'active',CASE WHEN $4 THEN NOW() ELSE NULL END,$5) RETURNING id,email,display_name,status,created_at`, proof.Email, name, phone, proof.EmailVerified, username).Scan(&u.ID, &u.Email, &u.DisplayName, &u.Status, &u.CreatedAt)
 			if err != nil {
 				return err
 			}
@@ -109,5 +134,14 @@ func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.Fi
 		_, err = tx.Exec(ctx, `UPDATE users SET email_verified_at=CASE WHEN $2 THEN COALESCE(email_verified_at,NOW()) ELSE email_verified_at END WHERE id=$1`, u.ID, proof.EmailVerified)
 		return err
 	})
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) && pgError.Code == "23505" {
+		switch pgError.ConstraintName {
+		case "users_username_unique":
+			return identity.User{}, ports.ErrUsernameTaken
+		case "users_email_key":
+			return identity.User{}, ports.ErrUserAlreadyExists
+		}
+	}
 	return u, err
 }

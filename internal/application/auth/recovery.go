@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"log/slog"
 	"net/url"
 	"strings"
 	"time"
@@ -50,50 +51,108 @@ func NewRecoveryService(repository ports.AuthTokenRepository, hasher ports.Passw
 	return &RecoveryService{repository: repository, hasher: hasher, sender: sender, baseURL: strings.TrimRight(baseURL, "/"), now: time.Now, newToken: randomToken}
 }
 
+const PasswordResetAcceptedMessage = "If this email has a password, we’ll send a reset link. If you only sign in with Google, recover your password through Google."
+
+type firebaseUnfinishedRecovery interface {
+	UnfinishedPasswordIdentity(context.Context, string) (ports.FirebaseIdentity, error)
+}
+
+type recoveryAccountLookup interface {
+	RecoveryEmailExists(context.Context, string) (bool, error)
+}
+
+func recoveryUnavailable(ctx context.Context, stage string) error {
+	slog.WarnContext(ctx, "password recovery failed", "stage", stage, "request_id", ports.RequestID(ctx))
+	return ErrRecoveryUnavailable
+}
+
+func (s *RecoveryService) sendFirebaseReset(ctx context.Context, proof ports.FirebaseIdentity) error {
+	link, err := s.firebaseLinks.PasswordResetLink(ctx, proof, s.baseURL+"/login")
+	if errors.Is(err, ports.ErrCredentialsNotFound) {
+		return nil
+	}
+	if err != nil {
+		return recoveryUnavailable(ctx, "firebase_link")
+	}
+	if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: PasswordResetSubject, ActionURL: link}) != nil {
+		return recoveryUnavailable(ctx, "firebase_send")
+	}
+	return nil
+}
+
+func (s *RecoveryService) recoverUnfinishedSignup(ctx context.Context, email string) error {
+	provider, canFind := s.firebaseLinks.(firebaseUnfinishedRecovery)
+	repo, canCheck := s.firebaseRepository.(recoveryAccountLookup)
+	if !canFind || !canCheck {
+		return nil
+	}
+	exists, err := repo.RecoveryEmailExists(ctx, email)
+	if err != nil {
+		return recoveryUnavailable(ctx, "unfinished_lookup")
+	}
+	if exists {
+		return nil
+	}
+	proof, err := provider.UnfinishedPasswordIdentity(ctx, email)
+	if errors.Is(err, ports.ErrCredentialsNotFound) {
+		return nil
+	}
+	if err != nil {
+		return recoveryUnavailable(ctx, "unfinished_firebase_lookup")
+	}
+	return s.sendFirebaseReset(ctx, proof)
+}
+
 // RequestPasswordReset is deliberately non-enumerating: an unknown active
 // account produces the same successful result as a known account.
 func (s *RecoveryService) RequestPasswordReset(ctx context.Context, email string) error {
-	if !validEmail(normalizeEmail(email)) {
+	email = normalizeEmail(email)
+	if !validEmail(email) {
 		return ErrRecoveryInvalidRequest
 	}
 	if s.repository == nil || s.sender == nil {
-		return ErrRecoveryUnavailable
+		return recoveryUnavailable(ctx, "sender_configuration")
 	}
 	if s.firebaseLinks != nil && s.firebaseRepository != nil {
-		proof, found, err := s.firebaseRepository.FirebaseEmailRecipient(ctx, 0, normalizeEmail(email))
+		proof, found, err := s.firebaseRepository.FirebaseEmailRecipient(ctx, 0, email)
 		if err != nil {
-			return ErrRecoveryUnavailable
+			return recoveryUnavailable(ctx, "firebase_lookup")
 		}
 		if found {
-			link, err := s.firebaseLinks.PasswordResetLink(ctx, proof, s.firebaseReturnURL)
-			if errors.Is(err, ports.ErrCredentialsNotFound) {
-				return nil
-			}
-			if err != nil {
-				return ErrRecoveryUnavailable
-			}
-			if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: PasswordResetSubject, ActionURL: link}) != nil {
-				return ErrRecoveryUnavailable
-			}
-			return nil
+			return s.sendFirebaseReset(ctx, proof)
 		}
 	}
 	rawToken, tokenHash, err := s.newActionToken()
 	if err != nil {
-		return ErrRecoveryUnavailable
+		return recoveryUnavailable(ctx, "native_token")
 	}
-	recipient, found, err := s.repository.IssuePasswordReset(ctx, normalizeEmail(email), tokenHash, s.now().UTC().Add(PasswordResetTTL))
+	recipient, found, err := s.repository.IssuePasswordReset(ctx, email, tokenHash, s.now().UTC().Add(PasswordResetTTL))
 	if err != nil {
-		return err
+		return recoveryUnavailable(ctx, "native_lookup_or_issue")
 	}
 	if !found {
-		return nil
+		return s.recoverUnfinishedSignup(ctx, email)
 	}
 	if err := s.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: PasswordResetSubject, ActionURL: s.actionURL("/reset-password", rawToken)}); err != nil {
 		_ = s.repository.RevokeAuthToken(ctx, tokenHash)
-		return ErrRecoveryUnavailable
+		return recoveryUnavailable(ctx, "native_send")
 	}
 	return nil
+}
+
+type passwordResetTokenChecker interface {
+	PasswordResetTokenActive(context.Context, string) (bool, error)
+}
+
+func (s *RecoveryService) PasswordResetLinkActive(ctx context.Context, token string) (bool, error) {
+	if token == "" || len(token) > 256 {
+		return false, nil
+	}
+	checker, ok := s.repository.(passwordResetTokenChecker)
+	if !ok {
+		return true, nil
+	}
+	return checker.PasswordResetTokenActive(ctx, hashActionToken(token))
 }
 
 func (s *RecoveryService) ResetPassword(ctx context.Context, rawToken, password string) (int64, error) {

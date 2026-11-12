@@ -12,21 +12,23 @@ import (
 )
 
 type fakeUserRepository struct {
-	credentials domainidentity.Credentials
-	created     domainidentity.User
-	createErr   error
-	getErr      error
-	failed      int
-	reset       int
-	seenContext context.Context
-	seenEmail   string
+	credentials  domainidentity.Credentials
+	created      domainidentity.User
+	createErr    error
+	getErr       error
+	failed       int
+	reset        int
+	seenContext  context.Context
+	seenEmail    string
+	seenUsername string
 }
 
-func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error) {
+func (f *fakeUserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash, username string) (domainidentity.User, error) {
 	f.seenContext = ctx
 	if f.createErr != nil {
 		return domainidentity.User{}, f.createErr
 	}
+	f.seenUsername = username
 	f.created = domainidentity.User{Email: email, DisplayName: displayName}
 	return f.created, nil
 }
@@ -72,6 +74,7 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	service := NewService(repository, fakeHasher{})
 	ctx := context.Background()
 	user, err := service.Register(ctx, RegisterInput{
+		Username:      "  Maker_One ",
 		Email:         "  PERSON@Example.COM ",
 		DisplayName:   " A maker ",
 		Phone:         "+91 98765 43210",
@@ -84,6 +87,9 @@ func TestRegisterValidatesAndNormalizesInput(t *testing.T) {
 	if user.Email != "person@example.com" || user.DisplayName != "A maker" {
 		t.Fatalf("unexpected normalized user: %+v", user)
 	}
+	if repository.seenUsername != "maker_one" {
+		t.Fatalf("persisted username = %q", repository.seenUsername)
+	}
 	if repository.seenContext != ctx {
 		t.Fatal("register did not propagate context")
 	}
@@ -94,7 +100,7 @@ func TestRegisterRequiresDisplayNameBetweenTwoAnd120Runes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			repository := &fakeUserRepository{}
 			service := NewService(repository, fakeHasher{})
-			_, err := service.Register(context.Background(), RegisterInput{Email: "person@example.test", DisplayName: displayName, Phone: "9876543210", Password: "correct-password", AcceptedTerms: true})
+			_, err := service.Register(context.Background(), RegisterInput{Username: "maker_one", Email: "person@example.test", DisplayName: displayName, Phone: "9876543210", Password: "correct-password", AcceptedTerms: true})
 			if !errors.Is(err, ErrInvalidRegistration) {
 				t.Fatalf("expected invalid display name rejection, got %v", err)
 			}
@@ -109,12 +115,22 @@ func TestRegisterRequiresTermsAcceptance(t *testing.T) {
 	repository := &fakeUserRepository{}
 	service := NewService(repository, fakeHasher{})
 	if _, err := service.Register(context.Background(), RegisterInput{
-		Email: "person@example.com", DisplayName: "A maker", Phone: "9876543210", Password: "correct-password",
+		Username: "maker_one", Email: "person@example.com", DisplayName: "A maker", Phone: "9876543210", Password: "correct-password",
 	}); !errors.Is(err, ErrInvalidRegistration) {
 		t.Fatalf("registration without consent should fail, got %v", err)
 	}
 	if repository.created.Email != "" {
 		t.Fatal("registration without terms consent reached persistence")
+	}
+}
+
+func TestRegisterRejectsMissingUsername(t *testing.T) {
+	repository := &fakeUserRepository{}
+	_, err := NewService(repository, fakeHasher{}).Register(context.Background(), RegisterInput{
+		Email: "person@example.com", DisplayName: "A maker", Phone: "9876543210", Password: "correct-password", AcceptedTerms: true,
+	})
+	if err == nil || repository.created.Email != "" {
+		t.Fatal("registration without a username reached persistence")
 	}
 }
 

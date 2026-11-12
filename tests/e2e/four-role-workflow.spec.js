@@ -71,7 +71,7 @@ test.describe('Four roles and private company coordination', () => {
 
   test('registration rejects forged roles; confirmed role replacement revokes the old session', async ({ page, browser }) => {
     const email = `four-role-registration-${Date.now()}@example.invalid`;
-    const data = { email, display_name: 'Four role registration QA', phone: '9876543210', password, accepted_terms: true };
+    const data = { email, username: 'four_role_' + Date.now(), display_name: 'Four role registration QA', phone: '9876543210', password, accepted_terms: true };
     expect((await page.request.post('/api/v1/auth/register', { data: { ...data, role: 'super_admin' } })).status()).toBe(400);
     expect((await page.request.post('/api/v1/auth/register', { data })).status()).toBe(201);
     const id = sql(`SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.email='${email}' AND ur.role_slug='customer'`);

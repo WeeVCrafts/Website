@@ -19,7 +19,7 @@ type FirebaseProvider interface {
 	SendPush(context.Context, string) error
 }
 type FirebaseIdentityRepository interface {
-	ResolveFirebase(context.Context, FirebaseIdentity, string, bool, int64) (identity.User, error)
+	ResolveFirebase(context.Context, FirebaseIdentity, string, string, bool, int64) (identity.User, error)
 	FirebaseBinding(context.Context, int64) (string, string, error)
 }
 

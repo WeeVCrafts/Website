@@ -60,7 +60,7 @@ test.beforeAll(async ({request}) => {
   guard(); await fs.mkdir(output, {recursive: true});
   for (const kind of ['journey', 'queue', 'failure', 'profile', 'security', 'retry']) {
     if (sql("SELECT count(*) FROM users WHERE email='" + email(kind) + "'") === '0') {
-      const response = await request.post(base + '/api/v1/auth/register', {data: {email: email(kind), password, display_name: 'Customer workflow ' + kind, phone: '+919876543210', accepted_terms: true}});
+      const response = await request.post(base + '/api/v1/auth/register', {data: {email: email(kind), username: 'workflow_'+require('node:crypto').randomBytes(8).toString('hex'), password, display_name: 'Customer workflow ' + kind, phone: '+919876543210', accepted_terms: true}});
       expect(response.ok()).toBeTruthy();
     }
   }
@@ -338,7 +338,7 @@ test('quick view retries failed reads and supports native selection and keyboard
 
 test('privacy requests, consent and deliberate deletion work for an isolated customer',async({page,browserName})=>{
   test.skip(browserName!=='chromium');const kind='privacy-'+Date.now();
-  expect((await page.request.post('/api/v1/auth/register',{data:{email:email(kind),password,display_name:'Privacy QA customer',phone:'+919876543210',accepted_terms:true}})).ok()).toBeTruthy();await login(page,kind);await page.goto('/privacy/center');await ready(page);
+  expect((await page.request.post('/api/v1/auth/register',{data:{email:email(kind),username:'privacy_'+require('node:crypto').randomBytes(8).toString('hex'),password,display_name:'Privacy QA customer',phone:'+919876543210',accepted_terms:true}})).ok()).toBeTruthy();await login(page,kind);await page.goto('/privacy/center');await ready(page);
   const request=page.locator('form[action="/privacy/requests"]');await request.locator('[name=request_type]').selectOption('access');await request.locator('[name=details]').fill('Please provide access to my isolated QA account data.');await request.getByRole('button',{name:'Submit request',exact:true}).click();await expect(page.locator('.saved-address').filter({hasText:'access Â· open'}).first()).toBeVisible();
   const consent=page.locator('form[action="/privacy/consent"]').filter({has:page.locator('[name=purpose][value=analytics]')});await consent.getByRole('button').click();await expect(page.getByText('analytics Â· granted',{exact:true})).toBeVisible();
   await request.locator('[name=request_type]').selectOption('deletion');await request.locator('[name=details]').fill('Delete this disposable QA account and its eligible data.');await request.getByRole('button',{name:'Submit request',exact:true}).click();

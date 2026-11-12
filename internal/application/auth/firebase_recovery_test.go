@@ -8,10 +8,12 @@ import (
 )
 
 type firebaseMailFixture struct {
-	proof          ports.FirebaseIdentity
-	found, allowed bool
-	err            error
-	calls          int
+	proof           ports.FirebaseIdentity
+	found, allowed  bool
+	err             error
+	calls           int
+	existingAccount bool
+	returnURL       string
 }
 
 func (f *firebaseMailFixture) FirebaseEmailRecipient(context.Context, int64, string) (ports.FirebaseIdentity, bool, error) {
@@ -20,9 +22,37 @@ func (f *firebaseMailFixture) FirebaseEmailRecipient(context.Context, int64, str
 func (f *firebaseMailFixture) FirebaseVerificationAllowed(context.Context, string) (bool, error) {
 	return f.allowed, nil
 }
-func (f *firebaseMailFixture) PasswordResetLink(context.Context, ports.FirebaseIdentity, string) (string, error) {
+func (f *firebaseMailFixture) PasswordResetLink(_ context.Context, _ ports.FirebaseIdentity, returnURL string) (string, error) {
 	f.calls++
+	f.returnURL = returnURL
 	return "https://weevcrafts.com/reset-password?oobCode=fixture", f.err
+}
+
+func (f *firebaseMailFixture) RecoveryEmailExists(context.Context, string) (bool, error) {
+	return f.existingAccount, nil
+}
+
+func (f *firebaseMailFixture) UnfinishedPasswordIdentity(_ context.Context, email string) (ports.FirebaseIdentity, error) {
+	if f.proof.Email != email {
+		return ports.FirebaseIdentity{}, ports.ErrCredentialsNotFound
+	}
+	return f.proof, nil
+}
+
+func TestRecoverySendsFirebaseLinkForUnfinishedPasswordSignupOnlyWithoutLocalAccount(t *testing.T) {
+	ctx := context.Background()
+	email := "unfinished@example.invalid"
+	f := &firebaseMailFixture{proof: ports.FirebaseIdentity{UID: "unfinished", Email: email}}
+	mail := &fakeEmailSender{}
+	s := NewRecoveryService(&fakeAuthTokenRepository{}, fakeHasher{}, mail, "https://weevcrafts.com").WithFirebaseEmails(f, f, "")
+	if err := s.RequestPasswordReset(ctx, email); err != nil || mail.message.To != email || f.returnURL != "https://weevcrafts.com/login" {
+		t.Fatalf("unfinished signup recovery failed: %v", err)
+	}
+	f.existingAccount = true
+	mail.message = ports.EmailMessage{}
+	if err := s.RequestPasswordReset(ctx, email); err != nil || mail.message.To != "" {
+		t.Fatalf("unfinished Firebase recovery overlapped an existing local account: %v", err)
+	}
 }
 func (f *firebaseMailFixture) EmailVerificationLink(context.Context, ports.FirebaseIdentity, string) (string, error) {
 	f.calls++

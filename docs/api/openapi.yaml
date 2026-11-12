@@ -59,7 +59,7 @@ paths:
     post:
       summary: Register a customer and create a session
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
-      responses: {'201': {description: 'Registered; response includes data, csrf_token and server-owned redirect_to'}, '422': {description: Invalid input}}
+      responses: {'201': {description: 'Registered; response includes data, csrf_token and server-owned redirect_to'}, '409': {description: Username or email already registered}, '422': {description: Invalid input}}
   /api/v1/auth/login:
     post:
       summary: Sign in and create a session
@@ -74,7 +74,7 @@ paths:
     post:
       summary: Request a password-reset email without revealing account existence
       requestBody: {required: true, content: {application/json: {schema: {type: object, required: [email], properties: {email: {type: string, format: email}}}}}}
-      responses: {'202': {description: Request accepted}, '422': {description: Invalid email}, '503': {description: Delivery unavailable}}
+      responses: {'202': {description: Request accepted}, '422': {description: Invalid email}}
   /api/v1/auth/password-reset/confirm:
     post:
       summary: Consume a one-time password-reset token
@@ -332,10 +332,13 @@ components:
         status: {type: string, enum: [open, answered, closed]}
     RegisterRequest:
       type: object
-      required: [email, display_name, password]
+      required: [email, username, display_name, phone, password, accepted_terms]
       properties:
         email: {type: string, format: email}
+        username: {type: string, pattern: '^[A-Za-z][A-Za-z0-9_]{2,31}$', description: Unique account username stored in lowercase}
         display_name: {type: string}
+        phone: {type: string}
+        accepted_terms: {type: boolean}
         password: {type: string, minLength: 12}
         next: {type: string, description: Optional supported customer return path}
     LoginRequest:

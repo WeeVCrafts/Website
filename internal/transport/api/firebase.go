@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"errors"
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
+	"github.com/wecratfs/commerce/internal/ports"
 	"net/http"
 	"net/url"
 )
@@ -34,6 +35,12 @@ func (h *Handler) FirebaseSession(w http.ResponseWriter, r *http.Request) {
 	user, err := h.firebase.Login(r.Context(), in)
 	if err != nil {
 		switch {
+		case errors.Is(err, ports.ErrUsernameTaken):
+			writeError(w, 409, "USERNAME_TAKEN", applicationauth.UsernameTakenMessage)
+		case errors.Is(err, ports.ErrUserAlreadyExists):
+			writeError(w, 409, "EMAIL_TAKEN", "An account with that email already exists.")
+		case errors.Is(err, applicationauth.ErrInvalidUsername):
+			writeError(w, 422, "USERNAME_REQUIRED", applicationauth.ErrInvalidUsername.Error()+".")
 		case errors.Is(err, applicationauth.ErrFirebaseLinkRequired):
 			writeError(w, 409, "LINK_REQUIRED", "Confirm your existing Weevcrafts password to securely connect this account.")
 		case errors.Is(err, applicationauth.ErrFirebaseTerms):

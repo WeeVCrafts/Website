@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrCredentialsNotFound     = errors.New("credentials not found")
+	ErrUsernameTaken           = errors.New("username already registered")
 	ErrUserAlreadyExists       = errors.New("user already exists")
 	ErrUserHasProtectedRecords = errors.New("user has protected records")
 	ErrAuthTokenInvalid        = errors.New("authentication token is invalid or expired")
@@ -19,7 +20,7 @@ var (
 )
 
 type UserRepository interface {
-	CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error)
+	CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash, username string) (domainidentity.User, error)
 	GetCredentialsByEmail(ctx context.Context, email string) (domainidentity.Credentials, error)
 	RecordFailedLogin(ctx context.Context, userID int64) error
 	ResetFailedLogin(ctx context.Context, userID int64) error

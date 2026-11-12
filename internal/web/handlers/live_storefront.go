@@ -95,6 +95,11 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if h.serveReturnLabel(w, r) {
 		return
 	}
+	switch r.URL.Path {
+	case "/forgot-password", "/reset-password", "/verify-email":
+		h.fallback.ServeHTTP(w, r)
+		return
+	}
 	// These account endpoints have their own authenticated handlers in the
 	// transport layer. Keep them out of the broad /account/* storefront route.
 	if r.URL.Path == "/account/sessions" && r.Method != http.MethodGet || r.URL.Path == "/account/verify-email" {

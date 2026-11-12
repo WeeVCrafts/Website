@@ -128,6 +128,12 @@ type pageData struct {
 	PaymentPublicKey   string
 	RefundKey          string
 	ActionToken        string
+	FirebaseAction     bool
+	FormUsername       string
+	FormPhone          string
+	FormConsent        bool
+	UsernameInvalid    bool
+	AuthNext           string
 	RecoveryEnabled    bool
 	Wishlist           []domaincommerce.WishlistItem
 	Notice             string
@@ -642,7 +648,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		h.renderAuth(w, r, "login", http.StatusBadRequest, "", "We could not read that form.")
 		return
 	}
-	user, err := h.auth.Login(r.Context(), r.FormValue("email"), r.FormValue("password"))
+	user, err := h.auth.LoginWithUsername(r.Context(), r.FormValue("email"), r.FormValue("password"))
 	if err != nil {
 		h.renderAuth(w, r, "login", http.StatusUnauthorized, r.FormValue("email"), "Username, email or password is incorrect.")
 		return
@@ -688,6 +694,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{
+		Username:      r.FormValue("username"),
 		Email:         r.FormValue("email"),
 		DisplayName:   r.FormValue("display_name"),
 		Phone:         r.FormValue("phone"),
@@ -696,10 +703,16 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		message := "Please check your name, email, password, and privacy notice agreement. Use at least 12 characters."
-		if errors.Is(err, ports.ErrUserAlreadyExists) {
-			message = "An account with that email already exists."
+		status := http.StatusUnprocessableEntity
+		switch {
+		case errors.Is(err, ports.ErrUsernameTaken):
+			status, message = http.StatusConflict, applicationauth.UsernameTakenMessage
+		case errors.Is(err, ports.ErrUserAlreadyExists):
+			status, message = http.StatusConflict, "An account with that email already exists."
+		case errors.Is(err, applicationauth.ErrInvalidUsername):
+			message = applicationauth.ErrInvalidUsername.Error() + "."
 		}
-		h.renderAuth(w, r, "register", http.StatusUnprocessableEntity, r.FormValue("email"), message)
+		h.renderAuth(w, r, "register", status, r.FormValue("email"), message)
 		return
 	}
 	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), clientIP(r), applicationauth.DefaultSessionTTL)
@@ -818,14 +831,19 @@ func (h *Handler) renderAuth(w http.ResponseWriter, r *http.Request, mode string
 		name = r.FormValue("display_name")
 	}
 	data := pageData{
-		Brand:       identity.Name,
-		Tagline:     identity.Tagline,
-		Description: identity.Description,
-		Title:       titleMode(mode) + " · " + identity.Name,
-		CSRFToken:   csrf,
-		FormEmail:   email,
-		FormName:    name,
-		Error:       formError,
+		Brand:           identity.Name,
+		Tagline:         identity.Tagline,
+		Description:     identity.Description,
+		Title:           titleMode(mode) + " · " + identity.Name,
+		CSRFToken:       csrf,
+		FormEmail:       email,
+		FormName:        name,
+		AuthNext:        r.FormValue("next"),
+		FormUsername:    r.FormValue("username"),
+		FormPhone:       r.FormValue("phone"),
+		FormConsent:     r.FormValue("consent") == "on",
+		UsernameInvalid: mode == "register" && (formError == applicationauth.UsernameTakenMessage || formError == applicationauth.ErrInvalidUsername.Error()+"."),
+		Error:           formError,
 	}
 	h.render(w, status, mode, data)
 }

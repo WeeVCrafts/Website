@@ -46,16 +46,15 @@ func (r *AuthActionRepository) IssuePasswordReset(ctx context.Context, email, to
 		err := tx.QueryRow(transactionContext, `
 			SELECT u.id, u.email, u.display_name
 			FROM users u
-			JOIN credentials c ON c.user_id = u.id
-			WHERE LOWER(u.email) = LOWER($1) AND u.status = 'active'`, email).Scan(&recipient.UserID, &recipient.Email, &recipient.DisplayName)
+			WHERE LOWER(u.email) = LOWER($1) AND u.status = 'active'
+			FOR UPDATE`, email).Scan(&recipient.UserID, &recipient.Email, &recipient.DisplayName)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
 		}
 		if err != nil {
 			return err
 		}
-		found = true
-		if _, err := tx.Exec(transactionContext, `UPDATE auth_action_tokens SET consumed_at = NOW() WHERE user_id = $1 AND purpose = 'password_reset' AND consumed_at IS NULL`, recipient.UserID); err != nil {
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM credentials WHERE user_id = $1)`, recipient.UserID).Scan(&found); err != nil || !found {
 			return err
 		}
 		_, err = tx.Exec(transactionContext, `INSERT INTO auth_action_tokens (user_id, purpose, token_hash, expires_at) VALUES ($1, 'password_reset', $2, $3)`, recipient.UserID, tokenHash, expiresAt)
@@ -90,27 +89,57 @@ func (r *AuthActionRepository) ConsumeEmailVerification(ctx context.Context, tok
 	return userID, err
 }
 
+func (r *AuthActionRepository) PasswordResetTokenActive(ctx context.Context, tokenHash string) (bool, error) {
+	var active bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(
+		SELECT 1 FROM auth_action_tokens t
+		JOIN users u ON u.id = t.user_id AND u.status = 'active'
+		JOIN credentials c ON c.user_id = t.user_id
+		WHERE t.token_hash = $1 AND t.purpose = 'password_reset' AND t.consumed_at IS NULL AND t.expires_at > NOW()
+	)`, tokenHash).Scan(&active)
+	return active, err
+}
+
 func (r *AuthActionRepository) ResetPassword(ctx context.Context, tokenHash, passwordHash string) (int64, error) {
 	var userID int64
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		if err := tx.QueryRow(transactionContext, `
-			SELECT user_id
-			FROM auth_action_tokens
-			WHERE purpose = 'password_reset' AND token_hash = $1
-			  AND consumed_at IS NULL AND expires_at > NOW()
-			FOR UPDATE`, tokenHash).Scan(&userID); err != nil {
+			SELECT u.id
+			FROM users u
+			JOIN auth_action_tokens t ON t.user_id = u.id
+			WHERE u.status = 'active' AND t.purpose = 'password_reset' AND t.token_hash = $1
+			  AND t.consumed_at IS NULL AND t.expires_at > NOW()
+			FOR UPDATE OF u`, tokenHash).Scan(&userID); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrAuthTokenInvalid
 			}
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE credentials SET password_hash = $2, password_changed_at = NOW(), failed_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE user_id = $1`, userID, passwordHash); err != nil {
+		// Recheck after taking the account lock. A concurrent reset or account
+		// link may have invalidated the token while this request was waiting.
+		var tokenActive bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(
+			SELECT 1 FROM auth_action_tokens WHERE token_hash = $1 AND consumed_at IS NULL AND expires_at > clock_timestamp()
+		)`, tokenHash).Scan(&tokenActive); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE auth_action_tokens SET consumed_at = NOW() WHERE token_hash = $1`, tokenHash); err != nil {
+		if !tokenActive {
+			return ports.ErrAuthTokenInvalid
+		}
+		updated, err := tx.Exec(transactionContext, `UPDATE credentials SET password_hash = $2, password_changed_at = NOW(), failed_attempts = 0, locked_until = NULL, updated_at = NOW() WHERE user_id = $1`, userID, passwordHash)
+		if err != nil {
 			return err
 		}
-		_, err := tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'auth.password_reset', 'user', $2, $3, '{}'::jsonb)`, fmt.Sprint(userID), fmt.Sprint(userID), ports.RequestID(transactionContext))
+		if updated.RowsAffected() != 1 {
+			return ports.ErrAuthTokenInvalid
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE auth_action_tokens SET consumed_at = NOW() WHERE user_id = $1 AND purpose = 'password_reset' AND consumed_at IS NULL`, userID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET sessions_revoked_at = clock_timestamp(), updated_at = NOW() WHERE id = $1`, userID); err != nil {
+			return err
+		}
+		_, err = tx.Exec(transactionContext, `INSERT INTO audit_logs (actor_id, action, resource_type, resource_id, request_id, metadata) VALUES ($1, 'auth.password_reset', 'user', $2, $3, '{}'::jsonb)`, fmt.Sprint(userID), fmt.Sprint(userID), ports.RequestID(transactionContext))
 		return err
 	})
 	return userID, err

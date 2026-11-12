@@ -8,17 +8,23 @@ import (
 	"firebase.google.com/go/v4/messaging"
 	"github.com/wecratfs/commerce/internal/ports"
 	"google.golang.org/api/option"
+	"os"
 	"time"
 )
 
 type Provider struct {
-	auth      *auth.Client
-	messaging *messaging.Client
+	auth             *auth.Client
+	messaging        *messaging.Client
+	webAPIKey        string
+	authEmulatorHost string
 }
 
 func New(ctx context.Context, project, credentialFile string) (*Provider, error) {
 	var opts []option.ClientOption
-	if credentialFile != "" {
+	authEmulatorHost := os.Getenv("FIREBASE_AUTH_EMULATOR_HOST")
+	if authEmulatorHost != "" {
+		opts = append(opts, option.WithoutAuthentication())
+	} else if credentialFile != "" {
 		opts = append(opts, option.WithCredentialsFile(credentialFile))
 	}
 	app, err := firebase.NewApp(ctx, &firebase.Config{ProjectID: project}, opts...)
@@ -33,7 +39,7 @@ func New(ctx context.Context, project, credentialFile string) (*Provider, error)
 	if err != nil {
 		return nil, errors.New("firebase messaging unavailable")
 	}
-	return &Provider{a, m}, nil
+	return &Provider{auth: a, messaging: m, authEmulatorHost: authEmulatorHost}, nil
 }
 func (p *Provider) Verify(ctx context.Context, raw string) (ports.FirebaseIdentity, error) {
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
@@ -91,6 +97,9 @@ func (p *Provider) DeleteIdentity(ctx context.Context, uid string) error {
 	return nil
 }
 func (p *Provider) SendPush(ctx context.Context, token string) error {
+	if p.authEmulatorHost != "" {
+		return errors.New("push delivery unavailable with the auth emulator")
+	}
 	_, err := p.messaging.Send(ctx, &messaging.Message{Token: token, Data: map[string]string{"title": "Weevcrafts", "body": "You have a new account update. Open Weevcrafts to view it securely.", "url": "/account/notifications"}, Webpush: &messaging.WebpushConfig{Headers: map[string]string{"TTL": "300"}}})
 	if messaging.IsUnregistered(err) {
 		return ports.ErrCredentialsNotFound
@@ -99,6 +108,31 @@ func (p *Provider) SendPush(ctx context.Context, token string) error {
 		return errors.New("push delivery unavailable")
 	}
 	return nil
+}
+
+func hasPasswordProvider(user *auth.UserRecord) bool {
+	for _, provider := range user.ProviderUserInfo {
+		if provider.ProviderID == "password" {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Provider) UnfinishedPasswordIdentity(ctx context.Context, email string) (ports.FirebaseIdentity, error) {
+	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
+	defer cancel()
+	user, err := p.auth.GetUserByEmail(ctx, email)
+	if auth.IsUserNotFound(err) {
+		return ports.FirebaseIdentity{}, ports.ErrCredentialsNotFound
+	}
+	if err != nil {
+		return ports.FirebaseIdentity{}, errors.New("firebase recovery lookup unavailable")
+	}
+	if user.Disabled || user.Email != email || !hasPasswordProvider(user) {
+		return ports.FirebaseIdentity{}, ports.ErrCredentialsNotFound
+	}
+	return ports.FirebaseIdentity{UID: user.UID, Email: user.Email, Name: user.DisplayName}, nil
 }
 
 func (p *Provider) emailAction(ctx context.Context, proof ports.FirebaseIdentity, returnURL string, verification bool) (string, error) {
@@ -110,6 +144,9 @@ func (p *Provider) emailAction(ctx context.Context, proof ports.FirebaseIdentity
 	}
 	if err != nil || user.Disabled || user.Email != proof.Email {
 		return "", errors.New("email action unavailable")
+	}
+	if !verification && !hasPasswordProvider(user) {
+		return "", ports.ErrCredentialsNotFound
 	}
 	settings := &auth.ActionCodeSettings{URL: returnURL}
 	var link string

@@ -32,7 +32,7 @@ type firebaseIdentityStore struct {
 	err    error
 }
 
-func (r *firebaseIdentityStore) ResolveFirebase(_ context.Context, _ ports.FirebaseIdentity, _ string, _ bool, id int64) (identity.User, error) {
+func (r *firebaseIdentityStore) ResolveFirebase(_ context.Context, _ ports.FirebaseIdentity, _, _ string, _ bool, id int64) (identity.User, error) {
 	r.called = true
 	r.linkID = id
 	return identity.User{ID: 12, Roles: []identity.Role{identity.RoleCustomer}}, r.err
@@ -109,5 +109,45 @@ func TestFirebaseCustomerLinkUsesExistingPassword(t *testing.T) {
 	}
 	if _, err := service.Login(context.Background(), FirebaseInput{Token: strings.Repeat("x", 40), LinkPassword: "correct-password"}); err != nil || store.linkID != 99 {
 		t.Fatal("verified customer password did not preserve the existing account")
+	}
+}
+
+type firebasePasswordFixture struct{ firebaseProof }
+
+func (f firebasePasswordFixture) PasswordSignIn(_ context.Context, email, password string) (string, error) {
+	if email != "customer@example.invalid" || password != "correct-password" {
+		return "", ports.ErrCredentialsNotFound
+	}
+	return strings.Repeat("x", 40), nil
+}
+
+type firebaseUsernameFixture struct{ firebaseIdentityStore }
+
+func (r *firebaseUsernameFixture) FirebaseCustomerByUsername(_ context.Context, username string) (identity.User, string, error) {
+	if username != "customer_one" {
+		return identity.User{}, "", ports.ErrCredentialsNotFound
+	}
+	return identity.User{ID: 12, Email: "customer@example.invalid"}, r.uid, nil
+}
+
+func TestFirebaseUsernameLoginRequiresPasswordAndMatchingUID(t *testing.T) {
+	native := NewService(&fakeUserRepository{getErr: ports.ErrCredentialsNotFound}, fakeHasher{})
+	store := &firebaseUsernameFixture{firebaseIdentityStore{uid: "bound-uid"}}
+	proof := ports.FirebaseIdentity{UID: "bound-uid", Email: "customer@example.invalid", Provider: "password", AuthTime: time.Now()}
+	native.WithFirebaseUsernameLogin(NewFirebaseService(firebasePasswordFixture{firebaseProof{proof: proof}}, store, native, nil))
+
+	user, err := native.LoginWithUsername(context.Background(), " CUSTOMER_ONE ", "correct-password")
+	if err != nil || user.ID != 12 {
+		t.Fatalf("bound username login: id=%d err=%v", user.ID, err)
+	}
+	if _, err := native.LoginWithUsername(context.Background(), "customer_one", "wrong-password"); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("incorrect password: %v", err)
+	}
+	store.uid = "another-uid"
+	if _, err := native.LoginWithUsername(context.Background(), "customer_one", "correct-password"); !errors.Is(err, ErrInvalidCredentials) {
+		t.Fatalf("wrong Firebase identity: %v", err)
+	}
+	if store.called {
+		t.Fatal("username login attempted to create or link an account")
 	}
 }

@@ -5,6 +5,7 @@
   const SDK = "https://www.gstatic.com/firebasejs/13.0.0/";
   let readyPromise;
   let pendingLink;
+  const pendingGoogle = new WeakMap();
   async function ready() {
     if (!readyPromise) readyPromise = (async () => {
       const response = await fetch("/api/v1/firebase/config", {credentials: "same-origin"});
@@ -32,7 +33,7 @@
     return error;
   }
   async function exchange(api, user, input) {
-    const body = {id_token: await user.getIdToken(true), next: input.next || "", accepted_terms: input.acceptedTerms === true, phone: input.phone || "", link_password: input.linkPassword || ""};
+    const body = {id_token: await user.getIdToken(true), next: input.next || "", accepted_terms: input.acceptedTerms === true, phone: input.phone || "", username: input.username || "", link_password: input.linkPassword || ""};
     try {
       const result = await api.call("/api/v1/auth/firebase/session", {method:"POST", authenticated:true, body});
       api.csrf = result.csrf_token;
@@ -41,7 +42,8 @@
     } catch (error) {
       if (error.code === "LINK_REQUIRED") {
         if (!user.emailVerified) {
-          throw new Error("Verify your email using the link in your inbox, then sign in again to connect your existing account securely.");
+          error.message = "Verify your email using the link in your inbox, then sign in again to connect your existing account securely.";
+          throw error;
         }
         pendingLink = {user, input};
         const panel = (input.authRoot || document).querySelector("[data-firebase-link]");
@@ -53,7 +55,7 @@
   async function signIn(api, input, legacy) {
     // Preserve existing role credentials and existing customer passwords.
     try {return await legacy();} catch (error) {
-      if (error.code !== "INVALID_CREDENTIALS") throw error;
+      if (error.code !== "INVALID_CREDENTIALS" || !input.email.includes("@")) throw error;
     }
     const f = await ready();
     if (!f) throw new Error("Email or password is incorrect.");
@@ -74,21 +76,31 @@
         // record. Password proof is still required; email matching never links.
         user = (await f.authSDK.signInWithEmailAndPassword(f.auth,input.email,input.password)).user;
       }
-      let verificationFailed = false;
-      if (!user.emailVerified) {
-        try {await api.call("/api/v1/auth/firebase/verification",{method:"POST",authenticated:true,body:{id_token:await user.getIdToken(true)}});}
-        catch (_) {verificationFailed = true;}
-      }
+      let result;
       try {
-        const result = await exchange(api,user,input);
-        if (verificationFailed) {
-          try {sessionStorage.setItem("weevcrafts_auth_notice","Your account was created, but the verification email could not be sent. Retry from Account → Sessions.");} catch (_) {}
+        result = await exchange(api, user, input);
+      } catch (error) {
+        if (error.code === "LINK_REQUIRED" && !user.emailVerified) {
+          try {
+            await api.call("/api/v1/auth/firebase/verification", {
+              method: "POST", authenticated: true, body: {id_token: await user.getIdToken(true)}
+            });
+          } catch (_) {
+            throw new Error("The verification email could not be sent. Please try again later.");
+          }
         }
-        return result;
-      } catch(error) {
-        if (verificationFailed && !user.emailVerified) throw new Error("The verification email could not be sent. Please retry registration later to connect this existing account.");
         throw error;
       }
+      if (!user.emailVerified) {
+        try {
+          await api.call("/api/v1/auth/email-verification/request", {method: "POST", authenticated: true});
+        } catch (_) {
+          try {
+            sessionStorage.setItem("weevcrafts_auth_notice", "Your account was created, but the verification email could not be sent. Retry from Account → Sessions.");
+          } catch (_) {}
+        }
+      }
+      return result;
     } catch(error) {throw safeError(error);}
   }
   async function recover(email,legacy) {
@@ -97,7 +109,11 @@
     return legacy();
   }
   async function action(password,legacy) {
-    const code = new URLSearchParams(global.location.search).get("oobCode");
+    const query = new URLSearchParams(global.location.search);
+    const code = query.get("oobCode");
+    if (code && query.get("mode") !== (password ? "resetPassword" : "verifyEmail")) {
+      throw new Error("This email link is invalid or expired. Request a new one.");
+    }
     if (!code) return legacy();
     const f = await ready(); if (!f) throw new Error("Email actions are unavailable.");
     try {
@@ -106,7 +122,7 @@
     } catch(error) {throw safeError(error);}
   }
   function message(container,text,error) {
-    let status = container.querySelector("[data-firebase-status]");
+    let status = container.querySelector(":scope > [data-firebase-status]");
     if (!status) {status=document.createElement("p");status.dataset.firebaseStatus="";status.setAttribute("role","status");status.setAttribute("aria-live","polite");container.append(status);}
     status.hidden=false;status.textContent=text; status.className=error?"form-message error":"form-message";
   }
@@ -134,10 +150,64 @@
       const provider=new f.authSDK.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
       const user=(await f.authSDK.signInWithPopup(f.auth,provider)).user;
       const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();
-      const result=await exchange(api,user,{acceptedTerms:terms,next:panel.dataset.authNext||new URLSearchParams(global.location.search).get("next")||"",authRoot:panel.closest('[data-auth-surface]')});
-      global.location.assign(result.redirect_to||"/products");
+      const input = {acceptedTerms: terms, next: panel.dataset.authNext || new URLSearchParams(global.location.search).get("next") || "", authRoot: panel.closest("[data-auth-surface]")};
+      try {
+        const result = await exchange(api, user, input);
+        global.location.assign(result.redirect_to || "/products");
+      } catch (error) {
+        if (error.code !== "USERNAME_REQUIRED") throw error;
+        const form = panel.querySelector("[data-google-username]");
+        pendingGoogle.set(form, {api, user, input});
+        panel.querySelector(":scope > [data-firebase-status]").hidden = true;
+        form.hidden = false;
+        form.elements.username.focus();
+      }
     } catch(error) {message(panel,safeError(error).message,true);} finally {button.disabled=false;}
   }
+
+  async function completeGoogleSignup(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const pending = pendingGoogle.get(form);
+    if (!pending || form.dataset.submitting === "true") return;
+    const username = form.elements.username;
+    username.value = username.value.trim();
+    if (!form.reportValidity()) return;
+    const button = form.querySelector('button[type="submit"]');
+    const feedback = form.querySelector("[data-firebase-status]");
+    feedback.hidden = true;
+    form.dataset.submitting = "true";
+    button.disabled = true;
+    try {
+      const result = await exchange(pending.api, pending.user, {...pending.input, username: username.value});
+      pendingGoogle.delete(form);
+      global.location.assign(result.redirect_to || "/products");
+    } catch (error) {
+      if (error.code === "FIREBASE_INVALID") {
+        pendingGoogle.delete(form);
+        form.hidden = true;
+        const panel = form.closest("[data-firebase-google-panel]");
+        message(panel, "Your Google sign-in expired. Continue with Google to try again.", true);
+        panel.querySelector("[data-google-signin]").focus();
+      } else {
+        message(form, safeError(error).message, true);
+        if (["USERNAME_TAKEN", "USERNAME_REQUIRED"].includes(error.code)) {
+          username.setAttribute("aria-invalid", "true");
+          username.setAttribute("aria-describedby", username.id + "-hint " + feedback.id);
+          username.focus();
+          username.addEventListener("input", () => {
+            username.removeAttribute("aria-invalid");
+            username.setAttribute("aria-describedby", username.id + "-hint");
+            feedback.hidden = true;
+          }, {once: true});
+        }
+      }
+    } finally {
+      delete form.dataset.submitting;
+      button.disabled = false;
+    }
+  }
+
   function bindLink(root) {
     root.querySelectorAll('[data-firebase-link]').forEach(link=>{
       if(link.dataset.linkBound)return;
@@ -158,7 +228,10 @@
     bindLink(root);
     const panels=Array.from(root.querySelectorAll('[data-firebase-google-panel]')).filter(panel=>!panel.dataset.googleBound);
     if(!panels.length)return;
-    panels.forEach(panel=>{panel.dataset.googleBound='true';});
+    panels.forEach(panel => {
+      panel.dataset.googleBound = "true";
+      panel.querySelector("[data-google-username]")?.addEventListener("submit", completeGoogleSignup);
+    });
     try {
       const f=await ready();
       panels.forEach(panel=>{

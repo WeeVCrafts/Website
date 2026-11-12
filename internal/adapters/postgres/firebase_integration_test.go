@@ -18,7 +18,7 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 	email := fmt.Sprintf("firebase-%d@example.invalid", suffix)
 	uid := fmt.Sprintf("firebase-%d", suffix)
 	proof := ports.FirebaseIdentity{UID: uid, Email: email, Name: "Firebase fixture", Provider: "google.com", EmailVerified: true}
-	if _, err := r.ResolveFirebase(ctx, proof, "", false, 0); !errors.Is(err, applicationauth.ErrFirebaseTerms) {
+	if _, err := r.ResolveFirebase(ctx, proof, "", "", false, 0); !errors.Is(err, applicationauth.ErrFirebaseTerms) {
 		t.Fatalf("unconsented registration: %v", err)
 	}
 	var id int64
@@ -37,11 +37,11 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 		_, _ = pool.Exec(ctx, `DELETE FROM users WHERE id=$1`, id)
 	})
 	for _, linkID := range []int64{0, id + 1} {
-		if _, err := r.ResolveFirebase(ctx, proof, "", true, linkID); !errors.Is(err, applicationauth.ErrFirebaseLinkRequired) {
+		if _, err := r.ResolveFirebase(ctx, proof, "", "", true, linkID); !errors.Is(err, applicationauth.ErrFirebaseLinkRequired) {
 			t.Fatalf("email matching bypassed ownership: %v", err)
 		}
 	}
-	user, err := r.ResolveFirebase(ctx, proof, "", true, id)
+	user, err := r.ResolveFirebase(ctx, proof, "", "", true, id)
 	if err != nil || user.ID != id {
 		t.Fatalf("explicit link failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 		t.Fatal("old password remains usable")
 	}
 	proof.UID = "different-fixture"
-	if _, err = r.ResolveFirebase(ctx, proof, "", true, id); !errors.Is(err, applicationauth.ErrFirebaseInvalid) {
+	if _, err = r.ResolveFirebase(ctx, proof, "", "", true, id); !errors.Is(err, applicationauth.ErrFirebaseInvalid) {
 		t.Fatalf("second identity took over account: %v", err)
 	}
 	if _, err = pool.Exec(ctx, `UPDATE user_roles SET role_slug='seller' WHERE user_id=$1`, id); err != nil {
@@ -72,7 +72,7 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 	if allowed, err := r.FirebaseVerificationAllowed(ctx, email); err != nil || allowed {
 		t.Fatal("seller received customer verification")
 	}
-	if _, err = r.ResolveFirebase(ctx, proof, "", true, id); !errors.Is(err, applicationauth.ErrFirebaseRole) {
+	if _, err = r.ResolveFirebase(ctx, proof, "", "", true, id); !errors.Is(err, applicationauth.ErrFirebaseRole) {
 		t.Fatalf("seller granted customer Firebase session: %v", err)
 	}
 }
@@ -82,7 +82,7 @@ func TestFirebaseRegistrationAndPrivacyDeletion(t *testing.T) {
 	r := NewFirebaseRepository(pool)
 	suffix := time.Now().UnixNano()
 	uid := fmt.Sprintf("firebase-delete-%d", suffix)
-	u, err := r.ResolveFirebase(ctx, ports.FirebaseIdentity{UID: uid, Email: fmt.Sprintf("firebase-delete-%d@example.invalid", suffix), Name: "Private fixture", EmailVerified: true}, "+919876543210", true, 0)
+	u, err := r.ResolveFirebase(ctx, ports.FirebaseIdentity{UID: uid, Email: fmt.Sprintf("firebase-delete-%d@example.invalid", suffix), Name: "Private fixture", EmailVerified: true}, "+919876543210", "firebase_delete", true, 0)
 	if err != nil {
 		t.Fatal(err)
 	}

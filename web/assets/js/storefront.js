@@ -566,6 +566,7 @@
 
   async function submitAuth(form) {
     if (form.dataset.submitting === "true") return;
+    if (form.dataset.backendAuth === "register") form.elements.username.value = form.elements.username.value.trim();
     if (global.WVUI && !global.WVUI.validate(form)) return;
     form.dataset.submitting = "true";
     const authButton = form.querySelector('button[type="submit"]');
@@ -581,26 +582,42 @@
         const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "", authRoot: form.closest('[data-auth-surface]') });
         global.location.assign(result.redirect_to || "/products");
       } else if (action === "register") {
-        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, phone: values.phone, acceptedTerms: values.consent === "on", next: values.next || "" });
+        const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, username: values.username.trim(), authRoot: form.closest("[data-auth-surface]"), phone: values.phone, acceptedTerms: values.consent === "on", next: values.next || "" });
         const data = unwrap(result) || result;
         if (data && (data.access_token || result.csrf_token)) global.location.assign(result.redirect_to || "/products");
         else showFormMessage(form, "Check your email to verify your new account.", false);
       } else if (action === "recover") {
         await api.recover(values.email);
-        showFormMessage(form, "If the address is registered, recovery instructions have been sent.", false);
+        showFormMessage(form, "If this email has a password, we’ll send a reset link. If you only sign in with Google, recover your password through Google.", false);
       } else if (action === "reset") {
         if (values.password !== values.confirm_password) throw new Error("The passwords do not match.");
         const hash = new URLSearchParams(global.location.hash.replace(/^#/, ""));
         const query = new URLSearchParams(global.location.search);
         await api.updatePassword(values.password, values.token || query.get("token") || hash.get("access_token") || hash.get("token") || "");
         global.history.replaceState(null, "", global.location.pathname);
-        showFormMessage(form, "Password updated. You can now sign in.", false);
+        const status = document.createElement("p");
+        status.setAttribute("role", "status");
+        status.textContent = "Password updated. You can now sign in.";
+        status.tabIndex = -1;
+        form.replaceWith(status);
+        status.focus();
       } else if (action === "verify") {
         await api.verifyEmail(values.token || new URLSearchParams(global.location.search).get("token") || "");
         showFormMessage(form, "Your email has been verified. You can now sign in.", false);
       }
     } catch (error) {
       showFormMessage(form, error.message, true);
+      if (action === "register" && ["USERNAME_TAKEN", "USERNAME_INVALID", "USERNAME_REQUIRED"].includes(error.code)) {
+        const username = form.elements.username;
+        username.setAttribute("aria-invalid", "true");
+        username.setAttribute("aria-describedby", username.id + "-hint register-feedback");
+        username.focus();
+        username.addEventListener("input", () => {
+          username.removeAttribute("aria-invalid");
+          username.setAttribute("aria-describedby", username.id + "-hint");
+          form.querySelector("[data-backend-form-message]").hidden = true;
+        }, {once: true});
+      }
     } finally {
       form.dataset.submitting = "false";
       if (authButton) {authButton.disabled = false; global.WVUI?.busy(authButton,false);}
@@ -1045,7 +1062,7 @@
 
     document.addEventListener("submit", function (event) {
       const form = event.target.closest("form[data-backend-auth]");
-      if (form) { event.preventDefault(); event.stopImmediatePropagation(); submitAuth(form); return; }
+      if (form?.dataset.backendAuth) { event.preventDefault(); event.stopImmediatePropagation(); submitAuth(form); return; }
       // Search/filter GETs are owned by their existing HTMX forms. Ordinary
       // links stay native, including modified clicks, history and new tabs.
     }, true);

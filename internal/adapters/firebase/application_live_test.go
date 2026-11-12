@@ -94,7 +94,7 @@ func TestLiveFirebaseApplicationSession(t *testing.T) {
 	if csrf == "" {
 		t.Fatal("login CSRF cookie missing")
 	}
-	body, _ := json.Marshal(map[string]any{"id_token": identity.IDToken, "accepted_terms": true, "phone": "+919876543210", "next": "/checkout"})
+	body, _ := json.Marshal(map[string]any{"id_token": identity.IDToken, "accepted_terms": true, "username": "fb_live_" + strconv.FormatInt(time.Now().UnixNano(), 36), "phone": "+919876543210", "next": "/checkout"})
 	request, _ := http.NewRequestWithContext(ctx, http.MethodPost, base+"/api/v1/auth/firebase/session", bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Origin", base)

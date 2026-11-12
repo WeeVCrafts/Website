@@ -144,7 +144,7 @@
     async signUp(input) {
       if (global.WeevCraftsFirebase && !input.nativeOnly) return global.WeevCraftsFirebase.signUp(this, input, () => this.signUp(Object.assign({},input,{nativeOnly:true})));
       const result = await this.call(ROOT + "/auth/register", {
-        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true, next: input.next || "" }
+        method: "POST", body: { email: input.email, password: input.password, display_name: input.displayName || "", username: input.username || "", phone: input.phone || "", accepted_terms: input.acceptedTerms === true, next: input.next || "" }
       });
       this.csrf = result.csrf_token || "";
       return result;

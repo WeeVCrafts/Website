@@ -5,8 +5,53 @@ import (
 	"errors"
 	"testing"
 
+	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	"github.com/wecratfs/commerce/internal/ports"
 )
+
+func TestNativeAndFirebaseRegistrationCannotClaimSameUsername(t *testing.T) {
+	pool := isolatedRolePool(t, false)
+	ctx := context.Background()
+	users := NewUserRepository(pool)
+	firebase := NewFirebaseRepository(pool)
+	service := applicationauth.NewService(users, applicationauth.NewArgon2idHasher())
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	go func() {
+		<-start
+		_, err := service.Register(ctx, applicationauth.RegisterInput{
+			Email: "native@example.invalid", DisplayName: "Shared name", Username: " Claim_Me ",
+			Phone: "9876543210", Password: "test-password-123", AcceptedTerms: true,
+		})
+		results <- err
+	}()
+	go func() {
+		<-start
+		_, err := firebase.ResolveFirebase(ctx, ports.FirebaseIdentity{
+			UID: "firebase-race-fixture", Email: "firebase@example.invalid", Name: "Shared name",
+		}, "", "claim_me", true, 0)
+		results <- err
+	}()
+	close(start)
+	var succeeded, conflicts int
+	for range 2 {
+		switch err := <-results; {
+		case err == nil:
+			succeeded++
+		case errors.Is(err, ports.ErrUsernameTaken):
+			conflicts++
+		default:
+			t.Fatalf("unexpected signup outcome: %v", err)
+		}
+	}
+	if succeeded != 1 || conflicts != 1 {
+		t.Fatalf("successful signups=%d, username conflicts=%d", succeeded, conflicts)
+	}
+	var count int
+	if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE email IN ('native@example.invalid', 'firebase@example.invalid')`).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("conflicting signup left a user record: count=%d err=%v", count, err)
+	}
+}
 
 func TestUsernameAndEmailResolveSameIdentityAfterRoleChange(t *testing.T) {
 	pool := isolatedRolePool(t, false)

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,22 +12,37 @@ import (
 )
 
 var (
+	ErrInvalidUsername     = errors.New("username must start with a letter and contain 3 to 32 letters, digits, or underscores")
 	ErrInvalidRegistration = errors.New("registration details are invalid")
 	ErrInvalidCredentials  = errors.New("email or password is incorrect")
 	ErrAccountLocked       = errors.New("account is temporarily locked")
 )
 
 type Service struct {
-	repository ports.UserRepository
-	hasher     ports.PasswordHasher
-	now        func() time.Time
+	repository            ports.UserRepository
+	hasher                ports.PasswordHasher
+	now                   func() time.Time
+	firebaseUsernameLogin *FirebaseService
 }
 
 func NewService(repository ports.UserRepository, hasher ports.PasswordHasher) *Service {
 	return &Service{repository: repository, hasher: hasher, now: time.Now}
 }
 
+const UsernameTakenMessage = "This username is already registered. Choose another."
+
+var usernamePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{2,31}$`)
+
+func normalizeUsername(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if !usernamePattern.MatchString(value) {
+		return "", ErrInvalidUsername
+	}
+	return strings.ToLower(value), nil
+}
+
 type RegisterInput struct {
+	Username      string
 	Email         string
 	DisplayName   string
 	Phone         string
@@ -41,11 +57,15 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (domainiden
 	if !validEmail(email) || len([]rune(displayName)) < 2 || len([]rune(displayName)) > 120 || !validPhone(phone) || len(input.Password) < 12 || len(input.Password) > 1024 || !input.AcceptedTerms {
 		return domainidentity.User{}, ErrInvalidRegistration
 	}
+	username, err := normalizeUsername(input.Username)
+	if err != nil {
+		return domainidentity.User{}, err
+	}
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
 		return domainidentity.User{}, err
 	}
-	return s.repository.CreateCustomer(ctx, email, displayName, phone, passwordHash)
+	return s.repository.CreateCustomer(ctx, email, displayName, phone, passwordHash, username)
 }
 
 func validPhone(phone string) bool {
@@ -63,6 +83,18 @@ func validPhone(phone string) bool {
 		}
 	}
 	return len(phone) <= 24 && digits >= 7 && digits <= 15
+}
+
+func (s *Service) WithFirebaseUsernameLogin(firebase *FirebaseService) {
+	s.firebaseUsernameLogin = firebase
+}
+
+func (s *Service) LoginWithUsername(ctx context.Context, login, password string) (domainidentity.User, error) {
+	user, err := s.Login(ctx, login, password)
+	if s.firebaseUsernameLogin != nil && errors.Is(err, ErrInvalidCredentials) && !strings.Contains(login, "@") {
+		return s.firebaseUsernameLogin.loginByUsername(ctx, login, password)
+	}
+	return user, err
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (domainidentity.User, error) {

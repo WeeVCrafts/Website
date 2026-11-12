@@ -20,7 +20,7 @@ async function token(page){return page.locator('form[action="/logout"] [name=csr
 
 test('Users uses a focused modal and preserves filters and rejected values',async({page})=>{
  const email=`admin.modal.${Date.now()}@example.invalid`;
- expect((await page.request.post('/api/v1/auth/register',{data:{email,password:'Modal-QA-2026-safe!',display_name:'Modal QA customer',phone:'+919876543210',accepted_terms:true}})).ok()).toBeTruthy();
+ expect((await page.request.post('/api/v1/auth/register',{data:{email,username:'modal_'+Date.now(),password:'Modal-QA-2026-safe!',display_name:'Modal QA customer',phone:'+919876543210',accepted_terms:true}})).ok()).toBeTruthy();
  await login(page);await page.goto('/super-admin/users?'+new URLSearchParams({q:email,status:'active',role:'customer'}));await ready(page);
  const manage=page.getByRole('button',{name:/Manage account for/});await manage.click();
  const dialog=page.getByRole('dialog',{name:'Edit account'});await expect(dialog).toBeVisible();

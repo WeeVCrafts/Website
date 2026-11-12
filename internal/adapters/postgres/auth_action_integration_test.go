@@ -29,9 +29,22 @@ func TestAuthActionTokensAreSingleUseAndResetPasswordAtomically(t *testing.T) {
 	})
 
 	repository := NewAuthActionRepository(pool)
+	sessionCreated := time.Now().Add(-time.Minute)
+	if _, found, err := repository.IssuePasswordReset(ctx, email, "expired-password-token-hash", sessionCreated); err != nil || !found {
+		t.Fatalf("issue expired reset fixture: found=%v err=%v", found, err)
+	}
+	if active, err := repository.PasswordResetTokenActive(ctx, "expired-password-token-hash"); err != nil || active {
+		t.Fatalf("expired reset link: active=%v err=%v", active, err)
+	}
+	if _, err := repository.ResetPassword(ctx, "expired-password-token-hash", "ignored-hash"); !errors.Is(err, ports.ErrAuthTokenInvalid) {
+		t.Fatalf("expired reset link changed credentials: %v", err)
+	}
 	recipient, found, err := repository.IssuePasswordReset(ctx, email, "password-token-hash", time.Now().Add(time.Minute))
 	if err != nil || !found || recipient.UserID != userID {
 		t.Fatalf("issue password reset: recipient=%+v found=%v err=%v", recipient, found, err)
+	}
+	if _, found, err := repository.IssuePasswordReset(ctx, email, "second-password-token-hash", time.Now().Add(time.Minute)); err != nil || !found {
+		t.Fatalf("issue second reset: found=%v err=%v", found, err)
 	}
 	resetID, err := repository.ResetPassword(ctx, "password-token-hash", "new-hash")
 	if err != nil || resetID != userID {
@@ -47,6 +60,12 @@ func TestAuthActionTokensAreSingleUseAndResetPasswordAtomically(t *testing.T) {
 	}
 	if _, err := repository.ResetPassword(ctx, "password-token-hash", "another-hash"); !errors.Is(err, ports.ErrAuthTokenInvalid) {
 		t.Fatalf("expected reset replay rejection, got %v", err)
+	}
+	if _, err := repository.ResetPassword(ctx, "second-password-token-hash", "another-hash"); !errors.Is(err, ports.ErrAuthTokenInvalid) {
+		t.Fatalf("expected rejection of other outstanding reset link, got %v", err)
+	}
+	if active, err := NewUserRepository(pool).IsSessionActive(ctx, userID, sessionCreated); err != nil || active {
+		t.Fatalf("old session after reset: active=%v err=%v", active, err)
 	}
 
 	if _, err := repository.IssueEmailVerification(ctx, userID, "email-token-hash", time.Now().Add(time.Minute)); err != nil {

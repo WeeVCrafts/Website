@@ -244,6 +244,7 @@ test("registration, email verification, password recovery and login complete end
     await page.goto("/register");
     await expect(page.locator('#page input[name="csrf_token"]')).not.toHaveValue("");
     await page.locator('#page input[name="display_name"]').fill(name);
+    await page.getByRole("textbox", { name: "Username", exact: true }).fill("portal_" + Date.now());
     await page.locator('#page input[name="email"]').fill(email);
     await page.locator('#page input[name="phone"]').fill("9876543210");
     await page.locator('#page input[name="password"]').fill(initialPassword);
@@ -266,7 +267,7 @@ test("registration, email verification, password recovery and login complete end
     const verification = await waitForMail(request, email, "Verify your Weevcrafts email");
     await page.goto(emailActionURL(verification));
     await page.getByRole("button", { name: "Verify email" }).click();
-    await expect(page.locator('[data-backend-form-message]')).toContainText("Your email has been verified");
+    await expect(page.getByText("Your email has been verified.")).toBeVisible();
 
     await page.goto("/account/sessions");
     await page.getByRole("button", { name: "Sign out all sessions" }).click();
@@ -275,13 +276,13 @@ test("registration, email verification, password recovery and login complete end
     await page.goto("/forgot-password");
     await page.locator('#page input[name="email"]').fill(email);
     await page.getByRole("button", { name: "Send recovery link" }).click();
-    await expect(page.locator('[data-backend-form-message]')).toContainText("recovery instructions have been sent");
+    await expect(page.locator('[data-backend-form-message]')).toContainText("send a reset link");
     const reset = await waitForMail(request, email, "Reset your Weevcrafts password");
     await page.goto(emailActionURL(reset));
     await page.locator('#page input[name="password"]').fill(recoveredPassword);
     await page.locator('#page input[name="confirm_password"]').fill(recoveredPassword);
     await page.getByRole("button", { name: "Update password" }).click();
-    await expect(page.locator('[data-backend-form-message]')).toContainText("Password updated");
+    await expect(page.getByRole("heading", { name: "Password updated" })).toBeVisible();
 
     await page.route("**/*.js", route => route.abort());
     await page.goto("/login");

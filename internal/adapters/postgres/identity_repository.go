@@ -37,7 +37,7 @@ func (r *UserRepository) IsSessionActive(ctx context.Context, userID int64, crea
 	return active, err
 }
 
-func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash string) (domainidentity.User, error) {
+func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName, phone, passwordHash, username string) (domainidentity.User, error) {
 	var user generated.InsertUserRow
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		queries := generated.New(tx)
@@ -50,7 +50,7 @@ func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName,
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `UPDATE users SET phone = $1 WHERE id = $2`, phone, user.ID); err != nil {
+		if _, err := tx.Exec(transactionContext, `UPDATE users SET phone = $1, username = $2 WHERE id = $3`, phone, username, user.ID); err != nil {
 			return err
 		}
 		if err := queries.InsertCredential(transactionContext, generated.InsertCredentialParams{
@@ -75,6 +75,9 @@ func (r *UserRepository) CreateCustomer(ctx context.Context, email, displayName,
 	if err != nil {
 		var pgError *pgconn.PgError
 		if errors.As(err, &pgError) && pgError.Code == "23505" {
+			if pgError.ConstraintName == "users_username_unique" {
+				return domainidentity.User{}, ports.ErrUsernameTaken
+			}
 			return domainidentity.User{}, ports.ErrUserAlreadyExists
 		}
 		return domainidentity.User{}, fmt.Errorf("create customer: %w", err)

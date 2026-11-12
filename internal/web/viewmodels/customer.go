@@ -149,6 +149,9 @@ type CustomerPage struct {
 	Notifications                                    []CustomerNotification
 	NotificationsNextURL                             string
 	Route, Title, Query, Category, Sort, Notice      string
+	AuthError, FormUsername, FormEmail               string
+	FormName, FormPhone                              string
+	FormConsent, UsernameInvalid, FirebaseAction     bool
 	CouponCode                                       string
 	Brand, Tagline, Description                      string
 	UserName, UserEmail, MemberSince                 string

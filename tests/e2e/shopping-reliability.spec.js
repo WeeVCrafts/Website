@@ -207,7 +207,7 @@ test('Back/Forward restoration renews cancelled reads and reconciles saved state
 
 test('confirmed wishlist persistence, detail state, removal focus and empty state use the real API', async ({page}) => {
   const api = await request.newContext({baseURL:base});
-  const registered = await api.post('/api/v1/auth/register',{data:{email:`wishlist.qa.${Date.now()}.${Math.random().toString(36).slice(2)}@example.invalid`,password:'Wishlist-QA-2026!',display_name:'Wishlist QA',phone:'+919876543210',accepted_terms:true}});
+  const registered = await api.post('/api/v1/auth/register',{data:{email:`wishlist.qa.${Date.now()}.${Math.random().toString(36).slice(2)}@example.invalid`,username:`wishlist_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,password:'Wishlist-QA-2026!',display_name:'Wishlist QA',phone:'+919876543210',accepted_terms:true}});
   expect(registered.status()).toBe(201);
   const state = await api.storageState();await page.context().addCookies(state.cookies);
   await ready(page, false);

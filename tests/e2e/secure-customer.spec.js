@@ -18,7 +18,7 @@ async function login(page, account) {
 }
 async function customer(page) {
   const email = `secure.${Date.now()}.${Math.random().toString(36).slice(2)}@example.invalid`;
-  const response = await page.request.post('/api/v1/auth/register', { data: { email, password, display_name: 'QA Customer', phone: '+919876543210', accepted_terms: true } });
+  const response = await page.request.post('/api/v1/auth/register', { data: { email, username: 'secure_' + require('node:crypto').randomBytes(8).toString('hex'), password, display_name: 'QA Customer', phone: '+919876543210', accepted_terms: true } });
   expect(response.status()).toBe(201);
   return response.json();
 }

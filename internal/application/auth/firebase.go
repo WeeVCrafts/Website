@@ -28,6 +28,7 @@ func NewFirebaseService(p ports.FirebaseProvider, r ports.FirebaseIdentityReposi
 }
 
 type FirebaseInput struct {
+	Username      string `json:"username"`
 	Token         string `json:"id_token"`
 	Phone         string `json:"phone"`
 	AcceptedTerms bool   `json:"accepted_terms"`
@@ -70,8 +71,51 @@ func (s *FirebaseService) Login(ctx context.Context, in FirebaseInput) (identity
 	if phone != "" && !validPhone(phone) {
 		return identity.User{}, ErrInvalidRegistration
 	}
-	return s.repository.ResolveFirebase(ctx, proof, phone, in.AcceptedTerms, linkID)
+	username := ""
+	if strings.TrimSpace(in.Username) != "" {
+		username, err = normalizeUsername(in.Username)
+		if err != nil {
+			return identity.User{}, err
+		}
+	}
+	return s.repository.ResolveFirebase(ctx, proof, phone, username, in.AcceptedTerms, linkID)
 }
+
+type firebasePasswordAuthenticator interface {
+	PasswordSignIn(context.Context, string, string) (string, error)
+}
+
+type firebaseUsernameRepository interface {
+	FirebaseCustomerByUsername(context.Context, string) (identity.User, string, error)
+}
+
+func (s *FirebaseService) loginByUsername(ctx context.Context, login, password string) (identity.User, error) {
+	username, err := normalizeUsername(login)
+	provider, canAuthenticate := s.provider.(firebasePasswordAuthenticator)
+	repository, canLookup := s.repository.(firebaseUsernameRepository)
+	if err != nil || !canAuthenticate || !canLookup || password == "" || len(password) > 1024 {
+		return identity.User{}, ErrInvalidCredentials
+	}
+	user, uid, err := repository.FirebaseCustomerByUsername(ctx, username)
+	if err != nil {
+		return identity.User{}, ErrInvalidCredentials
+	}
+	token, err := provider.PasswordSignIn(ctx, user.Email, password)
+	if err != nil {
+		return identity.User{}, ErrInvalidCredentials
+	}
+	proof, err := s.VerifyIdentity(ctx, token)
+	if err != nil || proof.Provider != "password" || proof.UID != uid || proof.Email != user.Email {
+		return identity.User{}, ErrInvalidCredentials
+	}
+	current, currentUID, err := repository.FirebaseCustomerByUsername(ctx, username)
+	if err != nil || current.ID != user.ID || current.Email != proof.Email || currentUID != proof.UID {
+		return identity.User{}, ErrInvalidCredentials
+	}
+	current.EmailVerified = proof.EmailVerified
+	return current, nil
+}
+
 func (s *FirebaseService) IsSessionActive(ctx context.Context, id int64, created time.Time) (bool, error) {
 	active, err := s.checker.IsSessionActive(ctx, id, created)
 	if err != nil || !active {

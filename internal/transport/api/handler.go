@@ -162,6 +162,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input struct {
+		Username      string `json:"username"`
 		Email         string `json:"email"`
 		DisplayName   string `json:"display_name"`
 		Phone         string `json:"phone"`
@@ -172,9 +173,18 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Email: input.Email, DisplayName: input.DisplayName, Phone: input.Phone, Password: input.Password, AcceptedTerms: input.AcceptedTerms})
+	user, err := h.auth.Register(r.Context(), applicationauth.RegisterInput{Username: input.Username, Email: input.Email, DisplayName: input.DisplayName, Phone: input.Phone, Password: input.Password, AcceptedTerms: input.AcceptedTerms})
 	if err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "REGISTRATION_INVALID", "Registration details and required privacy notice agreement are invalid.")
+		switch {
+		case errors.Is(err, ports.ErrUsernameTaken):
+			writeError(w, http.StatusConflict, "USERNAME_TAKEN", applicationauth.UsernameTakenMessage)
+		case errors.Is(err, ports.ErrUserAlreadyExists):
+			writeError(w, http.StatusConflict, "EMAIL_TAKEN", "An account with that email already exists.")
+		case errors.Is(err, applicationauth.ErrInvalidUsername):
+			writeError(w, http.StatusUnprocessableEntity, "USERNAME_INVALID", applicationauth.ErrInvalidUsername.Error()+".")
+		default:
+			writeError(w, http.StatusUnprocessableEntity, "REGISTRATION_INVALID", "Registration details and required privacy notice agreement are invalid.")
+		}
 		return
 	}
 	session, err := h.sessions.Start(r.Context(), user, r.UserAgent(), "", applicationauth.DefaultSessionTTL)
@@ -201,7 +211,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	user, err := h.auth.Login(r.Context(), input.Email, input.Password)
+	user, err := h.auth.LoginWithUsername(r.Context(), input.Email, input.Password)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "Email or password is incorrect.")
 		return

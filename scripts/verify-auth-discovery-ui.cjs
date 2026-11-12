@@ -70,7 +70,7 @@ async function main(){
    await page.goto('/register');const register=page.locator('[data-backend-auth=register]');let registrations=0;
    await page.route('**/api/v1/auth/register',route=>{registrations++;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{code:'QA_UNAVAILABLE',message:'Account creation is unavailable. Please retry.'}})});});
    await register.getByRole('button',{name:'Create account',exact:true}).click();await expect(page.locator('#register-name')).toBeFocused();assert.equal(registrations,0);
-   await page.getByLabel('Full name',{exact:true}).fill('UI Auth Review');await page.getByLabel('Email address',{exact:true}).fill('auth-review@weevcrafts.local');
+   await page.getByLabel('Full name',{exact:true}).fill('UI Auth Review');await page.getByRole('textbox',{name:'Username',exact:true}).fill('ui_auth_review');await page.getByLabel('Email address',{exact:true}).fill('auth-review@weevcrafts.local');
    await page.getByLabel('Phone number',{exact:true}).fill('9876543210');await page.getByLabel('Password',{exact:true}).fill('WeeVCrafts-Demo-2026!');
    await register.getByRole('button',{name:'Create account',exact:true}).click();await expect(register.locator('[name=consent]')).toHaveAttribute('aria-invalid','true');assert.equal(registrations,0);
    await register.locator('[name=consent]').check();await register.getByRole('button',{name:'Create account',exact:true}).click();
@@ -106,6 +106,7 @@ async function main(){
    await check('native signup succeeds on one isolated demo account and keeps return path',async()=>{
     await create.goto('/register?next=%2Fproducts%2Fblue-tote');
     await create.getByLabel('Full name',{exact:true}).fill('UI Auth Review');
+    await create.getByRole('textbox',{name:'Username',exact:true}).fill('ui_auth_'+Date.now());
     await create.getByLabel('Email address',{exact:true}).fill('ui-auth-review-'+Date.now()+'@weevcrafts.local');
     await create.getByLabel('Phone number',{exact:true}).fill('9876543210');
     await create.getByLabel('Password',{exact:true}).fill('WeeVCrafts-Demo-2026!');
