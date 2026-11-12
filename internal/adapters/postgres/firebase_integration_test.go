@@ -66,8 +66,14 @@ func TestFirebaseAccountOwnershipAndExplicitLink(t *testing.T) {
 		t.Fatal(err)
 	}
 	proof.UID = uid
-	if _, found, err := r.FirebaseEmailRecipient(ctx, 0, email); err != nil || found {
-		t.Fatal("seller received customer recovery")
+	if recipient, found, err := r.FirebaseEmailRecipient(ctx, 0, email); err != nil || !found || recipient.UID != uid {
+		t.Fatal("existing Firebase seller cannot recover their password")
+	}
+	if _, found, err := r.FirebaseEmailRecipient(ctx, id, ""); err != nil || found {
+		t.Fatal("seller received customer email verification")
+	}
+	if account, boundUID, err := r.FirebasePasswordAccount(ctx, email); err != nil || boundUID != uid || len(account.Roles) != 1 || account.Roles[0] != "seller" {
+		t.Fatalf("seller password sign-in lookup failed: %v", err)
 	}
 	if allowed, err := r.FirebaseVerificationAllowed(ctx, email); err != nil || allowed {
 		t.Fatal("seller received customer verification")

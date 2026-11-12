@@ -123,11 +123,11 @@ func (f firebasePasswordFixture) PasswordSignIn(_ context.Context, email, passwo
 
 type firebaseUsernameFixture struct{ firebaseIdentityStore }
 
-func (r *firebaseUsernameFixture) FirebaseCustomerByUsername(_ context.Context, username string) (identity.User, string, error) {
-	if username != "customer_one" {
+func (r *firebaseUsernameFixture) FirebasePasswordAccount(_ context.Context, username string) (identity.User, string, error) {
+	if username != "customer_one" && username != "customer@example.invalid" {
 		return identity.User{}, "", ports.ErrCredentialsNotFound
 	}
-	return identity.User{ID: 12, Email: "customer@example.invalid"}, r.uid, nil
+	return identity.User{ID: 12, Email: "customer@example.invalid", Roles: []identity.Role{identity.RoleSeller}}, r.uid, nil
 }
 
 func TestFirebaseUsernameLoginRequiresPasswordAndMatchingUID(t *testing.T) {
@@ -139,6 +139,10 @@ func TestFirebaseUsernameLoginRequiresPasswordAndMatchingUID(t *testing.T) {
 	user, err := native.LoginWithUsername(context.Background(), " CUSTOMER_ONE ", "correct-password")
 	if err != nil || user.ID != 12 {
 		t.Fatalf("bound username login: id=%d err=%v", user.ID, err)
+	}
+	user, err = native.LoginWithUsername(context.Background(), " CUSTOMER@EXAMPLE.INVALID ", "correct-password")
+	if err != nil || user.ID != 12 || len(user.Roles) != 1 || user.Roles[0] != identity.RoleSeller {
+		t.Fatalf("bound email login did not retain seller role: id=%d err=%v", user.ID, err)
 	}
 	if _, err := native.LoginWithUsername(context.Background(), "customer_one", "wrong-password"); !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("incorrect password: %v", err)

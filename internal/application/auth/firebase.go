@@ -85,18 +85,25 @@ type firebasePasswordAuthenticator interface {
 	PasswordSignIn(context.Context, string, string) (string, error)
 }
 
-type firebaseUsernameRepository interface {
-	FirebaseCustomerByUsername(context.Context, string) (identity.User, string, error)
+type firebasePasswordAccountRepository interface {
+	FirebasePasswordAccount(context.Context, string) (identity.User, string, error)
 }
 
-func (s *FirebaseService) loginByUsername(ctx context.Context, login, password string) (identity.User, error) {
-	username, err := normalizeUsername(login)
+func (s *FirebaseService) loginWithPassword(ctx context.Context, login, password string) (identity.User, error) {
+	login = normalizeEmail(login)
+	if !validEmail(login) {
+		var err error
+		login, err = normalizeUsername(login)
+		if err != nil {
+			return identity.User{}, ErrInvalidCredentials
+		}
+	}
 	provider, canAuthenticate := s.provider.(firebasePasswordAuthenticator)
-	repository, canLookup := s.repository.(firebaseUsernameRepository)
-	if err != nil || !canAuthenticate || !canLookup || password == "" || len(password) > 1024 {
+	repository, canLookup := s.repository.(firebasePasswordAccountRepository)
+	if !canAuthenticate || !canLookup || password == "" || len(password) > 1024 {
 		return identity.User{}, ErrInvalidCredentials
 	}
-	user, uid, err := repository.FirebaseCustomerByUsername(ctx, username)
+	user, uid, err := repository.FirebasePasswordAccount(ctx, login)
 	if err != nil {
 		return identity.User{}, ErrInvalidCredentials
 	}
@@ -108,7 +115,7 @@ func (s *FirebaseService) loginByUsername(ctx context.Context, login, password s
 	if err != nil || proof.Provider != "password" || proof.UID != uid || proof.Email != user.Email {
 		return identity.User{}, ErrInvalidCredentials
 	}
-	current, currentUID, err := repository.FirebaseCustomerByUsername(ctx, username)
+	current, currentUID, err := repository.FirebasePasswordAccount(ctx, login)
 	if err != nil || current.ID != user.ID || current.Email != proof.Email || currentUID != proof.UID {
 		return identity.User{}, ErrInvalidCredentials
 	}

@@ -74,10 +74,28 @@ func (s *RecoveryService) sendFirebaseReset(ctx context.Context, proof ports.Fir
 	if err != nil {
 		return recoveryUnavailable(ctx, "firebase_link")
 	}
-	if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: PasswordResetSubject, ActionURL: link}) != nil {
+	if s.sender.Send(ctx, ports.EmailMessage{To: proof.Email, DisplayName: proof.Name, Subject: PasswordResetSubject, ActionURL: s.firebaseResetURL(link)}) != nil {
 		return recoveryUnavailable(ctx, "firebase_send")
 	}
 	return nil
+}
+
+func (s *RecoveryService) firebaseResetURL(link string) string {
+	base, err := url.Parse(s.baseURL)
+	if err != nil || base.Scheme != "https" || base.Host == "" {
+		return link
+	}
+	action, err := url.Parse(link)
+	if err != nil || action.Scheme != "https" || action.Host == "" {
+		return link
+	}
+	params := action.Query()
+	if params.Get("mode") != "resetPassword" || params.Get("oobCode") == "" {
+		return link
+	}
+	return s.baseURL + "/reset-password?" + url.Values{
+		"mode": {"resetPassword"}, "oobCode": {params.Get("oobCode")},
+	}.Encode()
 }
 
 func (s *RecoveryService) recoverUnfinishedSignup(ctx context.Context, email string) error {

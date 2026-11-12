@@ -19,7 +19,9 @@ func NewFirebaseRepository(pool *pgxpool.Pool) *FirebaseRepository { return &Fir
 
 func (r *FirebaseRepository) FirebaseEmailRecipient(ctx context.Context, id int64, email string) (ports.FirebaseIdentity, bool, error) {
 	var recipient ports.FirebaseIdentity
-	err := r.pool.QueryRow(ctx, `SELECT f.firebase_uid,u.email,u.display_name FROM firebase_identities f JOIN users u ON u.id=f.user_id WHERE (u.id=$1 OR ($1=0 AND u.email=$2)) AND u.status='active' AND (SELECT count(*) FROM user_roles WHERE user_id=u.id)=1 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=u.id AND role_slug='customer')`, id, email).Scan(&recipient.UID, &recipient.Email, &recipient.Name)
+	err := r.pool.QueryRow(ctx, `SELECT f.firebase_uid,u.email,u.display_name FROM firebase_identities f JOIN users u ON u.id=f.user_id WHERE u.status='active'
+		AND (SELECT array_agg(role_slug) FROM user_roles WHERE user_id=u.id) IN (ARRAY['customer']::text[], ARRAY['seller']::text[])
+		AND (($1=0 AND u.email=$2) OR (u.id=$1 AND $1>0 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=u.id AND role_slug='customer')))`, id, email).Scan(&recipient.UID, &recipient.Email, &recipient.Name)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return recipient, false, nil
 	}
@@ -37,17 +39,20 @@ func (r *FirebaseRepository) FirebaseVerificationAllowed(ctx context.Context, em
 	err := r.pool.QueryRow(ctx, `SELECT NOT EXISTS(SELECT 1 FROM users WHERE email=$1) OR EXISTS(SELECT 1 FROM users u WHERE u.email=$1 AND u.status='active' AND (SELECT count(*) FROM user_roles WHERE user_id=u.id)=1 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=u.id AND role_slug='customer'))`, email).Scan(&allowed)
 	return allowed, err
 }
-func (r *FirebaseRepository) FirebaseCustomerByUsername(ctx context.Context, username string) (identity.User, string, error) {
+func (r *FirebaseRepository) FirebasePasswordAccount(ctx context.Context, login string) (identity.User, string, error) {
 	var user identity.User
 	var uid string
+	var role identity.Role
 	err := r.pool.QueryRow(ctx, `
-		SELECT u.id, u.email, u.display_name, u.status, u.created_at, f.firebase_uid
+		SELECT u.id, u.email, u.display_name, u.status, u.created_at, f.firebase_uid, r.role_slug
 		FROM users u JOIN firebase_identities f ON f.user_id = u.id
-		WHERE u.username = $1 AND u.status = 'active'
-		  AND (SELECT array_agg(role_slug) FROM user_roles WHERE user_id = u.id) = ARRAY['customer']::text[]
-	`, username).Scan(&user.ID, &user.Email, &user.DisplayName, &user.Status, &user.CreatedAt, &uid)
+		JOIN user_roles r ON r.user_id = u.id
+		WHERE (u.username = $1 OR u.email = $1) AND u.status = 'active'
+		  AND r.role_slug IN ('customer', 'seller')
+		  AND (SELECT COUNT(*) FROM user_roles WHERE user_id = u.id) = 1
+	`, login).Scan(&user.ID, &user.Email, &user.DisplayName, &user.Status, &user.CreatedAt, &uid, &role)
 	if err == nil {
-		user.Roles = []identity.Role{identity.RoleCustomer}
+		user.Roles = []identity.Role{role}
 	}
 	return user, uid, err
 }

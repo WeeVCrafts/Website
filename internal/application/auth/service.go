@@ -91,8 +91,8 @@ func (s *Service) WithFirebaseUsernameLogin(firebase *FirebaseService) {
 
 func (s *Service) LoginWithUsername(ctx context.Context, login, password string) (domainidentity.User, error) {
 	user, err := s.Login(ctx, login, password)
-	if s.firebaseUsernameLogin != nil && errors.Is(err, ErrInvalidCredentials) && !strings.Contains(login, "@") {
-		return s.firebaseUsernameLogin.loginByUsername(ctx, login, password)
+	if s.firebaseUsernameLogin != nil && errors.Is(err, ErrInvalidCredentials) {
+		return s.firebaseUsernameLogin.loginWithPassword(ctx, login, password)
 	}
 	return user, err
 }

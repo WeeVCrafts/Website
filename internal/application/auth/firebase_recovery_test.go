@@ -25,7 +25,7 @@ func (f *firebaseMailFixture) FirebaseVerificationAllowed(context.Context, strin
 func (f *firebaseMailFixture) PasswordResetLink(_ context.Context, _ ports.FirebaseIdentity, returnURL string) (string, error) {
 	f.calls++
 	f.returnURL = returnURL
-	return "https://weevcrafts.com/reset-password?oobCode=fixture", f.err
+	return "https://project.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=fixture&continueUrl=https%3A%2F%2Fweevcrafts.com%2Flogin", f.err
 }
 
 func (f *firebaseMailFixture) RecoveryEmailExists(context.Context, string) (bool, error) {
@@ -69,6 +69,9 @@ func TestFirebaseRecoveryUsesBoundIdentityAndPreservesNativeFallback(t *testing.
 	}
 	if mail.message.To != f.proof.Email || mail.message.Subject != PasswordResetSubject || native.resetHash != "" {
 		t.Fatal("Firebase reset did not use bound identity")
+	}
+	if mail.message.ActionURL != "https://weevcrafts.com/reset-password?mode=resetPassword&oobCode=fixture" {
+		t.Fatalf("Firebase reset email did not use the storefront action: %s", mail.message.ActionURL)
 	}
 	f.err = ports.ErrCredentialsNotFound
 	mail.message = ports.EmailMessage{}
