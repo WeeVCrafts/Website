@@ -8,7 +8,7 @@ COPY internal ./internal
 COPY tailwind.config.js ./
 RUN npm run assets:images && npm run css:build
 
-FROM golang:1.26.10-alpine AS build
+FROM golang:1.26.11-alpine AS build
 
 WORKDIR /src
 COPY go.mod go.sum* ./

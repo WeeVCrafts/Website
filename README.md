@@ -198,7 +198,7 @@ Verify successful checks on the exact revision, the running deployment SHA and
 `/health/ready` after each release. Branch selection does not enable publication
 or checkout; the existing production release gates still apply.
 
-Use Go 1.26.10 or newer within the supported Go 1.26 series. The module, CI and
+Use Go 1.26.11 or newer within the supported Go 1.26 series. The module, CI and
 container build require this security patch level.
 
 Templates and checked-in CSS are build artifacts. When their sources change:
