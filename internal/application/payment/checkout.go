@@ -12,6 +12,7 @@ import (
 )
 
 var ErrCheckoutPaymentInvalid = errors.New("checkout payment could not be verified")
+var ErrCheckoutPaymentUnavailable = errors.New("checkout payment verification is unavailable")
 
 // CheckoutVerificationService verifies the Razorpay Checkout signature and
 // records the resulting authorization through the same idempotent repository
@@ -35,11 +36,17 @@ func (s *CheckoutVerificationService) Verify(ctx context.Context, userID int64, 
 	}
 	record, err := s.orders.GetPaymentOrder(ctx, userID, orderNumber)
 	if err != nil {
-		return ErrCheckoutPaymentInvalid
+		if errors.Is(err, ports.ErrPaymentNotFound) {
+			return ErrCheckoutPaymentInvalid
+		}
+		return ErrCheckoutPaymentUnavailable
 	}
 	if record.Provider != "razorpay" || record.OrderStatus != "pending_payment" || record.ProviderOrderID == "" || record.ProviderOrderID != verification.ProviderOrderID || record.AmountCents <= 0 || record.Currency == "" {
 		return ErrCheckoutPaymentInvalid
 	}
+	// Verify against the provider order ID persisted on the server. The
+	// callback value is checked above, but never becomes the HMAC source.
+	verification.ProviderOrderID = record.ProviderOrderID
 	if err := s.gateway.VerifyPayment(ctx, verification); err != nil {
 		return ErrCheckoutPaymentInvalid
 	}
@@ -55,7 +62,7 @@ func (s *CheckoutVerificationService) Verify(ctx context.Context, userID int64, 
 		return ErrCheckoutPaymentInvalid
 	}
 	if _, err := s.webhooks.ProcessWebhook(ctx, webhook, payload); err != nil {
-		return err
+		return ErrCheckoutPaymentUnavailable
 	}
 	return nil
 }

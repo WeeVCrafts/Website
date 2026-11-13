@@ -9,6 +9,7 @@ import (
 )
 
 var ErrPaymentCreationFailed = errors.New("payment order could not be created")
+var ErrPaymentAmountTooSmall = errors.New("payment amount is below the provider minimum")
 
 type OrderService struct {
 	gateway    ports.PaymentGateway
@@ -29,7 +30,10 @@ func (s *OrderService) Create(ctx context.Context, userID int64, orderNumber str
 	if err != nil {
 		return domaincommerce.PaymentIntent{}, err
 	}
-	if record.OrderStatus != "pending_payment" || (record.PaymentStatus != "created" && record.PaymentStatus != "pending") || record.AmountCents <= 0 || record.Currency == "" {
+	if record.AmountCents < 100 {
+		return domaincommerce.PaymentIntent{}, ErrPaymentAmountTooSmall
+	}
+	if record.OrderStatus != "pending_payment" || (record.PaymentStatus != "created" && record.PaymentStatus != "pending") || record.Currency == "" {
 		return domaincommerce.PaymentIntent{}, ports.ErrPaymentState
 	}
 	if payable, ok := s.repository.(ports.PaymentPayabilityRepository); ok {

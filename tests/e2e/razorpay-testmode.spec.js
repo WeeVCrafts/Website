@@ -47,7 +47,7 @@ test.describe('Razorpay sandbox in the isolated payment QA store', () => {
     if (await contactContinue.isVisible()) await contactContinue.click({ timeout: 3000 }).catch(() => {});
     await provider.getByText('Netbanking', { exact: true }).click();
     const bankPromise = context.waitForEvent('page');
-    await provider.getByText('Canara Bank', { exact: true }).first().click();
+    await provider.getByText('Bank of Baroda - Retail Banking', { exact: true }).first().click();
     const bank = await bankPromise;
     await expect(bank.locator('body')).toContainText('This is just a demo bank page.');
     const verificationPromise = page.waitForRequest(r => r.url().endsWith('/payment/verify') && r.method() === 'POST');

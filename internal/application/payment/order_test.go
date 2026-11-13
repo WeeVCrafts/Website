@@ -3,6 +3,7 @@ package payment
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/wecratfs/commerce/internal/ports"
@@ -92,5 +93,39 @@ func TestOrderServiceRejectsInconsistentGatewayAmount(t *testing.T) {
 	_, err := NewOrderService(gateway, repository).Create(context.Background(), 7, "WC-42")
 	if !errors.Is(err, ErrPaymentCreationFailed) {
 		t.Fatalf("expected inconsistent gateway response rejection, got %v", err)
+	}
+}
+
+func TestOrderServiceRejectsProviderMinimumBeforeReuseOrCreation(t *testing.T) {
+	for _, amount := range []int64{99, 0} {
+		t.Run(fmt.Sprintf("%d_paise", amount), func(t *testing.T) {
+			repository := &fakePaymentOrderRepository{record: ports.PaymentOrderRecord{
+				OrderID: 42, OrderNumber: "WC-42", OrderStatus: "pending_payment", Provider: "razorpay",
+				ProviderOrderID: "order_existing", PaymentStatus: "pending", AmountCents: amount, Currency: "INR",
+			}}
+			gateway := &fakePaymentGateway{order: ports.PaymentOrder{ProviderOrderID: "order_new", AmountCents: amount, Currency: "INR"}}
+			_, err := NewOrderService(gateway, repository).Create(context.Background(), 7, "WC-42")
+			if !errors.Is(err, ErrPaymentAmountTooSmall) {
+				t.Fatalf("amount %d returned %v, want minimum error", amount, err)
+			}
+			if gateway.created != 0 {
+				t.Fatalf("amount %d called provider %d times", amount, gateway.created)
+			}
+		})
+	}
+}
+
+func TestOrderServiceAcceptsExactlyProviderMinimum(t *testing.T) {
+	repository := &fakePaymentOrderRepository{record: ports.PaymentOrderRecord{
+		OrderID: 42, OrderNumber: "WC-42", OrderStatus: "pending_payment", Provider: "razorpay",
+		PaymentStatus: "created", AmountCents: 100, Currency: "INR",
+	}}
+	gateway := &fakePaymentGateway{order: ports.PaymentOrder{ProviderOrderID: "order_min", AmountCents: 100, Currency: "INR"}}
+	intent, err := NewOrderService(gateway, repository).Create(context.Background(), 7, "WC-42")
+	if err != nil {
+		t.Fatalf("100-paise order rejected: %v", err)
+	}
+	if gateway.created != 1 || intent.AmountCents != 100 {
+		t.Fatalf("minimum order was not created: calls=%d intent=%+v", gateway.created, intent)
 	}
 }

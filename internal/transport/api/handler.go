@@ -436,8 +436,20 @@ func (h *Handler) Order(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) VerifyCheckoutPayment(w http.ResponseWriter, r *http.Request) {
 	session, ok := h.session(r)
-	if r.Method != http.MethodPost || !ok || h.checkoutPayment == nil || !h.validCSRF(r, session) {
-		writeError(w, http.StatusForbidden, "FORBIDDEN", "Authentication and CSRF validation are required.")
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Only POST is supported.")
+		return
+	}
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "Sign in to verify a payment.")
+		return
+	}
+	if h.checkoutPayment == nil {
+		writeError(w, http.StatusInternalServerError, "PAYMENT_VERIFICATION_UNAVAILABLE", "The payment could not be verified.")
+		return
+	}
+	if !h.validCSRF(r, session) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "CSRF validation is required.")
 		return
 	}
 	var input ports.PaymentVerification
@@ -451,7 +463,11 @@ func (h *Handler) VerifyCheckoutPayment(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := h.checkoutPayment.Verify(r.Context(), session.UserID, orderNumber, input); err != nil {
-		writeError(w, http.StatusUnprocessableEntity, "PAYMENT_VERIFICATION_FAILED", "The payment could not be verified. Check your order status before trying again.")
+		if errors.Is(err, applicationpayment.ErrCheckoutPaymentUnavailable) {
+			writeError(w, http.StatusInternalServerError, "PAYMENT_VERIFICATION_FAILED", "The payment could not be verified right now.")
+			return
+		}
+		writeError(w, http.StatusBadRequest, "PAYMENT_VERIFICATION_FAILED", "The payment could not be verified. Check your payment details and try again.")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"status": "authorized"}})
@@ -486,8 +502,20 @@ func (h *Handler) CancelOrder(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PaymentOrder(w http.ResponseWriter, r *http.Request) {
 	session, ok := h.session(r)
-	if r.Method != http.MethodPost || !ok || h.payment == nil || !h.validCSRF(r, session) {
-		writeError(w, http.StatusForbidden, "FORBIDDEN", "Authentication and CSRF validation are required.")
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Only POST is supported.")
+		return
+	}
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHENTICATED", "Sign in to create a payment order.")
+		return
+	}
+	if h.payment == nil {
+		writeError(w, http.StatusInternalServerError, "PAYMENT_ORDER_UNAVAILABLE", "The payment order could not be prepared.")
+		return
+	}
+	if !h.validCSRF(r, session) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "CSRF validation is required.")
 		return
 	}
 	path := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/orders/"), "/payment")
@@ -505,8 +533,12 @@ func (h *Handler) PaymentOrder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusConflict, "PAYMENT_NOT_PAYABLE", "This order is not available for payment.")
 		return
 	}
+	if errors.Is(err, applicationpayment.ErrPaymentAmountTooSmall) {
+		writeError(w, http.StatusBadRequest, "PAYMENT_AMOUNT_TOO_SMALL", "The payment amount must be at least 100 paise.")
+		return
+	}
 	if errors.Is(err, applicationpayment.ErrPaymentCreationFailed) {
-		writeError(w, http.StatusBadGateway, "PAYMENT_PROVIDER_UNAVAILABLE", "The payment provider could not prepare this order.")
+		writeError(w, http.StatusInternalServerError, "PAYMENT_ORDER_FAILED", "The payment order could not be prepared.")
 		return
 	}
 	if err != nil {
