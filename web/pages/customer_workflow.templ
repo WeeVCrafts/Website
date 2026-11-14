@@ -35,6 +35,9 @@ templ OrderShipmentProgress(order viewmodels.Order) {
     }
     for _, shipment := range order.Shipments {
       <article class="shipment-card"><h3>{ shipment.SellerName }</h3><p><span class={ "ui-status " + components.StatusTone(shipment.Status) }>{ components.StatusLabel(shipment.Status) }</span></p>
+        if shipment.DeliveryUpdate == "under_review" {
+          <p>Your delivery needs attention. Contact support with this order number for an update.</p>
+        }
         <ol class="shipment-timeline" aria-label={ shipment.SellerName + " shipment steps" }>
           for _, step := range shipmentSteps(shipment.Status) {
             <li class={ step.Class }><span class="material-symbols-outlined" aria-hidden="true">{ step.Icon }</span><span>{ step.Label }</span><small>{ step.State }</small></li>
@@ -43,7 +46,7 @@ templ OrderShipmentProgress(order viewmodels.Order) {
         if shipment.TrackingNumber != "" {
           <dl><div><dt>Courier</dt><dd>{ shipment.Carrier }</dd></div><div><dt>Tracking number</dt><dd>{ shipment.TrackingNumber }</dd></div></dl>
         }
-        <p class="muted">Updated { shipment.UpdatedAt.Format("2 Jan 2006, 15:04 MST") }. These updates are recorded by your maker.</p>
+        <p class="muted">Updated { shipment.UpdatedAt.Format("2 Jan 2006, 15:04 MST") }.</p>
       </article>
     }
   </section>
@@ -52,18 +55,22 @@ templ OrderShipmentProgress(order viewmodels.Order) {
 templ OrderStatusRegion(order viewmodels.Order) {
   <div data-order-status-region data-order-number={ order.Number }>
     <div class="order-detail-status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span><h2>{ orderStatusTitle(order) }</h2><p>{ orderStatusCopy(order) }</p></div>
-    @OrderShipmentProgress(order)
+    if order.Confirmed() || order.HasPaymentReceipt() {
+      @OrderShipmentProgress(order)
+    } else if !order.PaymentReview && order.State != "cancelled" && order.State != "refunded" {
+      <a class="outline-button" href={ orderPath(order.Number) + "/confirmation" }>Check payment status</a>
+    }
   </div>
 }
 
 templ OrderPaymentRecovery(p viewmodels.CustomerPage) {
-  if !p.NoPaymentDemo && p.SelectedOrder.CanPay && p.PaymentReady {
-    <section class="utility-card"><h2>Complete your payment</h2><p>Your order is saved. Continue payment for this order without creating another one.</p>
+  if canContinuePayment(p) {
+    <div class="payment-recovery"><p>Continue payment using this saved reference.</p>
       if razorpayTestMode(p) {
         <p>Razorpay test mode. Use test payment details only. No real money will be charged.</p>
       }
       <div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } data-contact-name={p.SelectedOrder.ContactName} data-contact-phone={p.SelectedOrder.ContactPhone} data-contact-email={p.UserEmail} hidden></div>
       <button class="primary-button" type="button" data-retry-payment={ p.SelectedOrder.Number }>Continue payment</button><p data-backend-message role="status"></p>
-    </section>
+    </div>
   }
 }

@@ -5,6 +5,7 @@ import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	CanManageDelivery                                                                bool
 	Insights                                                                         AdminInsights
 	Pagination                                                                       PortalPagination
 	ActorID                                                                          int64
@@ -13,6 +14,7 @@ type AdminPage struct {
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                                  string
 	SettlementRoot                                                                   string
 	OrderStage                                                                       string
+	OrderQueueUnavailable                                                            bool
 	CSRFToken                                                                        string
 	CanFinance, CanSecurity, IsFinance, IsOperations, CanManageCatalog               bool
 	Stats                                                                            []AdminStat
@@ -72,6 +74,7 @@ type AdminProductEditor struct {
 }
 
 type ProductVariant struct {
+	ShippingWeight, ShippingLength, ShippingWidth, ShippingHeight          string
 	ID, Name, SKU, PriceCents, CompareAtCents, Available, Reserved, Status string
 	Price, CompareAt, Discount, StockMessage                               string
 	HasCompareAt, InStock                                                  bool
@@ -226,10 +229,25 @@ type SellerAdminOrder struct {
 }
 
 type SellerAdminOrderDetail struct {
+	Shiprocket                                                                                              *SellerShiprocketView
+	PaymentReview                                                                                           bool
 	SellerID, Number, Date, Customer, OrderStatus, Status, Payment, Carrier, TrackingNumber, Note, Revision string
 	SellerName, RecipientName, Line1, Line2, City, State, PostalCode, CountryCode                           string
 	Subtotal, Currency                                                                                      string
 	Items                                                                                                   []SellerAdminOrderItem
+}
+
+type SellerShiprocketView struct {
+	ManualFallback, Cancelled                                                                 bool
+	Sandbox, CanCreate, Managed, CanManage, CanPickup, Unavailable                            bool
+	Reference, PickupLocation, PendingAction, Status, AWB, Courier, PickupReference, LabelURL string
+	ManifestURL                                                                               string
+	CourierOptions                                                                            []SellerCourierOption
+	CourierOptionsRequested, CourierOptionsUnavailable, CanChooseCourier                      bool
+}
+
+type SellerCourierOption struct {
+	ID, Name, Rate, Days string
 }
 
 type SellerAdminOrderItem struct {

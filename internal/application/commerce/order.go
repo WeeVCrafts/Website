@@ -22,6 +22,15 @@ type OrderService struct {
 	repository ports.OrderRepository
 }
 
+func (s *OrderService) CheckDelivery(ctx context.Context, userID, cartID int64, pin string) error {
+	if repo, ok := s.repository.(interface {
+		CheckDelivery(context.Context, int64, int64, string) error
+	}); ok {
+		return repo.CheckDelivery(ctx, userID, cartID, pin)
+	}
+	return nil
+}
+
 func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon string) (domaincommerce.CheckoutQuote, error) {
 	if userID <= 0 || cartID <= 0 {
 		return domaincommerce.CheckoutQuote{}, ports.ErrForbidden

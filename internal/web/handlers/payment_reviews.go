@@ -112,7 +112,7 @@ func (h *LivePortalHandler) servePaymentReviews(w http.ResponseWriter, r *http.R
 		}
 		return true
 	}
-	page := viewmodels.AdminPage{Active: "finance", NavActive: "finance", Title: "Payment reviews", Subtitle: "Resolve captured payments held outside normal checkout. Fulfilment and payout stay blocked while a review is open.", PortalRoot: root, SettlementRoot: root + "/finance", PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, ActorID: session.UserID, CanSecurity: role == domainidentity.RoleSuperAdmin, Notice: r.URL.Query().Get("notice"), DataWarning: failure}
+	page := viewmodels.AdminPage{Active: "finance", NavActive: "finance", Title: "Payment reviews", Subtitle: "Investigate payment setup exceptions and captured payments held outside normal checkout.", PortalRoot: root, SettlementRoot: root + "/finance", PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, ActorID: session.UserID, CanSecurity: role == domainidentity.RoleSuperAdmin, Notice: r.URL.Query().Get("notice"), DataWarning: failure}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_ = adminpages.PaymentReviews(page, cases, failedID, reason).Render(r.Context(), w)
 	return true

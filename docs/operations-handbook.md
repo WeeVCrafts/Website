@@ -95,17 +95,112 @@ For dispatch:
 1. Open **Orders** (`/seller-admin/orders`) and the specific order. Confirm seller
    items/variants, recorded payment, holds and the permitted next stage. A pending
    or held payment must not be treated as dispatch authorization.
-2. Inspect, pick and pack the actual items. Book shipping outside WeevCrafts under
-   the approved serviceability/handling policy. Retain the courier handover record.
-3. Save the permitted fulfilment transition and enter the real carrier/tracking
-   details when required. Inspect the saved order and customer-visible history.
-   These are seller-recorded updates, not independent courier scans.
-4. Print parcel/address information when available. The printout does not purchase
-   postage, create a courier booking or prove collection/delivery.
+2. Inspect, pick and pack the actual items. For a configured Shiprocket pickup
+   location, enter the packed weight and dimensions and create the seller's
+   shipment. Assign a courier, schedule pickup and open the provider label.
+   Retain the courier handover record.
+3. For manual dispatch, book with the approved courier and save the real carrier
+   and tracking details. For a live Shiprocket parcel, the app updates fulfilment
+   from verified Shiprocket status. A waybill alone leaves the order at Packing.
+4. Use the provider label for a Shiprocket parcel. The standard order printout
+   contains parcel/address information for manual dispatch.
 5. After a conflict, reload before retrying. After a timeout, inspect the saved
    stage and tracking before submitting again. Escalate lost parcels, RTO, damage,
    held payments or invalid transitions to company support; do not invent tracking
    events, deliver an order through support closure or repeatedly advance stages.
+
+Shiprocket is disabled by default. Use a private staging deployment and synthetic
+buyers, addresses and parcels. In the deployment secret settings, supply
+`WECRATFS_SHIPROCKET_MODE=sandbox`, `SHIPROCKET_API_EMAIL` and
+`SHIPROCKET_API_PASSWORD` for a dedicated Shiprocket API user. Configure every
+participating seller using its WeevCrafts seller ID. For example
+
+```dotenv
+SHIPROCKET_PICKUP_LOCATIONS={"12":"Seller Depot"}
+SHIPROCKET_PARCEL_PROFILES={"12":{"postal_code":"110030","packing_grams":50,"packing_cm":2}}
+WECRATFS_SHIPROCKET_BOOKINGS_ENABLED=true
+```
+
+Use the exact Shiprocket pickup name and PIN. Weigh and measure each sellable
+variant in the seller or company product editor. Enter all four shipping fields
+in grams and whole centimetres. Checkout estimates one parcel per seller by
+summing weight, stacking item heights and adding the configured packing
+allowance. Check estimates against representative multi-item parcels. The seller
+enters the actual packed measurements when booking.
+
+Run `wecratfs check-shiprocket` in the staging container or
+`go run ./cmd/website check-shiprocket` from an equivalent environment. The command
+checks the provider account and pickup names and PINs. With bookings enabled it
+also checks active seller mappings and approved active variant dimensions in
+PostgreSQL. It prints affected seller IDs and creates no shipments. An HTTP 498
+during login requires Shiprocket to enable API access for the staging host.
+
+Configure the HTTPS `/webhooks/delivery` endpoint in Shiprocket. Set the same
+dedicated secret in Shiprocket and `SHIPROCKET_WEBHOOK_SECRET`. Use at least 32
+characters. The receiver queues a status read after matching a saved parcel.
+The worker also polls the provider. Sandbox bookings do not advance live
+fulfilment. Production uses `WECRATFS_SHIPROCKET_MODE=live`, a separate API user,
+production pickup profiles and the webhook secret.
+
+### Verify a release candidate
+
+1. Run `wecratfs check-shiprocket` on the exact private staging image and record
+   its revision, migration level and readiness. At checkout use a known
+   serviceable PIN and a confirmed unserviceable PIN. Check that the first can
+   proceed and the second gets a PIN error before payment. Positive and negative
+   eligibility checks are cached for five minutes per app process and parcel route.
+2. Simulate a courier API timeout on staging. Complete a synthetic payment and
+   confirm **Delivery exceptions** under Admin Orders shows a checkout fallback.
+   The seller should be able to record a manual courier. Confirm
+   `shipping.courier_errors` rises on protected `/health/metrics`. Then induce a
+   pending provider operation and check that `pending_operations` and
+   `oldest_pending_seconds` reflect it. `backlog_available` signals whether the
+   database snapshot succeeded.
+3. Pay for a synthetic two-seller order. At Packing, create the parcel for one
+   seller, check available couriers, assign an AWB, schedule pickup, and open the
+   label and pickup manifest. Reload after each step and compare the saved
+   references with Shiprocket. Confirm callbacks receive HTTP 200 with the
+   configured token and HTTP 401 with an invalid token. Confirm that the second
+   seller cannot open or change the first seller’s parcel.
+4. With a separate prepaid parcel, request cancellation under **Delivery
+   exceptions** before the provider reaches Out for Pickup. Until verification
+   confirms cancellation, the seller cannot manually dispatch the live parcel.
+   After confirmation, assign the case to an operator and record a resolution
+   with **Allow manual dispatch**. Verify that both a second cancellation and
+   an after-pickup cancellation are refused. The original parcel remains in the
+   provider and local audit record. A cancellation does not issue a refund.
+5. Record the staging evidence for checkout, real provider label, live-status
+   mapping, cancellation, alerts and rollback. The sandbox tracking playground
+   can check callback delivery, while advancement requires an authenticated status
+   read for the same saved parcel. Use the provider-supported scan or simulation
+   to verify that one seller’s parcel advances independently and that the shopper
+   gets the same tracking information. Wait for the owner’s activation approval
+   before enabling bookings for the mapped sellers in production.
+
+If new bookings must stop, set `WECRATFS_SHIPROCKET_BOOKINGS_ENABLED=false` and
+keep the existing mode and credentials so polling, cancellations and document
+recovery can continue. Checkout resumes the standard delivery policy for new
+orders. A live parcel with a saved shipment record stays provider-managed until
+its terminal status or approved manual handoff. In a pending case, check the
+merchant reference in Shiprocket before taking any replacement action. Returns
+and post-pickup exceptions use the existing support process.
+
+The 14 November 2026 playground rehearsal authenticated the sandbox API user,
+registered a synthetic depot and created one prepaid order. Order details and
+courier serviceability returned successfully. Blue Dart, Xpressbees Surface,
+DTDC 500g and India Post returned no waybill. A repeat check used the saved parcel's
+actual pickup and delivery PIN codes. Shiprocket listed Shadowfax Surface as
+serviceable, but assignment returned HTTP 200 with `awb_assign_status: 0` and
+`Awb Assignment Failed`. Ekart Logistics Surface subsequently issued waybill
+`SRTP2190434957` for sandbox shipment `352594652`. The playground confirmed pickup
+and returned a manifest PDF URL. The label endpoint failed both before and after
+manifest generation, and the combined label and invoice request reported one
+failed document. The waybill lookup returned no tracking scans. Direct
+authentication from the local app host returned HTTP 498. Label generation,
+delivery scans and hosted app-to-sandbox access still require verification.
+The local callback rehearsal verified rejection of invalid credentials, exact
+matching of a known parcel, and replay-safe delivery updates in the shopper's
+order. No hosted callback URL has been registered for this candidate.
 
 ## Seller returns, private confirmations and earnings
 
@@ -241,7 +336,7 @@ live incident rehearsal is claimed by this handbook.
 | Seller status | Business approval/availability; independent from account role and product review. |
 | Product status | Draft/review/approved/archived state; independent from stock and seller availability. |
 | Payment status | Provider-confirmed financial state; independent from fulfilment and support case state. |
-| Fulfilment status | Permitted seller-recorded progress and tracking; not a courier scan. |
+| Fulfilment status | Seller-recorded progress for manual parcels and verified courier progress for live Shiprocket parcels. |
 | Return status | Company return decision/receipt workflow; not a completed refund. |
 | Refund status | Durable submission/provider/recovery state; unknown does not mean failed. |
 | Settlement status | Batch preparation/approval/transfer confirmation; approved does not mean paid. |

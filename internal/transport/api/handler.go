@@ -363,6 +363,10 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 			writeError(w, http.StatusUnprocessableEntity, "INSUFFICIENT_STOCK", "One or more items in your cart are currently out of stock.")
 			return
 		}
+		if errors.Is(err, ports.ErrShippingParcelMissing) {
+			writeError(w, http.StatusUnprocessableEntity, "PARCEL_UNAVAILABLE", "One or more items are temporarily unavailable for delivery. Your cart is saved.")
+			return
+		}
 		if errors.Is(err, ports.ErrDeliveryUnavailable) {
 			writeError(w, http.StatusUnprocessableEntity, "DELIVERY_UNAVAILABLE", "Delivery is unavailable for this PIN code. Choose another Indian delivery address.")
 			return
@@ -527,6 +531,15 @@ func (h *Handler) PaymentOrder(w http.ResponseWriter, r *http.Request) {
 	intent, err := h.payment.Create(r.Context(), session.UserID, path)
 	if errors.Is(err, ports.ErrPaymentNotFound) {
 		writeError(w, http.StatusNotFound, "PAYMENT_ORDER_NOT_FOUND", "Payment order not found.")
+		return
+	}
+	if errors.Is(err, ports.ErrPaymentCreationPending) {
+		w.Header().Set("Retry-After", "20")
+		writeError(w, http.StatusServiceUnavailable, "PAYMENT_RECOVERY_PENDING", "Your order is saved. Check payment status while we verify it with the provider.")
+		return
+	}
+	if errors.Is(err, ports.ErrPaymentCreationReview) {
+		writeError(w, http.StatusConflict, "PAYMENT_RECOVERY_REVIEW", "Your saved order needs payment review. Check its status or contact support.")
 		return
 	}
 	if errors.Is(err, ports.ErrPaymentState) {

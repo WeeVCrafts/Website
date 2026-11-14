@@ -46,6 +46,7 @@ type Config struct {
 	S3SecretKey             string
 	S3Bucket                string
 	S3Secure                bool
+	Shipping                ShippingConfig
 }
 
 func FromEnv() Config {
@@ -56,6 +57,7 @@ func FromEnv() Config {
 		publicURL = "http://localhost:8080"
 	}
 	return Config{
+		Shipping:                parseShippingConfig(),
 		CheckoutEnabled:         boolEnv("WECRATFS_CHECKOUT_ENABLED", false),
 		PublicContentApproved:   boolEnv("WECRATFS_PUBLIC_CONTENT_APPROVED", false),
 		OperationalMetricsToken: env("WECRATFS_METRICS_TOKEN", ""),

@@ -65,7 +65,7 @@ func TestMockOrderDetailsFollowRequestedOrder(t *testing.T) {
 		t.Fatalf("status = %d, want 200", res.Code)
 	}
 	body := res.Body.String()
-	if !strings.Contains(body, "#WC2504216632") || !strings.Contains(body, "Madhubani Painting - Tree of Life") || !strings.Contains(body, "INR 2,499") {
+	if !strings.Contains(body, "#WC2504216632") || !strings.Contains(body, "Madhubani Painting - Tree of Life") || !strings.Contains(body, "₹2,499") {
 		t.Fatal("order detail did not render the requested past order")
 	}
 	if strings.Contains(body, "#WC2504267819") || strings.Contains(body, "Chanderi Silk Cotton Saree - Royal Maroon") {
@@ -275,7 +275,7 @@ func TestMockCustomerSummaryValuesComeFromPreviewData(t *testing.T) {
 		t.Fatalf("payments status = %d, want 200", payments.Code)
 	}
 	paymentBody := payments.Body.String()
-	for _, want := range []string{"#PAY-01", "INR 10,497", "#PAY-04", "Failed"} {
+	for _, want := range []string{"#PAY-01", "₹10,497", "#PAY-04", "Failed"} {
 		if !strings.Contains(paymentBody, want) {
 			t.Errorf("payment activity is missing derived value %q", want)
 		}

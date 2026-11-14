@@ -55,7 +55,7 @@ func sellerOrderDetailPath(relative string) bool {
 		return false
 	}
 	number := strings.TrimPrefix(relative, "orders/")
-	return number != "" && !strings.Contains(number, "/") && number != "fulfill"
+	return number != "" && !strings.Contains(number, "/") && number != "fulfill" && number != "shiprocket"
 }
 
 func isSellerProductEditPath(relative string) bool {

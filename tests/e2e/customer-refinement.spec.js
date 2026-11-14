@@ -51,7 +51,7 @@ async function placeOrder(page, outcome = 'capture') {
     const response = await route.fetch({url: base + '/dev/payments/' + number + '/' + outcome});
     await route.fulfill({response});
   }, {times: 1});
-  await page.getByRole('button', {name: 'Pay & place order', exact: true}).click();
+  await page.getByRole('button', {name: /^Pay ₹[\d,.]+$/, exact: true}).click();
   await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/, {timeout: 30000});
   return decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
 }
@@ -197,7 +197,7 @@ test('shopping and checkout keep chosen options, prevent duplicates, and deliver
 
 test('payment interruption retries existing order; failed and cancelled orders stay distinct', async ({page, browserName}) => {
   test.skip(browserName !== 'chromium'); await login(page, 'failure'); await addItem(page); await checkoutReview(page);
-  const pending = await placeOrder(page, 'pending'); await expect(page.locator('h1')).toHaveText('Your order is saved');
+  const pending = await placeOrder(page, 'pending'); await expect(page.locator('h1')).toHaveText('Awaiting payment confirmation');
   await page.getByRole('link', {name: 'View order', exact: true}).click(); await page.getByRole('button', {name: 'Continue payment', exact: true}).click();
   await expect(page).toHaveURL(new RegExp('/orders/' + pending + '/confirmation')); await expect(page.locator('.confirmation-summary')).toContainText('Payment completed');
   await addItem(page); await checkoutReview(page); const failed = await placeOrder(page, 'fail'); await expect(page.locator('.confirmation-summary')).toContainText('Payment failed');
@@ -291,13 +291,13 @@ test('stock changes, uncertain checkout completion and session expiry retain saf
   const before=sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')");
   try {
     sql('UPDATE inventory_stock SET available_quantity=0 WHERE variant_id='+id);
-    await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
-    await expect(page.getByRole('button',{name:'Pay & place order',exact:true})).toBeEnabled();
+    await page.getByRole('button',{name: /^Pay ₹[\d,.]+$/,exact:true}).click();
+    await expect(page.getByRole('button',{name: /^Pay ₹[\d,.]+$/,exact:true})).toBeEnabled();
     expect(sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')")).toBe(before);
     await expect(page.locator('[name=line1]')).toHaveValue('12 Craft Lane');
   } finally {sql('UPDATE inventory_stock SET available_quantity='+available+' WHERE variant_id='+id);}
   await page.route('**/api/v1/checkout',async route=>{await route.fetch();await route.abort('connectionfailed');},{times:1});
-  await page.getByRole('button',{name:'Pay & place order',exact:true}).click();await expect(page.getByRole('button',{name:'Pay & place order',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name: /^Pay ₹[\d,.]+$/,exact:true}).click();await expect(page.getByRole('button',{name: /^Pay ₹[\d,.]+$/,exact:true})).toBeEnabled();
   const number=await placeOrder(page);await expect(page.locator('.confirmation-summary')).toContainText('Payment completed');
   expect(Number(sql("SELECT count(*) FROM orders WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"')"))).toBe(Number(before)+1);
   expect(sql("SELECT count(*) FROM addresses WHERE user_id=(SELECT id FROM users WHERE email='"+email('retry')+"') AND line1='12 Craft Lane'")).toBe('1');

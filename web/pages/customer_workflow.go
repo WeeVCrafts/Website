@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"strconv"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -94,8 +95,40 @@ func shoppingShell(p viewmodels.CustomerPage) viewmodels.CustomerPage {
 }
 
 func productInitialQuantity(p viewmodels.CustomerPage) int {
-	if p.ProductQuantity >= 1 && p.ProductQuantity <= 99 {
-		return p.ProductQuantity
+	return min(productQuantityLimit(p.Product), max(1, p.ProductQuantity))
+}
+
+func canCheckPayment(p viewmodels.CustomerPage) bool {
+	order := p.SelectedOrder
+	return !p.NoPaymentDemo && !order.PaymentReview &&
+		(order.State == "pending_payment" || order.State == "payment_failed")
+}
+
+func canContinuePayment(p viewmodels.CustomerPage) bool {
+	order := p.SelectedOrder
+	return canCheckPayment(p) && p.PaymentReady && order.CanPay &&
+		!order.PaymentExpired && !order.PaymentInProgress &&
+		!order.PaymentCreationPending && !order.PaymentCreationReview
+}
+
+func productQuantityLimit(product viewmodels.Product) int {
+	for _, variant := range product.Variants {
+		if selectedProductVariant(variant, product) {
+			return variantQuantityLimit(variant)
+		}
 	}
-	return 1
+	return purchaseQuantityLimit(product.Available, product.InStock)
+}
+
+func variantQuantityLimit(variant viewmodels.ProductVariant) int {
+	available, _ := strconv.Atoi(variant.Available)
+	return purchaseQuantityLimit(available, variant.InStock)
+}
+
+func purchaseQuantityLimit(available int, inStock bool) int {
+	if !inStock {
+		return 0
+	}
+	// Isolated mock storefront products may provide only an in-stock flag.
+	return min(99, max(1, available))
 }

@@ -9,10 +9,21 @@ import (
 templ PaymentReviews(p viewmodels.AdminPage, cases []ports.PaymentReviewCase, failedID int64, reason string) {
  @AdminDocument(p) {
   <div class="admin-toolbar"><a class="admin-button secondary" href={p.PortalRoot+"/finance"}>Back to finance</a><a class="admin-button secondary" href={p.PortalRoot+"/payment-reviews"}>Refresh saved status</a></div>
-  <article class="admin-panel"><h2>Captured payment exceptions</h2><p>Showing up to 100 cases, open cases first. Refund authorization is separate from merchandise returns. A saved decision never sends a second refund request.</p>
+  <article class="admin-panel"><h2>Payment exceptions</h2><p>Showing up to 100 cases, open cases first. Refund authorization is separate from merchandise returns. A saved decision never sends a second refund request.</p>
    <div class="ui-table-region" role="region" tabindex="0" aria-label="Payment review cases"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Payment</th><th scope="col">Reason</th><th scope="col">Status</th><th scope="col">Decision</th></tr></thead><tbody>
     for _,c:=range cases {
-     <tr><th scope="row">{c.OrderNumber}<small>{c.OrderStatus}</small></th><td data-label="Payment">{c.ProviderPaymentID}<br/>{c.Currency} {fmt.Sprintf("%d.%02d",c.AmountCents/100,c.AmountCents%100)}</td><td data-label="Reason">{c.Reason}</td><td data-label="Status">{c.Status}
+     <tr><th scope="row">{c.OrderNumber}<small>{c.OrderStatus}</small></th><td data-label="Payment">
+      if c.Status=="creation_review" {
+       <span>Capture unverified</span>
+      } else {
+       {c.ProviderPaymentID}
+      }
+      <br/>{c.Currency} {fmt.Sprintf("%d.%02d",c.AmountCents/100,c.AmountCents%100)}</td><td data-label="Reason">{c.Reason}</td><td data-label="Status">
+      if c.Status=="creation_review" {
+       <span>Payment setup needs review</span>
+      } else {
+       {c.Status}
+      }
       if c.Status=="refund_pending" {
        <small>Refund: {c.RefundSubmissionState}. Check provider status before any further action.</small>
       }
@@ -43,7 +54,7 @@ templ PaymentReviews(p viewmodels.AdminPage, cases []ports.PaymentReviewCase, fa
     }
    </tbody></table></div>
    if len(cases)==0 {
-    <p class="admin-page-note">No captured payment exceptions need review.</p>
+    <p class="admin-page-note">No payment exceptions need review.</p>
    }
   </article>
  }

@@ -1,84 +1,90 @@
 package pages
 
 import (
- "github.com/wecratfs/commerce/internal/web/viewmodels"
  "fmt"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
-// Checkout route boundary; implementation is in pages.templ.
-templ checkoutBoundary() { <span hidden>checkout</span>
- }
+templ checkoutBoundary() { <span hidden>checkout</span> }
 
 templ OrderConfirmation(p viewmodels.CustomerPage) {
  @Document(p) {
-  <section class="container order-confirmation" data-payment-confirmation data-order-number={p.SelectedOrder.Number} aria-labelledby="confirmation-title">
-   <div class="order-live-controls"><button class="outline-button" type="button" data-check-payment-status>Check payment status</button><p data-payment-refresh-feedback role="status">Your saved payment status is shown below.</p></div>
+  <section class="container order-confirmation" data-payment-confirmation data-order-number={ p.SelectedOrder.Number } aria-labelledby="confirmation-title">
    @OrderConfirmationContent(p)
   </section>
  }
 }
 
 templ OrderConfirmationContent(p viewmodels.CustomerPage) {
-  <div data-confirmation-content data-payment-pending={fmt.Sprint(!p.NoPaymentDemo && !p.SelectedOrder.PaymentReview && (p.SelectedOrder.State=="pending_payment" || p.SelectedOrder.State=="payment_failed"))}>
-   <div class="confirmation-art" aria-hidden="true"><svg width="160" height="140" viewBox="0 0 160 140" fill="none"><ellipse cx="80" cy="84" rx="66" ry="49" fill="#e6efdf"/><path d="M42 49h76l5 72H37l5-72Z" stroke="currentColor" stroke-width="3"/><path d="M60 56V34a20 20 0 0 1 40 0v22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="85" r="22" fill="currentColor"/><path d="m68 85 8 8 17-18" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="m20 67-8-3m128 0 8-3M20 88H9m131 0h11" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
-   if p.SelectedOrder.PaymentReview {
-    <h1 id="confirmation-title">Payment received — review in progress</h1><p class="confirmation-lead">Your captured payment is safely recorded. Our team must review stock or arrange a refund before fulfilment. Do not pay again.</p>
-   } else if p.SelectedOrder.PaymentState!="captured" || p.SelectedOrder.State=="cancelled" || p.SelectedOrder.State=="refunded" {
-    <h1 id="confirmation-title">Your order is saved</h1><p class="confirmation-lead">Open your order to review its recorded payment status and available next steps.</p>
-
-} else {
-
-    <h1 id="confirmation-title">Order placed successfully!</h1><p class="confirmation-lead">Thank you for supporting independent makers. Your order is saved, and you can follow every update from your order details.</p>
+ <div data-confirmation-content data-payment-pending={ fmt.Sprint(canCheckPayment(p)) }>
+  <div class={ "confirmation-panel", templ.KV("confirmation-panel--paid",p.SelectedOrder.Confirmed()) }>
+   if p.SelectedOrder.Confirmed() {
+    <span class="material-symbols-outlined confirmation-state-icon" aria-hidden="true">check_circle</span>
+    <h1 id="confirmation-title">Order confirmed</h1>
+    <p class="confirmation-lead">Payment captured. Your maker can now prepare your order.</p>
+   } else {
+    <span class="material-symbols-outlined confirmation-state-icon" aria-hidden="true">info</span>
+    <h1 id="confirmation-title">{ orderStatusTitle(p.SelectedOrder) }</h1>
+    <p class="confirmation-lead">{ orderStatusCopy(p.SelectedOrder) }</p>
    }
-   if p.Notice!="" {
- <p class="utility-notice" role="status">{ p.Notice }</p>
-}
- <div class="confirmation-summary">
-    <div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><small>Order number</small><strong>{ p.SelectedOrder.Number }</strong><small>{ p.SelectedOrder.Date } · { p.SelectedOrder.Total }</small></div></div>
-    <div><span class="material-symbols-outlined" aria-hidden="true">payments</span><div><strong>{ confirmationPayment(p.SelectedOrder) }</strong>
-     if p.PaymentMode=="local" {
-<p>Demo payment. No money has been charged.</p>
-} else if razorpayTestMode(p) {
-<p>Razorpay test payment. No real money has been charged.</p>
-} else {
-<p>Your payment status reflects the provider’s latest confirmed update.</p>
-}
-    </div></div>
+   if p.Notice!="" && !p.SelectedOrder.Confirmed() && !p.SelectedOrder.PaymentReview && !p.SelectedOrder.PaymentCreationReview {
+    <p class="utility-notice" role="status">{ p.Notice }</p>
+   }
+   <dl class="confirmation-facts">
+    <div><dt>Order reference</dt><dd>{ p.SelectedOrder.Number }</dd></div>
+    <div><dt>Order total</dt><dd class="checkout-amount">{ checkoutMoney(p.SelectedOrder.Total) }</dd></div>
+    <div><dt>Payment status</dt><dd>{ confirmationPayment(p.SelectedOrder) }</dd></div>
+   </dl>
+   if canCheckPayment(p) {
+    <div class="order-live-controls"><button class={ templ.KV("primary-button",!canContinuePayment(p)), templ.KV("outline-button",canContinuePayment(p)) } type="button" data-check-payment-status>Check payment status</button><p data-payment-refresh-feedback role="status">Showing your saved payment status.</p></div>
+    @OrderPaymentRecovery(p)
+   }
+   if p.NoPaymentDemo {
+    <p class="muted">Demo checkout. No money has been charged.</p>
+   } else if razorpayTestMode(p) || p.PaymentMode=="local" {
+    <p class="muted">Test payment. No real money is charged.</p>
+   }
+   <div class="confirmation-actions">
+    <a class={ templ.KV("outline-button",!p.SelectedOrder.Confirmed()), templ.KV("primary-button",p.SelectedOrder.Confirmed()) } href={ orderPath(p.SelectedOrder.Number) }>View order</a>
+    if p.SelectedOrder.HasPaymentReceipt() {
+     <a class="outline-button" hx-boost="false" href={ orderPath(p.SelectedOrder.Number)+"/invoice?format=pdf" }>Download receipt</a>
+    }
+    if p.SelectedOrder.PaymentExpired || p.SelectedOrder.State=="cancelled" || p.SelectedOrder.State=="refunded" {
+     <a class="outline-button" href="/products">Continue shopping</a>
+    }
    </div>
-   <ol class="confirmation-progress" aria-label="Order progress">
-    <li class="done"><span class="material-symbols-outlined" aria-hidden="true">check</span><strong>Order placed</strong><small>{ p.SelectedOrder.Date }</small></li>
-    <li class={ confirmationStep(confirmationPaymentSettled(p.SelectedOrder)) }><span class="material-symbols-outlined" aria-hidden="true">payments</span><strong>Payment</strong><small>{ confirmationPayment(p.SelectedOrder) }</small></li>
-    <li class={ confirmationStep(confirmationProcessing(p.SelectedOrder)) }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><strong>Processing</strong><small>
-     if confirmationProcessing(p.SelectedOrder) {
-Started
-} else {
-Not started
-}
-    </small></li>
-    <li class={ confirmationStep(confirmationDelivered(p.SelectedOrder)) }><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><strong>Delivered</strong><small>
-     if confirmationDelivered(p.SelectedOrder) {
-Delivered
-} else {
-Awaiting delivery
-}
-    </small></li>
-   </ol>
-   <div class="confirmation-actions"><a class="primary-button" href={ "/orders/"+p.SelectedOrder.Number }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a><a class="outline-button" href={ "/orders/"+p.SelectedOrder.Number+"/invoice?format=pdf" }>Download receipt</a><a class="outline-button" href="/products">Continue shopping</a></div>
-   <p class="confirmation-help">Need a hand? <a href={ customerSupportURL(p.SelectedOrder.Number) }>Contact support</a></p>
-  @OrderPaymentRecovery(p)
   </div>
+  if p.SelectedOrder.Confirmed() {
+   <ol class="confirmation-progress" aria-label="Order progress">
+    <li class="done"><span class="material-symbols-outlined" aria-hidden="true">check</span><strong>Order confirmed</strong><small>Payment captured</small></li>
+    <li class={ confirmationStep(confirmationProcessing(p.SelectedOrder)) }><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span><strong>Processing</strong><small>{ confirmationStageLabel(confirmationProcessing(p.SelectedOrder), "Started", "Not started") }</small></li>
+    <li class={ confirmationStep(confirmationDelivered(p.SelectedOrder)) }><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><strong>Delivered</strong><small>{ confirmationStageLabel(confirmationDelivered(p.SelectedOrder), "Delivered", "Awaiting delivery") }</small></li>
+   </ol>
+  }
+  <p class="confirmation-help">Need a hand? <a href={ customerSupportURL(p.SelectedOrder.Number) }>Contact support</a></p>
+ </div>
 }
 
 func confirmationStep(done bool) string {
- if done {
-return "done"}; return ""
+ return confirmationStageLabel(done,"done","")
+}
+
+func confirmationStageLabel(done bool, yes, no string) string {
+ if done {return yes}
+ return no
 }
 
 func confirmationPayment(order viewmodels.Order) string {
- if order.PaymentReview {return "Payment received — under review"}
- if order.State=="refunded" || order.RefundStatus=="processed" {return "Payment refunded"}
- if order.PaymentState=="captured" {return "Payment completed"}
- if order.PaymentState=="failed" || order.State=="payment_failed" {return "Payment failed"}
- if order.State=="cancelled" {return "Order cancelled"}
- return "Payment pending"
+ switch {
+ case order.PaymentReview: return "Payment received — under review"
+ case order.State=="refunded" || order.RefundStatus=="processed": return "Payment refunded"
+ case order.Confirmed(): return "Payment completed"
+ case order.State=="cancelled": return "Order cancelled"
+ case order.PaymentCreationReview: return "Payment setup under review"
+ case order.PaymentCreationPending: return "Checking payment setup"
+ case order.PaymentExpired: return "Payment window expired"
+ case order.PaymentInProgress: return "Awaiting payment confirmation"
+ case order.PaymentState=="failed" || order.State=="payment_failed": return "Payment failed"
+ default: return "Payment pending"
+ }
 }

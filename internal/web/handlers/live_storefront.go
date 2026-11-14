@@ -201,7 +201,11 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if r.URL.Path == "/checkout" && r.URL.Query().Get("intent") != "" && !isDraftPreview(r) {
 		intent, intentErr := h.cart.CheckoutIntent(r.Context(), userID, r.URL.Query().Get("intent"))
 		if intentErr != nil {
-			h.renderError(w, http.StatusNotFound, "This checkout is unavailable or expired. Your shopping cart is saved. Return to the product to start Buy now again.")
+			if errors.Is(intentErr, ports.ErrCartNotFound) {
+				h.renderExpiredBuyNow(w, r)
+			} else {
+				h.renderError(w, http.StatusServiceUnavailable, "This checkout could not be loaded. Your shopping cart is saved. Please try again.")
+			}
 			return
 		}
 		if intent.OrderNumber != "" {
@@ -211,6 +215,10 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	page, err := h.page(r)
 	if err != nil {
+		if r.URL.Path == "/checkout" && r.URL.Query().Get("intent") != "" && errors.Is(err, ports.ErrCartNotFound) {
+			h.renderExpiredBuyNow(w, r)
+			return
+		}
 		if errors.Is(err, applicationcatalog.ErrProductNotFound) || errors.Is(err, ports.ErrOrderNotFound) {
 			http.NotFound(w, r)
 			return
@@ -378,9 +386,15 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 				page.Notice = "Payment verification could not finish. Your order is saved. Check payment status before trying again."
 			case "provider-unavailable":
 				page.Notice = "The payment provider could not be reached. Your order is saved. Check payment status before trying again."
+			case "recovery":
+				page.Notice = "Your order is saved. Check the recorded payment status below."
 			}
 			component = pages.OrderConfirmation(page)
 		} else if strings.HasSuffix(r.URL.Path, "/invoice") {
+			if !page.SelectedOrder.HasPaymentReceipt() {
+				http.Error(w, "A receipt is available after payment confirmation.", http.StatusConflict)
+				return
+			}
 			if r.URL.Query().Get("format") == "pdf" {
 				receiptContext, cancel := context.WithTimeout(r.Context(), 8*time.Second)
 				defer cancel()
@@ -471,25 +485,15 @@ func (h *LiveStorefrontHandler) SetPaymentRecovery(recovery interface {
 	h.paymentRecovery = recovery
 }
 
-func orderShowsFulfillment(orderStatus, paymentStatus string) bool {
-	if paymentStatus != "captured" && paymentStatus != "paid" {
-		return false
-	}
-	switch orderStatus {
-	case "paid", "processing", "shipped", "delivered":
-		return true
-	}
-	return false
-}
-
 func refreshOrderView(detail domaincommerce.OrderDetail) viewmodels.Order {
 	displayStatus := detail.Status
-	if orderShowsFulfillment(detail.Status, detail.PaymentStatus) {
+	if domaincommerce.PrepaidOrderConfirmed(detail.Status, detail.PaymentStatus, detail.PaymentReview) {
 		if stage := domaincommerce.AggregateFulfillmentStage(detail.Fulfillments); stage != domaincommerce.FulfillmentPending {
 			displayStatus = domaincommerce.FulfillmentProgress(detail.Fulfillments)
 		}
 	}
 	view := viewmodels.Order{CanPay: detail.CanPay, PaymentReview: detail.PaymentReview, ContactName: detail.Contact.RecipientName, ContactPhone: detail.Contact.Phone, Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
+	applyCheckoutPaymentDisplay(&view, detail)
 	for _, item := range detail.Items {
 		view.Items = append(view.Items, viewmodels.CartItem{Product: viewmodels.Product{Name: item.ProductName, SKU: item.SKU, PriceCents: item.UnitPriceCents, Price: storefrontMoney(item.UnitPriceCents)}, Quantity: item.Quantity})
 	}
@@ -1496,7 +1500,7 @@ func filterSupportMessageAttachments(attachments []domaincommerce.SupportAttachm
 
 func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order domaincommerce.OrderDetail) (viewmodels.Order, error) {
 	displayStatus := order.Status
-	if orderShowsFulfillment(order.Status, order.PaymentStatus) {
+	if domaincommerce.PrepaidOrderConfirmed(order.Status, order.PaymentStatus, order.PaymentReview) {
 		if stage := domaincommerce.AggregateFulfillmentStage(order.Fulfillments); stage != domaincommerce.FulfillmentPending {
 			displayStatus = domaincommerce.FulfillmentProgress(order.Fulfillments)
 		}
@@ -1512,6 +1516,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 		CanCancel:        order.Status == "pending_payment" && !order.PaymentReview,
 		CanRequestReturn: order.Status == "delivered",
 	}
+	applyCheckoutPaymentDisplay(&view, order)
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
 		return viewmodels.Order{}, err
 	}
@@ -1676,7 +1681,36 @@ func displayPaymentStatus(paymentStatus, orderStatus string) string {
 	case "cancelled":
 		return "Cancelled"
 	default:
-		return "Paid"
+		return "Payment unverified"
+	}
+}
+
+func applyCheckoutPaymentDisplay(view *viewmodels.Order, detail domaincommerce.OrderDetail) {
+	view.PaymentExpired = detail.PaymentExpired
+	view.PaymentInProgress = detail.PaymentInProgress
+	view.PaymentCreationPending = detail.PaymentCreationPending
+	view.PaymentCreationReview = detail.PaymentCreationReview
+	switch {
+	case detail.PaymentReview:
+		view.Status, view.Payment = "Payment under review", "Payment received — under review"
+	case detail.Status == "refunded":
+		view.Payment = "Payment refunded"
+	case detail.Status == "cancelled":
+		view.Payment = "Cancelled"
+	case view.Confirmed():
+		return
+	case detail.PaymentExpired:
+		view.Status, view.Payment = "Payment window expired", "Payment window expired"
+	case detail.PaymentCreationReview:
+		view.Status, view.Payment = "Payment setup under review", "Payment setup under review"
+	case detail.PaymentCreationPending:
+		view.Status, view.Payment = "Checking payment setup", "Checking payment setup"
+	case detail.PaymentInProgress:
+		view.Status, view.Payment = "Awaiting payment", "Awaiting payment confirmation"
+	case detail.PaymentStatus == "failed":
+		view.Status, view.Payment = "Payment failed", "Payment failed"
+	case detail.Status == "pending_payment":
+		view.Payment = "Payment pending"
 	}
 }
 
@@ -2300,6 +2334,14 @@ func (h *LiveStorefrontHandler) render(w http.ResponseWriter, r *http.Request, c
 	if err := component.Render(r.Context(), w); err != nil {
 		h.renderError(w, http.StatusInternalServerError, "The page could not be rendered.")
 	}
+}
+
+func (h *LiveStorefrontHandler) renderExpiredBuyNow(w http.ResponseWriter, r *http.Request) {
+	page := viewmodels.CustomerPage{Route: r.URL.Path, Title: "Buy Now checkout unavailable", Brand: identity.Name}
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	h.render(w, r, pages.ExpiredBuyNow(page))
 }
 
 func (h *LiveStorefrontHandler) renderError(w http.ResponseWriter, status int, message string) {

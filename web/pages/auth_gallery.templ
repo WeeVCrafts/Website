@@ -26,6 +26,7 @@ templ LoginGallery(p viewmodels.CustomerPage) {
         if p.AuthError != "" {
           <p class="auth-feedback is-error" role="alert">{ p.AuthError }</p>
         }
+        <a class="gallery-browse" href="/">Continue browsing <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
         <h1 id="login-title">{ storefrontNativeHeading(p,"Sign in") }</h1>
         <p class="gallery-lead">{ storefrontNativeDescription(p,"Your saved pieces and orders, in one place.") }</p>
         if authNext(p.Filters) != "" {

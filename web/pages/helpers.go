@@ -453,6 +453,9 @@ func orderSeller(order viewmodels.Order) string {
 }
 
 func orderDeliveryCopy(order viewmodels.Order) string {
+	if order.PaymentReview || (!order.Confirmed() && order.PaymentExpired) {
+		return orderStatusCopy(order)
+	}
 	switch orderState(order) {
 	case "pending_payment":
 		return "Your order is awaiting payment."
@@ -548,6 +551,15 @@ func orderStatusTitle(order viewmodels.Order) string {
 	if order.PaymentReview {
 		return "Payment received — review in progress."
 	}
+	if order.PaymentCreationReview && order.State == "pending_payment" {
+		return "Payment setup under review"
+	}
+	if order.PaymentCreationPending && order.State == "pending_payment" {
+		return "Checking payment setup"
+	}
+	if order.PaymentExpired && orderState(order) != "cancelled" && orderState(order) != "refunded" && !order.Confirmed() {
+		return "Payment window expired"
+	}
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
 	case "packing":
 		return "Your maker is packing your order."
@@ -556,7 +568,15 @@ func orderStatusTitle(order viewmodels.Order) string {
 	}
 	switch orderState(order) {
 	case "pending_payment":
-		return "Your order is awaiting payment."
+		if order.PaymentState == "failed" && !order.PaymentInProgress {
+			return "Payment failed"
+		}
+		return "Awaiting payment confirmation"
+	case "paid":
+		if order.Confirmed() {
+			return "Order confirmed"
+		}
+		return "Awaiting payment confirmation"
 	case "payment_failed":
 		return "Payment was not completed."
 	case "shipped":
@@ -576,6 +596,15 @@ func orderStatusCopy(order viewmodels.Order) string {
 	if order.PaymentReview {
 		return "Your captured payment is recorded. Fulfilment and payout are held while our team reviews stock or a refund. Do not pay again."
 	}
+	if order.PaymentCreationReview && order.State == "pending_payment" {
+		return "Your order reference is saved. Contact support for help with payment setup before trying to pay again."
+	}
+	if order.PaymentCreationPending && order.State == "pending_payment" {
+		return "Your order reference is saved. Check payment status while we verify payment setup with our provider."
+	}
+	if order.PaymentExpired && orderState(order) != "cancelled" && orderState(order) != "refunded" && !order.Confirmed() {
+		return "The stock hold has ended. If you tried to pay, check the payment status before starting a new checkout."
+	}
 	switch strings.ToLower(strings.ReplaceAll(strings.TrimSpace(order.Status), " ", "_")) {
 	case "packing":
 		return "Your maker is preparing the parcel for its next journey."
@@ -584,7 +613,10 @@ func orderStatusCopy(order viewmodels.Order) string {
 	}
 	switch orderState(order) {
 	case "pending_payment":
-		return "Your order is saved. Check payment status before placing another order."
+		if order.PaymentState == "failed" && !order.PaymentInProgress {
+			return "Your order reference is saved. You can continue payment while the stock hold is active."
+		}
+		return "Your order reference is saved. We’ll confirm the order after payment is captured. If you tried to pay, check the status before paying again."
 	case "payment_failed":
 		return "This order remains in your history. No shipment is confirmed; contact support if you need help."
 	case "shipped":
@@ -596,8 +628,25 @@ func orderStatusCopy(order viewmodels.Order) string {
 	case "cancelled":
 		return "If you need help with this cancellation, our customer care team is here."
 	default:
+		if !order.Confirmed() {
+			return "Check the payment status for the next step."
+		}
 		return "We will notify you as soon as it ships."
 	}
+}
+
+func checkoutMoney(amount string) string {
+	if value, ok := strings.CutPrefix(amount, "INR "); ok {
+		return "₹" + value
+	}
+	return amount
+}
+
+func orderDateLabel(order viewmodels.Order) string {
+	if order.Confirmed() || order.HasPaymentReceipt() {
+		return "Order date"
+	}
+	return "Saved on"
 }
 
 func orderState(order viewmodels.Order) string {

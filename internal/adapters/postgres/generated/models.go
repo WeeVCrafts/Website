@@ -109,6 +109,18 @@ type Credential struct {
 	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
+type DeliveryException struct {
+	OrderID     int64              `json:"order_id"`
+	SellerID    int64              `json:"seller_id"`
+	Environment string             `json:"environment"`
+	Kind        string             `json:"kind"`
+	AssigneeID  pgtype.Int8        `json:"assignee_id"`
+	OpenedAt    pgtype.Timestamptz `json:"opened_at"`
+	ResolvedAt  pgtype.Timestamptz `json:"resolved_at"`
+	ResolvedBy  pgtype.Int8        `json:"resolved_by"`
+	Resolution  string             `json:"resolution"`
+}
+
 type FeaturedPopularity struct {
 	ProductID   int64              `json:"product_id"`
 	PaidUnits   int64              `json:"paid_units"`
@@ -180,6 +192,13 @@ type Order struct {
 	PaymentReviewRequired  bool               `json:"payment_review_required"`
 }
 
+type OrderDeliveryDecision struct {
+	OrderID  int64  `json:"order_id"`
+	SellerID int64  `json:"seller_id"`
+	Decision string `json:"decision"`
+	Estimate []byte `json:"estimate"`
+}
+
 type OrderItem struct {
 	ID                     int64              `json:"id"`
 	OrderID                int64              `json:"order_id"`
@@ -218,19 +237,22 @@ type OutboxEvent struct {
 }
 
 type PaymentAttempt struct {
-	ID                int64              `json:"id"`
-	OrderID           int64              `json:"order_id"`
-	Provider          string             `json:"provider"`
-	ProviderOrderID   pgtype.Text        `json:"provider_order_id"`
-	ProviderPaymentID pgtype.Text        `json:"provider_payment_id"`
-	Status            string             `json:"status"`
-	AmountCents       int64              `json:"amount_cents"`
-	Currency          string             `json:"currency"`
-	FailureCode       string             `json:"failure_code"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	NextReconcileAt   pgtype.Timestamptz `json:"next_reconcile_at"`
-	ReconcileAttempts int32              `json:"reconcile_attempts"`
+	ID                   int64              `json:"id"`
+	OrderID              int64              `json:"order_id"`
+	Provider             string             `json:"provider"`
+	ProviderOrderID      pgtype.Text        `json:"provider_order_id"`
+	ProviderPaymentID    pgtype.Text        `json:"provider_payment_id"`
+	Status               string             `json:"status"`
+	AmountCents          int64              `json:"amount_cents"`
+	Currency             string             `json:"currency"`
+	FailureCode          string             `json:"failure_code"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+	NextReconcileAt      pgtype.Timestamptz `json:"next_reconcile_at"`
+	ReconcileAttempts    int32              `json:"reconcile_attempts"`
+	CreationStartedAt    pgtype.Timestamptz `json:"creation_started_at"`
+	CreationNextLookupAt pgtype.Timestamptz `json:"creation_next_lookup_at"`
+	CreationReviewReason string             `json:"creation_review_reason"`
 }
 
 type PaymentRefund struct {
@@ -346,16 +368,20 @@ type ProductSearchTerm struct {
 }
 
 type ProductVariant struct {
-	ID             int64              `json:"id"`
-	ProductID      int64              `json:"product_id"`
-	Sku            string             `json:"sku"`
-	Name           string             `json:"name"`
-	PriceCents     int64              `json:"price_cents"`
-	CompareAtCents pgtype.Int8        `json:"compare_at_cents"`
-	Attributes     []byte             `json:"attributes"`
-	Status         string             `json:"status"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ID               int64              `json:"id"`
+	ProductID        int64              `json:"product_id"`
+	Sku              string             `json:"sku"`
+	Name             string             `json:"name"`
+	PriceCents       int64              `json:"price_cents"`
+	CompareAtCents   pgtype.Int8        `json:"compare_at_cents"`
+	Attributes       []byte             `json:"attributes"`
+	Status           string             `json:"status"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	ShippingWeightG  int32              `json:"shipping_weight_g"`
+	ShippingLengthCm int32              `json:"shipping_length_cm"`
+	ShippingWidthCm  int32              `json:"shipping_width_cm"`
+	ShippingHeightCm int32              `json:"shipping_height_cm"`
 }
 
 type ProviderPaymentAttempt struct {
@@ -392,6 +418,31 @@ type SessionsMetadatum struct {
 	LastSeenAt pgtype.Timestamptz `json:"last_seen_at"`
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+}
+
+type ShiprocketShipment struct {
+	OrderID            int64              `json:"order_id"`
+	SellerID           int64              `json:"seller_id"`
+	RequestedBy        int64              `json:"requested_by"`
+	Environment        string             `json:"environment"`
+	Reference          string             `json:"reference"`
+	PickupLocation     string             `json:"pickup_location"`
+	WeightGrams        int32              `json:"weight_grams"`
+	LengthCm           int32              `json:"length_cm"`
+	WidthCm            int32              `json:"width_cm"`
+	HeightCm           int32              `json:"height_cm"`
+	ProviderOrderID    pgtype.Int8        `json:"provider_order_id"`
+	ProviderShipmentID pgtype.Int8        `json:"provider_shipment_id"`
+	PendingAction      string             `json:"pending_action"`
+	ProviderStatus     string             `json:"provider_status"`
+	Awb                string             `json:"awb"`
+	Courier            string             `json:"courier"`
+	PickupReference    string             `json:"pickup_reference"`
+	LabelUrl           string             `json:"label_url"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	NextCheckAt        pgtype.Timestamptz `json:"next_check_at"`
+	ManifestUrl        string             `json:"manifest_url"`
+	PendingSince       pgtype.Timestamptz `json:"pending_since"`
 }
 
 type StorefrontDraft struct {

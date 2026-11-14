@@ -7,6 +7,7 @@ const previewFiles = [
   "fonts.css",
   "brand.css",
   "auth-gallery.css",
+  "customer-header.css",
   "ui-standards.css",
   "theme.css",
   "utility.css",

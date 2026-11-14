@@ -40,7 +40,9 @@ import (
 // existing application-backed handler so CSRF and service-level authorization
 // remain in one place.
 type LivePortalHandler struct {
+	shipping           *applicationcommerce.ShippingService
 	paymentReviews     paymentReviewOperations
+	deliveryExceptions deliveryExceptionOperations
 	storefrontPreview  *LiveStorefrontHandler
 	categoryStorage    ports.ObjectStorage
 	settlementStorage  ports.ObjectStorage
@@ -346,7 +348,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.serveSettlementEvidence(w, r) {
 		return
 	}
-	if h.servePaymentReviews(w, r) || h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
+	if h.serveDeliveryExceptions(w, r) || h.servePaymentReviews(w, r) || h.serveStorefrontEditor(w, r) || h.serveCompanySupport(w, r) || h.serveManagement(w, r) || h.serveSellerSupport(w, r) {
 		return
 	}
 	session, ok := h.session(r)
@@ -431,6 +433,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				denyPortalAccess(w, r)
 				return
 			}
+			if r.URL.Path == "/seller-admin/orders/shiprocket" {
+				h.shiprocketAction(w, r, session.UserID, session.CSRFToken)
+				return
+			}
 			if r.URL.Path == "/seller-admin/inventory/threshold" {
 				h.updateSellerLowStockThreshold(w, r)
 				return
@@ -508,6 +514,7 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LivePortalHandler) adminOrderStatusRefresh(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "private, no-store")
 	session, ok := h.session(r)
 	if !ok {
 		http.Error(w, "Sign in to refresh order status", http.StatusUnauthorized)
@@ -526,13 +533,13 @@ func (h *LivePortalHandler) adminOrderStatusRefresh(w http.ResponseWriter, r *ht
 		return
 	}
 	orders := h.adminOrders(r)
-	if projectionWarning(r, "") != "" {
+	if orders == nil || projectionWarning(r, "") != "" {
 		http.Error(w, "Order updates are temporarily unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = adminpages.OrderQueueRegion(orders).Render(r.Context(), w)
+	page := viewmodels.AdminPage{Orders: orders, Query: portalQuery(r.URL.Query().Get("q")), OrderStage: orderStageFilter(r)}
+	_ = adminpages.OrderQueueRegion(page).Render(r.Context(), w)
 }
 
 // Keep old bookmarks without retaining separate operational identities.
@@ -639,7 +646,7 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 	detail := &viewmodels.SellerAdminOrderDetail{}
 	var created time.Time
 	var subtotal int64
-	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,o.status,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(sf.revision,0)::text,COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss  WHERE ss.owner_user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 ) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,sf.revision,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.OrderStatus, &detail.Status, &detail.Payment, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.Revision, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
+	err := h.queryRow(r, `SELECT s.id::text,o.order_number,o.created_at,u.display_name,o.status,COALESCE(sf.status,'pending'),COALESCE(pa.status,'created'),o.payment_review_required,COALESCE(sf.carrier,''),COALESCE(sf.tracking_number,''),COALESCE(sf.last_note,''),COALESCE(sf.revision,0)::text,COALESCE(o.address_snapshot->>'recipient_name',''),COALESCE(o.address_snapshot->>'line1',''),COALESCE(o.address_snapshot->>'line2',''),COALESCE(o.address_snapshot->>'city',''),COALESCE(o.address_snapshot->>'state',''),COALESCE(o.address_snapshot->>'postal_code',''),COALESCE(o.address_snapshot->>'country_code','IN'),COALESCE(SUM(oi.line_total_cents),0),o.currency FROM orders o JOIN users u ON u.id=o.user_id JOIN order_items oi ON oi.order_id=o.id JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=s.id LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE WHERE o.order_number=$1 AND s.id=(SELECT ss.id FROM sellers ss  WHERE ss.owner_user_id=$2 ORDER BY CASE WHEN ss.owner_user_id=$2 THEN 0 ELSE 1 END,ss.id LIMIT 1) AND (s.owner_user_id=$2 ) GROUP BY s.id,o.id,u.display_name,sf.status,sf.carrier,sf.tracking_number,sf.last_note,sf.revision,pa.status`, number, userID).Scan(&detail.SellerID, &detail.Number, &created, &detail.Customer, &detail.OrderStatus, &detail.Status, &detail.Payment, &detail.PaymentReview, &detail.Carrier, &detail.TrackingNumber, &detail.Note, &detail.Revision, &detail.RecipientName, &detail.Line1, &detail.Line2, &detail.City, &detail.State, &detail.PostalCode, &detail.CountryCode, &subtotal, &detail.Currency)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)
@@ -668,6 +675,7 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 		}
 	}
 	page.OrderDetail = detail
+	h.loadShiprocket(r, userID, detail, page.CanFulfill)
 	page.OrderReturnPage = page.Pagination.Page
 	page.Pagination = viewmodels.PortalPagination{}
 	h.render(w, r, sellerpages.PortalOrderDetail(page))
@@ -818,6 +826,7 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	r = projectionRequest(r)
 	page := h.adminPage(r, actorID, role)
 	page.PortalRoot = root
+	page.CanManageDelivery = h.deliveryExceptions != nil && (root == "/admin" || root == "/super-admin")
 	page.SettlementRoot = root
 	page.SettlementRoot = root + "/finance"
 	page.PortalLabel = portalLabel(role)
@@ -935,6 +944,7 @@ func (h *LivePortalHandler) renderSuperAdminProductEditor(w http.ResponseWriter,
 	pageRequest := requestWithPath(r, "/admin/products")
 	page := h.adminPage(pageRequest, actorID, role)
 	page.PortalRoot = root
+	page.CanManageDelivery = h.deliveryExceptions != nil && (root == "/admin" || root == "/super-admin")
 	page.PortalLabel = portalLabel(role)
 	page.RoleLabel = roleLabel(role)
 	page.DisplayName = displayName
@@ -1091,6 +1101,7 @@ func (h *LivePortalHandler) adminData(r *http.Request, actorID int64, active, wo
 		page.DataWarning = "The product list could not be loaded. Refresh the page to try again."
 	}
 	page.Orders = h.adminOrders(r)
+	page.OrderQueueUnavailable = page.Orders == nil
 	page.Returns = h.adminReturns(r)
 	page.Transactions = h.adminTransactions(r)
 	page.SupportCases = h.adminCases(r)
@@ -1309,13 +1320,18 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 		var total int64
 		var encoded []byte
 		var parcels []domaincommerce.OrderFulfillment
-		if rows.Scan(&number, &created, &customer, &total, &status, &payment, &fulfillment, &encoded) == nil {
-			if json.Unmarshal(encoded, &parcels) != nil {
-				continue
-			}
-			fulfillment = domaincommerce.FulfillmentProgress(parcels)
-			result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Status: status, PaymentStatus: payment, Fulfillment: fulfillment, Parcels: parcels})
+		if err := rows.Scan(&number, &created, &customer, &total, &status, &payment, &fulfillment, &encoded); err != nil {
+			return nil
 		}
+		if err := json.Unmarshal(encoded, &parcels); err != nil {
+			recordProjectionError(r, err)
+			return nil
+		}
+		fulfillment = domaincommerce.FulfillmentProgress(parcels)
+		result = append(result, viewmodels.AdminOrder{Number: number, Date: created.Format("2 Jan 2006, 15:04"), Customer: customer, Value: money(total), Status: status, PaymentStatus: payment, Fulfillment: fulfillment, Parcels: parcels})
+	}
+	if rows.Err() != nil {
+		return nil
 	}
 	return result
 }
@@ -2088,7 +2104,7 @@ func productImagePreviewURL(image string) string {
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
 	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
-		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
+		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,'')
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
 	if err != nil {
@@ -2100,11 +2116,12 @@ func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64
 		var id, price, compareAt, available, reserved int64
 		var name, sku, status string
 		var hasCompare bool
-		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status); err != nil {
+		var weight, length, width, height string
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status, &weight, &length, &width, &height); err != nil {
 			return nil, err
 		}
 		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
-			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, HasCompareAt: hasCompare}
+			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height}
 		if hasCompare {
 			variant.CompareAtCents = strconv.FormatInt(compareAt, 10)
 		}
@@ -2369,7 +2386,7 @@ func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []view
 		JOIN products p ON p.id=pv.product_id AND p.seller_id=$1
 		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
 		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
-		WHERE o.status IN ('paid','processing','shipped','delivered','pending_payment') AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item JOIN product_variants search_variant ON search_variant.id=search_item.variant_id JOIN products search_product ON search_product.id=search_variant.product_id WHERE search_item.order_id=o.id AND search_product.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR COALESCE(sf.status,'pending')=$3)
+		WHERE o.status IN ('paid','processing','shipped','delivered') AND pa.status='captured' AND NOT o.payment_review_required AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item JOIN product_variants search_variant ON search_variant.id=search_item.variant_id JOIN products search_product ON search_product.id=search_variant.product_id WHERE search_item.order_id=o.id AND search_product.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR COALESCE(sf.status,'pending')=$3)
 		GROUP BY o.id, u.display_name, sf.status, sf.revision, pa.status
 		ORDER BY o.created_at DESC, o.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerOrderProjectionStatus(r))
 	if err != nil {

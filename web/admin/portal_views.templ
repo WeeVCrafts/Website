@@ -1,5 +1,6 @@
 package admin
 
+import "strings"
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 import "github.com/wecratfs/commerce/web/components"
 
@@ -202,7 +203,8 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 							<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
 							<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ components.RupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
 							<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ components.RupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
-								<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
+								@AdminParcelFields(variant)
+<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
 								if variant.Status == "active" {
 									<button class="admin-button primary" type="submit">Save variant</button>
 								}
@@ -222,7 +224,8 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 						<label>SKU<input name="sku" required maxlength="120"/></label>
 						<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" required/></label>
 						<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal"/></label>
-						<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" max="100000" value="0" required/></label>
+						@AdminParcelFields(viewmodels.ProductVariant{})
+<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" max="100000" value="0" required/></label>
 						<button class="admin-button primary" type="submit">Add variant</button>
 					</form>
 				</section>
@@ -270,7 +273,10 @@ templ PortalInventory(p viewmodels.AdminPage) {
 templ PortalOrders(p viewmodels.AdminPage) {
 	@AdminDocument(p) {
 		@StatGrid(p)
-		<form method="get" class="ui-filter-bar" aria-label="Filter orders"><label for="order-stage-filter">Fulfilment stage</label><select id="order-stage-filter" name="stage">
+		if p.CanManageDelivery {
+ <div class="admin-toolbar"><a class="admin-button secondary" href={p.PortalRoot+"/delivery-exceptions"}>Delivery exceptions</a></div>
+ }
+<form method="get" class="ui-filter-bar" aria-label="Filter orders"><label for="order-stage-filter">Fulfilment stage</label><select id="order-stage-filter" name="stage">
 			<option value="" selected?={ p.OrderStage == "" }>All stages</option>
 			for _, stage := range orderStageOptions() {
 				<option value={ stage.Value } selected?={ p.OrderStage == stage.Value }>{ stage.Label }</option>
@@ -447,14 +453,25 @@ templ PortalSellerList(p viewmodels.AdminPage) {
 
 templ PortalOrderList(p viewmodels.AdminPage) {
 	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><div><h2>Recent orders</h2><p>Marketplace order status and customer totals.</p></div></div></div>
-		@OrderQueueRegion(p.Orders)
+		@OrderQueueRegion(p)
 	</article>
 }
 
-templ OrderQueueRegion(orders []viewmodels.AdminOrder) {
-	<div data-admin-orders-region>
+templ OrderQueueRegion(p viewmodels.AdminPage) {
+	<div data-admin-orders-region data-order-queue-unavailable?={ p.OrderQueueUnavailable }>
+		if p.OrderQueueUnavailable {
+			@AdminTableEmpty("Order queue unavailable.", "Reload to try loading the order queue again.")
+			<a class="admin-button secondary" href="">Reload order queue</a>
+		} else if len(p.Orders) == 0 {
+			if p.OrderStage != "" || strings.TrimSpace(p.Query) != "" {
+				@AdminTableEmpty("No orders match the current filters.", "Clear your filters to see all orders.")
+				<a class="admin-button secondary" href="?">Clear filters</a>
+			} else {
+				@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
+			}
+		} else {
 		<div class="ui-table-region" role="region" tabindex="0" aria-label="Order queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Order status</th><th scope="col">Payment status</th><th scope="col">Fulfilment stage</th></tr></thead><tbody>
-			for _, order := range orders {
+			for _, order := range p.Orders {
 				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span>
 
                   if len(order.Parcels) > 1 {
@@ -471,8 +488,6 @@ templ OrderQueueRegion(orders []viewmodels.AdminOrder) {
                   </td></tr>
 			}
 		</tbody></table></div>
-		if len(orders) == 0 {
-			@AdminTableEmpty("No orders have been placed.", "Customer orders will appear here after checkout.")
 		}
 	</div>
 }
@@ -517,7 +532,7 @@ templ PortalReturnActions(p viewmodels.AdminPage,item viewmodels.AdminReturn) {
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {
  <article class="admin-panel">
-  <p><a class="admin-button secondary" href={ p.PortalRoot+"/payment-reviews" }>Review captured payment exceptions</a></p>
+  <p><a class="admin-button secondary" href={ p.PortalRoot+"/payment-reviews" }>Review payment exceptions</a></p>
   <div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">account_balance</span><div><h2>Seller settlements</h2><p>Record manual bank transfers made outside Weevcrafts. No button sends money.</p></div></div>
    if p.CanFinance {
     <form method="post" action={ p.SettlementRoot+"/settlements/create" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button class="admin-button primary" type="submit">Prepare settlement batches</button></form>
@@ -608,4 +623,13 @@ templ PortalAuditList(p viewmodels.AdminPage) {
 				@AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.")
 			}
 	</article>
+}
+
+templ AdminParcelFields(v viewmodels.ProductVariant) {
+ if v.Status == "" || v.Status == "active" {
+  <label>Shipping weight (g)<input name="shipping_weight_g" type="number" min="1" max="50000" value={v.ShippingWeight}/></label>
+  <label>Shipping length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={v.ShippingLength}/></label>
+  <label>Shipping width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={v.ShippingWidth}/></label>
+  <label>Shipping height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" value={v.ShippingHeight}/></label>
+ }
 }

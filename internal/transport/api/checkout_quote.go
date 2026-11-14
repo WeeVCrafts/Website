@@ -18,7 +18,8 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "Sign in to preview your checkout.")
 		return
 	}
-	if pin := strings.TrimSpace(r.URL.Query().Get("postal_code")); pin != "" {
+	pin := strings.TrimSpace(r.URL.Query().Get("postal_code"))
+	if pin != "" {
 		if !regexp.MustCompile(`^[1-9][0-9]{5}$`).MatchString(pin) {
 			writeError(w, http.StatusUnprocessableEntity, "PIN_INVALID", "Enter a valid six-digit Indian PIN code.")
 			return
@@ -40,8 +41,15 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quote, err := h.orders.Quote(r.Context(), session.UserID, cart.ID, r.URL.Query().Get("coupon_code"))
+	if err == nil && pin != "" {
+		err = h.orders.CheckDelivery(r.Context(), session.UserID, cart.ID, pin)
+	}
 	if err != nil {
 		switch {
+		case errors.Is(err, ports.ErrDeliveryUnavailable):
+			writeError(w, http.StatusUnprocessableEntity, "PIN_UNSERVICEABLE", "Delivery is not currently available to this PIN code. Your cart is saved.")
+		case errors.Is(err, ports.ErrShippingParcelMissing):
+			writeError(w, http.StatusUnprocessableEntity, "PARCEL_UNAVAILABLE", "One or more items are temporarily unavailable for delivery. Your cart is saved.")
 		case errors.Is(err, ports.ErrCouponInvalid):
 			writeError(w, http.StatusUnprocessableEntity, "COUPON_INVALID", "This coupon is invalid, expired, or unavailable for your items.")
 		case errors.Is(err, ports.ErrCartNotFound):

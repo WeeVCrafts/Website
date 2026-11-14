@@ -6,7 +6,7 @@ import (
 )
 
 templ Header(p viewmodels.CustomerPage) {
-  <header class="site-header" x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
+  <header class={ "site-header", templ.KV("customer-shopping-header", !p.SellerNotifications) } x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
     if p.Route=="/" {
      @HomepageUtility(p)
     }
@@ -30,10 +30,10 @@ templ Header(p viewmodels.CustomerPage) {
         </div>
         <div class="header-actions">
           @WishlistAction(p)
- if p.Authenticated {
+ if p.Authenticated && p.SellerNotifications {
  @NotificationBell()
  }
-          <a href="/cart" id="cart-count" data-backend-counter title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+          @ShoppingHeaderAction("cart-count", "/cart", "Cart", "shopping_bag", p.CartCount, false, false)
           if p.Authenticated {
           <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
             <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Open profile menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
@@ -54,12 +54,7 @@ templ Header(p viewmodels.CustomerPage) {
 
                 <a href={p.AccountDestination()}><span class="material-symbols-outlined" aria-hidden="true">person</span><span>Account & profile</span></a>
                 <a href="/orders"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><span>Orders & tracking</span></a>
-    <a href="/notifications" class="notification-action" aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications
-                  if p.ProfileIncomplete {
-    <em aria-label="Complete your profile">1</em>
-    }
-
-                </span></a>
+    <a href="/notifications" class="notification-action" data-notification-bell aria-label="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications <em data-notification-count hidden></em></span></a>
     <form class="profile-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Sign out</span></button></form>
 
             </nav>
@@ -69,7 +64,7 @@ templ Header(p viewmodels.CustomerPage) {
           }
         </div>
       </div>
-          if p.Authenticated {
+          if p.Authenticated && p.SellerNotifications {
     <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button></form>
     }
 
@@ -177,7 +172,7 @@ templ MenuLink(href string, label string, icon string) {
 
 
 templ WishlistAction(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } data-backend-counter title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  @ShoppingHeaderAction("wishlist-count", "/wishlist", "Wishlist", wishlistIcon(p.WishlistCount), p.WishlistCount, p.WishlistCount>0, false)
     }
 
 
@@ -195,14 +190,14 @@ templ CartMutation(p viewmodels.CustomerPage) {
 }
 
 templ CartMutationMessage(p viewmodels.CustomerPage, message string) {
-  <a href="/cart" id="cart-count" hx-swap-oob="outerHTML" title="Cart" aria-label={ fmt.Sprintf("Cart, %d items", p.CartCount) }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><span>Cart<em>{ p.CartCount }</em></span></a>
+  @ShoppingHeaderAction("cart-count", "/cart", "Cart", "shopping_bag", p.CartCount, false, true)
   @WishlistCountMutation(p)
   <div id="ui-toast" hx-swap-oob="innerHTML" role="status">{ message }</div>
     }
 
 
 templ WishlistCountMutation(p viewmodels.CustomerPage) {
-  <a href="/wishlist" id="wishlist-count" class={ wishlistHeaderClass(p.WishlistCount) } hx-swap-oob="outerHTML" title="Wishlist" aria-label={ fmt.Sprintf("Wishlist, %d items", p.WishlistCount) }><span class="material-symbols-outlined" aria-hidden="true">{ wishlistIcon(p.WishlistCount) }</span><span>Wishlist<em>{ p.WishlistCount }</em></span></a>
+  @ShoppingHeaderAction("wishlist-count", "/wishlist", "Wishlist", wishlistIcon(p.WishlistCount), p.WishlistCount, p.WishlistCount>0, true)
     }
 
 
@@ -297,3 +292,10 @@ templ ProductCard(product viewmodels.Product, showAction bool, priority ...bool)
 templ CategoryCard(category viewmodels.Category) {
   <a class="category-card" href={ "/products?category=" + category.Slug }><img style={ "object-position:"+category.ImagePosition } src={ category.ImageURL } srcset={ ResponsiveImageSrcSet(category.ImageURL, "") } sizes="(max-width:720px) 45vw, 320px" alt="" loading="lazy" decoding="async" width="320" height="320"/><span><strong>{ category.Name }</strong><small>{ category.Description }</small><b>Explore { category.Name } <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></b></span></a>
     }
+
+// Initial rendering and out-of-band count updates share the same geometry.
+templ ShoppingHeaderAction(id, href, label, icon string, count int, active, oob bool) {
+ <a href={href} id={id} class={templ.KV("wishlist-action",id=="wishlist-count"),templ.KV("is-active",active)} data-backend-counter title={label} aria-label={fmt.Sprintf("%s, %d items",label,count)} hx-swap-oob={headerActionSwap(oob)}>
+  <span class="material-symbols-outlined" aria-hidden="true">{icon}</span><span class="header-action-label">{label}<em>{count}</em></span>
+ </a>
+}

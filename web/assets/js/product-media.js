@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll("[data-print-kind]").forEach(function (button) {
-    button.addEventListener("click", function () {
-      document.body.dataset.printKind = button.dataset.printKind;
-      window.print();
-      window.setTimeout(function () { delete document.body.dataset.printKind; }, 500);
-    });
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-print-kind]");
+    if (!button || button.disabled) return;
+    document.body.dataset.printKind = button.dataset.printKind;
+    window.print();
+    window.setTimeout(function () { delete document.body.dataset.printKind; }, 500);
   });
   var builder = document.querySelector("[data-product-builder]");
   var selector = builder && builder.querySelector('[name="category_slug"]');

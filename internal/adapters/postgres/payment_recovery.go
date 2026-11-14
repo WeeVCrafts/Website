@@ -2,12 +2,21 @@ package postgres
 
 import (
 	"context"
+
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
+// Used by the shopper projection and the transactional payment creation path.
+const paymentOrderPayableSQL = `(o.status='pending_payment' AND NOT o.payment_review_required
+	AND COALESCE(pa.status IN ('created','pending'),false) AND COALESCE(pa.creation_review_reason,'')=''
+	AND EXISTS(SELECT 1 FROM inventory_reservations ir WHERE ir.order_id=o.id AND ir.status='active' AND ir.expires_at>NOW())
+	AND NOT EXISTS(SELECT 1 FROM provider_payment_attempts p WHERE p.payment_attempt_id=pa.id AND p.status='pending'))`
+
 func (r *PaymentRepository) PaymentOrderPayable(ctx context.Context, userID int64, number string) (bool, error) {
 	var payable bool
-	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM orders o JOIN payment_attempts pa ON pa.order_id=o.id JOIN inventory_reservations ir ON ir.order_id=o.id WHERE o.user_id=$1 AND o.order_number=$2 AND o.status='pending_payment' AND NOT o.payment_review_required AND pa.status IN ('created','pending') AND ir.status='active' AND ir.expires_at>NOW())`, userID, number).Scan(&payable)
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM orders o
+		JOIN LATERAL (SELECT id,status,creation_review_reason FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON true
+		WHERE o.user_id=$1 AND o.order_number=$2 AND `+paymentOrderPayableSQL+`)`, userID, number).Scan(&payable)
 	return payable, err
 }
 

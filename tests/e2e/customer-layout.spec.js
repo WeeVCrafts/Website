@@ -17,6 +17,9 @@ async function ready(page, route) {
     if (url.pathname.endsWith('/products/layout-mug')) data = {id:1,slug:'layout-mug',name:'Hand painted ceramic coffee mug with traditional floral patterns',seller:{name:'Independent Indian Ceramics Workshop'},variants:[{id:101,price_cents:9999900,inventory_quantity:10}],image_url:'/assets/images/customer/ceramic-mugs.webp'};
     if (url.pathname.endsWith('/checkout/quote')) {
       if (url.searchParams.get('coupon_code') === 'INVALID') return route.fulfill({status:422,json:{error:{message:'Coupon is not available.'}}});
+      if (url.searchParams.get('coupon_code') === 'EXPIRED') return route.fulfill({status:422,json:{error:{code:'COUPON_INVALID',message:'This coupon has expired.'}}});
+      if (url.searchParams.get('postal_code') === '100001') return route.fulfill({status:422,json:{error:{code:'PIN_UNSERVICEABLE',message:'Delivery is unavailable for this PIN.'}}});
+      if (url.searchParams.get('postal_code') === '411002') return route.fulfill({status:409,json:{error:{code:'ITEMS_UNAVAILABLE',message:'One or more items are no longer available.'}}});
       data = {subtotal_cents:9999900,shipping_cents:9900,discount_cents:10000,total_cents:9999800,policy_revision:1};
     }
     await route.fulfill({json:{data}});
@@ -63,7 +66,7 @@ for (const width of [320,390,720,1440]) {
     await page.screenshot({path:path.join(os.tmpdir(),`weev-customer-checkout-${width}.png`),fullPage:true});
     await coupon.fill('VALID');
     await page.locator('[data-preview-quote]').click();
-    await expect(page.locator('.checkout-summary [data-quote-discount]')).toHaveText('INR 100.00');
+    await expect(page.locator('.checkout-summary [data-quote-discount]')).toHaveText('₹100');
     await coupon.fill('INVALID');
     await page.locator('[data-preview-quote]').click();
     await expect(page.locator('#ui-toast')).toContainText('Coupon is not available');
@@ -89,4 +92,32 @@ test('cart controls retain variant selection after reflow and refresh', async ({
   await page.reload();
   await page.locator('.cart-layout').getByRole('button',{name:'Remove',exact:true}).click();
   await expect(page.locator('.cart-layout .empty-state')).toBeVisible();
+});
+
+test('checkout quote errors offer recovery without clearing the address', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await ready(page, '/checkout');
+  const address = { recipient_name: 'Fixture buyer', phone: '9876543210', line1: '12 Craft Lane', city: 'Pune', state: 'Maharashtra', postal_code: '100001' };
+  const form = page.locator('#checkout-address-form');
+  const pin = form.locator('[name=postal_code]');
+  for (const [field, value] of Object.entries(address)) await form.locator(`[name="${field}"]`).fill(value);
+  const review = page.getByRole('button', { name: 'Review & pay', exact: true });
+  await review.click();
+  await expect(page.locator('#checkout-postal-error')).toContainText('Delivery is unavailable');
+  await expect(pin).toHaveAttribute('aria-invalid', 'true');
+  await pin.fill('411002');
+  await review.click();
+  await expect(page.locator('[data-checkout-error-recovery]:visible a')).toHaveAttribute('href', '/cart');
+  await pin.fill('411001');
+  const coupon = page.locator('#checkout-coupon-code');
+  await coupon.fill('EXPIRED');
+  await review.click();
+  await expect(page.locator('#checkout-coupon-error')).toContainText('This coupon has expired.');
+  await expect(coupon).toHaveAttribute('aria-invalid', 'true');
+  await page.locator('[data-remove-checkout-coupon]').click();
+  await expect(coupon).toHaveValue('');
+  await review.click();
+  await expect(page.locator('.checkout-card[data-step="2"]')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit address', exact: true }).click();
+  await expect(form.locator('[name=line1]')).toHaveValue('12 Craft Lane');
 });

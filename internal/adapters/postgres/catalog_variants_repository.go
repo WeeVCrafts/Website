@@ -51,7 +51,8 @@ func listProductVariants(ctx context.Context, q interface {
 }, productID int64) ([]commerce.ProductVariant, error) {
 	rows, err := q.Query(ctx, `SELECT pv.id,pv.product_id,pv.name,pv.sku,pv.price_cents,pv.cost_price_cents,
 		COALESCE(pv.compare_at_cents,0),pv.compare_at_cents IS NOT NULL,
-		COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
+		COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,
+		pv.shipping_weight_g,pv.shipping_length_cm,pv.shipping_width_cm,pv.shipping_height_cm
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
 	if err != nil {
@@ -61,7 +62,7 @@ func listProductVariants(ctx context.Context, q interface {
 	variants := make([]commerce.ProductVariant, 0)
 	for rows.Next() {
 		var v commerce.ProductVariant
-		if err := rows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.PriceCents, &v.CostPriceCents, &v.CompareAtCents, &v.HasCompareAt, &v.Available, &v.Reserved, &v.Status); err != nil {
+		if err := rows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.PriceCents, &v.CostPriceCents, &v.CompareAtCents, &v.HasCompareAt, &v.Available, &v.Reserved, &v.Status, &v.Parcel.WeightGrams, &v.Parcel.LengthCM, &v.Parcel.WidthCM, &v.Parcel.HeightCM); err != nil {
 			return nil, err
 		}
 		variants = append(variants, v)
@@ -79,6 +80,9 @@ func (r *CommerceRepository) CreateAdminProductVariant(ctx context.Context, acto
 
 func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, productID int64, input commerce.ProductVariantInput, admin bool) (commerce.ProductVariant, error) {
 	var variant commerce.ProductVariant
+	if input.Parcel != nil && !input.Parcel.Valid() {
+		return variant, ports.ErrShippingInput
+	}
 	err := WithinTransaction(ctx, r.pool, func(txctx context.Context, tx pgx.Tx) error {
 		if admin {
 			if err := requireCompanyCatalogActor(txctx, tx, actorID); err != nil {
@@ -99,6 +103,9 @@ func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, 
 		}
 		variant.ProductID, variant.Name, variant.SKU = productID, input.Name, input.SKU
 		variant.PriceCents, variant.CostPriceCents, variant.Available, variant.Status = input.PriceCents, input.CostPriceCents, input.InitialStock, "active"
+		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
+			return err
+		}
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents
@@ -121,6 +128,9 @@ func (r *CommerceRepository) UpdateAdminProductVariant(ctx context.Context, acto
 
 func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, productID, variantID int64, input commerce.ProductVariantInput, admin bool) (commerce.ProductVariant, error) {
 	var variant commerce.ProductVariant
+	if input.Parcel != nil && !input.Parcel.Valid() {
+		return variant, ports.ErrShippingInput
+	}
 	err := WithinTransaction(ctx, r.pool, func(txctx context.Context, tx pgx.Tx) error {
 		if admin {
 			if err := requireCompanyCatalogActor(txctx, tx, actorID); err != nil {
@@ -141,6 +151,9 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 			return ports.ErrInvalidState
 		}
 		variant = commerce.ProductVariant{ID: variantID, ProductID: productID, Name: input.Name, SKU: input.SKU, PriceCents: input.PriceCents, CostPriceCents: input.CostPriceCents, Status: "active"}
+		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
+			return err
+		}
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents
@@ -154,6 +167,17 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 		return requestProductReindex(txctx, tx, productID, "active")
 	})
 	return variant, err
+}
+
+func saveVariantParcel(ctx context.Context, tx pgx.Tx, variant *commerce.ProductVariant, parcel *commerce.ParcelDimensions) error {
+	const dimensions = `shipping_weight_g,shipping_length_cm,shipping_width_cm,shipping_height_cm`
+	var row pgx.Row
+	if parcel != nil {
+		row = tx.QueryRow(ctx, `UPDATE product_variants SET shipping_weight_g=$2,shipping_length_cm=$3,shipping_width_cm=$4,shipping_height_cm=$5 WHERE id=$1 RETURNING `+dimensions, variant.ID, parcel.WeightGrams, parcel.LengthCM, parcel.WidthCM, parcel.HeightCM)
+	} else {
+		row = tx.QueryRow(ctx, `SELECT `+dimensions+` FROM product_variants WHERE id=$1`, variant.ID)
+	}
+	return row.Scan(&variant.Parcel.WeightGrams, &variant.Parcel.LengthCM, &variant.Parcel.WidthCM, &variant.Parcel.HeightCM)
 }
 
 func (r *CommerceRepository) ArchiveSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, reason string) error {

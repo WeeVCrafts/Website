@@ -23,7 +23,9 @@ func (r *CommerceRepository) ListSellerOrders(ctx context.Context, userID int64)
 		JOIN products p ON p.id = pv.product_id
 		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
 		LEFT JOIN seller_fulfillments sf ON sf.order_id = o.id AND sf.seller_id = s.id
-		WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered', 'pending_payment')
+		WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+		  AND NOT o.payment_review_required
+		  AND (SELECT pa.status FROM payment_attempts pa WHERE pa.order_id=o.id ORDER BY pa.id DESC LIMIT 1)='captured'
 		  AND (s.owner_user_id = $1 )
 		ORDER BY o.created_at DESC, o.id DESC, s.id, oi.id`, userID)
 	if err != nil {
@@ -64,9 +66,13 @@ func (r *CommerceRepository) UpdateSellerFulfillment(ctx context.Context, userID
 }
 
 func (r *CommerceRepository) UpdateSellerFulfillmentWithRevision(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string, expectedRevision int64) error {
+	return r.updateSellerFulfillment(ctx, userID, sellerID, orderNumber, status, carrier, trackingNumber, note, expectedRevision, "")
+}
+
+func (r *CommerceRepository) updateSellerFulfillment(ctx context.Context, userID, sellerID int64, orderNumber, status, carrier, trackingNumber, note string, expectedRevision int64, shippingEnvironment string) error {
 	return WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var orderID int64
-		var currentStatus, overallStatus string
+		var currentStatus, overallStatus, paymentStatus string
 		var paymentReview bool
 		var revision int64
 		err := tx.QueryRow(transactionContext, `
@@ -89,15 +95,50 @@ func (r *CommerceRepository) UpdateSellerFulfillmentWithRevision(ctx context.Con
 		if err != nil {
 			return err
 		}
-		if paymentReview {
+		// Read payment after obtaining the same order lock used by capture and refund.
+		if err := tx.QueryRow(transactionContext, `SELECT COALESCE((SELECT status FROM payment_attempts WHERE order_id=$1 ORDER BY id DESC LIMIT 1),'')`, orderID).Scan(&paymentStatus); err != nil {
+			return err
+		}
+		if !domaincommerce.PrepaidOrderConfirmed(overallStatus, paymentStatus, paymentReview) {
 			return ports.ErrInvalidState
 		}
 		var existingCarrier, existingTracking, existingNote string
 		if lockErr := tx.QueryRow(transactionContext, `SELECT status,revision,COALESCE(carrier,''),COALESCE(tracking_number,''),COALESCE(last_note,'') FROM seller_fulfillments WHERE seller_id=$1 AND order_id=$2 FOR UPDATE`, sellerID, orderID).Scan(&currentStatus, &revision, &existingCarrier, &existingTracking, &existingNote); lockErr != nil && !errors.Is(lockErr, pgx.ErrNoRows) {
 			return lockErr
 		}
-		if overallStatus != "paid" && overallStatus != "processing" && overallStatus != "shipped" && overallStatus != "delivered" {
-			return ports.ErrInvalidState
+		if shippingEnvironment != "" {
+			var active bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM shiprocket_shipments WHERE order_id=$1 AND seller_id=$2 AND environment=$3 AND provider_shipment_id IS NOT NULL AND provider_status NOT IN ('CANCELLED','CANCELED'))`, orderID, sellerID, shippingEnvironment).Scan(&active); err != nil {
+				return err
+			}
+			if !active {
+				return ports.ErrInvalidState
+			}
+			current, _ := domaincommerce.ParseFulfillmentStage(currentStatus)
+			target, _ := domaincommerce.ParseFulfillmentStage(status)
+			if current.Index() >= target.Index() {
+				return nil
+			}
+			if current.Index() < domaincommerce.FulfillmentPacking.Index() {
+				return ports.ErrInvalidState
+			}
+			status = string(current.Next())
+			note = existingNote
+		} else if target, ok := domaincommerce.ParseFulfillmentStage(status); ok && target.Index() >= domaincommerce.FulfillmentShipped.Index() {
+			var managed bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM shiprocket_shipments WHERE order_id=$1 AND seller_id=$2 AND environment='live'
+    AND (provider_status NOT IN ('CANCELLED','CANCELED') OR NOT EXISTS (
+       SELECT 1 FROM delivery_exceptions e WHERE e.order_id=$1 AND e.seller_id=$2 AND e.environment='live' AND e.kind='cancelled_parcel' AND e.resolved_at IS NOT NULL)))`, orderID, sellerID).Scan(&managed); err != nil {
+				return err
+			}
+			if !managed && r.delivery != nil && r.delivery.environment == "live" {
+				if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM order_delivery_decisions d WHERE d.order_id=$1 AND d.seller_id=$2 AND d.decision='shiprocket' AND NOT EXISTS(SELECT 1 FROM delivery_exceptions e WHERE e.order_id=d.order_id AND e.seller_id=d.seller_id AND e.environment='live' AND e.kind='cancelled_parcel' AND e.resolved_at IS NOT NULL))`, orderID, sellerID).Scan(&managed); err != nil {
+					return err
+				}
+			}
+			if managed {
+				return ports.ErrInvalidState
+			}
 		}
 		// A replay of an identical committed save succeeds even with the original
 		// revision, without repeating history, notifications or shipping email.

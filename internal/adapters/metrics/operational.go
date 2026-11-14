@@ -9,8 +9,10 @@ import (
 // expose only resource counters and a fixed HTTP vocabulary.
 type OperationalSnapshot struct {
 	SearchSnapshot
-	HTTP         HTTPSnapshot `json:"http"`
-	DatabasePool PoolSnapshot `json:"database_pool"`
+	HTTP         HTTPSnapshot     `json:"http"`
+	DatabasePool PoolSnapshot     `json:"database_pool"`
+	Payment      PaymentSnapshot  `json:"payment"`
+	Shipping     ShippingSnapshot `json:"shipping"`
 }
 type PoolSnapshot struct {
 	MaxConnections          int32 `json:"max_connections"`

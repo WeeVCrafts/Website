@@ -10,7 +10,7 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
-func requirePaymentReviewer(ctx context.Context, tx pgx.Tx, actor int64) error {
+func requireOperationsActor(ctx context.Context, tx pgx.Tx, actor int64) error {
 	var id int64
 	err := tx.QueryRow(ctx, `SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('admin','super_admin') FOR SHARE OF u,ur`, actor).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -24,13 +24,20 @@ func (r *PaymentRepository) ListPaymentReviews(ctx context.Context, actor int64,
 	}
 	cases := []ports.PaymentReviewCase{}
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
-		if err := requirePaymentReviewer(ctx, tx, actor); err != nil {
+		if err := requireOperationsActor(ctx, tx, actor); err != nil {
 			return err
 		}
-		rows, err := tx.Query(ctx, `SELECT c.id,c.order_id,o.order_number,o.status,c.provider_payment_id,c.amount_cents,c.currency,c.reason,c.status,c.resolution_reason,c.refund_submission_state,COALESCE(c.provider_refund_id,''),
-  (c.status='open' AND o.status IN ('pending_payment','payment_failed') AND pa.status='captured' AND pa.provider_payment_id=c.provider_payment_id AND EXISTS(SELECT 1 FROM inventory_reservations ir WHERE ir.order_id=o.id AND ir.status IN ('released','expired')))
+		rows, err := tx.Query(ctx, `SELECT id,order_id,order_number,order_status,provider_payment_id,amount_cents,currency,reason,status,
+  resolution_reason,refund_submission_state,provider_refund_id,can_approve FROM (
+  SELECT c.id,c.order_id,o.order_number,o.status AS order_status,c.provider_payment_id,c.amount_cents,c.currency,c.reason,c.status,
+    c.resolution_reason,c.refund_submission_state,COALESCE(c.provider_refund_id,'') AS provider_refund_id,c.created_at,
+    (c.status='open' AND o.status IN ('pending_payment','payment_failed') AND pa.status='captured' AND pa.provider_payment_id=c.provider_payment_id AND EXISTS(SELECT 1 FROM inventory_reservations ir WHERE ir.order_id=o.id AND ir.status IN ('released','expired'))) AS can_approve
   FROM payment_review_cases c JOIN orders o ON o.id=c.order_id JOIN payment_attempts pa ON pa.id=c.payment_attempt_id
-  ORDER BY (c.status IN ('open','refund_pending')) DESC,c.created_at,c.id LIMIT $1`, limit)
+  UNION ALL
+  SELECT pa.id,o.id,o.order_number,o.status,'',pa.amount_cents,pa.currency,pa.creation_review_reason,'creation_review',
+    'Check the order receipt in Razorpay and reconcile it with this saved order.','', '',pa.creation_started_at,false
+  FROM payment_attempts pa JOIN orders o ON o.id=pa.order_id WHERE pa.provider='razorpay' AND pa.creation_review_reason<>''
+  ) reviews ORDER BY (status IN ('open','refund_pending','creation_review')) DESC,created_at,id LIMIT $1`, limit)
 		if err != nil {
 			return err
 		}
@@ -90,7 +97,7 @@ func (r *PaymentRepository) ApprovePaymentReview(ctx context.Context, actor, id 
 		return ports.ErrInvalidState
 	}
 	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
-		if err := requirePaymentReviewer(ctx, tx, actor); err != nil {
+		if err := requireOperationsActor(ctx, tx, actor); err != nil {
 			return err
 		}
 		c, err := lockPaymentReview(ctx, tx, id)
@@ -192,7 +199,7 @@ func (r *PaymentRepository) BeginReviewRefund(ctx context.Context, actor, id int
 	}
 	var record ports.PaymentRefundRecord
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
-		if err := requirePaymentReviewer(ctx, tx, actor); err != nil {
+		if err := requireOperationsActor(ctx, tx, actor); err != nil {
 			return err
 		}
 		c, err := lockPaymentReview(ctx, tx, id)
@@ -224,7 +231,7 @@ func (r *PaymentRepository) AuthorizeReviewRefundRetry(ctx context.Context, acto
 		return ports.ErrRefundState
 	}
 	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
-		if err := requirePaymentReviewer(ctx, tx, actor); err != nil {
+		if err := requireOperationsActor(ctx, tx, actor); err != nil {
 			return err
 		}
 		c, err := lockPaymentReview(ctx, tx, id)

@@ -397,10 +397,10 @@
     const buttons=Array.from(form.querySelectorAll('button[type="submit"],input[type="submit"]')).filter(button=>!button.disabled);
     const oldError=form.querySelector('.ui-form-error'); oldError?.remove();
     form.dataset.saving="true"; form.setAttribute('aria-busy','true'); buttons.forEach(button=>{button.disabled=true;busy(button,true);});
-    const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),30000);
+    const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),form.hasAttribute('data-shiprocket-form')?100000:30000);
     let productInvalidField = null;
     try {
-      const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:customerForm && form.enctype!=='multipart/form-data' ? new URLSearchParams(payload) : payload,signal:controller.signal});
+      const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:(customerForm && form.enctype!=='multipart/form-data') || form.hasAttribute('data-shiprocket-form') ? new URLSearchParams(payload) : payload,signal:controller.signal});
       if ((customerForm || form.hasAttribute('data-store-profile') || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
         const error = new Error('Your session ended. Your entries are still here. Copy your changes before signing in again.');
         error.customerSession = true; throw error;
@@ -421,7 +421,7 @@
       if(storefrontSummary){const error=new Error(storefrontSummary.textContent.trim());error.storefrontSummary=storefrontSummary;throw error;}
       const message=response.headers.get('Content-Type')?.includes('text/plain') ? html.trim().slice(0,1000) : (doc.querySelector('.profile-error,.seller-form-error,.ui-error-summary p,.error-message,.error-state p') || doc.querySelector('main p'))?.textContent?.trim();
       const error = new Error(message || (response.status===403 ? 'Your session or permission changed. Sign in again before saving.' : 'The changes could not be saved. Review the fields and try again.'));
-      error.orderConflict = response.status===409 && form.matches('[data-fulfillment-form]');
+      error.orderConflict = response.status===409 && form.matches('[data-fulfillment-form], [data-shiprocket-form]');
       error.categoryConflict = response.status===409 && form.matches('[data-category-publication]');
       throw error;
     } catch(error) {
@@ -440,7 +440,7 @@
       }
       form.prepend(banner); banner.focus();
       if (productInvalidField) validate(form);
-      buttons.forEach(button=>{button.disabled=false;busy(button,false);}); delete form.dataset.saving; form.removeAttribute('aria-busy');
+      buttons.forEach(button=>{button.disabled=form.hasAttribute('data-fulfillment-stale');busy(button,false);}); delete form.dataset.saving; form.removeAttribute('aria-busy');
     } finally { clearTimeout(timer); }
   });
   document.addEventListener('click',event=>{
@@ -471,9 +471,7 @@
     const pause = document.createElement('button'); pause.type = 'button'; pause.className = 'text-button'; pause.textContent = 'Pause updates';
     const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'text-button'; retry.textContent = 'Retry update'; retry.hidden = true;
     controls.append(state, pause, retry);
-    // Keep the controls outside the seller detail's two-column layout.
-    const anchor = region.matches('[data-seller-order-detail]') ? region.parentElement : region;
-    anchor.before(controls); state.textContent = 'Live updates every 15 seconds';
+    region.before(controls); state.textContent = 'Live updates every 15 seconds';
     const result = { state, retry, paused: false, lastSuccess: "Not refreshed yet" };
     pause.addEventListener('click', () => {
       result.paused = !result.paused;
@@ -493,18 +491,20 @@
       if (busy || document.hidden || controls.paused) return;
       busy = true;
       try {
-        const response = await fetch('/ui/admin/orders/status' + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
-        if (!response.ok) throw new Error('refresh failed');
+        const response = await fetch('/ui/admin/orders/status' + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' }, signal: AbortSignal.timeout(12000) });
+        if (!response.ok || response.redirected) throw new Error('refresh failed');
         const parsed = document.createRange().createContextualFragment(await response.text());
         const next = parsed.querySelector('[data-admin-orders-region]');
-        if (next) {
-          const active = document.activeElement;
-          if (!region.contains(active)) { region.replaceWith(next); region = next; }
-        } else throw new Error('refresh failed');
+        if (!next) throw new Error('refresh failed');
+        if (controls.paused || document.hidden || region.contains(document.activeElement)) return;
+        region.replaceWith(next);
+        region = next;
         controls.lastSuccess = refreshTime(); controls.state.textContent = controls.lastSuccess;
         controls.retry.hidden = true;
       } catch (_) {
-        controls.state.textContent = 'Live update unavailable. ' + controls.lastSuccess + '. The last saved queue is shown.';
+        controls.state.textContent = region.hasAttribute('data-order-queue-unavailable')
+          ? 'Order queue unavailable. Retry the update.'
+          : 'Live update unavailable. ' + controls.lastSuccess + '. The last saved queue is shown.';
         controls.retry.hidden = false;
       } finally {
         busy = false;
@@ -516,73 +516,180 @@
   }
   startAdminOrderRefresh();
   function startPaymentConfirmationRefresh() {
-    const region=document.querySelector('[data-payment-confirmation]');
-    if(!region || region.dataset.refreshStarted)return;
-    region.dataset.refreshStarted='true';
-    const button=region.querySelector('[data-check-payment-status]');
-    const feedback=region.querySelector('[data-payment-refresh-feedback]');
-    let busy=false,active=true;
-    const refresh=async(manual=false)=>{
-      if(busy||document.hidden||!active)return;
-      if(!manual && region.querySelector('[data-confirmation-content]')?.dataset.paymentPending!=='true')return;
-      busy=true;button.disabled=true;
-      feedback.textContent='Checking the recorded payment status…';
-      try{
-        const response=await fetch('/ui/orders/status?view=confirmation&order='+encodeURIComponent(region.dataset.orderNumber),{credentials:'same-origin',cache:'no-store',headers:{Accept:'text/html'},signal:AbortSignal.timeout(20000)});
-        if(!response.ok||response.redirected)throw Error('Could not verify payment status. Your last saved status remains below. Check again before paying.');
-        const fragment=document.createRange().createContextualFragment(await response.text());
-        const next=fragment.querySelector('[data-confirmation-content]');
-        if(!next)throw Error('Payment update was incomplete. Check again before paying.');
-        const current=region.querySelector('[data-confirmation-content]');
-        const oldConfig=current.querySelector('#checkout-payment-config');
-        const nextConfig=next.querySelector('#checkout-payment-config');
-        if(nextConfig && !nextConfig.dataset.contactEmail && oldConfig?.dataset.contactEmail)nextConfig.dataset.contactEmail=oldConfig.dataset.contactEmail;
-        if(!current.contains(document.activeElement))current.replaceWith(next);
-        feedback.textContent=refreshTime();
-      }catch(error){feedback.textContent=error.message;}
-      finally{busy=false;button.disabled=false;}
+    const region = document.querySelector('[data-payment-confirmation]');
+    if (!region || region.dataset.refreshStarted) return;
+    region.dataset.refreshStarted = 'true';
+    let active = true;
+    let request;
+    let timer;
+    let initialTimer;
+    const refresh = async (manual = false) => {
+      if (request || document.hidden || !active) return;
+      const current = region.querySelector('[data-confirmation-content]');
+      const button = current?.querySelector('[data-check-payment-status]');
+      const feedback = current?.querySelector('[data-payment-refresh-feedback]');
+      if (!button || !feedback || (!manual && current.dataset.paymentPending !== 'true')) return;
+      if (current.querySelector('[data-retry-payment][aria-busy="true"]')) return;
+      const controller = new AbortController();
+      request = controller;
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      button.setAttribute('aria-disabled', 'true');
+      if (manual) feedback.textContent = 'Checking the recorded payment status…';
+      try {
+        const response = await fetch('/ui/orders/status?view=confirmation&order=' + encodeURIComponent(region.dataset.orderNumber), {
+          credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' }, signal: controller.signal
+        });
+        if (!response.ok || response.redirected) throw new Error('refresh failed');
+        const fragment = document.createRange().createContextualFragment(await response.text());
+        const next = fragment.querySelector('[data-confirmation-content]');
+        if (!next) throw new Error('refresh incomplete');
+        if (request !== controller || !active || current.querySelector('[data-retry-payment][aria-busy="true"]')) return;
+        const oldConfig = current.querySelector('#checkout-payment-config');
+        const nextConfig = next.querySelector('#checkout-payment-config');
+        if (nextConfig && !nextConfig.dataset.contactEmail && oldConfig?.dataset.contactEmail) nextConfig.dataset.contactEmail = oldConfig.dataset.contactEmail;
+        const focused = document.activeElement;
+        const statusChanged = current.querySelector('h1')?.textContent !== next.querySelector('h1')?.textContent
+          || Boolean(oldConfig) !== Boolean(nextConfig);
+        if (manual || statusChanged || !current.contains(focused)) {
+          const restoringFocus = current.contains(focused);
+          current.replaceWith(next);
+          const nextFeedback = next.querySelector('[data-payment-refresh-feedback]');
+          if (nextFeedback && (manual || statusChanged)) nextFeedback.textContent = refreshTime();
+          if (restoringFocus) {
+            let target;
+            if (focused === button) target = next.querySelector('[data-check-payment-status]');
+            else if (focused.matches('[data-retry-payment]')) target = next.querySelector('[data-retry-payment]');
+            else if (focused.matches('a[href]')) target = Array.from(next.querySelectorAll('a[href]')).find(link => link.href === focused.href);
+            target ||= next.querySelector('h1');
+            if (target?.matches('h1')) target.tabIndex = -1;
+            target?.focus({preventScroll: true});
+          }
+        }
+      } catch (_) {
+        if (request === controller && active) feedback.textContent = 'Could not verify payment status. Your last saved status remains below. Check again before paying.';
+      } finally {
+        clearTimeout(timeout);
+        if (request === controller) {
+          request = null;
+          button.removeAttribute('aria-disabled');
+        }
+      }
     };
-    button.addEventListener('click',()=>refresh(true));
-    const timer=setInterval(()=>refresh(),15000);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-    window.addEventListener('pagehide',()=>{active=false;clearInterval(timer);},{once:true});
-    setTimeout(()=>refresh(),1500);
+    region.addEventListener('click', event => {
+      if (event.target.closest('[data-check-payment-status]')) refresh(true);
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+    window.addEventListener('pagehide', () => {
+      active = false;
+      clearInterval(timer);
+      clearTimeout(initialTimer);
+      request?.abort();
+      request = null;
+      region.querySelector('[data-check-payment-status]')?.removeAttribute('aria-disabled');
+    });
+    window.addEventListener('pageshow', event => {
+      if (!event.persisted || active) return;
+      active = true;
+      timer = setInterval(() => refresh(), 15000);
+      refresh();
+    });
+    timer = setInterval(() => refresh(), 15000);
+    initialTimer = setTimeout(() => refresh(), 1500);
   }
   startPaymentConfirmationRefresh();
   function startLiveOrderView() {
     const sellerList = location.pathname === '/seller-admin/orders';
     const sellerDetail = /^\/seller-admin\/orders\/[^/]+$/.test(location.pathname);
+    if (sellerDetail && new URLSearchParams(location.search).get('couriers') === '1') return;
     const customerList = location.pathname === '/orders';
     const selector = sellerList ? '[data-seller-orders-region]' : sellerDetail ? '[data-seller-order-detail]' : customerList ? '.orders-list[data-server-orders]' : '';
     let region = selector && document.querySelector(selector);
     if (!region) return;
     let busy = false;
+    // Only the seller's editable fields determine whether a refresh can discard the form.
+    const fulfillmentForm = root => root.querySelector('[data-fulfillment-form]');
+    const shippingForm = root => root.querySelector('[data-shiprocket-form]');
+    const shippingActions = root => Array.from(shippingForm(root)?.querySelectorAll('button[name="action"]') || [], button => button.value).join(',');
+    const readDraft = root => JSON.stringify([
+      ...['carrier', 'custom_carrier', 'tracking_number', 'note'].map(name => fulfillmentForm(root)?.elements.namedItem(name)?.value ?? ''),
+      ...['weight_grams', 'length_cm', 'width_cm', 'height_cm', 'courier_id'].map(name => shippingForm(root)?.elements.namedItem(name)?.value ?? '')
+    ]);
+    const nextStage = form => form?.elements.namedItem('status')?.value;
+    let savedDraft = sellerDetail ? readDraft(region) : '';
+    function markSellerOrderStale() {
+      const forms = region.querySelectorAll('[data-fulfillment-form], [data-shiprocket-form]');
+      forms.forEach(form => {
+        form.setAttribute('data-fulfillment-stale', '');
+        form.querySelectorAll('[type="submit"], [data-mock-delivery]').forEach(button => { button.disabled = true; });
+      });
+      region.querySelectorAll('[data-print-kind]').forEach(button => { button.disabled = true; });
+      if (region.querySelector('[data-order-conflict]')) return false;
+      const conflict = document.createElement('p');
+      conflict.dataset.orderConflict = 'true';
+      conflict.role = 'alert';
+      conflict.className = 'ui-form-error';
+      conflict.append(forms.length
+        ? 'This order changed while you were working. Your entries are still here. '
+        : 'This order has changed. ');
+      const link = document.createElement('a');
+      link.href = location.pathname + location.search;
+      link.textContent = 'Reload latest order';
+      conflict.append(link);
+      region.prepend(conflict);
+      return true;
+    }
+    if (sellerDetail) {
+      region.parentElement.addEventListener('submit', event => {
+        if (!event.target.matches('[data-fulfillment-stale]')) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, true);
+    }
     const refresh = async () => {
       if (busy || document.hidden || controls.paused) return;
       busy = true;
       try {
-        const response = await fetch(location.pathname + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' } });
+        const response = await fetch(location.pathname + location.search, { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'text/html' }, signal: AbortSignal.timeout(12000) });
+        if (sellerDetail && (response.redirected || [401, 403, 404].includes(response.status))) markSellerOrderStale();
         if (!response.ok || response.redirected) throw new Error('refresh failed');
         const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
         const next = doc.querySelector(selector);
         if (!next) throw new Error('refresh failed');
+        if (controls.paused || document.hidden) return;
         const active = document.activeElement;
-        // Preserve a focused button/link until the next refresh opportunity.
-        if (!region.contains(active)) { region.replaceWith(next); region = next; if (customerList) init(region); }
+        if (sellerDetail) {
+          const currentForm = fulfillmentForm(region);
+          const incomingForm = fulfillmentForm(next);
+          const preserve = region.contains(active) || currentForm?.dataset.saving === 'true'
+            || shippingForm(region)?.dataset.saving === 'true' || readDraft(region) !== savedDraft;
+          if (preserve) {
+            const changed = next.dataset.fulfillmentStage !== region.dataset.fulfillmentStage
+              || next.dataset.fulfillmentRevision !== region.dataset.fulfillmentRevision
+              || next.dataset.orderStatus !== region.dataset.orderStatus
+              || next.dataset.paymentStatus !== region.dataset.paymentStatus
+              || next.hasAttribute('data-payment-review') !== region.hasAttribute('data-payment-review')
+              || Boolean(currentForm) !== Boolean(incomingForm)
+              || nextStage(currentForm) !== nextStage(incomingForm)
+              || shippingActions(region) !== shippingActions(next);
+            if (changed && markSellerOrderStale()) {
+              controls.state.textContent = 'Order changed. Reload for the latest details.';
+            }
+            return;
+          }
+          region.replaceWith(next);
+          region = next;
+          savedDraft = readDraft(region);
+          init(region);
+          document.dispatchEvent(new CustomEvent('ui:seller-order-refresh', { detail: region }));
+        } else if (!region.contains(active)) {
+          region.replaceWith(next);
+          region = next;
+          if (customerList) init(region);
+        }
         if (customerList) {
           const counts = document.querySelector('.account-intro .tabs');
           const nextCounts = doc.querySelector('.account-intro .tabs');
           if (counts && nextCounts && !counts.contains(active)) counts.replaceWith(nextCounts);
-        }
-        if (sellerDetail) {
-          const form = document.querySelector('[data-fulfillment-form]');
-          const latestRevision = doc.querySelector('[name="expected_revision"]')?.value;
-          const currentRevision = form?.elements.namedItem('expected_revision')?.value;
-          if (form && latestRevision !== undefined && latestRevision !== currentRevision && !form.querySelector('[data-order-conflict]')) {
-            const conflict = document.createElement('p'); conflict.dataset.orderConflict = 'true'; conflict.role = 'alert'; conflict.className = 'ui-form-error';
-            conflict.append('Another session updated this order. Your entered details are preserved. ');
-            const link = document.createElement('a'); link.href = location.pathname; link.textContent = 'Reload the latest stage before saving'; conflict.append(link); form.prepend(conflict);
-          }
         }
         controls.lastSuccess = refreshTime(); controls.state.textContent = controls.lastSuccess; controls.retry.hidden = true;
       } catch (_) { controls.state.textContent = 'Live update unavailable. ' + controls.lastSuccess + '. The last saved orders are shown.'; controls.retry.hidden = false; }

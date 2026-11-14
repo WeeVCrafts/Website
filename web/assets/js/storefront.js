@@ -67,6 +67,7 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
   })[char]);
   const money = (cents) => "INR " + (Number(cents || 0) / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const checkoutMoney = (cents) => "₹" + (Number(cents || 0) / 100).toLocaleString("en-IN", { useGrouping: false, minimumFractionDigits: Number(cents) % 100 === 0 ? 0 : 2, maximumFractionDigits: 2 });
   const unwrap = (value) => value && Object.prototype.hasOwnProperty.call(value, "data") ? value.data : value;
 
   function notice(message, error) {
@@ -580,11 +581,11 @@
       if(!backend){backend=api;global.weevcraftsBackend=api;backendError=null;}
       if (action === "login") {
         const result = await api.signIn({ email: values.email, password: values.password, remember: values.remember === "on", next: values.next || "", authRoot: form.closest('[data-auth-surface]') });
-        global.location.assign(result.redirect_to || "/products");
+        global.location.assign(result.redirect_to || "/");
       } else if (action === "register") {
         const result = await api.signUp({ email: values.email, password: values.password, displayName: values.display_name, username: values.username.trim(), authRoot: form.closest("[data-auth-surface]"), phone: values.phone, acceptedTerms: values.consent === "on", next: values.next || "" });
         const data = unwrap(result) || result;
-        if (data && (data.access_token || result.csrf_token)) global.location.assign(result.redirect_to || "/products");
+        if (data && (data.access_token || result.csrf_token)) global.location.assign(result.redirect_to || "/");
         else showFormMessage(form, "Check your email to verify your new account.", false);
       } else if (action === "recover") {
         await api.recover(values.email);
@@ -626,7 +627,7 @@
 
   function paymentReceipt(orderNumber, message, localSimulator) {
     // Confirmation always reads the committed payment/order state from the server.
-    const outcome = ['pending','incomplete','verification-unavailable','provider-unavailable'].includes(message) ? message : 'pending';
+    const outcome = ['pending','incomplete','verification-unavailable','provider-unavailable','recovery'].includes(message) ? message : 'pending';
     global.location.assign("/orders/" + encodeURIComponent(orderNumber) + "/confirmation?payment=" + outcome);
   }
 
@@ -686,19 +687,79 @@
   }
 
   async function previewCheckoutQuote() {
+    clearCheckoutErrors();
     const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
     const pin = document.querySelector('#checkout-address-form [name="postal_code"]')?.value.trim() || '';
     const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + (pin?'&postal_code='+encodeURIComponent(pin):'') + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(20000) });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error?.message || "Could not preview checkout. Please try again.");
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body) {
+      const error = new Error(body?.error?.message || "Could not preview checkout. Please try again.");
+      error.code = body?.error?.code;
+      throw error;
+    }
     const quote = unwrap(body);
     global.weevcraftsPolicyRevision=quote.policy_revision;
     for (const field of ["subtotal", "shipping", "discount", "total"]) {
       const elements = document.querySelectorAll("[data-quote-" + field + "]");
-      elements.forEach((element) => { element.textContent = money(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
+      elements.forEach((element) => { element.textContent = checkoutMoney(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
     }
     document.querySelectorAll("[data-quote-shipping-label]").forEach(label => { label.textContent="Shipping"; });
+    const payLabel = document.querySelector("[data-checkout-pay-label]");
+    if (payLabel) payLabel.textContent = "Pay " + checkoutMoney(quote.total_cents);
     return quote;
+  }
+
+  function clearCheckoutFieldError(id) {
+    const message = document.getElementById(id);
+    if (!message || message.hidden) return;
+    message.hidden = true;
+    message.textContent = "";
+    message.parentElement.querySelector("input")?.removeAttribute("aria-invalid");
+  }
+
+  function clearCheckoutErrors() {
+    clearCheckoutFieldError("checkout-postal-error");
+    clearCheckoutFieldError("checkout-coupon-error");
+    document.querySelectorAll("[data-checkout-error-recovery]").forEach(recovery => {
+      recovery.hidden = true;
+    });
+  }
+
+  async function showCheckoutError(error, feedback) {
+    if (["PIN_INVALID", "PIN_UNSERVICEABLE", "COUPON_INVALID"].includes(error.code)) {
+      const couponError = error.code === "COUPON_INVALID";
+      const message = document.getElementById(couponError ? "checkout-coupon-error" : "checkout-postal-error");
+      const field = message?.parentElement.querySelector("input");
+      if (field) {
+        if (feedback) feedback.textContent = "";
+        message.textContent = error.message;
+        message.hidden = false;
+        field.setAttribute("aria-invalid", "true");
+        if (!couponError) {
+          global.Alpine.$data(document.getElementById("page")).checkoutStep = 1;
+          await global.Alpine.nextTick();
+        }
+        field.focus();
+        return;
+      }
+    }
+    if (["CART_EMPTY", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "INSUFFICIENT_STOCK"].includes(error.code) ||
+        (error.code === "CART_UNAVAILABLE" && checkoutIntent)) {
+      const step = global.Alpine.$data(document.getElementById("page")).checkoutStep;
+      const recovery = document.querySelector('.checkout-card[data-step="' + step + '"] [data-checkout-error-recovery]');
+      if (recovery) {
+        if (feedback) feedback.textContent = "";
+        recovery.hidden = false;
+        const message = recovery.querySelector("[data-checkout-error-message]");
+        message.textContent = checkoutIntent
+          ? "This Buy Now checkout has expired or the item is unavailable. Your shopping cart is saved."
+          : error.message;
+        message.focus();
+        return;
+      }
+    }
+    if (feedback) feedback.textContent = error.message;
+    else notice(error.message, true);
   }
 
   async function checkout() {
@@ -707,6 +768,7 @@
     const form = document.getElementById("checkout-address-form");
     if (!button || !form || !global.WVUI.validate(form)) return;
     await requireUser();
+    clearCheckoutErrors();
     const couponInput = document.getElementById("checkout-coupon-code");
     const acceptedCoupon = couponInput ? couponInput.value.trim() : "";
     const totalElement = document.querySelector("[data-quote-total]");
@@ -760,15 +822,19 @@
         try {
           await beginPayment(orderNumber);
         } catch (paymentError) {
-          paymentReceipt(orderNumber, "provider-unavailable", false);
+          paymentReceipt(orderNumber, ["PAYMENT_RECOVERY_PENDING", "PAYMENT_RECOVERY_REVIEW"].includes(paymentError.code) ? "recovery" : "provider-unavailable", false);
         }
       }
     } catch (error) {
-      if (error.code === "QUOTE_CHANGED" || error.code === "COUPON_INVALID" || error.code === "INSUFFICIENT_STOCK") global.sessionStorage.removeItem(CHECKOUT_KEY);
+      if (["QUOTE_CHANGED", "COUPON_INVALID", "INSUFFICIENT_STOCK", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "CART_EMPTY"].includes(error.code)) global.sessionStorage.removeItem(CHECKOUT_KEY);
       if (orderNumber) {
         paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
       } else {
-        notice(error instanceof TypeError ? 'We could not confirm whether your order was saved. Keep this page open and try again; the same request will be checked before creating another order.' : error.message, true);
+        if (error instanceof TypeError) {
+          notice("We could not confirm whether your order was saved. Keep this page open and try again; the same request will be checked before creating another order.", true);
+        } else {
+          await showCheckoutError(error);
+        }
       }
     } finally {
       if (!orderNumber) {
@@ -791,7 +857,7 @@
         if(feedback)feedback.textContent='';
         await global.Alpine.nextTick();
         requestAnimationFrame(()=>{const heading=document.querySelector('.checkout-card[data-step="2"] h2');if(heading){heading.tabIndex=-1;heading.focus();}});
-      }catch(error){if(feedback)feedback.textContent=error.message;else notice(error.message,true);}
+      }catch(error){await showCheckoutError(error, feedback);}
       finally{reviewButton.disabled=false;global.WVUI?.busy(reviewButton,false);}
     });
     const saveAddress=document.querySelector('[data-checkout-save-address]');
@@ -812,15 +878,38 @@
       if (!button || button.disabled) return;
       button.disabled=true; global.WVUI?.busy(button,true);
       try { await beginPayment(button.dataset.retryPayment); }
-      catch(error) { notice(error.message,true); }
+      catch(error) {
+        if (["PAYMENT_RECOVERY_PENDING", "PAYMENT_RECOVERY_REVIEW"].includes(error.code)) {
+          paymentReceipt(button.dataset.retryPayment, "recovery", false);
+        } else {
+          notice(error.message, true);
+        }
+      }
       finally { button.disabled=false; global.WVUI?.busy(button,false); }
     });
     const quoteButton = document.querySelector("[data-preview-quote]");
-    if (quoteButton) quoteButton.addEventListener("click", async function () {
-      quoteButton.disabled = true; global.WVUI?.busy(quoteButton,true);
+    const removeCoupon = document.querySelector("[data-remove-checkout-coupon]");
+    const couponInput = document.getElementById("checkout-coupon-code");
+    function updateCouponControl() {
+      if (removeCoupon && couponInput) removeCoupon.hidden = !couponInput.value.trim();
+      clearCheckoutFieldError("checkout-coupon-error");
+    }
+    async function updateCouponQuote(button) {
+      if (quoteButton.disabled) return;
+      quoteButton.disabled = true;
+      global.WVUI?.busy(button, true);
       try { await previewCheckoutQuote(); notice("Checkout total updated.", false); }
-      catch (error) { notice(error.message, true); }
-      finally { quoteButton.disabled = false; global.WVUI?.busy(quoteButton,false); }
+      catch (error) { await showCheckoutError(error); }
+      finally { quoteButton.disabled = false; global.WVUI?.busy(button, false); }
+    }
+    quoteButton?.addEventListener("click", () => updateCouponQuote(quoteButton));
+    couponInput?.addEventListener("input", updateCouponControl);
+    removeCoupon?.addEventListener("click", () => {
+      if (quoteButton.disabled) return;
+      couponInput.value = "";
+      updateCouponControl();
+      couponInput.focus();
+      updateCouponQuote(removeCoupon);
     });
     const checkoutAddressForm = document.getElementById("checkout-address-form");
     if (checkoutAddressForm) {
@@ -831,8 +920,16 @@
         const deliveryLocation = document.querySelector('.header-main .location small');
         if (deliveryLocation) deliveryLocation.textContent = [values.city, values.state || values.region].filter(Boolean).join(', ') || 'Choose delivery location';
       };
-      checkoutAddressForm.addEventListener("input", updateSummary);
-      checkoutAddressForm.addEventListener("change", function () { queueMicrotask(updateSummary); });
+      checkoutAddressForm.addEventListener("input", event => {
+        if (event.target.name === "postal_code") clearCheckoutFieldError("checkout-postal-error");
+        updateSummary();
+      });
+      checkoutAddressForm.addEventListener("change", function () {
+        queueMicrotask(() => {
+          clearCheckoutFieldError("checkout-postal-error");
+          updateSummary();
+        });
+      });
       updateSummary();
     }
     const savedAddressSelect = document.querySelector("[data-checkout-address-select]");
@@ -955,7 +1052,7 @@
         if (!authenticated) { event.stopImmediatePropagation(); promptLogin("/checkout",checkoutButton); return; }
         if(checkoutInFlight || checkoutButton.disabled)return;
         checkoutInFlight=true;checkoutButton.disabled=true;global.WVUI?.busy(checkoutButton,true);
-        try { await checkout(); } catch (error) { notice(error.message, true); }
+        try { await checkout(); } catch (error) { await showCheckoutError(error); }
         finally {
           checkoutInFlight=false;
           if(!checkoutButton.dataset.orderCreated){checkoutButton.disabled=false;global.WVUI?.busy(checkoutButton,false);}

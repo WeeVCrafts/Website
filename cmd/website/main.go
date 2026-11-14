@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -45,6 +46,14 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 	cfg := config.FromEnv()
+	if len(os.Args) == 2 && os.Args[1] == "check-shiprocket" {
+		if err := checkShiprocket(cfg); err != nil {
+			logger.Error("Shiprocket configuration check failed", "error", err)
+			os.Exit(1)
+		}
+		fmt.Println("Shiprocket authentication and seller pickup mappings verified")
+		return
+	}
 	if err := validateFirebaseEnvironment(cfg.Environment); err != nil {
 		logger.Error("invalid Firebase configuration", "error", err)
 		os.Exit(1)
@@ -175,7 +184,8 @@ func main() {
 	}
 	mediaService := applicationcommerce.NewMediaService(mediaStorage, postgres.NewMediaRepository(pool), roleAuthorizer)
 	supportAttachmentService := applicationcommerce.NewSupportAttachmentService(mediaStorage, commerceRepository, roleAuthorizer)
-	paymentOrderService := applicationpayment.NewOrderService(paymentGateway, paymentRepository)
+	paymentMetrics := &metricsadapter.PaymentMetrics{}
+	paymentOrderService := applicationpayment.NewOrderService(paymentGateway, paymentRepository).WithCreationObserver(paymentMetrics.Observe)
 	webHandler, err := webTransport.NewFullHandlerWithPaymentConfigMediaRefundAndRecovery(catalogService, authService, sessionService, commerceCatalog, cartService, orderService, paymentOrderService, searchService, privacyService, mediaService, refundService, recoveryService, cfg.SecureCookies, cfg.RazorpayKeyID)
 	if err != nil {
 		logger.Error("load web templates", "error", err)
@@ -251,6 +261,15 @@ func main() {
 		}
 		return errors.Join(paymentErr, reviewErr)
 	})
+	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		metricsContext, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+		due, oldestSeconds, review, err := paymentRepository.PaymentReconciliationBacklog(metricsContext)
+		paymentMetrics.SetBacklog(metricsadapter.PaymentBacklogSnapshot{
+			Available: err == nil, Due: due, OldestPendingSeconds: oldestSeconds, CreationReview: review,
+		})
+		return err
+	})
 	go worker.RunPeriodic(workerContext, 5*time.Minute, func(ctx context.Context) error {
 		reconcileContext, cancel := context.WithTimeout(ctx, 2*time.Minute)
 		defer cancel()
@@ -315,6 +334,7 @@ func main() {
 	})
 	defer stopWorker()
 	httpMetrics := metricsadapter.NewHTTPMetrics()
+	shippingMetrics := &metricsadapter.Shipping{}
 	healthHandler := healthTransport.NewHandlerWithMetrics(map[string]healthTransport.Probe{
 		"postgresql": func(ctx context.Context) error { return postgres.Ping(ctx, pool) },
 		"redis":      func(ctx context.Context) error { return redisClient.Ping(ctx).Err() },
@@ -323,6 +343,8 @@ func main() {
 			SearchSnapshot: searchMetrics.Snapshot(),
 			HTTP:           httpMetrics.Snapshot(),
 			DatabasePool:   metricsadapter.SnapshotPool(pool.Stat()),
+			Payment:        paymentMetrics.Snapshot(),
+			Shipping:       shippingMetrics.Snapshot(cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live"),
 		}
 	})
 
@@ -394,6 +416,37 @@ func main() {
 	// development failure/pending controls disabled in production.
 	registerDemoPaymentCapture(mux, cfg, localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+	if cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live" {
+		gateway := configuredShiprocket(cfg.Shipping)
+		gateway.ObserveCourierResults(shippingMetrics.CourierResult)
+		shipping := applicationcommerce.NewShippingService(commerceRepository, gateway, cfg.Shipping.Mode, cfg.Shipping.PickupLocations)
+		shipping.SetBookingsEnabled(cfg.Shipping.BookingsEnabled)
+		if cfg.Shipping.BookingsEnabled {
+			profiles := make(map[int64]postgres.DeliveryProfile, len(cfg.Shipping.PickupLocations))
+			for seller := range cfg.Shipping.PickupLocations {
+				profile := cfg.Shipping.ParcelProfiles[seller]
+				profiles[seller] = postgres.DeliveryProfile{PostalCode: profile.PostalCode, PackingGrams: profile.PackingGrams, PackingCM: profile.PackingCM}
+			}
+			commerceRepository.ConfigureCheckoutDelivery(gateway, profiles, cfg.Shipping.Mode)
+		}
+		portalHandler.SetShipping(shipping)
+		portalHandler.SetDeliveryExceptions(commerceRepository)
+		if cfg.Shipping.WebhookSecret != "" {
+			mux.Handle(webhookTransport.DeliveryCallbackPath, webhookTransport.DeliveryCallback(cfg.Shipping.WebhookSecret, shipping.ScheduleCheck))
+		}
+		go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			err := shipping.Reconcile(ctx)
+			metricCtx, metricCancel := context.WithTimeout(workerContext, 3*time.Second)
+			defer metricCancel()
+			err = errors.Join(err, shippingMetrics.RefreshBacklog(metricCtx, commerceRepository, cfg.Shipping.Mode, err))
+			if err != nil {
+				logger.Warn("Shiprocket shipment reconciliation failed", "error", err)
+			}
+			return err
+		})
+	}
 	portalHandler.SetPaymentReviews(paymentReviewService)
 	portalHandler.EnableLocalDeliverySimulation(cfg.LocalMode)
 	portalHandler.SetCategoryStorage(mediaStorage)

@@ -41,7 +41,7 @@ func TestWebLoginRedirectsIntoRoleWorkspace(t *testing.T) {
 		roles []domainidentity.Role
 		want  string
 	}{
-		{name: "customer", roles: []domainidentity.Role{domainidentity.RoleCustomer}, want: "/products"},
+		{name: "customer", roles: []domainidentity.Role{domainidentity.RoleCustomer}, want: "/"},
 		{name: "seller", roles: []domainidentity.Role{domainidentity.RoleSeller}, want: "/seller-admin"},
 		{name: "admin", roles: []domainidentity.Role{domainidentity.RoleAdmin}, want: "/admin"},
 		{name: "super admin", roles: []domainidentity.Role{domainidentity.RoleSuperAdmin}, want: "/super-admin"},

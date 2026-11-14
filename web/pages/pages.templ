@@ -53,6 +53,9 @@ templ Document(p viewmodels.CustomerPage) {
        <link rel="stylesheet" href={ assets.URL("css/homepage-reference.min.css") }/>
       }
       <link rel="stylesheet" href={ assets.URL("css/auth-gallery.min.css") }/>
+      if !p.SellerNotifications {
+       <link rel="stylesheet" href={ assets.URL("css/customer-header.min.css") }/>
+      }
       if p.SellerNotifications {
  <link rel="stylesheet" href={ assets.URL("css/seller-reference.min.css") }/>
  }
@@ -83,6 +86,35 @@ templ Document(p viewmodels.CustomerPage) {
             });
             tablist.dataset.keyboardBound = "true";
           });
+          var detailQuantity = document.querySelector("[data-detail-quantity-controls]");
+          if (detailQuantity && detailQuantity.dataset.bound !== "true") {
+            var quantity = document.getElementById("detail-quantity");
+            var output = detailQuantity.querySelector("output");
+            var decrease = detailQuantity.querySelector("[data-detail-quantity-decrease]");
+            var increase = detailQuantity.querySelector("[data-detail-quantity-increase]");
+            var quantityStatus = document.querySelector("[data-detail-quantity-status]");
+            var setQuantity = function (value) {
+              var maximum = Number(detailQuantity.dataset.stockLimit);
+              var minimum = maximum > 0 ? 1 : 0;
+              var next = Math.min(maximum, Math.max(minimum, value));
+              quantity.value = String(next);
+              output.textContent = String(next);
+              decrease.setAttribute("aria-disabled", String(next <= minimum));
+              increase.setAttribute("aria-disabled", String(next >= maximum));
+              return next;
+            };
+            decrease.addEventListener("click", function () { setQuantity(Number(quantity.value) - 1); });
+            increase.addEventListener("click", function () { setQuantity(Number(quantity.value) + 1); });
+            detailQuantity.addEventListener("detail:stock-change", function (event) {
+              var previous = Number(quantity.value);
+              detailQuantity.dataset.stockLimit = String(event.detail);
+              var next = setQuantity(previous);
+              if (next !== previous) {
+                quantityStatus.textContent = next === 0 ? "This option is sold out." : "Quantity adjusted to " + next + ".";
+              }
+            });
+            detailQuantity.dataset.bound = "true";
+          }
           document.querySelectorAll("[data-product-variant-select]").forEach(function (select) {
             if (select.dataset.variantBound === "true") return;
             var updateVariant = function () {
@@ -104,10 +136,12 @@ templ Document(p viewmodels.CustomerPage) {
                 discount.textContent = option.dataset.discount || "";
                 discount.hidden = !option.dataset.discount;
               }
-              var available = option.dataset.inStock === "true";
+              var limit = Number(option.dataset.stockLimit);
+              var available = limit > 0;
               if (stock) stock.textContent = option.dataset.stockMessage || "Currently unavailable";
               if (badge) badge.textContent = available ? "In stock" : "Sold out";
               if (sku) sku.textContent = option.dataset.sku || "";
+              detailQuantity?.dispatchEvent(new CustomEvent("detail:stock-change", {detail: limit}));
               document.querySelectorAll(".detail-actions button, .mobile-buy-bar button").forEach(function (button) {
                 button.disabled = !available;
               });
@@ -121,54 +155,62 @@ templ Document(p viewmodels.CustomerPage) {
           var input = document.getElementById("global-search");
           if (!input) return;
           var list = function () { return document.getElementById("search-suggestions"); };
-          var options = function () {
-            var popup = list();
-            return popup ? Array.prototype.slice.call(popup.querySelectorAll('[role="option"]')) : [];
+          var isCurrent = function (popup) {
+            var query = input.value.trim();
+            return query !== "" && !input.dataset.composing
+              && popup?.querySelector("[data-search-response-query]")?.dataset.searchResponseQuery === query;
+          };
+          var options = function (popup) {
+            return popup ? Array.from(popup.querySelectorAll('[role="option"]')) : [];
           };
           var clearActive = function () {
-            options().forEach(function (option) { option.setAttribute("aria-selected", "false"); });
+            options(list()).forEach(function (option) { option.setAttribute("aria-selected", "false"); });
             input.removeAttribute("aria-activedescendant");
           };
           var syncExpanded = function () {
             var popup = list();
-            if (popup) {
-              if (input.value.trim() === "") {
-                popup.hidden = true;
-              } else if (popup.innerHTML.trim() !== "" && popup.dataset.dismissed !== "true") {
-                popup.hidden = false;
-              }
-            }
+            if (popup) popup.hidden = !isCurrent(popup) || popup.dataset.dismissed === "true";
             input.setAttribute("aria-expanded", popup && !popup.hidden ? "true" : "false");
           };
-          var setActive = function (index) {
-            var available = options();
-            if (!available.length) return;
-            available.forEach(function (option) { option.setAttribute("aria-selected", "false"); });
-            var active = available[(index + available.length) % available.length];
-            active.setAttribute("aria-selected", "true");
-            input.setAttribute("aria-activedescendant", active.id);
-            active.scrollIntoView({block:"nearest"});
-          };
           if (input.dataset.searchKeyboardBound !== "true") {
+            var previousQuery = input.value.trim();
             input.addEventListener("input", function () {
+              var query = input.value.trim();
+              if (query === previousQuery) return;
+              previousQuery = query;
               var popup = list();
-              if (popup) delete popup.dataset.dismissed;
+              if (popup) {
+                delete popup.dataset.dismissed;
+                popup.replaceChildren();
+              }
+              clearActive();
+              syncExpanded();
+            });
+            input.addEventListener("compositionstart", function () {
+              var popup = list();
+              if (popup) popup.hidden = true;
+              input.setAttribute("aria-expanded", "false");
               clearActive();
             });
             input.addEventListener("keydown", function (event) {
               if (event.isComposing || event.keyCode === 229) return;
-              var available = options();
+              var popup = list();
+              var available = popup && !popup.hidden && isCurrent(popup) ? options(popup) : [];
               var activeID = input.getAttribute("aria-activedescendant");
               var activeIndex = available.findIndex(function (option) { return option.id === activeID; });
               if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                 if (!available.length) return;
                 event.preventDefault();
-                setActive(event.key === "ArrowDown" ? activeIndex + 1 : activeIndex - 1);
+                var index = event.key === "ArrowDown" ? activeIndex + 1 : activeIndex < 0 ? available.length - 1 : activeIndex - 1;
+                var active = available[(index + available.length) % available.length];
+                clearActive();
+                active.setAttribute("aria-selected", "true");
+                input.setAttribute("aria-activedescendant", active.id);
+                active.scrollIntoView({block:"nearest"});
               } else if (event.key === "Enter" && activeIndex >= 0) {
                 event.preventDefault();
                 window.location.assign(available[activeIndex].getAttribute("href"));
               } else if (event.key === "Escape") {
-                var popup = list();
                 if (popup && !popup.hidden) {
                   event.preventDefault();
                   popup.dataset.dismissed = "true";
@@ -197,16 +239,12 @@ templ Document(p viewmodels.CustomerPage) {
       }
       <div id="ui-loading" class="htmx-indicator" role="status" aria-live="polite">Updating…</div>
       <div id="ui-toast" role="status" aria-live="polite"></div>
-      if p.Route == "/login" {
-        @LoginGalleryHeader(p)
-      } else {
-        @components.Header(shoppingShell(p))
-      }
+      @components.Header(shoppingShell(p))
       if !isAuthPage(p.Route) {
         @GuestLoginDialog(p)
       }
       @QuickViewDialog()
-      <main id="page" class={ templ.KV("home-page", p.Route == "/"), templ.KV("login-page", p.Route == "/login") } tabindex="-1" x-data={ fmt.Sprintf("{checkoutStep:1,payment:'upi',detailQuantity:%d}",productInitialQuantity(p)) }>
+      <main id="page" class={ templ.KV("home-page", p.Route == "/"), templ.KV("login-page", p.Route == "/login") } tabindex="-1" x-data="{checkoutStep:1,payment:'upi'}">
         if p.Route == "/payments" && p.Mock {
           <nav class="payment-state-links container" aria-label="Payment status views"><span>Reconciliation views</span><a href="/payments/success">Success</a><a href="/payments/pending">Pending</a><a href="/payments/failed">Failed</a></nav>
         }
@@ -286,13 +324,13 @@ templ ListingProducts(products []viewmodels.Product) {
 templ SearchSuggestions(products []viewmodels.Product, query string) {
   if query == "" {
   } else if len(products) == 0 {
-    <p class="search-suggestion-empty">No products match “{ query }”.</p>
+    <p class="search-suggestion-empty" data-search-response-query={ query }>No products match “{ query }”.</p>
   } else {
     for _, product := range productSlice(products, 0, 5) {
-      <a class="search-suggestion" role="option" id={ "search-suggestion-" + product.Slug } aria-selected="false" href={ "/products/" + product.Slug }><img src={ product.ImageURL } srcset={ components.ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="40px" decoding="async" alt="" width="40" height="44"/><span><strong>{ product.Name }</strong><small>By { product.Seller } · { product.Price }</small></span></a>
+      <a class="search-suggestion" role="option" id={ "search-suggestion-" + product.Slug } aria-selected="false" tabindex="-1" href={ "/products/" + product.Slug }><img src={ product.ImageURL } srcset={ components.ResponsiveImageSrcSet(product.ImageURL, product.ImageSrcSet) } sizes="40px" decoding="async" alt="" width="40" height="44"/><span><strong>{ product.Name }</strong><small>By { product.Seller } · { product.Price }</small></span></a>
     }
     if query != "" {
-      <a class="search-suggestion-all" href={ "/search?q=" + url.QueryEscape(query) }>View all results</a>
+      <a class="search-suggestion-all" data-search-response-query={ query } href={ "/search?q=" + url.QueryEscape(query) }>View all results</a>
     }
   }
 }
@@ -329,13 +367,13 @@ templ OrderRows(items []viewmodels.CartItem) {
 
 templ OrderDetailRows(items []viewmodels.CartItem) {
   for _, item := range items {
-    <article class="order-line"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(item.Product.ImageURL, item.Product.ImageSrcSet) } sizes="160px"/><span><b>{ item.Product.Name }</b><small>Qty: { item.Quantity } | Sold by { item.Product.Seller }</small></span><strong>{ item.Product.Price }</strong></article>
+    <article class="order-line"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(item.Product.ImageURL, item.Product.ImageSrcSet) } sizes="160px"/><span><b>{ item.Product.Name }</b><small>Qty: { item.Quantity } | Sold by { item.Product.Seller }</small></span><strong>{ checkoutMoney(item.Product.Price) }</strong></article>
   }
 }
 
 templ HistoryRows(orders []viewmodels.Order) {
   for _, order := range orders {
-    <article class="order-card compact-order"><header><div><p class="eyebrow">Order</p><h2>{ order.Number }</h2><small>Placed on { order.Date } | { order.Payment }</small></div><div><strong>{ order.Total }</strong><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></div></header><div class="compact-order-item">
+    <article class="order-card compact-order"><header><div><p class="eyebrow">Order</p><h2>{ order.Number }</h2><small>{ orderDateLabel(order) } { order.Date } | { order.Payment }</small></div><div><strong>{ checkoutMoney(order.Total) }</strong><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></div></header><div class="compact-order-item">
       if len(order.Items) > 0 {
         <img src={ firstCartItemValue(order.Items).Product.ImageURL } alt={ firstCartItemValue(order.Items).Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(firstCartItemValue(order.Items).Product.ImageURL, firstCartItemValue(order.Items).Product.ImageSrcSet) } sizes="160px"/><span>{ firstCartItemValue(order.Items).Product.Name }<small>{ orderItemCount(order) } items</small></span>
       }
@@ -360,7 +398,7 @@ templ CartRows(items []viewmodels.CartItem) {
 
 templ CheckoutItems(items []viewmodels.CartItem) {
   for _, item := range items {
-    <div class="checkout-item"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(item.Product.ImageURL, item.Product.ImageSrcSet) } sizes="160px"/><div><b>{ item.Product.Seller }</b><p>{ item.Product.Name } | Qty: { item.Quantity } | { item.Product.Price }</p><small><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span> Standard delivery: { item.Delivery }</small></div></div>
+    <div class="checkout-item"><img src={ item.Product.ImageURL } alt={ item.Product.Name } width="160" height="173" srcset={ components.ResponsiveImageSrcSet(item.Product.ImageURL, item.Product.ImageSrcSet) } sizes="160px"/><div><b>{ item.Product.Seller }</b><p>{ item.Product.Name } | Qty: { item.Quantity } | { checkoutMoney(item.Product.Price) }</p><small><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span> Standard delivery: { item.Delivery }</small></div></div>
   }
 }
 
@@ -370,7 +408,7 @@ templ CheckoutSummaryItems(items []viewmodels.CartItem) {
       if item.VariantName != "" {
         <small>{ components.CustomerOption(item.VariantName) }</small>
       }
-      <small>x { item.Quantity }</small></span><b>{ item.Product.Price }</b></p>
+      <small>x { item.Quantity }</small></span><b>{ checkoutMoney(item.Product.Price) }</b></p>
   }
 }
 
@@ -641,14 +679,15 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           if showVariantChoice(p.Product) {
             <fieldset class="product-variant-select"><label for="detail-variant">Choose an option</label><select id="detail-variant" name="variant_id" data-product-variant-select>
               for _, variant := range p.Product.Variants {
-                <option value={ variant.ID } data-price={ variant.Price } data-compare-at={ variant.CompareAt } data-discount={ variant.Discount } data-sku={ variant.SKU } data-stock-message={ variant.StockMessage } data-in-stock={ fmt.Sprint(variant.InStock) } selected?={ selectedProductVariant(variant, p.Product) }>{ components.CustomerOption(variant.Name) } · { variant.Price }</option>
+                <option value={ variant.ID } data-price={ variant.Price } data-compare-at={ variant.CompareAt } data-discount={ variant.Discount } data-sku={ variant.SKU } data-stock-message={ variant.StockMessage } data-stock-limit={ fmt.Sprint(variantQuantityLimit(variant)) } selected?={ selectedProductVariant(variant, p.Product) }>{ components.CustomerOption(variant.Name) } · { variant.Price }</option>
               }
             </select></fieldset>
           } else if len(p.Product.Variants) == 1 {
             <input id="detail-variant" type="hidden" name="variant_id" value={ p.Product.Variants[0].ID }/>
           }
-          <div class="quantity-row"><label>Quantity <span class="quantity-control"><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } @click="detailQuantity=Math.max(1, detailQuantity-1)">-</button><output aria-live="polite" x-text="detailQuantity">{ productInitialQuantity(p) }</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } @click="detailQuantity=Math.min(99, detailQuantity+1)">+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
-          <input id="detail-quantity" type="hidden" name="quantity" value={fmt.Sprint(productInitialQuantity(p))} :value="detailQuantity"/>
+          <div class="quantity-row"><label id="detail-quantity-label">Quantity <span class="quantity-control" role="group" aria-labelledby="detail-quantity-label" data-detail-quantity-controls data-stock-limit={ fmt.Sprint(productQuantityLimit(p.Product)) }><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } aria-disabled={ fmt.Sprint(productInitialQuantity(p) <= 1) } data-detail-quantity-decrease>-</button><output aria-live="polite">{ productInitialQuantity(p) }</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } aria-disabled={ fmt.Sprint(productInitialQuantity(p) >= productQuantityLimit(p.Product)) } data-detail-quantity-increase>+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
+          <p class="sr-only" data-detail-quantity-status role="status"></p>
+          <input id="detail-quantity" type="hidden" name="quantity" value={fmt.Sprint(productInitialQuantity(p))}/>
           <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
           <dl class="purchase-facts" aria-label="About this piece"><div><dt>Craft category</dt><dd>{p.Product.Category}</dd></div>
             for i,spec:=range components.ProductSpecifications(p.Product.Description) {
@@ -865,7 +904,11 @@ templ Orders(p viewmodels.CustomerPage) {
 }
 
 templ PrimaryOrder(order viewmodels.Order, csrfToken string) {
-  <article class="order-card"><header><div><p class="eyebrow">ORDER PLACED</p><h2>{ order.Number } <span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></h2><small>{ order.Date } | { order.Payment }</small></div><div><b>{ orderItemCount(order) } items</b><strong>{ order.Total }</strong></div></header><div class="order-progress"><span class="done"><i>1</i><b>Order placed</b><small>{ order.Date }</small></span><span class="current"><i>2</i><b>{ components.StatusLabel(order.Status) }</b><small>Current order status</small></span></div><div class="seller-order"><div class="seller-order-head"><b><span class="material-symbols-outlined" aria-hidden="true">storefront</span> { orderSeller(order) }</b><span>{ orderDeliveryCopy(order) }</span></div>
+  <article class="order-card"><header><div><p class="eyebrow">{ orderStatusTitle(order) }</p><h2>{ order.Number } <span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></h2><small>{ order.Date } | { order.Payment }</small></div><div><b>{ orderItemCount(order) } items</b><strong>{ checkoutMoney(order.Total) }</strong></div></header>
+  if order.Confirmed() {
+    <div class="order-progress"><span class="done"><i>1</i><b>Order confirmed</b><small>Payment captured</small></span><span class="current"><i>2</i><b>{ components.StatusLabel(order.Status) }</b><small>Current order status</small></span></div>
+  }
+  <div class="seller-order"><div class="seller-order-head"><b><span class="material-symbols-outlined" aria-hidden="true">storefront</span> { orderSeller(order) }</b><span>{ orderDeliveryCopy(order) }</span></div>
   @OrderRows(order.Items)</div><footer><a class="primary-button" href={ orderDetailsURL(order) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
     if order.CanCancel {
       <form method="post" action={ orderPath(order.Number) + "/cancel" } data-confirm="Cancel this unpaid order? Its reserved items will be released."><input type="hidden" name="csrf_token" value={ csrfToken }/><button class="outline-button" type="submit">Cancel order</button></form>
@@ -909,7 +952,7 @@ templ PaymentActivityRows(activities []viewmodels.PaymentActivity) {
     <p class="empty-state">No recent payment activity.</p>
   } else {
     for _, payment := range activities {
-      <div><span class={ "status-dot " + paymentActivityClass(payment.Status) }></span><p><strong>{ payment.Reference } · { payment.Amount }</strong><small>{ payment.Date } · { payment.Method } · Order { payment.OrderNumber }</small></p><mark class={ "ui-status " + components.StatusTone(payment.Status) }>{ payment.Status }</mark></div>
+      <div><span class={ "status-dot " + paymentActivityClass(payment.Status) }></span><p><strong>{ payment.Reference } · { checkoutMoney(payment.Amount) }</strong><small>{ payment.Date } · { payment.Method } · Order { payment.OrderNumber }</small></p><mark class={ "ui-status " + components.StatusTone(payment.Status) }>{ payment.Status }</mark></div>
     }
   }
 }
@@ -987,7 +1030,7 @@ templ OrderDetail(p viewmodels.CustomerPage) {
       <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/account">My Account</a><span aria-hidden="true">/</span><a href={ customerOrderBackURL(p) }>My Orders</a><span aria-hidden="true">/</span><span aria-current="page">Order details</span></nav>
       <a class="text-link" href={ customerOrderBackURL(p) }>Back to orders</a><p class="eyebrow">ORDER DETAILS</p>
       <h1>{ p.SelectedOrder.Number }</h1>
-      <p>Placed on { p.SelectedOrder.Date }</p>
+      <p>{ orderDateLabel(p.SelectedOrder) } { p.SelectedOrder.Date }</p>
     </section>
     <section class="container order-detail-layout">
       <div class="order-detail-main">
@@ -1023,7 +1066,14 @@ templ OrderDetail(p viewmodels.CustomerPage) {
           </form>
         }
       </div>
-      <aside class="summary"><h2>Order summary</h2><p>Items ({ orderItemCount(p.SelectedOrder) }) <b>{ p.SelectedOrder.Subtotal }</b></p><p>Shipping <b>{ p.SelectedOrder.Shipping }</b></p><p>Coupon discount <b>- { p.SelectedOrder.Discount }</b></p><hr/><h3>Total amount <strong>{ p.SelectedOrder.Total }</strong></h3><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/tracking" }>Track order</a><a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/invoice" }>View/print receipt</a><a class="outline-button full" href={ customerSupportURL(p.SelectedOrder.Number) }>Need help?</a></aside>
+      <aside class="summary"><h2>Order summary</h2><p>Items ({ orderItemCount(p.SelectedOrder) }) <b>{ checkoutMoney(p.SelectedOrder.Subtotal) }</b></p><p>Shipping <b>{ checkoutMoney(p.SelectedOrder.Shipping) }</b></p><p>Coupon discount <b>- { checkoutMoney(p.SelectedOrder.Discount) }</b></p><hr/><h3>Total amount <strong>{ checkoutMoney(p.SelectedOrder.Total) }</strong></h3>
+        if p.SelectedOrder.Confirmed() {
+          <a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/tracking" }>Track order</a>
+        }
+        if p.SelectedOrder.HasPaymentReceipt() {
+          <a class="outline-button full" href={ "/orders/" + p.SelectedOrder.Number + "/invoice" }>View/print receipt</a>
+        }
+        <a class="outline-button full" href={ customerSupportURL(p.SelectedOrder.Number) }>Need help?</a></aside>
     </section>
   }
 }
@@ -1032,7 +1082,7 @@ templ OrderReceipt(p viewmodels.CustomerPage) {
   @Document(p) {
     <section class="container order-receipt">
       <header class="page-intro compact-intro"><p class="eyebrow">Weevcrafts PURCHASE</p><h1>{ storefrontNativeHeading(p,"Order receipt") }</h1><p>Order { p.SelectedOrder.Number } · placed { p.SelectedOrder.Date }</p><a class="outline-button" href={ "/orders/" + p.SelectedOrder.Number }>Back to order</a></header>
-      <article class="order-card"><header><div><h2>Payment and order summary</h2><p>Payment status: { p.SelectedOrder.Payment }</p></div><strong>{ p.SelectedOrder.Total }</strong></header>@OrderDetailRows(p.SelectedOrder.Items)<footer><strong>Total paid / payable</strong><strong>{ p.SelectedOrder.Total }</strong></footer></article>
+      <article class="order-card"><header><div><h2>Payment and order summary</h2><p>Payment status: { p.SelectedOrder.Payment }</p></div><strong>{ checkoutMoney(p.SelectedOrder.Total) }</strong></header>@OrderDetailRows(p.SelectedOrder.Items)<footer><strong>Order total</strong><strong>{ checkoutMoney(p.SelectedOrder.Total) }</strong></footer></article>
       <p class="utility-muted">This receipt summarizes the order recorded in your account. It is not a GST tax invoice.</p>
       <a class="primary-button" hx-boost="false" href={ "/orders/" + p.SelectedOrder.Number + "/invoice?format=pdf" }>Download PDF receipt</a>
     </section>
@@ -1084,7 +1134,7 @@ templ Checkout(p viewmodels.CustomerPage) {
     <section class="container page-intro checkout-intro checkout-reference">
       <div class="checkout-topbar"><a class="checkout-brand" href="/"><img src={ assets.URL("images/brand/weevcrafts-logo.png") } alt="" width="32" height="32"/><span>Weevcrafts</span></a><span class="checkout-secure"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Secure checkout</span></div>
       @Breadcrumb("Home", "Checkout")
-      <p class="eyebrow">A SIMPLE, SECURE CHECKOUT</p><h1>{ storefrontNativeHeading(p,"Checkout") }</h1><p>A little closer to something handmade.</p>
+      <h1>{ storefrontNativeHeading(p,"Checkout") }</h1>
       <div class="steps" role="list" aria-label="Checkout progress"><span class="active" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Review &amp; pay</b></span></div>
     </section>
     if p.CheckoutIntentID!="" {
@@ -1114,18 +1164,19 @@ templ Checkout(p viewmodels.CustomerPage) {
             <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
             <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" list="indian-states" required/></label>
             <input name="region" type="hidden" value={ p.Address.State }/>
-            <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code"/></label>
+            <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code" aria-describedby="checkout-postal-error"/><span id="checkout-postal-error" class="ui-field-error" hidden></span></label>
             <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
             <datalist id="indian-states"><option value="Andhra Pradesh"/><option value="Assam"/><option value="Bihar"/><option value="Delhi"/><option value="Goa"/><option value="Gujarat"/><option value="Haryana"/><option value="Karnataka"/><option value="Kerala"/><option value="Madhya Pradesh"/><option value="Maharashtra"/><option value="Odisha"/><option value="Punjab"/><option value="Rajasthan"/><option value="Tamil Nadu"/><option value="Telangana"/><option value="Uttar Pradesh"/><option value="Uttarakhand"/><option value="West Bengal"/></datalist>
             <button class="primary-button full" type="button" data-checkout-review>Review &amp; pay <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
             <button class="outline-button full" type="button" data-checkout-save-address>Save address for later</button><p data-checkout-address-feedback role="status"></p>
+            @CheckoutErrorRecovery(p)
           </form>
         </section>
         <section class="checkout-card checkout-step-card" data-step="2" x-show="checkoutStep === 2" x-cloak>
           <header><h2><span>2</span> Review &amp; pay</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
           <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Edit address</button>
           @CheckoutItems(p.Cart)
-          <div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Total payable</strong><span data-quote-total>{ p.Total }</span></p></div>
+          <div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Total payable</strong><span class="checkout-amount" data-quote-total>{ checkoutMoney(p.Total) }</span></p></div>
           <div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } data-contact-email={p.UserEmail} hidden></div>
           if p.NoPaymentDemo {
             <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Demo checkout. Your order is saved pending payment. No money is collected.</p></div>
@@ -1136,18 +1187,44 @@ templ Checkout(p viewmodels.CustomerPage) {
             } else if razorpayTestMode(p) {
               <p class="utility-notice">Razorpay test mode. Use test payment details only. No real money is charged.</p>
             } else {
-              <p>Pay securely through Razorpay. Available payment methods appear in its checkout window.</p>
+            <p>Pay securely through Razorpay. We’ll confirm your order once payment is captured.</p>
             }
-            <button class="primary-button full" type="button" data-backend-action="checkout">Pay &amp; place order <span class="material-symbols-outlined" aria-hidden="true">lock</span></button>
+            <button class="primary-button full" type="button" data-backend-action="checkout"><span data-checkout-pay-label>Pay { checkoutMoney(p.Total) }</span><span class="material-symbols-outlined" aria-hidden="true">lock</span></button>
           } else {
             <p class="utility-notice is-error" role="alert">Payments are temporarily unavailable. Your cart is saved.</p><button class="primary-button full" type="button" data-backend-action="checkout" disabled>Payment unavailable</button>
           }
           <p data-backend-message role="status"></p>
+          @CheckoutErrorRecovery(p)
         </section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ p.ItemsTotal }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ p.ShippingTotal }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ p.DiscountTotal }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code"/><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ p.Total }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ checkoutMoney(p.ItemsTotal) }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ checkoutMoney(p.ShippingTotal) }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ checkoutMoney(p.DiscountTotal) }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code" aria-describedby="checkout-coupon-error"/><span id="checkout-coupon-error" class="ui-field-error" data-checkout-coupon-error hidden></span><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><button type="button" class="outline-button" data-remove-checkout-coupon hidden?={ p.CouponCode == "" }>Remove coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ checkoutMoney(p.Total) }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
     </section>
     }
+  }
+}
+
+templ CheckoutErrorRecovery(p viewmodels.CustomerPage) {
+  <div data-checkout-error-recovery hidden>
+    <p class="ui-field-error" data-checkout-error-message role="status" tabindex="-1"></p>
+    if p.CheckoutIntentID != "" && len(p.Cart) > 0 && p.Cart[0].Product.Slug != "" {
+      <a class="text-link" href={ "/products/" + p.Cart[0].Product.Slug }>Return to product</a>
+    } else if p.CheckoutIntentID != "" {
+      <a class="text-link" href="/products">Browse products</a>
+    } else {
+      <a class="text-link" href="/cart">Return to cart</a>
+    }
+  </div>
+}
+
+templ ExpiredBuyNow(p viewmodels.CustomerPage) {
+  @Document(p) {
+    <section class="container page-intro compact-intro">
+      @Breadcrumb("Home", "Checkout")
+      <h1>This Buy Now checkout is unavailable</h1>
+      <p>Your shopping cart is saved. Find the product to start Buy Now again.</p>
+      <a class="primary-button" href="/products">Browse products</a>
+      <a class="outline-button" href="/cart">View your cart</a>
+    </section>
   }
 }
 

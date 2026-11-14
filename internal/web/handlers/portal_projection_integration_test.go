@@ -105,8 +105,8 @@ INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) SELECT
 		t.Fatalf("old admin case missing: %+v", rows)
 	}
 	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/orders?q=needle-order", nil))
-	if rows := h.sellerOrders(r, 900001); len(rows) != 1 {
-		t.Fatalf("old seller order missing: %+v", rows)
+	if rows := h.sellerOrders(r, 900001); len(rows) != 0 {
+		t.Fatalf("unverified order appeared in the seller queue: %+v", rows)
 	}
 	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/returns?q=needle-reason", nil))
 	if rows := h.sellerReturns(r, 900001); len(rows) != 1 {
@@ -136,10 +136,10 @@ INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) SELECT
 		t.Fatalf("pagination incorrect: %+v", p)
 	}
 	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/orders?page=5", nil))
-	if rows := h.sellerOrders(r, 900001); len(rows) != 25 || rows[len(rows)-1].Number != "needle-order" {
+	if rows := h.sellerOrders(r, 900001); len(rows) != 24 || rows[len(rows)-1].Number != "projection-order-2" {
 		t.Fatalf("last seller order page inaccessible: %+v", rows)
 	}
-	if p := projectionPagination(r, "seller-orders"); p.Total != 225 || p.Page != 5 || p.Pages != 5 {
+	if p := projectionPagination(r, "seller-orders"); p.Total != 224 || p.Page != 5 || p.Pages != 5 {
 		t.Fatalf("seller orders pagination incorrect: %+v", p)
 	}
 	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/earnings?ledger_page=2&settlement_page=5&q=projection", nil))

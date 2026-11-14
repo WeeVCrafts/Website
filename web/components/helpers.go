@@ -221,3 +221,10 @@ func storefrontTrustIcon(title string) string {
 	}
 	return "verified_user"
 }
+
+func headerActionSwap(oob bool) string {
+	if oob {
+		return "outerHTML"
+	}
+	return "false"
+}

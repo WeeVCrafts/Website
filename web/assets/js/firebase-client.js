@@ -150,10 +150,10 @@
       const provider=new f.authSDK.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
       const user=(await f.authSDK.signInWithPopup(f.auth,provider)).user;
       const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();
-      const input = {acceptedTerms: terms, next: panel.dataset.authNext || new URLSearchParams(global.location.search).get("next") || "", authRoot: panel.closest("[data-auth-surface]")};
+      const input = {acceptedTerms: terms, next: panel.dataset.authNext || "", authRoot: panel.closest("[data-auth-surface]")};
       try {
         const result = await exchange(api, user, input);
-        global.location.assign(result.redirect_to || "/products");
+        global.location.assign(result.redirect_to || "/");
       } catch (error) {
         if (error.code !== "USERNAME_REQUIRED") throw error;
         const form = panel.querySelector("[data-google-username]");
@@ -181,7 +181,7 @@
     try {
       const result = await exchange(pending.api, pending.user, {...pending.input, username: username.value});
       pendingGoogle.delete(form);
-      global.location.assign(result.redirect_to || "/products");
+      global.location.assign(result.redirect_to || "/");
     } catch (error) {
       if (error.code === "FIREBASE_INVALID") {
         pendingGoogle.delete(form);
@@ -219,7 +219,7 @@
         if(global.WVUI && !global.WVUI.validate(link))return;
         link.dataset.submitting='true';
         const button=link.querySelector('button[type="submit"]');button.disabled=true;
-        try{const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();const result=await exchange(api,pendingLink.user,{...pendingLink.input,linkPassword:link.querySelector("input").value});global.location.assign(result.redirect_to||"/products");}
+        try{const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();const result=await exchange(api,pendingLink.user,{...pendingLink.input,linkPassword:link.querySelector("input").value});global.location.assign(result.redirect_to||"/");}
         catch(error){message(link,safeError(error).message,true);}finally{link.querySelector("input").value="";button.disabled=false;delete link.dataset.submitting;}
       });
     });

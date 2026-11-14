@@ -107,6 +107,7 @@ type ProductDraftInput struct {
 // Inventory is initialized only when the variant is created; later stock
 // changes go through the separate inventory permission workflow.
 type ProductVariantInput struct {
+	Parcel         *ParcelDimensions
 	Name           string
 	SKU            string
 	PriceCents     int64
@@ -116,6 +117,7 @@ type ProductVariantInput struct {
 }
 
 type ProductVariant struct {
+	Parcel         ParcelDimensions
 	ID             int64
 	ProductID      int64
 	Name           string
@@ -127,6 +129,14 @@ type ProductVariant struct {
 	Available      int
 	Reserved       int
 	Status         string
+}
+
+type ParcelDimensions struct {
+	WeightGrams, LengthCM, WidthCM, HeightCM int
+}
+
+func (p ParcelDimensions) Valid() bool {
+	return p.WeightGrams > 0 && p.WeightGrams <= 50000 && p.LengthCM > 0 && p.LengthCM <= 200 && p.WidthCM > 0 && p.WidthCM <= 200 && p.HeightCM > 0 && p.HeightCM <= 200
 }
 
 type ManagedProduct struct {
@@ -296,12 +306,16 @@ type OrderItem struct {
 
 type OrderDetail struct {
 	Order
-	PaymentReview bool               `json:"payment_review_required"`
-	CanPay        bool               `json:"can_pay"`
-	Contact       AddressInput       `json:"-"`
-	Items         []OrderItem        `json:"items"`
-	PaymentStatus string             `json:"payment_status"`
-	Fulfillments  []OrderFulfillment `json:"fulfillments"`
+	PaymentExpired         bool               `json:"-"`
+	PaymentInProgress      bool               `json:"-"`
+	PaymentCreationPending bool               `json:"payment_creation_pending,omitempty"`
+	PaymentCreationReview  bool               `json:"payment_creation_review,omitempty"`
+	PaymentReview          bool               `json:"payment_review_required"`
+	CanPay                 bool               `json:"can_pay"`
+	Contact                AddressInput       `json:"-"`
+	Items                  []OrderItem        `json:"items"`
+	PaymentStatus          string             `json:"payment_status"`
+	Fulfillments           []OrderFulfillment `json:"fulfillments"`
 }
 
 // OrderFulfillment is the customer-safe delivery projection. It contains
@@ -312,6 +326,7 @@ type OrderFulfillment struct {
 	Status         string    `json:"status"`
 	Carrier        string    `json:"carrier"`
 	TrackingNumber string    `json:"tracking_number"`
+	DeliveryUpdate string    `json:"delivery_update,omitempty"`
 	LastNote       string    `json:"last_note"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	Revision       int64     `json:"revision"`

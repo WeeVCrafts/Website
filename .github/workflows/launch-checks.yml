@@ -60,7 +60,8 @@ jobs:
       - run: go vet ./...
       - run: go test -p 1 ./...
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test -c tests/e2e/customer-layout.config.js
+      - name: Verify shopper and seller browser regressions
+        run: npx playwright test -c tests/e2e/customer-layout.config.js --project=chromium
       - run: npx playwright test -c tests/e2e/finance-controls.config.js
   security:
     runs-on: ubuntu-latest

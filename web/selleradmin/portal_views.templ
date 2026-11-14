@@ -271,7 +271,8 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 								<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
 								<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
 								<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
-								<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
+								@SellerParcelFields(variant)
+<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
 								if variant.Status == "active" {
 									<button class="seller-button primary" type="submit">Save variant</button>
 								}
@@ -291,6 +292,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						<label>SKU<input name="sku" required maxlength="120"/></label>
 						<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" required/></label>
 						<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal"/></label>
+@SellerParcelFields(viewmodels.ProductVariant{})
 						if p.CanInventoryWrite {
 							<label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" value="0" required/></label>
 						} else {
@@ -437,11 +439,33 @@ templ SellerOrderStage(p viewmodels.SellerAdminPage, key, label string) {
 templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 	@Document(p) {
 		if p.OrderDetail != nil {
-			<div class="seller-order-actions"><a class="seller-button outline" href={ sellerOrdersBackURL(p) }>Back to orders</a><button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button><button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button><button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button></div>
+			<div class="seller-order-actions"><a class="seller-button outline" href={ sellerOrdersBackURL(p) }>Back to orders</a></div>
+			@SellerOrderDetailRegion(p)
+		}
+	}
+}
+
+templ SellerOrderDetailRegion(p viewmodels.SellerAdminPage) {
+		<div data-seller-order-detail
+			data-fulfillment-stage={ p.OrderDetail.Status }
+			data-fulfillment-revision={ p.OrderDetail.Revision }
+			data-payment-status={ p.OrderDetail.Payment }
+			data-order-status={ p.OrderDetail.OrderStatus }
+			data-payment-review?={ p.OrderDetail.PaymentReview }
+		>
 			<section class="seller-two-grid">
-				<article class="seller-panel" data-seller-order-detail>
+				<article class="seller-panel">
 					<h2>Order { p.OrderDetail.Number }</h2>
-					<p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer } · { p.OrderDetail.Payment }</p>
+					<p>{ p.OrderDetail.Date } · { p.OrderDetail.Customer }</p>
+					<p>Payment: <strong>
+						if p.OrderDetail.PaymentReview {
+							Under review
+						} else if p.OrderDetail.Payment == "created" || p.OrderDetail.Payment == "pending" {
+							Pending
+						} else {
+							{ components.StatusLabel(p.OrderDetail.Payment) }
+						}
+					</strong></p>
 					<p>Fulfilment: <strong>{ components.StatusLabel(p.OrderDetail.Status) }</strong></p>
 					<h3>Delivery address</h3>
 					<address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address>
@@ -460,6 +484,13 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 				</article>
 				@SellerOrderFulfillment(p)
 			</section>
+			<div class="seller-order-actions" role="group" aria-label="Order documents">
+				if p.OrderDetail.Shiprocket == nil || (!p.OrderDetail.Shiprocket.Unavailable && (!p.OrderDetail.Shiprocket.Managed || p.OrderDetail.Shiprocket.Sandbox)) {
+					<button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button>
+				}
+				<button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button>
+				<button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button>
+			</div>
 			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>Weevcrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
 			<div class="seller-print-document" data-print-document="packing-slip">
 				<h1>Packing slip · { p.OrderDetail.Number }</h1>
@@ -476,16 +507,26 @@ templ PortalOrderDetail(p viewmodels.SellerAdminPage) {
 				<strong>Seller item subtotal: { p.OrderDetail.Subtotal }</strong>
 				<p>Basic order document based on stored order data.</p>
 			</div>
-		}
-	}
+		</div>
 }
 
 templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 	<article class="seller-panel">
 		<h2>Fulfilment &amp; tracking</h2>
 		<p>Current stage: <strong>{ sellerFulfillmentLabel(p.OrderDetail.Status) }</strong></p>
-		if reason := sellerFulfillmentBlockReason(p.OrderDetail.OrderStatus,p.OrderDetail.Payment); reason!="" {
+		if p.OrderDetail.Shiprocket != nil {
+			@SellerShiprocket(p)
+		}
+		if reason := sellerFulfillmentBlockReason(p.OrderDetail.OrderStatus,p.OrderDetail.Payment,p.OrderDetail.PaymentReview); reason!="" {
 			<p class="seller-notice" role="alert">{ reason }</p>
+		} else if p.OrderDetail.Shiprocket != nil && p.OrderDetail.Shiprocket.Unavailable {
+			<p>Reload this order to check which fulfilment actions are available.</p>
+		} else if p.OrderDetail.Shiprocket != nil && p.OrderDetail.Shiprocket.Managed && !p.OrderDetail.Shiprocket.Sandbox {
+   if p.OrderDetail.Shiprocket.Cancelled {
+    <p>Shiprocket confirmed cancellation. Wait for an operator to approve manual dispatch.</p>
+   } else if p.OrderDetail.Shiprocket.Reference != "" {
+    <p>Fulfilment updates follow the courier’s scans.</p>
+   }
 		} else if p.CanFulfill && sellerNextFulfillmentStatus(p.OrderDetail.Status)!="" {
 			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill" data-fulfillment-form>
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><input type="hidden" name="expected_revision" value={ p.OrderDetail.Revision }/><input type="hidden" name="status" value={ sellerNextFulfillmentStatus(p.OrderDetail.Status) }/>
@@ -512,10 +553,111 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
 					<div class="utility-callout"><p>Local delivery simulation records the next permitted shipment step.</p><button class="seller-button outline" type="button" data-mock-delivery>Simulate next delivery update</button></div>
 				}
 			</form>
-		} else {
+		} else if p.OrderDetail.Carrier != "" || p.OrderDetail.TrackingNumber != "" {
 			<p>{ p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p>
+		} else {
+			<p>No tracking details recorded.</p>
 		}
 	</article>
+}
+
+templ SellerShiprocket(p viewmodels.SellerAdminPage) {
+	<section aria-label="Shiprocket shipment">
+		<h3>Shiprocket shipment</h3>
+		if p.OrderDetail.Shiprocket.Unavailable {
+			<p class="seller-notice" role="status">Shiprocket shipment details are temporarily unavailable.</p>
+		} else {
+			@SellerShiprocketActions(p)
+		}
+	</section>
+}
+
+templ SellerShiprocketActions(p viewmodels.SellerAdminPage) {
+		if p.OrderDetail.Shiprocket.Sandbox {
+			<p>Sandbox. Use test orders and synthetic addresses.</p>
+		}
+  if p.OrderDetail.Shiprocket.ManualFallback {
+   <p role="status">Shiprocket eligibility could not be verified at checkout. Use manual dispatch and record the courier and tracking number.</p>
+  } else {
+   <p>Pickup location: { p.OrderDetail.Shiprocket.PickupLocation }</p>
+  }
+		if p.OrderDetail.Shiprocket.Reference != "" {
+			<p>Shipment reference: { p.OrderDetail.Shiprocket.Reference }</p>
+		}
+		if p.OrderDetail.Shiprocket.Status != "" {
+			<p>Courier status: <strong>{ components.StatusLabel(p.OrderDetail.Shiprocket.Status) }</strong></p>
+		}
+		if p.OrderDetail.Shiprocket.AWB != "" {
+			<p>Waybill: <strong>{ p.OrderDetail.Shiprocket.AWB }</strong> { p.OrderDetail.Shiprocket.Courier }</p>
+		}
+		if p.OrderDetail.Shiprocket.PickupReference != "" {
+			<p>Pickup reference: { p.OrderDetail.Shiprocket.PickupReference }</p>
+		}
+		if p.OrderDetail.Shiprocket.LabelURL != "" && !p.OrderDetail.Shiprocket.Cancelled {
+			<a class="seller-button outline" href={ templ.SafeURL(p.OrderDetail.Shiprocket.LabelURL) } target="_blank" rel="noopener noreferrer">Open Shiprocket label (PDF, new tab)</a>
+		}
+		if p.OrderDetail.Shiprocket.ManifestURL != "" && !p.OrderDetail.Shiprocket.Cancelled {
+			<a class="seller-button outline" href={ templ.SafeURL(p.OrderDetail.Shiprocket.ManifestURL) } target="_blank" rel="noopener noreferrer">Open pickup manifest (PDF, new tab)</a>
+		}
+		if p.OrderDetail.Shiprocket.PendingAction != "" {
+			<p class="seller-notice" role="status">Waiting for Shiprocket to confirm the last request. Check shipment status for the latest result.</p>
+		}
+		if p.OrderDetail.Shiprocket.CanCreate || (p.OrderDetail.Shiprocket.Reference != "" && !p.OrderDetail.Shiprocket.Cancelled) {
+			<form class="seller-form-grid" method="post" action="/seller-admin/orders/shiprocket" data-shiprocket-form>
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/>
+				<input type="hidden" name="return_query" value={ p.Query }/><input type="hidden" name="return_tab" value={ p.Tab }/><input type="hidden" name="return_page" value={ sellerInt(p.OrderReturnPage) }/>
+				if p.OrderDetail.Shiprocket.CanCreate {
+					<label>Packed weight (g)<input name="weight_grams" type="number" min="100" max="50000" required/></label>
+					<label>Length (cm)<input name="length_cm" type="number" min="1" max="200" required/></label>
+					<label>Width (cm)<input name="width_cm" type="number" min="1" max="200" required/></label>
+					<label>Height (cm)<input name="height_cm" type="number" min="1" max="200" required/></label>
+					<button class="seller-button primary" name="action" value="create" type="submit">Create Shiprocket shipment</button>
+				} else {
+					if p.OrderDetail.Shiprocket.PendingAction == "" && p.OrderDetail.Shiprocket.CanManage {
+						if p.OrderDetail.Shiprocket.CanChooseCourier {
+							@SellerCourierOptions(p)
+						} else if p.OrderDetail.Shiprocket.AWB != "" {
+							if p.OrderDetail.Shiprocket.CanPickup && p.OrderDetail.Shiprocket.PickupReference == "" && p.OrderDetail.Status == "packing" {
+								<button class="seller-button primary" name="action" value="pickup" type="submit">Schedule pickup</button>
+							}
+							if p.OrderDetail.Shiprocket.LabelURL == "" {
+								<button class="seller-button outline" name="action" value="label" type="submit">Generate Shiprocket label</button>
+							}
+							if p.OrderDetail.Shiprocket.PickupReference != "" && p.OrderDetail.Shiprocket.ManifestURL == "" {
+								<button class="seller-button outline" name="action" value="manifest" type="submit">Generate pickup manifest</button>
+							}
+						}
+					}
+					<button class="seller-button outline" name="action" value="refresh" type="submit" formnovalidate>Check shipment status</button>
+				}
+			</form>
+		}
+}
+
+templ SellerCourierOptions(p viewmodels.SellerAdminPage) {
+	<div class="seller-form-wide" id="shiprocket-couriers" tabindex="-1">
+		if !p.OrderDetail.Shiprocket.CourierOptionsRequested {
+			<a class="seller-button outline" href={ sellerCourierOptionsURL(p) }>Check available couriers</a>
+		} else if p.OrderDetail.Shiprocket.CourierOptionsUnavailable {
+			<p role="status">Courier estimates are temporarily unavailable.</p>
+			<a class="seller-button outline" href={ sellerCourierOptionsURL(p) }>Retry courier check</a>
+		} else if len(p.OrderDetail.Shiprocket.CourierOptions) == 0 {
+			<p role="status">Shiprocket returned no couriers for this parcel. Check the pickup and delivery details before trying again.</p>
+		} else {
+			<label for="shiprocket-courier">Courier</label>
+			<select id="shiprocket-courier" name="courier_id" aria-describedby="shiprocket-courier-estimates">
+				<option value="">Use Shiprocket’s default courier</option>
+				for _, option := range p.OrderDetail.Shiprocket.CourierOptions {
+					<option value={ option.ID }>{ option.Name }{ sellerCourierEstimate(option) }</option>
+				}
+			</select>
+			<p id="shiprocket-courier-estimates">Rates and delivery times are estimates from Shiprocket.</p>
+		}
+	</div>
+	if p.OrderDetail.Shiprocket.CourierOptionsRequested && len(p.OrderDetail.Shiprocket.CourierOptions) > 0 {
+		<input type="hidden" name="couriers" value="1"/>
+		<button class="seller-button primary" name="action" value="assign" type="submit">Assign courier and waybill</button>
+	}
 }
 
 templ PortalReturns(p viewmodels.SellerAdminPage) {
@@ -669,4 +811,13 @@ templ PortalSettings(p viewmodels.SellerAdminPage) {
           <p class="seller-form-note">Preview changes appear here. Save profile changes to publish them.</p>
         </aside></div>
 	}
+}
+
+templ SellerParcelFields(v viewmodels.ProductVariant) {
+ if v.Status == "" || v.Status == "active" {
+  <label>Shipping weight (g)<input name="shipping_weight_g" type="number" min="1" max="50000" value={v.ShippingWeight}/></label>
+  <label>Shipping length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={v.ShippingLength}/></label>
+  <label>Shipping width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={v.ShippingWidth}/></label>
+  <label>Shipping height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" value={v.ShippingHeight}/></label>
+ }
 }

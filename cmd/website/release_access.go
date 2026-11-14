@@ -7,10 +7,11 @@ import (
 	"strings"
 
 	"github.com/wecratfs/commerce/internal/config"
+	webhookTransport "github.com/wecratfs/commerce/internal/transport/webhook"
 )
 
 // releaseAccess keeps staging private while allowing provider callbacks and
-// minimal infrastructure probes. Callback handlers verify provider signatures.
+// minimal infrastructure probes. Callback handlers authenticate their providers.
 func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.EqualFold(cfg.Environment, "production") && r.URL.Path == "/health/metrics" {
@@ -30,7 +31,8 @@ func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 		if cfg.Staging {
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 			w.Header().Set("Cache-Control", "private, no-store")
-			if r.URL.Path != "/health/live" && r.URL.Path != "/health/ready" && r.URL.Path != "/webhooks/razorpay" {
+			deliveryCallback := r.URL.Path == webhookTransport.DeliveryCallbackPath && cfg.Shipping.Mode == "sandbox" && len(cfg.Shipping.WebhookSecret) >= 32
+			if r.URL.Path != "/health/live" && r.URL.Path != "/health/ready" && r.URL.Path != "/webhooks/razorpay" && !deliveryCallback {
 				user, password, ok := r.BasicAuth()
 				actualUser, actualPassword := sha256.Sum256([]byte(user)), sha256.Sum256([]byte(password))
 				expectedUser, expectedPassword := sha256.Sum256([]byte(cfg.StagingUsername)), sha256.Sum256([]byte(cfg.StagingPassword))

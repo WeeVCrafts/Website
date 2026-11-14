@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -416,6 +417,8 @@ func (h *Handler) orderPayment(w http.ResponseWriter, r *http.Request, orderNumb
 		switch {
 		case errors.Is(err, ports.ErrPaymentNotFound):
 			h.notFound(w, r)
+		case errors.Is(err, ports.ErrPaymentCreationPending), errors.Is(err, ports.ErrPaymentCreationReview):
+			h.redirect(w, r, "/orders/"+url.PathEscape(orderNumber)+"/confirmation?payment=recovery")
 		case errors.Is(err, ports.ErrPaymentState):
 			h.renderError(w, http.StatusConflict, "Payment unavailable", "This order is no longer available for payment.")
 		case errors.Is(err, applicationpayment.ErrPaymentCreationFailed):
@@ -1014,7 +1017,29 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 		}
 		costPrice = &value
 	}
-	return domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, InitialStock: stock}, nil
+	input := domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, InitialStock: stock}
+	fields := []string{"shipping_weight_g", "shipping_length_cm", "shipping_width_cm", "shipping_height_cm"}
+	var parcel domaincommerce.ParcelDimensions
+	values := []*int{&parcel.WeightGrams, &parcel.LengthCM, &parcel.WidthCM, &parcel.HeightCM}
+	var supplied bool
+	for i, name := range fields {
+		raw := strings.TrimSpace(r.FormValue(name))
+		if raw == "" {
+			continue
+		}
+		supplied = true
+		*values[i], err = strconv.Atoi(raw)
+		if err != nil {
+			return input, ports.ErrShippingInput
+		}
+	}
+	if supplied {
+		if !parcel.Valid() {
+			return input, ports.ErrShippingInput
+		}
+		input.Parcel = &parcel
+	}
+	return input, nil
 }
 
 func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {

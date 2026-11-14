@@ -11,7 +11,7 @@ func TestLoginDestinationRoutesSingleRoleToItsPortal(t *testing.T) {
 		role domainidentity.Role
 		want string
 	}{
-		{domainidentity.RoleCustomer, "/products"},
+		{domainidentity.RoleCustomer, "/"},
 		{domainidentity.RoleSeller, "/seller-admin"},
 		{domainidentity.RoleAdmin, "/admin"},
 		{domainidentity.RoleSuperAdmin, "/super-admin"},

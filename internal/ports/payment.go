@@ -6,11 +6,13 @@ import (
 )
 
 var (
-	ErrPaymentNotFound = errors.New("payment order not found")
-	ErrPaymentState    = errors.New("payment order is not payable")
-	ErrPaymentMismatch = errors.New("payment webhook does not match the order")
-	ErrRefundNotFound  = errors.New("refund not found")
-	ErrRefundState     = errors.New("refund is not in a refundable state")
+	ErrPaymentNotFound        = errors.New("payment order not found")
+	ErrPaymentState           = errors.New("payment order is not payable")
+	ErrPaymentMismatch        = errors.New("payment webhook does not match the order")
+	ErrPaymentCreationPending = errors.New("payment order recovery is pending")
+	ErrPaymentCreationReview  = errors.New("payment order creation requires review")
+	ErrRefundNotFound         = errors.New("refund not found")
+	ErrRefundState            = errors.New("refund is not in a refundable state")
 )
 
 // PaymentRefundGateway is intentionally separate from PaymentGateway: refund
@@ -94,6 +96,29 @@ type PaymentOrderRecord struct {
 type PaymentOrderRepository interface {
 	GetPaymentOrder(ctx context.Context, userID int64, orderNumber string) (PaymentOrderRecord, error)
 	AttachProviderOrder(ctx context.Context, userID int64, orderNumber string, providerOrder PaymentOrder) (PaymentOrderRecord, error)
+}
+
+// PaymentOrderLookupGateway finds up to two exact receipt matches. Two matches
+// are enough to establish that a receipt cannot safely identify one order.
+type PaymentOrderLookupGateway interface {
+	LookupOrdersByReceipt(ctx context.Context, receipt string) ([]PaymentOrder, error)
+}
+
+// PaymentCreationClaim authorizes a single provider POST for an attempt.
+// Recovery claims only authorize a read, including after a process restart.
+type PaymentCreationClaim struct {
+	AttemptID int64
+	UserID    int64
+	Order     PaymentOrderRecord
+	Submit    bool
+}
+
+type PaymentCreationRepository interface {
+	ClaimPaymentCreation(ctx context.Context, userID int64, orderNumber string) (PaymentCreationClaim, error)
+	ClaimExistingPaymentCreation(ctx context.Context, userID int64, orderNumber string) (PaymentCreationClaim, error)
+	ClaimPaymentCreationRecovery(ctx context.Context, limit int) ([]PaymentCreationClaim, error)
+	AttachClaimedProviderOrder(ctx context.Context, claim PaymentCreationClaim, order PaymentOrder) (PaymentOrderRecord, error)
+	ReviewPaymentCreation(ctx context.Context, claim PaymentCreationClaim, reason string) error
 }
 
 // Read-only provider recovery. Implementations must never create or capture a

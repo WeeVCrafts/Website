@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -20,7 +21,8 @@ import (
 )
 
 type CommerceRepository struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
+	delivery *checkoutDelivery
 }
 
 func NewCommerceRepository(pool *pgxpool.Pool) *CommerceRepository {
@@ -929,6 +931,21 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		return order, err
 	}
 	requestHash := checkoutRequestHash(cartID, addressJSON, couponCode)
+	var deliveryLines []deliveryLine
+	var deliveryDecisions []deliveryDecision
+	var deliveryErr error
+	if r.delivery != nil {
+		var saved bool
+		if err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM orders WHERE idempotency_scope=$1 AND idempotency_key=$2)`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&saved); err != nil {
+			return order, err
+		}
+		if !saved {
+			deliveryLines, deliveryErr = checkoutDeliveryLines(ctx, r.pool, userID, cartID, false)
+			if deliveryErr == nil {
+				deliveryDecisions, deliveryErr = r.delivery.check(ctx, deliveryLines, address.PostalCode)
+			}
+		}
+	}
 	err = WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
 		var existingHash *string
 		if err := tx.QueryRow(transactionContext, `SELECT id, order_number, status, currency, subtotal_cents, shipping_cents, discount_cents, total_cents, created_at, idempotency_request_hash FROM orders WHERE idempotency_scope = $1 AND idempotency_key = $2`, fmt.Sprintf("checkout:%d", userID), idempotencyKey).Scan(&order.ID, &order.OrderNumber, &order.Status, &order.Currency, &order.SubtotalCents, &order.ShippingCents, &order.DiscountCents, &order.TotalCents, &order.CreatedAt, &existingHash); err == nil {
@@ -1034,6 +1051,18 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		if !revision.Config.Settings.Policy.Serves(address.PostalCode) {
 			return fmt.Errorf("%w: %w", ports.ErrInvalidState, ports.ErrDeliveryUnavailable)
 		}
+		if r.delivery != nil {
+			if deliveryErr != nil {
+				return deliveryErr
+			}
+			current, err := checkoutDeliveryLines(transactionContext, tx, userID, cartID, true)
+			if err != nil {
+				return err
+			}
+			if !slices.Equal(current, deliveryLines) {
+				return ports.ErrQuoteChanged
+			}
+		}
 		if couponCode != "" && !revision.Config.Settings.Features.Coupons {
 			return ports.ErrCouponInvalid
 		}
@@ -1059,6 +1088,11 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if err != nil {
 			return mapCommerceError(err)
+		}
+		if r.delivery != nil {
+			if err := r.delivery.saveDecisions(transactionContext, tx, order.ID, deliveryDecisions); err != nil {
+				return err
+			}
 		}
 		policyJSON, _ := json.Marshal(revision.Config.Settings.Policy)
 		if _, err = tx.Exec(transactionContext, `UPDATE orders SET policy_revision=NULLIF($2,0),policy_snapshot=$3 WHERE id=$1 AND policy_snapshot IS NULL`, order.ID, revision.ID, policyJSON); err != nil {
@@ -1150,10 +1184,17 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	if err := r.pool.QueryRow(ctx, `
 		SELECT o.id, o.order_number, o.status, o.currency, o.subtotal_cents,
 		       o.shipping_cents, o.discount_cents, o.total_cents, o.created_at,
-		       COALESCE((SELECT pa.status FROM payment_attempts pa WHERE pa.order_id = o.id ORDER BY pa.id DESC LIMIT 1), ''),o.payment_review_required,o.address_snapshot,
-		       (o.status='pending_payment' AND NOT o.payment_review_required AND EXISTS(SELECT 1 FROM payment_attempts pa JOIN inventory_reservations ir ON ir.order_id=pa.order_id WHERE pa.order_id=o.id AND pa.status IN ('created','pending') AND ir.status='active' AND ir.expires_at>NOW()))
+		       COALESCE(CASE WHEN pa.status='pending' AND last_payment.status='failed' THEN 'failed' ELSE pa.status END, ''),o.payment_review_required,o.address_snapshot,
+		       EXISTS(SELECT 1 FROM inventory_reservations ir WHERE ir.order_id=o.id AND (ir.status='expired' OR (ir.status='active' AND ir.expires_at<=NOW()))),
+		       COALESCE(pa.status='authorized' OR last_payment.status='pending',false),
+		       `+paymentOrderPayableSQL+` AND NOT COALESCE(pa.creation_started_at IS NOT NULL AND pa.provider_order_id IS NULL,false),
+		       COALESCE(pa.creation_started_at IS NOT NULL AND pa.provider_order_id IS NULL AND pa.creation_review_reason='',false),
+		       COALESCE(pa.creation_review_reason<>'',false)
 		FROM orders o
-		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.DiscountCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus, &detail.PaymentReview, &addressData, &detail.CanPay); err != nil {
+		LEFT JOIN LATERAL (SELECT id,status,provider_order_id,creation_started_at,creation_review_reason FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON true
+		LEFT JOIN LATERAL (SELECT status FROM provider_payment_attempts WHERE payment_attempt_id=pa.id
+		 ORDER BY (status='pending') DESC,updated_at DESC,provider_payment_id DESC LIMIT 1) last_payment ON true
+		WHERE o.user_id = $1 AND o.order_number = $2`, userID, orderNumber).Scan(&detail.ID, &detail.OrderNumber, &detail.Status, &detail.Currency, &detail.SubtotalCents, &detail.ShippingCents, &detail.DiscountCents, &detail.TotalCents, &detail.CreatedAt, &detail.PaymentStatus, &detail.PaymentReview, &addressData, &detail.PaymentExpired, &detail.PaymentInProgress, &detail.CanPay, &detail.PaymentCreationPending, &detail.PaymentCreationReview); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domaincommerce.OrderDetail{}, ports.ErrOrderNotFound
 		}
@@ -1180,15 +1221,19 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	}
 	fulfillmentRows, err := r.pool.Query(ctx, `
 		SELECT s.display_name, COALESCE(sf.status, 'pending'), COALESCE(sf.carrier, ''), COALESCE(sf.tracking_number, ''),
-		       COALESCE(sf.last_note, ''), COALESCE(sf.updated_at, o.created_at), COALESCE(sf.revision, 0)
-		FROM order_items oi
+		       COALESCE(sf.last_note, ''), COALESCE(sf.updated_at, o.created_at), COALESCE(sf.revision, 0),
+     CASE WHEN EXISTS (SELECT 1 FROM delivery_exceptions e JOIN shiprocket_shipments sr
+       ON sr.order_id=e.order_id AND sr.seller_id=e.seller_id AND sr.environment='live'
+       WHERE e.order_id=o.id AND e.seller_id=s.id AND e.environment='live' AND e.resolved_at IS NULL AND e.kind IN ('provider_exception','cancelled_parcel'))
+       THEN 'under_review' ELSE '' END
+  FROM order_items oi
 		JOIN product_variants v ON v.id = oi.variant_id
 		JOIN products p ON p.id = v.product_id
 		JOIN sellers s ON s.id = p.seller_id
 		JOIN orders o ON o.id = oi.order_id
 		LEFT JOIN seller_fulfillments sf ON sf.order_id = oi.order_id AND sf.seller_id = s.id
 		WHERE oi.order_id = $1
-		GROUP BY s.id, s.display_name, sf.status, sf.carrier, sf.tracking_number, sf.last_note, sf.updated_at, sf.revision, o.created_at
+		GROUP BY s.id, s.display_name, sf.status, sf.carrier, sf.tracking_number, sf.last_note, sf.updated_at, sf.revision, o.id, o.created_at
 		ORDER BY COALESCE(sf.updated_at, o.created_at) DESC, s.id DESC`, detail.ID)
 	if err != nil {
 		return domaincommerce.OrderDetail{}, err
@@ -1197,7 +1242,7 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	detail.Fulfillments = make([]domaincommerce.OrderFulfillment, 0)
 	for fulfillmentRows.Next() {
 		var fulfillment domaincommerce.OrderFulfillment
-		if err := fulfillmentRows.Scan(&fulfillment.SellerName, &fulfillment.Status, &fulfillment.Carrier, &fulfillment.TrackingNumber, &fulfillment.LastNote, &fulfillment.UpdatedAt, &fulfillment.Revision); err != nil {
+		if err := fulfillmentRows.Scan(&fulfillment.SellerName, &fulfillment.Status, &fulfillment.Carrier, &fulfillment.TrackingNumber, &fulfillment.LastNote, &fulfillment.UpdatedAt, &fulfillment.Revision, &fulfillment.DeliveryUpdate); err != nil {
 			return domaincommerce.OrderDetail{}, err
 		}
 		detail.Fulfillments = append(detail.Fulfillments, fulfillment)

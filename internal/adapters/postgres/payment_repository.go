@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/wecratfs/commerce/internal/ports"
@@ -45,71 +46,58 @@ func (r *PaymentRepository) GetPaymentOrder(ctx context.Context, userID int64, o
 }
 
 func (r *PaymentRepository) AttachProviderOrder(ctx context.Context, userID int64, orderNumber string, providerOrder ports.PaymentOrder) (ports.PaymentOrderRecord, error) {
-	returnRecord := ports.PaymentOrderRecord{}
-	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
-		var orderID int64
-		var orderStatus string
-		if err := tx.QueryRow(transactionContext, `SELECT id, status FROM orders WHERE user_id = $1 AND order_number = $2 FOR UPDATE`, userID, orderNumber).Scan(&orderID, &orderStatus); err != nil {
+	return r.attachProviderOrder(ctx, userID, orderNumber, 0, providerOrder)
+}
+
+func (r *PaymentRepository) attachProviderOrder(ctx context.Context, userID int64, number string, attemptID int64, providerOrder ports.PaymentOrder) (ports.PaymentOrderRecord, error) {
+	var record ports.PaymentOrderRecord
+	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		if err := tx.QueryRow(ctx, `SELECT id,order_number,status FROM orders
+			WHERE user_id=$1 AND order_number=$2 FOR UPDATE`, userID, number).
+			Scan(&record.OrderID, &record.OrderNumber, &record.OrderStatus); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ports.ErrPaymentNotFound
 			}
 			return err
 		}
-		if orderStatus != "pending_payment" {
-			return ports.ErrPaymentState
-		}
-		var reserved bool
-		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM inventory_reservations WHERE order_id=$1 AND status='active' AND expires_at>NOW())`, orderID).Scan(&reserved); err != nil {
+		var latestID int64
+		var started, review, payable bool
+		if err := tx.QueryRow(ctx, `SELECT pa.id,pa.provider,COALESCE(pa.provider_order_id,''),pa.status,pa.amount_cents,pa.currency,
+			pa.creation_started_at IS NOT NULL,pa.creation_review_reason<>'',`+paymentOrderPayableSQL+`
+			FROM orders o JOIN payment_attempts pa ON pa.order_id=o.id WHERE o.id=$1
+			ORDER BY pa.id DESC LIMIT 1 FOR UPDATE OF pa`, record.OrderID).
+			Scan(&latestID, &record.Provider, &record.ProviderOrderID, &record.PaymentStatus, &record.AmountCents, &record.Currency,
+				&started, &review, &payable); err != nil {
 			return err
 		}
-		if !reserved {
+		if record.Provider != "razorpay" || review || (attemptID == 0 && (started || !payable)) ||
+			(attemptID != 0 && (attemptID != latestID || !started)) {
 			return ports.ErrPaymentState
 		}
-		result, err := tx.Exec(transactionContext, `
-			UPDATE payment_attempts
-			SET provider_order_id = $1, status = 'pending', updated_at = NOW()
-			WHERE order_id = $2 AND provider = 'razorpay' AND provider_order_id IS NULL
-			  AND status = 'created' AND amount_cents = $3 AND currency = $4`,
-			providerOrder.ProviderOrderID, orderID, providerOrder.AmountCents, providerOrder.Currency)
-		if err != nil {
+		if record.ProviderOrderID != "" {
+			if attemptID != 0 && record.ProviderOrderID != providerOrder.ProviderOrderID {
+				return ports.ErrPaymentMismatch
+			}
+			return nil
+		}
+		if (record.PaymentStatus != "created" && (attemptID == 0 || record.PaymentStatus != "failed")) || providerOrder.ProviderOrderID == "" ||
+			record.AmountCents != providerOrder.AmountCents || record.Currency != providerOrder.Currency {
+			return ports.ErrPaymentMismatch
+		}
+		// Associate a recovered order even after stock expiry or cancellation.
+		// Signed callbacks still need the reference to record a late capture.
+		if _, err := tx.Exec(ctx, `UPDATE payment_attempts SET provider_order_id=$2,status='pending',
+			creation_next_lookup_at=NULL,updated_at=NOW(),next_reconcile_at=NOW() WHERE id=$1`, latestID, providerOrder.ProviderOrderID); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return ports.ErrPaymentMismatch
+			}
 			return err
 		}
-		if result.RowsAffected() == 0 {
-			// A retry may have attached the provider order already. Return the
-			// existing authoritative value rather than overwriting it.
-			return tx.QueryRow(transactionContext, `
-				SELECT o.id, o.order_number, o.status, pa.provider,
-				       COALESCE(pa.provider_order_id, ''), pa.status,
-				       pa.amount_cents, pa.currency
-				FROM orders o JOIN payment_attempts pa ON pa.order_id = o.id
-				WHERE o.id = $1 ORDER BY pa.id DESC LIMIT 1`, orderID).Scan(
-				&returnRecord.OrderID,
-				&returnRecord.OrderNumber,
-				&returnRecord.OrderStatus,
-				&returnRecord.Provider,
-				&returnRecord.ProviderOrderID,
-				&returnRecord.PaymentStatus,
-				&returnRecord.AmountCents,
-				&returnRecord.Currency,
-			)
-		}
-		return tx.QueryRow(transactionContext, `
-			SELECT o.id, o.order_number, o.status, pa.provider,
-			       COALESCE(pa.provider_order_id, ''), pa.status,
-			       pa.amount_cents, pa.currency
-			FROM orders o JOIN payment_attempts pa ON pa.order_id = o.id
-			WHERE o.id = $1 ORDER BY pa.id DESC LIMIT 1`, orderID).Scan(
-			&returnRecord.OrderID,
-			&returnRecord.OrderNumber,
-			&returnRecord.OrderStatus,
-			&returnRecord.Provider,
-			&returnRecord.ProviderOrderID,
-			&returnRecord.PaymentStatus,
-			&returnRecord.AmountCents,
-			&returnRecord.Currency,
-		)
+		record.ProviderOrderID, record.PaymentStatus = providerOrder.ProviderOrderID, "pending"
+		return nil
 	})
-	return returnRecord, err
+	return record, err
 }
 
 func (r *PaymentRepository) ProcessWebhook(ctx context.Context, webhook ports.PaymentWebhook, payload []byte) (bool, error) {

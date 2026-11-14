@@ -144,12 +144,13 @@ paths:
       summary: Preview current stock, prices, shipping and eligible coupon discount
       security: [{cookieSession: []}]
       parameters:
+        - {name: postal_code, in: query, schema: {type: string, pattern: "^[1-9][0-9]{5}$"}, description: Indian delivery PIN for a serviceability check}
         - {name: coupon_code, in: query, schema: {type: string, maxLength: 40}}
         - {name: intent, in: query, schema: {type: string, minLength: 48, maxLength: 48}, description: Owned Buy now context; absent uses the normal shopping cart}
       responses:
         '200': {description: Integer minor-unit subtotal_cents, shipping_cents, discount_cents and total_cents with cart_id and policy_revision}
         '403': {description: Authentication required}
-        '422': {description: Coupon or cart unavailable}
+        '422': {description: Coupon or cart unavailable, invalid PIN, PIN_UNSERVICEABLE, or PARCEL_UNAVAILABLE}
   /api/v1/checkout:
     post:
       summary: Create one pending-payment order idempotently
@@ -179,8 +180,11 @@ paths:
       responses:
         '201': {description: Payment intent with provider order reference}
         '404': {description: Order or payment attempt not found}
-        '409': {description: Order is no longer payable}
-        '502': {description: Payment provider unavailable}
+        '409': {description: Order is no longer payable or requires operator review (PAYMENT_RECOVERY_REVIEW)}
+        '503':
+          description: The saved order is undergoing provider recovery (PAYMENT_RECOVERY_PENDING)
+          headers:
+            Retry-After: {schema: {type: integer}, description: Seconds before trying again}
   /api/v1/orders/{orderNumber}/cancel:
     post:
       summary: Cancel a customer-owned pending-payment order and release its reservation

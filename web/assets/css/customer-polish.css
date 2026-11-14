@@ -436,32 +436,36 @@ html {scroll-padding-block-start:90px;}
 .account-navigation nav > a:focus-visible {outline:2px solid var(--forest);outline-offset:-2px;}
 @media(max-width:720px) {.account-layout {grid-template-columns:minmax(0,1fr);} .account-sidebar {position:static;} .account-sidebar .profile-mini {display:none;} }
 
-.order-confirmation {max-width:1000px;text-align:center;padding-block:48px 64px;}
-.confirmation-art {color:var(--forest);display:flex;justify-content:center;margin-bottom:24px;}
-.order-confirmation h1 {font-size:clamp(32px,4vw,48px);color:var(--forest);line-height:1.15;margin-bottom:18px;}
-.confirmation-lead {max-width:680px;margin:0 auto 32px;color:var(--muted);font-size:18px;}
-.confirmation-summary {display:grid;grid-template-columns:1.3fr 1fr;gap:24px;padding:28px;text-align:left;border:1px solid #d5e4d1;background:#f1f7ed;border-radius:12px;}
-.confirmation-summary > div {display:flex;align-items:start;gap:16px;min-width:0;}
-.confirmation-summary > div + div {border-left:1px solid #d5e4d1;padding-left:24px;}
-.confirmation-summary .material-symbols-outlined {font-size:30px;color:var(--forest);}
-.confirmation-summary strong {display:block;color:var(--forest);overflow-wrap:anywhere;font-size:18px;}
-.confirmation-summary small {display:block;color:var(--muted);margin-bottom:4px;}
-.confirmation-summary p {margin:8px 0 0;color:var(--muted);}
-.confirmation-progress {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));list-style:none;padding:0;margin:40px 0;}
-.confirmation-progress li {position:relative;display:grid;justify-items:center;gap:8px;color:var(--muted);}
-.confirmation-progress li::before {content:"";position:absolute;height:1px;background:var(--line);left:-50%;right:50%;top:22px;z-index:-1;}
-.confirmation-progress li:first-child::before {display:none;}
-.confirmation-progress .material-symbols-outlined {display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--surface);font-size:23px;}
-.confirmation-progress li.done {color:var(--forest);}
-.confirmation-progress li.done .material-symbols-outlined {background:var(--forest);color:white;border-color:var(--forest);}
-.confirmation-progress small {font-size:13px;}
-.confirmation-actions {display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
-.confirmation-actions > a {min-width:220px;min-height:48px;border-radius:24px;}
-.confirmation-actions .primary-button {background:var(--forest);}
-.confirmation-actions .outline-button {border-color:var(--forest);color:var(--forest);}
-.confirmation-help {margin-top:24px;color:var(--muted);}
-.confirmation-help a {text-decoration:underline;color:var(--forest);}
-@media(max-width:600px) { .order-confirmation {padding-block:28px 40px;} .confirmation-summary {grid-template-columns:1fr;padding:20px;} .confirmation-summary > div + div {border-left:0;border-top:1px solid #d5e4d1;padding:20px 0 0;} .confirmation-progress {gap:12px 4px;} .confirmation-progress strong,.confirmation-progress small {font-size:12px !important;} .confirmation-actions > a {width:100%;} }
+.order-confirmation {max-width: 760px; padding-block: clamp(20px, 4vw, 40px);}
+.confirmation-panel {padding: clamp(16px, 3vw, 28px); border: 1px solid var(--line); border-radius: 12px; background: var(--surface);}
+.confirmation-panel--paid {border-color: #d5e4d1; background: #f1f7ed;}
+.confirmation-state-icon {font-size: 28px; color: var(--muted); margin-block-end: 8px;}
+.confirmation-panel--paid .confirmation-state-icon {font-size: 44px; color: var(--forest);}
+.order-confirmation h1 {font-size: clamp(1.75rem, 3vw, 2.25rem); color: var(--forest); line-height: 1.2; margin-block-end: 8px;}
+.confirmation-lead {max-width: 62ch; margin-block: 0 16px; color: var(--muted); line-height: 1.5;}
+.confirmation-facts {display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.5fr); gap: 12px; padding-block: 14px; margin-block: 0 12px; border-block: 1px solid var(--line);}
+.confirmation-facts div {min-width: 0;}
+.confirmation-facts dt {font-size: .875rem; color: var(--muted);}
+.confirmation-facts dd {margin: 3px 0 0; overflow-wrap: anywhere; font-weight: 600;}
+.confirmation-progress {display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; list-style: none; padding: 0; margin-block: 20px;}
+.confirmation-progress li {display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; column-gap: 8px; color: var(--muted);}
+.confirmation-progress .material-symbols-outlined {grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); font-size: 20px;}
+.confirmation-progress li.done {color: var(--forest);}
+.confirmation-progress li.done .material-symbols-outlined {background: var(--forest); color: white; border-color: var(--forest);}
+.confirmation-progress small {font-size: .8125rem;}
+.confirmation-actions {display: flex; gap: 8px; flex-wrap: wrap; margin-block-start: 12px;}
+.confirmation-actions > a, .payment-recovery button {min-height: 44px;}
+.confirmation-panel .order-live-controls button {padding-inline: 16px;}
+.payment-recovery p {margin-block: 8px; color: var(--muted);}
+.payment-recovery [data-backend-message]:empty {display: none;}
+.confirmation-help {margin-block-start: 16px; color: var(--muted);}
+.confirmation-help a {text-decoration: underline; color: var(--forest);}
+.checkout-amount, .checkout-summary :is(b,strong), .order-detail-layout .summary :is(b,strong), .order-receipt strong {font-family: var(--sans); font-variant-numeric: tabular-nums;}
+.confirmation-facts .checkout-amount {font-size: 1.25rem;}
+@media (max-width: 600px) {
+  .confirmation-facts, .confirmation-progress {grid-template-columns: minmax(0, 1fr);}
+  .confirmation-actions > a {width: 100%;}
+}
 
 .order-refresh-state {display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:28px;margin:8px 0 0;color:var(--muted);font-size:12px;}
 .order-refresh-state.is-error {color:var(--terracotta);}
@@ -513,11 +517,11 @@ html {scroll-padding-block-start:90px;}
 
 /* Checkout refresh: keep the existing four-step flow and payment behavior,
    while bringing the page closer to the approved visual direction. */
-.checkout-intro { padding-top: 30px; }
+.checkout-intro { padding-block: 16px; }
 .checkout-intro > .eyebrow { color: var(--terracotta); letter-spacing: .16em; }
-.checkout-intro h1 { color: var(--forest); }
+.checkout-intro h1 { color: var(--forest); font-size: clamp(1.875rem, 3vw, 2.5rem); }
 .checkout-intro > p:not(.eyebrow) { color: var(--muted); }
-.checkout-intro .steps { max-width: 860px; margin-top: 28px; }
+.checkout-intro .steps { max-width: 760px; margin-top: 12px; }
 .checkout-layout { align-items: start; gap: 24px; }
 .checkout-main { display: grid; gap: 16px; min-width: 0; }
 .checkout-main .checkout-card,
@@ -552,12 +556,12 @@ html {scroll-padding-block-start:90px;}
 }
 /* Checkout reference layout: quiet branded header, card-based steps and a readable summary. */
 .checkout-reference { max-width: 1120px; }
-.checkout-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 0 14px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.checkout-topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block-end: 8px; margin-block-end: 8px; border-bottom: 1px solid var(--line); }
 .checkout-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--forest); font: 600 20px/1 var(--serif); }
 .checkout-brand img { width: 32px; height: 32px; object-fit: contain; }
 .checkout-secure { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .checkout-secure .material-symbols-outlined { font-size: 16px; color: var(--forest); }
-.checkout-reference > .breadcrumb { margin-bottom: 16px; }
+.checkout-reference > .breadcrumb { margin-block-end: 8px; }
 .checkout-reference .steps { max-width: 760px; margin-inline: auto; }
 .checkout-layout { align-items: start; }
 .checkout-step-card { border-radius: 6px; }

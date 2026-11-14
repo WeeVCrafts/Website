@@ -1,5 +1,19 @@
 (function () {
   'use strict';
+  function enhanceFulfillment(root) {
+    const form = root.querySelector('[data-fulfillment-form]');
+    const carrier = form?.elements.namedItem('carrier');
+    const custom = form?.querySelector('[data-custom-carrier]');
+    if (!carrier || !custom) return;
+    const update = () => {
+      const needsCustomCarrier = carrier.value === 'Other';
+      custom.hidden = !needsCustomCarrier;
+      custom.querySelector('input').required = needsCustomCarrier;
+    };
+    carrier.addEventListener('change', update);
+    update();
+  }
+  document.addEventListener('ui:seller-order-refresh', event => enhanceFulfillment(event.detail));
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-product-builder]');
     if(form?.hasAttribute('data-product-simple')) {
@@ -102,15 +116,7 @@
       }
       adjustment.addEventListener('input', update); adjustment.addEventListener('change', update); update();
     });
-    const fulfillment = document.querySelector('[data-fulfillment-form]');
-    if (fulfillment) {
-      const carrier = fulfillment.elements.namedItem('carrier');
-      const custom = fulfillment.querySelector('[data-custom-carrier]');
-      if (carrier && custom) {
-        const update = () => { custom.hidden = carrier.value !== 'Other'; custom.querySelector('input').required = carrier.value === 'Other'; };
-        carrier.addEventListener('change',update); update();
-      }
-    }
+    enhanceFulfillment(document);
   });
 })();
 

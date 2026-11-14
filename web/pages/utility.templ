@@ -459,7 +459,11 @@ templ LiveTracking(p viewmodels.CustomerPage) {
     <section class="container tracking-layout"><div class="tracking-main">
       <form class="tracking-search" action="/tracking" method="get"><label for="tracking-order">Order number</label><div><input id="tracking-order" name="order" value={ p.SelectedOrder.Number } placeholder="Enter your order number" required/><button class="primary-button" type="submit">Track order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button></div></form>
       if p.SelectedOrder.Number != "" {
-        <article class="tracking-card-main"><header><div><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>Order { p.SelectedOrder.Number }</h2><p>Placed { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>@OrderShipmentProgress(p.SelectedOrder)@OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
+        <article class="tracking-card-main"><header><div><span class={ "ui-status " + components.StatusTone(p.SelectedOrder.Status) }>{ components.StatusLabel(p.SelectedOrder.Status) }</span><h2>Order { p.SelectedOrder.Number }</h2><p>{ orderDateLabel(p.SelectedOrder) } { p.SelectedOrder.Date }</p></div><strong>{ p.SelectedOrder.Payment }</strong></header><div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><p>{ orderStatusCopy(p.SelectedOrder) }</p></div>
+        if p.SelectedOrder.Confirmed() || p.SelectedOrder.HasPaymentReceipt() {
+          @OrderShipmentProgress(p.SelectedOrder)
+        }
+        @OrderDetailRows(p.SelectedOrder.Items)<a class="outline-button" href={ orderPath(p.SelectedOrder.Number) }>View order details</a></article>
       } else {
         <div class="empty-state"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><h2>Your order updates will appear here</h2><p>Choose an order from your account or enter an order number above.</p><a class="primary-button" href="/orders">View your orders</a></div>
       }

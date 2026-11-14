@@ -20,7 +20,7 @@ async function main(){
     assert.equal(new URL(page.url()).pathname,new URL(route,target).pathname);
    }
    await page.goto('/products');await page.locator('[data-filter-open]').click();
-   await page.locator('[data-filter-panel] input[name=category][value=crafts]').check();await page.waitForURL(/category=crafts/);
+   await page.locator('[data-filter-panel] input[name=category][value=arts]').check();await page.waitForURL(/category=arts/);
    await page.waitForFunction(()=>document.querySelector('[data-filter-panel]')?.classList.contains('is-open')&&!document.querySelector('#listing-results')?.hasAttribute('aria-busy'));
    await page.keyboard.press('Escape');await expect(page.locator('[data-filter-panel]')).not.toBeVisible();await page.locator('.product-card h3 a[href^="/products/"]').first().click();
    assert.match(new URL(page.url()).pathname,/^\/products\/.+/);assert.equal(await page.locator('#guest-login-dialog[open]').count(),0);
@@ -36,12 +36,15 @@ async function main(){
    await buy.click();const prompt=page.locator('#guest-login-dialog');
    await expect(prompt.getByLabel('Username or email',{exact:true})).toBeVisible();
    await expect(prompt.getByLabel('Password',{exact:true})).toBeVisible();
-   assert.equal(await prompt.locator('[name=next]').inputValue(),'/products/blue-tote');
+   const continuation=await prompt.locator('[name=next]').inputValue();
+   const chosen=new URL(continuation,target);assert.equal(chosen.pathname,'/products/blue-tote');assert(chosen.searchParams.get('variant_id'));assert.equal(chosen.searchParams.get('quantity'),'1');
    await prompt.getByRole('link',{name:'Create account',exact:true}).click();
-   await page.waitForURL(/\/register\?next=/);assert.equal(new URL(page.url()).searchParams.get('next'),'/products/blue-tote');
-   for(const protectedRoute of ['/account','/orders','/checkout','/wishlist']){
+   await page.waitForURL(/\/register\?next=/);assert.equal(new URL(page.url()).searchParams.get('next'),continuation);
+   for(const protectedRoute of ['/account','/orders','/wishlist']){
     const response=await context.request.get(protectedRoute,{maxRedirects:0});assert.equal(response.status(),303);
    }
+   // The isolated preview retains the current closed checkout release gate.
+   assert.equal((await context.request.get('/checkout',{maxRedirects:0})).status(),503);
    assert.equal((await context.request.get('/api/v1/orders')).status(),401);
   });
   await check('login/signup navigation keeps return path; account exit never gates browsing',async()=>{

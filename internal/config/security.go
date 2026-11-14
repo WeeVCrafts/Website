@@ -8,6 +8,9 @@ import (
 
 // ValidateSecurity rejects development defaults before connecting or serving.
 func (c Config) ValidateSecurity() error {
+	if err := c.ValidateShipping(); err != nil {
+		return err
+	}
 	if c.OperationalMetricsToken != "" && len(c.OperationalMetricsToken) < 32 {
 		return errors.New("operational metrics token must contain at least 32 characters")
 	}

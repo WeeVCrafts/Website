@@ -14,7 +14,7 @@ type Workspace struct {
 }
 
 var portalWorkspaces = []Workspace{
-	{Role: domainidentity.RoleCustomer, Label: "Customer", Path: "/products"},
+	{Role: domainidentity.RoleCustomer, Label: "Customer", Path: "/"},
 	{Role: domainidentity.RoleSeller, Label: "Seller", Path: "/seller-admin"},
 	{Role: domainidentity.RoleAdmin, Label: "Admin", Path: "/admin"},
 	{Role: domainidentity.RoleSuperAdmin, Label: "Super Admin", Path: "/super-admin"},
@@ -51,7 +51,7 @@ func LoginDestination(roles []domainidentity.Role) string {
 // destinations may honor a next URL, and only within the customer surface.
 func RedirectDestination(roles []domainidentity.Role, next string) string {
 	destination := LoginDestination(roles)
-	if destination != "/products" {
+	if destination != "/" {
 		return destination
 	}
 	candidate := strings.TrimSpace(next)

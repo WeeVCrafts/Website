@@ -91,6 +91,8 @@ type CartItem struct {
 }
 
 type Order struct {
+	PaymentExpired, PaymentInProgress                  bool
+	PaymentCreationPending, PaymentCreationReview      bool
 	PaymentReview                                      bool
 	CanPay                                             bool
 	ContactName, ContactPhone                          string
@@ -106,6 +108,15 @@ type Order struct {
 
 type PaymentActivity struct {
 	Reference, Amount, Date, Method, OrderNumber, Status string
+}
+
+func (order Order) Confirmed() bool {
+	return domaincommerce.PrepaidOrderConfirmed(order.State, order.PaymentState, order.PaymentReview)
+}
+
+// A refunded purchase can still have a historical payment receipt.
+func (order Order) HasPaymentReceipt() bool {
+	return !order.PaymentReview && (order.Confirmed() || (order.State == "refunded" && order.PaymentState == "refunded"))
 }
 
 type Return struct {

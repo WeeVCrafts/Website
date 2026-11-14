@@ -18,6 +18,7 @@ func main() {
 	flag.Parse()
 	mux := http.NewServeMux()
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("web/assets"))))
+	registerRecoveryRoutes(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/cart" && r.URL.Path != "/checkout" {
 			http.NotFound(w, r)

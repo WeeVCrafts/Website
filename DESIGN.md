@@ -395,3 +395,14 @@ explicit grid areas. Navigation remains beneath the photograph; media counts
 never wrap. Phones keep a bounded horizontal thumbnail rail. Photo and zoom
 loading and error states reserve media geometry and offer Retry. Gallery errors
 are owned by the gallery rather than the shared missing-image replacement.
+
+### Uniform customer shopping actions — 6 November 2026
+
+All customer screens, including authentication, use Wishlist, Cart and Sign in
+with 24px icons above visible 14px labels and at least 48px action targets.
+Account replaces Sign in after authentication. Notifications and its unread
+count, plus Sign out, belong inside Account. Search moves below the toolbar at
+800px; the brand reduces to its logo at 600px. Customer action geometry belongs
+to customer-header.css, loaded after the shared and homepage presentation.
+Operational portal headers and seller notification presentation remain separate.
+Ordinary customer login opens Home; validated task-return destinations remain.

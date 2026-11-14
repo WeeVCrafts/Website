@@ -105,7 +105,7 @@ async function createMockPaidOrder(page, email) {
 
 
   const checkoutResponse = page.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
-  await page.getByRole("button", { name: /Pay & place order/ }).click();
+  await page.getByRole("button", { name: /^Pay ₹[\d,.]+$/ }).click();
   expect((await checkoutResponse).ok()).toBeTruthy();
   const capture = page.getByRole("button", { name: "Simulate successful payment" });
   await expect(capture).toBeVisible();
@@ -1237,10 +1237,10 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     const quoteResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout/quote") && response.request().method() === "GET");
     await customer.getByRole("button", { name: "Apply coupon" }).click();
     expect((await quoteResponse).ok()).toBeTruthy();
-    await expect(customer.locator("[data-quote-discount]")).not.toHaveText("INR 0.00");
+    await expect(customer.locator("[data-quote-discount]")).not.toHaveText("₹0");
     const checkoutRequest = customer.waitForRequest(request => request.url().includes("/api/v1/checkout") && request.method() === "POST");
     const checkoutResponse = customer.waitForResponse(response => response.url().includes("/api/v1/checkout") && response.request().method() === "POST");
-    await customer.getByRole("button", { name: /Pay & place order/ }).click();
+    await customer.getByRole("button", { name: /^Pay ₹[\d,.]+$/ }).click();
     const checkoutPayload = JSON.parse((await checkoutRequest).postData());
     expect(checkoutPayload.address.phone).toBe("9876543210");
     expect(checkoutPayload.address.country_code).toBe("IN");
@@ -1280,20 +1280,21 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(saleLedgerRow).toContainText("open");
 
     const sellerOrdersPath = `/seller-admin/orders?q=${encodeURIComponent(orderNumber)}`;
-    for (const status of ["processing", "shipped", "delivered"]) {
+    for (const action of ["Start processing", "Mark as packed", "Mark as shipped", "Mark ready to deliver", "Mark as delivered"]) {
       await seller.goto(sellerOrdersPath);
-      const sellerOrder = seller.locator(".seller-order-card").filter({ hasText: orderNumber });
+      const sellerOrder = seller.locator("[data-seller-orders-region]").getByRole("row").filter({ hasText: orderNumber });
       await expect(sellerOrder).toHaveCount(1);
       await sellerOrder.getByRole("link", { name: "Open order" }).click();
       const fulfilmentForm = seller.locator('form[action="/seller-admin/orders/fulfill"]');
-      await fulfilmentForm.locator('select[name="status"]').selectOption(status);
-      await fulfilmentForm.locator('select[name="carrier"]').selectOption("Other");
-      await fulfilmentForm.locator('input[name="custom_carrier"]').fill("Browser QA Carrier");
-      await fulfilmentForm.locator('input[name="tracking_number"]').fill(`QA${suffix}`);
+      if (action === "Mark as shipped") {
+        await fulfilmentForm.locator('select[name="carrier"]').selectOption("Other");
+        await fulfilmentForm.locator('input[name="custom_carrier"]').fill("Browser QA Carrier");
+        await fulfilmentForm.locator('input[name="tracking_number"]').fill(`QA${suffix}`);
+      }
       const fulfillmentResponse = seller.waitForResponse(response => response.url().includes("/seller-admin/orders/fulfill") && response.request().method() === "POST");
-      await fulfilmentForm.getByRole("button", { name: "Save fulfilment" }).click();
-      expect((await fulfillmentResponse).status()).toBe(303);
-      await seller.waitForURL(url => url.pathname === "/seller-admin/orders");
+      await fulfilmentForm.getByRole("button", { name: action, exact: true }).click();
+      expect([200, 303]).toContain((await fulfillmentResponse).status());
+      await seller.waitForURL(url => url.pathname === `/seller-admin/orders/${encodeURIComponent(orderNumber)}` && url.searchParams.get("notice") === "Fulfilment update saved.");
     }
 
     const reviewTitle = `QA review ${suffix}`;

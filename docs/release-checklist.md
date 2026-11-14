@@ -124,6 +124,11 @@ New schema must be additive and historical financial records remain intact.
 Migration 52's durable refund claims require compatible writers: do not resume
 older refund code that can bypass submission claims. The payout controls likewise
 must not be bypassed by running an older status-only settlement writer.
+Migration 56 adds durable payment-order creation claims. Before replacing
+older payment-order writers, drain them with new checkout disabled. For a
+rollback, keep new checkout and existing-order payment initiation disabled if
+the older writer cannot honor these claims. Keep provider callbacks and
+read-only status recovery available on a compatible application revision.
 
 Rollback triggers include failed readiness, authorization bypass, inconsistent
 financial state, severe error/latency change or migration failure. The release
@@ -139,3 +144,25 @@ metrics, then reconcile financial events. Backup alerts, payment exceptions,
 uncertain refunds, outbox age, disk/CPU/memory and certificates require actual
 monitors and assigned recipients. The owner must choose support coverage,
 monitoring thresholds and observation duration before launch.
+
+For payment setup recovery, confirm the protected metrics endpoint reports
+provider creation and lookup outcomes and a current reconciliation backlog.
+In test mode, interrupt the create response after Razorpay creates the order.
+Verify `payment_creation_pending` on the saved order and `PAYMENT_RECOVERY_PENDING`
+on payment initiation. Confirm the application attaches a single provider order
+using the original receipt and sends no second POST. Delay lookups to distinguish the
+lookup timeout counter from due work and oldest pending age. For a multiple
+match or mismatch, use Finance → Payment reviews to find the order and reconcile
+the receipt and amount with provider evidence. A setup review alone confirms no
+capture and offers no fulfilment or refund action.
+
+## Shiprocket activation
+
+- [ ] Record the exact release SHA, readiness and migration 0059 or later on an
+  isolated staging deployment.
+- [ ] Verify all mapped sellers and variant measurements with
+  `wecratfs check-shiprocket`. Complete the checkout, provider label, manifest,
+  tracking, pre-pickup cancellation, timeout, and rollback checks in the
+  [operations handbook](operations-handbook.md#verify-a-release-candidate).
+- [ ] Record owner approval before enabling Shiprocket bookings for the mapped
+  sellers in production. The existing checkout and publication gates still apply.

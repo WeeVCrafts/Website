@@ -15,6 +15,25 @@ func sellerOrderURL(p viewmodels.SellerAdminPage, number string) string {
 	q := sellerOrderQuery(p)
 	return "/seller-admin/orders/" + url.PathEscape(number) + "?" + q.Encode()
 }
+func sellerCourierOptionsURL(p viewmodels.SellerAdminPage) string {
+	q := sellerOrderQuery(p)
+	q.Set("couriers", "1")
+	return "/seller-admin/orders/" + url.PathEscape(p.OrderDetail.Number) + "?" + q.Encode() + "#shiprocket-couriers"
+}
+
+func sellerCourierEstimate(option viewmodels.SellerCourierOption) string {
+	label := ""
+	if option.Rate != "" {
+		label += " · " + option.Rate
+	}
+	if option.Days == "1" {
+		return label + " · 1 day"
+	}
+	if option.Days != "" {
+		label += " · " + option.Days + " days"
+	}
+	return label
+}
 func sellerOrderQuery(p viewmodels.SellerAdminPage) url.Values {
 	q := url.Values{"q": {p.Query}, "tab": {p.Tab}}
 	if p.Pagination.Page > 1 {
@@ -156,17 +175,19 @@ func sellerFulfillmentDisabled(current, option string) bool {
 	return option != sellerNextFulfillmentStatus(current)
 }
 
-func sellerFulfillmentBlockReason(orderStatus, payment string) string {
+func sellerFulfillmentBlockReason(orderStatus, payment string, paymentReview bool) string {
 	status := strings.ToLower(strings.TrimSpace(orderStatus))
 	payment = strings.ToLower(strings.TrimSpace(payment))
 	switch {
+	case paymentReview:
+		return "Payment is under review. Fulfilment is on hold."
 	case status == "cancelled":
 		return "This order was cancelled, so fulfilment cannot be advanced."
 	case status == "refunded" || payment == "refunded":
 		return "This order has been refunded, so fulfilment cannot be advanced."
 	case status == "payment_failed" || strings.Contains(payment, "fail"):
 		return "Payment failed. Fulfilment becomes available after a successful payment."
-	case status == "pending_payment" || payment == "pending" || payment == "created":
+	case !domaincommerce.PrepaidOrderConfirmed(status, payment, false):
 		return "Payment is still pending. Fulfilment becomes available after capture."
 	}
 	return ""

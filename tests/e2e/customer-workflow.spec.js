@@ -43,7 +43,7 @@ async function placeMockOrder(page,result){
   const response=await page.request.post(endpoint,{headers:route.request().headers()});
   await route.fulfill({response});
  },{times:1});
- await page.getByRole('button',{name:'Pay & place order',exact:true}).click();
+ await page.getByRole('button',{name: /^Pay ₹[\d,.]+$/,exact:true}).click();
  await expect(page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/,{timeout:30000});
  const number=decodeURIComponent(new URL(page.url()).pathname.split('/')[2]);
  await page.getByRole('link',{name:'View order details',exact:true}).click();

@@ -35,10 +35,11 @@ func (g *paymentHTTPGateway) VerifyPayment(context.Context, ports.PaymentVerific
 type paymentHTTPRepository struct {
 	record   ports.PaymentOrderRecord
 	webhooks int
+	getErr   error
 }
 
 func (r *paymentHTTPRepository) GetPaymentOrder(context.Context, int64, string) (ports.PaymentOrderRecord, error) {
-	return r.record, nil
+	return r.record, r.getErr
 }
 
 func (r *paymentHTTPRepository) AttachProviderOrder(_ context.Context, _ int64, _ string, order ports.PaymentOrder) (ports.PaymentOrderRecord, error) {
@@ -133,6 +134,31 @@ func TestPaymentOrderHTTPMapsProviderFailureToGenericServerError(t *testing.T) {
 	handler.PaymentOrder(recorder, paymentRequest(http.MethodPost, "/api/v1/orders/WC-42/payment", session.CSRFToken, `{}`, session))
 	if recorder.Code != http.StatusInternalServerError || strings.Contains(recorder.Body.String(), "credentials") {
 		t.Fatalf("provider failure leaked or returned wrong status: %d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestPaymentOrderHTTPRecoveryStates(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		err    error
+		status int
+		code   string
+	}{
+		{"pending", ports.ErrPaymentCreationPending, http.StatusServiceUnavailable, "PAYMENT_RECOVERY_PENDING"},
+		{"review", ports.ErrPaymentCreationReview, http.StatusConflict, "PAYMENT_RECOVERY_REVIEW"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			handler, repository, session := newPaymentHTTPHandler(ports.PaymentOrderRecord{}, &paymentHTTPGateway{})
+			repository.getErr = tc.err
+			response := httptest.NewRecorder()
+			handler.PaymentOrder(response, paymentRequest(http.MethodPost, "/api/v1/orders/WC-42/payment", session.CSRFToken, `{}`, session))
+			if response.Code != tc.status || !strings.Contains(response.Body.String(), tc.code) {
+				t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+			}
+			if tc.err == ports.ErrPaymentCreationPending && response.Header().Get("Retry-After") != "20" {
+				t.Fatal("pending response omitted retry delay")
+			}
+		})
 	}
 }
 

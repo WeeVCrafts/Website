@@ -46,13 +46,22 @@ func TestConfirmationReflectsRecordedPaymentAndEveryParcelStage(t *testing.T) {
 	if !confirmationPaymentSettled(refunded) || !confirmationProcessing(refunded) || !confirmationDelivered(refunded) {
 		t.Fatal("refund erased recorded delivery history")
 	}
-	for _, state := range []string{"pending_payment", "payment_failed", "cancelled", "refunded"} {
+	for _, order := range []viewmodels.Order{
+		{State: "pending_payment", PaymentState: "pending"},
+		{State: "pending_payment", PaymentState: "authorized", PaymentInProgress: true},
+		{State: "payment_failed", PaymentState: "failed", PaymentExpired: true},
+		{State: "paid", PaymentState: "captured", PaymentReview: true},
+		{State: "cancelled", PaymentState: "captured"},
+	} {
 		var html bytes.Buffer
-		if err := OrderConfirmation(viewmodels.CustomerPage{SelectedOrder: viewmodels.Order{Number: "QA-ORDER", State: state}}).Render(context.Background(), &html); err != nil {
+		order.Number = "QA-ORDER"
+		if err := OrderConfirmation(viewmodels.CustomerPage{SelectedOrder: order, PaymentReady: true}).Render(context.Background(), &html); err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(html.String(), "Order placed successfully!") {
-			t.Errorf("unpaid or closed order presented as success: %s", state)
+		for _, marker := range []string{"Order confirmed", "check_circle", "Download receipt", "data-retry-payment"} {
+			if strings.Contains(html.String(), marker) {
+				t.Errorf("unexpected %q for state %s/%s (review: %v)", marker, order.State, order.PaymentState, order.PaymentReview)
+			}
 		}
 	}
 }

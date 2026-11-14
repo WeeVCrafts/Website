@@ -63,7 +63,7 @@ test('persistent covers, clean demo confirmation and synchronized fulfilment', a
     await customer.page.getByRole('button', { name: /Review & pay/ }).click();
 
 
-    await customer.page.getByRole('button', { name: /Pay & place order/, exact: false }).click();
+    await customer.page.getByRole('button', { name: /^Pay ₹[\d,.]+$/, exact: false }).click();
     await expect(customer.page).toHaveURL(/\/orders\/[^/]+\/confirmation(?:\?|$)/);
     await expect(customer.page.locator('.confirmation-summary')).toContainText('Payment completed');
     await expect(customer.page.locator('main')).not.toContainText('<!doctype');

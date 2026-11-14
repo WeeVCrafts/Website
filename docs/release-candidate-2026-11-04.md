@@ -279,3 +279,22 @@ Primary implementation: [settlements](../internal/web/handlers/settlements.go),
 references, focused regressions and the current operations/release docs accompany
 these changes. Pre-existing AGENTS/index changes and user scratch work remain
 separate and preserved.
+
+## 14 November 2026 roadmap rehearsal
+
+This rehearsal used the `main` working tree based on `7b4b62c`, with disposable
+PostgreSQL, Redis and private object storage. PostgreSQL applied migration 56.
+
+| Check | Observed result |
+| --- | --- |
+| Payment capture and fulfilment | Razorpay test-mode checkout captured payment for a two-seller order. The app confirmed payment, issued receipts and accepted each seller's fulfilment transitions. Invalid and repeated signed webhook requests were exercised against the isolated app. |
+| Refund | Razorpay processed the sandbox refund. Retrying the request returned the same saved refund reference. |
+| Recovery and access | The Go suite passed in 35 packages with isolated dependencies. PostgreSQL checks covered concurrent creation, a lost provider response, late recovery, last-unit contention and cross-account and cross-seller denials. A simulated provider timeout increased the timeout counter while due work remained visible in the backlog. A read-only Razorpay sandbox lookup returned exactly one order for the saved receipt, with the expected amount and currency. |
+| Manual settlements | Automated PostgreSQL and Finance browser checks exercised separate preparer and approver roles and protected transfer evidence. |
+| Browser checks | 39 Chromium, Firefox and WebKit fixture checks passed. Two Finance viewport checks and the Chromium header keyboard checks passed. Physical devices and hosted staging were outside this run. |
+| Restore | A separate database and matching private object were restored in 13 seconds. Migration level, sandbox order count and totals, linked object checksum and anonymous-access denial were checked. |
+| Local release image | `weevcrafts:roadmap-20261114` (`sha256:d1e848dbe681b33312f5bf4cb73804530b9e7530402fb612e047319ad5ce95b1`) ran as `app`, applied migration 56 to an empty database, reported PostgreSQL and Redis ready and served the payment metrics fields. |
+| Coolify | The public readiness endpoint returned HTTP 200. The running SHA, applied migration level, hosted webhook delivery and rollback rehearsal remain unverified. The latest GitHub deployment record showed failure and did not identify the running application. |
+
+The production publication and checkout gates remain in effect. Owner-approved
+content and the deployed-candidate evidence are still required for promotion.

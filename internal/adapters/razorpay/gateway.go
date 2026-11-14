@@ -54,7 +54,7 @@ func (g *Gateway) CreateOrder(ctx context.Context, request ports.PaymentOrderReq
 		return ports.PaymentOrder{}, err
 	}
 	if response.ID == "" || response.Amount != request.AmountCents || response.Currency != request.Currency {
-		return ports.PaymentOrder{}, errors.New("razorpay returned an inconsistent order")
+		return ports.PaymentOrder{}, ports.ErrPaymentMismatch
 	}
 	return ports.PaymentOrder{ProviderOrderID: response.ID, AmountCents: response.Amount, Currency: response.Currency}, nil
 }

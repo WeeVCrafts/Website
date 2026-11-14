@@ -1,0 +1,74 @@
+package admin
+
+import (
+ "fmt"
+ "strings"
+
+ "github.com/wecratfs/commerce/internal/ports"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ DeliveryExceptions(p viewmodels.AdminPage, cases []ports.DeliveryException) {
+ @AdminDocument(p) {
+  <div class="admin-toolbar"><a class="admin-button secondary" href={p.PortalRoot+"/orders"}>Back to orders</a></div>
+  <article class="admin-panel">
+   <h2>Open delivery cases</h2>
+   if len(cases)==0 {
+    <p>No open delivery exceptions.</p>
+   } else {
+    <div class="ui-table-region" role="region" tabindex="0" aria-label="Open delivery cases">
+     <table class="ui-table ui-table--records">
+      <thead><tr><th scope="col">Order</th><th scope="col">Seller</th><th scope="col">Issue</th><th scope="col">Assigned to</th><th scope="col">Actions</th></tr></thead>
+      <tbody>
+       for _,c:= range cases {
+        <tr>
+         <th scope="row">{c.OrderNumber}</th><td data-label="Seller">{fmt.Sprint(c.SellerID)}</td>
+         <td data-label="Issue">{strings.ReplaceAll(c.Kind,"_"," ")}<small>{c.ShipmentStatus}</small></td>
+         <td data-label="Assigned to">
+          if c.AssigneeID>0 {
+<span>{fmt.Sprint(c.AssigneeID)}</span>
+} else {
+<span>Unassigned</span>
+}
+         </td>
+         <td data-label="Actions" class="row-actions">
+          <form method="post" action={p.PortalRoot+"/delivery-exceptions"}>
+           <input type="hidden" name="csrf_token" value={p.CSRFToken}/>
+           <input type="hidden" name="order" value={fmt.Sprint(c.OrderID)}/>
+           <input type="hidden" name="seller" value={fmt.Sprint(c.SellerID)}/>
+           <input type="hidden" name="kind" value={c.Kind}/>
+           if c.AssigneeID==0 {
+<button class="admin-button secondary" name="action" value="assign" type="submit" formnovalidate>Assign to me</button>
+}
+           if c.CanCancel {
+            <button class="admin-button secondary" name="action" value="cancel" type="submit" formnovalidate>Request cancellation</button>
+           }
+           if c.CanResolve && (c.AssigneeID==0 || c.AssigneeID==p.ActorID) {
+            <label>Resolution<textarea name="reason" required minlength="3" maxlength="500"></textarea></label>
+            if c.Kind=="cancelled_parcel" {
+             <button class="admin-button primary" name="action" value="resolve" type="submit">Allow manual dispatch</button>
+            } else {
+             <button class="admin-button primary" name="action" value="resolve" type="submit">Resolve case</button>
+            }
+           }
+          </form>
+         </td>
+        </tr>
+       }
+      </tbody>
+     </table>
+    </div>
+   }
+  </article>
+  <article class="admin-panel">
+   <h2>Cancel before courier pickup</h2>
+   <p>Use the internal order and seller IDs. Once Shiprocket confirms cancellation, review the case before allowing manual dispatch.</p>
+   <form method="post" action={p.PortalRoot+"/delivery-exceptions"} data-confirm="Request cancellation of this Shiprocket shipment?">
+    <input type="hidden" name="csrf_token" value={p.CSRFToken}/>
+    <label>Order ID<input name="order" type="number" min="1" required/></label>
+    <label>Seller ID<input name="seller" type="number" min="1" required/></label>
+    <button class="admin-button secondary" name="action" value="cancel" type="submit">Request cancellation</button>
+   </form>
+  </article>
+ }
+}

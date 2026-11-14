@@ -74,8 +74,7 @@ if (screenshots) fs.mkdirSync(screenshots, {recursive:true});
     await expect(profileToggle).toHaveAttribute('aria-expanded','true');
     await expect(page.locator('#profile-dropdown')).toBeVisible();
     await expect(page.locator('#profile-dropdown a').first(), `${name} ${role} ${width}px profile focus`).toBeFocused();
-    if(width>800) await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
-    else await expect(page.locator('.header-actions > #wishlist-count')).not.toBeVisible();
+    await expect(page.locator('.header-actions > #wishlist-count')).toBeVisible();
     await expect(page.locator('.header-actions > #cart-count')).toBeVisible();
     for (const value of ['0','12','123','—']) {
      await page.locator('#wishlist-count em, #cart-count em').evaluateAll((els,value) => els.forEach(el=>el.textContent=value),value);
