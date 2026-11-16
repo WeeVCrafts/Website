@@ -262,7 +262,7 @@ func policyClaimAction(ctx context.Context, tx pgx.Tx, actor, order int64, a mar
 	}
 	if c.Status == "received" {
 		var verified bool
-		if err := tx.QueryRow(ctx, `SELECT return_status IN ('DELIVERED','RETURN DELIVERED','RTO DELIVERED') FROM marketplace_claims WHERE id=$1`, c.CaseID).Scan(&verified); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT return_status IN ('DELIVERED','RETURN DELIVERED') FROM marketplace_claims WHERE id=$1`, c.CaseID).Scan(&verified); err != nil {
 			return err
 		}
 		if !verified {

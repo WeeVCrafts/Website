@@ -71,10 +71,16 @@ func inspectPolicyClaim(t *testing.T, x marketplaceFixture, c ports.MarketplaceC
 	if err := x.repo.Act(ctx, x.admin, c); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := x.pool.Exec(ctx, `UPDATE marketplace_claims SET status='pickup_pending',return_reference='WC-RET-'||id,return_status='DELIVERED' WHERE id=$1`, c.CaseID); err != nil {
+	if _, err := x.pool.Exec(ctx, `UPDATE marketplace_claims SET status='pickup_pending',return_reference='WC-RET-'||id,return_status='RTO DELIVERED' WHERE id=$1`, c.CaseID); err != nil {
 		t.Fatal(err)
 	}
 	c.Status = "received"
+	if err := x.repo.Act(ctx, x.admin, c); err == nil {
+		t.Fatal("reverse shipment sent back to its buyer origin counted as seller receipt")
+	}
+	if _, err := x.pool.Exec(ctx, `UPDATE marketplace_claims SET return_status='DELIVERED' WHERE id=$1`, c.CaseID); err != nil {
+		t.Fatal(err)
+	}
 	if err := x.repo.Act(ctx, x.admin, c); err != nil {
 		t.Fatal(err)
 	}
