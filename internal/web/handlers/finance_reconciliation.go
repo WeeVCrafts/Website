@@ -70,7 +70,11 @@ func (h *LivePortalHandler) dailyReconciliation(r *http.Request, root string) (*
 	rows, err := h.pool.Query(r.Context(), `
 		SELECT o.order_number,'Payment review',c.amount_cents,c.status,c.created_at
 		FROM payment_review_cases c JOIN orders o ON o.id=c.order_id
-		WHERE c.status<>'refunded' AND c.currency='INR'
+		WHERE c.status IN ('open','refund_pending') AND c.currency='INR'
+		UNION ALL
+		SELECT o.order_number,'Payment creation review',p.amount_cents,'creation_review',p.created_at
+		FROM payment_attempts p JOIN orders o ON o.id=p.order_id
+		WHERE p.provider='razorpay' AND p.creation_review_reason<>'' AND p.currency='INR'
 		UNION ALL
 		SELECT o.order_number,'Refund follow-up',f.amount_cents,f.status,f.created_at
 		FROM marketplace_refunds f JOIN orders o ON o.id=f.order_id
@@ -89,7 +93,7 @@ func (h *LivePortalHandler) dailyReconciliation(r *http.Request, root string) (*
 		}
 		item.Amount = storefrontMoney(amount)
 		item.URL = root + "/fulfillment?order=" + url.QueryEscape(item.Order)
-		if item.Kind == "Payment review" {
+		if item.Kind == "Payment review" || item.Kind == "Payment creation review" {
 			item.URL = root + "/payment-reviews"
 		}
 		report.FollowUps = append(report.FollowUps, item)

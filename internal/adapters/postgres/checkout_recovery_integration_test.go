@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -18,11 +19,14 @@ func TestCheckoutRecoveryRequiresConsentStockAndNoPayment(t *testing.T) {
 	x := newMarketplaceFixture(t)
 	ctx := context.Background()
 	var mode string
-	if err := x.pool.QueryRow(ctx, `SELECT shipping_mode FROM marketplace_policy_settings WHERE id`).Scan(&mode); err != nil {
+	var published pgtype.Timestamptz
+	if err := x.pool.QueryRow(ctx, `SELECT shipping_mode,published_at FROM marketplace_policy_settings WHERE id`).Scan(&mode, &published); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		_, _ = x.pool.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode=$1 WHERE id`, mode)
+		if _, err := x.pool.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode=$1,published_at=$2 WHERE id`, mode, published); err != nil {
+			t.Error(err)
+		}
 	})
 	exec := func(query string, args ...any) {
 		t.Helper()
