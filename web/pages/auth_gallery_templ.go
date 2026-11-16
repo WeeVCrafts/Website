@@ -396,20 +396,20 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<span>Continue with Google</span></button> <label class=\"check-line google-terms-label\" hidden><input type=\"checkbox\" data-google-terms><span>I agree to the <a href=\"/privacy\">privacy notice</a> and <a href=\"/terms\">terms</a>.</span></label><p id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<span>Continue with Google</span></button><p id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.ResolveAttributeValue(prefix + "-google-note")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 64, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/auth_gallery.templ`, Line: 63, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p><form class=\"utility-form\" data-google-username hidden><h2>Choose a username</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" class=\"auth-provider-note\" data-firebase-config-note role=\"status\" aria-live=\"polite\">Checking Google sign-in availability…</p><p class=\"form-message\" data-firebase-status role=\"status\" aria-live=\"polite\" hidden></p><form class=\"utility-form\" data-google-username hidden><h2>Finish creating your account</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -417,7 +417,7 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<p id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<label class=\"check-line auth-consent\"><input type=\"checkbox\" name=\"consent\" required><span>I agree to the <a href=\"/privacy\">privacy notice</a> and <a href=\"/terms\">terms</a>.</span></label><p id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -430,7 +430,7 @@ func FirebaseGoogle(prefix, next string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" class=\"auth-feedback\" data-firebase-status role=\"alert\" hidden></p><button class=\"primary-button full\" type=\"submit\">Create account</button></form></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" class=\"auth-feedback\" data-firebase-status role=\"alert\" hidden></p><button class=\"primary-button full\" type=\"submit\">Create account</button></form></div><form class=\"utility-form firebase-link-panel\" data-firebase-link hidden><h2>Connect your existing account</h2><p>Enter your current Weevcrafts password once to connect Google. Your account and history stay together.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

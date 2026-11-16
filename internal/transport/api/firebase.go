@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"errors"
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
+	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/ports"
 	"net/http"
 	"net/url"
@@ -21,7 +22,7 @@ func (h *Handler) FirebaseSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.firebase == nil {
-		writeError(w, 503, "FIREBASE_UNAVAILABLE", "Customer sign-in is temporarily unavailable.")
+		writeError(w, 503, "FIREBASE_UNAVAILABLE", "Google sign-in is temporarily unavailable.")
 		return
 	}
 	if !h.validFirebaseCSRF(r) {
@@ -46,7 +47,7 @@ func (h *Handler) FirebaseSession(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, applicationauth.ErrFirebaseTerms):
 			writeError(w, 422, "TERMS_REQUIRED", "Accept the privacy notice and terms to create your account.")
 		case errors.Is(err, applicationauth.ErrFirebaseRole):
-			writeError(w, 403, "CUSTOMER_ONLY", "Use your assigned portal credentials. Google sign-in is available for customer accounts.")
+			writeError(w, 403, "ROLE_UNAVAILABLE", "Use your assigned portal credentials for this account.")
 		default:
 			writeError(w, 401, "FIREBASE_INVALID", "Sign-in could not be verified. Please sign in again.")
 		}
@@ -58,7 +59,9 @@ func (h *Handler) FirebaseSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.setSessionCookie(w, session)
-	h.mergeGuestCart(r.Context(), w, r, user.ID)
+	if len(user.Roles) == 1 && user.Roles[0] == domainidentity.RoleCustomer {
+		h.mergeGuestCart(r.Context(), w, r, user.ID)
+	}
 	writeJSON(w, 200, map[string]any{"data": user, "csrf_token": session.CSRFToken, "redirect_to": applicationauth.RedirectDestination(user.Roles, in.Next)})
 }
 

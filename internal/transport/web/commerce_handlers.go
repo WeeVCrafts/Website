@@ -954,6 +954,10 @@ func (h *Handler) mutateProductVariant(w http.ResponseWriter, r *http.Request, a
 	if action != "archive" {
 		productInput, err = productVariantFromForm(r, action == "create")
 		if err != nil {
+			if errors.Is(err, ports.ErrShippingInput) {
+				h.renderError(w, http.StatusUnprocessableEntity, "Shipping measurements incomplete or invalid", "Enter the packed weight in grams and all three dimensions in whole centimetres.")
+				return
+			}
 			h.renderError(w, http.StatusUnprocessableEntity, "Product variant invalid", "Check the name, SKU, price, compare-at price and initial stock.")
 			return
 		}

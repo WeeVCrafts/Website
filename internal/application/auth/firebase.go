@@ -13,7 +13,7 @@ var (
 	ErrFirebaseInvalid      = errors.New("firebase authentication invalid")
 	ErrFirebaseLinkRequired = errors.New("existing account requires password confirmation")
 	ErrFirebaseTerms        = errors.New("accept the privacy notice and terms to create an account")
-	ErrFirebaseRole         = errors.New("firebase customer access only")
+	ErrFirebaseRole         = errors.New("this role cannot use Firebase sign-in")
 )
 
 type FirebaseService struct {
@@ -62,7 +62,7 @@ func (s *FirebaseService) Login(ctx context.Context, in FirebaseInput) (identity
 		if err != nil {
 			return identity.User{}, ErrFirebaseInvalid
 		}
-		if len(user.Roles) != 1 || user.Roles[0] != identity.RoleCustomer {
+		if len(user.Roles) != 1 || (user.Roles[0] != identity.RoleCustomer && (user.Roles[0] != identity.RoleSeller || proof.Provider != "google.com")) {
 			return identity.User{}, ErrFirebaseRole
 		}
 		linkID = user.ID

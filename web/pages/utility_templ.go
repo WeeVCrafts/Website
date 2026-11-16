@@ -1228,7 +1228,7 @@ func PolicyContent(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = PolicySection("Customer sign-in", "Google Firebase processes customer email/password and Google sign-in. Your email and sign-in profile name are shared with this identity service. Profile phone numbers, private photos and commerce records remain in our application storage.").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = PolicySection("Account sign-in", "Google Firebase processes Google sign-in for customers and sellers and may also process account email and password sign-in. Your email and sign-in profile name are shared with this identity service. Profile phone numbers, private photos and commerce records remain in our application storage.").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

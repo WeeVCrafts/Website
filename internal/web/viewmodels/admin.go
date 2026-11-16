@@ -75,6 +75,7 @@ type AdminProductEditor struct {
 
 type ProductVariant struct {
 	ReturnClass, ReturnClassRequest                                        string
+	CostPriceCents                                                         string
 	ShippingWeight, ShippingLength, ShippingWidth, ShippingHeight          string
 	ID, Name, SKU, PriceCents, CompareAtCents, Available, Reserved, Status string
 	Price, CompareAt, Discount, StockMessage                               string

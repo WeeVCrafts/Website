@@ -37,9 +37,9 @@
 .storefront-body :is(.gallery-form,.auth-dialog) .firebase-google-panel { display:block; margin:0; padding:0; border:0; }
 .storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider { display:flex; align-items:center; gap:12px; margin:14px 0; color:var(--brand-muted); font:400 14px/1.4 var(--sans); text-transform:none; letter-spacing:0; }
 .storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider::before,.storefront-body :is(.gallery-form,.auth-dialog) .auth-method-divider::after { content:""; flex:1; height:1px; background:var(--brand-line); }
-.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label { display:flex; align-items:flex-start; gap:10px; margin:10px 0 0; min-height:44px; padding-block:8px; color:var(--brand-muted); font:400 13px/1.6 var(--sans); }
-.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label input { flex:none; width:18px; height:18px; margin:1px 0 0; accent-color:var(--brand-primary); }
-.google-terms-label a { color:var(--brand-primary); text-decoration:underline; text-underline-offset:3px; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-consent { display:flex; align-items:flex-start; gap:10px; margin:10px 0 0; min-height:44px; padding-block:8px; color:var(--brand-muted); font:400 13px/1.6 var(--sans); }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-consent input { flex:none; width:18px; height:18px; margin:1px 0 0; accent-color:var(--brand-primary); }
+.auth-consent a { color:var(--brand-primary); text-decoration:underline; text-underline-offset:3px; }
 .storefront-body :is(.gallery-form,.auth-dialog) .auth-provider-note { margin:10px 0; color:var(--brand-muted); font:400 13px/1.5 var(--sans); }
 .storefront-body :is(.gallery-form,.auth-dialog) .gallery-account-links { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:0 6px; margin-top:14px; padding-top:12px; border-top:1px solid var(--brand-line); font:400 14px/1.5 var(--sans); }
 .gallery-account-links a,.auth-keep-browsing { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 0; }
@@ -71,8 +71,8 @@
    Keep the new page and body-level dialog on their explicit readable scale. */
 .storefront-body :is(.gallery-form,.auth-dialog) :is(input,button) { font-size:16px!important; }
 .storefront-body :is(.gallery-form,.auth-dialog) :is(label,a,p,.ui-field-error) { font-size:14px!important; }
-.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label { font-size:13px!important; }
-.storefront-body :is(.gallery-form,.auth-dialog) .google-terms-label a { font-size:inherit!important; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-consent { font-size:13px!important; }
+.storefront-body :is(.gallery-form,.auth-dialog) .auth-consent a { font-size:inherit!important; }
 .storefront-body .gallery-form .gallery-lead { font-size:17px!important; }
 .storefront-body .gallery-browse { font-size:14px!important; }
 .storefront-body .gallery-footer a { font-size:13px!important; }

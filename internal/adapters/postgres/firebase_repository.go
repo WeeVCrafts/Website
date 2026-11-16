@@ -21,6 +21,7 @@ func (r *FirebaseRepository) FirebaseEmailRecipient(ctx context.Context, id int6
 	var recipient ports.FirebaseIdentity
 	err := r.pool.QueryRow(ctx, `SELECT f.firebase_uid,u.email,u.display_name FROM firebase_identities f JOIN users u ON u.id=f.user_id WHERE u.status='active'
 		AND (SELECT array_agg(role_slug) FROM user_roles WHERE user_id=u.id) IN (ARRAY['customer']::text[], ARRAY['seller']::text[])
+		AND NOT EXISTS(SELECT 1 FROM credentials WHERE user_id=u.id)
 		AND (($1=0 AND u.email=$2) OR (u.id=$1 AND $1>0 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=u.id AND role_slug='customer')))`, id, email).Scan(&recipient.UID, &recipient.Email, &recipient.Name)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return recipient, false, nil
@@ -50,6 +51,7 @@ func (r *FirebaseRepository) FirebasePasswordAccount(ctx context.Context, login 
 		WHERE (u.username = $1 OR u.email = $1) AND u.status = 'active'
 		  AND r.role_slug IN ('customer', 'seller')
 		  AND (SELECT COUNT(*) FROM user_roles WHERE user_id = u.id) = 1
+		  AND NOT EXISTS(SELECT 1 FROM credentials WHERE user_id=u.id)
 	`, login).Scan(&user.ID, &user.Email, &user.DisplayName, &user.Status, &user.CreatedAt, &uid, &role)
 	if err == nil {
 		user.Roles = []identity.Role{role}
@@ -102,10 +104,14 @@ func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.Fi
 		if err = tx.QueryRow(ctx, `SELECT COALESCE(array_agg(role_slug),ARRAY[]::text[]) FROM user_roles WHERE user_id=$1`, u.ID).Scan(&roles); err != nil {
 			return err
 		}
-		if u.Status != "active" || len(roles) != 1 || roles[0] != "customer" {
+		if u.Status != "active" || len(roles) != 1 {
 			return applicationauth.ErrFirebaseRole
 		}
-		u.Roles = []identity.Role{identity.RoleCustomer}
+		role := identity.Role(roles[0])
+		if role != identity.RoleCustomer && (role != identity.RoleSeller || proof.Provider != "google.com" || !proof.EmailVerified) {
+			return applicationauth.ErrFirebaseRole
+		}
+		u.Roles = []identity.Role{role}
 		u.EmailVerified = proof.EmailVerified
 		if boundUID != "" && boundUID != proof.UID {
 			return applicationauth.ErrFirebaseInvalid
@@ -115,19 +121,21 @@ func (r *FirebaseRepository) ResolveFirebase(ctx context.Context, proof ports.Fi
 			if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM credentials WHERE user_id=$1)`, u.ID).Scan(&hasCredentials); err != nil {
 				return err
 			}
-			if hasCredentials && (linkID != u.ID || !proof.EmailVerified) {
+			if (hasCredentials || role == identity.RoleSeller) && (linkID != u.ID || !proof.EmailVerified || !hasCredentials) {
 				return applicationauth.ErrFirebaseLinkRequired
 			}
 			if _, err = tx.Exec(ctx, `INSERT INTO firebase_identities(user_id,firebase_uid) VALUES($1,$2)`, u.ID, proof.UID); err != nil {
 				return err
 			}
-			// Once explicitly linked, Firebase owns password recovery. Native passwords
-			// must stop working, including previously issued native recovery links.
-			if _, err = tx.Exec(ctx, `DELETE FROM credentials WHERE user_id=$1`, u.ID); err != nil {
-				return err
-			}
-			if _, err = tx.Exec(ctx, `UPDATE auth_action_tokens SET consumed_at=NOW() WHERE user_id=$1 AND consumed_at IS NULL`, u.ID); err != nil {
-				return err
+			// Customer linking transfers password ownership to Firebase. Google is
+			// an additional sign-in method for sellers with native credentials.
+			if role == identity.RoleCustomer {
+				if _, err = tx.Exec(ctx, `DELETE FROM credentials WHERE user_id=$1`, u.ID); err != nil {
+					return err
+				}
+				if _, err = tx.Exec(ctx, `UPDATE auth_action_tokens SET consumed_at=NOW() WHERE user_id=$1 AND consumed_at IS NULL`, u.ID); err != nil {
+					return err
+				}
 			}
 			if _, err = tx.Exec(ctx, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,metadata) VALUES($1,'auth.firebase_connected','user',$1,'{}'::jsonb)`, fmt.Sprint(u.ID)); err != nil {
 				return err

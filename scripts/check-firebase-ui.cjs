@@ -18,8 +18,7 @@ const base=(process.env.WEEVCRAFTS_BASE_URL||'http://localhost:8080').replace(/\
   const googleButton=google.locator('[data-google-signin]');
   if(firebaseConfig.enabled){
    await expect(googleButton).toBeEnabled();
-   await googleButton.click();
-   await expect(google.getByRole('status')).toContainText('Accept the privacy notice');
+   await expect(google.locator('[data-google-username]')).toBeHidden();
   }else{
    await expect(googleButton).toBeDisabled();
    await expect(googleButton).toBeVisible();

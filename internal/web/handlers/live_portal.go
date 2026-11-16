@@ -2110,7 +2110,7 @@ func productImagePreviewURL(image string) string {
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
 	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
-		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,''),pv.return_class,pv.return_class_request
+		pv.compare_at_cents IS NOT NULL,COALESCE(pv.cost_price_cents::text,''),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,''),pv.return_class,pv.return_class_request
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
 	if err != nil {
@@ -2120,13 +2120,13 @@ func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64
 	variants := make([]viewmodels.ProductVariant, 0)
 	for rows.Next() {
 		var id, price, compareAt, available, reserved int64
-		var name, sku, status string
+		var name, sku, status, cost string
 		var hasCompare bool
 		var weight, length, width, height, returnClass, returnClassRequest string
-		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status, &weight, &length, &width, &height, &returnClass, &returnClassRequest); err != nil {
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &cost, &available, &reserved, &status, &weight, &length, &width, &height, &returnClass, &returnClassRequest); err != nil {
 			return nil, err
 		}
-		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
+		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10), CostPriceCents: cost,
 			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, ReturnClass: returnClass, ReturnClassRequest: returnClassRequest, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height}
 		if hasCompare {
 			variant.CompareAtCents = strconv.FormatInt(compareAt, 10)

@@ -1,4 +1,4 @@
-/* Firebase customer identity is exchanged for a first-party HttpOnly session.
+/* Firebase identity is exchanged for a first-party HttpOnly session.
  * Browser auth uses memory persistence; tokens are never logged or stored here. */
 (function (global) {
   "use strict";
@@ -128,35 +128,35 @@
   }
   function setGoogleAvailability(panel,enabled,text) {
     const button=panel.querySelector("[data-google-signin]");
-    const terms=panel.querySelector(".google-terms-label");
     const note=panel.querySelector("[data-firebase-config-note]");
     if (button) {button.disabled=!enabled;button.hidden=false;button.setAttribute("aria-disabled",String(!enabled));}
     const divider=panel.querySelector('[data-google-divider]');
     if(divider)divider.hidden=false;
-    if (terms) terms.hidden=!enabled;
     if (note) {note.hidden=enabled;note.textContent=text||"";}
     if(button && note){if(enabled)button.removeAttribute('aria-describedby');else button.setAttribute('aria-describedby',note.id);}
   }
   async function google(button) {
     const panel=button.closest("[data-firebase-google-panel]");
-    const consent=panel.querySelector("[data-google-terms]");
-    const terms=consent.checked;
-    // Show terms before contacting Google rather than auto-granting consent.
-    if (!terms) {consent.setAttribute('aria-invalid','true');message(panel,"Accept the privacy notice and terms before continuing.",true);consent.focus();return;}
-    consent.removeAttribute('aria-invalid');
+    const form=panel.querySelector("[data-google-username]");
+    const authRoot=panel.closest("[data-auth-surface]");
+    pendingGoogle.delete(form);
+    form.reset();
+    form.hidden=true;
+    const linkPanel=authRoot?.querySelector("[data-firebase-link]");
+    if (linkPanel) {linkPanel.reset();linkPanel.hidden=true;pendingLink=undefined;}
+    panel.querySelector(":scope > [data-firebase-status]").hidden=true;
     button.disabled=true;
     try {
       const f=await ready();if(!f)throw new Error("Google sign-in is unavailable.");
       const provider=new f.authSDK.GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});
       const user=(await f.authSDK.signInWithPopup(f.auth,provider)).user;
       const api=global.weevcraftsBackend || await global.WeevCraftsBackend.create();
-      const input = {acceptedTerms: terms, next: panel.dataset.authNext || "", authRoot: panel.closest("[data-auth-surface]")};
+      const input = {acceptedTerms: false, next: panel.dataset.authNext || "", authRoot};
       try {
         const result = await exchange(api, user, input);
         global.location.assign(result.redirect_to || "/");
       } catch (error) {
-        if (error.code !== "USERNAME_REQUIRED") throw error;
-        const form = panel.querySelector("[data-google-username]");
+        if (error.code !== "TERMS_REQUIRED" && error.code !== "USERNAME_REQUIRED") throw error;
         pendingGoogle.set(form, {api, user, input});
         panel.querySelector(":scope > [data-firebase-status]").hidden = true;
         form.hidden = false;
@@ -179,7 +179,7 @@
     form.dataset.submitting = "true";
     button.disabled = true;
     try {
-      const result = await exchange(pending.api, pending.user, {...pending.input, username: username.value});
+      const result = await exchange(pending.api, pending.user, {...pending.input, username: username.value, acceptedTerms: form.elements.consent.checked});
       pendingGoogle.delete(form);
       global.location.assign(result.redirect_to || "/");
     } catch (error) {
@@ -296,7 +296,10 @@
       catch(_){message(panel,"Test delivery failed. Please try again.",true);}finally{test.disabled=false;}
     });
   }
-  global.WeevCraftsFirebase={signIn,signUp,recover,action,enhanceGoogle,cancelLink(root){if(pendingLink && root.contains(pendingLink.input.authRoot))pendingLink=undefined;}};
+  global.WeevCraftsFirebase={signIn,signUp,recover,action,enhanceGoogle,cancelLink(root){
+    if(pendingLink && root.contains(pendingLink.input.authRoot))pendingLink=undefined;
+    root.querySelectorAll('[data-google-username]').forEach(form=>{pendingGoogle.delete(form);form.hidden=true;});
+  }};
   // The Firebase service worker forwards foreground messages to visible tabs.
   // Handle its public message event without loading auth or analytics on every
   // shopping page. The payload body is deliberately never rendered.

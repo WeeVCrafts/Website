@@ -44,8 +44,6 @@
           if(descriptions.length)field.setAttribute('aria-describedby',descriptions.join(' '));else field.removeAttribute('aria-describedby');
           field.removeAttribute('aria-invalid');delete field.dataset.uiError;
         });
-        const consent=dialog.querySelector('[data-google-terms]');
-        if(consent){consent.checked=false;consent.removeAttribute('aria-invalid');}
         global.WeevCraftsFirebase?.cancelLink(dialog);
         const origin=dialog._restoreFocus;
         if(origin?.isConnected && origin.getClientRects().length && !origin.closest('[inert]'))origin.focus({preventScroll:true});

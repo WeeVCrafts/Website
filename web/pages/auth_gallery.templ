@@ -60,18 +60,18 @@ templ FirebaseGoogle(prefix, next string) {
   <div class="firebase-google-panel" data-firebase-google-panel data-auth-next={ next }>
     <div class="auth-method-divider" data-google-divider><span>or</span></div>
     <button class="outline-button full google-button" type="button" data-google-signin disabled aria-disabled="true" aria-describedby={ prefix+"-google-note" }>@GoogleMark()<span>Continue with Google</span></button>
-    <label class="check-line google-terms-label" hidden><input type="checkbox" data-google-terms/><span>I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</span></label>
     <p id={ prefix+"-google-note" } class="auth-provider-note" data-firebase-config-note role="status" aria-live="polite">Checking Google sign-in availability…</p>
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>
     <form class="utility-form" data-google-username hidden>
-      <h2>Choose a username</h2>
+      <h2>Finish creating your account</h2>
       @AuthUsernameField(prefix+"-google-username", "", false)
+      <label class="check-line auth-consent"><input type="checkbox" name="consent" required/><span>I agree to the <a href="/privacy">privacy notice</a> and <a href="/terms">terms</a>.</span></label>
       <p id={ prefix+"-google-username-feedback" } class="auth-feedback" data-firebase-status role="alert" hidden></p>
       <button class="primary-button full" type="submit">Create account</button>
     </form>
   </div>
   <form class="utility-form firebase-link-panel" data-firebase-link hidden>
-    <h2>Connect your existing account</h2><p>Confirm your current Weevcrafts password to keep your orders and saved items. Future sign-in and password recovery will use Firebase.</p>
+    <h2>Connect your existing account</h2><p>Enter your current Weevcrafts password once to connect Google. Your account and history stay together.</p>
     @AuthPasswordField(prefix+"-link-password", "link_password", "Current Weevcrafts password", "current-password", 0, "")
     <button class="primary-button full" type="submit">Connect account securely</button>
     <p class="form-message" data-firebase-status role="status" aria-live="polite" hidden></p>

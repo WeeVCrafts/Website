@@ -115,6 +115,9 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 	@AdminDocument(p) {
 		<section class="admin-panel admin-product-editor-panel">
 			<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">edit_square</span><div><h2>{ p.Title }</h2><p>Manage product content, India delivery details and rupee pricing. Stock is managed separately in Inventory.</p></div></div></div>
+			if form.ID != "" {
+				<a class="admin-button secondary" href="#product-variants">Edit shipping measurements</a>
+			}
 			<form class="admin-product-editor-form" method="post" action={ form.Action } enctype="multipart/form-data">
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				if form.ID != "" {
@@ -193,17 +196,18 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 				</fieldset>
 			}
 			if form.ID != "" {
-				<section class="admin-panel product-variant-manager">
+				<section id="product-variants" class="admin-panel product-variant-manager" tabindex="-1">
 					<div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><div><h2>Product variants</h2><p>Enter prices in rupees. Stock changes after creation belong in Inventory. Archive is blocked when a variant has reserved units or is the last active option.</p></div></div></div>
 					for _, variant := range form.Variants {
 						<div class="product-variant-row">
 							<form class="admin-product-editor-form product-variant-edit" method="post" action={ p.PortalRoot + "/products/variants/update" }>
 								<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+								<input type="hidden" name="cost_price_cents" value={ variant.CostPriceCents }/>
 							<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
 							<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
 							<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ components.RupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
 							<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ components.RupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
-								@AdminParcelFields(variant)
+								@components.ProductParcelFields(variant)
 <div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
 								if variant.Status == "active" {
 									<button class="admin-button primary" type="submit">Save variant</button>
@@ -224,7 +228,7 @@ templ ProductEditor(p viewmodels.AdminPage, form viewmodels.AdminProductEditor) 
 						<label>SKU<input name="sku" required maxlength="120"/></label>
 						<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" required/></label>
 						<label>Compare-at price (INR)<input name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal"/></label>
-						@AdminParcelFields(viewmodels.ProductVariant{})
+						@components.ProductParcelFields(viewmodels.ProductVariant{})
 <label>Initial stock<input name="initial_stock" type="number" min="0" max="100000" max="100000" value="0" required/></label>
 						<button class="admin-button primary" type="submit">Add variant</button>
 					</form>
@@ -623,13 +627,4 @@ templ PortalAuditList(p viewmodels.AdminPage) {
 				@AdminTableEmpty("No audit events are recorded yet.", "Sensitive changes will be recorded in the audit log.")
 			}
 	</article>
-}
-
-templ AdminParcelFields(v viewmodels.ProductVariant) {
- if v.Status == "" || v.Status == "active" {
-  <label>Shipping weight (g)<input name="shipping_weight_g" type="number" min="1" max="50000" value={v.ShippingWeight}/></label>
-  <label>Shipping length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={v.ShippingLength}/></label>
-  <label>Shipping width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={v.ShippingWidth}/></label>
-  <label>Shipping height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" value={v.ShippingHeight}/></label>
- }
 }

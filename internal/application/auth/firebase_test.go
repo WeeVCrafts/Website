@@ -112,6 +112,28 @@ func TestFirebaseCustomerLinkUsesExistingPassword(t *testing.T) {
 	}
 }
 
+func TestFirebaseSellerLinkRequiresVerifiedGoogleAndExistingPassword(t *testing.T) {
+	native := NewService(&fakeUserRepository{credentials: identity.Credentials{User: identity.User{ID: 99, Status: "active", Roles: []identity.Role{identity.RoleSeller}}, PasswordHash: "hash"}}, fakeHasher{})
+	for _, tc := range []struct {
+		name, provider, password string
+		verified, allowed        bool
+	}{
+		{"matching verified Google", "google.com", "correct-password", true, true},
+		{"wrong password", "google.com", "wrong-password", true, false},
+		{"unverified Google", "google.com", "correct-password", false, false},
+		{"Firebase password proof", "password", "correct-password", true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &firebaseIdentityStore{}
+			service := NewFirebaseService(firebaseProof{proof: ports.FirebaseIdentity{UID: "seller-google", Email: "seller@example.invalid", Provider: tc.provider, EmailVerified: tc.verified, AuthTime: time.Now()}}, store, native, firebaseSessionCheck(true))
+			_, err := service.Login(t.Context(), FirebaseInput{Token: strings.Repeat("x", 40), LinkPassword: tc.password})
+			if (err == nil) != tc.allowed || store.called != tc.allowed || tc.allowed && store.linkID != 99 {
+				t.Fatalf("seller link allowed=%v, repository called=%v, result=%v", tc.allowed, store.called, err)
+			}
+		})
+	}
+}
+
 type firebasePasswordFixture struct{ firebaseProof }
 
 func (f firebasePasswordFixture) PasswordSignIn(_ context.Context, email, password string) (string, error) {

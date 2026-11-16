@@ -1,0 +1,16 @@
+package components
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ ProductParcelFields(v viewmodels.ProductVariant) {
+	if v.Status == "" || v.Status == "active" {
+		<fieldset class="ui-form-section">
+			<legend>Shipping measurements</legend>
+			<p>Measure the parcel with its packaging. Enter all four values together. Confirm the final parcel again when packing an order.</p>
+			<label>Packed weight (grams)<input name="shipping_weight_g" type="number" min="1" max="50000" value={ v.ShippingWeight }/></label>
+			<label>Packed length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={ v.ShippingLength }/></label>
+			<label>Packed width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={ v.ShippingWidth }/></label>
+			<label>Packed height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" value={ v.ShippingHeight }/></label>
+		</fieldset>
+	}
+}

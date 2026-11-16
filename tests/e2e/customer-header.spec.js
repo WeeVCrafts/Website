@@ -90,7 +90,7 @@ test('mocked Google exchange and account linking honor homepage and task destina
     });
     await page.goto('/login'+(scenario.next?'?next='+encodeURIComponent(scenario.next):''));
     const form=page.locator('.gallery-form');await expect(form.locator('[data-google-signin]')).toBeEnabled();
-    await form.locator('[data-google-terms]').check();await form.locator('[data-google-signin]').click();
+    await expect(form.locator('[data-google-username]')).toBeHidden();await form.locator('[data-google-signin]').click();
     if(scenario.link) {
       const link=form.locator('[data-firebase-link]');await expect(link).toBeVisible();
       await link.locator('input').fill('isolated-link-proof');await link.locator('button[type=submit]').click();

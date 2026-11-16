@@ -91,12 +91,13 @@ async function mockGoogle(page, options = {}) {
     const body = route.request().postDataJSON();
     exchanges.push(body);
     if (options.link && !body.link_password) return route.fulfill({ status: 409, json: { error: { code: 'LINK_REQUIRED', message: 'Confirm your existing password.' } } });
+    if (options.newAccount && !body.accepted_terms) return route.fulfill({ status: 422, json: { error: { code: 'TERMS_REQUIRED', message: 'Accept the privacy notice and terms to create your account.' } } });
     return route.fulfill({ json: { redirect_to: body.next || '/products', csrf_token: 'qa-only-csrf' } });
   });
   return { exchanges, sdkRequests: () => sdkRequests };
 }
 
-test('Google consent and return path work in page and popup without a live provider account', async ({ page }) => {
+test('returning Google users keep their destination without registration consent', async ({ page }) => {
   const mock = await mockGoogle(page);
   await page.goto('/products');
   expect(mock.sdkRequests()).toBe(0);
@@ -104,29 +105,49 @@ test('Google consent and return path work in page and popup without a live provi
   const dialog = page.locator('#guest-login-dialog');
   const google = dialog.locator('[data-google-signin]');
   await expect(google).toBeEnabled();
-  await google.click();
-  await expect(dialog.locator('[data-firebase-status]').first()).toContainText('Accept the privacy notice');
-  await expect(dialog.locator('[data-google-terms]')).toBeFocused();
-  expect(mock.exchanges).toHaveLength(0);
-  // Consent is fictional fixture state; all identity exchange requests are intercepted.
-  await dialog.locator('[data-google-terms]').check();
+  await expect(dialog.locator('[data-google-username]')).toBeHidden();
   await google.click();
   await expect(page).toHaveURL(/\/cart$/);
   expect(mock.exchanges[0].next).toBe('/cart');
-  expect(mock.exchanges[0].accepted_terms).toBe(true);
+  expect(mock.exchanges[0].accepted_terms).toBe(false);
   await page.goto('/login?next=%2Fproducts%3Fcategory%3Dcrafts');
   await expect(page.locator('[data-google-signin]')).toBeEnabled();
-  await page.locator('[data-google-terms]').check();
   await page.locator('[data-google-signin]').click();
   await expect(page).toHaveURL(/\/products\?category=crafts$/);
   expect(mock.exchanges.at(-1).next).toBe('/products?category=crafts');
+});
+
+test('new Google users accept consent above Create account', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mock = await mockGoogle(page, { newAccount: true });
+  await page.goto('/login');
+  const panel = page.locator('[data-firebase-google-panel]');
+  const form = panel.locator('[data-google-username]');
+  await expect(form).toBeHidden();
+  await panel.getByRole('button', { name: 'Continue with Google' }).click();
+  await expect(form).toBeVisible();
+  const username = form.getByLabel('Username');
+  await expect(username).toBeFocused();
+  await username.fill('new_google_user');
+  const consent = form.getByRole('checkbox', { name: /I agree/ });
+  const create = form.getByRole('button', { name: 'Create account' });
+  expect((await consent.boundingBox()).y).toBeLessThan((await create.boundingBox()).y);
+  await create.click();
+  await expect(consent).toBeFocused();
+  expect(mock.exchanges).toHaveLength(1);
+  expect(mock.exchanges[0].accepted_terms).toBe(false);
+  await page.keyboard.press('Space');
+  await expect(consent).toBeChecked();
+  await create.click();
+  await expect(page).toHaveURL(/\/products$/);
+  expect(mock.exchanges.at(-1).accepted_terms).toBe(true);
+  expect(mock.exchanges.at(-1).username).toBe('new_google_user');
 });
 
 test('Google linking proof stays in the active popup and is cleared on dismissal', async ({ page }) => {
   const mock = await mockGoogle(page, { link: true });
   const dialog = await openPrompt(page);
   await expect(dialog.locator('[data-google-signin]')).toBeEnabled();
-  await dialog.locator('[data-google-terms]').check();
   await dialog.locator('[data-google-signin]').click();
   const link = dialog.locator('[data-firebase-link]');
   await expect(link).toBeVisible();
@@ -135,8 +156,7 @@ test('Google linking proof stays in the active popup and is cleared on dismissal
   await page.keyboard.press('Escape');
   await page.locator('#cart-count').click();
   await expect(link).toBeHidden();
-  await expect(dialog.locator('[data-google-terms]')).not.toBeChecked();
-  await dialog.locator('[data-google-terms]').check();
+  await expect(dialog.locator('[data-google-username]')).toBeHidden();
   await dialog.locator('[data-google-signin]').click();
   await link.getByLabel('Current Weevcrafts password', { exact: true }).fill('qa-existing-proof');
   await link.getByRole('button', { name: 'Connect account securely' }).click();

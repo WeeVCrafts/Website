@@ -153,12 +153,12 @@ test("Google signup keeps verified proof while choosing another username", async
   }));
   await page.goto(firebaseOrigin + "/register?next=%2Fproducts");
   const panel = page.locator("[data-firebase-google-panel]");
-  await panel.locator("[data-google-terms]").check();
   await panel.getByRole("button", { name: "Continue with Google" }).click();
   const form = panel.locator("[data-google-username]");
   const username = form.getByLabel("Username");
   await expect(username).toBeFocused();
   await username.fill(taken.toUpperCase());
+  await form.locator('input[name="consent"]').check();
   await form.getByRole("button", { name: "Create account" }).click();
   await expect(form.getByRole("alert")).toContainText("This username is already registered.");
   await expect(username).toBeFocused();
@@ -169,7 +169,6 @@ test("Google signup keeps verified proof while choosing another username", async
 
   await page.context().clearCookies();
   await page.goto(firebaseOrigin + "/login?next=%2Fproducts");
-  await panel.locator("[data-google-terms]").check();
   await panel.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
