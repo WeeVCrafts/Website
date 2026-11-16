@@ -25,8 +25,9 @@ func (g *Gateway) PickupPostcodes(ctx context.Context) (map[string]string, error
 	var response struct {
 		Data struct {
 			Addresses []struct {
-				Location string      `json:"pickup_location"`
-				Postcode json.Number `json:"pin_code"`
+				Location      string      `json:"pickup_location"`
+				Postcode      json.Number `json:"pin_code"`
+				PhoneVerified int         `json:"phone_verified"`
 			} `json:"shipping_address"`
 		} `json:"data"`
 	}
@@ -38,7 +39,7 @@ func (g *Gateway) PickupPostcodes(ctx context.Context) (map[string]string, error
 	}
 	locations := make(map[string]string, len(response.Data.Addresses))
 	for _, address := range response.Data.Addresses {
-		if address.Location != "" {
+		if address.Location != "" && address.PhoneVerified == 1 {
 			locations[address.Location] = address.Postcode.String()
 		}
 	}

@@ -1,0 +1,24 @@
+package pages
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+import "fmt"
+
+templ ReturnPolicy(p viewmodels.CustomerPage) {
+	@Document(p) {
+		<section class="container utility-shell info-shell">
+			@Breadcrumb("Home", "Returns, replacements & authenticity")
+			<header class="info-hero"><div><p class="eyebrow">WEEVCRAFTS MARKETPLACE POLICY</p><h1>Returns, replacements &amp; authenticity</h1><p>Handmade items, fine arts, traditional crafts and handlooms.</p><p>Effective {p.ReturnPolicyEffective}</p></div></header>
+			<nav aria-label="Policy sections" class="utility-card">
+				for i,s := range p.ReturnPolicySections {
+					<a href={templ.SafeURL(fmt.Sprintf("#policy-%d",i))}>{s.Title}</a><br/>
+				}
+			</nav>
+			<article class="utility-card policy-copy">
+				for i,s := range p.ReturnPolicySections {
+					<section id={fmt.Sprintf("policy-%d",i)}><h2>{s.Title}</h2><p>{s.Text}</p></section>
+				}
+			</article>
+			<section class="info-contact-strip"><div><h2>Help with an order</h2><p>Submit a claim from your order so its delivery time, items and evidence stay together. Historical orders retain their recorded policy.</p><a class="primary-button" href="/account/fulfillment">View orders and claims</a> <a class="outline-button" href="/contact">Contact support</a></div></section>
+		</section>
+	}
+}

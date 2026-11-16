@@ -8,6 +8,9 @@ import (
 
 // ValidateSecurity rejects development defaults before connecting or serving.
 func (c Config) ValidateSecurity() error {
+	if err := c.SMS.Validate(c.Environment, c.Staging); err != nil {
+		return err
+	}
 	if err := c.ValidateShipping(); err != nil {
 		return err
 	}

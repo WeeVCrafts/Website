@@ -47,6 +47,7 @@ type Config struct {
 	S3Bucket                string
 	S3Secure                bool
 	Shipping                ShippingConfig
+	SMS                     SMSConfig
 }
 
 func FromEnv() Config {
@@ -58,6 +59,7 @@ func FromEnv() Config {
 	}
 	return Config{
 		Shipping:                parseShippingConfig(),
+		SMS:                     parseSMSConfig(),
 		CheckoutEnabled:         boolEnv("WECRATFS_CHECKOUT_ENABLED", false),
 		PublicContentApproved:   boolEnv("WECRATFS_PUBLIC_CONTENT_APPROVED", false),
 		OperationalMetricsToken: env("WECRATFS_METRICS_TOKEN", ""),

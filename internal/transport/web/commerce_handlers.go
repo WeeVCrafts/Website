@@ -288,7 +288,8 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request) {
 	if key == "" {
 		key = r.FormValue("idempotency_key")
 	}
-	order, err := h.orderService.Create(r.Context(), session.UserID, cart.ID, key, domaincommerce.AddressInput{
+	creditContext := domaincommerce.WithStoreCredit(r.Context(), r.FormValue("use_store_credit") == "on")
+	order, err := h.orderService.Create(creditContext, session.UserID, cart.ID, key, domaincommerce.AddressInput{
 		RecipientName: r.FormValue("recipient_name"),
 		Phone:         r.FormValue("phone"),
 		Line1:         r.FormValue("line1"),
@@ -1018,6 +1019,7 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 		costPrice = &value
 	}
 	input := domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, InitialStock: stock}
+	input.ReturnClassRequest = strings.TrimSpace(r.FormValue("return_class_request"))
 	fields := []string{"shipping_weight_g", "shipping_length_cm", "shipping_width_cm", "shipping_height_cm"}
 	var parcel domaincommerce.ParcelDimensions
 	values := []*int{&parcel.WeightGrams, &parcel.LengthCM, &parcel.WidthCM, &parcel.HeightCM}

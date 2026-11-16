@@ -388,7 +388,7 @@
     const form=event.target;
     if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
     const action=new URL(event.submitter?.getAttribute("formaction") || form.getAttribute("action") || location.href,location.href);
-    const customerForm = customerFormPath(action.pathname);
+    const customerForm = customerFormPath(action.pathname) || action.pathname === '/account/fulfillment/action';
     if(action.origin!==location.origin || (!customerForm && !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname))) return;
     event.preventDefault();
     if(form.dataset.saving) return;
@@ -401,7 +401,7 @@
     let productInvalidField = null;
     try {
       const response=await fetch(action.href,{method:'POST',credentials:'same-origin',headers:{'X-UI-Form':'true'},body:(customerForm && form.enctype!=='multipart/form-data') || form.hasAttribute('data-shiprocket-form') ? new URLSearchParams(payload) : payload,signal:controller.signal});
-      if ((customerForm || form.hasAttribute('data-store-profile') || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
+      if ((customerForm || form.classList.contains('marketplace-form') || form.hasAttribute('data-store-profile') || form.closest('[data-form-dialog]')) && response.redirected && new URL(response.url).pathname === '/login') {
         const error = new Error('Your session ended. Your entries are still here. Copy your changes before signing in again.');
         error.customerSession = true; throw error;
       }

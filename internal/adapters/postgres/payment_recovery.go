@@ -6,6 +6,17 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
+func (r *PaymentRepository) RecordPaymentLookup(ctx context.Context, order int64, events []ports.PaymentWebhook) error {
+	unresolved := false
+	for _, event := range events {
+		if event.Status == "authorized" || event.Status == "pending" || event.EventType == "payment.authorized" || event.EventType == "payment.pending" {
+			unresolved = true
+		}
+	}
+	_, err := r.pool.Exec(ctx, `UPDATE payment_attempts SET expiry_checked_at=now(),expiry_unresolved=$2 WHERE order_id=$1 AND provider='razorpay'`, order, unresolved)
+	return err
+}
+
 // Used by the shopper projection and the transactional payment creation path.
 const paymentOrderPayableSQL = `(o.status='pending_payment' AND NOT o.payment_review_required
 	AND COALESCE(pa.status IN ('created','pending'),false) AND COALESCE(pa.creation_review_reason,'')=''

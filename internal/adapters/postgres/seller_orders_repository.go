@@ -25,7 +25,7 @@ func (r *CommerceRepository) ListSellerOrders(ctx context.Context, userID int64)
 		LEFT JOIN seller_fulfillments sf ON sf.order_id = o.id AND sf.seller_id = s.id
 		WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
 		  AND NOT o.payment_review_required
-		  AND (SELECT pa.status FROM payment_attempts pa WHERE pa.order_id=o.id ORDER BY pa.id DESC LIMIT 1)='captured'
+		  AND marketplace_order_funded(o.id)
 		  AND (s.owner_user_id = $1 )
 		ORDER BY o.created_at DESC, o.id DESC, s.id, oi.id`, userID)
 	if err != nil {
@@ -94,6 +94,15 @@ func (r *CommerceRepository) updateSellerFulfillment(ctx context.Context, userID
 		}
 		if err != nil {
 			return err
+		}
+		if shippingEnvironment == "" {
+			var modern bool
+			if err := tx.QueryRow(transactionContext, `SELECT workflow_version=2 FROM orders WHERE id=$1`, orderID).Scan(&modern); err != nil {
+				return err
+			}
+			if modern {
+				return ports.ErrInvalidState
+			}
 		}
 		// Read payment after obtaining the same order lock used by capture and refund.
 		if err := tx.QueryRow(transactionContext, `SELECT COALESCE((SELECT status FROM payment_attempts WHERE order_id=$1 ORDER BY id DESC LIMIT 1),'')`, orderID).Scan(&paymentStatus); err != nil {

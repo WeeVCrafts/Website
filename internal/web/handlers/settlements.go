@@ -152,7 +152,7 @@ func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int
 		return err
 	}
 	defer tx.Rollback(r.Context())
-	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger sl WHERE status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required) GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
+	rows, err := tx.Query(r.Context(), `SELECT seller_id,SUM(gross_cents)::BIGINT,SUM(commission_cents)::BIGINT,SUM(net_cents)::BIGINT,MIN(created_at)::date,MAX(created_at)::date FROM seller_ledger sl WHERE status='open' AND settlement_id IS NULL AND (sl.order_id IS NULL OR (sl.net_cents<=0 AND EXISTS(SELECT 1 FROM seller_ledger original WHERE original.order_id=sl.order_id AND original.seller_id=sl.seller_id AND original.entry_type='sale' AND original.status='settled')) OR marketplace_payout_eligible(sl.order_id,sl.seller_id)) AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required) GROUP BY seller_id HAVING SUM(net_cents)>0 ORDER BY seller_id`)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (h *LivePortalHandler) createSettlementBatches(r *http.Request, actorID int
 		if err = tx.QueryRow(r.Context(), `INSERT INTO seller_settlements(seller_id,period_start,period_end,gross_cents,commission_cents,net_cents,status,reference,manual_controls_version,prepared_by) VALUES($1,$2,$3,$4,$5,$6,'pending',$7,1,$8) RETURNING id`, b.sellerID, b.start, b.end, b.gross, b.commission, b.net, reference, actorID).Scan(&id); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(r.Context(), `UPDATE seller_ledger sl SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required)`, id, b.sellerID); err != nil {
+		if _, err = tx.Exec(r.Context(), `UPDATE seller_ledger sl SET settlement_id=$1 WHERE seller_id=$2 AND status='open' AND settlement_id IS NULL AND (sl.order_id IS NULL OR (sl.net_cents<=0 AND EXISTS(SELECT 1 FROM seller_ledger original WHERE original.order_id=sl.order_id AND original.seller_id=sl.seller_id AND original.entry_type='sale' AND original.status='settled')) OR marketplace_payout_eligible(sl.order_id,sl.seller_id)) AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.id=sl.order_id AND o.payment_review_required)`, id, b.sellerID); err != nil {
 			return err
 		}
 		if err = auditSettlement(r, tx, actorID, id, "batch_created"); err != nil {
@@ -212,7 +212,7 @@ func settlementLedger(r *http.Request, tx pgx.Tx, s lockedSettlement) (string, e
 	var blocked bool
 	err := tx.QueryRow(r.Context(), `SELECT COUNT(*),COALESCE(SUM(sl.gross_cents),0)::bigint,COALESCE(SUM(sl.commission_cents),0)::bigint,COALESCE(SUM(sl.net_cents),0)::bigint,
  COALESCE(string_agg(concat_ws(':',sl.id,sl.seller_id,COALESCE(sl.order_id,0),sl.entry_type,sl.gross_cents,sl.commission_cents,sl.net_cents,sl.status),'|' ORDER BY sl.id),''),
- COALESCE(bool_or(sl.status<>'open' OR sl.seller_id<>$2 OR COALESCE(o.payment_review_required,false) OR (sl.entry_type='sale' AND o.status='refunded' AND NOT EXISTS(SELECT 1 FROM seller_ledger refund WHERE refund.order_id=o.id AND refund.seller_id=sl.seller_id AND refund.entry_type='refund' AND refund.settlement_id=$1)) OR EXISTS(SELECT 1 FROM payment_refunds pr WHERE pr.order_id=sl.order_id AND pr.status='pending')),false)
+ COALESCE(bool_or(sl.status<>'open' OR sl.seller_id<>$2 OR COALESCE(o.payment_review_required,false) OR (sl.order_id IS NOT NULL AND sl.net_cents>0 AND NOT marketplace_payout_eligible(sl.order_id,sl.seller_id)) OR (sl.entry_type='sale' AND o.status='refunded' AND NOT EXISTS(SELECT 1 FROM seller_ledger refund WHERE refund.order_id=o.id AND refund.seller_id=sl.seller_id AND refund.entry_type='refund' AND refund.settlement_id=$1)) OR EXISTS(SELECT 1 FROM payment_refunds pr WHERE pr.order_id=sl.order_id AND pr.status='pending')),false)
  FROM seller_ledger sl LEFT JOIN orders o ON o.id=sl.order_id WHERE sl.settlement_id=$1`, s.id, s.sellerID).Scan(&count, &gross, &commission, &net, &contents, &blocked)
 	if err != nil {
 		return "", err

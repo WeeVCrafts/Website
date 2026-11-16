@@ -107,13 +107,14 @@ type ProductDraftInput struct {
 // Inventory is initialized only when the variant is created; later stock
 // changes go through the separate inventory permission workflow.
 type ProductVariantInput struct {
-	Parcel         *ParcelDimensions
-	Name           string
-	SKU            string
-	PriceCents     int64
-	CostPriceCents *int64
-	CompareAtCents *int64
-	InitialStock   int
+	ReturnClassRequest string
+	Parcel             *ParcelDimensions
+	Name               string
+	SKU                string
+	PriceCents         int64
+	CostPriceCents     *int64
+	CompareAtCents     *int64
+	InitialStock       int
 }
 
 type ProductVariant struct {
@@ -285,6 +286,7 @@ type AddressInput struct {
 }
 
 type Order struct {
+	CreditCents   int64     `json:"credit_cents"`
 	ID            int64     `json:"id"`
 	OrderNumber   string    `json:"order_number"`
 	Status        string    `json:"status"`

@@ -51,6 +51,13 @@ func (r *PaymentRepository) BeginRefund(ctx context.Context, userID int64, order
 		if _, err := tx.Exec(transactionContext, `SELECT pg_advisory_xact_lock(4856203)`); err != nil {
 			return err
 		}
+		var partial bool
+		if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM marketplace_refunds WHERE order_id=$1 AND status<>'rejected') OR EXISTS(SELECT 1 FROM orders WHERE id=$1 AND (credit_cents>0 OR policy_snapshot ? 'return_policy_version'))`, orderID).Scan(&partial); err != nil {
+			return err
+		}
+		if partial {
+			return ports.ErrRefundState
+		}
 		var returnReceived bool
 		if err := tx.QueryRow(transactionContext, `SELECT EXISTS (SELECT 1 FROM return_requests WHERE order_id=$1 AND status='received')`, orderID).Scan(&returnReceived); err != nil {
 			return err

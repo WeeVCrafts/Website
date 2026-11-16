@@ -20,6 +20,7 @@ import (
 
 type parcelProvider struct {
 	mu                                                          sync.Mutex
+	providerOrderID                                             int64
 	created, lookedUp, assigned, pickedUp, labelled, manifested int
 	reference, otherSKU                                         string
 	delivered                                                   bool
@@ -30,6 +31,9 @@ type parcelProvider struct {
 func (p *parcelProvider) serve(t *testing.T, w http.ResponseWriter, r *http.Request) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.providerOrderID == 0 {
+		p.providerOrderID = 7001
+	}
 	w.Header().Set("Content-Type", "application/json")
 	endpoint := r.Method + " " + strings.TrimPrefix(r.URL.Path, "/v1/external")
 	if endpoint == "POST /auth/login" {
@@ -63,22 +67,22 @@ func (p *parcelProvider) serve(t *testing.T, w http.ResponseWriter, r *http.Requ
 		if r.URL.Query().Get("search") != p.reference {
 			t.Error("lookup did not use the original receipt")
 		}
-		fmt.Fprintf(w, `{"data":[{"id":7001,"channel_order_id":%q,"status":"NEW","shipments":[{"id":7002}]}]}`, p.reference)
+		fmt.Fprintf(w, `{"data":[{"id":%d,"channel_order_id":%q,"status":"NEW","shipments":[{"id":%d}]}]}`, p.providerOrderID, p.reference, p.providerOrderID+1)
 	case "GET /settings/company/pickup":
-		fmt.Fprint(w, `{"data":{"shipping_address":[{"pickup_location":"Fixture Depot","pin_code":"110030"}]}}`)
+		fmt.Fprint(w, `{"data":{"shipping_address":[{"pickup_location":"Fixture Depot","pin_code":"110030","phone_verified":1}]}}`)
 	case "GET /courier/serviceability/":
 		query := r.URL.Query()
-		if query.Get("order_id") != "7001" || query.Get("pickup_postcode") != "110030" || query.Get("delivery_postcode") != "411001" {
+		if query.Get("order_id") != fmt.Sprint(p.providerOrderID) || query.Get("pickup_postcode") != "110030" || query.Get("delivery_postcode") != "411001" {
 			t.Error("courier lookup did not use the saved route")
 		}
-		fmt.Fprint(w, `{"currency":"INR","data":{"available_courier_companies":[{"courier_company_id":217,"courier_name":"Test Courier"}]}}`)
+		fmt.Fprint(w, `{"currency":"INR","data":{"available_courier_companies":[{"courier_company_id":217,"courier_name":"Test Courier","rate":50}]}}`)
 	case "POST /courier/assign/awb":
 		p.assigned++
 		var input struct {
 			Courier  int64 `json:"courier_id"`
 			Shipment int64 `json:"shipment_id"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.Shipment != 7002 {
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.Shipment != p.providerOrderID+1 {
 			t.Error("AWB request did not use the saved shipment")
 		}
 		if input.Courier == 0 {
@@ -105,7 +109,7 @@ func (p *parcelProvider) serve(t *testing.T, w http.ResponseWriter, r *http.Requ
 		}
 		p.cancellationAccepted = true
 		fmt.Fprint(w, `{"message":"Cancellation requested"}`)
-	case "GET /orders/show/7001":
+	case "GET /orders/show/" + fmt.Sprint(p.providerOrderID):
 		status := 3
 		if p.outForPickup {
 			status = 19
@@ -116,7 +120,7 @@ func (p *parcelProvider) serve(t *testing.T, w http.ResponseWriter, r *http.Requ
 		if p.delivered {
 			status = 7
 		}
-		fmt.Fprintf(w, `{"data":{"id":7001,"channel_order_id":%q,"status":"PROCESSING","shipments":{"id":7002,"status":%d,"awb":"TEST-WAYBILL","courier":"Test Courier","pickup_token_number":"TEST-PICKUP"}}}`, p.reference, status)
+		fmt.Fprintf(w, `{"data":{"id":%d,"channel_order_id":%q,"status":"PROCESSING","shipments":{"id":%d,"status":%d,"awb":"TEST-WAYBILL","courier":"Test Courier","pickup_token_number":"TEST-PICKUP"}}}`, p.providerOrderID, p.reference, p.providerOrderID+1, status)
 	default:
 		t.Errorf("unexpected provider endpoint: %s", endpoint)
 		w.WriteHeader(http.StatusNotFound)
@@ -161,6 +165,11 @@ func TestShiprocketClaimsAndReconciliationAreSellerScoped(t *testing.T) {
 		t.Fatalf("unpaid create: %v", err)
 	}
 	if _, err = payments.ProcessWebhook(ctx, ports.PaymentWebhook{EventID: providerID + "_capture", EventType: "payment.captured", ProviderOrderID: providerID, ProviderPaymentID: providerID + "_pay", AmountCents: order.TotalCents, Currency: order.Currency}, []byte(`{}`)); err != nil {
+		t.Fatal(err)
+	}
+	// This suite exercises preserved pre-v2 parcels; new package workflows have
+	// separate multi-package, capture-gate and recovery integration coverage.
+	if _, err = pool.Exec(ctx, `UPDATE orders SET workflow_version=1 WHERE id=$1`, order.ID); err != nil {
 		t.Fatal(err)
 	}
 	for _, stage := range []string{"processing", "packing"} {
@@ -318,6 +327,11 @@ func TestShiprocketCancellationRequiresOperatorAndVerifiedStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := payments.ProcessWebhook(ctx, ports.PaymentWebhook{EventID: providerID + "_event", EventType: "payment.captured", ProviderOrderID: providerID, ProviderPaymentID: providerID + "_pay", AmountCents: order.TotalCents, Currency: order.Currency}, []byte(`{}`)); err != nil {
+		t.Fatal(err)
+	}
+	// This suite exercises preserved pre-v2 parcels; new package workflows have
+	// separate multi-package, capture-gate and recovery integration coverage.
+	if _, err = pool.Exec(ctx, `UPDATE orders SET workflow_version=1 WHERE id=$1`, order.ID); err != nil {
 		t.Fatal(err)
 	}
 	for _, stage := range []string{"processing", "packing"} {

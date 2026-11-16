@@ -17,6 +17,10 @@ func TestReturnRequiresDeliveredOrderAndOwner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Retain the policy sold with this historical return-capable order.
+	if _, err = pool.Exec(ctx, `UPDATE orders SET workflow_version=1,policy_snapshot=policy_snapshot-'standard_returns_allowed' WHERE id=$1`, order.ID); err != nil {
+		t.Fatal(err)
+	}
 	for _, status := range []string{"paid", "processing", "shipped"} {
 		if _, err = pool.Exec(ctx, `UPDATE orders SET status=$1 WHERE id=$2`, status, order.ID); err != nil {
 			t.Fatal(err)

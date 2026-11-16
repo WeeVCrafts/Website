@@ -25,6 +25,13 @@ JSON API, and uses PostgreSQL for marketplace data and Redis for sessions and
 rate limits. Both the browser and the server-side pages use this application as
 the only backend.
 
+See [marketplace fulfillment](docs/marketplace-fulfillment.md) for seller-controlled
+packages, live shipping, exception refunds, invoice setup and delivery-based
+settlement holds. Production checkout requires verified invoice/tax profiles.
+
+See [MSG91 transactional SMS](docs/msg91-integration.md) for customer/seller
+template drafts, durable delivery and account activation requirements.
+
 ## Deploy on Hostinger VPS with Coolify
 
 The production target is Hostinger VPS managed through Coolify. Build the root

@@ -84,11 +84,45 @@ func (r *CommerceRepository) CheckDelivery(ctx context.Context, user, cart int64
 	if err != nil {
 		return err
 	}
-	_, err = r.delivery.check(ctx, lines, pin)
+	profiles, err := r.deliveryProfiles(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = r.delivery.check(ctx, lines, pin, profiles)
 	return err
 }
 
-func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin string) ([]deliveryDecision, error) {
+func (r *CommerceRepository) deliveryProfiles(ctx context.Context) (map[int64]DeliveryProfile, error) {
+	profiles := maps.Clone(r.delivery.profiles)
+	if profiles == nil {
+		profiles = map[int64]DeliveryProfile{}
+	}
+	if r.pool == nil || r.delivery.environment != "live" {
+		return profiles, nil
+	}
+	rows, err := r.pool.Query(ctx, `SELECT seller_id,postal_code FROM marketplace_shipping_profiles WHERE verified`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var seller int64
+		var pin string
+		if err = rows.Scan(&seller, &pin); err != nil {
+			return nil, err
+		}
+		profile := profiles[seller]
+		profile.PostalCode = pin
+		profiles[seller] = profile
+	}
+	return profiles, rows.Err()
+}
+
+func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin string, overrides ...map[int64]DeliveryProfile) ([]deliveryDecision, error) {
+	profiles := d.profiles
+	if len(overrides) > 0 {
+		profiles = overrides[0]
+	}
 	var decisions []deliveryDecision
 	indexes := make(map[int64]int)
 	for _, line := range lines {
@@ -98,7 +132,7 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 			indexes[line.seller] = i
 			decisions = append(decisions, deliveryDecision{seller: line.seller, method: "manual"})
 		}
-		if _, mapped := d.profiles[line.seller]; !mapped {
+		if _, mapped := profiles[line.seller]; !mapped {
 			continue
 		}
 		if !line.parcel.Valid() || line.quantity < 1 || line.quantity > 50000 {
@@ -116,7 +150,7 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 	}
 	for i := range decisions {
 		decision := &decisions[i]
-		profile, mapped := d.profiles[decision.seller]
+		profile, mapped := profiles[decision.seller]
 		if !mapped {
 			continue
 		}
@@ -133,7 +167,7 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 	defer cancel()
 	for i := range decisions {
 		decision := &decisions[i]
-		profile, mapped := d.profiles[decision.seller]
+		profile, mapped := profiles[decision.seller]
 		if !mapped {
 			continue
 		}

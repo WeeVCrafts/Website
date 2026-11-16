@@ -106,6 +106,9 @@ func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, 
 		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
 			return err
 		}
+		if err := saveReturnClassRequest(txctx, tx, variant.ID, input.ReturnClassRequest); err != nil {
+			return err
+		}
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents
@@ -154,6 +157,9 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
 			return err
 		}
+		if err := saveReturnClassRequest(txctx, tx, variant.ID, input.ReturnClassRequest); err != nil {
+			return err
+		}
 		variant.HasCompareAt = input.CompareAtCents != nil
 		if input.CompareAtCents != nil {
 			variant.CompareAtCents = *input.CompareAtCents
@@ -178,6 +184,17 @@ func saveVariantParcel(ctx context.Context, tx pgx.Tx, variant *commerce.Product
 		row = tx.QueryRow(ctx, `SELECT `+dimensions+` FROM product_variants WHERE id=$1`, variant.ID)
 	}
 	return row.Scan(&variant.Parcel.WeightGrams, &variant.Parcel.LengthCM, &variant.Parcel.WidthCM, &variant.Parcel.HeightCM)
+}
+
+func saveReturnClassRequest(ctx context.Context, tx pgx.Tx, variant int64, class string) error {
+	if class == "" {
+		return nil
+	}
+	if class != "unclassified" && class != "textile_craft" && class != "fragile_art" {
+		return ports.ErrInvalidState
+	}
+	_, err := tx.Exec(ctx, `UPDATE product_variants SET return_class_request=$2 WHERE id=$1`, variant, class)
+	return err
 }
 
 func (r *CommerceRepository) ArchiveSellerProductVariant(ctx context.Context, ownerUserID, productID, variantID int64, reason string) error {

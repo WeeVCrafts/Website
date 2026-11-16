@@ -19,6 +19,7 @@ var (
 type Parcel = commerce.ParcelDimensions
 
 type Shipment struct {
+	RejectedCourierIDs                                                     []int64
 	OrderID, SellerID, RequestedBy, ProviderOrderID, ProviderShipmentID    int64
 	OrderNumber, Reference, PickupLocation                                 string
 	PendingAction, ProviderStatus, AWB, Courier, PickupReference, LabelURL string
@@ -33,6 +34,8 @@ type CourierOption struct {
 	Name          string
 	EstimatedRate string
 	EstimatedDays string
+	RateCents     int64
+	Recommended   bool
 }
 
 type ShippingOrder struct {

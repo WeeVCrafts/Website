@@ -12,7 +12,7 @@ func recordSellerSalesLedger(ctx context.Context, tx pgx.Tx, orderID int64) erro
 	}
 	_, err := tx.Exec(ctx, `
 		WITH lines AS (
-			SELECT oi.id AS order_item_id, p.seller_id, oi.line_total_cents AS merchandise_cents,
+			SELECT oi.id AS order_item_id, COALESCE(oi.seller_id,p.seller_id) AS seller_id, oi.line_total_cents AS merchandise_cents,
 			       COALESCE(oi.allocated_discount_cents,0) AS discount_cents,
 			       oi.allocated_discount_cents IS NOT NULL AS allocation_saved,
 			       rule.id AS commission_rule_id, COALESCE(rule.percentage_basis_points,0) AS basis_points
@@ -48,7 +48,7 @@ func recordSellerSalesLedger(ctx context.Context, tx pgx.Tx, orderID int64) erro
 		FROM snapshot s CROSS JOIN LATERAL jsonb_to_recordset(s.seller_finance_snapshot->'lines')
 		     AS e(seller_id bigint,gross_cents bigint,commission_cents bigint)
 		GROUP BY e.seller_id,s.id,s.order_number
-		ON CONFLICT (seller_id,order_id,entry_type) WHERE order_id IS NOT NULL DO NOTHING`, orderID)
+		ON CONFLICT (seller_id,order_id,entry_type) WHERE order_id IS NOT NULL AND marketplace_refund_id IS NULL AND policy_claim_id IS NULL DO NOTHING`, orderID)
 	return err
 }
 
@@ -62,6 +62,6 @@ func recordSellerRefundLedger(ctx context.Context, tx pgx.Tx, orderID int64) err
 		       'open','Refund for order '||o.order_number
 		FROM seller_ledger sl JOIN orders o ON o.id=sl.order_id
 		WHERE sl.order_id=$1 AND sl.entry_type='sale'
-		ON CONFLICT (seller_id,order_id,entry_type) WHERE order_id IS NOT NULL DO NOTHING`, orderID)
+		ON CONFLICT (seller_id,order_id,entry_type) WHERE order_id IS NOT NULL AND marketplace_refund_id IS NULL AND policy_claim_id IS NULL DO NOTHING`, orderID)
 	return err
 }

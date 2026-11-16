@@ -126,7 +126,7 @@ func (g *Gateway) request(ctx context.Context, method, path, token string, input
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 400 || resp.StatusCode == 422 {
-		if path == "/orders/create/adhoc" && resp.StatusCode == 422 {
+		if (path == "/orders/create/adhoc" || path == "/shipments/create/return-shipment") && resp.StatusCode == 422 {
 			// Shiprocket also uses 422 for an existing channel order reference.
 			return resp.StatusCode, ports.ErrShippingPending
 		}

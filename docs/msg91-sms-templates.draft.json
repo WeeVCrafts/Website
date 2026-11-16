@@ -1,0 +1,11 @@
+{
+  "status": "draft_for_owner_and_DLT_review_not_active",
+  "proposed_sender_header": "WEEVCR",
+  "note": "No sender, entity or template approval is implied. Configure only exact DLT-approved content and its real MSG91 variable names.",
+  "templates": [
+    {"key":"customer_order","name":"WeevCrafts customer order update","content":"WeevCrafts order {#var#}: {#var#}. Sign in to your WeevCrafts account for details.","variable_order":["reference","status"]},
+    {"key":"seller_order","name":"WeevCrafts seller order update","content":"WeevCrafts seller order {#var#}: {#var#}. Sign in to your seller dashboard for details.","variable_order":["reference","status"]},
+    {"key":"customer_support","name":"WeevCrafts customer support update","content":"WeevCrafts support reference {#var#}: {#var#}. Sign in to your account to review the company response.","variable_order":["reference","status"]},
+    {"key":"seller_support","name":"WeevCrafts seller support update","content":"WeevCrafts seller support reference {#var#}: {#var#}. Sign in to your seller dashboard to review the update.","variable_order":["reference","status"]}
+  ]
+}

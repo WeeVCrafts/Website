@@ -74,6 +74,7 @@ type AdminProductEditor struct {
 }
 
 type ProductVariant struct {
+	ReturnClass, ReturnClassRequest                                        string
 	ShippingWeight, ShippingLength, ShippingWidth, ShippingHeight          string
 	ID, Name, SKU, PriceCents, CompareAtCents, Available, Reserved, Status string
 	Price, CompareAt, Discount, StockMessage                               string
@@ -229,6 +230,7 @@ type SellerAdminOrder struct {
 }
 
 type SellerAdminOrderDetail struct {
+	NewWorkflow                                                                                             bool
 	Shiprocket                                                                                              *SellerShiprocketView
 	PaymentReview                                                                                           bool
 	SellerID, Number, Date, Customer, OrderStatus, Status, Payment, Carrier, TrackingNumber, Note, Revision string

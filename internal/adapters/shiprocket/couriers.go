@@ -45,7 +45,8 @@ func (g *Gateway) availableCouriers(ctx context.Context, query url.Values) ([]po
 	var reply struct {
 		Currency string `json:"currency"`
 		Data     struct {
-			Couriers []struct {
+			RecommendedID int64 `json:"recommended_courier_company_id"`
+			Couriers      []struct {
 				ID      int64           `json:"courier_company_id"`
 				Name    string          `json:"courier_name"`
 				Blocked *int            `json:"blocked"`
@@ -68,9 +69,10 @@ func (g *Gateway) availableCouriers(ctx context.Context, query url.Values) ([]po
 			continue
 		}
 		seen[courier.ID] = true
-		option := ports.CourierOption{ID: courier.ID, Name: name}
+		option := ports.CourierOption{ID: courier.ID, Name: name, Recommended: courier.ID == reply.Data.RecommendedID}
 		if rate, err := strconv.ParseFloat(estimateText(courier.Rate), 64); err == nil && rate > 0 && rate <= 1000000 && (reply.Currency == "" || reply.Currency == "INR") {
 			option.EstimatedRate = fmt.Sprintf("₹%.2f", rate)
+			option.RateCents = int64(rate*100 + 0.5)
 		}
 		if days, err := strconv.ParseInt(estimateText(courier.Days), 10, 64); err == nil && days > 0 && days <= 365 {
 			option.EstimatedDays = strconv.FormatInt(days, 10)

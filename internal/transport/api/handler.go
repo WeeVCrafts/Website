@@ -299,6 +299,8 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		IntentID       string                      `json:"checkout_intent_id"`
 		IdempotencyKey string                      `json:"idempotency_key"`
 		CouponCode     string                      `json:"coupon_code"`
+		UseStoreCredit bool                        `json:"use_store_credit"`
+		ExpectedCredit *int64                      `json:"expected_credit_cents"`
 		ExpectedPolicy *int64                      `json:"expected_policy_revision"`
 		ExpectedTotal  *int64                      `json:"expected_total_cents"`
 		Address        domaincommerce.AddressInput `json:"address"`
@@ -308,6 +310,14 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	}
 	if headerKey := strings.TrimSpace(r.Header.Get("Idempotency-Key")); headerKey != "" {
 		input.IdempotencyKey = headerKey
+	}
+	r = r.WithContext(domaincommerce.WithStoreCredit(r.Context(), input.UseStoreCredit))
+	if input.UseStoreCredit {
+		if input.ExpectedCredit == nil {
+			writeError(w, 409, "QUOTE_CHANGED", "Review your store-credit allocation before placing the order.")
+			return
+		}
+		r = r.WithContext(domaincommerce.WithExpectedCredit(r.Context(), *input.ExpectedCredit))
 	}
 	if input.IntentID != "" {
 		intent, err := h.cart.CheckoutIntent(r.Context(), session.UserID, input.IntentID)

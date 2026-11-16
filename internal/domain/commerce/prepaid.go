@@ -2,7 +2,7 @@ package commerce
 
 // PrepaidOrderConfirmed reports whether the captured order can enter fulfillment.
 func PrepaidOrderConfirmed(orderStatus, paymentStatus string, paymentReview bool) bool {
-	if paymentReview || paymentStatus != "captured" {
+	if paymentReview || (paymentStatus != "captured" && paymentStatus != "funded") {
 		return false
 	}
 	switch orderStatus {

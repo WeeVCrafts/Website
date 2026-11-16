@@ -1,0 +1,96 @@
+package components
+
+import "fmt"
+import "strings"
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ MarketplacePolicyControls(p viewmodels.MarketplacePage) {
+	if p.Role=="customer" && p.Number=="" {
+		<section class="utility-card"><h2>Your store credit</h2><p>Available: INR {fmt.Sprintf("%.2f",float64(p.CreditAvailableCents)/100)}</p><p>Account-bound credit can be used partly or fully at checkout. Any remainder is paid through Razorpay.</p>
+			for _,g:=range p.CreditGrants {
+<p>Credit #{fmt.Sprint(g.ID)}: INR {fmt.Sprintf("%.2f",float64(g.RemainingCents)/100)} remaining · expires {g.ExpiresAt.Format("2 Jan 2006")}</p>
+}
+		</section>
+	}
+	if p.Role=="super_admin" && p.Number=="" {
+		<section class="admin-panel"><h2>Policy and live shipping readiness</h2>
+@MarketplaceReadiness(p)
+<p>Shipping mode: <strong>{p.Policy.ShippingMode}</strong>. Pilot order: {fmt.Sprint(p.Policy.PilotOrderID)}. New bookings also require the application booking switch.</p>
+			if p.Policy.PublishedAt==nil {
+				<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"publish_policy")
+<p>Publish the reviewed returns, replacements, authenticity and account-credit policy. Existing orders keep their previous terms.</p><label>Publication reason<input name="reason" minlength="10" maxlength="1000" required/></label><label><input name="confirmed" value="yes" type="checkbox" required/>I confirm this policy and its operational workflows are ready</label><button type="submit">Publish policy</button></form>
+			} else {
+<p>Policy {p.Policy.Version} published {p.Policy.PublishedAt.Format("2 Jan 2006")}. <a href="/returns-replacements-authenticity">Read published policy</a></p>
+}
+			<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"classify_variant")
+<h3>Verify product return classification</h3><label>Variant ID<input type="number" min="1" name="variant_id" required/></label><label>Classification<select name="return_class"><option value="textile_craft">Eligible textile or craft</option><option value="fragile_art">Fragile fine art, painting or sculpture</option></select></label><label><input type="checkbox" name="confirmed" value="yes" required/>I verified the product category</label><button type="submit">Save classification</button></form>
+			<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"configure_pilot")
+<h3>One genuine order pilot</h3><p>Requires a verified seller invoice/tax profile, pickup, real variant measurements, published policy and live booking configuration. Only one item and one pilot order are permitted.</p><label>Customer account ID<input name="customer_id" type="number" min="1" required/></label><label>Variant ID<input name="variant_id" type="number" min="1" required/></label><label>Activation reason<input name="reason" minlength="10" maxlength="1000" required/></label><label><input type="checkbox" name="confirmed" value="yes" required/>Wallet is funded and this customer and product are ready for a genuine shipment</label><button type="submit">Enable one-order pilot</button></form>
+			<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"pause_shipping")
+<label>Pause reason<input name="reason" minlength="10" maxlength="1000" required/></label><label><input type="checkbox" name="confirmed" value="yes" required/>Pause new purchases and bookings; continue reconciliation</label><button type="submit">Pause new shipping</button></form>
+		</section>
+	}
+}
+
+templ MarketplacePolicyClaims(p viewmodels.MarketplacePage) {
+	if p.NewReturnPolicy {
+		if p.Role=="customer" {
+			for _,item:=range p.Lines {
+				if item.CanReturn {
+					<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"submit_claim")
+<h3>Request help: {item.Name}</h3><input type="hidden" name="item_id" value={fmt.Sprint(item.ID)}/><label>Delivered package<select name="package_id" required>
+for _,pkg:=range p.Packages {
+ if pkg.Status=="delivered" && !strings.HasPrefix(pkg.Reference,"WC-RPL-") {
+  for _,piece:=range pkg.Items {
+   if piece.SKU==item.SKU {
+<option value={fmt.Sprint(pkg.ID)}>Package #{fmt.Sprint(pkg.ID)} · {pkg.Courier} · {pkg.AWB}</option>
+   }
+  }
+ }
+}
+</select></label><label>Reason for claim<select name="claim_kind"><option value="damage">Transit damage</option><option value="defect">Manufacturing or weaving defect</option><option value="wrong_item">Wrong item or design</option><option value="change_of_mind">Change of mind — eligible textiles and crafts</option></select></label><label>Quantity<input type="number" name="quantity" min="1" max={fmt.Sprint(item.Quantity-item.Cancelled)} value="1" required/></label><label>What happened?<textarea name="reason" minlength="10" maxlength="1000" style="resize:none" rows="4" required></textarea></label><p>Damage/wrong-item/defect claims: 48 hours after delivery. Change of mind: three days, subject to category and condition. Credit is the discounted item amount less ₹200 per return pickup; original delivery charges are excluded. Upload evidence after saving this claim.</p><button type="submit">Submit claim for review</button></form>
+				}
+			}
+		}
+	}
+	for _,c:=range p.Claims {
+		<article class="utility-card"><h3>Claim #{fmt.Sprint(c.ID)} — {strings.ReplaceAll(c.Kind,"_"," ")}</h3><p>Status: {strings.ReplaceAll(c.Status,"_"," ")} · Resolution: {c.Resolution}</p><p>{c.Reason}</p><p>Eligible item amount: INR {fmt.Sprintf("%.2f",float64(c.AmountCents)/100)} · Return fee: INR {fmt.Sprintf("%.2f",float64(c.FeeCents)/100)}</p>
+			if c.ReturnAWB!="" {
+<p>Reverse shipment: {c.ReturnCourier} · {c.ReturnAWB} · {c.ReturnStatus}</p>
+}
+			if c.ReplacementPackageID>0 {
+<p>Replacement package #{fmt.Sprint(c.ReplacementPackageID)} appears in package tracking below.</p>
+}
+			<ul>
+for _,e:=range c.Evidence {
+<li><a href={templ.SafeURL(fmt.Sprintf("%s?order=%s&evidence=%d",p.Root,p.Number,e.ID))}>{e.Filename}</a></li>
+}
+</ul>
+			if p.Role=="customer" && c.Status!="completed" && c.Status!="rejected" {
+				<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} enctype="multipart/form-data" novalidate>
+@MarketplaceFields(p,"upload_claim_evidence")
+<input type="hidden" name="case_id" value={fmt.Sprint(c.ID)}/><label>Unboxing video or photo<input type="file" name="evidence" accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp" required/></label><p>One video up to 200 MB, or one photo up to 10 MB. Evidence is private to you and company staff unless they explicitly share it with your seller.</p><button type="submit">Upload private evidence</button></form>
+			}
+			if p.Role=="admin" || p.Role=="super_admin" {
+				if c.Status!="completed" && c.Status!="rejected" {
+					<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"claim_status")
+<input name="case_id" type="hidden" value={fmt.Sprint(c.ID)}/><label>Next status<select name="status"><option value="approved">Approve resolution (Super Admin)</option><option value="pickup_pending">Arrange reverse pickup</option><option value="received">Confirm carrier-verified receipt</option><option value="inspected">Record inspection</option><option value="completed">Complete credit/refund request (Super Admin)</option><option value="rejected">Reject with reason</option></select></label><label>Review or inspection findings<textarea name="reason" minlength="10" maxlength="1000" style="resize:none" required></textarea></label><label>Alternative evidence exception<textarea name="evidence_exception" maxlength="1000" style="resize:none"></textarea></label><label>Return parcel weight (grams)<input name="weight_grams" type="number" min="100" max="50000"/></label><label>Return length (cm)<input name="length_cm" type="number" min="1" max="200"/></label><label>Return width (cm)<input name="width_cm" type="number" min="1" max="200"/></label><label>Return height (cm)<input name="height_cm" type="number" min="1" max="200"/></label><label><input type="checkbox" name="inspection_passed" value="yes"/>Inspection confirms eligibility and condition for this resolution</label><label><input type="checkbox" name="restock" value="yes"/>Inspection confirms returned units can be restocked</label><label><input type="checkbox" name="confirmed" value="yes" required/>I verified this transition and its consequences</label><button type="submit">Record claim decision</button></form>
+					<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"share_claim_evidence")
+<input name="case_id" type="hidden" value={fmt.Sprint(c.ID)}/><label>Reason to share with the order's seller<input name="reason" minlength="10" maxlength="1000" required/></label><button type="submit">Share claim evidence with seller</button></form>
+				}
+			}
+			if p.Role=="seller" && c.Status=="inspected" && c.Resolution=="replacement" && c.ReplacementPackageID==0 {
+				<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+@MarketplaceFields(p,"prepare_replacement")
+<input name="case_id" type="hidden" value={fmt.Sprint(c.ID)}/><input name="seller_id" type="hidden" value={fmt.Sprint(c.SellerID)}/><label>Packed weight (grams)<input name="weight_grams" type="number" min="100" max="50000" required/></label><label>Length (cm)<input name="length_cm" type="number" min="1" max="200" required/></label><label>Width (cm)<input name="width_cm" type="number" min="1" max="200" required/></label><label>Height (cm)<input name="height_cm" type="number" min="1" max="200" required/></label><label>Pre-dispatch quality-check evidence<input name="qc_evidence" minlength="10" maxlength="1000" required/></label><label>Preparation note<input name="reason" minlength="10" maxlength="1000" required/></label><label><input type="checkbox" name="confirmed" value="yes" required/>I confirm the actual parcel, quality check and free replacement dispatch</label><button type="submit">Confirm and ship free replacement</button></form>
+			}
+		</article>
+	}
+}

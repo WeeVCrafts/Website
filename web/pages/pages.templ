@@ -697,13 +697,11 @@ templ ProductDetail(p viewmodels.CustomerPage) {
             }
           </dl>
           <details class="purchase-policy-summary"><summary>Shipping and returns</summary><p>{p.ShippingInformation}</p>
-           if p.Storefront!=nil && p.Storefront.Settings.Policy.ReturnDays>0 {
-<p>Eligible return requests can be made within {fmt.Sprint(p.Storefront.Settings.Policy.ReturnDays)} days of delivery. Check the full policy for conditions.</p>
-}
-           <p><a href="/shipping">Read shipping information</a> · <a href="/pages/returns">Read returns and refund policy</a></p>
+           <p>Report damage, defects or wrong items within 48 hours of delivery. Eligible textile and craft change-of-mind requests must be made within 72 hours. Conditions and exclusions apply.</p>
+           <p><a href="/shipping">Read shipping information</a> · <a href="/returns-replacements-authenticity">Read return, replacement and authenticity policy</a></p>
           </details>
           <div class="benefits"><span><span class="material-symbols-outlined" aria-hidden="true">local_shipping</span><b>Delivery</b><small>{ p.Product.DeliveryLabel }</small></span><span><span class="material-symbols-outlined" aria-hidden="true">public</span><b>Shipping region</b><small>India only</small></span></div>
-          <nav class="product-policy-links" aria-label="Product policies"><a href="/shipping">Shipping information</a><a href="/pages/returns">Returns &amp; refunds</a><a href="/size-guide">Size guide</a></nav>
+          <nav class="product-policy-links" aria-label="Product policies"><a href="/shipping">Shipping information</a><a href="/returns-replacements-authenticity">Returns &amp; replacements</a><a href="/size-guide">Size guide</a></nav>
           <button class="text-button product-share" type="button" data-product-share data-share-title={ p.Product.Name }><span class="material-symbols-outlined" aria-hidden="true">share</span>Share this piece</button>
           <p class="sr-only" data-share-status role="status"></p>
         </div>
@@ -1083,7 +1081,10 @@ templ OrderReceipt(p viewmodels.CustomerPage) {
     <section class="container order-receipt">
       <header class="page-intro compact-intro"><p class="eyebrow">Weevcrafts PURCHASE</p><h1>{ storefrontNativeHeading(p,"Order receipt") }</h1><p>Order { p.SelectedOrder.Number } · placed { p.SelectedOrder.Date }</p><a class="outline-button" href={ "/orders/" + p.SelectedOrder.Number }>Back to order</a></header>
       <article class="order-card"><header><div><h2>Payment and order summary</h2><p>Payment status: { p.SelectedOrder.Payment }</p></div><strong>{ checkoutMoney(p.SelectedOrder.Total) }</strong></header>@OrderDetailRows(p.SelectedOrder.Items)<footer><strong>Order total</strong><strong>{ checkoutMoney(p.SelectedOrder.Total) }</strong></footer></article>
-      <p class="utility-muted">This receipt summarizes the order recorded in your account. It is not a GST tax invoice.</p>
+      if p.SelectedOrder.CreditCents>0 {
+<p>Store credit used: {p.SelectedOrder.CreditUsed} · Other funding: {p.SelectedOrder.CashPaid}</p>
+}
+<p class="utility-muted">This receipt summarizes the order recorded in your account. It is not a GST tax invoice.</p>
       <a class="primary-button" hx-boost="false" href={ "/orders/" + p.SelectedOrder.Number + "/invoice?format=pdf" }>Download PDF receipt</a>
     </section>
   }
@@ -1197,7 +1198,7 @@ templ Checkout(p viewmodels.CustomerPage) {
           @CheckoutErrorRecovery(p)
         </section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ checkoutMoney(p.ItemsTotal) }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ checkoutMoney(p.ShippingTotal) }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ checkoutMoney(p.DiscountTotal) }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code" aria-describedby="checkout-coupon-error"/><span id="checkout-coupon-error" class="ui-field-error" data-checkout-coupon-error hidden></span><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><button type="button" class="outline-button" data-remove-checkout-coupon hidden?={ p.CouponCode == "" }>Remove coupon</button><small>Review the updated total before placing your order.</small></div><hr/><h3>Total payable <strong data-quote-total>{ checkoutMoney(p.Total) }</strong></h3><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ checkoutMoney(p.ItemsTotal) }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ checkoutMoney(p.ShippingTotal) }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ checkoutMoney(p.DiscountTotal) }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code" aria-describedby="checkout-coupon-error"/><span id="checkout-coupon-error" class="ui-field-error" data-checkout-coupon-error hidden></span><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><button type="button" class="outline-button" data-remove-checkout-coupon hidden?={ p.CouponCode == "" }>Remove coupon</button><small>Review the updated total before placing your order.</small></div><label><input type="checkbox" name="use_store_credit" data-use-store-credit/>Use available store credit (<span data-quote-credit-available>check quote</span>)</label><p>Store credit applied <b data-quote-credit>INR 0.00</b></p><p>Due through Razorpay <b data-quote-cash>{ checkoutMoney(p.Total) }</b></p><hr/><h3>Total payable <strong data-quote-total>{ checkoutMoney(p.Total) }</strong></h3><p>Prepaid orders only. Review the <a href="/returns-replacements-authenticity">returns, replacements and authenticity policy</a> before ordering. Eligible claim windows and return fees apply.</p><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
     </section>
     }
   }

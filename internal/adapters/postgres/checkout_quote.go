@@ -66,6 +66,11 @@ func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int6
 	var quote domaincommerce.CheckoutQuote
 	quote.CartID = cartID
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		if r.policyCheckoutRequired {
+			if err := checkPolicyCheckout(ctx, tx, userID, cartID, false); err != nil {
+				return err
+			}
+		}
 		revision, e := readPlacementPolicy(ctx, tx)
 		if e != nil {
 			return e
@@ -91,6 +96,16 @@ func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int6
 		quote.ShippingCents = revision.Config.Settings.Policy.Shipping(quote.SubtotalCents)
 		_, _, quote.DiscountCents, err = checkoutDiscount(ctx, tx, userID, cartID, quote.ShippingCents, strings.TrimSpace(coupon), false)
 		quote.TotalCents = quote.SubtotalCents + quote.ShippingCents - quote.DiscountCents
+		if err == nil {
+			quote.CreditAvailableCents, err = creditAvailable(ctx, tx, userID)
+			if domaincommerce.UsesStoreCredit(ctx) {
+				quote.CreditCents = min(quote.CreditAvailableCents, quote.TotalCents)
+				if due := quote.TotalCents - quote.CreditCents; due > 0 && due < 100 {
+					quote.CreditCents = max(0, quote.TotalCents-100)
+				}
+			}
+			quote.CashDueCents = quote.TotalCents - quote.CreditCents
+		}
 		return err
 	})
 	return quote, err

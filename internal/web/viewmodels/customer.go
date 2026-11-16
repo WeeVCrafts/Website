@@ -91,6 +91,8 @@ type CartItem struct {
 }
 
 type Order struct {
+	CreditUsed, CashPaid                               string
+	CreditCents                                        int64
 	PaymentExpired, PaymentInProgress                  bool
 	PaymentCreationPending, PaymentCreationReview      bool
 	PaymentReview                                      bool
@@ -130,6 +132,8 @@ type Address struct {
 }
 
 type CustomerPage struct {
+	ReturnPolicySections                             []domaincommerce.PolicySection
+	ReturnPolicyEffective                            string
 	SellerNotifications                              bool
 	NotificationFilter                               string
 	NotificationTotal, NotificationUnread            int64

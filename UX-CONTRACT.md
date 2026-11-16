@@ -1,5 +1,21 @@
 # Weevcrafts UX contract
 
+## Marketplace fulfillment — 15 November 2026
+
+The existing customer, seller and company shells host the shared fulfillment
+workspace. It reuses native labelled fields, the shared confirmation/validation
+and busy-state owners, no-store authenticated routes and server-confirmed
+mutation feedback. Order and exception lists use cursor pagination. Sellers
+confirm actual package quantities, weight and dimensions before booking;
+carrier labels remain distinct from packing slips and seller invoices.
+Customer item cancellation/refund/exception-return controls follow server
+eligibility. Company refund approval is explicit; pending provider work never
+claims completed payment, delivery or refund. Forms retain rejected entries and
+avoid blind retry. Existing support conversation boundaries remain intact.
+Historical orders keep their recorded return policy. New handmade purchases
+exclude standard returns; company staff review exceptions. See
+`docs/marketplace-fulfillment.md` for the state, financial and launch contract.
+
 ## Seller reference workflows — 2 November 2026
 
 Seller summaries use complete seller-owned datasets independently of search and

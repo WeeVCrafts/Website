@@ -527,7 +527,9 @@ templ SellerOrderFulfillment(p viewmodels.SellerAdminPage) {
    } else if p.OrderDetail.Shiprocket.Reference != "" {
     <p>Fulfilment updates follow the courier’s scans.</p>
    }
-		} else if p.CanFulfill && sellerNextFulfillmentStatus(p.OrderDetail.Status)!="" {
+		} else if p.OrderDetail.NewWorkflow {
+ <p><a class="seller-button primary" href={templ.SafeURL("/seller-admin/orders/"+p.OrderDetail.Number+"/fulfillment")}>Accept, pack and manage packages</a></p>
+ } else if p.CanFulfill && sellerNextFulfillmentStatus(p.OrderDetail.Status)!="" {
 			<form class="seller-form-grid" method="post" action="/seller-admin/orders/fulfill" data-fulfillment-form>
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="seller_id" value={ p.OrderDetail.SellerID }/><input type="hidden" name="order_number" value={ p.OrderDetail.Number }/><input type="hidden" name="expected_revision" value={ p.OrderDetail.Revision }/><input type="hidden" name="status" value={ sellerNextFulfillmentStatus(p.OrderDetail.Status) }/>
 				<input type="hidden" name="return_query" value={ p.Query }/><input type="hidden" name="return_tab" value={ p.Tab }/><input type="hidden" name="return_page" value={ sellerInt(p.OrderReturnPage) }/>
@@ -815,6 +817,9 @@ templ PortalSettings(p viewmodels.SellerAdminPage) {
 
 templ SellerParcelFields(v viewmodels.ProductVariant) {
  if v.Status == "" || v.Status == "active" {
+<p class="seller-form-note">Measure the shipping package for this option. Final parcel measurements are confirmed again when packing an order. Approved return classification: {v.ReturnClass}.</p>
+<label>Proposed return classification<select name="return_class_request"><option value="unclassified" selected?={v.ReturnClassRequest=="" || v.ReturnClassRequest=="unclassified"}>Needs company review</option><option value="textile_craft" selected?={v.ReturnClassRequest=="textile_craft"}>Textile or craft</option><option value="fragile_art" selected?={v.ReturnClassRequest=="fragile_art"}>Fragile fine art, painting or sculpture</option></select><small>Company verification is required before this changes checkout eligibility.</small></label>
+
   <label>Shipping weight (g)<input name="shipping_weight_g" type="number" min="1" max="50000" value={v.ShippingWeight}/></label>
   <label>Shipping length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={v.ShippingLength}/></label>
   <label>Shipping width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={v.ShippingWidth}/></label>

@@ -55,6 +55,13 @@ func (r *CommerceRepository) ClaimShipment(ctx context.Context, actor, seller in
 			COALESCE((SELECT status FROM seller_fulfillments WHERE order_id=$1 AND seller_id=$2),'pending')`, orderID, seller).Scan(&payment, &stage); err != nil {
 			return err
 		}
+		var modern bool
+		if err = tx.QueryRow(ctx, `SELECT workflow_version=2 FROM orders WHERE id=$1`, orderID).Scan(&modern); err != nil {
+			return err
+		}
+		if modern {
+			return ports.ErrInvalidState
+		}
 		if !domaincommerce.PrepaidOrderConfirmed(overall, payment, review) || currency != "INR" || shipment.Address.CountryCode != "IN" {
 			return ports.ErrInvalidState
 		}

@@ -71,8 +71,8 @@ func TestPaymentCreationClaimSurvivesConcurrentRequestsAndCancellation(t *testin
 	if _, err := repository.AttachProviderOrder(ctx, userID, order.OrderNumber, ports.PaymentOrder{ProviderOrderID: "bypass", AmountCents: order.TotalCents, Currency: order.Currency}); !errors.Is(err, ports.ErrPaymentState) {
 		t.Fatalf("legacy writer bypassed claim: %v", err)
 	}
-	if err := commerce.CancelOrder(ctx, userID, order.OrderNumber); err != nil {
-		t.Fatal(err)
+	if err := commerce.CancelOrder(ctx, userID, order.OrderNumber); !errors.Is(err, ports.ErrInvalidState) {
+		t.Fatalf("uncertain provider creation must preserve reserved stock: %v", err)
 	}
 	if _, err := pool.Exec(ctx, `UPDATE payment_attempts SET creation_next_lookup_at=NOW()-INTERVAL '1 minute' WHERE id=$1`, claimed.AttemptID); err != nil {
 		t.Fatal(err)
@@ -85,6 +85,13 @@ func TestPaymentCreationClaimSurvivesConcurrentRequestsAndCancellation(t *testin
 	}
 	providerID := fmt.Sprintf("order_creation_%d", order.ID)
 	if _, err := restarted.AttachClaimedProviderOrder(ctx, recovered, ports.PaymentOrder{ProviderOrderID: providerID, AmountCents: order.TotalCents, Currency: order.Currency}); err != nil {
+		t.Fatal(err)
+	}
+	// A successful provider lookup with no in-flight payments permits cancellation.
+	if err := restarted.RecordPaymentLookup(ctx, order.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := commerce.CancelOrder(ctx, userID, order.OrderNumber); err != nil {
 		t.Fatal(err)
 	}
 	event := ports.PaymentWebhook{EventID: providerID + "_captured", EventType: "payment.captured", ProviderOrderID: providerID, ProviderPaymentID: fmt.Sprintf("pay_creation_%d", order.ID), AmountCents: order.TotalCents, Currency: order.Currency}

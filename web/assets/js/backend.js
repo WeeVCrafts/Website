@@ -281,7 +281,7 @@
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        }, coupon_code: couponCode || "", expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
+        }, coupon_code: couponCode || "", use_store_credit: !!document.querySelector('[name="use_store_credit"]')?.checked, expected_credit_cents: global.weevcraftsCreditQuote || 0, expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
       });
     }
 

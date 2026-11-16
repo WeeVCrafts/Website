@@ -8,6 +8,7 @@ import (
 )
 
 func (r *PaymentRepository) processRefundWebhook(ctx context.Context, event ports.PaymentWebhook, payload []byte) (bool, error) {
+	if matched, err := NewMarketplaceRepository(r.pool).RefundCallback(ctx,event); matched || err!=nil { return matched,err }
 	var seen bool
 	if err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM payment_webhook_events WHERE event_id=$1 AND processed_at IS NOT NULL)`, event.EventID).Scan(&seen); err != nil || seen {
 		return false, err

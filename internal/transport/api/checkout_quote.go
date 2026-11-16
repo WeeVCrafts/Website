@@ -30,6 +30,7 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var cart domaincommerce.Cart
+	r = r.WithContext(domaincommerce.WithStoreCredit(r.Context(), r.URL.Query().Get("use_store_credit") == "true"))
 	var err error
 	if token := r.URL.Query().Get("intent"); token != "" {
 		cart, err = h.cart.GetCheckoutCart(r.Context(), session.UserID, token)

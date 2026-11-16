@@ -112,5 +112,8 @@ func (s *OrderService) recoverProviderOrder(ctx context.Context, gateway ports.P
 			return err
 		}
 	}
+	if tracker, ok := repository.(ports.PaymentLookupResultRepository); ok {
+		return tracker.RecordPaymentLookup(ctx, record.OrderID, events)
+	}
 	return nil
 }

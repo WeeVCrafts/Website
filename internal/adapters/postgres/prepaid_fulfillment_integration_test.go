@@ -24,6 +24,10 @@ func TestPrepaidFulfillmentRequiresCaptureAndEverySellerDelivery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// This suite exercises the preserved historical seller-operated path.
+	if _, err = pool.Exec(ctx, `UPDATE orders SET workflow_version=1 WHERE id=$1`, order.ID); err != nil {
+		t.Fatal(err)
+	}
 	providerOrder := fmt.Sprintf("order_prepaid_%d", order.ID)
 	providerPayment := fmt.Sprintf("pay_prepaid_%d", order.ID)
 	if _, err = payments.AttachProviderOrder(ctx, customer, order.OrderNumber, ports.PaymentOrder{ProviderOrderID: providerOrder, AmountCents: order.TotalCents, Currency: order.Currency}); err != nil {

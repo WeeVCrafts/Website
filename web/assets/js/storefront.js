@@ -690,7 +690,8 @@
     clearCheckoutErrors();
     const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
     const pin = document.querySelector('#checkout-address-form [name="postal_code"]')?.value.trim() || '';
-    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + (pin?'&postal_code='+encodeURIComponent(pin):'') + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(20000) });
+    const useCredit=!!document.querySelector('[name="use_store_credit"]')?.checked;
+    const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + '&use_store_credit='+String(useCredit) + (pin?'&postal_code='+encodeURIComponent(pin):'') + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(20000) });
     const body = await response.json().catch(() => null);
     if (!response.ok || !body) {
       const error = new Error(body?.error?.message || "Could not preview checkout. Please try again.");
@@ -699,13 +700,17 @@
     }
     const quote = unwrap(body);
     global.weevcraftsPolicyRevision=quote.policy_revision;
+    global.weevcraftsCreditQuote=quote.credit_cents||0;
+    document.querySelectorAll('[data-quote-credit]').forEach(el=>{el.textContent=checkoutMoney(quote.credit_cents||0);});
+    document.querySelectorAll('[data-quote-credit-available]').forEach(el=>{el.textContent=checkoutMoney(quote.credit_available_cents||0);});
+    document.querySelectorAll('[data-quote-cash]').forEach(el=>{el.textContent=checkoutMoney(quote.cash_due_cents);});
     for (const field of ["subtotal", "shipping", "discount", "total"]) {
       const elements = document.querySelectorAll("[data-quote-" + field + "]");
       elements.forEach((element) => { element.textContent = checkoutMoney(quote[field + "_cents"]); element.dataset.cents = String(quote[field + "_cents"]); });
     }
     document.querySelectorAll("[data-quote-shipping-label]").forEach(label => { label.textContent="Shipping"; });
     const payLabel = document.querySelector("[data-checkout-pay-label]");
-    if (payLabel) payLabel.textContent = "Pay " + checkoutMoney(quote.total_cents);
+    if (payLabel) payLabel.textContent = quote.cash_due_cents===0 ? "Confirm prepaid order" : "Pay " + checkoutMoney(quote.cash_due_cents);
     return quote;
   }
 
@@ -790,11 +795,13 @@
     };
     const summary = document.querySelector("[data-checkout-address-summary]");
     if (summary) summary.textContent = [address.recipient_name, address.line1, address.city, address.state, address.postal_code].filter(Boolean).join(" · ");
-    const fingerprint = JSON.stringify({ address, couponCode: acceptedCoupon });
+    const fingerprint = JSON.stringify({ address, couponCode: acceptedCoupon, useCredit:!!document.querySelector('[name="use_store_credit"]')?.checked });
     let pending = null;
     try { pending = JSON.parse(global.sessionStorage.getItem(CHECKOUT_KEY)); } catch (_) { /* Invalid stored draft. */ }
     const retry = pending && pending.fingerprint === fingerprint && pending.key && pending.quote;
     const currentQuote = retry ? pending.quote : await previewCheckoutQuote();
+    global.weevcraftsCreditQuote=currentQuote.credit_cents||0;
+    global.weevcraftsCreditQuote=currentQuote.credit_cents||0;
     if (!retry && previousTotal !== undefined && previousTotal !== String(currentQuote.total_cents)) {
       notice("Your total has changed. Review the updated amount, then place your order again.", true);
       return;
@@ -816,7 +823,9 @@
       global.sessionStorage.removeItem(CHECKOUT_KEY);
       const cartBadge = document.querySelector("#cart-count em");
       if (cartBadge && !checkoutIntent) { cartBadge.textContent = "0"; cartBadge.closest('a').setAttribute('aria-label','Cart, 0 items'); markReady(document.getElementById("cart-count")); }
-      if (noPaymentDemo) {
+      if (result.status==='paid') {
+        paymentReceipt(orderNumber,'pending',false);
+      } else if (noPaymentDemo) {
         paymentReceipt(orderNumber, "Your order is saved with payment pending. No payment was collected.", false);
       } else {
         try {
@@ -1335,6 +1344,10 @@
   // after every listener so a restored document does not reuse an aborted read.
   global.addEventListener('pageshow', event => {
     if (event.persisted && backend) global.setTimeout(() => { void refreshCounts(); }, 0);
+  });
+  document.addEventListener('change', async event => {
+    if (!event.target.matches('[data-use-store-credit]')) return;
+    try { await previewCheckoutQuote(); } catch(error) { await showCheckoutError(error); }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshCounts(); });
 

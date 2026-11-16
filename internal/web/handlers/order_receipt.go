@@ -229,9 +229,12 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 	if len(order.Items) == 0 {
 		rowY += 12
 	}
-	// Totals and the two receipt-note lines occupy 83mm below the item table.
-	// Keep a normal one-item receipt on one page without entering the footer.
-	if rowY+83 > 270 {
+	// Keep funding details and receipt notes above the footer.
+	footerSpace := 83.0
+	if order.CreditCents > 0 {
+		footerSpace += 16
+	}
+	if rowY+footerSpace > 270 {
 		pdf.AddPage()
 		receiptLabel(pdf, "Order "+order.Number+" · totals", 14, 16, 182)
 		rowY = 30
@@ -239,7 +242,11 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 	totalY := rowY + 8
 	receiptSetText(pdf, receiptMuted)
 	pdf.SetFont("DM", "", 10)
-	for _, line := range []struct{ label, value string }{{"Subtotal", order.Subtotal}, {"Shipping", order.Shipping}, {"Discount", order.Discount}} {
+	totals := []struct{ label, value string }{{"Subtotal", order.Subtotal}, {"Shipping", order.Shipping}, {"Discount", order.Discount}}
+	if order.CreditCents > 0 {
+		totals = append(totals, struct{ label, value string }{"Store credit", order.CreditUsed}, struct{ label, value string }{"Other funding", order.CashPaid})
+	}
+	for _, line := range totals {
 		pdf.SetFont("DM", "", 10)
 		pdf.SetXY(112, totalY)
 		pdf.CellFormat(30, 7, line.label, "", 0, "L", false, 0, "")
@@ -256,7 +263,7 @@ func receiptPDF(order viewmodels.Order, loaders ...func(string) ([]byte, error))
 	pdf.SetFont("Cormorant", "", 15)
 	pdf.SetXY(116, totalY+5)
 	totalLabel := "Total payable"
-	if order.PaymentState == "captured" {
+	if order.Confirmed() {
 		totalLabel = "Total paid"
 	} else if order.PaymentState == "refunded" {
 		totalLabel = "Order total"

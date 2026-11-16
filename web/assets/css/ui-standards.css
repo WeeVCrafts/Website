@@ -384,3 +384,13 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
 .user-edit-dialog h2{margin:0;font-size:24px}.user-edit-dialog p,.user-edit-dialog small{overflow-wrap:anywhere;white-space:normal}.user-dialog-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap}
 .user-management-actions-cell{white-space:normal!important}.user-management-actions-cell>.admin-button{margin:4px 4px 4px 0}
 @media(max-width:600px){.user-edit-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:20px}.user-dialog-actions>button{flex:1}}
+
+/* Marketplace operations share the existing portal forms, tokens and focus states. */
+.marketplace-workspace{max-width:1200px;margin:0 auto;padding:24px 16px;overflow-wrap:anywhere}
+.marketplace-workspace h2{margin-block:28px 12px}.marketplace-workspace h3{margin-block:12px}
+.marketplace-workspace article{padding:18px;margin-block:14px;border:1px solid var(--border,#d6cdbf);border-radius:6px}
+.marketplace-form{display:grid;gap:14px;max-width:42rem;margin-block:16px}
+.marketplace-form label{display:grid;gap:6px}.marketplace-form input:not([type=checkbox]),.marketplace-form select,.marketplace-form textarea{width:100%;min-width:0;max-width:100%;min-height:44px;padding:10px;border:1px solid #8e7d6b;border-radius:6px;font:inherit;font-size:16px;background:var(--surface,#fffdf8);color:inherit}
+.marketplace-form textarea{resize:none;min-height:96px}.marketplace-form button{min-height:44px;padding:10px 16px;border-radius:6px;border:1px solid #8e7d6b;background:var(--brand-primary,#123f32);color:#fff;font:inherit;cursor:pointer}
+.marketplace-form button:disabled{opacity:.6;cursor:wait}.marketplace-workspace a{text-decoration:underline;text-underline-offset:3px}.marketplace-workspace summary{cursor:pointer;min-height:44px;padding-block:12px}
+@media(max-width:600px){.marketplace-workspace{padding:16px 8px}.marketplace-form{max-width:100%}.marketplace-form button{width:100%}}

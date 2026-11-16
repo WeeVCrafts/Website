@@ -674,8 +674,14 @@ func (h *LivePortalHandler) renderSellerOrderDetail(w http.ResponseWriter, r *ht
 			detail.Items = append(detail.Items, item)
 		}
 	}
+	if err := h.queryRow(r, `SELECT workflow_version=2 FROM orders WHERE order_number=$1`, number).Scan(&detail.NewWorkflow); err != nil {
+		http.Error(w, "order workflow unavailable", 503)
+		return
+	}
 	page.OrderDetail = detail
-	h.loadShiprocket(r, userID, detail, page.CanFulfill)
+	if !detail.NewWorkflow {
+		h.loadShiprocket(r, userID, detail, page.CanFulfill)
+	}
 	page.OrderReturnPage = page.Pagination.Page
 	page.Pagination = viewmodels.PortalPagination{}
 	h.render(w, r, sellerpages.PortalOrderDetail(page))
@@ -2104,7 +2110,7 @@ func productImagePreviewURL(image string) string {
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
 	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
-		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,'')
+		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,''),pv.return_class,pv.return_class_request
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
 	if err != nil {
@@ -2116,12 +2122,12 @@ func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64
 		var id, price, compareAt, available, reserved int64
 		var name, sku, status string
 		var hasCompare bool
-		var weight, length, width, height string
-		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status, &weight, &length, &width, &height); err != nil {
+		var weight, length, width, height, returnClass, returnClassRequest string
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status, &weight, &length, &width, &height, &returnClass, &returnClassRequest); err != nil {
 			return nil, err
 		}
 		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
-			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height}
+			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, ReturnClass: returnClass, ReturnClassRequest: returnClassRequest, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height}
 		if hasCompare {
 			variant.CompareAtCents = strconv.FormatInt(compareAt, 10)
 		}

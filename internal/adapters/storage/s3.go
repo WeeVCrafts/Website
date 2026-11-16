@@ -79,7 +79,11 @@ func (s *S3) InspectObject(ctx context.Context, objectKey string) (ports.ObjectI
 }
 
 func (s *S3) PutObject(ctx context.Context, objectKey, contentType string, byteSize int64, body io.Reader) error {
-	if s == nil || s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) || !allowedStoredObjectType(objectKey, contentType, byteSize) || byteSize <= 0 || byteSize > 25<<20 || body == nil {
+	limit := int64(25 << 20)
+	if claimEvidenceKeyPattern.MatchString(objectKey) {
+		limit = 200 << 20
+	}
+	if s == nil || s.client == nil || s.bucket == "" || !validStoredObjectKey(objectKey) || !allowedStoredObjectType(objectKey, contentType, byteSize) || byteSize <= 0 || byteSize > limit || body == nil {
 		return errors.New("invalid object upload")
 	}
 	_, err := s.client.PutObject(ctx, s.bucket, objectKey, body, byteSize, minio.PutObjectOptions{ContentType: contentType})
@@ -175,6 +179,9 @@ func validProductObjectKey(value string) bool {
 var financeObjectKeyPattern = regexp.MustCompile(`^finance/settlements/[1-9][0-9]*/[a-f0-9]{48}$`)
 
 func allowedStoredObjectType(key, contentType string, size int64) bool {
+	if claimEvidenceKeyPattern.MatchString(key) {
+		return size > 0 && ((size <= 200<<20 && (contentType == "video/mp4" || contentType == "video/quicktime" || contentType == "video/webm")) || (size <= 10<<20 && (contentType == "image/png" || contentType == "image/jpeg" || contentType == "image/webp")))
+	}
 	if financeObjectKeyPattern.MatchString(key) {
 		return size <= 5<<20 && (contentType == "application/pdf" || contentType == "image/png" || contentType == "image/jpeg")
 	}
@@ -182,6 +189,7 @@ func allowedStoredObjectType(key, contentType string, size int64) bool {
 }
 
 var supportObjectKeyPattern = regexp.MustCompile(`^support/[1-9][0-9]*/[a-f0-9]{32}$`)
+var claimEvidenceKeyPattern = regexp.MustCompile(`^private/claim-evidence/[a-f0-9]{48}$`)
 var avatarObjectKeyPattern = regexp.MustCompile(`^avatars/[1-9][0-9]*/[a-f0-9]{32}$`)
 var categoryObjectKeyPattern = regexp.MustCompile(`^categories/[a-f0-9]{32}\.jpg$`)
 var storefrontObjectKeyPattern = regexp.MustCompile(`^storefront/item-[a-f0-9]{24}(-(480|960))?\.jpg$`)
@@ -189,5 +197,5 @@ var storefrontObjectKeyPattern = regexp.MustCompile(`^storefront/item-[a-f0-9]{2
 // Private support files are streamed through an ownership-checked application
 // endpoint. Product presigned upload/download endpoints remain product-only.
 func validStoredObjectKey(value string) bool {
-	return financeObjectKeyPattern.MatchString(value) || validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value)
+	return claimEvidenceKeyPattern.MatchString(value) || financeObjectKeyPattern.MatchString(value) || validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value)
 }

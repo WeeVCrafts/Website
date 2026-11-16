@@ -21,8 +21,18 @@ import (
 )
 
 type CommerceRepository struct {
-	pool     *pgxpool.Pool
-	delivery *checkoutDelivery
+	pool                    *pgxpool.Pool
+	delivery                *checkoutDelivery
+	invoiceProfilesRequired bool
+	policyCheckoutRequired  bool
+}
+
+func (r *CommerceRepository) RequireInvoiceProfiles(required bool) {
+	r.invoiceProfilesRequired = required
+}
+
+func (r *CommerceRepository) RequirePolicyCheckout(required bool) {
+	r.policyCheckoutRequired = required
 }
 
 func NewCommerceRepository(pool *pgxpool.Pool) *CommerceRepository {
@@ -931,6 +941,9 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		return order, err
 	}
 	requestHash := checkoutRequestHash(cartID, addressJSON, couponCode)
+	if domaincommerce.UsesStoreCredit(ctx) {
+		requestHash += ":credit"
+	}
 	var deliveryLines []deliveryLine
 	var deliveryDecisions []deliveryDecision
 	var deliveryErr error
@@ -942,7 +955,11 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		if !saved {
 			deliveryLines, deliveryErr = checkoutDeliveryLines(ctx, r.pool, userID, cartID, false)
 			if deliveryErr == nil {
-				deliveryDecisions, deliveryErr = r.delivery.check(ctx, deliveryLines, address.PostalCode)
+				profiles, profileErr := r.deliveryProfiles(ctx)
+				deliveryErr = profileErr
+				if profileErr == nil {
+					deliveryDecisions, deliveryErr = r.delivery.check(ctx, deliveryLines, address.PostalCode, profiles)
+				}
 			}
 		}
 	}
@@ -974,6 +991,20 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 				return err
 			}
 			return ports.ErrCartNotFound
+		}
+		if r.policyCheckoutRequired {
+			if err := checkPolicyCheckout(transactionContext, tx, userID, cartID, true); err != nil {
+				return err
+			}
+		}
+		if r.invoiceProfilesRequired {
+			var missing bool
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=p.seller_id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE ci.cart_id=$1 AND (ip.seller_id IS NULL OR tp.variant_id IS NULL OR (ip.registration='unregistered' AND tp.rate_basis_points<>0)))`, cartID).Scan(&missing); err != nil {
+				return err
+			}
+			if missing {
+				return ports.ErrInvalidState
+			}
 		}
 		// Serialize checkout with seller role replacement before availability is read.
 		sellerLocks, lockErr := tx.Query(transactionContext, `SELECT s.id FROM sellers s WHERE s.id IN (SELECT p.seller_id FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id WHERE ci.cart_id=$1) ORDER BY s.id FOR UPDATE`, cartID)
@@ -1144,8 +1175,25 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		if err := snapshotOrderDiscounts(transactionContext, tx, order.ID, promotionID); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(transactionContext, `INSERT INTO payment_attempts (order_id, provider, status, amount_cents) VALUES ($1, 'razorpay', 'created', $2)`, order.ID, order.TotalCents); err != nil {
+		credit, creditErr := reserveOrderCredit(transactionContext, tx, userID, order.ID, order.TotalCents, domaincommerce.UsesStoreCredit(ctx))
+		if creditErr != nil {
+			return creditErr
+		}
+		order.CreditCents = credit
+		if wanted, ok := domaincommerce.ExpectedCredit(ctx); ok && wanted != credit {
+			return ports.ErrQuoteChanged
+		}
+		provider, paymentStatus := "razorpay", "created"
+		if credit == order.TotalCents && credit > 0 {
+			provider, paymentStatus = "store_credit", "funded"
+		}
+		if _, err := tx.Exec(transactionContext, `INSERT INTO payment_attempts (order_id, provider, status, amount_cents) VALUES ($1, $2, $3, $4)`, order.ID, provider, paymentStatus, order.TotalCents-credit); err != nil {
 			return err
+		}
+		if r.policyCheckoutRequired {
+			if _, err := tx.Exec(transactionContext, `UPDATE marketplace_policy_settings SET pilot_order_id=$1 WHERE id AND shipping_mode='pilot'`, order.ID); err != nil {
+				return err
+			}
 		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO order_status_history (order_id, to_status, actor_id, reason) VALUES ($1, 'pending_payment', $2, 'checkout created')`, order.ID, userID); err != nil {
 			return err
@@ -1156,8 +1204,17 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return err
 		}
 		_, err = tx.Exec(transactionContext, `UPDATE carts SET status = 'checked_out', checkout_order_id=$2, updated_at = NOW() WHERE id = $1`, cartID, order.ID)
+		if err == nil && provider == "store_credit" {
+			err = commitCapturedOrder(transactionContext, tx, order.ID, reservationID, "pending_payment")
+			if err == nil {
+				order.Status = "paid"
+			}
+		}
 		return err
 	})
+	if err == nil && order.ID > 0 {
+		err = r.pool.QueryRow(ctx, `SELECT credit_cents FROM orders WHERE id=$1`, order.ID).Scan(&order.CreditCents)
+	}
 	return order, err
 }
 
@@ -1199,6 +1256,9 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 			return domaincommerce.OrderDetail{}, ports.ErrOrderNotFound
 		}
 		return domaincommerce.OrderDetail{}, err
+	}
+	if err := r.pool.QueryRow(ctx, `SELECT credit_cents FROM orders WHERE id=$1`, detail.ID).Scan(&detail.CreditCents); err != nil {
+		return detail, err
 	}
 	if err := json.Unmarshal(addressData, &detail.Contact); err != nil {
 		return domaincommerce.OrderDetail{}, err
@@ -1264,6 +1324,13 @@ func (r *CommerceRepository) CancelOrder(ctx context.Context, userID int64, orde
 		if status != "pending_payment" || review {
 			return ports.ErrInvalidState
 		}
+		var reconciled bool
+		if err := tx.QueryRow(transactionContext, `SELECT marketplace_payment_resolved_for_release($1)`, orderID).Scan(&reconciled); err != nil {
+			return err
+		}
+		if !reconciled {
+			return ports.ErrInvalidState
+		}
 		if err := tx.QueryRow(transactionContext, `SELECT id FROM inventory_reservations WHERE order_id = $1 AND status = 'active' FOR UPDATE`, orderID).Scan(&reservationID); err != nil {
 			return err
 		}
@@ -1286,7 +1353,7 @@ func (r *CommerceRepository) ReleaseExpiredReservations(ctx context.Context, lim
 		rows, queryErr := tx.Query(transactionContext, `
 			SELECT ir.id, ir.order_id
 			FROM orders o JOIN inventory_reservations ir ON ir.order_id=o.id
-			WHERE o.status='pending_payment' AND ir.status = 'active' AND ir.expires_at <= NOW()
+			WHERE o.status='pending_payment' AND ir.status = 'active' AND ir.expires_at <= NOW() AND marketplace_payment_resolved_for_release(o.id)
 			ORDER BY ir.id
 			FOR UPDATE OF o SKIP LOCKED
 			LIMIT $1`, limit)

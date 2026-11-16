@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -23,6 +24,7 @@ import (
 	localpayment "github.com/wecratfs/commerce/internal/adapters/localpayment"
 	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
 	metricsadapter "github.com/wecratfs/commerce/internal/adapters/metrics"
+	msg91adapter "github.com/wecratfs/commerce/internal/adapters/msg91"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
 	razorpayadapter "github.com/wecratfs/commerce/internal/adapters/razorpay"
 	redisadapter "github.com/wecratfs/commerce/internal/adapters/redis"
@@ -30,6 +32,7 @@ import (
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	applicationcatalog "github.com/wecratfs/commerce/internal/application/catalog"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	applicationcommunication "github.com/wecratfs/commerce/internal/application/communication"
 	applicationpayment "github.com/wecratfs/commerce/internal/application/payment"
 	applicationprivacy "github.com/wecratfs/commerce/internal/application/privacy"
 	"github.com/wecratfs/commerce/internal/config"
@@ -46,12 +49,42 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 	cfg := config.FromEnv()
-	if len(os.Args) == 2 && os.Args[1] == "check-shiprocket" {
-		if err := checkShiprocket(cfg); err != nil {
+	if len(os.Args) == 2 && os.Args[1] == "check-msg91" {
+		check := cfg.SMS
+		check.Enabled = true
+		if err := check.Validate(cfg.Environment, cfg.Staging); err != nil {
+			logger.Error("MSG91 configuration incomplete", "error", err)
+			os.Exit(1)
+		}
+		if _, err := check.ReadAuthKey(); err != nil {
+			logger.Error("MSG91 credential unavailable", "error", err)
+			os.Exit(1)
+		}
+		fmt.Println("MSG91 local configuration complete. Provider KYC, DLT mappings and actual delivery require separate verification.")
+		return
+	}
+	if len(os.Args) >= 2 && os.Args[1] == "check-shiprocket" {
+		var variant int64
+		if len(os.Args) != 2 {
+			if len(os.Args) != 4 || os.Args[2] != "--variant" {
+				logger.Error("Use check-shiprocket [--variant ID]")
+				os.Exit(1)
+			}
+			var err error
+			variant, err = strconv.ParseInt(os.Args[3], 10, 64)
+			if err != nil || variant <= 0 {
+				logger.Error("Variant ID must be positive")
+				os.Exit(1)
+			}
+		}
+		if err := checkShiprocketVariant(cfg, variant); err != nil {
 			logger.Error("Shiprocket configuration check failed", "error", err)
 			os.Exit(1)
 		}
 		fmt.Println("Shiprocket authentication and seller pickup mappings verified")
+		if variant > 0 {
+			fmt.Printf("Readiness checked for pilot variant %d only; other products are not approved by this result.\n", variant)
+		}
 		return
 	}
 	if err := validateFirebaseEnvironment(cfg.Environment); err != nil {
@@ -143,6 +176,8 @@ func main() {
 	recoveryService := applicationauth.NewRecoveryService(postgres.NewAuthActionRepository(pool), passwordHasher, emailSender, cfg.PublicURL)
 	commerceRepository := postgres.NewCommerceRepository(pool)
 	roleAuthorizer := postgres.NewRoleAuthorizer(pool)
+	commerceRepository.RequireInvoiceProfiles(cfg.Environment == "production")
+	commerceRepository.RequirePolicyCheckout(cfg.Environment == "production")
 	commerceCatalog := applicationcommerce.NewCatalogServiceWithRoles(commerceRepository, roleAuthorizer)
 	inventoryService := applicationcommerce.NewInventoryService(commerceRepository, roleAuthorizer)
 	sellerOrderService := applicationcommerce.NewSellerOrderService(commerceRepository, roleAuthorizer)
@@ -244,6 +279,21 @@ func main() {
 			return err
 		})
 	}
+	marketplaceRepository := postgres.NewMarketplaceRepository(pool).WithInvoiceRenderer(webHandlers.MarketplaceInvoicePDF)
+	durableHandlers := make(map[string]func(context.Context) error)
+	smsProcessor := &applicationcommunication.SMSProcessor{Store: postgres.NewSMSRepository(pool)}
+	if cfg.SMS.Enabled {
+		key, keyErr := cfg.SMS.ReadAuthKey()
+		if keyErr != nil {
+			logger.Error("SMS private credential unavailable")
+			os.Exit(1)
+		}
+		smsProcessor.Sender, err = msg91adapter.New(key, cfg.SMS.SenderID, cfg.SMS.Templates)
+		if err != nil {
+			logger.Error("SMS sender configuration invalid")
+			os.Exit(1)
+		}
+	}
 	backgroundWorker, err := worker.New(1, 16)
 	if err != nil {
 		logger.Error("configure background worker", "error", err)
@@ -251,7 +301,14 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
-	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, 30*time.Second, "sms-notifications", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
+		_, err := smsProcessor.Process(ctx, 5)
+		if err != nil {
+			logger.Warn("transactional SMS requires review")
+		}
+		return err
+	})
+	worker.RegisterDurablePeriodic(workerContext, time.Minute, "payment-reconciliation", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		reconcileContext, cancel := context.WithTimeout(ctx, 50*time.Second)
 		defer cancel()
 		_, paymentErr := paymentOrderService.Reconcile(reconcileContext, 20)
@@ -270,7 +327,7 @@ func main() {
 		})
 		return err
 	})
-	go worker.RunPeriodic(workerContext, 5*time.Minute, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, 5*time.Minute, "refund-reconciliation", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		reconcileContext, cancel := context.WithTimeout(ctx, 2*time.Minute)
 		defer cancel()
 		_, err := refundService.Reconcile(reconcileContext, 20)
@@ -283,7 +340,7 @@ func main() {
 	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
 	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL, cfg.PaymentMode == "local" || strings.HasPrefix(cfg.RazorpayKeyID, "rzp_test_"))
-	go worker.RunPeriodic(workerContext, 10*time.Second, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, 10*time.Second, "order-confirmations", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 		_, err := orderConfirmationProcessor.Process(processContext, 20)
@@ -296,7 +353,7 @@ func main() {
 		}
 		return err
 	})
-	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, time.Minute, "search-indexing", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 		_, indexErr := productIndexProcessor.Process(cleanupContext, 10)
@@ -305,7 +362,7 @@ func main() {
 		}
 		return indexErr
 	})
-	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, time.Minute, "dispatch-notifications", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 		_, dispatchErr := sellerDispatchProcessor.Process(processContext, 20)
@@ -314,7 +371,7 @@ func main() {
 		}
 		return dispatchErr
 	})
-	go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+	worker.RegisterDurablePeriodic(workerContext, time.Minute, "reservation-expiry", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		cleanupContext, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		_, cleanupErr := commerceRepository.ReleaseExpiredReservations(cleanupContext, 100)
@@ -416,8 +473,29 @@ func main() {
 	// development failure/pending controls disabled in production.
 	registerDemoPaymentCapture(mux, cfg, localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
+
+	var marketplaceGateway ports.ShippingGateway
 	if cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live" {
 		gateway := configuredShiprocket(cfg.Shipping)
+		if cfg.Shipping.Mode == "live" {
+			marketplaceGateway = gateway
+			pins := make(map[int64]string)
+			locations, checkErr := gateway.PickupPostcodes(startupContext)
+			if checkErr == nil {
+				verified := make(map[int64]string)
+				for id, name := range cfg.Shipping.PickupLocations {
+					if pin, found := locations[name]; found && pin == cfg.Shipping.ParcelProfiles[id].PostalCode {
+						verified[id] = name
+						pins[id] = pin
+					}
+				}
+				if err := marketplaceRepository.ConfigureShippingProfiles(startupContext, verified, pins); err != nil {
+					logger.Warn("seller shipping profiles require attention")
+				}
+			} else {
+				logger.Warn("live shipping pickup verification unavailable")
+			}
+		}
 		gateway.ObserveCourierResults(shippingMetrics.CourierResult)
 		shipping := applicationcommerce.NewShippingService(commerceRepository, gateway, cfg.Shipping.Mode, cfg.Shipping.PickupLocations)
 		shipping.SetBookingsEnabled(cfg.Shipping.BookingsEnabled)
@@ -432,9 +510,11 @@ func main() {
 		portalHandler.SetShipping(shipping)
 		portalHandler.SetDeliveryExceptions(commerceRepository)
 		if cfg.Shipping.WebhookSecret != "" {
-			mux.Handle(webhookTransport.DeliveryCallbackPath, webhookTransport.DeliveryCallback(cfg.Shipping.WebhookSecret, shipping.ScheduleCheck))
+			mux.Handle(webhookTransport.DeliveryCallbackPath, webhookTransport.DeliveryCallback(cfg.Shipping.WebhookSecret, func(ctx context.Context, id int64, reference, awb string) error {
+				return errors.Join(shipping.ScheduleCheck(ctx, id, reference, awb), marketplaceRepository.WakePackage(ctx, id, reference, awb))
+			}))
 		}
-		go worker.RunPeriodic(workerContext, time.Minute, func(ctx context.Context) error {
+		worker.RegisterDurablePeriodic(workerContext, time.Minute, "legacy-shipping-reconciliation", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 			defer cancel()
 			err := shipping.Reconcile(ctx)
@@ -507,9 +587,21 @@ func main() {
 	mux.Handle("/support/", portalHandler)
 	mux.Handle("/", storefrontHandler)
 
+	marketplaceProcessor := &applicationcommerce.MarketplaceProcessor{Store: marketplaceRepository, Handlers: durableHandlers, Shipping: marketplaceGateway, Refunds: refundGateway, BookingsEnabled: cfg.Shipping.Mode == "live" && cfg.Shipping.BookingsEnabled}
+	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled}
+	marketplaceHandler.Storage = mediaStorage
+	if checker, ok := marketplaceGateway.(interface {
+		PickupPostcodes(context.Context) (map[string]string, error)
+	}); ok {
+		marketplaceHandler.PickupChecker = checker
+	}
+	consumerID, _ := os.Hostname()
+	for consumer := 0; consumer < 2; consumer++ {
+		go worker.RunMarketplaceQueue(workerContext, redisClient, marketplaceRepository, marketplaceProcessor.Process, fmt.Sprintf("%s-%d-%d", consumerID, os.Getpid(), consumer))
+	}
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           httpMetrics.Middleware(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, mux, cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg)),
+		Handler:           httpMetrics.Middleware(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, marketplaceHandler.Middleware(mux), cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

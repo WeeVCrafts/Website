@@ -73,6 +73,9 @@ func applyProviderPayment(ctx context.Context, tx pgx.Tx, orderID int64, event p
 }
 
 func commitCapturedOrder(ctx context.Context, tx pgx.Tx, orderID, reservationID int64, from string) error {
+	if err := commitOrderCredit(ctx, tx, orderID); err != nil {
+		return err
+	}
 	result, err := tx.Exec(ctx, `UPDATE orders SET status='paid',payment_review_required=FALSE,updated_at=NOW() WHERE id=$1 AND status=$2`, orderID, from)
 	if err != nil {
 		return err

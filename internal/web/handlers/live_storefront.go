@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -84,6 +85,10 @@ func paymentReady(mode string, paymentConfigured bool) bool {
 }
 
 func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/pages/returns" && r.Method == http.MethodGet {
+		http.Redirect(w, r, "/returns-replacements-authenticity", http.StatusTemporaryRedirect)
+		return
+	}
 	if r.URL.Path == "/ui/orders/status" && r.Method == http.MethodGet {
 		h.orderStatusRefresh(w, r)
 		return
@@ -308,6 +313,20 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		listingComponent = pages.ListingUpdate(page)
 	}
 	switch {
+	case r.URL.Path == "/returns-replacements-authenticity":
+		var content []byte
+		var effective time.Time
+		if err := h.pool.QueryRow(r.Context(), `SELECT v.content,v.published_at FROM marketplace_policy_settings p JOIN marketplace_policy_versions v ON v.version=p.version WHERE p.id AND p.published_at IS NOT NULL`).Scan(&content, &effective); err != nil {
+			http.Error(w, "The updated policy is being prepared. Contact support for the policy recorded with your order.", 503)
+			return
+		}
+		if err := json.Unmarshal(content, &page.ReturnPolicySections); err != nil {
+			http.Error(w, "Policy temporarily unavailable", 503)
+			return
+		}
+		page.Title = "Returns, replacements & authenticity"
+		page.ReturnPolicyEffective = effective.In(time.FixedZone("IST", 19800)).Format("2 January 2006")
+		component = pages.ReturnPolicy(page)
 	case page.StorefrontPage != nil && !page.StorefrontPage.Legacy:
 		component = pages.StorefrontContentPage(page)
 	case page.StorefrontPage != nil && page.StorefrontPage.Legacy && strings.HasPrefix(r.URL.Path, "/pages/"):
@@ -677,7 +696,7 @@ func requiresCustomerSession(path string) bool {
 
 func isInfoRoute(path string) bool {
 	switch path {
-	case "/faq", "/contact", "/shipping", "/size-guide", "/terms", "/privacy", "/about", "/our-story", "/sustainability", "/press", "/careers":
+	case "/returns-replacements-authenticity", "/faq", "/contact", "/shipping", "/size-guide", "/terms", "/privacy", "/about", "/our-story", "/sustainability", "/press", "/careers":
 		return true
 	default:
 		return false
@@ -1522,7 +1541,7 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 	}
 	if view.CanRequestReturn {
 		var eligible bool
-		if e := h.pool.QueryRow(ctx, `SELECT COALESCE((policy_snapshot->>'return_days')::int,0)=0 OR delivered_at IS NULL OR delivered_at + make_interval(days=>COALESCE((policy_snapshot->>'return_days')::int,0))>=now() FROM orders WHERE id=$1`, order.ID).Scan(&eligible); e != nil {
+		if e := h.pool.QueryRow(ctx, `SELECT COALESCE((policy_snapshot->>'standard_returns_allowed')::boolean,true) AND (COALESCE((policy_snapshot->>'return_days')::int,0)=0 OR delivered_at IS NULL OR delivered_at + make_interval(days=>COALESCE((policy_snapshot->>'return_days')::int,0))>=now()) FROM orders WHERE id=$1`, order.ID).Scan(&eligible); e != nil {
 			return viewmodels.Order{}, e
 		}
 		view.CanRequestReturn = eligible
@@ -1686,6 +1705,10 @@ func displayPaymentStatus(paymentStatus, orderStatus string) string {
 }
 
 func applyCheckoutPaymentDisplay(view *viewmodels.Order, detail domaincommerce.OrderDetail) {
+	view.CreditCents = detail.CreditCents
+	view.CreditUsed = storefrontMoney(detail.CreditCents)
+	view.CashPaid = storefrontMoney(detail.TotalCents - detail.CreditCents)
+
 	view.PaymentExpired = detail.PaymentExpired
 	view.PaymentInProgress = detail.PaymentInProgress
 	view.PaymentCreationPending = detail.PaymentCreationPending

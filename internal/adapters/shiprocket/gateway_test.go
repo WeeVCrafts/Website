@@ -34,7 +34,7 @@ func TestShiprocketParcelLifecycle(t *testing.T) {
 		}
 		switch r.Method + " " + r.URL.Path {
 		case "GET /v1/external/settings/company/pickup":
-			fmt.Fprint(w, `{"data":{"shipping_address":[{"pickup_location":"Test Pickup","pin_code":"110030","address":"Private fixture address"}]}}`)
+			fmt.Fprint(w, `{"data":{"shipping_address":[{"pickup_location":"Test Pickup","pin_code":"110030","phone_verified":1,"address":"Private fixture address"}]}}`)
 		case "GET /v1/external/courier/serviceability/":
 			query := r.URL.Query()
 			if query.Get("order_id") != "42" || query.Get("pickup_postcode") != "110030" || query.Get("delivery_postcode") != "122002" {
@@ -98,7 +98,7 @@ func TestShiprocketParcelLifecycle(t *testing.T) {
 	}
 	shipment.DeliveryPostalCode = "122002"
 	options, err := client.CourierOptions(ctx, shipment)
-	if err != nil || len(options) != 2 || options[0] != (ports.CourierOption{ID: 51, Name: "Xpressbees Surface", EstimatedRate: "₹54.00", EstimatedDays: "4"}) || options[1] != (ports.CourierOption{ID: 217, Name: "India Post"}) {
+	if err != nil || len(options) != 2 || options[0] != (ports.CourierOption{ID: 51, Name: "Xpressbees Surface", EstimatedRate: "₹54.00", EstimatedDays: "4", RateCents: 5400}) || options[1] != (ports.CourierOption{ID: 217, Name: "India Post"}) {
 		t.Fatalf("unexpected courier options %v, %v", options, err)
 	}
 	if found, err := client.Find(ctx, shipment.Reference); err != nil || found.ProviderShipmentID != shipment.ProviderShipmentID {

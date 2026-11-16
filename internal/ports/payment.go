@@ -130,6 +130,9 @@ type PaymentRecoveryRepository interface {
 	ClaimPaymentReconciliation(context.Context, int) ([]PaymentOrderRecord, error)
 	ClaimOrderPaymentReconciliation(context.Context, int64, string) (bool, error)
 }
+type PaymentLookupResultRepository interface {
+	RecordPaymentLookup(context.Context, int64, []PaymentWebhook) error
+}
 
 type PaymentPayabilityRepository interface {
 	PaymentOrderPayable(context.Context, int64, string) (bool, error)

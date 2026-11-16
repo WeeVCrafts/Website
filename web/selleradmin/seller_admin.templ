@@ -104,6 +104,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
       }
       if p.CanOrders {
         @SellerNav("orders", "Orders & Fulfilment", "inventory_2", p.Active, "/seller-admin/orders")
+        @SellerNav("fulfillment", "Packages & pickups", "local_shipping", p.Active, "/seller-admin/fulfillment")
       }
       if p.CanReports {
         @SellerNav("earnings", "Earnings", "account_balance_wallet", p.Active, "/seller-admin/earnings")
