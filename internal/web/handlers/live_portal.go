@@ -908,6 +908,18 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 	case "returns":
 		component = adminpages.PortalReturns(page)
 	case "finance":
+		if page.Workspace == "finance-reconciliation" {
+			if !page.CanFinance {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			report, err := h.dailyReconciliation(r, root)
+			if err != nil {
+				page.DataWarning = joinPortalWarning(page.DataWarning, "The reconciliation report is unavailable. Check the date and try again.")
+			} else {
+				page.Reconciliation = report
+			}
+		}
 		component = adminpages.PortalFinance(page)
 	case "support":
 		if page.Workspace == "reviews" {

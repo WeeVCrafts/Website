@@ -38,3 +38,17 @@ for (const width of [390,1440]) {
     await expect(page.getByRole('button',{name:'Confirm transfer paid',exact:true})).toHaveCount(0);
   });
 }
+test("daily reconciliation is usable on a phone and links to the review queue", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("http://127.0.0.1:18087/admin/finance-reconciliation");
+  await expect(page.getByRole("heading", { name: "Daily reconciliation" })).toBeVisible();
+  await expect(page.getByLabel("Report date (IST)")).toHaveValue("2026-11-16");
+  await page.getByLabel("Report date (IST)").focus();
+  const showReport = page.getByRole("button", { name: "Show report" });
+  for (let step = 0; step < 5 && !(await showReport.evaluate(el => el === document.activeElement)); step++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(showReport).toBeFocused();
+  await expect(page.getByRole("link", { name: "WC-FIXTURE" })).toHaveAttribute("href", "/admin/payment-reviews");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(392);
+});

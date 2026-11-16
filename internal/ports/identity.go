@@ -69,11 +69,12 @@ type EmailSender interface {
 }
 
 type EmailMessage struct {
-	To          string
-	DisplayName string
-	Subject     string
-	ActionURL   string
-	Body        string
+	IdempotencyKey string
+	To             string
+	DisplayName    string
+	Subject        string
+	ActionURL      string
+	Body           string
 }
 
 // RoleChecker is the application authorization boundary. Implementations may

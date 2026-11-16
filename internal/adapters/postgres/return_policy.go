@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
-	"strings"
-	"time"
 )
 
 func (r *MarketplaceRepository) PolicySettings(ctx context.Context) (ports.PolicySettings, error) {
@@ -40,7 +41,9 @@ func (r *MarketplaceRepository) ConfigurePolicy(ctx context.Context, actor int64
 			_, err = tx.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode='off',updated_at=now() WHERE id`)
 		case "configure_pilot":
 			var ready bool
-			err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='customer') AND EXISTS(SELECT 1 FROM product_variants v JOIN products p ON p.id=v.product_id JOIN sellers s ON s.id=p.seller_id JOIN marketplace_shipping_profiles sp ON sp.seller_id=s.id JOIN seller_invoice_profiles ip ON ip.seller_id=s.id JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE v.id=$2 AND v.status='active' AND p.status='approved' AND s.status='active' AND sp.verified AND v.return_class<>'unclassified' AND v.shipping_weight_g>=100 AND v.shipping_length_cm>0 AND v.shipping_width_cm>0 AND v.shipping_height_cm>0 AND NOT(ip.registration='unregistered' AND tp.rate_basis_points<>0)) AND EXISTS(SELECT 1 FROM marketplace_policy_settings WHERE id AND published_at IS NOT NULL AND (pilot_order_id IS NULL OR (pilot_user_id=$1 AND pilot_variant_id=$2)))`, user, variant).Scan(&ready)
+			err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='customer')
+				AND EXISTS(SELECT 1 FROM marketplace_ready_variants WHERE variant_id=$2 AND stock>0)
+				AND EXISTS(SELECT 1 FROM marketplace_policy_settings WHERE id AND published_at IS NOT NULL AND pilot_order_id IS NULL)`, user, variant).Scan(&ready)
 			if err != nil {
 				return err
 			}
@@ -64,6 +67,55 @@ func (r *MarketplaceRepository) ConfigurePolicy(ctx context.Context, actor int64
 			return err
 		}
 		return marketplaceAudit(ctx, tx, actor, 0, action, reason)
+	})
+}
+
+func (r *MarketplaceRepository) ConfigureLiveCatalog(ctx context.Context, actor, first, second int64, reason string) error {
+	reason = strings.TrimSpace(reason)
+	if first <= 0 || second <= 0 || first == second || len(reason) < 10 || len(reason) > 1000 {
+		return ports.ErrInvalidState
+	}
+	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		a, err := marketplaceIdentity(ctx, tx, actor)
+		if err != nil {
+			return err
+		}
+		if a.role != "super_admin" {
+			return ports.ErrForbidden
+		}
+		var pilotOrder int64
+		var published bool
+		if err = tx.QueryRow(ctx, `SELECT COALESCE(pilot_order_id,0),published_at IS NOT NULL
+			FROM marketplace_policy_settings WHERE id FOR UPDATE`).Scan(&pilotOrder, &published); err != nil {
+			return err
+		}
+		var ready bool
+		if err = tx.QueryRow(ctx, `SELECT
+			(SELECT count(DISTINCT seller_id)=2 FROM marketplace_ready_variants WHERE variant_id IN ($1,$2) AND stock>0)
+			AND EXISTS(SELECT 1 FROM orders o WHERE o.id=$3 AND o.status='delivered' AND marketplace_order_funded(o.id)
+				AND EXISTS(SELECT 1 FROM payment_attempts p WHERE p.order_id=o.id AND p.provider='razorpay'
+					AND p.status='captured' AND p.amount_cents>0 AND COALESCE(p.provider_payment_id,'')<>'')
+				AND EXISTS(SELECT 1 FROM marketplace_packages p WHERE p.order_id=o.id AND p.delivery_method='shiprocket'
+					AND p.status='delivered' AND p.provider_shipment_id IS NOT NULL AND p.awb<>''))`, first, second, pilotOrder).Scan(&ready); err != nil {
+			return err
+		}
+		if !published || !ready {
+			return ports.ErrInvalidState
+		}
+		if _, err = tx.Exec(ctx, `DELETE FROM marketplace_launch_variants WHERE variant_id NOT IN ($1,$2)`, first, second); err != nil {
+			return err
+		}
+		if _, err = tx.Exec(ctx, `INSERT INTO marketplace_launch_variants(variant_id) VALUES($1),($2) ON CONFLICT DO NOTHING`, first, second); err != nil {
+			return err
+		}
+		if _, err = tx.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode='live',updated_at=now() WHERE id`); err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata)
+			VALUES($1,'marketplace.configure_live_catalog','marketplace_policy','1',$2,
+				jsonb_build_object('reason',$3::text,'variant_ids',jsonb_build_array($4::bigint,$5::bigint)))`,
+			fmt.Sprint(actor), ports.RequestID(ctx), reason, first, second)
+		return err
 	})
 }
 

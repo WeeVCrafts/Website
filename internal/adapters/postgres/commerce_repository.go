@@ -843,7 +843,17 @@ func (r *CommerceRepository) GetCart(ctx context.Context, cartID int64) (domainc
 		}
 		return domaincommerce.Cart{}, err
 	}
-	rows, err := r.pool.Query(ctx, `SELECT ci.variant_id, p.id, p.slug, p.name, pv.name, pv.sku, ci.quantity, pv.price_cents, i.available_quantity FROM cart_items ci JOIN product_variants pv ON pv.id = ci.variant_id AND pv.status = 'active' JOIN products p ON p.id = pv.product_id AND p.status = 'approved' JOIN inventory_stock i ON i.variant_id = pv.id WHERE ci.cart_id = $1 ORDER BY ci.created_at, ci.variant_id`, cartID)
+	rows, err := r.pool.Query(ctx, `SELECT ci.variant_id,p.id,p.slug,p.name,pv.name,pv.sku,ci.quantity,pv.price_cents,i.available_quantity,
+		$2 AND NOT COALESCE(m.published_at IS NOT NULL AND v.stock>=ci.quantity AND
+			(m.shipping_mode='live' AND v.selected OR m.shipping_mode='pilot' AND c.user_id=m.pilot_user_id
+				AND v.variant_id=m.pilot_variant_id AND m.pilot_order_id IS NULL AND ci.quantity=1),false)
+		FROM cart_items ci JOIN carts c ON c.id=ci.cart_id
+		JOIN product_variants pv ON pv.id=ci.variant_id AND pv.status='active'
+		JOIN products p ON p.id=pv.product_id AND p.status='approved'
+		JOIN inventory_stock i ON i.variant_id=pv.id
+		LEFT JOIN marketplace_ready_variants v ON v.variant_id=pv.id
+		LEFT JOIN marketplace_policy_settings m ON m.id
+		WHERE ci.cart_id=$1 ORDER BY ci.created_at,ci.variant_id`, cartID, r.policyCheckoutRequired)
 	if err != nil {
 		return domaincommerce.Cart{}, err
 	}
@@ -851,7 +861,7 @@ func (r *CommerceRepository) GetCart(ctx context.Context, cartID int64) (domainc
 	cart.Items = make([]domaincommerce.CartItem, 0)
 	for rows.Next() {
 		var item domaincommerce.CartItem
-		if err := rows.Scan(&item.VariantID, &item.ProductID, &item.ProductSlug, &item.ProductName, &item.VariantName, &item.SKU, &item.Quantity, &item.UnitPriceCents, &item.Available); err != nil {
+		if err := rows.Scan(&item.VariantID, &item.ProductID, &item.ProductSlug, &item.ProductName, &item.VariantName, &item.SKU, &item.Quantity, &item.UnitPriceCents, &item.Available, &item.CheckoutBlocked); err != nil {
 			return domaincommerce.Cart{}, err
 		}
 		item.LineTotalCents = item.UnitPriceCents * int64(item.Quantity)

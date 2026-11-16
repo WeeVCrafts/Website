@@ -32,7 +32,7 @@ func MarketplaceReadiness(p viewmodels.MarketplacePage) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>Only measured, classified products with verified seller, pickup and tax details can enter the pilot. Missing data stays visible here.</p><div role=\"region\" aria-label=\"Product shipping readiness\" tabindex=\"0\" style=\"overflow-x:auto\"><table><caption>Active product options — up to 50 per page</caption><thead><tr><th scope=\"col\">Product option</th><th scope=\"col\">Seller</th><th scope=\"col\">Measurements</th><th scope=\"col\">Required setup</th></tr></thead><tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>Review inventory, packed measurements, return classification, pickup, invoice and tax details before selecting variants for checkout.</p><div role=\"region\" aria-label=\"Product shipping readiness\" tabindex=\"0\" style=\"overflow-x:auto\"><table><caption>Active product options — up to 50 per page</caption><thead><tr><th scope=\"col\">Product option</th><th scope=\"col\">Seller</th><th scope=\"col\">Measurements</th><th scope=\"col\">Required setup</th></tr></thead><tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -143,42 +143,54 @@ func MarketplaceReadiness(p viewmodels.MarketplacePage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if r.WeightGrams < 100 || r.LengthCM < 1 || r.WidthCM < 1 || r.HeightCM < 1 {
+			if !r.ParcelReady() {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<p>Actual measurements required</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			if r.PickupReady && r.InvoiceReady && r.TaxReady && r.Classified && r.WeightGrams >= 100 && r.LengthCM > 0 && r.WidthCM > 0 && r.HeightCM > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<p>Product setup complete</p>")
+			if r.Stock <= 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<p>No sellable stock</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td></tr>")
+			if r.Ready() {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<p>Product setup complete</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if r.Selected {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<p>Selected for live checkout</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</tbody></table></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</tbody></table></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if p.NextSetupID > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s?setup_before=%d", p.Root, p.NextSetupID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/shipping_readiness.templ`, Line: 35, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/shipping_readiness.templ`, Line: 41, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">More product options</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\">More product options</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

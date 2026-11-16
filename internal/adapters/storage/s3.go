@@ -38,6 +38,15 @@ func NewS3WithCA(endpoint, accessKey, secretKey, bucket string, secure bool, caP
 // NewS3WithCARegion creates an S3 client with optional private CA trust and an
 // explicit signing region for providers such as Tigris and Cloudflare R2.
 func NewS3WithCARegion(endpoint, accessKey, secretKey, bucket string, secure bool, caPEM, region string) (*S3, error) {
+	client, err := NewS3Client(endpoint, accessKey, secretKey, secure, caPEM, region)
+	if err != nil {
+		return nil, err
+	}
+	return &S3{client: client, bucket: bucket}, nil
+}
+
+// NewS3Client also configures TLS and signing for the recovery command.
+func NewS3Client(endpoint, accessKey, secretKey string, secure bool, caPEM, region string) (*minio.Client, error) {
 	endpoint = strings.TrimPrefix(strings.TrimPrefix(endpoint, "http://"), "https://")
 	options := minio.Options{Creds: credentials.NewStaticV4(accessKey, secretKey, ""), Secure: secure, Region: strings.TrimSpace(region)}
 	if strings.TrimSpace(caPEM) != "" {
@@ -49,11 +58,7 @@ func NewS3WithCARegion(endpoint, accessKey, secretKey, bucket string, secure boo
 		transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: roots}
 		options.Transport = transport
 	}
-	client, err := minio.New(endpoint, &options)
-	if err != nil {
-		return nil, err
-	}
-	return &S3{client: client, bucket: bucket}, nil
+	return minio.New(endpoint, &options)
 }
 
 func (s *S3) CreateUploadURL(ctx context.Context, request ports.UploadRequest) (ports.UploadURL, error) {

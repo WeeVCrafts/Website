@@ -51,11 +51,17 @@ type LiveStorefrontHandler struct {
 	paymentMode        string
 	paymentPublicKey   string
 	paymentReady       bool
+	policyCheckout     bool
+	checkoutEnabled    bool
 	noPaymentDemo      bool
 	publicURL          string
 	supportAttachments *applicationcommerce.SupportAttachmentService
 	profileStorage     ports.ObjectStorage
 	fallback           http.Handler
+}
+
+func (h *LiveStorefrontHandler) SetCheckoutAvailability(policyCheckout, enabled bool) {
+	h.policyCheckout, h.checkoutEnabled = policyCheckout, enabled
 }
 
 func NewLiveStorefrontHandler(catalog *applicationcatalog.Service, search *applicationcatalog.SearchService, cart *applicationcommerce.CartService, orders *applicationcommerce.OrderService, sessions *applicationauth.SessionService, pool *pgxpool.Pool, paymentMode, paymentPublicKey string, paymentConfigured bool, fallback http.Handler, noPaymentDemo ...interface{}) *LiveStorefrontHandler {
@@ -2101,7 +2107,8 @@ func (h *LiveStorefrontHandler) liveCartViews(ctx context.Context, cart domainco
 		if strings.TrimSpace(delivery) == "" {
 			delivery = "Delivery estimate unavailable"
 		}
-		items = append(items, viewmodels.CartItem{Product: productView, VariantName: item.VariantName, Quantity: item.Quantity, Delivery: delivery})
+		items = append(items, viewmodels.CartItem{Product: productView, VariantName: item.VariantName, Quantity: item.Quantity, Delivery: delivery,
+			CheckoutBlocked: item.CheckoutBlocked || h.policyCheckout && !h.checkoutEnabled})
 	}
 	return items, nil
 }
@@ -2390,11 +2397,19 @@ func liveProduct(product domaincatalog.Product, csrf string) viewmodels.Product 
 }
 
 func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug string) ([]viewmodels.ProductVariant, error) {
+	var actor int64
+	if h.policyCheckout {
+		actor, _, _ = h.session(r)
+	}
 	rows, err := h.pool.Query(r.Context(), `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
-		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status
+		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,
+		NOT $2 OR $3 AND COALESCE(m.published_at IS NOT NULL AND v.stock>0 AND (m.shipping_mode='live' AND v.selected
+			OR m.shipping_mode='pilot' AND m.pilot_user_id=$4 AND v.variant_id=m.pilot_variant_id AND m.pilot_order_id IS NULL),false)
 		FROM products p JOIN product_variants pv ON pv.product_id=p.id AND pv.status='active'
 		LEFT JOIN inventory_stock i ON i.variant_id=pv.id
-		WHERE p.slug=$1 AND p.status='approved' ORDER BY (COALESCE(i.available_quantity,0)>0) DESC,pv.id`, slug)
+		LEFT JOIN marketplace_ready_variants v ON v.variant_id=pv.id
+		LEFT JOIN marketplace_policy_settings m ON m.id
+		WHERE p.slug=$1 AND p.status='approved' ORDER BY (COALESCE(i.available_quantity,0)>0) DESC,pv.id`, slug, h.policyCheckout, h.checkoutEnabled, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -2403,8 +2418,8 @@ func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug st
 	for rows.Next() {
 		var id, price, compareAt, available, reserved int64
 		var name, sku, status string
-		var hasCompare bool
-		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status); err != nil {
+		var hasCompare, purchasable bool
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &available, &reserved, &status, &purchasable); err != nil {
 			return nil, err
 		}
 		view := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
@@ -2412,6 +2427,9 @@ func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug st
 			Price: storefrontMoney(price), InStock: available > 0, StockMessage: "Currently unavailable"}
 		if view.InStock {
 			view.StockMessage = "In stock"
+			if !purchasable {
+				view.StockMessage = "Checkout is unavailable for this option"
+			}
 		}
 		view.HasCompareAt = hasCompare && compareAt > price
 		if view.HasCompareAt {

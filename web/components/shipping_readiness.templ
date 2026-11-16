@@ -4,7 +4,7 @@ import "fmt"
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ MarketplaceReadiness(p viewmodels.MarketplacePage) {
-	<p>Only measured, classified products with verified seller, pickup and tax details can enter the pilot. Missing data stays visible here.</p>
+	<p>Review inventory, packed measurements, return classification, pickup, invoice and tax details before selecting variants for checkout.</p>
 	<div role="region" aria-label="Product shipping readiness" tabindex="0" style="overflow-x:auto">
 		<table><caption>Active product options — up to 50 per page</caption><thead><tr><th scope="col">Product option</th><th scope="col">Seller</th><th scope="col">Measurements</th><th scope="col">Required setup</th></tr></thead><tbody>
 			for _,r:=range p.Readiness {
@@ -21,11 +21,17 @@ templ MarketplaceReadiness(p viewmodels.MarketplacePage) {
 					if !r.Classified {
 <p>Return classification missing</p>
 }
-					if r.WeightGrams<100 || r.LengthCM<1 || r.WidthCM<1 || r.HeightCM<1 {
+					if !r.ParcelReady() {
 <p>Actual measurements required</p>
 }
-					if r.PickupReady && r.InvoiceReady && r.TaxReady && r.Classified && r.WeightGrams>=100 && r.LengthCM>0 && r.WidthCM>0 && r.HeightCM>0 {
+					if r.Stock<=0 {
+<p>No sellable stock</p>
+}
+					if r.Ready() {
 <p>Product setup complete</p>
+}
+					if r.Selected {
+<p>Selected for live checkout</p>
 }
 				</td></tr>
 			}

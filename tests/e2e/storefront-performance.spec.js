@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
 
-test('desktop hero controls reserve space and only next media is prefetched after the first image',async({page})=>{
+test('desktop hero controls reserve space and defer other media until activation',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.setViewportSize({width:1440,height:1000});
   let release;
@@ -23,7 +23,7 @@ test('desktop hero controls reserve space and only next media is prefetched afte
     const after=await controls.boundingBox();
     expect(after.height).toBe(before.height);
     expect(Math.abs(after.y-before.y)).toBeLessThan(1);
-    await expect.poll(()=>images.some(url=>new URL(url).pathname.includes('textiles-banner'))).toBe(true);
+    expect(images.some(url=>new URL(url).pathname.includes('textiles-banner'))).toBe(false);
     expect(await page.locator('[data-hero-slide] img').nth(2).getAttribute('src')).toBeNull();
     expect(images.some(url=>new URL(url).pathname.includes('craft-mobile-banner'))).toBe(false);
     await page.emulateMedia({reducedMotion:'reduce'});

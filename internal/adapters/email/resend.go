@@ -88,6 +88,12 @@ func (s *Resend) Send(ctx context.Context, message ports.EmailMessage) error {
 	}
 	request.Header.Set("Authorization", "Bearer "+s.key)
 	request.Header.Set("Content-Type", "application/json")
+	if message.IdempotencyKey != "" {
+		if !validHeader(message.IdempotencyKey) || len(message.IdempotencyKey) > 256 {
+			return errors.New("email idempotency key invalid")
+		}
+		request.Header.Set("Idempotency-Key", message.IdempotencyKey)
+	}
 	response, err := s.client.Do(request)
 	if err != nil {
 		return errors.New("email delivery unavailable")

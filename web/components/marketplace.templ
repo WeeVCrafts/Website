@@ -33,6 +33,16 @@ templ MarketplaceWorkspace(p viewmodels.MarketplacePage) {
 				}
 			</ul>
 			if p.Role=="admin" || p.Role=="super_admin" {
+				<h2>Seller follow-up</h2>
+				<p>Acceptance after 24 hours, packing after a 48-hour dispatch target, and seller cancellations in the last seven days.</p>
+				if len(p.Queue)==0 {
+					<p>No seller follow-up is due.</p>
+				}
+				<ul>
+					for _,item:=range p.Queue {
+						<li><a href={ templ.SafeURL(p.Root+"?order="+url.QueryEscape(item.Number)) }>{ item.Number }</a> · { item.Seller } · { item.Issue }</li>
+					}
+				</ul>
 				<h2>Support delivery queues</h2>
 				<nav aria-label="Exception queues">
 					for _,kind:=range []string{"","delayed_order","failed_delivery","ndr","rto","return_dispute","refund_request","seller_escalation","delivery_dispute","unknown_status","provider_error"} {
@@ -56,9 +66,15 @@ templ MarketplaceWorkspace(p viewmodels.MarketplacePage) {
 						<p>
 							{ c.Reason }
 						</p>
+						if c.Assignee != "" {
+							<p>Assigned to { c.Assignee }</p>
+						}
+						if c.NextAction != "" {
+							<p>Next action: { c.NextAction }</p>
+						}
 						<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-							@MarketplaceFields(p, "resolve_case")
-							<input type="hidden" name="case_id" value={ fmt.Sprint(c.ID) }/><label>Investigation outcome<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><button type="submit" name="action" value="assign_case">Assign to me</button> <button type="submit" name="action" value="resolve_case">Resolve case</button>
+							@MarketplaceFields(p, "")
+							<input type="hidden" name="case_id" value={ fmt.Sprint(c.ID) }/><label>Next action or resolution<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><button type="submit" name="action" value="assign_case">Assign to me</button> <button type="submit" name="action" value="resolve_case">Resolve case</button>
 						</form>
 					</article>
 				}

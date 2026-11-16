@@ -84,19 +84,27 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 			v.NextOrderID = v.Orders[49].ID
 			v.Orders = v.Orders[:50]
 		}
-		rows, e = r.pool.Query(ctx, `SELECT c.id,c.order_id,COALESCE(c.seller_id,0),COALESCE(c.package_id,0),o.order_number,c.kind,c.status,c.reason,c.created_at FROM marketplace_cases c JOIN orders o ON o.id=c.order_id WHERE c.status='open' AND ($1='' OR c.kind=$1) AND ($2=0 OR c.id<$2) ORDER BY c.id DESC LIMIT 51`, queue, caseBefore)
+		if queue == "" && caseBefore == 0 {
+			v.Queue, e = r.fulfillmentQueue(ctx)
+			if e != nil {
+				return v, e
+			}
+		}
+		rows, e = r.pool.Query(ctx, `SELECT c.id,c.order_id,COALESCE(c.seller_id,0),COALESCE(c.package_id,0),o.order_number,c.kind,c.status,c.reason,c.created_at,COALESCE(u.display_name,''),c.next_action
+			FROM marketplace_cases c JOIN orders o ON o.id=c.order_id LEFT JOIN users u ON u.id=c.assignee_id
+			WHERE c.status='open' AND ($1='' OR c.kind=$1) AND ($2=0 OR c.id<$2) ORDER BY c.id DESC LIMIT 51`, queue, caseBefore)
 		if e != nil {
 			return v, e
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var c ports.MarketplaceCase
-			if e = rows.Scan(&c.ID, &c.OrderID, &c.SellerID, &c.PackageID, &c.Number, &c.Kind, &c.Status, &c.Reason, &c.CreatedAt); e != nil {
+			if e = rows.Scan(&c.ID, &c.OrderID, &c.SellerID, &c.PackageID, &c.Number, &c.Kind, &c.Status, &c.Reason, &c.CreatedAt, &c.Assignee, &c.NextAction); e != nil {
 				return v, e
 			}
 			v.Cases = append(v.Cases, c)
 		}
-		e = errorsJoinRows(nil, rows)
+		e = errorsJoinRows(e, rows)
 		if len(v.Cases) > 50 {
 			v.NextCaseID = v.Cases[49].ID
 			v.Cases = v.Cases[:50]
@@ -305,7 +313,12 @@ func (r *MarketplaceRepository) Act(ctx context.Context, actor int64, c ports.Ma
 			if !a.company() || len(strings.TrimSpace(c.Reason)) < 4 {
 				return ports.ErrForbidden
 			}
-			result, e := tx.Exec(ctx, `UPDATE marketplace_cases SET assignee_id=$2,status=CASE WHEN $3 THEN 'resolved' ELSE status END,resolution=CASE WHEN $3 THEN $4 ELSE resolution END,resolved_at=CASE WHEN $3 THEN now() ELSE resolved_at END WHERE id=$1 AND status='open'`, c.CaseID, actor, c.Action == "resolve_case", c.Reason)
+			if len(c.Reason) > 1000 {
+				return ports.ErrInvalidState
+			}
+			result, e := tx.Exec(ctx, `UPDATE marketplace_cases SET assignee_id=$2,status=CASE WHEN $3 THEN 'resolved' ELSE status END,
+				resolution=CASE WHEN $3 THEN $4 ELSE resolution END,next_action=CASE WHEN $3 THEN '' ELSE $4 END,
+				resolved_at=CASE WHEN $3 THEN now() ELSE resolved_at END WHERE id=$1 AND status='open'`, c.CaseID, actor, c.Action == "resolve_case", c.Reason)
 			if e != nil {
 				return e
 			}

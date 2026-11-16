@@ -20,6 +20,7 @@ type MarketplaceProcessor struct {
 	Refunds         ports.PaymentRefundGateway
 	BookingsEnabled bool
 	Handlers        map[string]func(context.Context) error
+	NotifyEmail     func(context.Context, int64) error
 }
 
 func (p *MarketplaceProcessor) Process(ctx context.Context, id int64) error {
@@ -40,6 +41,10 @@ func (p *MarketplaceProcessor) Process(ctx context.Context, id int64) error {
 		err = p.refund(runCtx, job.ResourceID)
 	case "notify_sellers":
 		err = p.Store.NotifySellers(runCtx, job.ResourceID)
+	case "transactional_email":
+		if p.NotifyEmail != nil {
+			err = p.NotifyEmail(runCtx, job.ResourceID)
+		}
 	case "invoice":
 		err = p.Store.IssueInvoices(runCtx, job.ResourceID)
 	case "credit_note":

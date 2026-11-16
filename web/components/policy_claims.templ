@@ -29,6 +29,18 @@ templ MarketplacePolicyControls(p viewmodels.MarketplacePage) {
 			<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
 @MarketplaceFields(p,"configure_pilot")
 <h3>One genuine order pilot</h3><p>Requires a verified seller invoice/tax profile, pickup, real variant measurements, published policy and live booking configuration. Only one item and one pilot order are permitted.</p><label>Customer account ID<input name="customer_id" type="number" min="1" required/></label><label>Variant ID<input name="variant_id" type="number" min="1" required/></label><label>Activation reason<input name="reason" minlength="10" maxlength="1000" required/></label><label><input type="checkbox" name="confirmed" value="yes" required/>Wallet is funded and this customer and product are ready for a genuine shipment</label><button type="submit">Enable one-order pilot</button></form>
+			if p.Policy.PilotOrderID > 0 {
+				<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
+					@MarketplaceFields(p, "configure_live_catalog")
+					<h3>Two-variant launch catalog</h3>
+					<p>Choose one ready variant per seller after the paid pilot has been delivered through Shiprocket.</p>
+					<label>First variant ID<input name="variant_id" type="number" min="1" required/></label>
+					<label>Second variant ID<input name="second_variant_id" type="number" min="1" required/></label>
+					<label>Launch reason<input name="reason" minlength="10" maxlength="1000" required/></label>
+					<label><input name="confirmed" value="yes" type="checkbox" required/>I verified the recovery drill, two-seller rehearsal and launch notifications</label>
+					<button type="submit">Save and activate launch catalog</button>
+				</form>
+			}
 			<form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
 @MarketplaceFields(p,"pause_shipping")
 <label>Pause reason<input name="reason" minlength="10" maxlength="1000" required/></label><label><input type="checkbox" name="confirmed" value="yes" required/>Pause new purchases and bookings; continue reconciliation</label><button type="submit">Pause new shipping</button></form>

@@ -14,7 +14,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("web/assets"))))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/admin/finance" {
+		if r.Method != http.MethodGet || r.URL.Path != "/admin/finance" && r.URL.Path != "/admin/finance-reconciliation" {
 			http.NotFound(w, r)
 			return
 		}
@@ -41,6 +41,14 @@ func main() {
 			item.EvidenceState = "Historical paid record: evidence requires reconciliation"
 		}
 		page := viewmodels.AdminPage{ActorID: actor, Active: "finance", NavActive: "finance", Workspace: "settlements", Title: "Manual settlement fixture", PortalRoot: "/admin", SettlementRoot: "/admin/finance", PortalLabel: "Admin", RoleLabel: "Admin", DisplayName: "Isolated layout operator", CanFinance: true, CSRFToken: "fixture-only", Settlements: []viewmodels.AdminSettlement{item}}
+		if r.URL.Path == "/admin/finance-reconciliation" {
+			page.Workspace = "finance-reconciliation"
+			page.Reconciliation = &viewmodels.FinanceReconciliation{
+				Date:      "2026-11-16",
+				Totals:    []viewmodels.AdminStat{{Label: "Razorpay captured for confirmed orders", Value: "INR 100.00"}},
+				FollowUps: []viewmodels.FinanceFollowUp{{Order: "WC-FIXTURE", Kind: "Payment review", Amount: "INR 25.00", Status: "open", URL: "/admin/payment-reviews"}},
+			}
+		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if err := adminpages.PortalFinance(page).Render(r.Context(), w); err != nil {
 			log.Print(err)

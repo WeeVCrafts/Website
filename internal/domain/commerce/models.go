@@ -237,16 +237,17 @@ type ReturnRequest struct {
 }
 
 type CartItem struct {
-	VariantID      int64  `json:"variant_id"`
-	ProductID      int64  `json:"product_id"`
-	ProductSlug    string `json:"product_slug"`
-	ProductName    string `json:"product_name"`
-	VariantName    string `json:"variant_name"`
-	SKU            string `json:"sku"`
-	Quantity       int    `json:"quantity"`
-	UnitPriceCents int64  `json:"unit_price_cents"`
-	LineTotalCents int64  `json:"line_total_cents"`
-	Available      int    `json:"available"`
+	CheckoutBlocked bool   `json:"checkout_blocked,omitempty"`
+	VariantID       int64  `json:"variant_id"`
+	ProductID       int64  `json:"product_id"`
+	ProductSlug     string `json:"product_slug"`
+	ProductName     string `json:"product_name"`
+	VariantName     string `json:"variant_name"`
+	SKU             string `json:"sku"`
+	Quantity        int    `json:"quantity"`
+	UnitPriceCents  int64  `json:"unit_price_cents"`
+	LineTotalCents  int64  `json:"line_total_cents"`
+	Available       int    `json:"available"`
 }
 
 type Cart struct {

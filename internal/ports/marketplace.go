@@ -38,7 +38,12 @@ type MarketplaceRefund struct {
 type MarketplaceCase struct {
 	ID, OrderID, SellerID, PackageID int64
 	Number, Kind, Status, Reason     string
+	Assignee, NextAction             string
 	CreatedAt                        time.Time
+}
+
+type FulfillmentQueueItem struct {
+	Number, Seller, Issue string
 }
 type MarketplaceOrderSummary struct {
 	ID             int64
@@ -95,6 +100,7 @@ type MarketplaceView struct {
 	Packages                                []MarketplacePackage
 	Refunds                                 []MarketplaceRefund
 	Cases                                   []MarketplaceCase
+	Queue                                   []FulfillmentQueueItem
 	Invoices                                []MarketplaceInvoice
 	CreditNotes                             []MarketplaceInvoice
 	Orders                                  []MarketplaceOrderSummary

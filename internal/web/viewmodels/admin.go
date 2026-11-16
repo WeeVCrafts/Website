@@ -5,6 +5,7 @@ import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	Reconciliation                                                                   *FinanceReconciliation
 	CanManageDelivery                                                                bool
 	Insights                                                                         AdminInsights
 	Pagination                                                                       PortalPagination
@@ -36,6 +37,17 @@ type AdminPage struct {
 	AuditEntries                                                                     []AdminAuditEntry
 	Configs                                                                          []AdminConfig
 	RoleAssignments                                                                  []domainidentity.RoleAssignment
+}
+
+type FinanceReconciliation struct {
+	Date      string
+	Totals    []AdminStat
+	FollowUps []FinanceFollowUp
+	HasMore   bool
+}
+
+type FinanceFollowUp struct {
+	Order, Kind, Amount, Status, URL string
 }
 
 type AdminStat struct {

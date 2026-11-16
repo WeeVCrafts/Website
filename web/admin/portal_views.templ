@@ -310,21 +310,67 @@ templ PortalFinance(p viewmodels.AdminPage) {
   <a class={workspaceTabClass(p.Workspace==tab.Path || ((p.Workspace=="finance" || p.Workspace=="") && tab.Path=="payments"))} href={financeSectionURL(p,tab.Path)} aria-current={ariaCurrent(p.Workspace==tab.Path || ((p.Workspace=="finance" || p.Workspace=="") && tab.Path=="payments"))}>{tab.Label}</a>
  }
  </nav>
- @StatGrid(p)
-		if p.Workspace == "failed-payments" {
+		if p.Workspace == "finance-reconciliation" {
+			@PortalDailyReconciliation(p)
+		} else {
+			@StatGrid(p)
+			if p.Workspace == "failed-payments" {
 			<p class="admin-page-note">Showing failed payment attempts from the live payment ledger.</p>
-		} else if p.Workspace == "refunds" {
+			} else if p.Workspace == "refunds" {
 			<p class="admin-page-note">Showing payment attempts recorded as refunded.</p>
-		} else if p.Workspace == "settlements" {
+			} else if p.Workspace == "settlements" {
 			<p class="admin-page-note">Settlement batches use captured order ledger entries. Record external bank transfers with independent approval and private evidence.</p>
-		}
-		<section class="admin-two-grid">
-			@PortalSettlementTable(p)
-			if p.Workspace != "settlements" {
-				@PortalTransactionTable(p)
 			}
-		</section>
+			<section class="admin-two-grid">
+				@PortalSettlementTable(p)
+				if p.Workspace != "settlements" {
+					@PortalTransactionTable(p)
+				}
+			</section>
+		}
 	}
+}
+
+templ PortalDailyReconciliation(p viewmodels.AdminPage) {
+	<article class="admin-panel">
+		<h2>Daily reconciliation</h2>
+		<form class="marketplace-form" method="get" action={ financeSectionURL(p, "finance-reconciliation") }>
+			<label>Report date (IST)
+				if p.Reconciliation != nil {
+					<input type="date" name="date" value={ p.Reconciliation.Date } required/>
+				} else {
+					<input type="date" name="date" required/>
+				}
+			</label>
+			<button type="submit">Show report</button>
+		</form>
+		if p.Reconciliation != nil {
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Daily reconciliation amounts">
+				<table class="ui-table ui-table--records">
+					<caption>Recorded amounts for { p.Reconciliation.Date } (IST)</caption>
+					<thead><tr><th scope="col">Entry</th><th scope="col">Amount</th></tr></thead>
+					<tbody>
+						for _, total := range p.Reconciliation.Totals {
+							<tr><th scope="row">{ total.Label }</th><td data-label="Amount">{ total.Value }</td></tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<h3>Open payment and refund follow-ups</h3>
+			<p>These are current cases across all dates.</p>
+			if len(p.Reconciliation.FollowUps) == 0 {
+				<p>No open cases.</p>
+			}
+			<ul>
+				for _, item := range p.Reconciliation.FollowUps {
+					<li><a href={ templ.SafeURL(item.URL) }>{ item.Order }</a> · { item.Kind } · { item.Amount } · { components.StatusLabel(item.Status) }</li>
+				}
+			</ul>
+			if p.Reconciliation.HasMore {
+				<p>Showing the oldest 50 cases. Open the payment or fulfillment queue to review the rest.</p>
+			}
+		}
+	</article>
 }
 
 templ PortalSupport(p viewmodels.AdminPage) {

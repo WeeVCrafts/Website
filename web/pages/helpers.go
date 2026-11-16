@@ -985,6 +985,11 @@ func productDescription(product viewmodels.Product) string {
 }
 
 func productStockMessage(product viewmodels.Product) string {
+	for _, variant := range product.Variants {
+		if selectedProductVariant(variant, product) && variant.StockMessage != "" {
+			return variant.StockMessage
+		}
+	}
 	if product.InStock {
 		return "In stock"
 	}

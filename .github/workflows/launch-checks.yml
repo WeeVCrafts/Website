@@ -62,6 +62,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Verify shopper and seller browser regressions
         run: npx playwright test -c tests/e2e/customer-layout.config.js --project=chromium
+      - name: Verify storefront media loading and keyboard controls
+        run: npx playwright test -c tests/e2e/storefront-performance.config.js
       - run: npx playwright test -c tests/e2e/finance-controls.config.js
   security:
     runs-on: ubuntu-latest

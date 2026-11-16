@@ -175,6 +175,16 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 					c.Reason = f.Get("return_class")
 				}
 				e = h.Repository.ConfigurePolicy(r.Context(), session.UserID, c.Action, c.Reason, num("customer_id"), num("variant_id"))
+			case "configure_live_catalog":
+				if f.Get("confirmed") != "yes" {
+					http.Error(w, "Confirm the launch catalog before submitting", 422)
+					return
+				}
+				if !h.BookingsEnabled {
+					http.Error(w, "Live booking is paused in the application configuration", 409)
+					return
+				}
+				e = h.Repository.ConfigureLiveCatalog(r.Context(), session.UserID, num("variant_id"), num("second_variant_id"), c.Reason)
 			case "save_shipping_profile":
 				if view.Role != "super_admin" || h.PickupChecker == nil {
 					http.Error(w, "Live shipping setup is required", 409)

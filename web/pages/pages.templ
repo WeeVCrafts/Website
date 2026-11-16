@@ -405,7 +405,10 @@ templ CheckoutItems(items []viewmodels.CartItem) {
 templ CheckoutSummaryItems(items []viewmodels.CartItem) {
   for _, item := range items {
     <p><span>{ item.Product.Name }
-      if item.VariantName != "" {
+        if item.CheckoutBlocked {
+          <p>Checkout is unavailable for this option.</p>
+        }
+        if item.VariantName != "" {
         <small>{ components.CustomerOption(item.VariantName) }</small>
       }
       <small>x { item.Quantity }</small></span><b>{ checkoutMoney(item.Product.Price) }</b></p>

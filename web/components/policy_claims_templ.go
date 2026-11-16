@@ -240,20 +240,51 @@ func MarketplacePolicyControls(p viewmodels.MarketplacePage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<h3>One genuine order pilot</h3><p>Requires a verified seller invoice/tax profile, pickup, real variant measurements, published policy and live booking configuration. Only one item and one pilot order are permitted.</p><label>Customer account ID<input name=\"customer_id\" type=\"number\" min=\"1\" required></label><label>Variant ID<input name=\"variant_id\" type=\"number\" min=\"1\" required></label><label>Activation reason<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>Wallet is funded and this customer and product are ready for a genuine shipment</label><button type=\"submit\">Enable one-order pilot</button></form><form class=\"marketplace-form\" method=\"post\" action=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<h3>One genuine order pilot</h3><p>Requires a verified seller invoice/tax profile, pickup, real variant measurements, published policy and live booking configuration. Only one item and one pilot order are permitted.</p><label>Customer account ID<input name=\"customer_id\" type=\"number\" min=\"1\" required></label><label>Variant ID<input name=\"variant_id\" type=\"number\" min=\"1\" required></label><label>Activation reason<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>Wallet is funded and this customer and product are ready for a genuine shipment</label><button type=\"submit\">Enable one-order pilot</button></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var13 templ.SafeURL
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 32, Col: 83}
+			if p.Policy.PilotOrderID > 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var13 templ.SafeURL
+				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 33, Col: 85}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = MarketplaceFields(p, "configure_live_catalog").Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<h3>Two-variant launch catalog</h3><p>Choose one ready variant per seller after the paid pilot has been delivered through Shiprocket.</p><label>First variant ID<input name=\"variant_id\" type=\"number\" min=\"1\" required></label> <label>Second variant ID<input name=\"second_variant_id\" type=\"number\" min=\"1\" required></label> <label>Launch reason<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label> <label><input name=\"confirmed\" value=\"yes\" type=\"checkbox\" required>I verified the recovery drill, two-seller rehearsal and launch notifications</label> <button type=\"submit\">Save and activate launch catalog</button></form>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<form class=\"marketplace-form\" method=\"post\" action=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" novalidate>")
+			var templ_7745c5c3_Var14 templ.SafeURL
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 44, Col: 83}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" novalidate>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -261,7 +292,7 @@ func MarketplacePolicyControls(p viewmodels.MarketplacePage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<label>Pause reason<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>Pause new purchases and bookings; continue reconciliation</label><button type=\"submit\">Pause new shipping</button></form></section>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<label>Pause reason<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>Pause new purchases and bookings; continue reconciliation</label><button type=\"submit\">Pause new shipping</button></form></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -286,29 +317,29 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if p.NewReturnPolicy {
 			if p.Role == "customer" {
 				for _, item := range p.Lines {
 					if item.CanReturn {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<form class=\"marketplace-form\" method=\"post\" action=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var15 templ.SafeURL
-						templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+						var templ_7745c5c3_Var16 templ.SafeURL
+						templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 44, Col: 85}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 56, Col: 85}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" novalidate>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" novalidate>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -316,33 +347,33 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<h3>Request help: ")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						var templ_7745c5c3_Var16 string
-						templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
-						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 46, Col: 28}
-						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</h3><input type=\"hidden\" name=\"item_id\" value=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<h3>Request help: ")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var17 string
-						templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(item.ID))
+						templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 46, Col: 96}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 58, Col: 28}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\"><label>Delivered package<select name=\"package_id\" required>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</h3><input type=\"hidden\" name=\"item_id\" value=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var18 string
+						templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(item.ID))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 58, Col: 96}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\"><label>Delivered package<select name=\"package_id\" required>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -350,59 +381,59 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 							if pkg.Status == "delivered" && !strings.HasPrefix(pkg.Reference, "WC-RPL-") {
 								for _, piece := range pkg.Items {
 									if piece.SKU == item.SKU {
-										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<option value=\"")
-										if templ_7745c5c3_Err != nil {
-											return templ_7745c5c3_Err
-										}
-										var templ_7745c5c3_Var18 string
-										templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(pkg.ID))
-										if templ_7745c5c3_Err != nil {
-											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 51, Col: 33}
-										}
-										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
-										if templ_7745c5c3_Err != nil {
-											return templ_7745c5c3_Err
-										}
-										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\">Package #")
+										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<option value=\"")
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
 										var templ_7745c5c3_Var19 string
-										templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(pkg.ID))
+										templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(pkg.ID))
 										if templ_7745c5c3_Err != nil {
-											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 51, Col: 63}
+											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 63, Col: 33}
 										}
-										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
-										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, " · ")
+										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\">Package #")
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
 										var templ_7745c5c3_Var20 string
-										templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(pkg.Courier)
+										templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(pkg.ID))
 										if templ_7745c5c3_Err != nil {
-											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 51, Col: 80}
+											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 63, Col: 63}
 										}
 										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
-										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " · ")
+										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, " · ")
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
 										var templ_7745c5c3_Var21 string
-										templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(pkg.AWB)
+										templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(pkg.Courier)
 										if templ_7745c5c3_Err != nil {
-											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 51, Col: 93}
+											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 63, Col: 80}
 										}
 										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
-										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</option>")
+										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " · ")
+										if templ_7745c5c3_Err != nil {
+											return templ_7745c5c3_Err
+										}
+										var templ_7745c5c3_Var22 string
+										templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(pkg.AWB)
+										if templ_7745c5c3_Err != nil {
+											return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 63, Col: 93}
+										}
+										_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+										if templ_7745c5c3_Err != nil {
+											return templ_7745c5c3_Err
+										}
+										templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</option>")
 										if templ_7745c5c3_Err != nil {
 											return templ_7745c5c3_Err
 										}
@@ -410,20 +441,20 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 								}
 							}
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</select></label><label>Reason for claim<select name=\"claim_kind\"><option value=\"damage\">Transit damage</option><option value=\"defect\">Manufacturing or weaving defect</option><option value=\"wrong_item\">Wrong item or design</option><option value=\"change_of_mind\">Change of mind — eligible textiles and crafts</option></select></label><label>Quantity<input type=\"number\" name=\"quantity\" min=\"1\" max=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</select></label><label>Reason for claim<select name=\"claim_kind\"><option value=\"damage\">Transit damage</option><option value=\"defect\">Manufacturing or weaving defect</option><option value=\"wrong_item\">Wrong item or design</option><option value=\"change_of_mind\">Change of mind — eligible textiles and crafts</option></select></label><label>Quantity<input type=\"number\" name=\"quantity\" min=\"1\" max=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						var templ_7745c5c3_Var22 string
-						templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(item.Quantity - item.Cancelled))
+						var templ_7745c5c3_Var23 string
+						templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(item.Quantity - item.Cancelled))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 56, Col: 440}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 68, Col: 440}
 						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" value=\"1\" required></label><label>What happened?<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" rows=\"4\" required></textarea></label><p>Damage/wrong-item/defect claims: 48 hours after delivery. Change of mind: three days, subject to category and condition. Credit is the discounted item amount less ₹200 per return pickup; original delivery charges are excluded. Upload evidence after saving this claim.</p><button type=\"submit\">Submit claim for review</button></form>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" value=\"1\" required></label><label>What happened?<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" rows=\"4\" required></textarea></label><p>Damage/wrong-item/defect claims: 48 hours after delivery. Change of mind: three days, subject to category and condition. Credit is the discounted item amount less ₹200 per return pickup; original delivery charges are excluded. Upload evidence after saving this claim.</p><button type=\"submit\">Submit claim for review</button></form>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -432,220 +463,220 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 			}
 		}
 		for _, c := range p.Claims {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<article class=\"utility-card\"><h3>Claim #")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(c.ID))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 60}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, " — ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<article class=\"utility-card\"><h3>Claim #")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var24 string
-			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ReplaceAll(c.Kind, "_", " "))
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(c.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 101}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</h3><p>Status: ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, " — ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var25 string
-			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ReplaceAll(c.Status, "_", " "))
+			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ReplaceAll(c.Kind, "_", " "))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 101}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, " · Resolution: ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</h3><p>Status: ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var26 string
-			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(c.Resolution)
+			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ReplaceAll(c.Status, "_", " "))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 185}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 155}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</p><p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, " · Resolution: ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var27 string
-			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(c.Reason)
+			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(c.Resolution)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 202}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 185}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</p><p>Eligible item amount: INR ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</p><p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var28 string
-			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", float64(c.AmountCents)/100))
+			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(c.Reason)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 283}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 202}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, " · Return fee: INR ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</p><p>Eligible item amount: INR ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var29 string
-			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", float64(c.FeeCents)/100))
+			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", float64(c.AmountCents)/100))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 62, Col: 348}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 283}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " · Return fee: INR ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var30 string
+			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", float64(c.FeeCents)/100))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 74, Col: 348}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if c.ReturnAWB != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<p>Reverse shipment: ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var30 string
-				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnCourier)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 64, Col: 37}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " · ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<p>Reverse shipment: ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var31 string
-				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnAWB)
+				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnCourier)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 64, Col: 54}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 76, Col: 37}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " · ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " · ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var32 string
-				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnStatus)
+				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnAWB)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 64, Col: 74}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 76, Col: 54}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</p>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			if c.ReplacementPackageID > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<p>Replacement package #")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, " · ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var33 string
-				templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(c.ReplacementPackageID))
+				templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(c.ReturnStatus)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 67, Col: 59}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 76, Col: 74}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " appears in package tracking below.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<ul>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			for _, e := range c.Evidence {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<li><a href=\"")
+			if c.ReplacementPackageID > 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<p>Replacement package #")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var34 templ.SafeURL
-				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s?order=%s&evidence=%d", p.Root, p.Number, e.ID)))
+				var templ_7745c5c3_Var34 string
+				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(c.ReplacementPackageID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 71, Col: 87}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 79, Col: 59}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, " appears in package tracking below.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var35 string
-				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(e.Filename)
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<ul>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, e := range c.Evidence {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<li><a href=\"")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 71, Col: 100}
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var35 templ.SafeURL
+				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s?order=%s&evidence=%d", p.Root, p.Number, e.ID)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 83, Col: 87}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</a></li>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</ul>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if p.Role == "customer" && c.Status != "completed" && c.Status != "rejected" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+				var templ_7745c5c3_Var36 string
+				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(e.Filename)
 				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var36 templ.SafeURL
-				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 75, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 83, Col: 100}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\" enctype=\"multipart/form-data\" novalidate>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</a></li>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</ul>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if p.Role == "customer" && c.Status != "completed" && c.Status != "rejected" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var37 templ.SafeURL
+				templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 87, Col: 84}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" enctype=\"multipart/form-data\" novalidate>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -653,40 +684,40 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<input type=\"hidden\" name=\"case_id\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<input type=\"hidden\" name=\"case_id\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var37 string
-				templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
+				var templ_7745c5c3_Var38 string
+				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 77, Col: 59}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 89, Col: 59}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var37)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var38)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\"><label>Unboxing video or photo<input type=\"file\" name=\"evidence\" accept=\"video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp\" required></label><p>One video up to 200 MB, or one photo up to 10 MB. Evidence is private to you and company staff unless they explicitly share it with your seller.</p><button type=\"submit\">Upload private evidence</button></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\"><label>Unboxing video or photo<input type=\"file\" name=\"evidence\" accept=\"video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/webp\" required></label><p>One video up to 200 MB, or one photo up to 10 MB. Evidence is private to you and company staff unless they explicitly share it with your seller.</p><button type=\"submit\">Upload private evidence</button></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if p.Role == "admin" || p.Role == "super_admin" {
 				if c.Status != "completed" && c.Status != "rejected" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<form class=\"marketplace-form\" method=\"post\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var38 templ.SafeURL
-					templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+					var templ_7745c5c3_Var39 templ.SafeURL
+					templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 81, Col: 85}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 93, Col: 85}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" novalidate>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "\" novalidate>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -694,33 +725,33 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<input name=\"case_id\" type=\"hidden\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<input name=\"case_id\" type=\"hidden\" value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var39 string
-					templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
+					var templ_7745c5c3_Var40 string
+					templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 83, Col: 59}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 95, Col: 59}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\"><label>Next status<select name=\"status\"><option value=\"approved\">Approve resolution (Super Admin)</option><option value=\"pickup_pending\">Arrange reverse pickup</option><option value=\"received\">Confirm carrier-verified receipt</option><option value=\"inspected\">Record inspection</option><option value=\"completed\">Complete credit/refund request (Super Admin)</option><option value=\"rejected\">Reject with reason</option></select></label><label>Review or inspection findings<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" required></textarea></label><label>Alternative evidence exception<textarea name=\"evidence_exception\" maxlength=\"1000\" style=\"resize:none\"></textarea></label><label>Return parcel weight (grams)<input name=\"weight_grams\" type=\"number\" min=\"100\" max=\"50000\"></label><label>Return length (cm)<input name=\"length_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label>Return width (cm)<input name=\"width_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label>Return height (cm)<input name=\"height_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label><input type=\"checkbox\" name=\"inspection_passed\" value=\"yes\">Inspection confirms eligibility and condition for this resolution</label><label><input type=\"checkbox\" name=\"restock\" value=\"yes\">Inspection confirms returned units can be restocked</label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>I verified this transition and its consequences</label><button type=\"submit\">Record claim decision</button></form><form class=\"marketplace-form\" method=\"post\" action=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var40 templ.SafeURL
-					templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 84, Col: 85}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "\"><label>Next status<select name=\"status\"><option value=\"approved\">Approve resolution (Super Admin)</option><option value=\"pickup_pending\">Arrange reverse pickup</option><option value=\"received\">Confirm carrier-verified receipt</option><option value=\"inspected\">Record inspection</option><option value=\"completed\">Complete credit/refund request (Super Admin)</option><option value=\"rejected\">Reject with reason</option></select></label><label>Review or inspection findings<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" required></textarea></label><label>Alternative evidence exception<textarea name=\"evidence_exception\" maxlength=\"1000\" style=\"resize:none\"></textarea></label><label>Return parcel weight (grams)<input name=\"weight_grams\" type=\"number\" min=\"100\" max=\"50000\"></label><label>Return length (cm)<input name=\"length_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label>Return width (cm)<input name=\"width_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label>Return height (cm)<input name=\"height_cm\" type=\"number\" min=\"1\" max=\"200\"></label><label><input type=\"checkbox\" name=\"inspection_passed\" value=\"yes\">Inspection confirms eligibility and condition for this resolution</label><label><input type=\"checkbox\" name=\"restock\" value=\"yes\">Inspection confirms returned units can be restocked</label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>I verified this transition and its consequences</label><button type=\"submit\">Record claim decision</button></form><form class=\"marketplace-form\" method=\"post\" action=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "\" novalidate>")
+					var templ_7745c5c3_Var41 templ.SafeURL
+					templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 96, Col: 85}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" novalidate>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -728,40 +759,40 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<input name=\"case_id\" type=\"hidden\" value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<input name=\"case_id\" type=\"hidden\" value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var41 string
-					templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
+					var templ_7745c5c3_Var42 string
+					templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 86, Col: 59}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 98, Col: 59}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\"><label>Reason to share with the order's seller<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><button type=\"submit\">Share claim evidence with seller</button></form>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\"><label>Reason to share with the order's seller<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><button type=\"submit\">Share claim evidence with seller</button></form>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
 			if p.Role == "seller" && c.Status == "inspected" && c.Resolution == "replacement" && c.ReplacementPackageID == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "<form class=\"marketplace-form\" method=\"post\" action=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<form class=\"marketplace-form\" method=\"post\" action=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var42 templ.SafeURL
-				templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
+				var templ_7745c5c3_Var43 templ.SafeURL
+				templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(p.ActionPath))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 90, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 102, Col: 84}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" novalidate>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "\" novalidate>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -769,38 +800,38 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "<input name=\"case_id\" type=\"hidden\" value=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var43 string
-				templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 92, Col: 59}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var43)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "\"><input name=\"seller_id\" type=\"hidden\" value=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<input name=\"case_id\" type=\"hidden\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var44 string
-				templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.SellerID))
+				templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 92, Col: 129}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 104, Col: 59}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var44)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "\"><label>Packed weight (grams)<input name=\"weight_grams\" type=\"number\" min=\"100\" max=\"50000\" required></label><label>Length (cm)<input name=\"length_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Width (cm)<input name=\"width_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Height (cm)<input name=\"height_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Pre-dispatch quality-check evidence<input name=\"qc_evidence\" minlength=\"10\" maxlength=\"1000\" required></label><label>Preparation note<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>I confirm the actual parcel, quality check and free replacement dispatch</label><button type=\"submit\">Confirm and ship free replacement</button></form>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "\"><input name=\"seller_id\" type=\"hidden\" value=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var45 string
+				templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(c.SellerID))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 104, Col: 129}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var45)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "\"><label>Packed weight (grams)<input name=\"weight_grams\" type=\"number\" min=\"100\" max=\"50000\" required></label><label>Length (cm)<input name=\"length_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Width (cm)<input name=\"width_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Height (cm)<input name=\"height_cm\" type=\"number\" min=\"1\" max=\"200\" required></label><label>Pre-dispatch quality-check evidence<input name=\"qc_evidence\" minlength=\"10\" maxlength=\"1000\" required></label><label>Preparation note<input name=\"reason\" minlength=\"10\" maxlength=\"1000\" required></label><label><input type=\"checkbox\" name=\"confirmed\" value=\"yes\" required>I confirm the actual parcel, quality check and free replacement dispatch</label><button type=\"submit\">Confirm and ship free replacement</button></form>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</article>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "</article>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

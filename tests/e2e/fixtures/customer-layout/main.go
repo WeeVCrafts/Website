@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"github.com/wecratfs/commerce/web/pages"
 )
@@ -19,6 +20,12 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("web/assets"))))
 	registerRecoveryRoutes(mux)
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		page := recoveryCustomerPage(r)
+		config := storefront.Defaults()
+		page.Storefront = &config
+		renderFixture(w, r, pages.Home(page))
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/cart" && r.URL.Path != "/checkout" {
 			http.NotFound(w, r)

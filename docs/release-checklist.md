@@ -89,6 +89,11 @@ layout/axe pass alone.
 
 ## Backup and isolated restoration
 
+The production host recovery service encrypts the database and referenced
+objects and verifies the R2 copy by downloading and hashing it. Follow
+[host recovery](../deploy/recovery/README.md) for the restore drill. The
+Coolify database-only schedule remains available as an additional copy.
+
 Before promotion, verify a monitored encrypted backup schedule, independent
 storage, retention, access controls and separate recovery-key custody. The
 `scripts/backup-database.sh` helper creates an encrypted PostgreSQL export only;

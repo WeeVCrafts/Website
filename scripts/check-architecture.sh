@@ -10,6 +10,12 @@ if printf '%s\n' "$imports" \
   | rg --ignore-case "$forbidden"; then
   echo "forbidden provider or transport import found in business boundary" >&2
   exit 1
+else
+  status=$?
+  if [ "$status" -ne 1 ]; then
+    echo "architecture import scan could not be completed" >&2
+    exit "$status"
+  fi
 fi
 
 echo "architecture import boundary: PASS"

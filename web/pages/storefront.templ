@@ -149,7 +149,11 @@ templ StorefrontHero(p viewmodels.CustomerPage, slides []storefront.Slide) {
 						<div class="hero-image">
 							<picture>
 								if s.MobileImage!="" {
-									<source media="(max-width:800px)" srcset={ components.ResponsiveImageSrcSet(s.MobileImage, "") } sizes="100vw"/>
+									if i == 0 {
+										<source media="(max-width:800px)" srcset={ components.ResponsiveImageSrcSet(s.MobileImage, "") } sizes="100vw"/>
+									} else {
+										<source media="(max-width:800px)" data-srcset={ components.ResponsiveImageSrcSet(s.MobileImage, "") } sizes="100vw"/>
+									}
 								}
 								if i==0 {
 									<img src={ s.Image } srcset={ components.ResponsiveImageSrcSet(s.Image, "") } sizes="100vw" alt={ storefrontImageAlt(p, s.Image, s.Alt) } style={ storefrontResponsivePosition(p, s.Image, s.MobileImage) } width="1536" height="1024" loading="eager" fetchpriority="high"/>

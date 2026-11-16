@@ -543,6 +543,7 @@ func main() {
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
+	storefrontHandler.SetCheckoutAvailability(cfg.Environment == "production", cfg.CheckoutEnabled)
 	storefrontHandler.SetProfileStorage(mediaStorage)
 	storefrontHandler.SetPaymentRecovery(paymentOrderService)
 	portalHandler.SetStorefrontPreview(storefrontHandler)
@@ -588,6 +589,9 @@ func main() {
 	mux.Handle("/", storefrontHandler)
 
 	marketplaceProcessor := &applicationcommerce.MarketplaceProcessor{Store: marketplaceRepository, Handlers: durableHandlers, Shipping: marketplaceGateway, Refunds: refundGateway, BookingsEnabled: cfg.Shipping.Mode == "live" && cfg.Shipping.BookingsEnabled}
+	marketplaceProcessor.NotifyEmail = func(ctx context.Context, notificationID int64) error {
+		return marketplaceRepository.SendNotificationEmail(ctx, notificationID, emailSender, cfg.PublicURL)
+	}
 	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled}
 	marketplaceHandler.Storage = mediaStorage
 	if checker, ok := marketplaceGateway.(interface {

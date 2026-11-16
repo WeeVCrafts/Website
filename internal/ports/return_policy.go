@@ -47,4 +47,16 @@ type ShippingReadiness struct {
 	Product, SKU, Seller                            string
 	WeightGrams, LengthCM, WidthCM, HeightCM        int
 	PickupReady, InvoiceReady, TaxReady, Classified bool
+	Stock                                           int
+	Selected                                        bool
+}
+
+func (r ShippingReadiness) Ready() bool {
+	return r.PickupReady && r.InvoiceReady && r.TaxReady && r.Classified && r.Stock > 0 && r.ParcelReady()
+}
+
+func (r ShippingReadiness) ParcelReady() bool {
+	return r.WeightGrams >= 100 && r.WeightGrams <= 50000 &&
+		r.LengthCM >= 1 && r.LengthCM <= 200 && r.WidthCM >= 1 && r.WidthCM <= 200 &&
+		r.HeightCM >= 1 && r.HeightCM <= 200
 }
