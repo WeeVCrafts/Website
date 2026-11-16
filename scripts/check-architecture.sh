@@ -7,7 +7,7 @@ forbidden='htmx|jackc/pgx|go-redis|redis/go-redis|meilisearch|aws-sdk|aws/aws-sd
 imports="$(go list -f '{{.ImportPath}} {{join .Imports " "}}' ./internal/domain/... ./internal/application/... ./internal/ports/...)"
 if printf '%s\n' "$imports" \
   | awk '{for (i=2; i<=NF; i++) print $1 " " $i}' \
-  | rg --ignore-case "$forbidden"; then
+  | grep -Ei "$forbidden"; then
   echo "forbidden provider or transport import found in business boundary" >&2
   exit 1
 else

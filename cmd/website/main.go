@@ -301,6 +301,18 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
+	if cfg.CheckoutEnabled && cfg.CheckoutRecoveryEmails {
+		worker.RegisterDurablePeriodic(workerContext, 5*time.Minute, "checkout-recovery", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
+			sendCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
+			defer cancel()
+			return marketplaceRepository.RecoverCheckout(sendCtx, emailSender, cfg.PublicURL)
+		})
+	}
+	if cfg.CheckoutEnabled && cfg.CheckoutRecoveryEmails {
+		worker.RegisterDurablePeriodic(workerContext, 5*time.Minute, "checkout-recovery", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
+			return marketplaceRepository.RecoverCheckout(ctx, emailSender, cfg.PublicURL)
+		})
+	}
 	worker.RegisterDurablePeriodic(workerContext, 30*time.Second, "sms-notifications", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		_, err := smsProcessor.Process(ctx, 5)
 		if err != nil {

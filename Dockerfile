@@ -23,6 +23,8 @@ RUN templ generate -path . -w 2
 RUN --mount=type=cache,id=weevcrafts-go-mod,target=/go/pkg/mod --mount=type=cache,id=weevcrafts-go-build,target=/root/.cache/go-build CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/wecratfs ./cmd/website && CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/weevcrafts-sync-accounts ./cmd/sync-designated-accounts
 
 FROM alpine:3.22
+ARG SOURCE_COMMIT=unknown
+ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 LABEL com.weevcrafts.project="weevcrafts" com.weevcrafts.role="application"
 RUN apk add --no-cache ca-certificates
 RUN addgroup -S app && adduser -S -D -H -G app app

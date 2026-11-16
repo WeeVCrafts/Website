@@ -24,8 +24,8 @@ import (
 	"github.com/wecratfs/commerce/internal/config"
 )
 
-// Include records with a stored payload. Pending uploads, expired exports and
-// deletion queues do not assert that a corresponding object must exist.
+// Include records with a stored payload. Product upload intents and deletion
+// queues do not assert that a corresponding object must exist.
 const requiredObjects = `
 	SELECT object_key FROM product_media WHERE status='ready'
 	UNION SELECT image_object_key FROM categories WHERE image_object_key<>''
@@ -34,7 +34,7 @@ const requiredObjects = `
 	UNION SELECT object_key FROM marketplace_claim_evidence
 	UNION SELECT object_key FROM support_attachments
 	UNION SELECT object_key FROM user_avatars
-	UNION SELECT object_key FROM seller_documents WHERE status='verified'
+	UNION SELECT object_key FROM seller_documents WHERE status<>'deleted'
 	UNION SELECT object_key FROM data_export_requests WHERE status='ready' AND object_key<>''
 	UNION SELECT evidence_key FROM seller_payout_payee_versions
 	UNION SELECT transfer_evidence_key FROM seller_settlements WHERE transfer_evidence_key IS NOT NULL`
@@ -45,6 +45,36 @@ type backedUpObject struct {
 	ContentType string `json:"content_type"`
 	SHA256      string `json:"sha256"`
 	Bytes       int64  `json:"bytes"`
+}
+
+func checkReferenceInventory(ctx context.Context, tx pgx.Tx) error {
+	rows, err := tx.Query(ctx, `SELECT table_name||'.'||column_name FROM information_schema.columns
+		WHERE table_schema=current_schema() AND column_name ~ '(object_key|evidence_key)$'`)
+	if err != nil {
+		return errors.New("collect: cannot validate object reference inventory")
+	}
+	defer rows.Close()
+	known := map[string]bool{
+		"product_media.object_key": true, "categories.image_object_key": true,
+		"storefront_media.object_key": true, "marketplace_claim_evidence.object_key": true,
+		"support_attachments.object_key": true, "user_avatars.object_key": true,
+		"avatar_cleanup.object_key": true, "seller_documents.object_key": true,
+		"data_export_requests.object_key": true, "seller_payout_payee_versions.evidence_key": true,
+		"seller_settlements.transfer_evidence_key": true,
+	}
+	for rows.Next() {
+		var column string
+		if err = rows.Scan(&column); err != nil {
+			return errors.New("collect: cannot read object reference inventory")
+		}
+		if !known[column] {
+			return errors.New("collect: unmapped object reference column")
+		}
+	}
+	if rows.Err() != nil {
+		return errors.New("collect: object reference inventory query failed")
+	}
+	return nil
 }
 
 func collect(ctx context.Context, dst io.Writer) error {
@@ -67,6 +97,9 @@ func collect(ctx context.Context, dst io.Writer) error {
 		return errors.New("collect: cannot start database snapshot")
 	}
 	defer tx.Rollback(context.Background())
+	if err = checkReferenceInventory(ctx, tx); err != nil {
+		return err
+	}
 	var snapshot string
 	if err = tx.QueryRow(ctx, "SELECT pg_export_snapshot()").Scan(&snapshot); err != nil {
 		return errors.New("collect: cannot export database snapshot")
@@ -125,6 +158,9 @@ func collect(ctx context.Context, dst io.Writer) error {
 			if strings.Contains(diagnostic.String(), category) {
 				return fmt.Errorf("collect: pg_dump failed (%s)", category)
 			}
+		}
+		if cmd.ProcessState == nil {
+			return errors.New("collect: pg_dump could not be started")
 		}
 		return fmt.Errorf("collect: pg_dump failed (exit %d)", cmd.ProcessState.ExitCode())
 	}

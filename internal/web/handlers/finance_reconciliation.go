@@ -21,6 +21,13 @@ func (h *LivePortalHandler) dailyReconciliation(r *http.Request, root string) (*
 		return nil, errors.New("invalid reconciliation date")
 	}
 	report := &viewmodels.FinanceReconciliation{Date: reportDate}
+	err = h.queryRow(r, `SELECT count(*),count(cr.order_id),
+		count(*) FILTER(WHERE EXISTS(SELECT 1 FROM orders o WHERE o.id=cr.order_id AND o.funding_status='funded'))
+		FROM checkout_recovery cr WHERE cr.first_quoted_at >= $1 AND cr.first_quoted_at < $2`,
+		start, start.AddDate(0, 0, 1)).Scan(&report.Quoted, &report.PaymentStarted, &report.Funded)
+	if err != nil {
+		return nil, err
+	}
 	var captured, refunds, shipping, commission, reversals, payout int64
 	err = h.queryRow(r, `
 		WITH paid_orders AS (

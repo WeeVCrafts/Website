@@ -40,10 +40,11 @@ type AdminPage struct {
 }
 
 type FinanceReconciliation struct {
-	Date      string
-	Totals    []AdminStat
-	FollowUps []FinanceFollowUp
-	HasMore   bool
+	Date                           string
+	Totals                         []AdminStat
+	Quoted, PaymentStarted, Funded int
+	FollowUps                      []FinanceFollowUp
+	HasMore                        bool
 }
 
 type FinanceFollowUp struct {

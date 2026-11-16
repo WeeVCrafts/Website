@@ -31,3 +31,8 @@ the manifest inside the encrypted archive. To repopulate the recovery object
 store, use the original keys and content types in that manifest. Check that
 sample objects can be retrieved with the intended access controls. Record the
 recovery point and elapsed time in the release checklist.
+
+The Production readiness GitHub workflow probes the public endpoint from
+outside the VPS every five minutes. Failed workflow notifications use the
+repository owner's GitHub notification settings. Scheduled workflow timing
+depends on GitHub runner availability.

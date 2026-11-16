@@ -123,7 +123,7 @@ func financeTestHandlerAtVersion(t *testing.T, lastVersion int) *LivePortalHandl
 		t.Fatal(err)
 	}
 	if lastVersion == 55 {
-		if _, err = pool.Exec(context.Background(), `UPDATE orders SET status='delivered',delivered_at=now()-interval '8 days' WHERE id=900104;
+		if _, err = pool.Exec(context.Background(), `UPDATE orders SET status='delivered',funding_status='funded',delivered_at=now()-interval '8 days' WHERE id=900104;
  INSERT INTO payment_attempts(order_id,provider,provider_payment_id,status,amount_cents,currency) VALUES(900104,'razorpay','finance-captured-fixture','captured',1000,'INR');
  INSERT INTO seller_fulfillments(seller_id,order_id,status,lifecycle_status,delivered_at) VALUES(900103,900104,'delivered','delivered',now()-interval '8 days');`); err != nil {
 			t.Fatal(err)

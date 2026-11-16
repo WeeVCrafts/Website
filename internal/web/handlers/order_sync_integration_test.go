@@ -25,6 +25,7 @@ INSERT INTO product_variants(id,product_id,sku,price_cents) VALUES(901001,901001
 INSERT INTO orders(id,order_number,user_id,status,subtotal_cents,total_cents,address_snapshot,idempotency_scope,idempotency_key) VALUES(901001,'STAGE-ORDER',901002,'paid',1000,1000,'{}','stage','1');
 INSERT INTO order_items(order_id,variant_id,product_name,sku,unit_price_cents,quantity,line_total_cents) VALUES(901001,901001,'Stage Product','STAGE-SKU',1000,1,1000);
 INSERT INTO payment_attempts(order_id,provider,status,amount_cents) VALUES(901001,'local','captured',1000);
+UPDATE orders SET workflow_version=1 WHERE id=901001;
 `)
 	if err != nil {
 		t.Fatal(err)

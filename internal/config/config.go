@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	CheckoutRecoveryEmails  bool
 	CheckoutEnabled         bool
 	PublicContentApproved   bool
 	OperationalMetricsToken string
@@ -58,6 +59,7 @@ func FromEnv() Config {
 		publicURL = "http://localhost:8080"
 	}
 	return Config{
+		CheckoutRecoveryEmails:  boolEnv("WECRATFS_CHECKOUT_RECOVERY_EMAILS", false),
 		Shipping:                parseShippingConfig(),
 		SMS:                     parseSMSConfig(),
 		CheckoutEnabled:         boolEnv("WECRATFS_CHECKOUT_ENABLED", false),

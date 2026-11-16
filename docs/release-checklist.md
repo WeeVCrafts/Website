@@ -94,6 +94,22 @@ objects and verifies the R2 copy by downloading and hashing it. Follow
 [host recovery](../deploy/recovery/README.md) for the restore drill. The
 Coolify database-only schedule remains available as an additional copy.
 
+Use `scripts/deploy-reviewed-image.ps1` from the operator workstation to
+build the committed main revision outside the VPS. The script waits for that
+revision's successful Launch checks, verifies the transferred Docker image,
+and queues Coolify's existing deployment with its revision tag. Coolify can
+reuse the loaded image without compiling on the VPS when its deployment
+configuration requires no new build. Verify the final deployment state and
+readiness after the script queues it.
+
+The Finance reconciliation view counts quoted carts, payment orders created,
+and funded orders by the cart's first quote date in IST. Recovery emails use
+the existing explicit email-offers consent and require
+`WECRATFS_CHECKOUT_RECOVERY_EMAILS=true` plus open checkout. Enable this
+after the launch journey is verified. Each eligible abandoned cart gets one
+reminder after an hour, with current stock and consent rechecked and payment
+attempts suppressed.
+
 Before promotion, verify a monitored encrypted backup schedule, independent
 storage, retention, access controls and separate recovery-key custody. The
 `scripts/backup-database.sh` helper creates an encrypted PostgreSQL export only;

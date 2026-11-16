@@ -106,6 +106,10 @@ func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int6
 			}
 			quote.CashDueCents = quote.TotalCents - quote.CreditCents
 		}
+		if err == nil {
+			_, err = tx.Exec(ctx, `INSERT INTO checkout_recovery(cart_id) VALUES($1)
+				ON CONFLICT(cart_id) DO UPDATE SET last_quoted_at=now()`, cartID)
+		}
 		return err
 	})
 	return quote, err

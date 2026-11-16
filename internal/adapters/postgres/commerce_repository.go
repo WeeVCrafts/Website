@@ -1205,6 +1205,9 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 				return err
 			}
 		}
+		if _, err := tx.Exec(transactionContext, `UPDATE checkout_recovery SET order_id=$2 WHERE cart_id=$1`, cartID, order.ID); err != nil {
+			return err
+		}
 		if _, err := tx.Exec(transactionContext, `INSERT INTO order_status_history (order_id, to_status, actor_id, reason) VALUES ($1, 'pending_payment', $2, 'checkout created')`, order.ID, userID); err != nil {
 			return err
 		}

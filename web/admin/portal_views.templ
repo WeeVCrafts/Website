@@ -1,5 +1,6 @@
 package admin
 
+import "fmt"
 import "strings"
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 import "github.com/wecratfs/commerce/web/components"
@@ -345,6 +346,7 @@ templ PortalDailyReconciliation(p viewmodels.AdminPage) {
 			<button type="submit">Show report</button>
 		</form>
 		if p.Reconciliation != nil {
+			<p>{ fmt.Sprint(p.Reconciliation.Quoted) } quoted carts · { fmt.Sprint(p.Reconciliation.PaymentStarted) } payment orders created · { fmt.Sprint(p.Reconciliation.Funded) } funded orders for this quote date.</p>
 			<div class="ui-table-region" role="region" tabindex="0" aria-label="Daily reconciliation amounts">
 				<table class="ui-table ui-table--records">
 					<caption>Recorded amounts for { p.Reconciliation.Date } (IST)</caption>
