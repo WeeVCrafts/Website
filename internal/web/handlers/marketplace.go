@@ -145,14 +145,20 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				if f.Get("setup_context") != "" && (f.Get("action") == "save_invoice_profile" || f.Get("action") == "save_shipping_profile") && f.Get("seller_id") != setupPostContext(f).Get("seller_id") {
 					setupErrors["seller_id"] = "Choose the seller again before saving."
 				}
-				if f.Get("setup_context") != "" && (f.Get("action") == "save_tax_profile" || f.Get("action") == "classify_variant" || f.Get("action") == "configure_pilot") {
+				if f.Get("setup_context") != "" && (f.Get("action") == "save_tax_profile" || f.Get("action") == "classify_variant" || f.Get("action") == "configure_pilot" || f.Get("action") == "save_setup_parcel" || f.Get("action") == "save_setup_tax") {
 					q := setupPostContext(f)
 					sid, _ := strconv.ParseInt(q.Get("seller_id"), 10, 64)
 					vid, _ := strconv.ParseInt(f.Get("variant_id"), 10, 64)
 					if sid <= 0 || vid <= 0 {
 						setupErrors["variant_id"] = "Choose a seller and product option."
-					} else if _, err := h.Repository.FulfillmentSetup(r.Context(), session.UserID, ports.MarketplaceSetupQuery{SellerID: sid, VariantID: vid}); err != nil {
+					} else if d, err := h.Repository.FulfillmentSetup(r.Context(), session.UserID, ports.MarketplaceSetupQuery{SellerID: sid, VariantID: vid}); err != nil {
 						setupErrors["variant_id"] = "This product option does not belong to the selected seller."
+					} else if f.Get("action") == "save_setup_tax" {
+						if !d.InvoiceSaved {
+							setupErrors["form"] = "Save seller invoice details before verifying tax and return policy."
+						} else if rate, err := parseTaxPercent(f); err == nil && d.Invoice.Registration == "unregistered" && rate != 0 {
+							setupErrors["tax_rate_percent"] = "An unregistered seller cannot collect GST. Use the verified applicable tax treatment."
+						}
 					}
 				}
 			}
@@ -233,6 +239,15 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 						return
 					}
 					e = h.Repository.SaveInvoiceProfile(r.Context(), session.UserID, ports.SellerInvoiceProfile{SellerID: c.SellerID, LegalName: f.Get("legal_name"), Address: f.Get("address"), StateCode: f.Get("state_code"), GSTIN: strings.ToUpper(f.Get("gstin")), Registration: f.Get("registration"), Prefix: f.Get("prefix")}, c.Reason)
+				case "save_setup_parcel":
+					q := setupPostContext(f)
+					sid, _ := strconv.ParseInt(q.Get("seller_id"), 10, 64)
+					e = h.Repository.SaveSetupParcel(r.Context(), session.UserID, sid, num("variant_id"), c.Parcel)
+				case "save_setup_tax":
+					q := setupPostContext(f)
+					sid, _ := strconv.ParseInt(q.Get("seller_id"), 10, 64)
+					rate, _ := parseTaxPercent(f)
+					e = h.Repository.SaveSetupTaxAndClass(r.Context(), session.UserID, sid, num("variant_id"), f.Get("hsn"), rate, f.Get("return_class"), c.Reason)
 				case "save_tax_profile":
 					if view.Role != "super_admin" {
 						http.Error(w, "Forbidden", 403)
@@ -259,6 +274,15 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				target := root + "?saved=1"
 				if isMarketplaceSetupAction(c.Action) {
 					q := setupPostContext(f)
+					if f.Get("intent") == "continue" && (c.Action == "save_invoice_profile" || c.Action == "save_shipping_profile" || c.Action == "save_setup_parcel" || c.Action == "save_setup_tax") {
+						q.Del("pickup_choices")
+						next := viewmodels.MarketplacePage{SetupContext: q}
+						if err := h.loadSetup(r.Context(), session.UserID, &next); err != nil {
+							marketplaceHTTPError(w, err)
+							return
+						}
+						q.Set("step", next.FirstMissingStep())
+					}
 					q.Set("saved", "1")
 					q.Set("saved_action", c.Action)
 					target = root + "?" + q.Encode()
@@ -347,7 +371,7 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 		p := viewmodels.MarketplacePage{MarketplaceView: view, Root: root, Back: back, ActionPath: root + "/action", CSRFToken: session.CSRFToken, Key: hex.EncodeToString(keyBytes), ShippingConfigured: h.ShippingConfigured, BookingsEnabled: h.BookingsEnabled}
 		p.CheckoutEnabled = h.CheckoutEnabled
 		p.Tab = "operations"
-		if view.Role == "super_admin" && number == "" && r.URL.Query().Get("tab") == "setup" {
+		if view.Role == "super_admin" && number == "" && r.URL.Query().Get("tab") != "operations" {
 			p.Tab = "setup"
 			p.SetupContext = setupContext(r.URL.Query())
 			p.SetupValues = setupValues
@@ -360,7 +384,12 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 		}
 		if view.Role == "super_admin" && number == "" {
 			before, _ := strconv.ParseInt(r.URL.Query().Get("setup_before"), 10, 64)
-			p.Readiness, p.NextSetupID, e = h.Repository.ShippingReadiness(r.Context(), session.UserID, before)
+			p.Readiness, p.NextSetupID, e = h.Repository.ShippingReadinessFiltered(r.Context(), session.UserID, before, func() int64 {
+				if p.Setup != nil {
+					return p.Setup.Query.SellerID
+				}
+				return 0
+			}(), r.URL.Query().Get("product_q"))
 			if e != nil {
 				marketplaceHTTPError(w, e)
 				return
@@ -372,6 +401,10 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				switch r.URL.Query().Get("saved_action") {
 				case "save_invoice_profile":
 					p.Notice = "Seller invoice details verified and saved."
+				case "save_setup_parcel":
+					p.Notice = "Packed measurements saved."
+				case "save_setup_tax":
+					p.Notice = "Tax and return policy verified and saved."
 				case "save_tax_profile":
 					p.Notice = "Product tax settings verified and saved."
 				case "save_shipping_profile":
@@ -393,7 +426,7 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			if view.Role == "super_admin" {
 				label = "Super Admin"
 			}
-			document = adminpages.AdminDocument(viewmodels.AdminPage{Title: "Fulfillment · " + strings.Title(p.Tab), Active: "fulfillment", NavActive: "fulfillment", PortalRoot: strings.TrimSuffix(root, "/fulfillment"), PortalLabel: label, RoleLabel: label, CSRFToken: session.CSRFToken, CanFinance: true, CanSecurity: view.Role == "super_admin", CanManageCatalog: true})
+			document = adminpages.AdminDocument(viewmodels.AdminPage{GuidedFulfillment: p.Tab == "setup", Title: "Fulfillment · " + strings.Title(p.Tab), Active: "fulfillment", NavActive: "fulfillment", PortalRoot: strings.TrimSuffix(root, "/fulfillment"), PortalLabel: label, RoleLabel: label, CSRFToken: session.CSRFToken, CanFinance: true, CanSecurity: view.Role == "super_admin", CanManageCatalog: true})
 		default:
 			document = pages.Document(viewmodels.CustomerPage{Title: "Order fulfillment", Route: "/orders", Brand: "WeevCrafts", Authenticated: true, IsCustomer: true, CSRFToken: session.CSRFToken})
 		}
@@ -411,7 +444,7 @@ func marketplaceHTTPError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ports.ErrForbidden):
 		status, message = 403, "Forbidden"
-	case errors.Is(err, ports.ErrOrderNotFound) || errors.Is(err, pgx.ErrNoRows):
+	case errors.Is(err, ports.ErrNotFound) || errors.Is(err, ports.ErrOrderNotFound) || errors.Is(err, pgx.ErrNoRows):
 		status, message = 404, "Record not found or unavailable for this account"
 	case errors.Is(err, ports.ErrIdempotencyConflict):
 		status, message = 409, "This request key was already used. Reload before making a different request."

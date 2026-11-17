@@ -17,6 +17,7 @@ const previewFiles = [
   "homepage-reference.css",
   "admin.css",
   "superadmin.css",
+  "fulfillment-guided.css",
   "storefront-editor.css",
   "seller-admin.css",
   "seller-reference.css",

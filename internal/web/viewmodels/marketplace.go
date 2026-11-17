@@ -24,6 +24,79 @@ type MarketplacePage struct {
 	SetupErrors                                    map[string]string
 	SetupContext                                   url.Values
 	SetupAction                                    string
+	SetupStep                                      string
+}
+
+type GuidedSetupStep struct {
+	Key, Label string
+	Complete   bool
+}
+
+func (p MarketplacePage) GuidedSteps() []GuidedSetupStep {
+	r := p.Setup
+	steps := []GuidedSetupStep{{Key: "choose", Label: "Choose product"}, {Key: "invoice", Label: "Invoice details"}, {Key: "pickup", Label: "Pickup location"}, {Key: "parcel", Label: "Packed measurements"}, {Key: "tax", Label: "Tax & return policy"}, {Key: "review", Label: "Review"}}
+	if r == nil {
+		return steps
+	}
+	steps[0].Complete = r.Query.VariantID > 0
+	if r.Selected != nil {
+		s := r.Selected
+		steps[1].Complete = s.InvoiceReady
+		steps[2].Complete = s.PickupReady
+		steps[3].Complete = s.ParcelReady()
+		steps[4].Complete = s.TaxReady && s.Classified
+	}
+	steps[5].Complete = steps[1].Complete && steps[2].Complete && steps[3].Complete && steps[4].Complete
+	return steps
+}
+
+func (p MarketplacePage) FirstMissingStep() string {
+	for _, s := range p.GuidedSteps() {
+		if s.Key != "choose" && s.Key != "review" && !s.Complete {
+			return s.Key
+		}
+	}
+	return "review"
+}
+func (p MarketplacePage) StepComplete(key string) bool {
+	for _, s := range p.GuidedSteps() {
+		if s.Key == key {
+			return s.Complete
+		}
+	}
+	return false
+}
+func (p MarketplacePage) StepNumber() int {
+	for i, s := range p.GuidedSteps() {
+		if s.Key == p.SetupStep {
+			return i + 1
+		}
+	}
+	return 6
+}
+func (p MarketplacePage) StepLabel(key string) string {
+	for _, s := range p.GuidedSteps() {
+		if s.Key == key {
+			return s.Label
+		}
+	}
+	switch key {
+	case "pilot":
+		return "Pilot setup"
+	case "launch":
+		return "Launch catalog"
+	case "policy":
+		return "Publish policy"
+	case "pause":
+		return "Pause shipping"
+	}
+	return "Choose product"
+}
+func (p MarketplacePage) OverviewURL() string {
+	return p.SetupURL("variant_id", "", "step", "", "pickup_choices", "")
+}
+func (p MarketplacePage) PurchaseReady() bool {
+	return p.Setup != nil && p.Setup.Selected != nil && p.Setup.Selected.Ready() && p.Setup.Selected.Selected && p.CheckoutEnabled && p.BookingsEnabled && p.ShippingConfigured && p.Policy.PublishedAt != nil && p.Policy.ShippingMode == "live"
 }
 
 func (p MarketplacePage) SetupValue(name, fallback string) string {

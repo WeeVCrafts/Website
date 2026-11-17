@@ -43,8 +43,8 @@ test('HTML policy and claim evidence work at phone and desktop widths', async ({
   }
   const admin=await rolePage(browser,'super_admin',390);
   await admin.page.goto(`${base}${admin.root}?tab=setup`);
-  await expect(admin.page.getByRole('heading',{name:'Policy and live shipping readiness'})).toBeVisible();
-  await expect(admin.page.getByRole('button',{name:'Enable one-order pilot'})).toBeVisible();
+  await expect(admin.page.getByRole('heading',{name:'Finish product setup'})).toBeVisible();
+  await expect(admin.page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
   expect(await admin.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await admin.page.screenshot({path:path.resolve('.tmp/policy-super-admin-390.png'),fullPage:true});
   await admin.context.close();
@@ -133,100 +133,96 @@ test.describe.serial('Seller-controlled fulfillment', () => {
 });
 
 
-test('Super Admin setup uses names, saved profiles and the correct navigation on desktop and phone',async({browser})=>{
- for(const width of [1440,390]){
-  const {context,page,root}=await rolePage(browser,'super_admin',width);
-  await page.goto(`${base}${root}`);
-  await expect(page.getByRole('link',{name:'Fulfillment & exceptions',exact:true})).toHaveAttribute('aria-current','page');
-  await expect(page.getByRole('link',{name:'Orders & delivery',exact:true})).not.toHaveAttribute('aria-current','page');
-  await expect(page.getByRole('heading',{name:'Recent orders',exact:true})).toBeVisible();
-  await page.getByRole('link',{name:'Setup',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Seller and product setup',exact:true})).toBeVisible();
-  await expect(page.getByRole('heading',{name:'Recent orders',exact:true})).toHaveCount(0);
-  await page.getByLabel('Seller',{exact:true}).selectOption(String(fixture.SellerID));
-  await page.getByRole('button',{name:'Load seller',exact:true}).click();
-  await page.getByLabel('Product option',{exact:true}).selectOption(String(fixture.VariantID));
-  await page.getByRole('button',{name:'Load product option',exact:true}).click();
-  await expect(page.getByLabel('Legal name',{exact:true})).toHaveValue('Verified craft business');
-  await expect(page.getByLabel('Invoice prefix',{exact:true})).toHaveAttribute('readonly','');
-  const state=page.getByLabel('State / Union Territory',{exact:true});
-  await state.focus();await page.keyboard.press('Home');await page.keyboard.press('t');await page.keyboard.press('Enter');
-  await state.selectOption('36');await expect(state).toHaveValue('36');
-  await page.getByLabel('GST registration',{exact:true}).selectOption('registered');
-  await expect(page.getByLabel('GSTIN (for registered sellers)',{exact:true})).toBeVisible();
-  await page.getByLabel('GST registration',{exact:true}).selectOption('unregistered');
-  await expect(page.getByLabel('GSTIN (for registered sellers)',{exact:true})).toBeHidden();
-  await page.getByRole('link',{name:'Operations',exact:true}).click();
-  await page.getByRole('button',{name:'Keep editing',exact:true}).click();
-  await expect(state).toHaveValue('36');
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  await page.screenshot({path:path.resolve(`.tmp/fulfillment-setup-${width}.png`),fullPage:true});
-  await page.getByRole('link',{name:'Operations',exact:true}).click();
-  await page.getByRole('button',{name:'Discard changes',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Recent orders',exact:true})).toBeVisible();
-  await context.close();
- }
-});
 
-test('Setup retains invalid values and saves exact tax percentages without changing launch mode',async({browser})=>{
- const {context,page,root}=await rolePage(browser,'super_admin');
- await page.goto(`${base}${root}?tab=setup&seller_id=${fixture.SellerID}&variant_id=${fixture.VariantID}`);
- const tax=page.locator('form[data-fulfillment-setup-action="save_tax_profile"]');
- // Bypass the browser pattern intentionally to exercise server-side failure recovery.
- await tax.getByLabel('HSN (4–8 digits)',{exact:true}).fill('44');
- await tax.getByLabel('Tax rate (%)',{exact:true}).fill('5.555');
- await tax.getByLabel('Verification reason',{exact:true}).fill('Checked fixture classification');
- const rejected=await page.request.post(`${base}${root}/action`,{form:{action:'save_tax_profile',csrf_token:fixture.Roles.super_admin.CSRF,variant_id:String(fixture.VariantID),hsn:'44',tax_rate_percent:'5.555',reason:'Checked fixture classification',setup_context:`seller_id=${fixture.SellerID}&variant_id=${fixture.VariantID}`}});
- expect(rejected.status()).toBe(422);
- const html=await rejected.text();expect(html).toContain('up to two decimal places');expect(html).toContain('value="5.555"');expect(html).toContain('aria-invalid="true"');
- await tax.getByLabel('HSN (4–8 digits)',{exact:true}).evaluate(field=>field.removeAttribute('pattern'));
- await tax.getByLabel('Tax rate (%)',{exact:true}).evaluate(field=>field.removeAttribute('pattern'));
- const failedSave=page.waitForResponse(response=>response.url().endsWith('/fulfillment/action')&&response.request().method()==='POST');
- await tax.getByRole('button',{name:'Verify and save product tax settings'}).click();
- expect((await failedSave).status()).toBe(422);
- await expect(tax.locator('.ui-error-summary')).toContainText('up to two decimal places');
- await expect(tax.getByLabel('Tax rate (%)',{exact:true})).toHaveValue('5.555');
+const setupURL=(root,step='')=>`${base}${root}?tab=setup&seller_id=${fixture.SellerID}&variant_id=${fixture.VariantID}${step?'&step='+step:''}`;
 
- await tax.getByLabel('HSN (4–8 digits)',{exact:true}).fill('4420');
- await tax.getByLabel('Tax rate (%)',{exact:true}).fill('5.50');
- await save(page,tax.getByRole('button',{name:'Verify and save product tax settings'}));
- await expect(page.getByLabel('Tax rate (%)',{exact:true})).toHaveValue('5.50');
- await expect(page.getByText('Product tax settings verified and saved.',{exact:true})).toBeVisible();
- await expect(page.locator('#setup-policy')).toContainText('off');
- expect(page.url()).not.toContain('Checked');
- await context.close();
-});
-
-test('Verified pickup lookup offers retry and named choices',async({browser})=>{
- const {context,page,root}=await rolePage(browser,'super_admin');
- await page.goto(`${base}${root}?tab=setup&seller_id=${fixture.SellerID}`);
+test('Guided setup shows one form, saves each task, and explains checkout gates',async({browser})=>{
+ const {context,page,root}=await rolePage(browser,'super_admin',1536);await page.setViewportSize({width:1536,height:1024});
+ await page.goto(`${base}${root}?tab=setup`);
+ await expect(page.getByRole('heading',{name:'Finish product setup',exact:true})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Fulfillment',exact:true})).toHaveAttribute('aria-current','page');
+ await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
+ await page.getByLabel('Find product',{exact:true}).fill('no-such-approved-product');await page.getByRole('button',{name:'Apply filters',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'No approved products match'})).toBeVisible();
+ await page.goto(`${base}${root}?tab=setup`);await page.screenshot({path:path.resolve('.tmp/guided-overview-1536.png')});
+ await page.goto(setupURL(root,'invoice'));
+ const invoice=page.locator('[data-fulfillment-setup-action="save_invoice_profile"]');
+ await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(1);
+ await expect(invoice.getByLabel('Legal name',{exact:true})).toHaveValue('Verified craft business');
+ await expect(invoice.getByLabel('Invoice prefix',{exact:true})).toHaveAttribute('readonly','');
+ await invoice.getByLabel('GST registration',{exact:true}).selectOption('registered');await expect(invoice.getByLabel('GSTIN (for registered sellers)')).toBeVisible();
+ await invoice.getByLabel('GST registration',{exact:true}).selectOption('unregistered');await expect(invoice.getByLabel('GSTIN (for registered sellers)')).toBeHidden();
+ await invoice.getByLabel('State / Union Territory',{exact:true}).selectOption('36');
+ await invoice.getByLabel('Legal name',{exact:true}).fill('Verified craft business updated');
+ await page.getByRole('link',{name:'Back to products',exact:true}).click();await page.getByRole('button',{name:'Keep editing',exact:true}).click();
+ await expect(invoice.getByLabel('State / Union Territory',{exact:true})).toHaveValue('36');
+ await invoice.getByLabel('Verification reason',{exact:true}).fill('Verified isolated fixture legal evidence');
+ await page.screenshot({path:path.resolve('.tmp/guided-invoice-1536.png')});
+ await save(page,invoice.getByRole('button',{name:'Save and continue',exact:true}));
+ expect(page.url()).not.toContain('Verified');expect(page.url()).not.toContain('legal_name');
+ await expect(page.getByRole('heading',{name:'Add packed measurements'})).toBeVisible();
+ await page.goto(setupURL(root,'pickup'));
+ await expect(page.getByRole('heading',{name:'Confirm seller pickup location'})).toBeVisible();
  await page.getByRole('button',{name:'Load or refresh verified Shiprocket pickups'}).click();
  await expect(page.getByText('Shiprocket pickup locations could not be loaded. Retry when the provider is available.',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Load or refresh verified Shiprocket pickups'}).click();
- const choices=page.getByLabel('Verified pickup location',{exact:true});
- await expect(choices).toBeVisible();await choices.selectOption('Fixture Depot');
- await expect(choices.locator('option:checked')).toHaveText('Fixture Depot · PIN 411001');
+ const pickup=page.locator('[data-fulfillment-setup-action="save_shipping_profile"]');await pickup.getByLabel('Verified pickup location').selectOption('Fixture Depot');
+ await pickup.getByLabel('Verification reason').fill('Verified isolated seller pickup');await save(page,pickup.getByRole('button',{name:'Save and continue'}));
+ await expect(page.getByRole('heading',{name:'Add packed measurements'})).toBeVisible();
+ await page.goto(setupURL(root,'parcel'));
+ const parcel=page.locator('[data-fulfillment-setup-action="save_setup_parcel"]');
+ await parcel.getByLabel('Packed weight (g)').fill('750');await parcel.getByLabel('Length (cm)').fill('30');await parcel.getByLabel('Width (cm)').fill('20');await parcel.getByLabel('Height (cm)').fill('10');
+ await page.screenshot({path:path.resolve('.tmp/guided-parcel-1536.png')});await save(page,parcel.getByRole('button',{name:'Save and continue'}));
+ await expect(page.getByRole('heading',{name:'Verify tax & return policy'})).toBeVisible();
+ const tax=page.locator('[data-fulfillment-setup-action="save_setup_tax"]');await tax.getByLabel('HSN (4–8 digits)').fill('4420');await tax.getByLabel('Tax rate (%)').fill('0');await tax.getByLabel('Return category').selectOption('textile_craft');await tax.getByLabel('Verification reason').fill('Verified isolated product classification');
+ await save(page,tax.getByRole('button',{name:'Save and continue'}));await page.goto(setupURL(root,'review'));await expect(page.getByText('Product setup complete',{exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Checkout is still paused'})).toBeVisible();await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
+ await page.screenshot({path:path.resolve('.tmp/guided-review-1536.png')});
+ await page.getByRole('link',{name:'Continue to pilot setup'}).click();await expect(page.getByRole('heading',{name:'One genuine order pilot'})).toBeVisible();await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(1);
  await context.close();
 });
 
+test('Guided validation retains invalid values, focuses errors and preserves exact tax precision',async({browser})=>{
+ const {context,page,root}=await rolePage(browser,'super_admin');await page.goto(setupURL(root,'tax'));
+ const tax=page.locator('[data-fulfillment-setup-action="save_setup_tax"]');
+ await tax.getByLabel('HSN (4–8 digits)').fill('44');await tax.getByLabel('Tax rate (%)').fill('5.555');await tax.getByLabel('Return category').selectOption('fragile_art');await tax.getByLabel('Verification reason').fill('Isolated validation evidence');
+ await tax.locator('[pattern]').evaluateAll(fields=>fields.forEach(field=>field.removeAttribute('pattern')));
+ const rejected=page.waitForResponse(r=>r.url().endsWith('/fulfillment/action')&&r.request().method()==='POST');await tax.getByRole('button',{name:'Save and continue'}).click();expect((await rejected).status()).toBe(422);
+ await expect(tax.locator('.ui-error-summary')).toContainText('up to two decimal places');await expect(tax.getByLabel('Tax rate (%)')).toHaveValue('5.555');await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(1);
+ await expect(tax.locator('[aria-invalid="true"]').first()).toBeFocused();
+ const parcel=await page.request.post(`${base}${root}/action`,{form:{action:'save_setup_parcel',csrf_token:fixture.Roles.super_admin.CSRF,variant_id:String(fixture.VariantID),weight_grams:'0',length_cm:'30',width_cm:'20',height_cm:'10',setup_context:`seller_id=${fixture.SellerID}&variant_id=${fixture.VariantID}&step=parcel`}});
+ expect(parcel.status()).toBe(422);expect(await parcel.text()).toContain('Enter a whole number from 100 to 50000.');
+ await context.close();
+});
 
-test('Invoice state saves by selection and other roles cannot verify profiles',async({browser})=>{
- const admin=await rolePage(browser,'super_admin');
- await admin.page.goto(`${base}${admin.root}?tab=setup&seller_id=${fixture.SellerID}&variant_id=${fixture.VariantID}`);
- const invoice=admin.page.locator('[data-fulfillment-setup-action="save_invoice_profile"]');
- await invoice.getByLabel('State / Union Territory',{exact:true}).selectOption('36');
- await invoice.getByLabel('Verification reason',{exact:true}).fill('Fixture operator checked legal evidence');
- await save(admin.page,invoice.getByRole('button',{name:'Verify and save invoice details'}));
- await expect(admin.page.getByLabel('State / Union Territory',{exact:true})).toHaveValue('36');
- await expect(admin.page.getByText('Seller invoice details verified and saved.',{exact:true})).toBeVisible();
- expect(admin.page.url()).not.toContain('Fixture+operator');
- await admin.context.close();
+test('Guided screens fit phone widths and keyboard navigation preserves unfinished work',async({browser})=>{
+ const {context,page,root}=await rolePage(browser,'super_admin',390);
+ for(const step of ['', 'invoice','pickup','parcel','tax','review']){
+  await page.goto(step?setupURL(root,step):`${base}${root}?tab=setup`);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.keyboard.press('Tab');expect(await page.evaluate(()=>document.activeElement.tagName!=='BODY')).toBe(true);
+  await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(['invoice','tax','parcel'].includes(step)?1:0);
+  await page.keyboard.press('Tab');
+  if(step){await expect(page.locator('[data-guided-progress]')).not.toHaveAttribute('open','');await page.getByText('Setup progress',{exact:true}).focus();await page.keyboard.press('Space');await expect(page.locator('[data-guided-progress]')).toHaveAttribute('open','');await page.keyboard.press('Space');}
+  await page.addScriptTag({path:require.resolve('axe-core/axe.min.js')});
+  const audit=await page.evaluate(async()=>{const result=await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}});return result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>n.target)}))});expect(audit).toEqual([]);
+  await page.screenshot({path:path.resolve(`.tmp/guided-${step||'overview'}-390.png`),fullPage:true});
+ }
+ await page.keyboard.press('Tab');
+ await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Fulfillment',exact:true})).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Open admin navigation'})).toBeFocused();
+ await page.goto(setupURL(root,'invoice'));await page.getByLabel('Legal name',{exact:true}).fill('Unsaved isolated edit');await page.getByRole('link',{name:'Back to products',exact:true}).click();await page.getByRole('button',{name:'Discard changes',exact:true}).click();await expect(page.getByRole('heading',{name:'Finish product setup'})).toBeVisible();
+ await context.close();
+});
+
+test('Only Super Admin can save guided profiles and production activation stays guarded',async({browser})=>{
  for(const role of ['customer','seller','admin']){
   const {context,page,root}=await rolePage(browser,role);
-  const surface=await page.request.get(`${base}${root}?tab=setup`);
-  expect(surface.status()).toBe(200);expect(await surface.text()).not.toContain('name="legal_name"');
-  const denied=await page.request.post(`${base}${root}/action`,{form:{action:'save_tax_profile',csrf_token:fixture.Roles[role].CSRF,variant_id:String(fixture.VariantID),hsn:'4420',tax_rate_percent:'0',reason:'Forbidden fixture attempt'}});
-  expect(denied.status()).toBe(403);
-  await context.close();
+  for(const action of ['save_setup_parcel','save_setup_tax']){
+   const denied=await page.request.post(`${base}${root}/action`,{form:{action,csrf_token:fixture.Roles[role].CSRF,variant_id:String(fixture.VariantID),weight_grams:'750',length_cm:'30',width_cm:'20',height_cm:'10',hsn:'4420',tax_rate_percent:'0',return_class:'textile_craft',reason:'Forbidden isolated attempt'}});expect(denied.status()).toBe(403);
+  }await context.close();
  }
+ const {context,page,root}=await rolePage(browser,'super_admin');await page.goto(setupURL(root,'pilot'));
+ const pilot=page.locator('[data-fulfillment-setup-action="configure_pilot"]');await pilot.getByLabel('Customer account').selectOption({index:1});await pilot.getByLabel('Activation reason').fill('Isolated test must preserve paused bookings');await pilot.getByLabel(/Wallet is funded/).check();
+ const failed=page.waitForResponse(r=>r.url().endsWith('/fulfillment/action')&&r.request().method()==='POST');await pilot.getByRole('button',{name:'Enable one-order pilot'}).click();expect((await failed).status()).toBe(422);await expect(pilot.locator('.ui-error-summary')).toContainText('paused');
+ await context.close();
 });

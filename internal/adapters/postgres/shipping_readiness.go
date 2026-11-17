@@ -7,6 +7,10 @@ import (
 )
 
 func (r *MarketplaceRepository) ShippingReadiness(ctx context.Context, actor, before int64) ([]ports.ShippingReadiness, int64, error) {
+	return r.ShippingReadinessFiltered(ctx, actor, before, 0, "")
+}
+
+func (r *MarketplaceRepository) ShippingReadinessFiltered(ctx context.Context, actor, before, seller int64, search string) ([]ports.ShippingReadiness, int64, error) {
 	a, err := marketplaceIdentity(ctx, r.pool, actor)
 	if err != nil {
 		return nil, 0, err
@@ -15,7 +19,7 @@ func (r *MarketplaceRepository) ShippingReadiness(ctx context.Context, actor, be
 		return nil, 0, ports.ErrForbidden
 	}
 	rows, err := r.pool.Query(ctx, `SELECT variant_id,(SELECT product_id FROM product_variants pv WHERE pv.id=variant_id),seller_id,product,sku,seller,shipping_weight_g,shipping_length_cm,shipping_width_cm,shipping_height_cm,pickup_ready,invoice_ready,tax_ready,classified,stock,selected
-		FROM marketplace_variant_readiness WHERE ($1=0 OR variant_id<$1) ORDER BY variant_id DESC LIMIT 51`, before)
+		FROM marketplace_variant_readiness WHERE ($1=0 OR variant_id<$1) AND ($2=0 OR seller_id=$2) AND ($3='' OR strpos(lower(product||' '||sku),lower($3))>0) ORDER BY variant_id DESC LIMIT 51`, before, seller, search)
 	if err != nil {
 		return nil, 0, err
 	}

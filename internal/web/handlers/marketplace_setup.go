@@ -14,7 +14,7 @@ import (
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
-var setupKeys = []string{"seller_id", "variant_id", "seller_q", "product_q", "seller_before", "variant_before", "customer_q", "customer_before", "launch_q", "launch_before", "setup_before", "pickup_choices"}
+var setupKeys = []string{"seller_id", "variant_id", "seller_q", "product_q", "seller_before", "variant_before", "customer_q", "customer_before", "launch_q", "launch_before", "setup_before", "pickup_choices", "step"}
 
 func setupContext(values url.Values) url.Values {
 	q := url.Values{"tab": {"setup"}}
@@ -43,7 +43,7 @@ func setupPostContext(values url.Values) url.Values {
 
 func isMarketplaceSetupAction(action string) bool {
 	switch action {
-	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "configure_live_catalog":
+	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "save_setup_parcel", "save_setup_tax", "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "configure_live_catalog":
 		return true
 	}
 	return false
@@ -93,7 +93,7 @@ func validateSetup(action string, f url.Values) map[string]string {
 	if action == "publish_policy" || action == "pause_shipping" || action == "configure_pilot" || action == "configure_live_catalog" {
 		minimum = 10
 	}
-	if action != "classify_variant" && len(strings.TrimSpace(f.Get("reason"))) < minimum {
+	if action != "classify_variant" && action != "save_setup_parcel" && len(strings.TrimSpace(f.Get("reason"))) < minimum {
 		e["reason"] = fmt.Sprintf("Enter a reason of at least %d characters.", minimum)
 	}
 	if action == "publish_policy" || action == "pause_shipping" || action == "configure_pilot" || action == "configure_live_catalog" || action == "classify_variant" {
@@ -134,13 +134,27 @@ func validateSetup(action string, f url.Values) map[string]string {
 		default:
 			e["registration"] = "Choose the seller’s registration status."
 		}
-	case "save_tax_profile":
+	case "save_tax_profile", "save_setup_tax":
 		positive("variant_id", "a product option")
 		if !regexp.MustCompile(`^[0-9]{4,8}$`).MatchString(strings.TrimSpace(f.Get("hsn"))) {
 			e["hsn"] = "Enter the verified HSN (4–8 digits)."
 		}
 		if _, err := parseTaxPercent(f); err != nil {
 			e["tax_rate_percent"] = err.Error()
+		}
+		if action == "save_setup_tax" && f.Get("return_class") != "textile_craft" && f.Get("return_class") != "fragile_art" {
+			e["return_class"] = "Choose the verified return classification."
+		}
+	case "save_setup_parcel":
+		positive("variant_id", "a product option")
+		for _, field := range []struct {
+			key      string
+			min, max int
+		}{{"weight_grams", 100, 50000}, {"length_cm", 1, 200}, {"width_cm", 1, 200}, {"height_cm", 1, 200}} {
+			v, err := strconv.Atoi(f.Get(field.key))
+			if err != nil || v < field.min || v > field.max {
+				e[field.key] = fmt.Sprintf("Enter a whole number from %d to %d.", field.min, field.max)
+			}
 		}
 	case "save_shipping_profile":
 		positive("seller_id", "a seller")
@@ -174,6 +188,14 @@ func (h *MarketplaceHandler) loadSetup(ctx context.Context, actor int64, p *view
 	}
 	p.Setup = &d
 	p.States = domain.IndianStates()
+	if d.Query.VariantID > 0 {
+		p.SetupStep = q.Get("step")
+		switch p.SetupStep {
+		case "invoice", "pickup", "parcel", "tax", "review", "pilot", "launch", "policy", "pause":
+		default:
+			p.SetupStep = p.FirstMissingStep()
+		}
+	}
 	// A live read is requested explicitly; routine invoice/tax editing does not
 	// wait on Shiprocket. Saving always revalidates with the provider.
 	if q.Get("seller_id") != "" && q.Get("pickup_choices") == "1" && h.PickupChecker != nil {

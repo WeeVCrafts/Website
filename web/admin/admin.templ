@@ -93,25 +93,37 @@ if p.CanSecurity {
  <link rel="stylesheet" href={assets.URL("css/superadmin.min.css")}/>
  <script defer src={assets.URL("js/superadmin.min.js")}></script>
 }
+if p.GuidedFulfillment {
+ <link rel="stylesheet" href={assets.URL("css/fulfillment-guided.min.css")}/>
+}
 </head>
 
-    <body class={"admin-body",templ.KV("superadmin-body",p.CanSecurity)}>
+    <body class={"admin-body",templ.KV("superadmin-body",p.CanSecurity),templ.KV("fulfillment-guided",p.GuidedFulfillment)}>
 
       <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
 
       <div class="admin-shell" x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.adminMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#admin-sidebar a, #admin-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
 
-        @Sidebar(p)
+        if p.GuidedFulfillment {
+ @GuidedSidebar(p)
+} else {
+ @Sidebar(p)
+}
 
         <button class="admin-sidebar-backdrop" type="button" aria-label="Close admin navigation" :class="sidebar ? 'is-open' : ''" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"></button>
 
         <div class="admin-main" :inert="sidebar">
 
-          @AdminHeader(p)
+          if p.GuidedFulfillment {
+ @GuidedMobileHeader(p)
+} else {
+ @AdminHeader(p)
+}
 
           <main id="admin-main" class="admin-content">
 
-            if p.CanSecurity {
+            if p.GuidedFulfillment {
+            } else if p.CanSecurity {
              @SuperAdminHeading(p)
             } else {
             <section class="admin-page-heading">
@@ -152,7 +164,9 @@ if p.CanSecurity {
 
           </main>
 
-          @AdminFooter(p)
+          if !p.GuidedFulfillment {
+ @AdminFooter(p)
+}
 
         </div>
 

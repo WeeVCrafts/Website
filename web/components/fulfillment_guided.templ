@@ -1,0 +1,202 @@
+package components
+
+import (
+ "fmt"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
+ <div class="guided-workspace">
+  if p.Setup.Query.VariantID==0 {
+   @GuidedOverview(p)
+  } else {
+   <header class="guided-heading"><h1>Product setup</h1><a aria-label="Back to products" href={templ.SafeURL(p.OverviewURL())}>← Back to products</a></header>
+   <div class="guided-product"><div><h2>{p.Setup.Product}</h2><p>{p.Setup.Seller}<span class="guided-sku"> · {p.Setup.SKU}</span></p></div><p>
+    if p.SetupStep=="pilot"||p.SetupStep=="launch"||p.SetupStep=="policy"||p.SetupStep=="pause" {
+     {p.StepLabel(p.SetupStep)}
+    } else {
+     Step {fmt.Sprint(p.StepNumber())} of 6
+    }
+   </p></div>
+   <div class="guided-layout">
+    <details class="guided-progress" data-guided-progress open><summary>Setup progress</summary><nav aria-label="Product setup steps"><ol>
+     for i,step:=range p.GuidedSteps() {
+      <li class={templ.KV("is-current",step.Key==p.SetupStep),templ.KV("is-complete",step.Complete)}>
+       <a href={templ.SafeURL(guidedStepURL(p,step.Key))} aria-current={tabCurrent(step.Key==p.SetupStep)}><span class="guided-step-number" aria-hidden="true">
+        if step.Complete {
+         <span class="material-symbols-outlined">check</span>
+        } else {
+         {fmt.Sprint(i+1)}
+        }
+       </span><span><strong>{step.Label}</strong><small class={"guided-status",templ.KV("complete",step.Complete),templ.KV("missing",!step.Complete&&step.Key!="review")}>
+        if step.Complete {
+         Complete
+        } else if step.Key=="review" {
+         Pending
+        } else {
+         Missing
+        }
+       </small></span></a>
+      </li>
+     }
+    </ol></nav></details>
+    <div class={"guided-task",templ.KV("guided-task--parcel",p.SetupStep=="parcel"),templ.KV("guided-task--review",p.SetupStep=="review")}>
+     if p.Setup.Selected==nil {
+      <h2>Product approval is required</h2><p>This option is not in the approved, active launch catalog. Review the product before completing checkout setup.</p><a class="guided-primary" href={templ.SafeURL(fmt.Sprintf("/super-admin/products/%d/edit",p.Setup.ProductID))}>Review product</a>
+     } else if p.SetupStep=="invoice" {
+      @MarketplaceInvoiceSetup(p)
+     } else if p.SetupStep=="pickup" {
+      @MarketplacePickupSetup(p)
+     } else if p.SetupStep=="parcel" {
+      @GuidedParcel(p)
+     } else if p.SetupStep=="tax" {
+      @GuidedTax(p)
+     } else if p.SetupStep=="review" {
+      @GuidedReview(p)
+     } else {
+      @GuidedLaunchStep(p)
+     }
+    </div>
+   </div>
+  }
+ </div>
+}
+
+templ GuidedOverview(p viewmodels.MarketplacePage) {
+ <div class="guided-overview-chrome"><strong>Fulfillment</strong><span><i class="material-symbols-outlined" aria-hidden="true">person</i>Super Admin</span></div>
+ <nav class="guided-overview-tabs" aria-label="Fulfillment sections"><a href={templ.SafeURL(p.Root+"?tab=operations")}>Operations</a><a href={templ.SafeURL(p.SetupURL())} aria-current="page">Guided setup</a></nav>
+ <header class="guided-heading"><div><h1>Finish product setup</h1><p>Choose a product. We will guide you through only the missing details.</p></div></header>
+ <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/>
+  <label>Seller<select name="seller_id">@SetupOptions(p.Setup.Sellers,p.Setup.Query.SellerID,"All sellers")</select></label>
+  <label>Find product<input name="product_q" value={p.Setup.Query.ProductSearch} maxlength="120" placeholder="Search product name or SKU"/></label><button type="submit">Apply filters</button>
+ </form>
+ <div class="guided-catalog"><div class="guided-catalog-head" aria-hidden="true"><span>Product</span><span>Missing details</span><span>Next action</span></div>
+  for _,r:=range p.Readiness {
+   <article class="guided-product-row"><div><h2>{r.Product}</h2><p>{r.Seller}</p><small>{r.SKU}</small></div><div class="guided-missing-list">
+    if !r.InvoiceReady {
+     <span>Invoice details</span>
+    }
+    if !r.PickupReady {
+     <span>Pickup location</span>
+    }
+    if !r.ParcelReady() {
+     <span>Packed measurements</span>
+    }
+    if !r.TaxReady||!r.Classified {
+     <span>Tax & return policy</span>
+    }
+    if guidedDetailsReady(r) {
+     <strong class="guided-complete">Setup complete</strong>
+    }
+    <small>{guidedCompleted(r)} of 4 tasks complete</small>
+   </div><a class="guided-primary" href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID),"step","","pickup_choices",""))} aria-label={"Continue setup for "+r.Product+" · "+r.SKU}>Continue setup <span aria-hidden="true">→</span></a></article>
+  }
+  if len(p.Readiness)==0 {
+   <div class="guided-empty"><h2>No approved products match</h2><p>Try another seller or product name. Products must be approved and active to appear here.</p><a href={templ.SafeURL(p.SetupURL("seller_id","","product_q","","setup_before",""))}>Clear filters</a></div>
+  }
+ </div>
+ <nav class="guided-pagination" aria-label="Product pages">
+  if p.NextSetupID>0 {
+   <a href={templ.SafeURL(p.SetupURL("setup_before",fmt.Sprint(p.NextSetupID)))}>More products →</a>
+  }
+  if p.SetupContext.Get("setup_before")!="" {
+   <a href={templ.SafeURL(p.SetupURL("setup_before",""))}>First product page</a>
+  }
+  if p.Setup.NextSeller>0 {
+   <a href={templ.SafeURL(p.SetupURL("seller_before",fmt.Sprint(p.Setup.NextSeller)))}>More sellers</a>
+  }
+  if p.Setup.Query.SellerBefore>0 {
+   <a href={templ.SafeURL(p.SetupURL("seller_before",""))}>First seller page</a>
+  }
+ </nav>
+ <p class="guided-footnote">Completing product setup does not automatically open checkout. Review stock, policy and the genuine delivery pilot before launch.</p>
+}
+
+templ GuidedMissing(p viewmodels.MarketplacePage,key,label string) {
+ if !p.StepComplete(key) {
+  <p class="guided-alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>Missing: {label}</p>
+ } else {
+  <p class="guided-saved"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Saved: {label}. Review or update the details below.</p>
+ }
+}
+
+templ GuidedActions(p viewmodels.MarketplacePage,back string) {
+ <div class="guided-actions"><a class="guided-secondary" href={templ.SafeURL(guidedStepURL(p,back))}>Back</a><small>You can return to this step later.</small><button type="submit">Save and continue</button></div>
+}
+
+templ GuidedParcelField(p viewmodels.MarketplacePage,name,label string,value,min,max int) {
+ <div><label for={"save_setup_parcel_"+name}>{label}</label><input type="number" id={"save_setup_parcel_"+name} name={name} min={fmt.Sprint(min)} max={fmt.Sprint(max)} step="1" inputmode="numeric" required value={p.FormValue("save_setup_parcel",name,guidedMeasurement(value))} aria-invalid={invalidField(p.FieldError("save_setup_parcel",name))} aria-describedby={"save_setup_parcel_"+name+"_error"}/>@SetupFieldError(p,"save_setup_parcel",name)</div>
+}
+
+templ GuidedParcel(p viewmodels.MarketplacePage) {
+ <h2>Add packed measurements</h2><p>Measure the final packed parcel, including all protective packaging.</p>
+ @GuidedMissing(p,"parcel","packed weight and dimensions")
+
+ <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate data-fulfillment-setup-action="save_setup_parcel">
+  @MarketplaceFields(p,"save_setup_parcel") @SetupErrors(p,"save_setup_parcel")<input type="hidden" name="intent" value="continue"/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/>
+  <div class="guided-parcel-top"><div>@GuidedParcelField(p,"weight_grams","Packed weight (g)",p.Setup.Selected.WeightGrams,100,50000)<small>Weigh the product together with its packaging. 1,000 g = 1 kg.</small></div> <div class="guided-parcel-diagram"><svg viewBox="95 10 330 190" role="img" aria-label="Measure the packed box: length along the front, width along the side and height vertically"><defs><marker id="parcel-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto-start-reverse"><path d="M 6 0 L 0 3 L 6 6" fill="none" stroke="currentColor"/></marker></defs><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M190 58 280 25 380 62 291 100Z M190 58V133L291 171 380 133V62 M291 100V171"/><path d="m233 42 99 38M332 80v26" opacity=".5"/><g marker-start="url(#parcel-arrow)" marker-end="url(#parcel-arrow)"><path d="M173 68v60M195 148l83 31M310 179l79-34"/></g></g><g fill="currentColor" font-size="15" font-family="Inter, sans-serif"><text x="108" y="106">Height</text><text x="211" y="188">Length</text><text x="367" y="179">Width</text></g></svg></div></div>
+  <div class="guided-dimensions">@GuidedParcelField(p,"length_cm","Length (cm)",p.Setup.Selected.LengthCM,1,200) @GuidedParcelField(p,"width_cm","Width (cm)",p.Setup.Selected.WidthCM,1,200) @GuidedParcelField(p,"height_cm","Height (cm)",p.Setup.Selected.HeightCM,1,200)</div>
+  <p class="guided-inline-note">Use actual measurements. Shipping charges depend on these values.</p>@GuidedActions(p,"pickup")
+ </form>
+}
+
+templ GuidedTax(p viewmodels.MarketplacePage) {
+ <h2>Verify tax & return policy</h2><p>Use the verified classification for this product option. Catalog prices include tax.</p>@GuidedMissing(p,"tax","verified tax and return classification")
+ <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate data-fulfillment-setup-action="save_setup_tax">
+  @MarketplaceFields(p,"save_setup_tax") @SetupErrors(p,"save_setup_tax")<input type="hidden" name="intent" value="continue"/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/>
+  <div class="guided-field-grid"><div>@SetupInput(p,"save_setup_tax","hsn","HSN (4–8 digits)",p.Setup.HSN,"[0-9]{4,8}",true,false)</div><div>@SetupInput(p,"save_setup_tax","tax_rate_percent","Tax rate (%)",setupTaxValue(p),"[0-9]{1,3}([.][0-9]{1,2})?",true,false)</div></div><small>Enter a percentage, for example 5 for 5%. An unregistered seller cannot collect GST.</small>
+  <label for="save_setup_tax_return_class">Return category</label><select id="save_setup_tax_return_class" name="return_class" required aria-invalid={invalidField(p.FieldError("save_setup_tax","return_class"))} aria-describedby="save_setup_tax_return_class_error"><option value="">Choose the verified category</option><option value="textile_craft" selected?={p.FormValue("save_setup_tax","return_class",p.Setup.ReturnClass)=="textile_craft"}>Eligible textile or craft</option><option value="fragile_art" selected?={p.FormValue("save_setup_tax","return_class",p.Setup.ReturnClass)=="fragile_art"}>Fragile fine art, painting or sculpture</option></select>@SetupFieldError(p,"save_setup_tax","return_class")
+  <p><a href="/returns-replacements-authenticity" target="_blank" rel="noopener">Read return and replacement policy ↗</a></p>@SetupReason(p,"save_setup_tax") @GuidedActions(p,"parcel")
+ </form>
+}
+
+templ GuidedReview(p viewmodels.MarketplacePage) {
+ if p.StepComplete("review") {
+  <div class="guided-review-heading"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><div><h2>Product setup complete</h2><p>The required product details have been saved.</p></div></div>
+ } else {
+  <h2>Review product setup</h2><p class="guided-alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span>Some product details are still missing</p>
+ }
+ <dl class="guided-review-list">
+  for _,step:=range p.GuidedSteps() {
+   if step.Key!="choose"&&step.Key!="review" {
+    <div><dt>{step.Label}</dt><dd><span class={"guided-status",templ.KV("complete",step.Complete),templ.KV("missing",!step.Complete)}>
+     if step.Complete&&step.Key!="parcel" {
+      Verified
+     } else if step.Complete {
+      Saved
+     } else {
+      Missing
+     }
+    </span><a href={templ.SafeURL(guidedStepURL(p,step.Key))} aria-label={"Edit "+step.Label}>Edit</a></dd></div>
+   }
+  }
+ </dl>
+ if p.PurchaseReady() {
+  <p class="guided-success">This option is selected for live checkout. Delivery availability is checked for each customer’s PIN code.</p>
+ } else {
+  <div class="guided-alert-block"><h3>Checkout is still paused</h3><p>Product setup is one part of launch readiness. Complete the requirements below.</p><ul>
+   if !p.StepComplete("review") {
+    <li>Complete the missing product details.</li>
+   }
+   if p.Setup.Selected.Stock<=0 {
+    <li>Add available inventory for this option. <a href="/super-admin/inventory">Open inventory</a></li>
+   }
+   if p.Policy.PublishedAt==nil {
+    <li>Review and <a href={templ.SafeURL(guidedStepURL(p,"policy"))}>publish the returns policy</a>.</li>
+   }
+   if !p.CheckoutEnabled||!p.BookingsEnabled||!p.ShippingConfigured {
+    <li>Production checkout, shipping bookings or the shipping connection is unavailable. Product setup can still be saved.</li>
+   }
+   if p.Policy.ShippingMode!="live"||!p.Setup.Selected.Selected {
+    <li>Complete a genuine prepaid delivery pilot, then select the approved launch catalog.</li>
+   }
+  </ul></div>
+ }
+ <div class="guided-actions">
+  if p.StepComplete("review") {
+   <a class="guided-primary" href={templ.SafeURL(guidedStepURL(p,"pilot"))}>Continue to pilot setup</a>
+  } else {
+   <a class="guided-primary" href={templ.SafeURL(guidedStepURL(p,p.FirstMissingStep()))}>Complete missing details →</a>
+  }
+ <a class="guided-secondary" href={templ.SafeURL(p.OverviewURL())}>Back to products</a></div><nav class="guided-utility-links" aria-label="Launch controls"><a href={templ.SafeURL(guidedStepURL(p,"launch"))}>Launch catalog</a><a href={templ.SafeURL(guidedStepURL(p,"pause"))}>Pause new shipping</a></nav>
+}

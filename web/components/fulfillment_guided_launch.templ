@@ -1,0 +1,54 @@
+package components
+
+import (
+ "fmt"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ GuidedLaunchStep(p viewmodels.MarketplacePage) {
+ <a href={templ.SafeURL(guidedStepURL(p,"review"))}>← Back to review</a>
+ if p.SetupStep=="policy" {
+  <h2>Publish returns policy</h2><p><a href="/returns-replacements-authenticity" target="_blank" rel="noopener">Read the policy ↗</a>. Existing orders keep their previous terms.</p>
+  if p.Policy.PublishedAt!=nil {
+   <p class="guided-success">Policy {p.Policy.Version} published {p.Policy.PublishedAt.Format("2 Jan 2006")}.</p>
+  } else {
+   <form class="marketplace-form" data-fulfillment-setup-action="publish_policy" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"publish_policy") @SetupErrors(p,"publish_policy") @GuidedLaunchReason(p,"publish_policy","Publication reason","I confirm this policy and its operational workflows are ready","Publish policy")</form>
+  }
+ } else if p.SetupStep=="pilot" {
+  <h2>One genuine order pilot</h2><p>The pilot uses {p.Setup.Product}. It requires complete product setup, stock, published policy, enabled production switches and a funded Shiprocket wallet. No payment or shipment is created by this form.</p><p>Current shipping mode: <strong>{p.Policy.ShippingMode}</strong> · Pilot order: {fmt.Sprint(p.Policy.PilotOrderID)}</p>
+  if !p.BookingsEnabled||!p.CheckoutEnabled {
+   <p class="guided-alert">Production checkout or shipping bookings are paused. Ask the platform operator to enable the required production configuration after verification.</p>
+  }
+  <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/><input type="hidden" name="step" value="pilot"/><input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Find pilot customer<input name="customer_q" value={p.Setup.Query.CustomerSearch} maxlength="120" placeholder="Customer name or ID"/></label><button type="submit">Find customers</button></form>
+  if p.Setup.NextCustomer>0 {
+   <a href={templ.SafeURL(p.SetupURL("customer_before",fmt.Sprint(p.Setup.NextCustomer)))}>More customers</a>
+  }
+  if p.Setup.Query.CustomerBefore>0 {
+   <a href={templ.SafeURL(p.SetupURL("customer_before",""))}>First customer page</a>
+  }
+  <form class="marketplace-form" data-fulfillment-setup-action="configure_pilot" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"configure_pilot") @SetupErrors(p,"configure_pilot")<input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Customer account<select name="customer_id" required>@SetupOptions(p.Setup.Customers,setupFormID(p,"configure_pilot","customer_id"),"Choose an active customer")</select></label>@SetupFieldError(p,"configure_pilot","customer_id") @GuidedLaunchReason(p,"configure_pilot","Activation reason","Wallet is funded and this customer and product are ready for a genuine shipment","Enable one-order pilot")</form>
+ } else if p.SetupStep=="launch" {
+  <h2>Two-seller launch catalog</h2><p>Select one ready option per seller after the genuine prepaid pilot has been delivered through Shiprocket. The backend checks the pilot and each selected option again.</p>
+  if p.Policy.PilotOrderID==0 {
+   <p class="guided-alert">A genuine pilot order is required first. <a href={templ.SafeURL(guidedStepURL(p,"pilot"))}>Open pilot setup</a></p>
+  } else {
+   <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/><input type="hidden" name="step" value="launch"/><input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Find ready launch options<input name="launch_q" value={p.Setup.Query.LaunchSearch} maxlength="120"/></label><button type="submit">Find ready options</button></form>
+   if p.Setup.NextLaunch>0 {
+    <a href={templ.SafeURL(p.SetupURL("launch_before",fmt.Sprint(p.Setup.NextLaunch)))}>More ready options</a>
+   }
+   if p.Setup.Query.LaunchBefore>0 {
+    <a href={templ.SafeURL(p.SetupURL("launch_before",""))}>First ready-options page</a>
+   }
+   <form class="marketplace-form" data-fulfillment-setup-action="configure_live_catalog" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"configure_live_catalog") @SetupErrors(p,"configure_live_catalog")<label>First ready product option<select name="variant_id" required>@SetupOptions(p.Setup.LaunchVariants,setupFormID(p,"configure_live_catalog","variant_id"),"Choose the first seller’s ready option")</select></label>@SetupFieldError(p,"configure_live_catalog","variant_id")<label>Second ready product option<select name="second_variant_id" required>@SetupOptions(p.Setup.LaunchVariants,setupFormID(p,"configure_live_catalog","second_variant_id"),"Choose a different seller’s ready option")</select></label>@SetupFieldError(p,"configure_live_catalog","second_variant_id") @GuidedLaunchReason(p,"configure_live_catalog","Launch reason","I verified the recovery drill, two-seller rehearsal and launch notifications","Save and activate launch catalog")</form>
+  }
+ } else if p.SetupStep=="pause" {
+  <h2>Pause new shipping</h2><p>Pause new purchases and bookings while payment and carrier reconciliation continues. Current shipping mode: <strong>{p.Policy.ShippingMode}</strong>.</p>
+  <form class="marketplace-form" data-fulfillment-setup-action="pause_shipping" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"pause_shipping") @SetupErrors(p,"pause_shipping") @GuidedLaunchReason(p,"pause_shipping","Pause reason","Pause new purchases and bookings; continue reconciliation","Pause new shipping")</form>
+ }
+}
+
+templ GuidedLaunchReason(p viewmodels.MarketplacePage,action,label,confirmation,button string) {
+ <label for={action+"_reason"}>{label}</label><input id={action+"_reason"} name="reason" value={p.FormValue(action,"reason","")} minlength="10" maxlength="1000" required/>@SetupFieldError(p,action,"reason")
+ <label class="guided-confirm"><input id={action+"_confirmed"} type="checkbox" name="confirmed" value="yes" checked?={p.FormValue(action,"confirmed","")=="yes"} required/>{confirmation}</label>@SetupFieldError(p,action,"confirmed")
+ <div class="guided-actions"><a class="guided-secondary" href={templ.SafeURL(guidedStepURL(p,"review"))}>Back to review</a><button type="submit">{button}</button></div>
+}

@@ -19,4 +19,7 @@ type MarketplaceSetup struct {
 	InvoiceSaved, TaxSaved                            bool
 	HSN, ReturnClass, PickupLocation, PickupPIN       string
 	TaxBasisPoints                                    int
+	Product, Seller, SKU                              string
+	ProductID                                         int64
+	Selected                                          *ShippingReadiness
 }

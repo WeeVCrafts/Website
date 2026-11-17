@@ -499,8 +499,8 @@ body.admin-body { font-size: 14px; line-height: 1.5; }
 .admin-notice[role="alert"] { border-color: #e8c27a; background: #fff8e8; color: #72510b; }
 
 /* Keep narrow utility copy legible even when component rules set a smaller size. */
-.admin-body :where(p, li, label, input, select, textarea, button, a, small, time, dt, dd, td, th, summary) { font-size: max(13px, 1em) !important; }
-.admin-body :where(small, .admin-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
+.admin-body:not(.fulfillment-guided) :where(p, li, label, input, select, textarea, button, a, small, time, dt, dd, td, th, summary) { font-size: max(13px, 1em) !important; }
+.admin-body:not(.fulfillment-guided) :where(small, .admin-meta, .table-meta, .helper, .form-hint) { font-size: max(12px, 1em) !important; }
 
 .category-search { display:flex; align-items:end; gap:12px; flex-wrap:wrap; }
 .category-search label { flex:1; min-width:180px; }

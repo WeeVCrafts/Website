@@ -1,0 +1,26 @@
+[
+  {
+    "file": "01-missing-details.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "4d6d9d58dc636b3784c870644d8986300cdfe2ffffb621d3703054d3e9aa0e01"
+  },
+  {
+    "file": "02-invoice-step.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "f5b444edb6d9b09b73ec17cf765c9c0295ff84697d1bf229a14f4bd99a8731be"
+  },
+  {
+    "file": "03-parcel-step.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "40bb9a97ab946362ac039da0e7b9db8505b640e75c0da1e8a7362f8cf4c033d9"
+  },
+  {
+    "file": "04-review.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "23ed96bdff73938130f210dd680cee2d11cc3f68ca99cee4d86a431cbdc76d4c"
+  }
+]

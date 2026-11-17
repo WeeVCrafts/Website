@@ -2,19 +2,24 @@
 
 ## Fulfillment setup — 17 November 2026
 
-Super Admin Fulfillment defaults to Operations; `tab=setup` opens configuration.
-The Fulfillment sidebar item is active on both. Setup context and bounded selector
-search/pagination live in URL parameters; invoice addresses, legal names and
-GSTINs remain in private POST bodies and never become navigation parameters.
-Select and load a seller, then an option. Changing seller clears the prior option.
-Verified profiles prefill; registration starts blank for new profiles. Saved
-invoice prefixes are read-only. Tax entry converts percentages exactly to stored
-basis points without choosing a classification. Errors preserve values, identify
-fields and keep context; success returns to Setup with an action-specific notice.
-Context navigation uses shared unsaved-change confirmation. Shiprocket choices
-are read explicitly and reverified on save. Authorization, CSRF, confirmation,
-provider checks and launch prerequisites remain server-enforced. Setup edits
-never open checkout automatically.
+Super Admin Fulfillment opens the approved guided Setup; `tab=operations` opens
+orders and exceptions. Other roles retain their fulfillment workspace. The guided
+shell is scoped to Setup with one task form rendered per selected product. The
+server chooses the first missing task and recomputes it after each successful
+save. Progress labels derive from current database readiness. Invoice and pickup
+profiles are shared by the selected seller; parcel, tax and classification belong
+to the selected variant. The combined tax/classification save is transactional.
+
+Native selects, shared errors, busy states, notifications and unsaved-change
+confirmation remain canonical (`ui-standards.js`). Setup URLs allow only selected
+IDs, filters, cursors and step; legal details and verification notes stay in private
+POST bodies. Invalid saves retain entered fields and focus the first error.
+Shiprocket pickup reads are explicit and reverified on save. The review separates
+setup completion from stock, policy, application switches, launch selection and
+PIN serviceability. Pilot, launch, policy publication and shipping pause each have
+a dedicated task page and retain all backend prerequisites. Setup never enables
+checkout automatically. Phone layouts retain the same native form and a compact,
+expandable progress list; all task links work without JavaScript.
 
 ## Marketplace fulfillment — 15 November 2026
 

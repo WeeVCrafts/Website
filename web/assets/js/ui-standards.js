@@ -183,6 +183,11 @@
     });
   }
   function init(root) {
+    root.querySelectorAll('[data-guided-progress]').forEach(progress=>{
+      if(progress.dataset.guidedBound)return;
+      progress.dataset.guidedBound='true';
+      if(matchMedia('(max-width: 960px)').matches)progress.open=false;
+    });
     root.querySelectorAll('[data-fulfillment-setup-action="save_invoice_profile"]').forEach(form=>{
       const registration=form.elements.namedItem('registration');
       const field=form.querySelector('[data-gstin-field]');
@@ -268,7 +273,8 @@
     root.querySelectorAll("textarea").forEach(field => {
       if (field.dataset.growBound) return;
       field.dataset.growBound = "true";
-      const grow=()=> { field.style.height="auto"; field.style.height=Math.min(400, Math.max(120,field.scrollHeight))+"px"; };
+      const minimum=Math.max(44,parseFloat(getComputedStyle(field).minHeight)||120);
+      const grow=()=> { field.style.height="auto"; field.style.height=Math.min(400, Math.max(minimum,field.scrollHeight))+"px"; };
       field.addEventListener("input", grow); grow();
     });
     root.querySelectorAll("[data-main-image]").forEach(input => {

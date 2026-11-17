@@ -56,6 +56,9 @@ func (r *MarketplaceRepository) FulfillmentSetup(ctx context.Context, actor int6
 		if err != nil {
 			return d, err
 		}
+		if err = r.pool.QueryRow(ctx, `SELECT display_name FROM sellers WHERE id=$1`, q.SellerID).Scan(&d.Seller); err != nil {
+			return d, err
+		}
 		found := false
 		for _, o := range d.Sellers {
 			found = found || o.ID == selected.ID
@@ -85,6 +88,18 @@ func (r *MarketplaceRepository) FulfillmentSetup(ctx context.Context, actor int6
 		}
 		if err != nil {
 			return d, err
+		}
+		if err = r.pool.QueryRow(ctx, `SELECT p.id,p.name,v.sku FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1`, q.VariantID).Scan(&d.ProductID, &d.Product, &d.SKU); err != nil {
+			return d, err
+		}
+		var readiness ports.ShippingReadiness
+		err = r.pool.QueryRow(ctx, `SELECT variant_id,seller_id,product,sku,seller,shipping_weight_g,shipping_length_cm,shipping_width_cm,shipping_height_cm,pickup_ready,invoice_ready,tax_ready,classified,stock,selected FROM marketplace_variant_readiness WHERE variant_id=$1`, q.VariantID).Scan(&readiness.VariantID, &readiness.SellerID, &readiness.Product, &readiness.SKU, &readiness.Seller, &readiness.WeightGrams, &readiness.LengthCM, &readiness.WidthCM, &readiness.HeightCM, &readiness.PickupReady, &readiness.InvoiceReady, &readiness.TaxReady, &readiness.Classified, &readiness.Stock, &readiness.Selected)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return d, err
+		}
+		if err == nil {
+			readiness.ProductID = d.ProductID
+			d.Selected = &readiness
 		}
 		found := false
 		for _, o := range d.Variants {

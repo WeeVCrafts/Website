@@ -416,3 +416,26 @@ count, plus Sign out, belong inside Account. Search moves below the toolbar at
 to customer-header.css, loaded after the shared and homepage presentation.
 Operational portal headers and seller notification presentation remain separate.
 Ordinary customer login opens Home; validated task-return destinations remain.
+
+
+### Guided Fulfillment — approved 17 November 2026
+
+Owner approved the four concepts in `docs/design/fulfillment-guided-2026-11-17`.
+They replace the long Super Admin Setup form with a product overview, six-step
+progress rail and one open task. This explicit accepted design uses WeevCrafts in
+its scoped wordmark. Other surfaces retain their maintained branding and shell.
+
+Tokens are owned by `web/assets/css/fulfillment-guided.css`, loaded last only on
+Setup: ivory #f7f5ee; warm white #fffdf8; forest #123f32; ink #20362d; muted
+#56665d; borders #dfd8ca; Missing amber #9a6700; Complete green #246b45.
+Inter controls/wordmark, Roboto headings, 44px minimum controls, 6px control
+radius, 264px navigation, 280px progress rail, 16px rail gap. Main content is
+code-native. The technical parcel SVG explains dimensions; no stock imagery or
+visual overlays are used. Desktop preserves the accepted framing and hierarchy.
+Phone uses the same form below a compact disclosure with the shared mobile nav.
+
+Real catalog content and saved statuses replace illustrative concept values.
+Legal/tax information and real measurements are never inferred from a mockup.
+Saved, missing and checkout eligibility are distinct. Existing canonical fields,
+validation, dirty protection and action feedback remain shared. No new frontend
+framework, client-side routing, or competing UI behavior owner is introduced.

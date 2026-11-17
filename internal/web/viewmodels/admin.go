@@ -5,6 +5,7 @@ import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	GuidedFulfillment                                                                bool
 	Reconciliation                                                                   *FinanceReconciliation
 	CanManageDelivery                                                                bool
 	Insights                                                                         AdminInsights
