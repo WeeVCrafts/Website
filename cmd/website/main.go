@@ -604,7 +604,7 @@ func main() {
 	marketplaceProcessor.NotifyEmail = func(ctx context.Context, notificationID int64) error {
 		return marketplaceRepository.SendNotificationEmail(ctx, notificationID, emailSender, cfg.PublicURL)
 	}
-	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled}
+	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled, CheckoutEnabled: cfg.CheckoutEnabled}
 	marketplaceHandler.Storage = mediaStorage
 	if checker, ok := marketplaceGateway.(interface {
 		PickupPostcodes(context.Context) (map[string]string, error)

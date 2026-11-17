@@ -11,18 +11,23 @@ templ MarketplaceReadiness(p viewmodels.MarketplacePage) {
 				<tr><th scope="row">{r.Product}<br/>{r.SKU}<br/>Variant #{fmt.Sprint(r.VariantID)}</th><td>{r.Seller}<br/>Seller #{fmt.Sprint(r.SellerID)}</td><td>{fmt.Sprintf("%d g · %d × %d × %d cm",r.WeightGrams,r.LengthCM,r.WidthCM,r.HeightCM)}</td><td>
 					if !r.PickupReady {
 <p>Pickup verification missing</p>
+<a href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID))+"#setup-pickup")}>Configure pickup</a>
 }
 					if !r.InvoiceReady {
 <p>Seller invoice details missing</p>
+<a href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID))+"#setup-invoice")}>Complete invoice details</a>
 }
 					if !r.TaxReady {
 <p>Product tax verification missing</p>
+<a href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID))+"#setup-tax")}>Complete tax settings</a>
 }
 					if !r.Classified {
 <p>Return classification missing</p>
+<a href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID))+"#setup-policy")}>Verify return category</a>
 }
 					if !r.ParcelReady() {
 <p>Actual measurements required</p>
+<a href={templ.SafeURL(fmt.Sprintf("%s/products/%d/edit",p.Back,r.ProductID))}>Edit packed measurements</a>
 }
 					if r.Stock<=0 {
 <p>No sellable stock</p>
@@ -38,6 +43,6 @@ templ MarketplaceReadiness(p viewmodels.MarketplacePage) {
 		</tbody></table>
 	</div>
 	if p.NextSetupID>0 {
-<a href={templ.SafeURL(fmt.Sprintf("%s?setup_before=%d",p.Root,p.NextSetupID))}>More product options</a>
+<a href={templ.SafeURL(p.SetupURL("setup_before",fmt.Sprint(p.NextSetupID)))}>More product options</a>
 }
 }

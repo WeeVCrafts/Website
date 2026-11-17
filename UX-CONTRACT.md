@@ -1,5 +1,21 @@
 # Weevcrafts UX contract
 
+## Fulfillment setup — 17 November 2026
+
+Super Admin Fulfillment defaults to Operations; `tab=setup` opens configuration.
+The Fulfillment sidebar item is active on both. Setup context and bounded selector
+search/pagination live in URL parameters; invoice addresses, legal names and
+GSTINs remain in private POST bodies and never become navigation parameters.
+Select and load a seller, then an option. Changing seller clears the prior option.
+Verified profiles prefill; registration starts blank for new profiles. Saved
+invoice prefixes are read-only. Tax entry converts percentages exactly to stored
+basis points without choosing a classification. Errors preserve values, identify
+fields and keep context; success returns to Setup with an action-specific notice.
+Context navigation uses shared unsaved-change confirmation. Shiprocket choices
+are read explicitly and reverified on save. Authorization, CSRF, confirmation,
+provider checks and launch prerequisites remain server-enforced. Setup edits
+never open checkout automatically.
+
 ## Marketplace fulfillment — 15 November 2026
 
 The existing customer, seller and company shells host the shared fulfillment

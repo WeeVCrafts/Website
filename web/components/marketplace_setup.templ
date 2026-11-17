@@ -1,0 +1,209 @@
+package components
+
+import (
+ "fmt"
+ "strconv"
+ "github.com/wecratfs/commerce/internal/ports"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ MarketplaceWorkspace(p viewmodels.MarketplacePage) {
+ <section class="marketplace-workspace">
+  <nav aria-label="Fulfillment navigation"><a href={templ.SafeURL(p.Back)}>Back to dashboard</a> · <a href={templ.SafeURL(p.Root)}>Fulfillment overview</a></nav>
+  if p.Role!="admin" && p.Role!="super_admin" {
+   <h1>Fulfillment</h1>
+  }
+  if p.Role=="super_admin" && p.Number=="" {
+   <nav class="fulfillment-tabs" aria-label="Fulfillment sections">
+    <a href={templ.SafeURL(p.Root+"?tab=operations")} aria-current={tabCurrent(p.Tab=="operations")}>Operations</a>
+    <a href={templ.SafeURL(p.SetupURL())} aria-current={tabCurrent(p.Tab=="setup")}>Setup</a>
+   </nav>
+  }
+  if p.Notice!="" {
+<p class="fulfillment-notice" role="status">{p.Notice}</p>
+}
+  if p.Tab=="setup" && p.Setup!=nil {
+   @MarketplaceSetupWorkspace(p)
+  } else {
+   @MarketplaceOperations(p)
+  }
+ </section>
+}
+
+templ SetupOptions(options []ports.MarketplaceSetupOption, selected int64, placeholder string) {
+ <option value="">{placeholder}</option>
+ for _,o:=range options {
+<option value={strconv.FormatInt(o.ID,10)} selected?={o.ID==selected}>{o.Label}</option>
+}
+}
+
+templ SetupErrors(p viewmodels.MarketplacePage, action string) {
+ if p.SetupAction==action && len(p.SetupErrors)>0 {
+  <div class="ui-error-summary" role="alert" tabindex="-1"><p>Check these details before saving.</p><ul>
+   for _,name:=range setupErrorKeys(p.SetupErrors) {
+    <li>
+     if name=="form" {
+{p.SetupErrors[name]}
+} else {
+<a href={templ.SafeURL("#"+action+"_"+name)}>{p.SetupErrors[name]}</a>
+}
+    </li>
+   }
+  </ul></div>
+ }
+}
+
+templ SetupInput(p viewmodels.MarketplacePage, action,name,label,value,pattern string, required,readonly bool) {
+ <label for={action+"_"+name}>{label}</label>
+ <input id={action+"_"+name} name={name} value={p.FormValue(action,name,value)} required?={required} readonly?={readonly} pattern={pattern} title={setupFieldHint(name)} inputmode={setupInputMode(name)} aria-invalid={invalidField(p.FieldError(action,name))} aria-describedby={action+"_"+name+"_error"}/>
+ @SetupFieldError(p,action,name)
+}
+
+templ SetupFieldError(p viewmodels.MarketplacePage, action,name string) {
+ <small id={action+"_"+name+"_error"} class="fulfillment-field-error">{p.FieldError(action,name)}</small>
+}
+
+templ SetupReason(p viewmodels.MarketplacePage, action string) {
+ @SetupInput(p,action,"reason","Verification reason", "", ".{4,1000}",true,false)
+ <small>Record what you checked. This is saved in the audit history.</small>
+}
+
+templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
+ <h2>Seller and product setup</h2>
+ <p>New checkout: <strong>{setupSwitch(p.CheckoutEnabled)}</strong> · New shipment bookings: <strong>{setupSwitch(p.BookingsEnabled)}</strong>. These application switches are managed separately from product verification.</p>
+ <p>Choose a seller, then a product option. Complete the missing details below before enabling checkout.</p>
+ <section class="fulfillment-setup-card" aria-labelledby="setup-selection-title">
+  <h3 id="setup-selection-title">Choose what to configure</h3>
+  <form method="get" action={templ.SafeURL(p.Root)} class="marketplace-form">
+   <input type="hidden" name="tab" value="setup"/>
+   <label>Find seller<input name="seller_q" value={p.Setup.Query.SellerSearch} maxlength="120" placeholder="Search by seller name or ID"/></label>
+   <label for="setup_seller">Seller</label><select id="setup_seller" name="seller_id">@SetupOptions(p.Setup.Sellers,p.Setup.Query.SellerID,"Choose a seller")</select>
+   <button type="submit">Load seller</button>
+  </form>
+  if len(p.Setup.Sellers)==0 {
+<p role="status">No active sellers match this search.</p>
+}
+  if p.Setup.NextSeller>0 {
+<a href={templ.SafeURL(p.SetupURL("seller_before",fmt.Sprint(p.Setup.NextSeller)))}>More sellers</a>
+}
+  if p.Setup.Query.SellerBefore>0 {
+<a href={templ.SafeURL(p.SetupURL("seller_before",""))}>First seller page</a>
+}
+  if p.Setup.Query.SellerID>0 {
+   <form method="get" action={templ.SafeURL(p.Root)} class="marketplace-form">
+    <input type="hidden" name="tab" value="setup"/><input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/>
+    <label>Find product option<input name="product_q" value={p.Setup.Query.ProductSearch} maxlength="120" placeholder="Search by product name, option or SKU"/></label>
+    <label for="setup_variant">Product option</label><select id="setup_variant" name="variant_id">@SetupOptions(p.Setup.Variants,p.Setup.Query.VariantID,"Choose a product option")</select>
+    <button type="submit">Load product option</button>
+   </form>
+   if len(p.Setup.Variants)==0 {
+<p role="status">No active product options match this seller and search.</p>
+}
+   if p.Setup.NextVariant>0 {
+<a href={templ.SafeURL(p.SetupURL("variant_before",fmt.Sprint(p.Setup.NextVariant)))}>More product options</a>
+}
+   if p.Setup.Query.VariantBefore>0 {
+<a href={templ.SafeURL(p.SetupURL("variant_before",""))}>First product page</a>
+}
+  }
+ </section>
+ <nav class="fulfillment-jump-links" aria-label="Setup tasks"><a href="#setup-readiness">Readiness</a><a href="#setup-invoice">Invoice details</a><a href="#setup-pickup">Pickup</a><a href="#setup-tax">Tax settings</a><a href="#setup-policy">Policy and launch</a></nav>
+ <section id="setup-readiness" class="fulfillment-setup-card"><h3>What is missing?</h3>@MarketplaceReadiness(p)<p>Product setup being complete does not activate purchases. Checkout also depends on the platform switches, pilot authorization or launch selection, stock, and delivery serviceability.</p></section>
+ if p.Setup.Query.SellerID>0 {
+  @MarketplaceInvoiceSetup(p)
+  @MarketplacePickupSetup(p)
+
+} else {
+<p>Select a seller to enter invoice details and configure pickup.</p>
+}
+ if p.Setup.Query.VariantID>0 {
+@MarketplaceTaxSetup(p)
+} else {
+<p>Select a product option to verify its tax settings and return classification.</p>
+}
+ <section id="setup-policy" class="fulfillment-setup-card">@MarketplacePolicyControls(p)</section>
+}
+
+templ MarketplaceInvoiceSetup(p viewmodels.MarketplacePage) {
+ <section id="setup-invoice" class="fulfillment-setup-card">
+  <h3>Seller invoice details</h3><p>One verified profile is shared by this seller’s products. Use the seller’s actual legal information.</p>
+  if p.Setup.InvoiceSaved {
+<p>Verified profile saved. Editing applies to future invoices; issued invoices keep their saved details.</p>
+}
+  <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate data-fulfillment-setup-action="save_invoice_profile">
+   @MarketplaceFields(p,"save_invoice_profile") @SetupErrors(p,"save_invoice_profile")
+   <input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/>
+   @SetupInput(p,"save_invoice_profile","legal_name","Legal name",p.Setup.Invoice.LegalName,".{2,160}",true,false)
+   <label for="save_invoice_profile_address">Registered address</label><textarea id="save_invoice_profile_address" name="address" minlength="10" maxlength="1000" required style="resize:none" aria-invalid={invalidField(p.FieldError("save_invoice_profile","address"))} aria-describedby="save_invoice_profile_address_error">{p.FormValue("save_invoice_profile","address",p.Setup.Invoice.Address)}</textarea>@SetupFieldError(p,"save_invoice_profile","address")
+   <label for="save_invoice_profile_state_code">State / Union Territory</label><select id="save_invoice_profile_state_code" name="state_code" required aria-invalid={invalidField(p.FieldError("save_invoice_profile","state_code"))} aria-describedby="save_invoice_profile_state_code_error"><option value="">Choose a state or union territory</option>
+    for _,state:=range p.States {
+<option value={state.Code} selected?={p.FormValue("save_invoice_profile","state_code",p.Setup.Invoice.StateCode)==state.Code}>{state.Name+" ("+state.Code+")"}</option>
+}
+   </select>@SetupFieldError(p,"save_invoice_profile","state_code")
+   <label for="save_invoice_profile_registration">GST registration</label><select id="save_invoice_profile_registration" name="registration" required><option value="">Choose the seller’s registration status</option><option value="registered" selected?={p.FormValue("save_invoice_profile","registration",p.Setup.Invoice.Registration)=="registered"}>GST registered</option><option value="unregistered" selected?={p.FormValue("save_invoice_profile","registration",p.Setup.Invoice.Registration)=="unregistered"}>Unregistered</option></select>@SetupFieldError(p,"save_invoice_profile","registration")
+   <div data-gstin-field>
+    @SetupInput(p,"save_invoice_profile","gstin","GSTIN (for registered sellers)",p.Setup.Invoice.GSTIN,"[0-9]{2}[A-Z0-9]{13}",false,false)
+   </div>
+   @SetupInput(p,"save_invoice_profile","prefix","Invoice prefix",p.Setup.Invoice.Prefix,"(?:[A-Z0-9]|-){1,6}",true,p.Setup.InvoiceSaved)
+   <small>1–6 uppercase letters, numbers or hyphens. The prefix stays fixed after the first save to preserve invoice numbering.</small>
+   @SetupReason(p,"save_invoice_profile")<button type="submit">Verify and save invoice details</button>
+  </form>
+ </section>
+}
+
+templ MarketplaceTaxSetup(p viewmodels.MarketplacePage) {
+ <section id="setup-tax" class="fulfillment-setup-card"><h3>Product tax settings</h3><p>Enter the verified HSN and tax percentage for the selected option. Catalog prices include tax. No classification or tax rate is chosen automatically.</p>
+  if p.Setup.TaxSaved {
+<p>Verified tax settings saved for this option.</p>
+}
+  <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate data-fulfillment-setup-action="save_tax_profile">
+   @MarketplaceFields(p,"save_tax_profile") @SetupErrors(p,"save_tax_profile")
+   <input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/>
+   @SetupInput(p,"save_tax_profile","hsn","HSN (4–8 digits)",p.Setup.HSN,"[0-9]{4,8}",true,false)
+   @SetupInput(p,"save_tax_profile","tax_rate_percent","Tax rate (%)",setupTaxValue(p),"[0-9]{1,3}(\\.[0-9]{1,2})?",true,false)
+   <small>Enter a percentage, for example 5 for 5%. Use only the applicable verified rate.</small>
+   @SetupReason(p,"save_tax_profile")<button type="submit">Verify and save product tax settings</button>
+  </form>
+ </section>
+}
+
+templ MarketplacePickupSetup(p viewmodels.MarketplacePage) {
+ <section id="setup-pickup" class="fulfillment-setup-card"><h3>Seller pickup location</h3>
+  if p.Setup.PickupLocation!="" {
+<p>Saved pickup: <strong>{p.Setup.PickupLocation}</strong> · PIN {p.Setup.PickupPIN}</p>
+}
+  <p>Choose an existing phone-verified pickup from your Shiprocket account. Saving checks the provider again and records its PIN.</p>
+  <form method="get" action={templ.SafeURL(p.Root+"#setup-pickup")} class="marketplace-form">
+    for key,values:=range p.SetupContext {
+     if key!="pickup_choices" {
+      for _,value:=range values {
+       <input type="hidden" name={key} value={value}/>
+      }
+     }
+    }
+    <input type="hidden" name="pickup_choices" value="1"/>
+    // Each explicit refresh must reach the server even when the query and
+    // fragment otherwise equal the current document URL.
+    <input type="hidden" name="pickup_refresh" value={p.Key}/>
+    <button type="submit">Load or refresh verified Shiprocket pickups</button>
+   </form>
+  if p.PickupError!="" {
+<p role="alert">{p.PickupError}</p>
+}
+  if len(p.Pickups)>0 {
+   <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate data-fulfillment-setup-action="save_shipping_profile">
+    @MarketplaceFields(p,"save_shipping_profile") @SetupErrors(p,"save_shipping_profile")
+    <input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/>
+    <label for="save_shipping_profile_pickup_location">Verified pickup location</label><select id="save_shipping_profile_pickup_location" name="pickup_location" required><option value="">Choose the seller’s pickup</option>
+     for _,pickup:=range p.Pickups {
+<option value={pickup.Name} selected?={p.FormValue("save_shipping_profile","pickup_location",p.Setup.PickupLocation)==pickup.Name}>{pickup.Name+" · PIN "+pickup.PIN}</option>
+}
+    </select>@SetupFieldError(p,"save_shipping_profile","pickup_location")
+    @SetupReason(p,"save_shipping_profile")<button type="submit">Verify and save seller pickup</button>
+   </form>
+ 
+} else if p.SetupContext.Get("pickup_choices")=="1" && p.PickupError=="" {
+<p>No verified pickup locations are available. Complete pickup verification in Shiprocket, then refresh.</p>
+}
+ </section>
+}

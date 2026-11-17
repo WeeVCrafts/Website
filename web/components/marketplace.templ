@@ -7,16 +7,11 @@ import (
 	"strings"
 )
 
-templ MarketplaceWorkspace(p viewmodels.MarketplacePage) {
-	<section class="marketplace-workspace">
-		<nav aria-label="Order navigation"><a href={ templ.SafeURL(p.Back) }>Back to dashboard</a> · <a href={ templ.SafeURL(p.Root) }>Fulfillment overview</a></nav>
-		<h1>Orders, delivery and refunds</h1>
-		@MarketplacePolicyControls(p)
-		if p.Notice!="" {
-			<p role="status">
-				{ p.Notice }
-			</p>
-		}
+templ MarketplaceOperations(p viewmodels.MarketplacePage) {
+	<div class="fulfillment-operations">
+		if p.Role=="customer" {
+ @MarketplacePolicyControls(p)
+}
 		<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
 		if p.Number=="" {
 			<h2>Recent orders</h2>
@@ -337,42 +332,16 @@ if p.NewReturnPolicy {
 				</article>
 			}
 		}
-		if p.Role=="super_admin" {
-			@MarketplaceConfiguration(p)
-		}
-	</section>
+
+	</div>
 }
 
 templ MarketplaceFields(p viewmodels.MarketplacePage, action string) {
+ if p.Tab=="setup" {
+ <input type="hidden" name="setup_context" value={p.SetupContext.Encode()}/>
+ }
 	<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="order_number" value={ p.Number }/><input type="hidden" name="request_key" value={ p.Key }/>
 	if action!="" && action!="resolve_case" {
 		<input type="hidden" name="action" value={ action }/>
 	}
-}
-
-templ MarketplaceConfiguration(p viewmodels.MarketplacePage) {
-	<h2>Shipping and invoice configuration</h2>
-	<details>
-		<summary>Verify a seller pickup location</summary>
-		<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-			@MarketplaceFields(p, "save_shipping_profile")
-			<label>Seller ID<input name="seller_id" type="number" min="1" required/></label><label>Exact Shiprocket pickup name<input name="pickup_location" maxlength="100" required/></label><label>Pickup PIN<input name="postal_code" pattern="[1-9][0-9]{5}" required/></label><label>Verification reason<input name="reason" minlength="4" maxlength="1000" required/></label><button type="submit">Verify with Shiprocket and save</button>
-		</form>
-	</details>
-	<p>Live shipping credentials remain private server settings. Provider configuration: { fmt.Sprint(p.ShippingConfigured) }. New bookings enabled: { fmt.Sprint(p.BookingsEnabled) }.</p>
-	<details>
-		<summary>Verify seller invoice details</summary>
-		<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-			@MarketplaceFields(p, "save_invoice_profile")
-			<label>Seller ID<input name="seller_id" type="number" min="1" required/></label><label>Legal name<input name="legal_name" maxlength="160" required/></label><label>Registered address<textarea style="resize:none" name="address" minlength="10" maxlength="1000" required></textarea></label><label>State code<input name="state_code" pattern="[0-9]{2}" required/></label><label>Registration<select name="registration"><option value="registered">GST registered</option><option value="unregistered">Unregistered</option></select></label><label>GSTIN (registered sellers)<input name="gstin" maxlength="15"/></label><label>Invoice prefix (1–6 uppercase letters/numbers)<input name="prefix" pattern="[A-Z0-9-]{1,6}" required/></label><label>Verification evidence/reason<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><button type="submit">Verify seller invoice details</button>
-		</form>
-	</details>
-	<details>
-		<summary>Verify product tax settings</summary>
-		<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-			@MarketplaceFields(p, "save_tax_profile")
-			<label>Variant ID<input name="variant_id" type="number" min="1" required/></label><label>HSN<input name="hsn" pattern="[0-9]{4,8}" required/></label><label>Tax rate in basis points (500 = 5%)<input name="rate_basis_points" type="number" min="0" max="10000" required/></label>
-			<p>Catalog prices include tax. Use only approved product tax classifications.</p><label>Verification evidence/reason<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><button type="submit">Verify product tax settings</button>
-		</form>
-	</details>
 }

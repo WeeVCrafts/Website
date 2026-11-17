@@ -183,6 +183,15 @@
     });
   }
   function init(root) {
+    root.querySelectorAll('[data-fulfillment-setup-action="save_invoice_profile"]').forEach(form=>{
+      const registration=form.elements.namedItem('registration');
+      const field=form.querySelector('[data-gstin-field]');
+      const gstin=form.elements.namedItem('gstin');
+      if(!registration||!field||!gstin||registration.dataset.fulfillmentBound)return;
+      registration.dataset.fulfillmentBound='true';
+      const update=()=>{const registered=registration.value==='registered';field.hidden=!registered;gstin.disabled=!registered;gstin.required=registered;};
+      registration.addEventListener('change',update);update();
+    });
     if (root.matches?.('dialog')) bindModalTab(root);
     root.querySelectorAll('dialog').forEach(bindModalTab);
     initRoleNavigation(root);
@@ -301,7 +310,7 @@
   const customerFormPath = path => /^\/account\/(profile|addresses(?:\/delete)?|notifications|reviews)$/.test(path) || /^\/support\/(create|customer-reply)$/.test(path) || /^\/privacy\/(consent|requests)$/.test(path) || /^\/orders\/[^/]+\/(cancel|return|refund)$/.test(path);
   // Protect long edits in memory. Do not persist account/product form values locally.
   const dirtyForms = new Set();
-  const dirtySelector = '[data-product-builder], [data-store-profile], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty], [data-customer-retain]';
+  const dirtySelector = '[data-product-builder], [data-store-profile], .admin-product-editor-form, .role-user-edit-form, [data-storefront-dirty], [data-customer-retain], [data-fulfillment-setup-action]';
   function dirtyForm() {
     for (const form of dirtyForms) {
       if (!form.isConnected) { dirtyForms.delete(form); continue; }
@@ -318,6 +327,17 @@
     if (form && event.isTrusted) dirtyForms.add(form);
   });
   let discardPending = false;
+  document.addEventListener('submit',async event=>{
+    const form=event.target;
+    if(form.method?.toLowerCase()!=='get'||form.elements.namedItem('tab')?.value!=='setup'||form.dataset.setupDiscardConfirmed||!dirtyForm())return;
+    event.preventDefault();
+    if(discardPending)return;
+    discardPending=true;
+    const discard=await confirmAction('Discard your unsaved setup changes before changing selection?',event.submitter,'Discard changes',{cancelLabel:'Keep editing',intent:'warning'});
+    discardPending=false;
+    if(!discard)return;
+    dirtyForms.forEach(edit=>edit.dataset.discarded='true');form.dataset.setupDiscardConfirmed='true';if(event.submitter)form.requestSubmit(event.submitter);else form.requestSubmit();
+  },true);
   document.addEventListener('click', async event => {
     const link = event.target.closest('a[href]');
     const form = dirtyForm();
@@ -407,6 +427,13 @@
       }
       if(response.ok && response.redirected) { location.assign(response.url); return; }
       const html=await response.text(); const doc=new DOMParser().parseFromString(html,'text/html');
+      if(response.status===422 && form.dataset.fulfillmentSetupAction){
+        const replacement=Array.from(doc.querySelectorAll('[data-fulfillment-setup-action]')).find(candidate=>candidate.dataset.fulfillmentSetupAction===form.dataset.fulfillmentSetupAction);
+        if(replacement){
+          dirtyForms.delete(form);form.replaceWith(replacement);init(replacement.parentElement);dirtyForms.add(replacement);
+          (replacement.querySelector('[aria-invalid="true"]')||replacement.querySelector('.ui-error-summary'))?.focus();return;
+        }
+      }
       if (response.status === 422 && form.matches('[data-product-builder]')) {
         const rejectedField = response.headers.get('X-Seller-Product-Field');
         const field = rejectedField && form.elements.namedItem(rejectedField);

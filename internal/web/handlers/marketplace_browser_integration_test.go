@@ -79,7 +79,7 @@ func TestMarketplaceBrowserPreview(t *testing.T) {
 		}
 	})
 	fallback.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.FS))))
-	handler := (&MarketplaceHandler{Repository: repo, Sessions: sessions, Storage: &claimBrowserStorage{objects: map[string][]byte{}}}).Middleware(fallback)
+	handler := (&MarketplaceHandler{Repository: repo, Sessions: sessions, ShippingConfigured: true, PickupChecker: &setupBrowserPickups{}, Storage: &claimBrowserStorage{objects: map[string][]byte{}}}).Middleware(fallback)
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	if err = os.WriteFile(file, []byte(server.URL), 0600); err != nil {
@@ -99,6 +99,21 @@ func TestMarketplaceBrowserPreview(t *testing.T) {
 			}
 		}
 	}
+}
+
+type setupBrowserPickups struct {
+	mu    sync.Mutex
+	calls int
+}
+
+func (p *setupBrowserPickups) PickupPostcodes(context.Context) (map[string]string, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.calls++
+	if p.calls == 1 {
+		return nil, ports.ErrShippingUnavailable
+	}
+	return map[string]string{"Fixture Depot": "411001", "Second Verified Depot": "500079"}, nil
 }
 
 // Isolated bytes exercise the real evidence handler without cloud credentials.

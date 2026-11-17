@@ -387,6 +387,21 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
 
 /* Marketplace operations share the existing portal forms, tokens and focus states. */
 .marketplace-workspace{max-width:1200px;margin:0 auto;padding:24px 16px;overflow-wrap:anywhere}
+.fulfillment-tabs,.fulfillment-jump-links{display:flex;flex-wrap:wrap;gap:12px;margin-block:20px}
+.fulfillment-tabs{border-bottom:1px solid var(--ui-line,#dfd8ca);padding-bottom:8px}
+.fulfillment-tabs a{display:inline-flex;align-items:center;min-height:44px;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600}
+.fulfillment-tabs a[aria-current=page]{background:var(--brand-primary,#123f32);color:#fff}
+.fulfillment-tabs a:hover{outline:1px solid currentColor}
+.fulfillment-jump-links a{min-height:44px;display:inline-flex;align-items:center;padding:6px 10px}
+.fulfillment-setup-card{margin-block:20px;padding:24px;border:1px solid var(--ui-line,#dfd8ca);border-radius:12px;background:var(--surface,#fffdf8);scroll-margin-top:120px;min-width:0}
+.fulfillment-setup-card h3{margin-top:0}.fulfillment-notice{padding:16px;border-left:4px solid var(--brand-primary,#123f32)}
+.fulfillment-field-error{color:var(--ui-danger,#9d4031);white-space:normal}.fulfillment-field-error:empty{display:none}
+.fulfillment-setup-card table{width:100%;border-collapse:collapse}.fulfillment-setup-card :is(th,td){padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--ui-line,#dfd8ca)}
+.fulfillment-setup-card fieldset{border:0;padding:0;min-width:0;display:grid;gap:14px}
+.fulfillment-setup-card input[readonly]{background:var(--ui-subtle,#f3f0e9)}
+.fulfillment-setup-card .marketplace-form label:has(input[type=checkbox]){display:flex;align-items:flex-start;gap:10px}
+.fulfillment-setup-card .marketplace-form input[type=checkbox]{flex:0 0 20px;width:20px;height:20px;min-height:20px;margin:2px 0 0}
+@media(max-width:600px){.fulfillment-setup-card{padding:16px}.fulfillment-tabs a{flex:1;justify-content:center}.fulfillment-setup-card :is(th,td){padding:8px}}
 .marketplace-workspace h2{margin-block:28px 12px}.marketplace-workspace h3{margin-block:12px}
 .marketplace-workspace article{padding:18px;margin-block:14px;border:1px solid var(--border,#d6cdbf);border-radius:6px}
 .marketplace-form{display:grid;gap:14px;max-width:42rem;margin-block:16px}

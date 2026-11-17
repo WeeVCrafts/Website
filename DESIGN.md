@@ -37,6 +37,16 @@ components:
 
 # WeevCrafts visual standards
 
+## Fulfillment setup — 17 November 2026
+
+Fulfillment uses URL-backed Operations and Setup navigation inside the existing
+Super Admin shell. Native labelled selectors show state, seller, product-option,
+customer and pickup names; IDs remain secondary references. Setup uses existing
+paper/forest tokens, 44px controls and natural document scrolling.
+`ui-standards.css` owns scoped panels and navigation; `ui-standards.js` owns
+shared validation, conditional GSTIN entry and unsaved-change protection.
+No separate theme or authored listbox is introduced.
+
 ## Seller reference screens — 2 November 2026
 
 The ten supplied seller-admin-screens images define seller content presentation:

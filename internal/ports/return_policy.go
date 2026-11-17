@@ -44,6 +44,7 @@ type StoreCreditGrant struct {
 
 type ShippingReadiness struct {
 	VariantID, SellerID                             int64
+	ProductID                                       int64
 	Product, SKU, Seller                            string
 	WeightGrams, LengthCM, WidthCM, HeightCM        int
 	PickupReady, InvoiceReady, TaxReady, Classified bool

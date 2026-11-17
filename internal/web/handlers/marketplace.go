@@ -34,6 +34,7 @@ type MarketplaceHandler struct {
 	Repository                          *postgres.MarketplaceRepository
 	Sessions                            *applicationauth.SessionService
 	ShippingConfigured, BookingsEnabled bool
+	CheckoutEnabled                     bool
 	PickupChecker                       interface {
 		PickupPostcodes(context.Context) (map[string]string, error)
 	}
@@ -102,6 +103,10 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			http.Error(w, "Forbidden", 403)
 			return
 		}
+		var setupValues url.Values
+		var setupErrors map[string]string
+		setupAction := ""
+		responseStatus := http.StatusOK
 		if strings.HasSuffix(r.URL.Path, "/action") {
 			if r.Method != "POST" {
 				w.Header().Set("Allow", "POST")
@@ -131,6 +136,26 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				return
 			}
 			f := r.PostForm
+			if isMarketplaceSetupAction(f.Get("action")) {
+				if view.Role != "super_admin" {
+					http.Error(w, "Forbidden", 403)
+					return
+				}
+				setupErrors = validateSetup(f.Get("action"), f)
+				if f.Get("setup_context") != "" && (f.Get("action") == "save_invoice_profile" || f.Get("action") == "save_shipping_profile") && f.Get("seller_id") != setupPostContext(f).Get("seller_id") {
+					setupErrors["seller_id"] = "Choose the seller again before saving."
+				}
+				if f.Get("setup_context") != "" && (f.Get("action") == "save_tax_profile" || f.Get("action") == "classify_variant" || f.Get("action") == "configure_pilot") {
+					q := setupPostContext(f)
+					sid, _ := strconv.ParseInt(q.Get("seller_id"), 10, 64)
+					vid, _ := strconv.ParseInt(f.Get("variant_id"), 10, 64)
+					if sid <= 0 || vid <= 0 {
+						setupErrors["variant_id"] = "Choose a seller and product option."
+					} else if _, err := h.Repository.FulfillmentSetup(r.Context(), session.UserID, ports.MarketplaceSetupQuery{SellerID: sid, VariantID: vid}); err != nil {
+						setupErrors["variant_id"] = "This product option does not belong to the selected seller."
+					}
+				}
+			}
 			num := func(k string) int64 { n, _ := strconv.ParseInt(f.Get(k), 10, 64); return n }
 			c := ports.MarketplaceCommand{Action: f.Get("action"), Number: f.Get("order_number"), Reason: strings.TrimSpace(f.Get("reason")), Key: f.Get("request_key"), SellerID: num("seller_id"), ItemID: num("item_id"), PackageID: num("package_id"), RefundID: num("refund_id"), CaseID: num("case_id"), Revision: num("revision"), Quantity: int(num("quantity")), Parcel: ports.Parcel{WeightGrams: int(num("weight_grams")), LengthCM: int(num("length_cm")), WidthCM: int(num("width_cm")), HeightCM: int(num("height_cm"))}, Items: map[int64]int{}}
 			c.Kind, c.Resolution, c.EvidenceException, c.QCEvidence = f.Get("claim_kind"), f.Get("resolution"), strings.TrimSpace(f.Get("evidence_exception")), strings.TrimSpace(f.Get("qc_evidence"))
@@ -155,78 +180,97 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			c.Carrier = f.Get("carrier")
 			c.Tracking = f.Get("tracking_number")
 			c.PreferredDate = f.Get("preferred_date")
-			switch c.Action {
-			case "upload_claim_evidence":
-				if r.MultipartForm == nil || len(r.MultipartForm.File["evidence"]) != 1 {
-					http.Error(w, "Choose one video or photo", 422)
-					return
+			if len(setupErrors) == 0 {
+				switch c.Action {
+				case "upload_claim_evidence":
+					if r.MultipartForm == nil || len(r.MultipartForm.File["evidence"]) != 1 {
+						http.Error(w, "Choose one video or photo", 422)
+						return
+					}
+					e = h.uploadClaimEvidence(r.Context(), session.UserID, c.CaseID, r.MultipartForm.File["evidence"][0])
+				case "publish_policy", "pause_shipping", "configure_pilot", "classify_variant":
+					if f.Get("confirmed") != "yes" {
+						http.Error(w, "Confirm the policy or shipping change", 422)
+						return
+					}
+					if c.Action == "configure_pilot" && !h.BookingsEnabled {
+						setupErrors["form"] = "New shipping bookings are paused in the application configuration. Product setup can still be saved."
+						break
+					}
+					if c.Action == "classify_variant" {
+						c.Reason = f.Get("return_class")
+					}
+					e = h.Repository.ConfigurePolicy(r.Context(), session.UserID, c.Action, c.Reason, num("customer_id"), num("variant_id"))
+				case "configure_live_catalog":
+					if f.Get("confirmed") != "yes" {
+						http.Error(w, "Confirm the launch catalog before submitting", 422)
+						return
+					}
+					if !h.BookingsEnabled {
+						setupErrors["form"] = "New shipping bookings are paused in the application configuration."
+						break
+					}
+					e = h.Repository.ConfigureLiveCatalog(r.Context(), session.UserID, num("variant_id"), num("second_variant_id"), c.Reason)
+				case "save_shipping_profile":
+					if view.Role != "super_admin" || h.PickupChecker == nil {
+						setupErrors["form"] = "Live Shiprocket configuration is required before a pickup can be verified."
+						break
+					}
+					locations, checkErr := h.PickupChecker.PickupPostcodes(r.Context())
+					if checkErr != nil {
+						e = checkErr
+						break
+					}
+					pin, found := locations[f.Get("pickup_location")]
+					if !found || f.Get("postal_code") != "" && pin != f.Get("postal_code") {
+						e = ports.ErrShippingInput
+						break
+					}
+					e = h.Repository.SaveShippingProfile(r.Context(), session.UserID, c.SellerID, f.Get("pickup_location"), pin, c.Reason)
+				case "save_invoice_profile":
+					if view.Role != "super_admin" {
+						http.Error(w, "Forbidden", 403)
+						return
+					}
+					e = h.Repository.SaveInvoiceProfile(r.Context(), session.UserID, ports.SellerInvoiceProfile{SellerID: c.SellerID, LegalName: f.Get("legal_name"), Address: f.Get("address"), StateCode: f.Get("state_code"), GSTIN: strings.ToUpper(f.Get("gstin")), Registration: f.Get("registration"), Prefix: f.Get("prefix")}, c.Reason)
+				case "save_tax_profile":
+					if view.Role != "super_admin" {
+						http.Error(w, "Forbidden", 403)
+						return
+					}
+					rate, _ := parseTaxPercent(f)
+					e = h.Repository.SaveTaxProfile(r.Context(), session.UserID, num("variant_id"), strings.TrimSpace(f.Get("hsn")), rate, c.Reason)
+				default:
+					e = h.Repository.Act(r.Context(), session.UserID, c)
 				}
-				e = h.uploadClaimEvidence(r.Context(), session.UserID, c.CaseID, r.MultipartForm.File["evidence"][0])
-			case "publish_policy", "pause_shipping", "configure_pilot", "classify_variant":
-				if f.Get("confirmed") != "yes" {
-					http.Error(w, "Confirm the policy or shipping change", 422)
-					return
-				}
-				if c.Action == "configure_pilot" && !h.BookingsEnabled {
-					http.Error(w, "Live booking is paused in the application configuration", 409)
-					return
-				}
-				if c.Action == "classify_variant" {
-					c.Reason = f.Get("return_class")
-				}
-				e = h.Repository.ConfigurePolicy(r.Context(), session.UserID, c.Action, c.Reason, num("customer_id"), num("variant_id"))
-			case "configure_live_catalog":
-				if f.Get("confirmed") != "yes" {
-					http.Error(w, "Confirm the launch catalog before submitting", 422)
-					return
-				}
-				if !h.BookingsEnabled {
-					http.Error(w, "Live booking is paused in the application configuration", 409)
-					return
-				}
-				e = h.Repository.ConfigureLiveCatalog(r.Context(), session.UserID, num("variant_id"), num("second_variant_id"), c.Reason)
-			case "save_shipping_profile":
-				if view.Role != "super_admin" || h.PickupChecker == nil {
-					http.Error(w, "Live shipping setup is required", 409)
-					return
-				}
-				locations, checkErr := h.PickupChecker.PickupPostcodes(r.Context())
-				if checkErr != nil {
-					marketplaceHTTPError(w, checkErr)
-					return
-				}
-				if pin, found := locations[f.Get("pickup_location")]; !found || pin != f.Get("postal_code") {
-					http.Error(w, "Pickup location and PIN do not match Shiprocket", 422)
-					return
-				}
-				e = h.Repository.SaveShippingProfile(r.Context(), session.UserID, c.SellerID, f.Get("pickup_location"), f.Get("postal_code"), c.Reason)
-			case "save_invoice_profile":
-				if view.Role != "super_admin" {
-					http.Error(w, "Forbidden", 403)
-					return
-				}
-				e = h.Repository.SaveInvoiceProfile(r.Context(), session.UserID, ports.SellerInvoiceProfile{SellerID: c.SellerID, LegalName: f.Get("legal_name"), Address: f.Get("address"), StateCode: f.Get("state_code"), GSTIN: strings.ToUpper(f.Get("gstin")), Registration: f.Get("registration"), Prefix: f.Get("prefix")}, c.Reason)
-			case "save_tax_profile":
-				if view.Role != "super_admin" {
-					http.Error(w, "Forbidden", 403)
-					return
-				}
-				e = h.Repository.SaveTaxProfile(r.Context(), session.UserID, num("variant_id"), f.Get("hsn"), int(num("rate_basis_points")), c.Reason)
-			default:
-				e = h.Repository.Act(r.Context(), session.UserID, c)
 			}
-			if e != nil {
+			if isMarketplaceSetupAction(c.Action) && (e != nil || len(setupErrors) > 0) {
+				setupValues = f
+				setupAction = c.Action
+				responseStatus = http.StatusUnprocessableEntity
+				if e != nil {
+					setupErrors["form"] = "Configuration could not be saved. Check the selected records, prerequisites and provider availability, then retry."
+				}
+				r.URL.RawQuery = setupPostContext(f).Encode()
+			} else if e != nil {
 				marketplaceHTTPError(w, e)
 				return
+			} else {
+				target := root + "?saved=1"
+				if isMarketplaceSetupAction(c.Action) {
+					q := setupPostContext(f)
+					q.Set("saved", "1")
+					q.Set("saved_action", c.Action)
+					target = root + "?" + q.Encode()
+				}
+				if c.Number != "" {
+					target += "&order=" + url.QueryEscape(c.Number)
+				}
+				http.Redirect(w, r, target, 303)
+				return
 			}
-			target := root + "?saved=1"
-			if c.Number != "" {
-				target += "&order=" + url.QueryEscape(c.Number)
-			}
-			http.Redirect(w, r, target, 303)
-			return
 		}
-		if r.Method != "GET" && r.Method != "HEAD" {
+		if r.Method != "GET" && r.Method != "HEAD" && setupValues == nil {
 			w.Header().Set("Allow", "GET, HEAD")
 			http.Error(w, "Method not allowed", 405)
 			return
@@ -301,6 +345,19 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		p := viewmodels.MarketplacePage{MarketplaceView: view, Root: root, Back: back, ActionPath: root + "/action", CSRFToken: session.CSRFToken, Key: hex.EncodeToString(keyBytes), ShippingConfigured: h.ShippingConfigured, BookingsEnabled: h.BookingsEnabled}
+		p.CheckoutEnabled = h.CheckoutEnabled
+		p.Tab = "operations"
+		if view.Role == "super_admin" && number == "" && r.URL.Query().Get("tab") == "setup" {
+			p.Tab = "setup"
+			p.SetupContext = setupContext(r.URL.Query())
+			p.SetupValues = setupValues
+			p.SetupErrors = setupErrors
+			p.SetupAction = setupAction
+			if err := h.loadSetup(r.Context(), session.UserID, &p); err != nil {
+				marketplaceHTTPError(w, err)
+				return
+			}
+		}
 		if view.Role == "super_admin" && number == "" {
 			before, _ := strconv.ParseInt(r.URL.Query().Get("setup_before"), 10, 64)
 			p.Readiness, p.NextSetupID, e = h.Repository.ShippingReadiness(r.Context(), session.UserID, before)
@@ -311,6 +368,20 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 		}
 		if r.URL.Query().Get("saved") == "1" {
 			p.Notice = "Request saved. Payment and carrier operations update after provider confirmation."
+			if p.Tab == "setup" {
+				switch r.URL.Query().Get("saved_action") {
+				case "save_invoice_profile":
+					p.Notice = "Seller invoice details verified and saved."
+				case "save_tax_profile":
+					p.Notice = "Product tax settings verified and saved."
+				case "save_shipping_profile":
+					p.Notice = "Seller pickup verified with Shiprocket and saved."
+				case "classify_variant":
+					p.Notice = "Product return classification saved."
+				default:
+					p.Notice = "Shipping policy configuration saved."
+				}
+			}
 		}
 		ctx := templ.WithChildren(r.Context(), components.MarketplaceWorkspace(p))
 		var document templ.Component
@@ -322,11 +393,15 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			if view.Role == "super_admin" {
 				label = "Super Admin"
 			}
-			document = adminpages.AdminDocument(viewmodels.AdminPage{Title: "Order fulfillment", Active: "orders", NavActive: "orders", PortalRoot: strings.TrimSuffix(root, "/fulfillment"), PortalLabel: label, RoleLabel: label, CSRFToken: session.CSRFToken, CanFinance: true, CanSecurity: view.Role == "super_admin", CanManageCatalog: true})
+			document = adminpages.AdminDocument(viewmodels.AdminPage{Title: "Fulfillment · " + strings.Title(p.Tab), Active: "fulfillment", NavActive: "fulfillment", PortalRoot: strings.TrimSuffix(root, "/fulfillment"), PortalLabel: label, RoleLabel: label, CSRFToken: session.CSRFToken, CanFinance: true, CanSecurity: view.Role == "super_admin", CanManageCatalog: true})
 		default:
 			document = pages.Document(viewmodels.CustomerPage{Title: "Order fulfillment", Route: "/orders", Brand: "WeevCrafts", Authenticated: true, IsCustomer: true, CSRFToken: session.CSRFToken})
 		}
 		if r.Method != "HEAD" {
+			if responseStatus != http.StatusOK {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.WriteHeader(responseStatus)
+			}
 			_ = document.Render(ctx, w)
 		}
 	})
