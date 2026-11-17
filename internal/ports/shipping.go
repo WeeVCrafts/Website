@@ -61,6 +61,19 @@ type CourierAvailabilityGateway interface {
 	CourierOptions(context.Context, Shipment) ([]CourierOption, error)
 }
 
+type DeliveryEstimateGateway interface {
+	DeliveryEstimate(context.Context, string, string, Parcel) (available bool, days int, err error)
+}
+
+type ProductDeliveryResult struct {
+	State       string `json:"state"`
+	TransitDays int    `json:"transit_days,omitempty"`
+}
+
+type ProductDeliveryReader interface {
+	ProductDelivery(ctx context.Context, slug string, variant int64, quantity int, pin string) (ProductDeliveryResult, error)
+}
+
 type CheckoutDeliveryChecker interface {
 	DeliveryAvailable(context.Context, string, string, Parcel) (bool, error)
 }

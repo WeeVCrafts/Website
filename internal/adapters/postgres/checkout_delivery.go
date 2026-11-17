@@ -118,11 +118,7 @@ func (r *CommerceRepository) deliveryProfiles(ctx context.Context) (map[int64]De
 	return profiles, rows.Err()
 }
 
-func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin string, overrides ...map[int64]DeliveryProfile) ([]deliveryDecision, error) {
-	profiles := d.profiles
-	if len(overrides) > 0 {
-		profiles = overrides[0]
-	}
+func estimateCheckoutParcels(lines []deliveryLine, profiles map[int64]DeliveryProfile) ([]deliveryDecision, error) {
 	var decisions []deliveryDecision
 	indexes := make(map[int64]int)
 	for _, line := range lines {
@@ -162,6 +158,18 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 		if !estimate.Valid() {
 			return nil, ports.ErrShippingParcelMissing
 		}
+	}
+	return decisions, nil
+}
+
+func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin string, overrides ...map[int64]DeliveryProfile) ([]deliveryDecision, error) {
+	profiles := d.profiles
+	if len(overrides) > 0 {
+		profiles = overrides[0]
+	}
+	decisions, err := estimateCheckoutParcels(lines, profiles)
+	if err != nil {
+		return nil, err
 	}
 	checkCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()

@@ -122,6 +122,13 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 @media(min-width:960px) { .storefront-body .detail-copy { top: calc(var(--ui-header-height,72px) + 16px); } }
 .storefront-body .detail-copy h1 { font-size: clamp(28px,3vw,38px); line-height: 1.2; }
 .storefront-body .product-variant-select select { min-height: 48px; font-size: 16px; width: 100%; }
+.storefront-body .product-delivery-check { margin-block: 16px 10px; }
+.storefront-body .product-delivery-check label { display: block; font-weight: 600; margin-bottom: 6px; }
+.storefront-body .product-delivery-fields { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.storefront-body .product-delivery-fields input { width: 100%; min-width: 0; min-height: 44px; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: inherit; }
+.storefront-body .product-delivery-fields button { min-height: 44px; white-space: nowrap; }
+.storefront-body .product-delivery-check [role="status"] { margin: 6px 0 0; min-height: 2.8em; font-size: .875rem; }
+
 .storefront-body .quantity-control { min-height: 44px; }
 .storefront-body .quantity-control button { min-width: 44px; min-height: 44px; }
 .storefront-body .detail-tabs nav { flex-wrap: wrap; gap: 8px 24px; }

@@ -28,3 +28,16 @@ type MediaLifecycleRepository interface {
 type MediaServicePort interface {
 	PrepareUpload(ctx context.Context, sellerOwnerID, productID int64, contentType string, byteSize int64) (domaincommerce.MediaUpload, error)
 }
+
+type MediaDerivative struct {
+	MediaID                                       int64
+	Width                                         int
+	SourceKey, SourceType, ObjectKey, ContentType string
+	SourceBytes, ByteSize                         int64
+}
+
+type MediaDerivativeRepository interface {
+	PublicDerivative(context.Context, domaincommerce.MediaRecord, int) (MediaDerivative, error)
+	SaveDerivative(context.Context, MediaDerivative) error
+	DerivativeCandidates(context.Context, int) ([]domaincommerce.MediaRecord, error)
+}

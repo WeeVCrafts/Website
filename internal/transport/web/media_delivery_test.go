@@ -2,6 +2,10 @@ package web
 
 import (
 	"bytes"
+	"time"
+
+	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -49,13 +53,17 @@ func TestProductPhotographVariantsAreSmallerAndPreserveOriginal(t *testing.T) {
 	if err := jpeg.Encode(&original, source, &jpeg.Options{Quality: 95}); err != nil {
 		t.Fatal(err)
 	}
+	data := original.Bytes()
+	info := ports.ObjectInfo{ContentType: "image/jpeg", ByteSize: int64(len(data))}
+	repository := &publicCacheRepository{public: true, coverRepository: coverRepository{record: domaincommerce.MediaRecord{ID: 881, ObjectKey: "products/test/881", ContentType: info.ContentType, ByteSize: info.ByteSize, Status: "ready", Visibility: "public", CreatedAt: time.Now()}}}
+	storage := &countedMediaStorage{coverStorage: coverStorage{data: data, info: info}}
+	handler := &Handler{mediaService: applicationcommerce.NewMediaService(storage, repository)}
 	for _, test := range []struct {
 		query string
 		width int
 	}{{"?w=320", 320}, {"?w=640", 640}, {"?w=960", 960}, {"", 1600}} {
 		response := httptest.NewRecorder()
-		data := original.Bytes()
-		(&Handler{}).serveMedia(response, httptest.NewRequest("GET", "/media/products/881"+test.query, nil), 881, io.NopCloser(bytes.NewReader(data)), ports.ObjectInfo{ContentType: "image/jpeg", ByteSize: int64(len(data))}, true)
+		handler.publicMedia(response, httptest.NewRequest("GET", "/media/products/881"+test.query, nil), "881")
 		config, _, err := image.DecodeConfig(bytes.NewReader(response.Body.Bytes()))
 		if err != nil || config.Width != test.width || response.Code != 200 {
 			t.Fatalf("%s width=%d status=%d error=%v", test.query, config.Width, response.Code, err)

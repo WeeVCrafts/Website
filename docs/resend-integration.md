@@ -1,6 +1,6 @@
 > **Historical integration/deployment observations:** Hosting, account, brand and verification observations below describe their recorded dates/releases. Hostinger VPS/Coolify is the current production target. Use the [current handbook](operations-handbook.md) and [release checklist](release-checklist.md); do not execute old Railway deployment instructions or treat old provider acceptance as current evidence.
 
-# Resend integration — 10 October 2026
+# Resend integration â€” 10 October 2026
 
 Resend is the optional server-side transactional sender. Firebase Admin creates private verification and reset links; the Go application renders `internal/adapters/email/templates/action.html` as branded HTML with a text alternative. Firebase's blocked template editor is not required. Its default hosted action page applies the one-time link and returns to `https://weevcrafts.com/`. That domain still serves Shopify; no production website cutover was performed.
 
@@ -34,3 +34,23 @@ References: [Firebase Admin email action links](https://firebase.google.com/docs
 
 
 2026-10-12 deployment update: Resend MCP is exposed in this session and confirmed the verified domain, DKIM/SPF records, enabled sending, and delivered order/verification/reset messages. Railway CLI staged the saved sending-only key through stdin and set the existing verified sender/reply address, without printing the secret. Production uses the sealed server environment variable; local credential-file support remains. The application logs the configured provider, never the key. Order-received, paid confirmation, seller dispatch, verification and recovery use the existing application adapter and retryable delivery paths. Demo paid confirmations explicitly say no money was charged.
+
+## Order delivery history â€” November 2026
+
+Order received, paid confirmation, seller new-order, dispatch, delivery and refund
+emails retain submission IDs and signed delivery outcomes for 30 days. Super Admin
+opens Support & delivery â†’ Email delivery history. Support sees the linked order's
+history inside an authorized support case. SMTP continues to send without provider
+delivery telemetry.
+
+Register `https://weevcrafts.com/webhooks/resend` in Resend for `email.sent`,
+`email.delivery_delayed`, `email.delivered`, `email.bounced`, `email.failed`,
+`email.suppressed` and `email.complained`. Store its signing secret privately as
+`WECRATFS_RESEND_WEBHOOK_SECRET` in Coolify. Keep open/click tracking disabled.
+The webhook uses the raw body and Svix signatures, with replay deduplication.
+
+A send receipt is persisted before the worker acknowledges its job. Ambiguous
+attempts use the same idempotency key for less than 23 hours, then enter Needs
+investigation. Do not blindly resend a bounced, suppressed or uncertain message.
+Delivery confirmation records acceptance by the recipient mail server. Check the
+designated customer and seller mailboxes to confirm inbox or spam placement.

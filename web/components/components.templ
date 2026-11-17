@@ -1,7 +1,6 @@
 package components
 
 import (
-  "fmt"
   "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -15,7 +14,7 @@ templ Header(p viewmodels.CustomerPage) {
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
-      <a class="wordmark" href="/" aria-label="Weevcrafts home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      <a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a>
       if p.Route=="/" {
        <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
       }
@@ -36,7 +35,7 @@ templ Header(p viewmodels.CustomerPage) {
           @ShoppingHeaderAction("cart-count", "/cart", "Cart", "shopping_bag", p.CartCount, false, false)
           if p.Authenticated {
           <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
-            <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Open profile menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
+            <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Account menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
               if p.AvatarURL != "" {
     <img class="header-avatar" src={ p.AvatarURL } width="36" height="36" alt="Your profile photo"/>
               } else {
@@ -295,7 +294,7 @@ templ CategoryCard(category viewmodels.Category) {
 
 // Initial rendering and out-of-band count updates share the same geometry.
 templ ShoppingHeaderAction(id, href, label, icon string, count int, active, oob bool) {
- <a href={href} id={id} class={templ.KV("wishlist-action",id=="wishlist-count"),templ.KV("is-active",active)} data-backend-counter title={label} aria-label={fmt.Sprintf("%s, %d items",label,count)} hx-swap-oob={headerActionSwap(oob)}>
-  <span class="material-symbols-outlined" aria-hidden="true">{icon}</span><span class="header-action-label">{label}<em>{count}</em></span>
+ <a href={href} id={id} class={templ.KV("wishlist-action",id=="wishlist-count"),templ.KV("is-active",active)} data-backend-counter title={label} hx-swap-oob={headerActionSwap(oob)}>
+  <span class="material-symbols-outlined" aria-hidden="true">{icon}</span><span class="header-action-label">{label}{ " " }<em>{count}</em><span class="sr-only"> items</span></span>
  </a>
 }

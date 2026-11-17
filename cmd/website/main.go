@@ -25,6 +25,7 @@ import (
 	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
 	metricsadapter "github.com/wecratfs/commerce/internal/adapters/metrics"
 	msg91adapter "github.com/wecratfs/commerce/internal/adapters/msg91"
+	"github.com/wecratfs/commerce/internal/adapters/photograph"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
 	razorpayadapter "github.com/wecratfs/commerce/internal/adapters/razorpay"
 	redisadapter "github.com/wecratfs/commerce/internal/adapters/redis"
@@ -281,6 +282,11 @@ func main() {
 	}
 	marketplaceRepository := postgres.NewMarketplaceRepository(pool).WithInvoiceRenderer(webHandlers.MarketplaceInvoicePDF)
 	durableHandlers := make(map[string]func(context.Context) error)
+	orderEmails := emailSender
+	emailDeliveryRepository := postgres.NewEmailDeliveryRepository(pool)
+	if provider, ok := emailSender.(ports.EmailReceiptSender); ok {
+		orderEmails = applicationcommerce.TrackedOrderEmail{Sender: provider, Store: emailDeliveryRepository}
+	}
 	smsProcessor := &applicationcommunication.SMSProcessor{Store: postgres.NewSMSRepository(pool)}
 	if cfg.SMS.Enabled {
 		key, keyErr := cfg.SMS.ReadAuthKey()
@@ -301,6 +307,12 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
+	worker.RegisterDurablePeriodic(workerContext, time.Hour, "email-delivery-retention", marketplaceRepository, durableHandlers, emailDeliveryRepository.ExpireEmailDeliveries)
+	if storageErr == nil {
+		worker.RegisterDurablePeriodic(workerContext, time.Minute, "product-image-derivatives", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
+			return photograph.Prepare(ctx, mediaStorage, postgres.NewMediaRepository(pool))
+		})
+	}
 	if cfg.CheckoutEnabled && cfg.CheckoutRecoveryEmails {
 		worker.RegisterDurablePeriodic(workerContext, 5*time.Minute, "checkout-recovery", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 			sendCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
@@ -349,9 +361,9 @@ func main() {
 		return err
 	})
 	productIndexProcessor := applicationcatalog.NewProductIndexProcessorWithCache(postgres.NewOutboxRepository(pool), searchRepository, searchEngine, searchCache)
-	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
-	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL)
-	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, emailSender, cfg.PublicURL, cfg.PaymentMode == "local" || strings.HasPrefix(cfg.RazorpayKeyID, "rzp_test_"))
+	sellerDispatchProcessor := applicationcommerce.NewSellerDispatchProcessor(postgres.NewOutboxRepository(pool), commerceRepository, orderEmails, cfg.PublicURL)
+	orderConfirmationProcessor := applicationcommerce.NewOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, orderEmails, cfg.PublicURL)
+	paidOrderConfirmationProcessor := applicationcommerce.NewPaidOrderConfirmationProcessor(postgres.NewOutboxRepository(pool), commerceRepository, orderEmails, cfg.PublicURL, cfg.PaymentMode == "local" || strings.HasPrefix(cfg.RazorpayKeyID, "rzp_test_"))
 	worker.RegisterDurablePeriodic(workerContext, 10*time.Second, "order-confirmations", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 		processContext, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
@@ -478,6 +490,7 @@ func main() {
 		mux.Handle("/api/v1/local/", apiTransport.NewLocalDemoHandler(pool, sessionService))
 	}
 	mux.Handle("/webhooks/razorpay", webhookTransport.NewRazorpayHandler(paymentService))
+	mux.Handle(webhookTransport.ResendCallbackPath, webhookTransport.ResendCallback(cfg.ResendWebhookSecret, emailDeliveryRepository.RecordEmailDeliveryEvent))
 	if developmentPaymentHelpersEnabled(cfg) {
 		mux.HandleFunc("/dev/payments/", localPaymentHandler(pool, sessionService, paymentService, localGateway, paymentRepository))
 	}
@@ -487,6 +500,7 @@ func main() {
 	portalHandler := webHandlers.NewLivePortalHandler(pool, sessionService, webHandler)
 
 	var marketplaceGateway ports.ShippingGateway
+	var productDelivery ports.ProductDeliveryReader
 	if cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live" {
 		gateway := configuredShiprocket(cfg.Shipping)
 		if cfg.Shipping.Mode == "live" {
@@ -511,13 +525,16 @@ func main() {
 		gateway.ObserveCourierResults(shippingMetrics.CourierResult)
 		shipping := applicationcommerce.NewShippingService(commerceRepository, gateway, cfg.Shipping.Mode, cfg.Shipping.PickupLocations)
 		shipping.SetBookingsEnabled(cfg.Shipping.BookingsEnabled)
+		profiles := make(map[int64]postgres.DeliveryProfile, len(cfg.Shipping.PickupLocations))
+		for seller := range cfg.Shipping.PickupLocations {
+			profile := cfg.Shipping.ParcelProfiles[seller]
+			profiles[seller] = postgres.DeliveryProfile{PostalCode: profile.PostalCode, PackingGrams: profile.PackingGrams, PackingCM: profile.PackingCM}
+		}
 		if cfg.Shipping.BookingsEnabled {
-			profiles := make(map[int64]postgres.DeliveryProfile, len(cfg.Shipping.PickupLocations))
-			for seller := range cfg.Shipping.PickupLocations {
-				profile := cfg.Shipping.ParcelProfiles[seller]
-				profiles[seller] = postgres.DeliveryProfile{PostalCode: profile.PostalCode, PackingGrams: profile.PackingGrams, PackingCM: profile.PackingCM}
-			}
 			commerceRepository.ConfigureCheckoutDelivery(gateway, profiles, cfg.Shipping.Mode)
+		}
+		if cfg.Shipping.Mode == "live" {
+			productDelivery = postgres.NewProductDeliveryRepository(pool, gateway, profiles)
 		}
 		portalHandler.SetShipping(shipping)
 		portalHandler.SetDeliveryExceptions(commerceRepository)
@@ -600,9 +617,10 @@ func main() {
 	mux.Handle("/support/", portalHandler)
 	mux.Handle("/", storefrontHandler)
 
+	mux.Handle("/api/v1/products/{slug}/delivery", apiTransport.ProductDelivery(productDelivery, rateLimiter, clientAddress))
 	marketplaceProcessor := &applicationcommerce.MarketplaceProcessor{Store: marketplaceRepository, Handlers: durableHandlers, Shipping: marketplaceGateway, Refunds: refundGateway, BookingsEnabled: cfg.Shipping.Mode == "live" && cfg.Shipping.BookingsEnabled}
 	marketplaceProcessor.NotifyEmail = func(ctx context.Context, notificationID int64) error {
-		return marketplaceRepository.SendNotificationEmail(ctx, notificationID, emailSender, cfg.PublicURL)
+		return marketplaceRepository.SendNotificationEmail(ctx, notificationID, orderEmails, cfg.PublicURL)
 	}
 	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled, CheckoutEnabled: cfg.CheckoutEnabled}
 	marketplaceHandler.Storage = mediaStorage

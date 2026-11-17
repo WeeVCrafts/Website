@@ -303,6 +303,77 @@
     };
   }
 
+  function initProductDelivery() {
+    const form = document.querySelector("[data-product-delivery]");
+    if (!form || form.dataset.deliveryBound) return;
+    const scope = form.closest(".detail-copy");
+    const option = scope.querySelector("#detail-variant");
+    const quantity = scope.querySelector("#detail-quantity");
+    const pin = form.elements.namedItem("postal_code");
+    const button = form.querySelector("button");
+    const result = form.querySelector("[data-product-delivery-result]");
+    let active;
+    const selection = () => [pin.value.trim(), option.value, quantity.value];
+    function clear() {
+      active?.abort();
+      active = undefined;
+      result.textContent = "";
+      button.disabled = false;
+      pin.removeAttribute("aria-invalid");
+    }
+    pin.addEventListener("input", clear);
+    option.addEventListener("change", clear);
+    quantity.addEventListener("change", clear);
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      clear();
+      const [postalCode, variant, count] = selection();
+      if (!/^[1-9][0-9]{5}$/.test(postalCode)) {
+        pin.setAttribute("aria-invalid", "true");
+        result.textContent = "Enter a six-digit Indian PIN code.";
+        pin.focus();
+        return;
+      }
+      if (Number(count) < 1) {
+        result.textContent = "Choose an in-stock option to check delivery.";
+        return;
+      }
+      const request = new AbortController();
+      const timeout = setTimeout(() => request.abort(), 6500);
+      active = request;
+      button.disabled = true;
+      result.textContent = "Checking delivery…";
+      const query = new URLSearchParams({postal_code: postalCode, variant_id: variant, quantity: count});
+      try {
+        const response = await fetch(form.action + "?" + query, {signal: request.signal, cache: "no-store"});
+        const data = response.ok ? await response.json() : {};
+        if (active !== request || selection().join("/") !== [postalCode, variant, count].join("/")) return;
+        if (response.status === 429) {
+          result.textContent = "Too many delivery checks. Try again in a minute.";
+        } else if (data.state === "available") {
+          const days = data.transit_days;
+          result.textContent = Number.isInteger(days) && days > 0
+            ? `Delivery available to ${postalCode}. Estimated transit after dispatch: ${days} ${days === 1 ? "day" : "days"}.`
+            : `Delivery available to ${postalCode}. The courier hasn’t provided a transit estimate.`;
+        } else if (data.state === "unserviceable") {
+          result.textContent = `No courier currently serves PIN ${postalCode} for this parcel.`;
+        } else {
+          result.textContent = "Delivery details are unavailable for this option. Try again later.";
+        }
+      } catch {
+        if (active === request) result.textContent = "Delivery details are unavailable. Try again.";
+      } finally {
+        clearTimeout(timeout);
+        if (active === request) {
+          active = undefined;
+          button.disabled = false;
+        }
+      }
+    });
+    form.dataset.deliveryBound = "true";
+    form.hidden = false;
+  }
+
   function initGallery(root) {
     root.querySelectorAll("[data-ui-gallery]").forEach(gallery => {
       if (gallery.dataset.bound) return;
@@ -506,7 +577,7 @@
     if (!(event?.type==='htmx:afterSwap' && ['page','listing-content'].includes(event.detail.target?.id) && filterSnapshot)) initFilters();
     initHero(document);
       initCategoryRails();
-    initProductRails(document);initGallery(document);initSearch();initPurchaseBar();syncPurchase();
+    initProductRails(document);initGallery(document);initProductDelivery();initSearch();initPurchaseBar();syncPurchase();
     document.querySelectorAll(".facet-search").forEach(facet=>{
       if (facet.dataset.emptyBound) return;
       facet.dataset.emptyBound="true";

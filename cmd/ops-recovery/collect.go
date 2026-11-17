@@ -47,6 +47,19 @@ type backedUpObject struct {
 	Bytes       int64  `json:"bytes"`
 }
 
+func requiredObjectQuery(ctx context.Context, tx pgx.Tx) (string, error) {
+	var prepared bool
+	err := tx.QueryRow(ctx, `SELECT to_regclass('product_image_derivatives') IS NOT NULL`).Scan(&prepared)
+	if err != nil {
+		return "", err
+	}
+	query := requiredObjects
+	if prepared {
+		query += " UNION SELECT d.object_key FROM product_image_derivatives d JOIN product_media pm ON pm.id=d.media_id WHERE pm.status='ready'"
+	}
+	return query, nil
+}
+
 func checkReferenceInventory(ctx context.Context, tx pgx.Tx) error {
 	rows, err := tx.Query(ctx, `SELECT table_name||'.'||column_name FROM information_schema.columns
 		WHERE table_schema=current_schema() AND column_name ~ '(object_key|evidence_key)$'`)
@@ -55,7 +68,7 @@ func checkReferenceInventory(ctx context.Context, tx pgx.Tx) error {
 	}
 	defer rows.Close()
 	known := map[string]bool{
-		"product_media.object_key": true, "categories.image_object_key": true,
+		"product_media.object_key": true, "product_image_derivatives.object_key": true, "categories.image_object_key": true,
 		"storefront_media.object_key": true, "marketplace_claim_evidence.object_key": true,
 		"support_attachments.object_key": true, "user_avatars.object_key": true,
 		"avatar_cleanup.object_key": true, "seller_documents.object_key": true,
@@ -104,7 +117,11 @@ func collect(ctx context.Context, dst io.Writer) error {
 	if err = tx.QueryRow(ctx, "SELECT pg_export_snapshot()").Scan(&snapshot); err != nil {
 		return errors.New("collect: cannot export database snapshot")
 	}
-	rows, err := tx.Query(ctx, requiredObjects)
+	objectsQuery, err := requiredObjectQuery(ctx, tx)
+	if err != nil {
+		return errors.New("collect: cannot inspect media schema")
+	}
+	rows, err := tx.Query(ctx, objectsQuery)
 	if err != nil {
 		return errors.New("collect: cannot inventory required object references")
 	}

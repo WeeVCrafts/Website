@@ -57,3 +57,25 @@ func TestResendRejectsUnsafeMessageBeforeNetwork(t *testing.T) {
 		t.Fatal("unsafe sender accepted")
 	}
 }
+
+func TestResendReturnsReceiptWithoutProviderPayload(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Idempotency-Key") != "order-paid-42" {
+			t.Error("retry key missing")
+		}
+		_, _ = w.Write([]byte(`{"id":"ef4c2c91-940e-4379-91f4-86a1d2d3b588","private":"do not retain"}`))
+	}))
+	defer server.Close()
+	sender, _ := NewResend("fixture-key", "no-reply@example.invalid", "")
+	sender.endpoint = server.URL
+	tracked, ok := any(sender).(interface {
+		SendWithReceipt(context.Context, ports.EmailMessage) (string, error)
+	})
+	if !ok {
+		t.Fatal("Resend does not expose submission receipts")
+	}
+	id, err := tracked.SendWithReceipt(context.Background(), ports.EmailMessage{To: "customer@example.invalid", Subject: "Payment confirmed", ActionURL: "https://example.invalid/orders/42", IdempotencyKey: "order-paid-42"})
+	if err != nil || id != "ef4c2c91-940e-4379-91f4-86a1d2d3b588" {
+		t.Fatalf("receipt = %q, error = %v", id, err)
+	}
+}

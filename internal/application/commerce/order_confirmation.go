@@ -78,7 +78,7 @@ func (p *OrderConfirmationProcessor) Process(ctx context.Context, limit int) (in
 					}
 					link = tracking
 				}
-				deliveryErr = p.sender.Send(ctx, ports.EmailMessage{To: recipient.Email, DisplayName: recipient.DisplayName, Subject: subject, ActionURL: link, Body: body})
+				deliveryErr = p.sender.Send(ctx, ports.EmailMessage{IdempotencyKey: fmt.Sprintf("order-confirmation-%d", event.ID), OrderNumber: event.AggregateID, DeliveryKind: p.eventType, DeliveryQueuedAt: event.CreatedAt, To: recipient.Email, DisplayName: recipient.DisplayName, Subject: subject, ActionURL: link, Body: body})
 			}
 		}
 		if deliveryErr != nil {

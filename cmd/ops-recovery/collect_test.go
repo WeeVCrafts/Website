@@ -33,6 +33,29 @@ func TestRecoveryInventoryCoversCurrentSchemaAndDetectsNewReferences(t *testing.
 	if err = checkReferenceInventory(ctx, tx); err != nil {
 		t.Fatalf("current object references are not covered: %v", err)
 	}
+	query, err := requiredObjectQuery(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := tx.Query(ctx, query)
+	if err != nil {
+		t.Fatalf("new schema object inventory: %v", err)
+	}
+	rows.Close()
+	// Verify the collector can be installed before the application applies
+	// the additive derivative migration.
+	if _, err = tx.Exec(ctx, `DROP TABLE product_image_derivatives`); err != nil {
+		t.Fatal(err)
+	}
+	query, err = requiredObjectQuery(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err = tx.Query(ctx, query)
+	if err != nil {
+		t.Fatalf("previous schema object inventory: %v", err)
+	}
+	rows.Close()
 	if _, err = tx.Exec(ctx, `CREATE TABLE recovery_inventory_probe(object_key text)`); err != nil {
 		t.Fatal(err)
 	}

@@ -148,8 +148,9 @@ func (s *MediaService) OpenPublicMedia(ctx context.Context, mediaID int64) (io.R
 // PublicMedia is a request-scoped, repository-authorized public media record.
 // Its fields stay private so callers cannot substitute an arbitrary object key.
 type PublicMedia struct {
-	record domaincommerce.MediaRecord
-	reader ports.ObjectStorageContentReader
+	record      domaincommerce.MediaRecord
+	reader      ports.ObjectStorageContentReader
+	derivatives ports.MediaDerivativeRepository
 }
 
 // ResolvePublicMedia checks current catalogue visibility without opening the
@@ -167,7 +168,27 @@ func (s *MediaService) ResolvePublicMedia(ctx context.Context, mediaID int64) (P
 	if !ok {
 		return PublicMedia{}, ErrInvalidMedia
 	}
-	return PublicMedia{record: record, reader: reader}, nil
+	derivatives, _ := s.repository.(ports.MediaDerivativeRepository)
+	return PublicMedia{record: record, reader: reader, derivatives: derivatives}, nil
+}
+
+func (m PublicMedia) OpenDerivative(ctx context.Context, width int) (io.ReadCloser, ports.ObjectInfo, error) {
+	if m.derivatives == nil {
+		return nil, ports.ObjectInfo{}, ports.ErrNotFound
+	}
+	derivative, err := m.derivatives.PublicDerivative(ctx, m.record, width)
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	body, info, err := m.reader.OpenObject(ctx, derivative.ObjectKey)
+	if err != nil {
+		return nil, ports.ObjectInfo{}, err
+	}
+	if info.ContentType != derivative.ContentType || info.ByteSize != derivative.ByteSize || info.ByteSize <= 0 || info.ByteSize > 1<<20 {
+		_ = body.Close()
+		return nil, ports.ObjectInfo{}, ErrInvalidMedia
+	}
+	return body, info, nil
 }
 
 // CacheKey binds a derivative to the authorized immutable object identity and

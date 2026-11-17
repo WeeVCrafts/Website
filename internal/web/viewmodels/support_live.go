@@ -34,4 +34,11 @@ type CompanySupportPage struct {
 	Sellers                []domain.CaseSeller
 	RequestKey             string
 	QueueStatus, QueueNext string
+	EmailHistory           EmailDeliveryHistory
+}
+
+type EmailDeliveryHistory struct {
+	Rows                []domain.EmailDeliverySummary
+	Next, Latest, Order string
+	Unavailable         bool
 }

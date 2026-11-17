@@ -6,8 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/a-h/templ"
+	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
@@ -18,6 +20,16 @@ import (
 const confirmationOrder = "QA-PAYMENT"
 
 func registerRecoveryRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /super-admin/support/email", func(w http.ResponseWriter, r *http.Request) {
+		page := fixtureAdminOrderPage(r)
+		page.Active, page.NavActive, page.Title, page.PortalRoot = "support", "support", "Email delivery history", "/super-admin"
+		history := viewmodels.EmailDeliveryHistory{Rows: []domaincommerce.EmailDeliverySummary{
+			{OrderNumber: "QA-EMAIL", Kind: "OrderPaid", State: "delivered", ProviderID: "a2df44b7-53bc-43c0-bdc8-4166d663a127", StateAt: time.Now()},
+			{OrderNumber: "QA-EMAIL", Kind: "New paid order", State: "bounced", ProviderID: "48ff3c9f-c5db-4453-b998-3306301c33c4", StateAt: time.Now()},
+		}}
+		renderFixture(w, r, adminpages.EmailDeliveryPage(page, history))
+	})
+
 	mug := viewmodels.Product{
 		ID: 1, VariantID: 101, Slug: "layout-mug", Name: "Ceramic mug",
 		Price: "₹500", PriceCents: 50000, Seller: "Fixture maker", InStock: true, Available: 8,

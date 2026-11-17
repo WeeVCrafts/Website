@@ -12,6 +12,7 @@ templ CompanySupport(p viewmodels.CompanySupportPage) {
  @AdminDocument(p.Admin) {
   if p.Admin.CanSecurity {
 @StatGrid(p.Admin)
+<p><a class="admin-button" href={p.Admin.PortalRoot+"/support/email"}>Email delivery history</a></p>
 }
   @supportportal.CaseContent(p.Support,p.Admin.PortalRoot+"/support")
   if p.Support.SelectedCase.DatabaseID>0 {
@@ -21,6 +22,7 @@ templ CompanySupport(p viewmodels.CompanySupportPage) {
      <dl class="coordination-tracking"><div><dt>Order status</dt><dd>{ components.StatusLabel(p.Support.SelectedCase.OrderStatus) }</dd></div><div><dt>Payment status</dt><dd>{ components.StatusLabel(p.Support.SelectedCase.PaymentStatus) }</dd></div><div><dt>Order total</dt><dd>{ p.Support.SelectedCase.OrderValue }</dd></div></dl>
      <a class="admin-button" href={ p.Admin.PortalRoot+"/orders?q="+url.QueryEscape(p.Support.SelectedCase.Order) }>Inspect linked order</a>
     </section>
+    @EmailHistory(p.EmailHistory,false)
    }
 <section class="admin-panel coordination">
     <h2>Request seller confirmation</h2><p>Only sellers represented in this order can receive this private request.</p>

@@ -97,7 +97,9 @@ templ Document(p viewmodels.CustomerPage) {
               var maximum = Number(detailQuantity.dataset.stockLimit);
               var minimum = maximum > 0 ? 1 : 0;
               var next = Math.min(maximum, Math.max(minimum, value));
+              var changed = quantity.value !== String(next);
               quantity.value = String(next);
+              if (changed) quantity.dispatchEvent(new Event("change", {bubbles: true}));
               output.textContent = String(next);
               decrease.setAttribute("aria-disabled", String(next <= minimum));
               increase.setAttribute("aria-disabled", String(next >= maximum));
@@ -692,6 +694,17 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           <p class="sr-only" data-detail-quantity-status role="status"></p>
           <input id="detail-quantity" type="hidden" name="quantity" value={fmt.Sprint(productInitialQuantity(p))}/>
           <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
+          if len(p.Product.Variants) > 0 {
+            <form class="product-delivery-check" data-product-delivery action={ "/api/v1/products/" + p.Product.Slug + "/delivery" } method="get" novalidate hidden>
+              <label for="product-delivery-pin">Check delivery</label>
+              <div class="product-delivery-fields">
+                <input id="product-delivery-pin" name="postal_code" type="text" inputmode="numeric" autocomplete="postal-code" pattern="[1-9][0-9]{5}" maxlength="6" placeholder="6-digit PIN code" aria-describedby="product-delivery-result" required/>
+                <button class="outline-button" type="submit">Check PIN</button>
+              </div>
+              <p id="product-delivery-result" role="status" aria-atomic="true" data-product-delivery-result></p>
+            </form>
+            <noscript><p><a href="/shipping">Read shipping information</a></p></noscript>
+          }
           <dl class="purchase-facts" aria-label="About this piece"><div><dt>Craft category</dt><dd>{p.Product.Category}</dd></div>
             for i,spec:=range components.ProductSpecifications(p.Product.Description) {
               if i<2 {

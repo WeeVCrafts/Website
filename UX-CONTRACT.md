@@ -503,3 +503,17 @@ this change, as confirmed by the owner.
   authorization. It uses a distinct receipt and binds the request to the failed
   provider refund ID. Replayed old forms cannot authorize another submission;
   prior refund identity and the new reason remain in the audit trail.
+
+## Delivery checks and email history — 18 November 2026
+
+The product-page PIN form uses the current option and quantity. Shared form
+controls preserve focus, show inline validation and announce the result.
+Changing the PIN, option or quantity cancels the earlier result. Carrier transit
+estimates describe time after dispatch. Final delivery checks remain at checkout.
+
+Super Admin can browse the paginated 30-day order-email history under Support.
+Support sees delivery metadata only through an authorized case's linked order.
+The existing Admin role owns Support access. History excludes message bodies,
+recipient addresses and account action links. A delivered state means the
+recipient mail server accepted the message. Human mailbox checks are separate.
+The shared ui-table and ui-table-region own history layout and overflow.

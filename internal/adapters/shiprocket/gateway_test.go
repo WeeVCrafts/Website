@@ -1,6 +1,7 @@
 package shiprocket
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,34 @@ import (
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 )
+
+func TestPrepaidDeliveryEstimateRequiresNoShipment(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/v1/external/auth/login" {
+			fmt.Fprint(w, `{"token":"fixture"}`)
+			return
+		}
+		q := r.URL.Query()
+		if r.Method != http.MethodGet || r.URL.Path != "/v1/external/courier/serviceability/" || q.Get("cod") != "0" || q.Get("order_id") != "" || q.Get("weight") != "0.500" || q.Get("pickup_postcode") != "500079" || q.Get("delivery_postcode") != "110030" {
+			t.Errorf("unexpected carrier request: %s %s", r.Method, r.URL)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		fmt.Fprint(w, `{"data":{"recommended_courier_company_id":51,"available_courier_companies":[{"courier_company_id":51,"courier_name":"Fixture","estimated_delivery_days":"4"},{"courier_company_id":52,"courier_name":"Blocked","blocked":1,"estimated_delivery_days":"1"}]}}`)
+	}))
+	defer server.Close()
+	gateway := New(server.URL, "fixture@example.com", "fixture")
+	estimate, ok := any(gateway).(interface {
+		DeliveryEstimate(context.Context, string, string, ports.Parcel) (bool, int, error)
+	})
+	if !ok {
+		t.Fatal("prepaid delivery estimate missing")
+	}
+	available, days, err := estimate.DeliveryEstimate(t.Context(), "500079", "110030", ports.Parcel{WeightGrams: 500, LengthCM: 10, WidthCM: 10, HeightCM: 10})
+	if err != nil || !available || days != 4 {
+		t.Fatalf("got available=%t days=%d err=%v", available, days, err)
+	}
+}
 
 func TestShiprocketParcelLifecycle(t *testing.T) {
 	logins := 0

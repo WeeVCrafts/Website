@@ -41,6 +41,7 @@ type Config struct {
 	SMTPFrom                string
 	ResendAPIKey            string
 	ResendAPIKeyFile        string
+	ResendWebhookSecret     string
 	ResendFrom              string
 	ResendReplyTo           string
 	S3AccessKey             string
@@ -95,6 +96,7 @@ func FromEnv() Config {
 		SMTPFrom:                env("WECRATFS_SMTP_FROM", ""),
 		ResendAPIKey:            env("WECRATFS_RESEND_API_KEY", ""),
 		ResendAPIKeyFile:        env("WECRATFS_RESEND_API_KEY_FILE", ""),
+		ResendWebhookSecret:     env("WECRATFS_RESEND_WEBHOOK_SECRET", ""),
 		ResendFrom:              env("WECRATFS_RESEND_FROM", ""),
 		ResendReplyTo:           env("WECRATFS_RESEND_REPLY_TO", ""),
 		S3AccessKey:             env("S3_ACCESS_KEY", "GK0123456789abcdef01234567"),

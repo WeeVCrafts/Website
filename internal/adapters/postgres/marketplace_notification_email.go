@@ -17,20 +17,28 @@ func (r *MarketplaceRepository) SendNotificationEmail(ctx context.Context, id in
 	var message ports.EmailMessage
 	var path string
 	err := r.pool.QueryRow(ctx, `
-		SELECT u.email,u.display_name,n.title,n.body,n.link_url
+		SELECT u.email,u.display_name,n.title,n.body,n.link_url,n.created_at
 		FROM notifications n JOIN users u ON u.id=n.user_id AND u.status='active'
 		WHERE n.id=$1 AND n.kind='order'
 			AND n.title IN ('New paid order','Package out for delivery','Package delivered','Refund processed')
-	`, id).Scan(&message.To, &message.DisplayName, &message.Subject, &message.Body, &path)
+	`, id).Scan(&message.To, &message.DisplayName, &message.Subject, &message.Body, &path, &message.DeliveryQueuedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	if !strings.HasPrefix(path, "/orders/") && !strings.HasPrefix(path, "/seller-admin/orders/") {
+	orderPath := strings.TrimPrefix(path, "/seller-admin")
+	orderPath, ok := strings.CutPrefix(orderPath, "/orders/")
+	if !ok || strings.ContainsAny(orderPath, "?#") {
 		return ports.ErrInvalidState
 	}
+	orderNumber, _, _ := strings.Cut(orderPath, "/")
+	if orderNumber == "" {
+		return ports.ErrInvalidState
+	}
+	message.OrderNumber = orderNumber
+	message.DeliveryKind = message.Subject
 	message.ActionURL = strings.TrimRight(publicURL, "/") + path
 	message.IdempotencyKey = fmt.Sprintf("marketplace-notification-%d", id)
 	return sender.Send(ctx, message)

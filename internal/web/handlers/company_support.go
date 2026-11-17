@@ -11,6 +11,7 @@ import (
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
 	"net/http"
+	"net/url"
 
 	"strconv"
 	"strings"
@@ -56,6 +57,25 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 			redirectPortalDestination(w, r, root+"/"+strings.TrimPrefix(path, root+"/support/"))
 			return true
 		}
+		if path == root+"/support/email" {
+			if role != identity.RoleSuperAdmin {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return true
+			}
+			order := strings.TrimSpace(r.URL.Query().Get("order"))
+			if len(order) > 100 {
+				http.Error(w, "invalid order reference", http.StatusBadRequest)
+				return true
+			}
+			filters := make(url.Values)
+			if order != "" {
+				filters.Set("order", order)
+			}
+			page := viewmodels.AdminPage{ActorID: session.UserID, Active: "support", NavActive: "support", Title: "Email delivery history", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, CanSecurity: true}
+			w.Header().Set("Cache-Control", "private, no-store")
+			h.render(w, r, adminpages.EmailDeliveryPage(page, h.loadEmailHistory(r, order, path, filters)))
+			return true
+		}
 		if path != root+"/support" && path != root+"/support/cases" {
 			http.NotFound(w, r)
 			return true
@@ -69,6 +89,10 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 			support.SelectedCase = viewmodels.SupportPortalCase{}
 		}
 		page := viewmodels.CompanySupportPage{Support: support, RequestKey: rand.Text()}
+		if support.SelectedCase.DatabaseID > 0 && strings.TrimSpace(support.SelectedCase.Order) != "" {
+			w.Header().Set("Cache-Control", "private, no-store")
+			page.EmailHistory = h.loadEmailHistory(r, support.SelectedCase.Order, root+"/support", url.Values{"ticket_id": {strconv.FormatInt(support.SelectedCase.DatabaseID, 10)}})
+		}
 		page.Admin = viewmodels.AdminPage{ActorID: session.UserID, Active: "support", NavActive: "support", Title: "Support & delivery", Subtitle: "Review the case, confirm with the seller and keep the customer informed.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, CanSecurity: role == identity.RoleSuperAdmin, Pagination: support.Pagination, Notice: r.URL.Query().Get("notice"), DataWarning: support.DataWarning}
 		if role == identity.RoleSuperAdmin {
 			page.Support.StatusFilter = supportInsightFilter(r)

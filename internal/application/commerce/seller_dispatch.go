@@ -62,7 +62,7 @@ func (p *SellerDispatchProcessor) Process(ctx context.Context, limit int) (int, 
 			}
 			trackingURL := p.publicURL + "/orders/" + url.PathEscape(payload.OrderNumber) + "/tracking"
 			body := fmt.Sprintf("Your Weevcrafts order %s has shipped.\n\nCarrier: %s\nTracking number: %s\n\nTrack your order: %s", payload.OrderNumber, payload.Carrier, payload.TrackingNumber, trackingURL)
-			if sendErr := p.sender.Send(ctx, ports.EmailMessage{To: contact.Email, DisplayName: contact.DisplayName, Subject: "Your Weevcrafts order has shipped", ActionURL: trackingURL, Body: body}); sendErr != nil {
+			if sendErr := p.sender.Send(ctx, ports.EmailMessage{IdempotencyKey: fmt.Sprintf("seller-dispatch-%d", event.ID), OrderNumber: payload.OrderNumber, DeliveryKind: SellerOrderShippedEventType, DeliveryQueuedAt: event.CreatedAt, To: contact.Email, DisplayName: contact.DisplayName, Subject: "Your Weevcrafts order has shipped", ActionURL: trackingURL, Body: body}); sendErr != nil {
 				_ = p.events.Fail(ctx, event.ID, time.Minute, sendErr.Error())
 				if processErr == nil {
 					processErr = sendErr

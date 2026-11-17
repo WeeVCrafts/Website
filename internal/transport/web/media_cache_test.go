@@ -151,3 +151,26 @@ func TestPublicOriginalPhotographConditionalDelivery(t *testing.T) {
 		t.Fatal("private previews must not reuse public validators")
 	}
 }
+
+func TestPublicPhotographCachesSmallOriginalAtResponsiveWidth(t *testing.T) {
+	const id int64 = 991882
+	var encoded bytes.Buffer
+	if err := jpeg.Encode(&encoded, image.NewRGBA(image.Rect(0, 32, 32, 64)), &jpeg.Options{Quality: 50}); err != nil {
+		t.Fatal(err)
+	}
+	data := encoded.Bytes()
+	info := ports.ObjectInfo{ContentType: "image/jpeg", ByteSize: int64(len(data))}
+	repo := &publicCacheRepository{public: true, coverRepository: coverRepository{record: domaincommerce.MediaRecord{ID: id, ObjectKey: "products/7/small", ContentType: info.ContentType, ByteSize: info.ByteSize, Status: "ready", Visibility: "public", CreatedAt: time.Now()}}}
+	store := &countedMediaStorage{coverStorage: coverStorage{data: data, info: info}}
+	h := &Handler{mediaService: applicationcommerce.NewMediaService(store, repo)}
+	for i := 0; i < 2; i++ {
+		w := httptest.NewRecorder()
+		h.publicMedia(w, httptest.NewRequest(http.MethodGet, "/media/products/991882?w=640", nil), strconv.FormatInt(id, 10))
+		if w.Code != http.StatusOK || !bytes.Equal(w.Body.Bytes(), data) || w.Header().Get("Content-Type") != "image/jpeg" {
+			t.Fatalf("request %d: small original not served correctly", i)
+		}
+	}
+	if store.opens != 1 || repo.checks != 2 {
+		t.Fatalf("storage opened %d times and visibility checked %d times", store.opens, repo.checks)
+	}
+}
