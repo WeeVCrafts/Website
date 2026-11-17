@@ -34,11 +34,14 @@ test('product PIN check uses the current option and quantity and announces carri
   await expect(status).toContainText('No courier currently serves PIN 110030');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)).toBe(false);
   await page.addScriptTag({ content: axe.source });
-  const failures = await page.evaluate(async () => {
-    const result = await axe.run(document.querySelector('.site-header'), { runOnly: ['label-content-name-mismatch'] });
-    return result.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) }));
-  });
-  expect(failures).toEqual([]);
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const failures = await page.evaluate(async () => {
+      const result = await axe.run(document.querySelector('.site-header'), { runOnly: ['label-content-name-mismatch', 'link-name', 'button-name'] });
+      return result.violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) }));
+    });
+    expect(failures).toEqual([]);
+  }
 });
 
 test('changing PIN discards an earlier serviceability response', async ({ page }) => {

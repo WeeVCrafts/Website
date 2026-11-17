@@ -14,7 +14,7 @@ templ Header(p viewmodels.CustomerPage) {
       <div class="header-left">
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
-      <a class="wordmark" href="/"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong><small>Handmade by India’s Makers</small></span></a>
+      <a class="wordmark" href="/" aria-label="Weevcrafts Handmade by India’s Makers home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong>{ " " }<small>Handmade by India’s Makers</small></span></a>
       if p.Route=="/" {
        <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
       }
