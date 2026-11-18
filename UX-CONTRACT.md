@@ -4,7 +4,9 @@
 
 Super Admin Fulfillment opens the approved guided Setup; `tab=operations` opens
 orders and exceptions. Other roles retain their fulfillment workspace. The guided
-shell is scoped to Setup with one task form rendered per selected product. The
+content is scoped to Setup with one task form rendered per selected product.
+The shared Super Admin sidebar, header and desktop collapse preference apply
+throughout Operations and Setup. Guided styles belong to the workspace content. The
 server chooses the first missing task and recomputes it after each successful
 save. Progress labels derive from current database readiness. Invoice and pickup
 profiles are shared by the selected seller; parcel, tax and classification belong

@@ -6,12 +6,14 @@ Razorpay orders and live Shiprocket credentials; there is no COD path.
 
 ## Workspaces
 
-Super Admin setup is available at `/super-admin/fulfillment?tab=setup`.
-Choose and load a seller, then a product option. Saved invoice/tax profiles load
+Super Admin Fulfillment opens guided setup at `/super-admin/fulfillment`;
+`?tab=operations` opens orders and delivery exceptions. The shared Super Admin
+navigation applies to both views. Choose a seller and product option, then follow
+the next missing setup task. Saved invoice/tax profiles load
 automatically; states use names and tax rates use percentages. Invoice details
 are per seller; tax and return classification are per option. Legal/tax values
 must come from verified records. Pickup choices are phone-verified Shiprocket
-locations; saving fetches the provider PIN again. Operations is the default tab.
+locations; saving fetches the provider PIN again.
 Editing setup does not open checkout or change shipping-booking switches.
 
 | User | Entry point | Responsibilities |

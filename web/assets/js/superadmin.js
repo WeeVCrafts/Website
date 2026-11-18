@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const shell=document.querySelector('.superadmin-body .admin-shell');
-  if(!shell || document.body.classList.contains('fulfillment-guided')) return;
+  if(!shell) return;
   const toggle=shell.querySelector('[data-superadmin-toggle]');
   const desktop=matchMedia('(min-width: 961px)');
   const key='weevcrafts.superadmin.sidebar-collapsed';

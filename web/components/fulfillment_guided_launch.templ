@@ -17,7 +17,19 @@ templ GuidedLaunchStep(p viewmodels.MarketplacePage) {
  } else if p.SetupStep=="pilot" {
   <h2>One genuine order pilot</h2><p>The pilot uses {p.Setup.Product}. It requires complete product setup, stock, published policy, enabled production switches and a funded Shiprocket wallet. No payment or shipment is created by this form.</p><p>Current shipping mode: <strong>{p.Policy.ShippingMode}</strong> · Pilot order: {fmt.Sprint(p.Policy.PilotOrderID)}</p>
   if !p.BookingsEnabled||!p.CheckoutEnabled {
-   <p class="guided-alert">Production checkout or shipping bookings are paused. Ask the platform operator to enable the required production configuration after verification.</p>
+   <div class="guided-alert guided-activation-status" role="status">
+    <strong>Production activation is required</strong>
+    <p>Checkout is {guidedSwitchState(p.CheckoutEnabled)}. Shipment bookings are {guidedSwitchState(p.BookingsEnabled)}.</p>
+   </div>
+   <details class="guided-activation-help"><summary>How to enable the one-order pilot</summary>
+    <ol>
+     <li>Verify this product and seller, publish the policy and fund the Shiprocket wallet.</li>
+     <li>Open <a href="https://coolify.weevcrafts.com" target="_blank" rel="noopener">Coolify</a>, select the WeevCrafts website application, then open Environment Variables.</li>
+     <li>Set <code>WECRATFS_CHECKOUT_ENABLED=true</code> and <code>WECRATFS_SHIPROCKET_BOOKINGS_ENABLED=true</code> as runtime variables. Save and redeploy the reviewed application.</li>
+     <li>Return here, choose the customer account that will place the real order, enter the activation reason and confirm the wallet is funded. Select Enable one-order pilot.</li>
+    </ol>
+    <p>Shipping mode <strong>off</strong> means the pilot has not been activated. After activation, only the selected customer and product option can place the pilot order.</p>
+   </details>
   }
   <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/><input type="hidden" name="step" value="pilot"/><input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Find pilot customer<input name="customer_q" value={p.Setup.Query.CustomerSearch} maxlength="120" placeholder="Customer name or ID"/></label><button type="submit">Find customers</button></form>
   if p.Setup.NextCustomer>0 {
@@ -51,4 +63,9 @@ templ GuidedLaunchReason(p viewmodels.MarketplacePage,action,label,confirmation,
  <label for={action+"_reason"}>{label}</label><input id={action+"_reason"} name="reason" value={p.FormValue(action,"reason","")} minlength="10" maxlength="1000" required/>@SetupFieldError(p,action,"reason")
  <label class="guided-confirm"><input id={action+"_confirmed"} type="checkbox" name="confirmed" value="yes" checked?={p.FormValue(action,"confirmed","")=="yes"} required/>{confirmation}</label>@SetupFieldError(p,action,"confirmed")
  <div class="guided-actions"><a class="guided-secondary" href={templ.SafeURL(guidedStepURL(p,"review"))}>Back to review</a><button type="submit">{button}</button></div>
+}
+
+func guidedSwitchState(enabled bool) string {
+ if enabled { return "enabled" }
+ return "paused"
 }

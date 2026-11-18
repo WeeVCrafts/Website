@@ -13,6 +13,7 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	adminpages "github.com/wecratfs/commerce/web/admin"
+	"github.com/wecratfs/commerce/web/components"
 	"github.com/wecratfs/commerce/web/pages"
 	"github.com/wecratfs/commerce/web/selleradmin"
 )
@@ -20,6 +21,22 @@ import (
 const confirmationOrder = "QA-PAYMENT"
 
 func registerRecoveryRoutes(mux *http.ServeMux) {
+	for _, route := range []string{"/super-admin/navigation-reference", "/super-admin/fulfillment"} {
+		mux.HandleFunc("GET "+route, func(w http.ResponseWriter, r *http.Request) {
+			p := fixtureAdminOrderPage(r)
+			p.PortalRoot, p.PortalLabel, p.RoleLabel, p.CanSecurity = "/super-admin", "Super Admin", "Super Admin", true
+			p.GuidedFulfillment = r.URL.Path == "/super-admin/fulfillment"
+			p.Active, p.NavActive = "fulfillment", "fulfillment"
+			selected := &ports.ShippingReadiness{VariantID: 101, SellerID: 7, InvoiceReady: true, PickupReady: true, TaxReady: true, Classified: true, WeightGrams: 750, LengthCM: 30, WidthCM: 20, HeightCM: 10, Stock: 5}
+			setup := &ports.MarketplaceSetup{Query: ports.MarketplaceSetupQuery{SellerID: 7, VariantID: 101}, Product: "Fixture craft", Seller: "Fixture maker", Selected: selected}
+			marketplace := viewmodels.MarketplacePage{Root: "/super-admin/fulfillment", ActionPath: "/super-admin/fulfillment/action", SetupStep: "pilot", Setup: setup}
+			marketplace.Policy.ShippingMode = "off"
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			if err := adminpages.AdminDocument(p).Render(templ.WithChildren(r.Context(), components.MarketplaceSetupWorkspace(marketplace)), w); err != nil {
+				log.Print(err)
+			}
+		})
+	}
 	mux.HandleFunc("GET /super-admin/support/email", func(w http.ResponseWriter, r *http.Request) {
 		page := fixtureAdminOrderPage(r)
 		page.Active, page.NavActive, page.Title, page.PortalRoot = "support", "support", "Email delivery history", "/super-admin"

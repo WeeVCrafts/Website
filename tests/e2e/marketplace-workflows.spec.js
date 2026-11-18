@@ -140,7 +140,7 @@ test('Guided setup shows one form, saves each task, and explains checkout gates'
  const {context,page,root}=await rolePage(browser,'super_admin',1536);await page.setViewportSize({width:1536,height:1024});
  await page.goto(`${base}${root}?tab=setup`);
  await expect(page.getByRole('heading',{name:'Finish product setup',exact:true})).toBeVisible();
- await expect(page.getByRole('link',{name:'Fulfillment',exact:true})).toHaveAttribute('aria-current','page');
+ await expect(page.getByRole('link',{name:'Fulfillment & exceptions',exact:true})).toHaveAttribute('aria-current','page');
  await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
  await page.getByLabel('Find product',{exact:true}).fill('no-such-approved-product');await page.getByRole('button',{name:'Apply filters',exact:true}).click();
  await expect(page.getByRole('heading',{name:'No approved products match'})).toBeVisible();
@@ -209,7 +209,7 @@ test('Guided screens fit phone widths and keyboard navigation preserves unfinish
   await page.screenshot({path:path.resolve(`.tmp/guided-${step||'overview'}-390.png`),fullPage:true});
  }
  await page.keyboard.press('Tab');
- await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Fulfillment',exact:true})).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Open admin navigation'})).toBeFocused();
+ await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Fulfillment & exceptions',exact:true})).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Open admin navigation'})).toBeFocused();
  await page.goto(setupURL(root,'invoice'));await page.getByLabel('Legal name',{exact:true}).fill('Unsaved isolated edit');await page.getByRole('link',{name:'Back to products',exact:true}).click();await page.getByRole('button',{name:'Discard changes',exact:true}).click();await expect(page.getByRole('heading',{name:'Finish product setup'})).toBeVisible();
  await context.close();
 });

@@ -66,6 +66,8 @@ jobs:
         run: npx playwright test -c tests/e2e/storefront-performance.config.js
       - name: Verify product PIN checks and header names
         run: npx playwright test -c tests/e2e/product-delivery.config.js
+      - name: Verify shared fulfillment navigation and pilot guidance
+        run: npx playwright test -c tests/e2e/fulfillment-navigation.config.js
       - run: npx playwright test -c tests/e2e/finance-controls.config.js
   security:
     runs-on: ubuntu-latest

@@ -439,3 +439,10 @@ Legal/tax information and real measurements are never inferred from a mockup.
 Saved, missing and checkout eligibility are distinct. Existing canonical fields,
 validation, dirty protection and action feedback remain shared. No new frontend
 framework, client-side routing, or competing UI behavior owner is introduced.
+
+## Fulfillment navigation — 18 November 2026
+
+Guided fulfillment retains the shared Super Admin sidebar and header, including
+the complete navigation list, current-page marker, desktop rail preference and
+mobile drawer. The guided visual treatment is confined to the setup workspace.
+This supersedes the separate guided navigation shown in the November 17 concepts.

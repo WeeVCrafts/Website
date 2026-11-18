@@ -104,21 +104,13 @@ if p.GuidedFulfillment {
 
       <div class="admin-shell" x-data="{sidebar:false}" @keydown.escape.window="if (sidebar && !$event.defaultPrevented && !document.querySelector('dialog[open]')) { sidebar=false; $nextTick(() => $refs.adminMenu.focus()); }" @keydown.tab.window="if (sidebar) { const focusables = $el.querySelectorAll('#admin-sidebar a, #admin-sidebar button'); const first = focusables[0]; const last = focusables[focusables.length - 1]; if ($event.shiftKey && document.activeElement === first) { $event.preventDefault(); last.focus(); } else if (!$event.shiftKey && document.activeElement === last) { $event.preventDefault(); first.focus(); } }">
 
-        if p.GuidedFulfillment {
- @GuidedSidebar(p)
-} else {
- @Sidebar(p)
-}
+        @Sidebar(p)
 
         <button class="admin-sidebar-backdrop" type="button" aria-label="Close admin navigation" :class="sidebar ? 'is-open' : ''" @click="sidebar=false; $nextTick(() => $refs.adminMenu.focus())"></button>
 
         <div class="admin-main" :inert="sidebar">
 
-          if p.GuidedFulfillment {
- @GuidedMobileHeader(p)
-} else {
- @AdminHeader(p)
-}
+          @AdminHeader(p)
 
           <main id="admin-main" class="admin-content">
 
