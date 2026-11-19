@@ -5,6 +5,7 @@ import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
+	OwnContentHeading                                                                bool
 	GuidedFulfillment                                                                bool
 	Reconciliation                                                                   *FinanceReconciliation
 	CanManageDelivery                                                                bool
@@ -107,6 +108,7 @@ type AdminOrder struct {
 }
 
 type AdminReturn struct {
+	Kind                                                               string
 	ID, Number, Customer, Product, Reason, Date, Status, Amount, Image string
 }
 
@@ -120,7 +122,7 @@ type AdminSettlement struct {
 }
 
 type AdminTransaction struct {
-	Date, Type, Reference, Description, Amount, Status string
+	Date, Type, Reference, Description, Amount, Refunded, Status string
 }
 
 type AdminSupportCase struct {
@@ -187,6 +189,7 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
+	OwnContentHeading                                                                bool
 	ReturnStatus, ReturnRange, StorefrontURL                                         string
 	InventoryFilter, SelectedVariant                                                 string
 	InventoryHistory                                                                 []SellerInventoryTransaction
@@ -281,6 +284,7 @@ type SellerCategoryChoice struct {
 }
 
 type SellerAdminReturn struct {
+	Kind                                                                  string
 	Number, Order, Customer, Product, Reason, Date, Status, Amount, Image string
 }
 

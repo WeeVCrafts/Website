@@ -90,7 +90,7 @@ func (h *LivePortalHandler) superAdminInsights(r *http.Request, p *viewmodels.Ad
 		}
 	case "returns":
 		p.StatusFilter = returnInsightFilter(r)
-		values, ok = counts(`SELECT COUNT(*) FILTER(WHERE rr.status IN('pending','approved')),COUNT(*) FILTER(WHERE rr.status='pending'),COUNT(*) FILTER(WHERE rr.status='approved'),COUNT(*) FILTER(WHERE rr.status IN('received','rejected') AND rr.updated_at>=date_trunc('month',NOW())) FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND ($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day'`, q, returnInsightFilter(r), p.Insights.Days)
+		values, ok = counts(`SELECT COUNT(*) FILTER(WHERE rr.bucket IN('needs_review','in_progress')),COUNT(*) FILTER(WHERE rr.bucket='needs_review'),COUNT(*) FILTER(WHERE rr.bucket='in_progress'),COUNT(*) FILTER(WHERE rr.bucket IN('completed','rejected') AND rr.created_at>=date_trunc('month',NOW())) FROM commerce_request_summary rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=o.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND ($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day'`, q, returnInsightFilter(r), p.Insights.Days)
 		if ok {
 			p.Stats = []viewmodels.AdminStat{stat("undo", "Open requests", values[0]), stat("schedule", "Awaiting review", values[1]), stat("verified_user", "Approved", values[2]), stat("task_alt", "Closed this month", values[3])}
 		}
@@ -235,7 +235,7 @@ func (h *LivePortalHandler) superAdminExport(w http.ResponseWriter, r *http.Requ
 	var headers []string
 	if kind == "returns" {
 		headers = []string{"Return", "Order", "Customer", "Reason", "Status"}
-		sql = `SELECT 'RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND ($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day' ORDER BY rr.id DESC`
+		sql = `SELECT rr.kind||':'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status FROM commerce_request_summary rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=o.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND ($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day' ORDER BY rr.id DESC`
 		args = []any{portalQuery(r.URL.Query().Get("q")), returnInsightFilter(r), insightDays(r)}
 	} else {
 		headers = []string{"Time", "Actor", "Action", "Record type", "Record ID"}

@@ -18,7 +18,7 @@ type EmailDeliveryRepository struct {
 // path for Support. Only Super Admin calls this with an empty order filter.
 func (r *EmailDeliveryRepository) List(ctx context.Context, orderNumber, before string) ([]domain.EmailDeliverySummary, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id::text,order_number,kind,COALESCE(provider_id::text,''),state,started_at,state_at
+		SELECT id::text,order_number,kind,COALESCE(provider_id::text,''),state,started_at,state_at,workflow_reference
 		FROM order_email_deliveries
 		WHERE started_at>now()-interval '30 days' AND ($1='' OR order_number=$1)
 			AND ($2='' OR (started_at,id)<(SELECT started_at,id FROM order_email_deliveries WHERE id=NULLIF($2,'')::uuid))
@@ -30,7 +30,7 @@ func (r *EmailDeliveryRepository) List(ctx context.Context, orderNumber, before 
 	defer rows.Close()
 	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (domain.EmailDeliverySummary, error) {
 		var item domain.EmailDeliverySummary
-		err := row.Scan(&item.ID, &item.OrderNumber, &item.Kind, &item.ProviderID, &item.State, &item.StartedAt, &item.StateAt)
+		err := row.Scan(&item.ID, &item.OrderNumber, &item.Kind, &item.ProviderID, &item.State, &item.StartedAt, &item.StateAt, &item.WorkflowReference)
 		return item, err
 	})
 }
@@ -42,11 +42,11 @@ func NewEmailDeliveryRepository(pool *pgxpool.Pool) *EmailDeliveryRepository {
 func (r *EmailDeliveryRepository) BeginEmailDelivery(ctx context.Context, message ports.EmailMessage) (ports.EmailDeliveryAttempt, error) {
 	var attempt ports.EmailDeliveryAttempt
 	err := r.pool.QueryRow(ctx, `
-		INSERT INTO order_email_deliveries(send_key,order_number,kind)
-		VALUES ($1,$2,$3) ON CONFLICT (send_key) DO UPDATE SET send_key=EXCLUDED.send_key
-		WHERE order_email_deliveries.order_number=EXCLUDED.order_number AND order_email_deliveries.kind=EXCLUDED.kind
+		INSERT INTO order_email_deliveries(send_key,order_number,kind,workflow_reference)
+		VALUES ($1,$2,$3,$4) ON CONFLICT (send_key) DO UPDATE SET send_key=EXCLUDED.send_key
+		WHERE order_email_deliveries.order_number=EXCLUDED.order_number AND order_email_deliveries.kind=EXCLUDED.kind AND order_email_deliveries.workflow_reference=EXCLUDED.workflow_reference
 		RETURNING id::text,COALESCE(provider_id::text,''),state,started_at
-	`, message.IdempotencyKey, message.OrderNumber, message.DeliveryKind).Scan(&attempt.ID, &attempt.ProviderID, &attempt.State, &attempt.StartedAt)
+	`, message.IdempotencyKey, message.OrderNumber, message.DeliveryKind, message.WorkflowReference).Scan(&attempt.ID, &attempt.ProviderID, &attempt.State, &attempt.StartedAt)
 	return attempt, err
 }
 

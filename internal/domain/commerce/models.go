@@ -308,6 +308,16 @@ type OrderItem struct {
 }
 
 type OrderDetail struct {
+	Packages         []OrderPackageSummary    `json:"packages,omitempty"`
+	Documents        []OrderDocumentReference `json:"documents,omitempty"`
+	Requests         []OrderRequestSummary    `json:"requests,omitempty"`
+	HasMorePackages  bool                     `json:"has_more_packages,omitempty"`
+	HasMoreDocuments bool                     `json:"has_more_documents,omitempty"`
+	HasMoreRequests  bool                     `json:"has_more_requests,omitempty"`
+
+	PaymentSummary   *OrderFinancialSummary `json:"payment_summary,omitempty"`
+	ItemProgress     []OrderItemProgress    `json:"item_progress,omitempty"`
+	ProcessingStatus string                 `json:"processing_status,omitempty"`
 	Order
 	PaymentExpired         bool               `json:"-"`
 	PaymentInProgress      bool               `json:"-"`

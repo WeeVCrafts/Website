@@ -59,6 +59,9 @@ func (r *MarketplaceRepository) SaveSetupTaxAndClass(ctx context.Context, actor,
 		return ports.ErrInvalidState
 	}
 	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		if err := guardSetupReview(ctx, tx, actor, seller, variant, "tax"); err != nil {
+			return err
+		}
 		if err := lockSetupVariant(ctx, tx, actor, seller, variant); err != nil {
 			return err
 		}
@@ -72,10 +75,13 @@ func (r *MarketplaceRepository) SaveSetupTaxAndClass(ctx context.Context, actor,
 		if registration == "unregistered" && rate != 0 {
 			return ports.ErrInvalidState
 		}
-		if _, err := tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now()`, variant, hsn, rate, actor); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=variant_tax_profiles.revision+1`, variant, hsn, rate, actor); err != nil {
 			return err
 		}
 		if _, err := tx.Exec(ctx, `UPDATE product_variants SET return_class=$2,updated_at=now() WHERE id=$1`, variant, class); err != nil {
+			return err
+		}
+		if err := recordOperatorSetup(ctx, tx, actor, seller, variant, "tax", ports.SetupSubmissionData{HSN: hsn, RateBasisPoints: rate, ReturnClass: class}, reason); err != nil {
 			return err
 		}
 		metadata, _ := json.Marshal(map[string]any{"seller_id": seller, "hsn": hsn, "rate_basis_points": rate, "return_class": class, "reason": reason})

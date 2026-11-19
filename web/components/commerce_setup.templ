@@ -1,0 +1,174 @@
+package components
+
+import (
+ "fmt"
+ domain "github.com/wecratfs/commerce/internal/domain/commerce"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) {
+ <section class="commerce-workspace">
+ if p.Actor.Role=="super_admin" {
+  <nav aria-label="Breadcrumb"><a href="/super-admin/fulfillment">Fulfillment</a> / <a href="/super-admin/fulfillment/reviews">Setup review</a></nav>
+  if p.Selected==nil {
+   <h1>Seller setup review</h1><p>Review submitted invoice and tax details before clearing their checkout hold.</p>
+   @CommerceSubmissionList(p)
+  } else {
+   <h1>Review seller {p.Kind} details</h1><p>Seller: <strong>{p.Selected.Seller}</strong> · {p.Selected.Product}</p>
+   if p.Selected.Status=="submitted" || p.Selected.Status=="changes_requested" {
+    <p class="commerce-notice">New checkout for the affected seller or option is paused while these changes are reviewed.</p>
+   }
+   @CommerceSetupMessages(p)
+   <section class="commerce-panel">
+    <p>Status: <strong>{commerceLabel(p.Selected.Status)}</strong></p>
+    if p.Selected.SubmittedAt!=nil {
+     <p>Submitted on {commerceDate(*p.Selected.SubmittedAt)} by the seller.</p>
+    }
+    <table class="ui-table commerce-review-table"><thead><tr><th scope="col">Field</th><th scope="col">Current verified details</th><th scope="col">Submitted details</th></tr></thead><tbody>
+    for _,row:=range commerceReviewRows(p) {
+     <tr><th scope="row">{row.Label}</th><td data-label="Current verified details">{row.Current}</td><td data-label="Submitted details">{row.Submitted}
+      if row.Current!=row.Submitted {
+       <small>Changed</small>
+      }
+     </td></tr>
+    }
+    </tbody></table>
+    <p>Invoice numbering is managed by the platform. Existing order invoices keep their recorded details.</p>
+    if p.Selected.Note!="" {
+     <p>Seller note: {p.Selected.Note}</p>
+    }
+    if p.Selected.ReviewNote!="" {
+     <p>Review outcome: {p.Selected.ReviewNote}</p>
+    }
+    if p.Selected.Status=="submitted" {
+     <form class="marketplace-form" method="post" novalidate>
+      <input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="revision" value={fmt.Sprint(p.Selected.Revision)}/>
+      <label for="setup-review-note">Review note</label><textarea id="setup-review-note" name="review_note" minlength="4" maxlength="1000" rows="4" required>{commerceSetupValue(p,"review_note","")}</textarea>
+      <label><input type="checkbox" name="confirmed" value="yes"/> I verified these details against the seller's records. Required for approval.</label>
+      <div class="commerce-actions"><button class="commerce-button" type="submit" name="decision" value="approve" data-confirm="Approve these verified details and clear their review hold? Other checkout checks still apply.">Approve verified details</button><button class="commerce-button secondary" type="submit" name="decision" value="changes">Request changes</button><a href="/super-admin/fulfillment/reviews">Back to review queue</a></div>
+     </form>
+    }
+    <p class="commerce-muted">Approval clears this review hold. Stock, pickup, parcel, policy and launch checks still apply.</p>
+   </section>
+  }
+ } else {
+  <a href="/seller-admin/products">Back to products</a><h1>Complete product setup</h1>
+  @CommerceSetupMessages(p)
+  if p.Kind=="" {
+   <p>Product approval and checkout readiness are separate. Each option shows its next required setup work.</p>
+   <a class="commerce-button" href="/seller-admin/setup?kind=invoice">Seller invoice details</a>
+   for _,row:=range p.Rows {
+    <section class="commerce-panel"><h2>{row.Product}</h2><p>{row.SKU} · Product: {commerceLabel(row.ProductStatus)}</p><p>{commerceReadinessMissing(row)}</p>
+     <div class="commerce-actions"><a class="commerce-button secondary" href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?kind=tax&variant_id=%d",row.VariantID))}>Tax & return details</a><a class="commerce-button secondary" href={templ.SafeURL(fmt.Sprintf("/seller-admin/products/%d/edit",row.ProductID))}>Edit packed measurements or stock</a></div>
+     if row.ReviewID>0 {
+      <p><a href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?submission_id=%d",row.ReviewID))}>{commerceLabel(row.ReviewStatus)} — view the submission</a></p>
+     }
+    </section>
+   }
+   if p.Next>0 {
+    <a href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?before=%d",p.Next))}>More product options</a>
+   }
+   @CommerceSubmissionList(p)
+  } else {
+   <div class="commerce-setup-grid"><aside class="commerce-panel" aria-label="Setup progress"><ol class="commerce-progress">
+    for _,step:=range commerceSetupSteps(p) {
+     <li><strong>{step.Label}</strong><span>{step.State}</span></li>
+    }
+   </ol></aside><section class="commerce-panel">
+    if p.Kind=="invoice" {
+     <h2>Seller invoice details</h2><p>Enter your business details once. Super Admin verifies them before they can be used for new purchases.</p>
+    } else {
+     <h2>Tax & return details</h2><p>Enter the details for this option. Super Admin verifies them before checkout is enabled.</p>
+    }
+    if p.Selected!=nil {
+     <p>Status: <strong>{commerceLabel(p.Selected.Status)}</strong></p>
+     if p.Selected.ReviewNote!="" {
+      <p class="commerce-notice">Review note: {p.Selected.ReviewNote}</p>
+     }
+    }
+    if commerceSetupReadOnly(p) {
+     <p>These submitted values are recorded. A submitted review cannot be edited while Super Admin is reviewing it.</p>
+     <dl class="commerce-financial">
+      for _,row:=range commerceReviewRows(p) {
+       <div><dt>{row.Label}</dt><dd>{row.Submitted}</dd></div>
+      }
+     </dl>
+     <a class="commerce-button secondary" href="/seller-admin/setup">Back to setup checklist</a>
+     if p.Selected.Status=="approved" {
+      <a href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?kind=%s&variant_id=%d",p.Kind,p.VariantID))}>Prepare another change</a>
+     }
+    } else {
+     @CommerceSellerSetupForm(p)
+    }
+   </section></div>
+  }
+ }
+ </section>
+}
+
+templ CommerceSetupMessages(p viewmodels.CommerceSetupPage) {
+ if p.Error!="" {
+  <div class="ui-error-summary" role="alert" tabindex="-1"><p>{p.Error}</p><ul>
+   for key,message:=range p.Errors {
+    <li><a href={templ.SafeURL("#setup-"+key)}>{message}</a></li>
+   }
+  </ul></div>
+ }
+ if p.Notice!="" {
+  <p class="commerce-notice" role="status">{p.Notice}</p>
+ }
+}
+
+templ CommerceSellerSetupForm(p viewmodels.CommerceSetupPage) {
+ <form class="marketplace-form" data-fulfillment-setup-action={"commerce-seller-"+p.Kind} method="post" action="/seller-admin/setup" novalidate>
+  <input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="kind" value={p.Kind}/><input type="hidden" name="variant_id" value={fmt.Sprint(p.VariantID)}/>
+  if p.Selected!=nil {
+   <input type="hidden" name="submission_id" value={fmt.Sprint(p.Selected.ID)}/><input type="hidden" name="revision" value={fmt.Sprint(p.Selected.Revision)}/>
+  }
+  if p.Kind=="invoice" {
+   @CommerceSetupInput(p,"legal_name","Legal name",p.Data.LegalName,"",160)
+   <label for="setup-address">Registered invoice address</label><textarea id="setup-address" name="address" minlength="10" maxlength="1000" rows="4" aria-invalid={commerceInvalid(p,"address")} aria-describedby="setup-address-error" required>{p.Data.Address}</textarea><small id="setup-address-error">{commerceSetupError(p,"address")}</small>
+   <label for="setup-state_code">State or union territory</label><select id="setup-state_code" name="state_code" required aria-invalid={commerceInvalid(p,"state_code")} aria-describedby="setup-state_code-error"><option value="">Choose a state</option>
+    for _,state:=range domain.IndianStates() {
+     <option value={state.Code} selected?={p.Data.StateCode==state.Code}>{state.Name}</option>
+    }
+   </select><small id="setup-state_code-error">{commerceSetupError(p,"state_code")}</small>
+   <label for="setup-registration">GST registration</label><select id="setup-registration" name="registration" required aria-invalid={commerceInvalid(p,"registration")} aria-describedby="setup-registration-error"><option value="">Choose registration status</option><option value="unregistered" selected?={p.Data.Registration=="unregistered"}>Unregistered</option><option value="registered" selected?={p.Data.Registration=="registered"}>Registered</option></select><small id="setup-registration-error">{commerceSetupError(p,"registration")}</small>
+   <label for="setup-gstin">GSTIN — registered sellers only</label><input id="setup-gstin" name="gstin" value={p.Data.GSTIN} maxlength="15" aria-invalid={commerceInvalid(p,"gstin")} aria-describedby="setup-gstin-error"/><small id="setup-gstin-error">{commerceSetupError(p,"gstin")}</small>
+  } else {
+   @CommerceSetupInput(p,"hsn","HSN (4–8 digits)",p.Data.HSN,"[0-9]{4,8}",8)
+   @CommerceSetupInput(p,"tax_rate_percent","Verified tax rate (%)",commerceSetupValue(p,"tax_rate_percent",commerceDraftPercent(p.Data)),"[0-9]{1,3}([.][0-9]{1,2})?",6)
+   <label for="setup-return_class">Return category</label><select id="setup-return_class" name="return_class" required aria-invalid={commerceInvalid(p,"return_class")} aria-describedby="setup-return_class-error"><option value="">Choose category</option><option value="textile_craft" selected?={p.Data.ReturnClass=="textile_craft"}>Textiles and crafts</option><option value="fragile_art" selected?={p.Data.ReturnClass=="fragile_art"}>Fragile artwork</option></select><small id="setup-return_class-error">{commerceSetupError(p,"return_class")}</small>
+  }
+  <p class="commerce-muted">Use your verified records. Saving a draft does not change approved details. Submitting changes pauses new purchases for the affected seller or option until approval.</p>
+  <label for="setup-note">Seller note (optional)</label><textarea id="setup-note" name="note" maxlength="1000" rows="3">{commerceSetupValue(p,"note",func()string{if p.Selected!=nil{return p.Selected.Note};return ""}())}</textarea>
+  <p><strong>Your next step:</strong> submit details. <strong>Super Admin:</strong> verify the submission.</p>
+  <div class="commerce-actions"><a href="/seller-admin/setup">Back</a><button class="commerce-button secondary" type="submit" name="intent" value="draft" formnovalidate>Save draft</button><button class="commerce-button" type="submit" name="intent" value="submit" data-confirm="Submit these details for verification? New checkout for the affected seller or option will pause until approval.">Submit for review</button></div>
+ </form>
+}
+
+templ CommerceSetupInput(p viewmodels.CommerceSetupPage,key,label,value,pattern string,max int) {
+ <label for={"setup-"+key}>{label}</label><input id={"setup-"+key} name={key} value={value} if pattern!="" {
+pattern={pattern}
+} maxlength={fmt.Sprint(max)} required aria-invalid={commerceInvalid(p,key)} aria-describedby={"setup-"+key+"-error"}/><small id={"setup-"+key+"-error"}>{commerceSetupError(p,key)}</small>
+}
+
+templ CommerceSubmissionList(p viewmodels.CommerceSetupPage) {
+ <section class="commerce-panel"><h2>Recorded submissions</h2>
+  if len(p.Submissions)==0 {
+   <p>No submissions in this view.</p>
+  }
+  for _,s:=range p.Submissions {
+   <article class="commerce-support-row"><h3>{s.Seller} · {s.Product}</h3><p>{commerceLabel(s.Kind)} · {commerceLabel(s.Status)} · {commerceDate(s.CreatedAt)}</p>
+    if p.Actor.Role=="super_admin" {
+     <a class="commerce-button secondary" href={templ.SafeURL(fmt.Sprintf("/super-admin/fulfillment/reviews/%d",s.ID))}>Review submission</a>
+    } else {
+     <a href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?submission_id=%d",s.ID))}>View submission</a>
+    }
+   </article>
+  }
+  if p.NextReview>0 {
+   <a href={templ.SafeURL(fmt.Sprintf("/super-admin/fulfillment/reviews?review_before=%d",p.NextReview))}>More submissions</a>
+  }
+ </section>
+}

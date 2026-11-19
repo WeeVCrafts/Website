@@ -1009,7 +1009,7 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if r.invoiceProfilesRequired {
 			var missing bool
-			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=p.seller_id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE ci.cart_id=$1 AND (ip.seller_id IS NULL OR tp.variant_id IS NULL OR (ip.registration='unregistered' AND tp.rate_basis_points<>0)))`, cartID).Scan(&missing); err != nil {
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=p.seller_id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE ci.cart_id=$1 AND (ip.seller_id IS NULL OR tp.variant_id IS NULL OR ip.checkout_review_hold OR tp.checkout_review_hold OR (ip.registration='unregistered' AND tp.rate_basis_points<>0)))`, cartID).Scan(&missing); err != nil {
 				return err
 			}
 			if missing {
@@ -1276,21 +1276,13 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 	if err := json.Unmarshal(addressData, &detail.Contact); err != nil {
 		return domaincommerce.OrderDetail{}, err
 	}
-	rows, err := r.pool.Query(ctx, `SELECT product_name, sku, quantity, unit_price_cents, line_total_cents FROM order_items WHERE order_id = $1 ORDER BY id`, detail.ID)
+	progress, err := readOrderItems(ctx, r.pool, detail.ID, 0)
 	if err != nil {
-		return domaincommerce.OrderDetail{}, err
+		return detail, err
 	}
-	defer rows.Close()
-	detail.Items = make([]domaincommerce.OrderItem, 0)
-	for rows.Next() {
-		var item domaincommerce.OrderItem
-		if err := rows.Scan(&item.ProductName, &item.SKU, &item.Quantity, &item.UnitPriceCents, &item.LineTotalCents); err != nil {
-			return domaincommerce.OrderDetail{}, err
-		}
-		detail.Items = append(detail.Items, item)
-	}
-	if err := rows.Err(); err != nil {
-		return domaincommerce.OrderDetail{}, err
+	detail.ItemProgress = progress
+	for _, x := range progress {
+		detail.Items = append(detail.Items, domaincommerce.OrderItem{ProductName: x.Name, SKU: x.SKU, Quantity: x.Ordered, UnitPriceCents: x.UnitPriceCents, LineTotalCents: x.OriginalCents})
 	}
 	fulfillmentRows, err := r.pool.Query(ctx, `
 		SELECT s.display_name, COALESCE(sf.status, 'pending'), COALESCE(sf.carrier, ''), COALESCE(sf.tracking_number, ''),
@@ -1320,7 +1312,24 @@ func (r *CommerceRepository) GetOrder(ctx context.Context, userID int64, orderNu
 		}
 		detail.Fulfillments = append(detail.Fulfillments, fulfillment)
 	}
-	return detail, fulfillmentRows.Err()
+	if err := fulfillmentRows.Err(); err != nil {
+		return detail, err
+	}
+	fulfillmentRows.Close()
+	financial, err := readOrderFinancial(ctx, r.pool, detail.ID, 0)
+	if err != nil {
+		return detail, err
+	}
+	detail.PaymentSummary = &financial
+	if err = r.pool.QueryRow(ctx, `SELECT CASE WHEN workflow_version=2 THEN lifecycle_status ELSE '' END FROM orders WHERE id=$1`, detail.ID).Scan(&detail.ProcessingStatus); err != nil {
+		return detail, err
+	}
+	if ports.OrderWorkspaceMetadataRequested(ctx) {
+		if err = r.loadOrderWorkspaceMetadata(ctx, userID, &detail); err != nil {
+			return detail, err
+		}
+	}
+	return detail, nil
 }
 
 func (r *CommerceRepository) CancelOrder(ctx context.Context, userID int64, orderNumber string) error {

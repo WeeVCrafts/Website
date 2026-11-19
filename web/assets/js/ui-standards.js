@@ -255,7 +255,7 @@
           event.preventDefault(); event.stopImmediatePropagation();
           form.dispatchEvent(new CustomEvent('ui:wizard-next')); return;
         }
-        if (!validate(form)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+        if (!event.submitter?.formNoValidate && !validate(form)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
         const confirmation=event.submitter?.dataset.confirm||form.dataset.confirm;
         if (confirmation && !form.dataset.confirmed) {
           event.preventDefault(); event.stopImmediatePropagation();

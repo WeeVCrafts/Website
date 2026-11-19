@@ -1,0 +1,236 @@
+package components
+
+import (
+ "fmt"
+ "net/url"
+ "github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ CommerceOrderWorkspace(p viewmodels.MarketplacePage) {
+ <section class="commerce-workspace" data-order-workspace data-order-number={p.Number}>
+  <nav aria-label="Breadcrumb"><a href={templ.SafeURL(p.Back+"/orders")}>My orders</a><span aria-hidden="true"> / </span><span aria-current="page">{p.Number}</span></nav>
+  <header class="commerce-heading"><h1>Order {p.Number}</h1><div class="commerce-statuses"><span class={"ui-status "+StatusTone(p.Payment)}>Payment: {commerceLabel(p.Payment)}</span><span class={"ui-status "+StatusTone(p.Status)}>Order: {commerceLabel(p.Status)}</span></div></header>
+  <nav class="commerce-tabs" aria-label="Order sections">
+   for _,tab:=range []struct{Key,Label string}{{"overview","Overview"},{"packages","Packages"},{"documents","Documents"},{"returns","Returns & refunds"},{"support","Support"}} {
+    <a href={templ.SafeURL(commerceTabURL(p,tab.Key))} aria-current={tabCurrent(p.OrderTab==tab.Key)}>{tab.Label}
+     if tab.Key=="packages" {
+<span> ({fmt.Sprint(len(p.Packages))})</span>
+}
+
+    </a>
+   }
+  </nav>
+  if p.Notice!="" {
+<p class="commerce-notice" role="status">{p.Notice}</p>
+}
+
+  if p.OrderTab=="overview" {
+   @CommerceOrderOverview(p)
+  } else if p.OrderTab=="support" {
+   <section class="commerce-panel"><h2>Order support</h2>
+    if len(p.Summary.Support)==0 {
+<p>No support conversations or delivery cases are recorded for this order.</p>
+}
+
+    for _,ref:=range p.Summary.Support {
+     <article class="commerce-support-row"><div><h3><a href={templ.SafeURL(ref.URL)}>{ref.Kind} · {ref.Reference}</a></h3><p>{commerceLabel(ref.Status)}</p>
+     if ref.Owner!="" {
+<p>Assigned to {ref.Owner}</p>
+}
+
+     if ref.NextAction!="" {
+<p>Next action: {ref.NextAction}</p>
+}
+</div></article>
+    }
+    if p.Role=="customer" {
+<a class="commerce-button" href={templ.SafeURL("/account/support?order="+url.QueryEscape(p.Number))}>Get help with this order</a>
+}
+ else {
+<a class="commerce-button" href={templ.SafeURL(p.Back+"/support")}>Open support conversations</a>
+}
+
+    for _,c:=range p.Cases {
+     <article class="commerce-panel"><h3>{commerceLabel(c.Kind)} · CASE-{fmt.Sprint(c.ID)}</h3><p>{c.Reason}</p><p>{commerceLabel(c.Status)} · Assigned to: {c.Assignee}</p><p>Next action: {c.NextAction}</p>
+      if c.Status=="open" {
+       <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+        @MarketplaceFields(p, "")
+        <input type="hidden" name="case_id" value={fmt.Sprint(c.ID)}/><label>Next action or resolution<textarea name="reason" minlength="4" maxlength="1000" rows="3" required></textarea></label><button type="submit" name="action" value="assign_case">Assign to me</button><button type="submit" name="action" value="resolve_case" data-confirm="Resolve this delivery case with the recorded evidence?">Resolve case</button>
+       </form>
+      }
+     </article>
+    }
+    <p>Support conversations, delivery decisions and refunds retain their own statuses.</p>
+   </section>
+  } else if p.OrderTab=="returns" {
+   @CommerceRequestList(p)
+   if p.Role=="customer" && !p.RequestTask && p.Focus=="" {
+<a class="commerce-button" href={templ.SafeURL(commerceTabURL(p,"returns")+"&task=new")}>Request help or cancel items</a>
+}
+
+   if p.RequestTask || p.Focus!="" {
+    <a href={templ.SafeURL(commerceTabURL(p,"returns"))}>Back to requests</a>
+    @CommerceLegacyRequest(p)
+    if p.RequestTask && p.WorkflowVersion!=2 {
+     <p>This order retains its historical policy and request workflow.</p>
+     <a class="commerce-button secondary" href={templ.SafeURL(p.OrderURL+"?legacy=1")}>Manage historical order requests</a>
+    } else {
+    if p.RequestTask && p.TaskItemID==0 {
+     <section class="commerce-panel"><h2>Choose an item</h2>
+      for _,item:=range p.Summary.Items {
+       <p><a class="commerce-button secondary" href={templ.SafeURL(commerceTabURL(p,"returns")+"&task=new&item_id="+fmt.Sprint(item.ID))}>{item.Name} · {item.Seller}</a></p>
+      }
+     </section>
+    }
+    @MarketplacePolicyClaims(p)
+    if len(p.Lines)>0 || len(p.Returns)>0 || len(p.Refunds)>0 {
+    @MarketplaceOperations(p)
+    }
+    }
+   }
+  } else {
+   if p.OrderTab=="documents" && p.Role=="customer" && (p.Summary.Financial.CapturedCents>0 || p.Payment=="funded") {
+    <p><a class="commerce-button secondary" href={templ.SafeURL("/orders/"+url.PathEscape(p.Number)+"/invoice?format=pdf")}>Download payment receipt</a></p>
+   }
+   if p.OrderTab=="packages" && p.WorkflowVersion!=2 {
+    <section class="commerce-panel"><h2>Historical delivery progress</h2>
+     for _,shipment:=range p.Summary.LegacyShipments {
+      <article class="commerce-support-row"><h3>{shipment.SellerName}</h3><p>{commerceLabel(shipment.Status)}</p>
+       if shipment.TrackingNumber!="" {
+<p>Carrier: {shipment.Carrier} · Tracking: {shipment.TrackingNumber}</p>
+}
+      </article>
+     }
+     <p>This purchase retains its original delivery workflow and recorded documents.</p>
+    </section>
+   } else {
+    @MarketplaceOperations(p)
+   }
+   if p.OrderTab=="packages" && p.WorkflowVersion!=2 && p.Role=="seller" {
+    <a class="commerce-button secondary" href={templ.SafeURL(p.OrderURL+"?legacy=1")}>Manage historical fulfillment</a>
+   }
+  }
+ </section>
+}
+
+templ CommerceLegacyRequest(p viewmodels.MarketplacePage) {
+ for _,req:=range commerceFocusedRequests(p) {
+  if req.Key()==p.Focus && (req.Kind=="legacy_return"||req.Kind=="legacy_refund") {
+   <section class="commerce-panel"><h2>{commerceLabel(req.Kind)} #{fmt.Sprint(req.ID)}</h2><p>{commerceLabel(req.Status)} · {req.Reason}</p>
+    if req.Kind=="legacy_return" && (p.Role=="admin"||p.Role=="super_admin") {
+     if req.Status=="pending" || req.Status=="approved" {
+      <form class="marketplace-form" method="post" action={templ.SafeURL(p.Back+"/returns/status")} novalidate><input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="request_id" value={fmt.Sprint(req.ID)}/><label>Decision<select name="status">
+       if req.Status=="pending" {
+        <option value="approved">Approve return</option><option value="rejected">Reject return</option>
+       } else {
+        <option value="received">Physically received</option>
+       }
+      </select></label><label>Decision or receipt note<textarea name="reason" maxlength="1000" rows="3" style="resize:none"></textarea></label><button type="submit" data-confirm="Record this historical return decision?">Save return decision</button></form>
+     }
+    }
+    if req.Kind=="legacy_return" && req.Status=="received" && p.Role=="customer" && !commerceLegacyRefundExists(p) {
+     <a href={templ.SafeURL(p.OrderURL+"?legacy=1")}>Review historical refund eligibility</a>
+    }
+   </section>
+  }
+ }
+}
+
+templ CommerceOrderOverview(p viewmodels.MarketplacePage) {
+ {{ message,label,target:=commerceNextAction(p) }}
+<div class="commerce-next"><p>{message}</p><a class="commerce-button" href={templ.SafeURL(target)}>{label}</a></div>
+ if p.Role=="customer" && p.Status!="cancelled" && (p.Payment=="pending" || p.Payment=="authorized" || p.Payment=="failed" || p.Payment=="") {
+  <p class="commerce-notice">Payment confirmation is required before fulfillment. <a href={templ.SafeURL("/orders/"+url.PathEscape(p.Number)+"/confirmation")}>Check payment status or continue payment</a>.</p>
+ }
+ <section class="commerce-panel"><h2>Financial summary</h2><dl class="commerce-financial">
+  if p.Summary.Financial.SellerScoped {
+   <div><dt>Your original item value after discounts</dt><dd>{commerceMoney(p.Summary.Financial.OriginalTotalCents)}</dd></div>
+   <div><dt>Refunds awaiting resolution for your items</dt><dd>{commerceMoney(p.Summary.Financial.PendingRefundCents)}</dd></div>
+
+  } else {
+   <div><dt>Original order total</dt><dd>{commerceMoney(p.Summary.Financial.OriginalTotalCents)}</dd></div>
+   <div><dt>Paid by payment provider</dt><dd>{commerceMoney(p.Summary.Financial.CapturedCents)}</dd></div>
+   <div><dt>Provider-confirmed refund</dt><dd>{commerceMoney(p.Summary.Financial.ProviderRefundedCents)}</dd></div>
+   if p.Summary.Financial.PendingRefundCents>0 {
+<div><dt>Refunds awaiting resolution</dt><dd>{commerceMoney(p.Summary.Financial.PendingRefundCents)}</dd></div>
+}
+
+   if p.Summary.Financial.CreditAppliedCents>0 {
+<div><dt>Store credit applied</dt><dd>{commerceMoney(p.Summary.Financial.CreditAppliedCents)}</dd></div>
+}
+
+   if p.Summary.Financial.CreditRestoredCents>0 {
+<div><dt>Store credit restored</dt><dd>{commerceMoney(p.Summary.Financial.CreditRestoredCents)}</dd></div>
+}
+
+   <div class="commerce-total"><dt>Net paid through payment provider</dt><dd>{commerceMoney(p.Summary.Financial.NetProviderPaidCents)}</dd></div>
+  }
+ </dl>
+if p.Summary.Financial.SellerScoped {
+<p>Customer payment and your settlement are separate. <a href="/seller-admin/earnings">View earnings and settlements</a>.</p>
+}
+</section>
+ <section class="commerce-panel"><h2>Items</h2><div class="ui-table-region" tabindex="0" role="region" aria-label="Order item quantities"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Item</th><th scope="col">Seller</th><th scope="col">Ordered</th><th scope="col">Cancelled</th><th scope="col">Refunded</th></tr></thead><tbody>
+  for _,item:=range p.Summary.Items {
+<tr><th scope="row">{item.Name}<small>{item.SKU}</small></th><td data-label="Seller">{item.Seller}</td><td data-label="Ordered">{fmt.Sprint(item.Ordered)}</td><td data-label="Cancelled">{fmt.Sprint(item.Cancelled)}</td><td data-label="Refunded">{fmt.Sprint(item.Refunded)}</td></tr>
+}
+
+ </tbody></table></div><p class="commerce-muted">Refunded quantities may include cancelled items. Original purchase records are retained.</p></section>
+}
+
+templ CommerceRequestList(p viewmodels.MarketplacePage) {
+ <section class="commerce-panel">
+ if p.Number=="" {
+<h1>Returns & refunds</h1>
+} else {
+<h2>Returns & refunds</h2>
+}
+ <form class="marketplace-form commerce-filters" method="get" novalidate>
+  if p.Number!="" {
+<input type="hidden" name="tab" value="returns"/>
+}
+
+  <label>Search requests<input name="q" value={p.RequestSearch} maxlength="120" placeholder="Order, item or request type"/></label>
+  <label>Request status<select name="status">
+   for _,bucket:=range []struct{Key,Label string}{{"","All requests"},{"needs_review","Needs review"},{"in_progress","In progress"},{"completed","Completed"},{"rejected","Rejected"}} {
+<option value={bucket.Key} selected?={p.RequestBucket==bucket.Key}>{bucket.Label} ({fmt.Sprint(p.Requests.Counts[bucket.Key])})</option>
+}
+
+  </select></label><button type="submit">Apply filters</button><a href={templ.SafeURL(commerceClearURL(p))}>Clear filters</a>
+ </form>
+ if len(p.Requests.Rows)==0 {
+<p>No requests match this view. Try clearing the filters or open an order to request help.</p>
+}
+
+ if len(p.Requests.Rows)>0 {
+  <div class="ui-table-region" tabindex="0" role="region" aria-label="Returns and refund requests"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Request</th><th scope="col">Item / seller</th><th scope="col">Status</th><th scope="col">Amount</th><th scope="col">Next action</th></tr></thead><tbody>
+   for _,req:=range p.Requests.Rows {
+<tr><th scope="row">{commerceLabel(req.Kind)} #{fmt.Sprint(req.ID)}<small>{req.Number}</small></th><td data-label="Item / seller">{req.Item}<small>{req.Seller}</small></td><td data-label="Status"><span class={"ui-status "+StatusTone(req.Status)}>{commerceLabel(req.Status)}</span></td><td data-label="Amount">if req.AmountKnown {
+{commerceMoney(req.AmountCents)}
+} else {
+<span>See company review</span>
+}</td><td data-label="Next action">
+    if p.Role=="customer" {
+<a class="commerce-button secondary" href={templ.SafeURL(commerceCustomerOrderURL(req.Number,req.Key()))}>View request</a>
+}
+ else {
+<a class="commerce-button secondary" href={templ.SafeURL(commerceRequestURL(p,req.Number,req.Key()))}>Review request</a>
+}
+
+   </td></tr>
+}
+
+  </tbody></table></div>
+ }
+ <nav class="commerce-pagination" aria-label="Request pages"><span>{fmt.Sprint(p.Requests.Total)} requests · Page {fmt.Sprint(p.Requests.Page)}</span>
+ if p.Requests.Page>1 {
+<a href={templ.SafeURL(commercePageURL(p,p.Requests.Page-1))}>Previous</a>
+}
+
+ if p.Requests.Page<p.Requests.Pages {
+<a href={templ.SafeURL(commercePageURL(p,p.Requests.Page+1))}>Next</a>
+}
+
+ </nav><p class="commerce-muted">Refund approval and provider-confirmed completion are separate steps.</p>
+ </section>
+}

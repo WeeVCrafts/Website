@@ -36,7 +36,9 @@ templ Document(p viewmodels.SellerAdminPage) {
         <button class="seller-sidebar-backdrop" type="button" aria-label="Close seller navigation" :class="sidebar ? 'is-open' : ''" @click="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())"></button>
         <div class="seller-main" :inert="sidebar">
           <main id="seller-main" class="seller-content">
-            @SellerPageIntro(p)
+            if !p.OwnContentHeading {
+ @SellerPageIntro(p)
+ }
             if p.Notice != "" {
               <div class="seller-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
             }

@@ -14,7 +14,7 @@ import (
 
 func (r *MarketplaceRepository) PolicySettings(ctx context.Context) (ports.PolicySettings, error) {
 	var p ports.PolicySettings
-	err := r.pool.QueryRow(ctx, `SELECT published_at,version,shipping_mode,COALESCE(pilot_user_id,0),COALESCE(pilot_variant_id,0),COALESCE(pilot_order_id,0) FROM marketplace_policy_settings WHERE id`).Scan(&p.PublishedAt, &p.Version, &p.ShippingMode, &p.PilotUserID, &p.PilotVariantID, &p.PilotOrderID)
+	err := r.readSource().QueryRow(ctx, `SELECT published_at,version,shipping_mode,COALESCE(pilot_user_id,0),COALESCE(pilot_variant_id,0),COALESCE(pilot_order_id,0) FROM marketplace_policy_settings WHERE id`).Scan(&p.PublishedAt, &p.Version, &p.ShippingMode, &p.PilotUserID, &p.PilotVariantID, &p.PilotOrderID)
 	return p, err
 }
 
@@ -126,11 +126,11 @@ func (r *MarketplaceRepository) policyView(ctx context.Context, actor int64, a m
 		return err
 	}
 	if a.role == "customer" && v.OrderID == 0 {
-		v.CreditAvailableCents, err = creditAvailable(ctx, r.pool, actor)
+		v.CreditAvailableCents, err = creditAvailable(ctx, r.readSource(), actor)
 		if err != nil {
 			return err
 		}
-		rows, e := r.pool.Query(ctx, `SELECT id,amount_cents,remaining_cents,expires_at FROM store_credit_grants WHERE user_id=$1 ORDER BY expires_at,id LIMIT 100`, actor)
+		rows, e := r.readSource().Query(ctx, `SELECT id,amount_cents,remaining_cents,expires_at FROM store_credit_grants WHERE user_id=$1 ORDER BY expires_at,id LIMIT 100`, actor)
 		if e != nil {
 			return e
 		}
@@ -148,10 +148,10 @@ func (r *MarketplaceRepository) policyView(ctx context.Context, actor int64, a m
 	if v.OrderID == 0 {
 		return nil
 	}
-	if err := r.pool.QueryRow(ctx, `SELECT COALESCE(policy_snapshot ? 'return_policy_version',false) FROM orders WHERE id=$1`, v.OrderID).Scan(&v.NewReturnPolicy); err != nil {
+	if err := r.readSource().QueryRow(ctx, `SELECT COALESCE(policy_snapshot ? 'return_policy_version',false) FROM orders WHERE id=$1`, v.OrderID).Scan(&v.NewReturnPolicy); err != nil {
 		return err
 	}
-	rows, err := r.pool.Query(ctx, `SELECT id,order_item_id,seller_id,quantity,kind,resolution,status,reason,evidence_exception,inspection_note,return_awb,return_courier,return_status,amount_cents,fee_cents,COALESCE(replacement_package_id,0),submitted_at FROM marketplace_claims WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, a.seller)
+	rows, err := r.readSource().Query(ctx, `SELECT id,order_item_id,seller_id,quantity,kind,resolution,status,reason,evidence_exception,inspection_note,return_awb,return_courier,return_status,amount_cents,fee_cents,COALESCE(replacement_package_id,0),submitted_at FROM marketplace_claims WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, a.seller)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (r *MarketplaceRepository) policyView(ctx context.Context, actor int64, a m
 		return err
 	}
 	for i := range v.Claims {
-		evidence, e := r.pool.Query(ctx, `SELECT e.id,e.filename,e.content_type FROM marketplace_claim_evidence e JOIN marketplace_claims c ON c.id=e.claim_id WHERE c.id=$1 AND ($2 OR c.evidence_shared) ORDER BY e.id`, v.Claims[i].ID, a.role != "seller")
+		evidence, e := r.readSource().Query(ctx, `SELECT e.id,e.filename,e.content_type FROM marketplace_claim_evidence e JOIN marketplace_claims c ON c.id=e.claim_id WHERE c.id=$1 AND ($2 OR c.evidence_shared) ORDER BY e.id`, v.Claims[i].ID, a.role != "seller")
 		if e != nil {
 			return e
 		}

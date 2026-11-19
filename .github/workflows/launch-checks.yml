@@ -69,6 +69,66 @@ jobs:
       - name: Verify shared fulfillment navigation and pilot guidance
         run: npx playwright test -c tests/e2e/fulfillment-navigation.config.js
       - run: npx playwright test -c tests/e2e/finance-controls.config.js
+  authenticated-marketplace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: marketplace_policy_test
+        ports: ['15465:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports: ['15464:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgres://ci:isolated-ci-only@127.0.0.1:15465/marketplace_policy_test?sslmode=disable
+      MARKETPLACE_UI_FIXTURE_FILE: /tmp/weev-marketplace-fixture.json
+      MARKETPLACE_PREVIEW_URL_FILE: /tmp/weev-marketplace-preview-url
+      MARKETPLACE_POLICY_UI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Seed isolated authenticated marketplace
+        run: go test ./internal/adapters/postgres -run '^TestMarketplaceBrowserFixture$' -count=1
+      - name: Start the real role handlers with isolated services
+        run: |
+          go test ./internal/web/handlers -run '^TestMarketplaceBrowserPreview$' -count=1 -timeout 40m > /tmp/weev-marketplace-preview.log 2>&1 &
+          echo $! > /tmp/weev-marketplace-preview.pid
+          for attempt in $(seq 1 180); do
+            if [ -s "$MARKETPLACE_PREVIEW_URL_FILE" ] && curl --fail --silent "$(cat "$MARKETPLACE_PREVIEW_URL_FILE")/returns-replacements-authenticity" > /dev/null; then exit 0; fi
+            if ! kill -0 "$(cat /tmp/weev-marketplace-preview.pid)" 2>/dev/null; then cat /tmp/weev-marketplace-preview.log; exit 1; fi
+            sleep 2
+          done
+          cat /tmp/weev-marketplace-preview.log
+          exit 1
+      - name: Verify customer, both sellers and company order integrity
+        run: npx playwright test -c tests/e2e/cross-role.config.js
+      - name: Stop isolated preview
+        if: always()
+        run: |
+          touch "$MARKETPLACE_PREVIEW_URL_FILE.stop"
+          if [ -f /tmp/weev-marketplace-preview.pid ]; then kill "$(cat /tmp/weev-marketplace-preview.pid)" 2>/dev/null || true; fi
+          cat /tmp/weev-marketplace-preview.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: authenticated-marketplace-failure
+          path: |
+            /tmp/weevcrafts-playwright
+            /tmp/weev-marketplace-preview.log
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 30

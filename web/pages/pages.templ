@@ -923,7 +923,16 @@ templ PrimaryOrder(order viewmodels.Order, csrfToken string) {
     <div class="order-progress"><span class="done"><i>1</i><b>Order confirmed</b><small>Payment captured</small></span><span class="current"><i>2</i><b>{ components.StatusLabel(order.Status) }</b><small>Current order status</small></span></div>
   }
   <div class="seller-order"><div class="seller-order-head"><b><span class="material-symbols-outlined" aria-hidden="true">storefront</span> { orderSeller(order) }</b><span>{ orderDeliveryCopy(order) }</span></div>
-  @OrderRows(order.Items)</div><footer><a class="primary-button" href={ orderDetailsURL(order) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+  @OrderRows(order.Items)
+  if order.Financial!=nil && (order.Financial.ProviderRefundedCents>0 || order.Financial.PendingRefundCents>0) {
+   <p>Provider-confirmed refund: {checkoutMoney(storefrontReadMoney(order.Financial.ProviderRefundedCents))}. Refunds awaiting resolution: {checkoutMoney(storefrontReadMoney(order.Financial.PendingRefundCents))}.</p>
+  }
+  for _,progress:=range order.ItemProgress {
+   if progress.Cancelled>0 || progress.Refunded>0 {
+    <p>{progress.Name}: {fmt.Sprint(progress.Cancelled)} cancelled; {fmt.Sprint(progress.Refunded)} refunded.</p>
+   }
+  }
+  </div><footer><a class="primary-button" href={ orderDetailsURL(order) }>View order <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
     if order.CanCancel {
       <form method="post" action={ orderPath(order.Number) + "/cancel" } data-confirm="Cancel this unpaid order? Its reserved items will be released."><input type="hidden" name="csrf_token" value={ csrfToken }/><button class="outline-button" type="submit">Cancel order</button></form>
     }
@@ -966,7 +975,10 @@ templ PaymentActivityRows(activities []viewmodels.PaymentActivity) {
     <p class="empty-state">No recent payment activity.</p>
   } else {
     for _, payment := range activities {
-      <div><span class={ "status-dot " + paymentActivityClass(payment.Status) }></span><p><strong>{ payment.Reference } · { checkoutMoney(payment.Amount) }</strong><small>{ payment.Date } · { payment.Method } · Order { payment.OrderNumber }</small></p><mark class={ "ui-status " + components.StatusTone(payment.Status) }>{ payment.Status }</mark></div>
+      <div><span class={ "status-dot " + paymentActivityClass(payment.Status) }></span><p><strong>{ payment.Reference } · { checkoutMoney(payment.Amount) }</strong><small>{ payment.Date } · { payment.Method } · Order { payment.OrderNumber }</small>
+if payment.Net!="" {
+<small>Provider-confirmed refund: {payment.Refunded} · Net provider payment: {payment.Net} · <a href={templ.SafeURL("/orders/"+payment.OrderNumber)}>View order details</a></small>
+}</p><mark class={ "ui-status " + components.StatusTone(payment.Status) }>{ payment.Status }</mark></div>
     }
   }
 }

@@ -62,6 +62,9 @@ func marketplaceRoute(path string) (root, number, back string, ok bool) {
 }
 func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h.serveCommerceSurface(w, r) {
+			return
+		}
 		root, number, back, ok := marketplaceRoute(r.URL.Path)
 		if !ok {
 			next.ServeHTTP(w, r)
@@ -104,6 +107,18 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		var setupValues url.Values
+		if number != "" && (r.Method == "GET" || r.Method == "HEAD") && r.URL.Query().Get("invoice") == "" && r.URL.Query().Get("packing_slip") == "" && r.URL.Query().Get("evidence") == "" {
+			tab := r.URL.Query().Get("tab")
+			if tab == "" {
+				tab = "packages"
+			}
+			target := canonicalCommerceURL(view.Role, number, tab)
+			if r.URL.Query().Get("saved") == "1" {
+				target += "&saved=1"
+			}
+			http.Redirect(w, r, target, http.StatusSeeOther)
+			return
+		}
 		var setupErrors map[string]string
 		setupAction := ""
 		responseStatus := http.StatusOK
@@ -289,6 +304,15 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				}
 				if c.Number != "" {
 					target += "&order=" + url.QueryEscape(c.Number)
+					if f.Get("workspace_tab") != "" {
+						target = canonicalCommerceURL(view.Role, c.Number, f.Get("workspace_tab")) + "&saved=1"
+						if c.Action == "assign_case" || c.Action == "resolve_case" {
+							target += "&case_id=" + fmt.Sprint(c.CaseID)
+						}
+						if f.Get("focus") != "" {
+							target += "&focus=" + url.QueryEscape(f.Get("focus"))
+						}
+					}
 				}
 				http.Redirect(w, r, target, 303)
 				return

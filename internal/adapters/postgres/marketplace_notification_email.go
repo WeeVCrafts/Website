@@ -19,14 +19,21 @@ func (r *MarketplaceRepository) SendNotificationEmail(ctx context.Context, id in
 	err := r.pool.QueryRow(ctx, `
 		SELECT u.email,u.display_name,n.title,n.body,n.link_url,n.created_at
 		FROM notifications n JOIN users u ON u.id=n.user_id AND u.status='active'
-		WHERE n.id=$1 AND n.kind='order'
-			AND n.title IN ('New paid order','Package out for delivery','Package delivered','Refund processed')
+		WHERE n.id=$1 AND ((n.kind='order' AND n.title IN ('New paid order','Package out for delivery','Package delivered','Refund processed'))
+		 OR (n.kind='account' AND n.title IN ('Seller details submitted','Seller details approved','Seller details changes requested')))
 	`, id).Scan(&message.To, &message.DisplayName, &message.Subject, &message.Body, &path, &message.DeliveryQueuedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
 	if err != nil {
 		return err
+	}
+	if strings.HasPrefix(path, "/super-admin/fulfillment/reviews/") || strings.HasPrefix(path, "/seller-admin/setup?submission_id=") {
+		message.WorkflowReference = path
+		message.DeliveryKind = message.Subject
+		message.ActionURL = strings.TrimRight(publicURL, "/") + path
+		message.IdempotencyKey = fmt.Sprintf("marketplace-notification-%d", id)
+		return sender.Send(ctx, message)
 	}
 	orderPath := strings.TrimPrefix(path, "/seller-admin")
 	orderPath, ok := strings.CutPrefix(orderPath, "/orders/")

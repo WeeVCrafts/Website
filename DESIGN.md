@@ -446,3 +446,27 @@ Guided fulfillment retains the shared Super Admin sidebar and header, including
 the complete navigation list, current-page marker, desktop rail preference and
 mobile drawer. The guided visual treatment is confined to the setup workspace.
 This supersedes the separate guided navigation shown in the November 17 concepts.
+
+
+## Cross-role order and setup integration — 19 November 2026
+
+Accepted concepts are retained in `docs/design/commerce-integration-2026-11-19`.
+Only their content hierarchy applies. Existing customer, seller and company
+headers, navigation, branding and shared controls remain authoritative.
+
+Order details share five URL-backed sections: Overview, Packages, Documents,
+Returns & refunds, and Support. Independent payment, processing, package,
+request and settlement states retain their meanings. The overview shows original
+amounts and confirmed refunds; seller views expose only their item amounts.
+Requests use the same role-scoped records and status buckets across portals.
+
+Seller setup presents missing product requirements, their responsible role and
+links to one task at a time. Legal identity belongs to the seller; tax and return
+classification belong to each option. Drafts do not change approved data.
+Submission pauses affected new purchases; only Super Admin verification clears
+that review hold. Existing order invoices retain snapshotted identity.
+
+Shared ui-standards tokens and components own typography, colors, controls,
+validation, confirmation dialogs and form errors. Content styles use the
+commerce-workspace scope. Phone layouts keep sections, forms and readable
+labelled table records without horizontal page overflow. No new frontend stack.

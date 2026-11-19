@@ -14,7 +14,7 @@ type TrackedOrderEmail struct {
 }
 
 func (s TrackedOrderEmail) Send(ctx context.Context, message ports.EmailMessage) error {
-	if message.IdempotencyKey == "" || message.OrderNumber == "" || message.DeliveryKind == "" {
+	if message.IdempotencyKey == "" || (message.OrderNumber == "" && message.WorkflowReference == "") || message.DeliveryKind == "" {
 		return errors.New("order email reference missing")
 	}
 	if !message.DeliveryQueuedAt.IsZero() && time.Since(message.DeliveryQueuedAt) >= 30*24*time.Hour {

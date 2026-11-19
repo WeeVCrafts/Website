@@ -519,3 +519,26 @@ The existing Admin role owns Support access. History excludes message bodies,
 recipient addresses and account action links. A delivered state means the
 recipient mail server accepted the message. Human mailbox checks are separate.
 The shared ui-table and ui-table-region own history layout and overflow.
+
+
+## Order integration and seller verification — 19 November 2026
+
+- `/orders/{number}`, `/seller-admin/orders/{number}` and company equivalents
+  resolve the authorized order workspace. Old fulfillment order links redirect
+  while authenticated document downloads retain their existing endpoints.
+- Tab, filter and pagination state lives in the URL. Mutations retain existing
+  handlers, role checks, CSRF, revision and idempotency guards. A successful POST
+  records a request, not a provider-confirmed financial or delivery outcome.
+- Return IDs are namespaced by record kind. Legacy records retain their original
+  policy and actions. Seller summaries hide historical whole-order amounts.
+- New order documents use official invoice PDFs and genuine AWB-specific labels.
+  A missing carrier label remains unavailable. Historical printable summaries
+  and address sheets remain explicitly labelled as such.
+- Seller invoice and option tax submissions use typed payloads, revisions,
+  audit history and owner notifications. Submitted versions are immutable;
+  requesting changes keeps the hold, and approval never edits existing invoices.
+- Mandatory authenticated CI exercises ordinary role handlers against disposable
+  PostgreSQL/Redis. It has no provider credentials or live messages/bookings.
+- The owner authorized checkout activation on 19 November after verification.
+  Production price, legal facts, actual parcels and a genuine customer remain
+  prerequisites; simulated CI delivery must never satisfy the live pilot gate.

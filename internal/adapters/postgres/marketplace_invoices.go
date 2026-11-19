@@ -54,6 +54,13 @@ func (r *MarketplaceRepository) IssueInvoices(ctx context.Context, order int64) 
 			if err = tx.QueryRow(ctx, `SELECT seller_id,legal_name,address,state_code,gstin,registration,prefix,next_number FROM seller_invoice_profiles WHERE seller_id=$1 FOR UPDATE`, seller).Scan(&d.Seller.SellerID, &d.Seller.LegalName, &d.Seller.Address, &d.Seller.StateCode, &d.Seller.GSTIN, &d.Seller.Registration, &d.Seller.Prefix, &next); err != nil {
 				return fmt.Errorf("verified seller invoice profile required: %w", err)
 			}
+			var identitySnapshot []byte
+			if err = tx.QueryRow(ctx, `SELECT snapshot FROM order_seller_invoice_snapshots WHERE order_id=$1 AND seller_id=$2`, order, seller).Scan(&identitySnapshot); err != nil {
+				return fmt.Errorf("recorded seller invoice identity required: %w", err)
+			}
+			if err = json.Unmarshal(identitySnapshot, &d.Seller); err != nil {
+				return err
+			}
 			d.Number = fmt.Sprintf("%s/%s/%06d", d.Seller.Prefix, time.Now().In(time.FixedZone("IST", 19800)).Format("06"), next)
 			if len(d.Number) > 16 {
 				return ports.ErrInvalidState
@@ -147,8 +154,14 @@ func (r *MarketplaceRepository) SaveInvoiceProfile(ctx context.Context, actor in
 		if a.role != "super_admin" {
 			return ports.ErrForbidden
 		}
-		_, err = tx.Exec(ctx, `INSERT INTO seller_invoice_profiles(seller_id,legal_name,address,state_code,gstin,registration,prefix,verified_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(seller_id) DO UPDATE SET legal_name=EXCLUDED.legal_name,address=EXCLUDED.address,state_code=EXCLUDED.state_code,gstin=EXCLUDED.gstin,registration=EXCLUDED.registration,verified_by=EXCLUDED.verified_by,verified_at=now()`, p.SellerID, p.LegalName, p.Address, p.StateCode, p.GSTIN, p.Registration, p.Prefix, actor)
+		if err = guardSetupReview(ctx, tx, actor, p.SellerID, 0, "invoice"); err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO seller_invoice_profiles(seller_id,legal_name,address,state_code,gstin,registration,prefix,verified_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(seller_id) DO UPDATE SET legal_name=EXCLUDED.legal_name,address=EXCLUDED.address,state_code=EXCLUDED.state_code,gstin=EXCLUDED.gstin,registration=EXCLUDED.registration,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=seller_invoice_profiles.revision+1`, p.SellerID, p.LegalName, p.Address, p.StateCode, p.GSTIN, p.Registration, p.Prefix, actor)
 		if err != nil {
+			return err
+		}
+		if err = recordOperatorSetup(ctx, tx, actor, p.SellerID, 0, "invoice", ports.SetupSubmissionData{LegalName: p.LegalName, Address: p.Address, StateCode: p.StateCode, GSTIN: p.GSTIN, Registration: p.Registration}, reason); err != nil {
 			return err
 		}
 		return marketplaceAudit(ctx, tx, actor, 0, "invoice_profile_verified", reason)
@@ -166,8 +179,18 @@ func (r *MarketplaceRepository) SaveTaxProfile(ctx context.Context, actor, varia
 		if a.role != "super_admin" {
 			return ports.ErrForbidden
 		}
-		_, err = tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now()`, variant, hsn, rate, actor)
+		var seller int64
+		if err = tx.QueryRow(ctx, `SELECT p.seller_id FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1`, variant).Scan(&seller); err != nil {
+			return err
+		}
+		if err = guardSetupReview(ctx, tx, actor, seller, variant, "tax"); err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=variant_tax_profiles.revision+1`, variant, hsn, rate, actor)
 		if err != nil {
+			return err
+		}
+		if err = recordOperatorSetup(ctx, tx, actor, seller, variant, "tax", ports.SetupSubmissionData{HSN: hsn, RateBasisPoints: rate}, reason); err != nil {
 			return err
 		}
 		return marketplaceAudit(ctx, tx, actor, 0, "product_tax_verified", reason)

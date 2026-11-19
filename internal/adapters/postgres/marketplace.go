@@ -16,6 +16,7 @@ import (
 
 type MarketplaceRepository struct {
 	pool          *pgxpool.Pool
+	readTx        pgx.Tx
 	renderInvoice func(ports.InvoiceDocument) ([]byte, error)
 }
 
@@ -49,7 +50,7 @@ func (r *MarketplaceRepository) View(ctx context.Context, actor int64, number st
 }
 func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, number string, before, caseBefore int64, queue string) (ports.MarketplaceView, error) {
 	var v ports.MarketplaceView
-	a, err := marketplaceIdentity(ctx, r.pool, actor)
+	a, err := marketplaceIdentity(ctx, r.readSource(), actor)
 	if err != nil {
 		return v, err
 	}
@@ -58,7 +59,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		return v, err
 	}
 	if number == "" {
-		rows, e := r.pool.Query(ctx, `SELECT o.id,o.order_number,o.lifecycle_status FROM orders o WHERE ($1 OR ($2='customer' AND o.user_id=$3) OR ($2='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$4))) AND ($5=0 OR o.id<$5) ORDER BY o.id DESC LIMIT 51`, a.company(), a.role, actor, a.seller, before)
+		rows, e := r.readSource().Query(ctx, `SELECT o.id,o.order_number,o.lifecycle_status FROM orders o WHERE ($1 OR ($2='customer' AND o.user_id=$3) OR ($2='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$4))) AND ($5=0 OR o.id<$5) ORDER BY o.id DESC LIMIT 51`, a.company(), a.role, actor, a.seller, before)
 		if e != nil {
 			return v, e
 		}
@@ -90,7 +91,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 				return v, e
 			}
 		}
-		rows, e = r.pool.Query(ctx, `SELECT c.id,c.order_id,COALESCE(c.seller_id,0),COALESCE(c.package_id,0),o.order_number,c.kind,c.status,c.reason,c.created_at,COALESCE(u.display_name,''),c.next_action
+		rows, e = r.readSource().Query(ctx, `SELECT c.id,c.order_id,COALESCE(c.seller_id,0),COALESCE(c.package_id,0),o.order_number,c.kind,c.status,c.reason,c.created_at,COALESCE(u.display_name,''),c.next_action
 			FROM marketplace_cases c JOIN orders o ON o.id=c.order_id LEFT JOIN users u ON u.id=c.assignee_id
 			WHERE c.status='open' AND ($1='' OR c.kind=$1) AND ($2=0 OR c.id<$2) ORDER BY c.id DESC LIMIT 51`, queue, caseBefore)
 		if e != nil {
@@ -112,7 +113,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		if e != nil {
 			return v, e
 		}
-		rows, e = r.pool.Query(ctx, `SELECT id,kind,status,last_error,attempts FROM marketplace_jobs WHERE status='failed' ORDER BY id DESC LIMIT 50`)
+		rows, e = r.readSource().Query(ctx, `SELECT id,kind,status,last_error,attempts FROM marketplace_jobs WHERE status='failed' ORDER BY id DESC LIMIT 50`)
 		if e != nil {
 			return v, e
 		}
@@ -125,7 +126,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		}
 		return v, errorsJoinRows(e, rows)
 	}
-	err = r.pool.QueryRow(ctx, `SELECT o.id,o.order_number,o.lifecycle_status,o.currency,o.workflow_version,COALESCE((SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1),'pending') FROM orders o WHERE o.order_number=$1 AND ($2 OR (o.user_id=$3 AND $4='customer') OR ($4='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$5)))`, number, a.company(), actor, a.role, a.seller).Scan(&v.OrderID, &v.Number, &v.Status, &v.Currency, &v.WorkflowVersion, &v.Payment)
+	err = r.readSource().QueryRow(ctx, `SELECT o.id,o.order_number,o.lifecycle_status,o.currency,o.workflow_version,COALESCE((SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1),'pending') FROM orders o WHERE o.order_number=$1 AND ($2 OR (o.user_id=$3 AND $4='customer') OR ($4='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$5)))`, number, a.company(), actor, a.role, a.seller).Scan(&v.OrderID, &v.Number, &v.Status, &v.Currency, &v.WorkflowVersion, &v.Payment)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return v, ports.ErrOrderNotFound
 	}
@@ -136,7 +137,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if err := r.policyView(ctx, actor, a, &v); err != nil {
 		return v, err
 	}
-	if err = r.pool.QueryRow(ctx, `SELECT refunded_amount_cents,amount_cents FROM payment_attempts WHERE order_id=$1 ORDER BY id DESC LIMIT 1`, v.OrderID).Scan(&refunded, &total); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+	if err = r.readSource().QueryRow(ctx, `SELECT refunded_amount_cents,amount_cents FROM payment_attempts WHERE order_id=$1 ORDER BY id DESC LIMIT 1`, v.OrderID).Scan(&refunded, &total); err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return v, err
 	}
 	if refunded > 0 {
@@ -149,7 +150,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if a.role == "seller" {
 		seller = a.seller
 	}
-	returnRows, returnErr := r.pool.Query(ctx, `SELECT id,order_item_id,seller_id,quantity,status,reason,carrier,tracking_number FROM marketplace_returns WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	returnRows, returnErr := r.readSource().Query(ctx, `SELECT id,order_item_id,seller_id,quantity,status,reason,carrier,tracking_number FROM marketplace_returns WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if returnErr != nil {
 		return v, returnErr
 	}
@@ -163,7 +164,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if returnErr = errorsJoinRows(returnErr, returnRows); returnErr != nil {
 		return v, returnErr
 	}
-	rows, err := r.pool.Query(ctx, `SELECT oi.id,COALESCE(oi.seller_id,0),oi.product_name,oi.sku,oi.quantity,oi.cancelled_quantity,oi.refunded_quantity,oi.line_total_cents-COALESCE(oi.allocated_discount_cents,0),(NOT EXISTS(SELECT 1 FROM orders co WHERE co.id=oi.order_id AND co.policy_snapshot ? 'return_policy_version' AND now()>co.created_at+interval '12 hours')) AND NOT EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_packages mp ON mp.id=pi.package_id WHERE pi.order_item_id=oi.id AND (mp.status NOT IN ('created','pickup_scheduled','cancelled') OR mp.pending_action<>'')) AND NOT EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=oi.order_id AND sf.seller_id=oi.seller_id AND sf.status IN ('shipped','out_for_delivery','delivered')),(EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_packages mp ON mp.id=pi.package_id WHERE pi.order_item_id=oi.id AND mp.status='delivered' AND mp.replacement_claim_id IS NULL) OR EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=oi.order_id AND sf.seller_id=oi.seller_id AND sf.status='delivered')) FROM order_items oi WHERE oi.order_id=$1 AND ($2=0 OR oi.seller_id=$2) ORDER BY oi.id`, v.OrderID, seller)
+	rows, err := r.readSource().Query(ctx, `SELECT oi.id,COALESCE(oi.seller_id,0),oi.product_name,oi.sku,oi.quantity,oi.cancelled_quantity,oi.refunded_quantity,oi.line_total_cents-COALESCE(oi.allocated_discount_cents,0),(NOT EXISTS(SELECT 1 FROM orders co WHERE co.id=oi.order_id AND co.policy_snapshot ? 'return_policy_version' AND now()>co.created_at+interval '12 hours')) AND NOT EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_packages mp ON mp.id=pi.package_id WHERE pi.order_item_id=oi.id AND (mp.status NOT IN ('created','pickup_scheduled','cancelled') OR mp.pending_action<>'')) AND NOT EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=oi.order_id AND sf.seller_id=oi.seller_id AND sf.status IN ('shipped','out_for_delivery','delivered')),(EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_packages mp ON mp.id=pi.package_id WHERE pi.order_item_id=oi.id AND mp.status='delivered' AND mp.replacement_claim_id IS NULL) OR EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=oi.order_id AND sf.seller_id=oi.seller_id AND sf.status='delivered')) FROM order_items oi WHERE oi.order_id=$1 AND ($2=0 OR oi.seller_id=$2) ORDER BY oi.id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
@@ -179,7 +180,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if err != nil {
 		return v, err
 	}
-	rows, err = r.pool.Query(ctx, `SELECT sf.seller_id,sf.revision,s.display_name,sf.lifecycle_status,COALESCE(d.decision,'manual') FROM seller_fulfillments sf JOIN sellers s ON s.id=sf.seller_id LEFT JOIN order_delivery_decisions d ON d.order_id=sf.order_id AND d.seller_id=sf.seller_id WHERE sf.order_id=$1 AND ($2=0 OR sf.seller_id=$2) ORDER BY sf.seller_id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT sf.seller_id,sf.revision,s.display_name,sf.lifecycle_status,COALESCE(d.decision,'manual') FROM seller_fulfillments sf JOIN sellers s ON s.id=sf.seller_id LEFT JOIN order_delivery_decisions d ON d.order_id=sf.order_id AND d.seller_id=sf.seller_id WHERE sf.order_id=$1 AND ($2=0 OR sf.seller_id=$2) ORDER BY sf.seller_id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
@@ -196,11 +197,11 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		return v, err
 	}
 	for i := range v.Sellers {
-		if err = r.pool.QueryRow(ctx, `SELECT CASE WHEN EXISTS(SELECT 1 FROM seller_ledger WHERE order_id=$1 AND seller_id=$2 AND status='settled' AND entry_type='sale') THEN 'paid' WHEN EXISTS(SELECT 1 FROM seller_settlements ss JOIN seller_ledger sl ON sl.settlement_id=ss.id WHERE sl.order_id=$1 AND sl.seller_id=$2 AND ss.status='approved' AND ss.transfer_evidence_key IS NOT NULL) THEN 'processing' WHEN marketplace_payout_eligible($1,$2) THEN 'eligible' WHEN EXISTS(SELECT 1 FROM marketplace_cases WHERE order_id=$1 AND status='open' AND (seller_id IS NULL OR seller_id=$2)) OR EXISTS(SELECT 1 FROM marketplace_refunds WHERE order_id=$1 AND seller_id=$2 AND status NOT IN ('processed','rejected')) OR EXISTS(SELECT 1 FROM orders WHERE id=$1 AND payment_review_required) THEN 'on_hold' WHEN EXISTS(SELECT 1 FROM seller_settlements ss JOIN seller_ledger sl ON sl.settlement_id=ss.id WHERE sl.order_id=$1 AND sl.seller_id=$2 AND ss.status='failed') THEN 'failed' ELSE 'pending' END`, v.OrderID, v.Sellers[i].SellerID).Scan(&v.Sellers[i].SettlementStatus); err != nil {
+		if err = r.readSource().QueryRow(ctx, `SELECT CASE WHEN EXISTS(SELECT 1 FROM seller_ledger WHERE order_id=$1 AND seller_id=$2 AND status='settled' AND entry_type='sale') THEN 'paid' WHEN EXISTS(SELECT 1 FROM seller_settlements ss JOIN seller_ledger sl ON sl.settlement_id=ss.id WHERE sl.order_id=$1 AND sl.seller_id=$2 AND ss.status='approved' AND ss.transfer_evidence_key IS NOT NULL) THEN 'processing' WHEN marketplace_payout_eligible($1,$2) THEN 'eligible' WHEN EXISTS(SELECT 1 FROM marketplace_cases WHERE order_id=$1 AND status='open' AND (seller_id IS NULL OR seller_id=$2)) OR EXISTS(SELECT 1 FROM marketplace_refunds WHERE order_id=$1 AND seller_id=$2 AND status NOT IN ('processed','rejected')) OR EXISTS(SELECT 1 FROM orders WHERE id=$1 AND payment_review_required) THEN 'on_hold' WHEN EXISTS(SELECT 1 FROM seller_settlements ss JOIN seller_ledger sl ON sl.settlement_id=ss.id WHERE sl.order_id=$1 AND sl.seller_id=$2 AND ss.status='failed') THEN 'failed' ELSE 'pending' END`, v.OrderID, v.Sellers[i].SellerID).Scan(&v.Sellers[i].SettlementStatus); err != nil {
 			return v, err
 		}
 	}
-	rows, err = r.pool.Query(ctx, `SELECT id,seller_id,reference,status,provider_status,awb,courier,label_url,manifest_url,pickup_reference,pending_action,delivered_at,delivery_method FROM marketplace_packages WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,reference,status,provider_status,awb,courier,label_url,manifest_url,pickup_reference,pending_action,delivered_at,delivery_method FROM marketplace_packages WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
@@ -217,7 +218,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		return v, err
 	}
 	for i := range v.Packages {
-		contents, e := r.pool.Query(ctx, `SELECT oi.product_name,oi.sku,pi.quantity FROM marketplace_package_items pi JOIN order_items oi ON oi.id=pi.order_item_id WHERE pi.package_id=$1 ORDER BY oi.id`, v.Packages[i].ID)
+		contents, e := r.readSource().Query(ctx, `SELECT oi.product_name,oi.sku,pi.quantity FROM marketplace_package_items pi JOIN order_items oi ON oi.id=pi.order_item_id WHERE pi.package_id=$1 ORDER BY oi.id`, v.Packages[i].ID)
 		if e != nil {
 			return v, e
 		}
@@ -232,7 +233,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 			return v, e
 		}
 	}
-	rows, err = r.pool.Query(ctx, `SELECT id,seller_id,COALESCE(order_item_id,0),amount_cents,shipping_cents,quantity,kind,status,reason,COALESCE(provider_refund_id,'') FROM marketplace_refunds WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,COALESCE(order_item_id,0),amount_cents,shipping_cents,quantity,kind,status,reason,COALESCE(provider_refund_id,'') FROM marketplace_refunds WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
@@ -248,7 +249,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if err != nil {
 		return v, err
 	}
-	rows, err = r.pool.Query(ctx, `SELECT id,seller_id,number,snapshot,issued_at,pdf_bytes,pdf_sha256 FROM marketplace_invoices WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,number,snapshot,issued_at,pdf_bytes,pdf_sha256 FROM marketplace_invoices WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
@@ -264,7 +265,7 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 	if err != nil {
 		return v, err
 	}
-	notes, noteErr := r.pool.Query(ctx, `SELECT id,seller_id,number,snapshot,issued_at,pdf_bytes,pdf_sha256 FROM marketplace_credit_notes WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	notes, noteErr := r.readSource().Query(ctx, `SELECT id,seller_id,number,snapshot,issued_at,pdf_bytes,pdf_sha256 FROM marketplace_credit_notes WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if noteErr != nil {
 		return v, noteErr
 	}

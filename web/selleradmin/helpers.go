@@ -149,6 +149,16 @@ func sellerNextFulfillmentStatus(current string) string {
 	return string(stage.Next())
 }
 func sellerFulfillmentLabel(status string) string {
+	switch status {
+	case "new":
+		return "New"
+	case "accepted":
+		return "Accepted"
+	case "ready_to_ship":
+		return "Ready to ship"
+	case "cancelled":
+		return "Cancelled"
+	}
 	stage, ok := domaincommerce.ParseFulfillmentStage(status)
 	if !ok {
 		return status
@@ -157,11 +167,7 @@ func sellerFulfillmentLabel(status string) string {
 }
 
 func sellerFulfillmentOptions(current string) []string {
-	options := make([]string, 0, len(domaincommerce.FulfillmentStages))
-	for _, stage := range domaincommerce.FulfillmentStages {
-		options = append(options, string(stage))
-	}
-	return options
+	return []string{"new", "accepted", "packing", "ready_to_ship", "shipped", "delivered", "cancelled"}
 }
 
 func sellerFulfillmentSelected(current, option string) bool {

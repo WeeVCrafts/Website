@@ -14,6 +14,9 @@ templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 }
 		<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
 		if p.Number=="" {
+if p.Role=="super_admin" {
+<p><a class="commerce-button secondary" href="/super-admin/fulfillment/reviews">Review seller invoice and tax submissions</a></p>
+}
 			<h2>Recent orders</h2>
 			if len(p.Orders)==0 {
 				<p>No orders are available for this account.</p>
@@ -96,6 +99,7 @@ templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 				}
 			}
 		} else {
+			if !p.Workspace {
 			<h2>
 				Order { p.Number }
 			</h2>
@@ -110,6 +114,9 @@ templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 			</p>
 			<p>View the <a href="/returns-replacements-authenticity">returns, replacements and authenticity policy</a>. Your purchase retains its recorded policy.</p>
 			@MarketplacePolicyClaims(p)
+
+			}
+			if !p.Workspace || p.OrderTab=="packages" {
 			for _,s:=range p.Sellers {
 				<article class="seller-panel">
 					<h3>
@@ -137,19 +144,23 @@ templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 							if p.ShippingConfigured || s.DeliveryMethod!="shiprocket" {
 								<h4>Prepare a package</h4>
 								<p>Select the quantities in this package. Final weight and dimensions include all packaging.</p>
+if !p.Workspace || commerceNeedsPacking(p,s.SellerID) {
 								<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
 									@MarketplaceFields(p, "package")
 									<input type="hidden" name="seller_id" value={ fmt.Sprint(s.SellerID) }/>
 									for _,item:=range p.Lines {
-										if item.SellerID==s.SellerID && item.Quantity>item.Cancelled {
+										if item.SellerID==s.SellerID && item.Quantity>item.Cancelled && (!p.Workspace || commercePackRemaining(p,item.ID)>0) {
 											<label>
 												{ item.Name }
-												<input type="number" name={ fmt.Sprintf("item_%d", item.ID) } min="0" max={ fmt.Sprint(item.Quantity - item.Cancelled) } value="0"/>
+												<input type="number" name={ fmt.Sprintf("item_%d", item.ID) } min="0" max={ fmt.Sprint(commercePackRemaining(p,item.ID)) } value="0"/>
 											</label>
 										}
 									}
 									<label>Weight (grams)<input name="weight_grams" type="number" min="100" max="50000" required/></label><label>Length (cm)<input name="length_cm" type="number" min="1" max="200" required/></label><label>Width (cm)<input name="width_cm" type="number" min="1" max="200" required/></label><label>Height (cm)<input name="height_cm" type="number" min="1" max="200" required/></label><button type="submit">Save package</button>
 								</form>
+}
+
+if !p.Workspace || !commerceNeedsPacking(p,s.SellerID) {
 								<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
 									@MarketplaceFields(p, "ready")
 									<input type="hidden" name="seller_id" value={ fmt.Sprint(s.SellerID) }/><input type="hidden" name="revision" value={ fmt.Sprint(s.Revision) }/><label><input type="checkbox" name="confirmed" value="yes" required/> I confirm the package contents, weight and dimensions. Start shipping the confirmed packages.</label>
@@ -158,6 +169,8 @@ if p.NewReturnPolicy {
 }
 <button type="submit" disabled?={ !p.BookingsEnabled && s.DeliveryMethod=="shiprocket" }>Ready to ship</button>
 								</form>
+}
+
 							} else {
 								<p>Shipping setup is incomplete. Contact company support to arrange delivery.</p>
 							}
@@ -165,6 +178,9 @@ if p.NewReturnPolicy {
 					}
 				</article>
 			}
+
+			}
+			if !p.Workspace || p.OrderTab=="returns" {
 			<h2>Items</h2>
 			for _,item:=range p.Lines {
 				<article class="admin-panel">
@@ -200,6 +216,9 @@ if p.NewReturnPolicy {
 					}
 				</article>
 			}
+
+			}
+			if !p.Workspace || p.OrderTab=="packages" {
 			<h2>Packages</h2>
 			if len(p.Packages)==0 {
 				<p>Packages appear after the seller confirms packing.</p>
@@ -247,7 +266,7 @@ if p.NewReturnPolicy {
 						</form>
 					}
 					if p.Role!="customer" && pkg.DeliveryMethod!="manual" {
-						if pkg.LabelURL!="" {
+						if pkg.LabelURL!="" && pkg.AWB!="" {
 							<a href={ templ.SafeURL(pkg.LabelURL) } target="_blank" rel="noopener noreferrer">Download carrier label</a>
 						}
 						if pkg.ManifestURL!="" {
@@ -263,6 +282,9 @@ if p.NewReturnPolicy {
 					}
 				</article>
 			}
+
+			}
+			if !p.Workspace || p.OrderTab=="returns" {
 			if len(p.Returns)>0 {
 			<h2>Exceptional returns</h2>
 			}
@@ -277,15 +299,24 @@ if p.NewReturnPolicy {
 					<p>
 						{ ret.Reason }
 					</p>
-					if p.Role=="admin" || p.Role=="super_admin" {
+					if (p.Role=="admin" || p.Role=="super_admin") && len(commerceReturnStages(ret.Status))>0 {
 						<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
 							@MarketplaceFields(p, "return_status")
-							<input name="case_id" type="hidden" value={ fmt.Sprint(ret.ID) }/><label>Next return stage<select name="status"><option value="approved">Approved exception</option><option value="pickup_pending">Pickup pending</option><option value="received">Physically received</option><option value="inspected">Inspected</option><option value="rejected">Rejected</option><option value="completed">Complete and request refund approval</option></select></label><label>Actual return carrier<input name="carrier" maxlength="80"/></label><label>Actual return tracking number<input name="tracking_number" maxlength="120"/></label><label>Customer-visible decision / inspection summary<textarea style="resize:none" name="reason" minlength="10" maxlength="1000" required></textarea></label><label><input type="checkbox" name="restock" value="yes"/> On completion, inspected goods are suitable for resale. Restock the received quantity.</label><button type="submit">Save return decision</button>
+							<input name="case_id" type="hidden" value={ fmt.Sprint(ret.ID) }/><label>Next return stage<select name="status">for _,stage:=range commerceReturnStages(ret.Status) {
+<option value={stage}>{commerceLabel(stage)}</option>
+}
+</select></label><label>Actual return carrier<input name="carrier" maxlength="80"/></label><label>Actual return tracking number<input name="tracking_number" maxlength="120"/></label><label>Customer-visible decision / inspection summary<textarea style="resize:none" name="reason" minlength="10" maxlength="1000" required></textarea></label><label><input type="checkbox" name="restock" value="yes"/> On completion, inspected goods are suitable for resale. Restock the received quantity.</label><button type="submit">Save return decision</button>
 						</form>
 					}
 				</article>
 			}
+
+			}
+			if !p.Workspace || p.OrderTab=="documents" {
 			<h2>Invoices</h2>
+ if p.Role=="customer" && p.Summary!=nil && (p.Summary.Financial.CapturedCents>0 || p.Summary.Financial.CreditAppliedCents>0) {
+ <p><a href={templ.SafeURL("/orders/"+url.PathEscape(p.Number)+"/invoice?format=pdf")}>Download payment receipt</a></p>
+ }
 			<p>Seller invoices and payment receipts are separate documents.</p>
 			if len(p.Invoices)==0 {
 				<p>Invoices will appear after verified seller and product tax details are available.</p>
@@ -304,6 +335,9 @@ if p.NewReturnPolicy {
 					</a>
 				</p>
 			}
+
+			}
+			if !p.Workspace || p.OrderTab=="returns" {
 			<h2>Refund status</h2>
 			if len(p.Refunds)==0 {
 				<p>No item refund requests.</p>
@@ -331,12 +365,18 @@ if p.NewReturnPolicy {
 					}
 				</article>
 			}
+			}
+
 		}
 
 	</div>
 }
 
 templ MarketplaceFields(p viewmodels.MarketplacePage, action string) {
+ if p.Workspace {
+<input type="hidden" name="workspace_tab" value={p.OrderTab}/><input type="hidden" name="focus" value={p.Focus}/>
+}
+
  if p.Tab=="setup" {
  <input type="hidden" name="setup_context" value={p.SetupContext.Encode()}/>
  }

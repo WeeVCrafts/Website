@@ -92,6 +92,8 @@ type CartItem struct {
 }
 
 type Order struct {
+	Financial                                          *domaincommerce.OrderFinancialSummary
+	ItemProgress                                       []domaincommerce.OrderItemProgress
 	CreditUsed, CashPaid                               string
 	CreditCents                                        int64
 	PaymentExpired, PaymentInProgress                  bool
@@ -111,6 +113,7 @@ type Order struct {
 
 type PaymentActivity struct {
 	Reference, Amount, Date, Method, OrderNumber, Status string
+	Refunded, Net                                        string
 }
 
 func (order Order) Confirmed() bool {

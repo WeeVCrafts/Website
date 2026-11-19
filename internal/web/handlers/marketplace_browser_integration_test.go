@@ -18,6 +18,8 @@ import (
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
 	redisadapter "github.com/wecratfs/commerce/internal/adapters/redis"
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
+	applicationcatalog "github.com/wecratfs/commerce/internal/application/catalog"
+	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -45,7 +47,7 @@ func TestMarketplaceBrowserPreview(t *testing.T) {
 	defer client.Close()
 	sessions := applicationauth.NewSessionService(redisadapter.NewSessionStore(client)).WithSessionChecker(postgres.NewUserRepository(pool))
 	repo := postgres.NewMarketplaceRepository(pool).WithInvoiceRenderer(MarketplaceInvoicePDF)
-	var fixtures struct{ Order, PolicyOrder string }
+	var fixtures struct{ Order, PolicyOrder, MixedOrder string }
 	data, err := os.ReadFile(os.Getenv("MARKETPLACE_UI_FIXTURE_FILE"))
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +55,7 @@ func TestMarketplaceBrowserPreview(t *testing.T) {
 	if err = json.Unmarshal(data, &fixtures); err != nil {
 		t.Fatal(err)
 	}
-	rows, err := pool.Query(ctx, `SELECT id FROM orders WHERE workflow_version=2 AND status='paid' AND order_number=ANY($1) ORDER BY id`, []string{fixtures.Order, fixtures.PolicyOrder})
+	rows, err := pool.Query(ctx, `SELECT id FROM orders WHERE workflow_version=2 AND status='paid' AND order_number=ANY($1) ORDER BY id`, []string{fixtures.Order, fixtures.PolicyOrder, fixtures.MixedOrder})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,13 +81,22 @@ func TestMarketplaceBrowserPreview(t *testing.T) {
 		}
 	})
 	fallback.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets.FS))))
-	handler := (&MarketplaceHandler{Repository: repo, Sessions: sessions, ShippingConfigured: true, PickupChecker: &setupBrowserPickups{}, Storage: &claimBrowserStorage{objects: map[string][]byte{}}}).Middleware(fallback)
+	commerceRepo := postgres.NewCommerceRepository(pool)
+	storefront := NewLiveStorefrontHandler(applicationcatalog.NewService(postgres.NewProductRepository(pool)), nil, applicationcommerce.NewCartService(commerceRepo), applicationcommerce.NewOrderService(commerceRepo), sessions, pool, "razorpay", "", false, fallback)
+	portal := NewLivePortalHandler(pool, sessions, storefront)
+	routes := http.NewServeMux()
+	for _, root := range []string{"/seller-admin", "/admin", "/super-admin"} {
+		routes.Handle(root, portal)
+		routes.Handle(root+"/", portal)
+	}
+	routes.Handle("/", storefront)
+	handler := (&MarketplaceHandler{Repository: repo, Sessions: sessions, ShippingConfigured: true, PickupChecker: &setupBrowserPickups{}, Storage: &claimBrowserStorage{objects: map[string][]byte{}}}).Middleware(routes)
 	server := httptest.NewServer(handler)
 	defer server.Close()
 	if err = os.WriteFile(file, []byte(server.URL), 0600); err != nil {
 		t.Fatal(err)
 	}
-	timer := time.NewTimer(10 * time.Minute)
+	timer := time.NewTimer(35 * time.Minute)
 	defer timer.Stop()
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()

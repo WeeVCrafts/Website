@@ -40,7 +40,15 @@ templ EmailHistory(history viewmodels.EmailDeliveryHistory, showOrder bool) {
 						for _, row := range history.Rows {
 							<tr>
 								if showOrder {
- <td data-label="Order">{row.OrderNumber}</td>
+ <td data-label="Order">
+if row.OrderNumber!="" {
+{row.OrderNumber}
+} else if row.WorkflowReference!="" {
+<span>Seller setup</span>
+} else {
+<span>Account notification</span>
+}
+</td>
  }
 								<td data-label="Email">{emailDeliveryKind(row.Kind)}</td>
 								<td data-label="Status">{emailDeliveryState(row.State)}</td>

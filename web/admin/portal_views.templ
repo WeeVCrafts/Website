@@ -524,7 +524,7 @@ templ OrderQueueRegion(p viewmodels.AdminPage) {
 		} else {
 		<div class="ui-table-region" role="region" tabindex="0" aria-label="Order queue"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Total</th><th scope="col">Order status</th><th scope="col">Payment status</th><th scope="col">Fulfilment stage</th></tr></thead><tbody>
 			for _, order := range p.Orders {
-				<tr><td data-label="Order"><strong>{ order.Number }</strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span>
+				<tr><td data-label="Order"><strong><a href={templ.SafeURL(p.PortalRoot+"/orders/"+order.Number)}>{ order.Number }</a></strong></td><td data-label="Customer">{ order.Customer }</td><td data-label="Total">{ order.Value }</td><td data-label="Order status"><span class={ "ui-status " + components.StatusTone(order.Status) }>{ components.StatusLabel(order.Status) }</span></td><td data-label="Payment status"><span class={ "ui-status " + components.StatusTone(order.PaymentStatus) }>{ components.StatusLabel(order.PaymentStatus) }</span></td><td data-label="Fulfilment stage"><span class={ "ui-status " + components.StatusTone(order.Fulfillment) }>{ components.StatusLabel(order.Fulfillment) }</span>
 
                   if len(order.Parcels) > 1 {
                     <ul class="order-parcel-progress" aria-label="Seller parcels">
@@ -571,15 +571,7 @@ templ PortalReturnList(p viewmodels.AdminPage) {
 }
 
 templ PortalReturnActions(p viewmodels.AdminPage,item viewmodels.AdminReturn) {
- if p.Active=="dashboard" {
-  <a class="admin-button secondary" href={p.PortalRoot+"/returns"}>Review return</a>
- } else if item.Status=="pending" {
-  <form method="post" action={p.PortalRoot+"/returns/status"}><input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="request_id" value={item.ID}/><label>Status<select name="status"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason<input name="reason" maxlength="1000" placeholder="Decision note"/></label><button class="admin-button primary" type="submit">Save decision</button></form>
- } else if item.Status=="approved" {
-  <form method="post" action={p.PortalRoot+"/returns/status"}><input type="hidden" name="csrf_token" value={p.CSRFToken}/><input type="hidden" name="request_id" value={item.ID}/><input type="hidden" name="status" value="received"/><label>Receipt note<input name="reason" maxlength="1000" placeholder="Optional receipt note"/></label><button class="admin-button primary" type="submit">Mark returned order received</button></form>
- } else {
-  <p class="admin-page-note">This return request is closed for operations updates.</p>
- }
+ <a class="admin-button secondary" href={templ.SafeURL(adminRequestURL(p,item))}>Review request</a>
 }
 
 templ PortalSettlementTable(p viewmodels.AdminPage) {
@@ -655,7 +647,7 @@ templ PortalTransactionTable(p viewmodels.AdminPage) {
 	<article class="admin-panel"><div class="panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span><div><h2>Payment attempts</h2><p>Payment attempts reported by the configured provider.</p></div></div></div>
 		<div class="ui-table-region" role="region" tabindex="0" aria-label="TransactionTable"><table class="ui-table ui-table--records"><thead><tr><th scope="col">Date</th><th scope="col">Order</th><th scope="col">Amount</th><th scope="col">Status</th></tr></thead><tbody>
 			for _, item := range p.Transactions {
-				<tr><td data-label="Date"><strong>{ item.Date }</strong></td><td data-label="Order">{ item.Reference }</td><td data-label="Amount">{ item.Amount }</td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td></tr>
+				<tr><td data-label="Date"><strong>{ item.Date }</strong></td><td data-label="Order"><a href={templ.SafeURL(p.PortalRoot+"/orders/"+item.Reference)}>{ item.Reference }</a></td><td data-label="Amount">{ item.Amount }<small>Provider-confirmed refund: {item.Refunded}</small></td><td data-label="Status"><span class={ "ui-status " + components.StatusTone(item.Status) }>{ components.StatusLabel(item.Status) }</span></td></tr>
 			}
 		</tbody></table></div>
 			if len(p.Transactions) == 0 && p.DataWarning == "" {

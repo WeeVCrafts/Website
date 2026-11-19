@@ -270,12 +270,16 @@ func transactionProjectionStatus(r *http.Request) string {
 func sellerOrderProjectionStatus(r *http.Request) string {
 	switch r.URL.Query().Get("tab") {
 	case "new":
-		return "pending"
+		return "new"
+	case "pending":
+		return "new"
+	case "processing":
+		return "accepted"
+	case "out_for_delivery":
+		return "shipped"
 	case "ready":
-		return "out_for_delivery"
-	case "rto":
-		return "rto"
-	case "pending", "processing", "packing", "shipped", "out_for_delivery", "delivered":
+		return "ready_to_ship"
+	case "accepted", "packing", "ready_to_ship", "shipped", "delivered", "cancelled":
 		return r.URL.Query().Get("tab")
 	}
 	return ""
@@ -1173,7 +1177,7 @@ func (h *LivePortalHandler) adminStats(r *http.Request) []viewmodels.AdminStat {
 	_ = h.queryRow(r, `SELECT COUNT(*) FROM sellers`).Scan(&sellers)
 	_ = h.queryRow(r, `SELECT COUNT(*) FROM products`).Scan(&products)
 	_ = h.queryRow(r, `SELECT COUNT(*) FROM orders`).Scan(&orders)
-	_ = h.queryRow(r, `SELECT COUNT(*) FROM return_requests WHERE status='pending'`).Scan(&returns)
+	_ = h.queryRow(r, `SELECT COUNT(*) FROM commerce_request_summary WHERE bucket='needs_review'`).Scan(&returns)
 	_ = h.queryRow(r, `SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress','waiting_customer')`).Scan(&tickets)
 	return []viewmodels.AdminStat{{Icon: "groups", Value: strconv.FormatInt(sellers, 10), Label: "Sellers", Delta: "Live", Positive: true, Period: "database"}, {Icon: "inventory_2", Value: strconv.FormatInt(products, 10), Label: "Products", Delta: "Live", Positive: true, Period: "database"}, {Icon: "shopping_bag", Value: strconv.FormatInt(orders, 10), Label: "Orders", Delta: "Live", Positive: true, Period: "database"}, {Icon: "undo", Value: strconv.FormatInt(returns, 10), Label: "Pending returns", Delta: "Live", Period: "database"}, {Icon: "support_agent", Value: strconv.FormatInt(tickets, 10), Label: "Open support cases", Delta: "Live", Period: "database"}}
 }
@@ -1191,7 +1195,7 @@ func (h *LivePortalHandler) portalStats(r *http.Request, role domainidentity.Rol
 		return []viewmodels.AdminStat{
 			count(`SELECT COUNT(*) FROM orders WHERE status IN ('paid','processing')`, "Orders to fulfil", "inventory_2"),
 			count(`SELECT COUNT(*) FROM orders WHERE status='shipped'`, "In transit", "local_shipping"),
-			count(`SELECT COUNT(*) FROM return_requests WHERE status IN ('pending','approved','received')`, "Active returns", "undo"),
+			count(`SELECT COUNT(*) FROM commerce_request_summary WHERE bucket IN ('needs_review','in_progress')`, "Active returns", "undo"),
 			count(`SELECT COUNT(*) FROM orders WHERE status='delivered'`, "Delivered orders", "task_alt"),
 		}
 	case domainidentity.RoleSuperAdmin:
@@ -1206,7 +1210,7 @@ func (h *LivePortalHandler) portalStats(r *http.Request, role domainidentity.Rol
 			count(`SELECT COUNT(*) FROM products WHERE status='pending_review'`, "Products awaiting review", "fact_check"),
 			count(`SELECT COUNT(*) FROM sellers WHERE status='pending'`, "Seller applications", "groups"),
 			count(`SELECT COUNT(*) FROM orders`, "Orders", "shopping_bag"),
-			count(`SELECT COUNT(*) FROM return_requests WHERE status='pending'`, "Pending returns", "undo"),
+			count(`SELECT COUNT(*) FROM commerce_request_summary WHERE bucket='needs_review'`, "Pending returns", "undo"),
 		}
 	}
 }
@@ -1310,11 +1314,11 @@ func (h *LivePortalHandler) adminProducts(r *http.Request, query string) []viewm
 
 func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder {
 	rows, err := h.projectionRows(r, "admin-orders", `
-		SELECT o.order_number,o.created_at,u.display_name,o.total_cents,o.status,
+		SELECT o.order_number,o.created_at,u.display_name,o.total_cents,CASE WHEN o.workflow_version=2 THEN o.lifecycle_status ELSE o.status END,
 		       COALESCE(pa.status,'unrecorded'),
 		       COALESCE(parcel.status,'pending'), COALESCE(parcel.details,'[]'::jsonb)
 		FROM orders o JOIN users u ON u.id=o.user_id
-		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
+		LEFT JOIN LATERAL (SELECT CASE WHEN refunded_amount_cents>0 AND refunded_amount_cents<amount_cents THEN 'partially_refunded' ELSE status END AS status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
 		LEFT JOIN LATERAL (SELECT CASE
 				WHEN bool_and(COALESCE(sf.status,'pending')='delivered') THEN 'delivered'
 				WHEN bool_and(COALESCE(sf.status,'pending') IN ('out_for_delivery','delivered')) THEN 'out_for_delivery'
@@ -1355,7 +1359,7 @@ func (h *LivePortalHandler) adminOrders(r *http.Request) []viewmodels.AdminOrder
 }
 
 func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminReturn {
-	rows, err := h.projectionRows(r, "admin-returns", `SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.status,o.total_cents,rr.created_at FROM return_requests rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=rr.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND (NOT $4::boolean OR (($2='' OR rr.status=$2) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day')) ORDER BY rr.created_at DESC,rr.id DESC`, portalQuery(r.URL.Query().Get("q")), returnInsightFilter(r), insightDays(r), superAdminRequest(r))
+	rows, err := h.projectionRows(r, "admin-returns", `SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.status,rr.amount_cents,rr.created_at,rr.kind FROM commerce_request_summary rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=o.user_id WHERE ($1='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status) ILIKE '%'||$1||'%') AND (NOT $4::boolean OR (($2='' OR rr.status=$2 OR ($2='pending' AND rr.bucket='needs_review')) AND rr.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day')) ORDER BY rr.created_at DESC,rr.id DESC`, portalQuery(r.URL.Query().Get("q")), returnInsightFilter(r), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1363,11 +1367,11 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 	result := make([]viewmodels.AdminReturn, 0)
 	for rows.Next() {
 		var id int64
-		var number, customer, reason, status string
+		var number, customer, reason, status, kind string
 		var amount int64
 		var created time.Time
-		if rows.Scan(&id, &number, &customer, &reason, &status, &amount, &created) == nil {
-			result = append(result, viewmodels.AdminReturn{ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Date: created.Format("2 Jan 2006"), Amount: money(amount), Image: "/assets/images/product-unavailable.svg"})
+		if rows.Scan(&id, &number, &customer, &reason, &status, &amount, &created, &kind) == nil {
+			result = append(result, viewmodels.AdminReturn{Kind: kind, ID: strconv.FormatInt(id, 10), Number: fmt.Sprintf("RTN-%d", id), Customer: customer, Product: number, Reason: reason, Status: status, Date: created.Format("2 Jan 2006"), Amount: money(amount), Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result
@@ -1376,9 +1380,9 @@ func (h *LivePortalHandler) adminReturns(r *http.Request) []viewmodels.AdminRetu
 func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.AdminTransaction {
 	source := "payment_attempts"
 	if transactionProjectionStatus(r) == "failed" {
-		source = failedPaymentActivitySQL
+		source = "(SELECT f.*,0::bigint AS refunded_amount_cents FROM " + failedPaymentActivitySQL + " f)"
 	}
-	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,pa.status,o.order_number,pa.amount_cents,pa.provider FROM `+source+` pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2) AND (NOT $4::boolean OR pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day') ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r), insightDays(r), superAdminRequest(r))
+	rows, err := h.projectionRows(r, "admin-transactions", `SELECT pa.created_at,CASE WHEN pa.status='captured' AND pa.refunded_amount_cents>0 THEN CASE WHEN pa.refunded_amount_cents>=pa.amount_cents THEN 'refunded' ELSE 'partially_refunded' END ELSE pa.status END,o.order_number,pa.amount_cents,pa.provider,CASE WHEN pa.status='refunded' AND pa.refunded_amount_cents=0 THEN pa.amount_cents ELSE pa.refunded_amount_cents END FROM `+source+` pa JOIN orders o ON o.id=pa.order_id WHERE ($1='' OR concat_ws(' ',o.order_number,'Payment',pa.provider,pa.status) ILIKE '%'||$1||'%') AND ($2='' OR pa.status=$2 OR ($2='refunded' AND pa.refunded_amount_cents>0)) AND (NOT $4::boolean OR pa.created_at>=date_trunc('day',NOW() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'-($3::int-1)*INTERVAL '1 day') ORDER BY pa.created_at DESC,pa.id DESC`, portalQuery(r.URL.Query().Get("q")), transactionProjectionStatus(r), insightDays(r), superAdminRequest(r))
 	if err != nil {
 		return nil
 	}
@@ -1387,9 +1391,9 @@ func (h *LivePortalHandler) adminTransactions(r *http.Request) []viewmodels.Admi
 	for rows.Next() {
 		var created time.Time
 		var status, reference, provider string
-		var amount int64
-		if rows.Scan(&created, &status, &reference, &amount, &provider) == nil {
-			result = append(result, viewmodels.AdminTransaction{Date: created.Format("2 Jan 2006"), Type: "Payment", Reference: reference, Description: provider, Amount: money(amount), Status: status})
+		var amount, refunded int64
+		if rows.Scan(&created, &status, &reference, &amount, &provider, &refunded) == nil {
+			result = append(result, viewmodels.AdminTransaction{Date: created.Format("2 Jan 2006"), Type: "Payment", Reference: reference, Description: provider, Amount: money(amount), Refunded: money(refunded), Status: status})
 		}
 	}
 	return result
@@ -2396,16 +2400,15 @@ func (h *LivePortalHandler) sellerInventory(r *http.Request, sellerID int64, que
 func (h *LivePortalHandler) sellerOrders(r *http.Request, sellerID int64) []viewmodels.SellerAdminOrder {
 	rows, err := h.projectionRows(r, "seller-orders", `
 		SELECT o.order_number, o.created_at, u.display_name, COALESCE(SUM(oi.line_total_cents),0),
-		       COALESCE(sf.status,'pending'), COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0), COALESCE(sf.revision,0)
+		       CASE WHEN o.workflow_version=2 THEN COALESCE(sf.lifecycle_status,'new') ELSE CASE COALESCE(sf.status,'pending') WHEN 'pending' THEN 'new' WHEN 'processing' THEN 'accepted' WHEN 'out_for_delivery' THEN 'shipped' ELSE sf.status END END, COALESCE(pa.status, o.status), COALESCE(SUM(oi.quantity),0), COALESCE(sf.revision,0)
 		FROM orders o
 		JOIN users u ON u.id=o.user_id
-		JOIN order_items oi ON oi.order_id=o.id
-		JOIN product_variants pv ON pv.id=oi.variant_id
-		JOIN products p ON p.id=pv.product_id AND p.seller_id=$1
+		JOIN order_items oi ON oi.order_id=o.id AND oi.seller_id=$1
+
 		LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1
-		LEFT JOIN LATERAL (SELECT status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
-		WHERE o.status IN ('paid','processing','shipped','delivered') AND pa.status='captured' AND NOT o.payment_review_required AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,COALESCE(sf.status,'pending'),COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item JOIN product_variants search_variant ON search_variant.id=search_item.variant_id JOIN products search_product ON search_product.id=search_variant.product_id WHERE search_item.order_id=o.id AND search_product.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR COALESCE(sf.status,'pending')=$3)
-		GROUP BY o.id, u.display_name, sf.status, sf.revision, pa.status
+		LEFT JOIN LATERAL (SELECT CASE WHEN refunded_amount_cents>0 AND refunded_amount_cents<amount_cents THEN 'partially_refunded' ELSE status END AS status FROM payment_attempts WHERE order_id=o.id ORDER BY id DESC LIMIT 1) pa ON TRUE
+		WHERE oi.seller_id=$1 AND (pa.status IN ('captured','partially_refunded','refunded') OR o.funding_status='funded') AND ((o.workflow_version=2 AND sf.order_id IS NOT NULL) OR (o.workflow_version<>2 AND o.status IN ('paid','processing','shipped','delivered','cancelled','refunded'))) AND ($2='' OR concat_ws(' ',o.order_number,u.display_name,CASE WHEN o.workflow_version=2 THEN COALESCE(sf.lifecycle_status,'new') ELSE CASE COALESCE(sf.status,'pending') WHEN 'pending' THEN 'new' WHEN 'processing' THEN 'accepted' WHEN 'out_for_delivery' THEN 'shipped' ELSE sf.status END END,COALESCE(pa.status,o.status)) ILIKE '%'||$2||'%' OR EXISTS(SELECT 1 FROM order_items search_item  WHERE search_item.order_id=o.id AND search_item.seller_id=$1 AND concat_ws(' ',search_item.product_name,search_item.sku) ILIKE '%'||$2||'%')) AND ($3='' OR CASE WHEN o.workflow_version=2 THEN COALESCE(sf.lifecycle_status,'new') ELSE CASE COALESCE(sf.status,'pending') WHEN 'pending' THEN 'new' WHEN 'processing' THEN 'accepted' WHEN 'out_for_delivery' THEN 'shipped' ELSE sf.status END END=$3)
+		GROUP BY o.id, u.display_name, sf.status,sf.lifecycle_status, sf.revision, pa.status
 		ORDER BY o.created_at DESC, o.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerOrderProjectionStatus(r))
 	if err != nil {
 		return nil
@@ -2432,18 +2435,9 @@ func nextFulfillmentStatus(status string) string {
 }
 
 func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []viewmodels.SellerAdminReturn {
-	rows, err := h.projectionRows(r, "seller-returns", `
-		SELECT rr.id,o.order_number,u.display_name,rr.reason,rr.created_at,rr.status,o.total_cents,
-		       COALESCE(string_agg(DISTINCT p.name, ', '),'')
-		FROM return_requests rr
-		JOIN orders o ON o.id=rr.order_id
-		JOIN users u ON u.id=rr.user_id
-		JOIN order_items oi ON oi.order_id=o.id
-		JOIN product_variants v ON v.id=oi.variant_id
-		JOIN products p ON p.id=v.product_id AND p.seller_id=$1
- WHERE ($2='' OR concat_ws(' ','RTN-'||rr.id::text,o.order_number,u.display_name,rr.reason,rr.status,p.name) ILIKE '%'||$2||'%') AND ($3='' OR rr.status=$3) AND ($4='all' OR rr.created_at>=date_trunc($4,NOW()))
-		GROUP BY rr.id,o.order_number,u.display_name,rr.reason,rr.created_at,rr.status,o.total_cents
-		ORDER BY rr.created_at DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerReturnStatus(r.URL.Query().Get("status")), sellerReturnRange(r.URL.Query().Get("range")))
+	rows, err := h.projectionRows(r, "seller-returns", `SELECT rr.id,o.order_number,u.display_name,CASE WHEN rr.seller_id IS NULL THEN 'Historical order request; contact company support for your item outcome.' ELSE rr.reason END,rr.created_at,rr.status,CASE WHEN rr.seller_id IS NULL THEN 0 ELSE rr.amount_cents END,rr.item,rr.kind FROM commerce_request_summary rr JOIN orders o ON o.id=rr.order_id JOIN users u ON u.id=o.user_id
+ WHERE (rr.seller_id=$1 OR (rr.seller_id IS NULL AND EXISTS(SELECT 1 FROM order_items oi WHERE oi.order_id=rr.order_id AND oi.seller_id=$1)))
+ AND ($2='' OR concat_ws(' ',o.order_number,rr.item,rr.kind,rr.status) ILIKE '%'||$2||'%') AND ($3='' OR rr.status=$3 OR ($3='pending' AND rr.bucket='needs_review')) AND ($4='all' OR rr.created_at>=date_trunc($4,NOW())) ORDER BY rr.created_at DESC,rr.kind,rr.id DESC`, sellerID, portalQuery(r.URL.Query().Get("q")), sellerReturnStatus(r.URL.Query().Get("status")), sellerReturnRange(r.URL.Query().Get("range")))
 	if err != nil {
 		return nil
 	}
@@ -2451,11 +2445,15 @@ func (h *LivePortalHandler) sellerReturns(r *http.Request, sellerID int64) []vie
 	result := make([]viewmodels.SellerAdminReturn, 0)
 	for rows.Next() {
 		var id int64
-		var order, customer, reason, status, product string
+		var order, customer, reason, status, product, kind string
 		var created time.Time
 		var amount int64
-		if rows.Scan(&id, &order, &customer, &reason, &created, &status, &amount, &product) == nil {
-			result = append(result, viewmodels.SellerAdminReturn{Number: fmt.Sprintf("RTN-%d", id), Order: order, Customer: maskName(customer), Product: product, Reason: reason, Date: created.Format("2 Jan 2006"), Status: status, Amount: money(amount), Image: "/assets/images/product-unavailable.svg"})
+		if rows.Scan(&id, &order, &customer, &reason, &created, &status, &amount, &product, &kind) == nil {
+			displayAmount := money(amount)
+			if strings.HasPrefix(kind, "legacy_") {
+				displayAmount = "See company review"
+			}
+			result = append(result, viewmodels.SellerAdminReturn{Kind: kind, Number: fmt.Sprintf("%s-%d", strings.ToUpper(kind), id), Order: order, Customer: maskName(customer), Product: product, Reason: reason, Date: created.Format("2 Jan 2006"), Status: status, Amount: displayAmount, Image: "/assets/images/product-unavailable.svg"})
 		}
 	}
 	return result

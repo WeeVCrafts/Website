@@ -519,6 +519,14 @@ func refreshOrderView(detail domaincommerce.OrderDetail) viewmodels.Order {
 	}
 	view := viewmodels.Order{CanPay: detail.CanPay, PaymentReview: detail.PaymentReview, ContactName: detail.Contact.RecipientName, ContactPhone: detail.Contact.Phone, Number: detail.OrderNumber, Status: displayOrderStatus(displayStatus), State: detail.Status, Payment: displayPaymentStatus(detail.PaymentStatus, detail.Status), PaymentState: detail.PaymentStatus, Date: detail.CreatedAt.Format("2 Jan 2006"), Total: storefrontMoney(detail.TotalCents), Shipments: detail.Fulfillments}
 	applyCheckoutPaymentDisplay(&view, detail)
+	view.Financial = detail.PaymentSummary
+	view.ItemProgress = detail.ItemProgress
+	if detail.PaymentSummary != nil {
+		view.Payment = displayPaymentStatus(detail.PaymentSummary.DisplayStatus, detail.Status)
+	}
+	if detail.ProcessingStatus != "" {
+		view.Status = displayOrderStatus(detail.ProcessingStatus)
+	}
 	for _, item := range detail.Items {
 		view.Items = append(view.Items, viewmodels.CartItem{Product: viewmodels.Product{Name: item.ProductName, SKU: item.SKU, PriceCents: item.UnitPriceCents, Price: storefrontMoney(item.UnitPriceCents)}, Quantity: item.Quantity})
 	}
@@ -1542,6 +1550,14 @@ func (h *LiveStorefrontHandler) customerOrderView(ctx context.Context, order dom
 		CanRequestReturn: order.Status == "delivered",
 	}
 	applyCheckoutPaymentDisplay(&view, order)
+	view.Financial = order.PaymentSummary
+	view.ItemProgress = order.ItemProgress
+	if order.PaymentSummary != nil {
+		view.Payment = displayPaymentStatus(order.PaymentSummary.DisplayStatus, order.Status)
+	}
+	if order.ProcessingStatus != "" {
+		view.Status = displayOrderStatus(order.ProcessingStatus)
+	}
 	if err := h.pool.QueryRow(ctx, `SELECT COALESCE((SELECT status FROM return_requests WHERE order_id = $1), '')`, order.ID).Scan(&view.ReturnStatus); err != nil {
 		return viewmodels.Order{}, err
 	}
@@ -1633,7 +1649,7 @@ func (h *LiveStorefrontHandler) customerReturns(ctx context.Context, userID int6
 func (h *LiveStorefrontHandler) customerPaymentActivity(ctx context.Context, userID int64) ([]viewmodels.PaymentActivity, error) {
 	rows, err := h.pool.Query(ctx, `
 		SELECT COALESCE(NULLIF(pa.provider_payment_id, ''), NULLIF(pa.provider_order_id, ''), o.order_number),
-		       pa.amount_cents, pa.currency, pa.provider, o.order_number, pa.status, pa.created_at
+		       pa.amount_cents, pa.currency, pa.provider, o.order_number, CASE WHEN pa.refunded_amount_cents>0 AND pa.refunded_amount_cents<pa.amount_cents THEN 'partially_refunded' ELSE pa.status END, pa.created_at,CASE WHEN pa.status='refunded' AND pa.refunded_amount_cents=0 THEN pa.amount_cents ELSE pa.refunded_amount_cents END
 		FROM payment_attempts pa
 		JOIN orders o ON o.id = pa.order_id
 		WHERE o.user_id = $1
@@ -1646,13 +1662,17 @@ func (h *LiveStorefrontHandler) customerPaymentActivity(ctx context.Context, use
 	activities := make([]viewmodels.PaymentActivity, 0)
 	for rows.Next() {
 		var item viewmodels.PaymentActivity
-		var cents int64
+		var cents, refunded int64
 		var currency, provider, status string
 		var createdAt time.Time
-		if err := rows.Scan(&item.Reference, &cents, &currency, &provider, &item.OrderNumber, &status, &createdAt); err != nil {
+		if err := rows.Scan(&item.Reference, &cents, &currency, &provider, &item.OrderNumber, &status, &createdAt, &refunded); err != nil {
 			return nil, err
 		}
 		item.Amount = storefrontMoney(cents)
+		item.Refunded = storefrontMoney(refunded)
+		if status == "captured" || status == "partially_refunded" || status == "refunded" {
+			item.Net = storefrontMoney(cents - refunded)
+		}
 		item.Date = createdAt.Format("2 Jan 2006")
 		item.Method = strings.ToUpper(provider) + " · " + currency
 		item.Status = strings.ToUpper(status[:1]) + strings.ReplaceAll(status[1:], "_", " ")
@@ -1663,8 +1683,12 @@ func (h *LiveStorefrontHandler) customerPaymentActivity(ctx context.Context, use
 
 func displayOrderStatus(status string) string {
 	switch status {
-	case "pending_payment":
+	case "pending_payment", "awaiting_payment":
 		return "Awaiting payment"
+	case "confirmed":
+		return "Confirmed"
+	case "completed":
+		return "Completed"
 	case "payment_failed":
 		return "Payment failed"
 	case "paid":

@@ -9,8 +9,15 @@ import (
 type MarketplacePickupChoice struct{ Name, PIN string }
 
 type MarketplacePage struct {
-	Readiness   []ports.ShippingReadiness
-	NextSetupID int64
+	Workspace                    bool
+	OrderTab, OrderURL, Focus    string
+	RequestTask                  bool
+	TaskItemID                   int64
+	Summary                      *ports.CommerceOrderSummary
+	Requests                     ports.RequestPage
+	RequestSearch, RequestBucket string
+	Readiness                    []ports.ShippingReadiness
+	NextSetupID                  int64
 	ports.MarketplaceView
 	Root, Back, ActionPath, CSRFToken, Key, Notice string
 	ShippingConfigured, BookingsEnabled            bool

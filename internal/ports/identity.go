@@ -69,16 +69,17 @@ type EmailSender interface {
 }
 
 type EmailMessage struct {
-	DeliveryID       string
-	OrderNumber      string
-	DeliveryKind     string
-	DeliveryQueuedAt time.Time
-	IdempotencyKey   string
-	To               string
-	DisplayName      string
-	Subject          string
-	ActionURL        string
-	Body             string
+	WorkflowReference string
+	DeliveryID        string
+	OrderNumber       string
+	DeliveryKind      string
+	DeliveryQueuedAt  time.Time
+	IdempotencyKey    string
+	To                string
+	DisplayName       string
+	Subject           string
+	ActionURL         string
+	Body              string
 }
 
 // RoleChecker is the application authorization boundary. Implementations may

@@ -85,6 +85,10 @@ templ PortalTerms(p viewmodels.SellerAdminPage) {
 
 templ PortalProducts(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+if p.SellerStatus=="active" {
+<p class="seller-callout">Approval and checkout readiness are separate. <a href="/seller-admin/setup">Check missing invoice, tax, pickup and parcel details</a>.</p>
+}
+ <div class="seller-callout"><p>Approval and checkout readiness are separate. Check missing invoice, tax, pickup and parcel details for every option.</p><a class="seller-button outline" href="/seller-admin/setup">Complete product setup</a></div>
 		if p.SellerStatus != "active" {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}
@@ -403,7 +407,7 @@ templ PortalOrders(p viewmodels.SellerAdminPage) {
 				<select id="seller-order-stage" name="tab">
 					<option value="">All stages</option>
 					for _, stage := range sellerFulfillmentOptions("") {
-						<option value={ stage } selected?={ p.Tab==stage || (p.Tab=="new" && stage=="pending") || (p.Tab=="ready" && stage=="out_for_delivery") }>{ sellerFulfillmentLabel(stage) }</option>
+						<option value={ stage } selected?={ p.Tab==stage || (p.Tab=="new" && stage=="new") || (p.Tab=="ready" && stage=="ready_to_ship") }>{ sellerFulfillmentLabel(stage) }</option>
 					}
 				</select>
 			</label><button class="seller-button outline" type="submit">Apply filter</button><a class="seller-button outline" href="/seller-admin/orders">Clear</a>
@@ -494,12 +498,12 @@ templ SellerOrderDetailRegion(p viewmodels.SellerAdminPage) {
 			</section>
 			<div class="seller-order-actions" role="group" aria-label="Order documents">
 				if p.OrderDetail.Shiprocket == nil || (!p.OrderDetail.Shiprocket.Unavailable && (!p.OrderDetail.Shiprocket.Managed || p.OrderDetail.Shiprocket.Sandbox)) {
-					<button class="seller-button outline" type="button" data-print-kind="label">Print shipping label</button>
+					<button class="seller-button outline" type="button" data-print-kind="label">Print address sheet</button>
 				}
 				<button class="seller-button outline" type="button" data-print-kind="packing-slip">Print packing slip</button>
-				<button class="seller-button outline" type="button" data-print-kind="invoice">Print invoice</button>
+				<button class="seller-button outline" type="button" data-print-kind="invoice">Print order summary</button>
 			</div>
-			<div class="seller-print-document" data-print-document="label"><h1>Shipping label</h1><p>Weevcrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
+			<div class="seller-print-document" data-print-document="label"><h1>Delivery address sheet</h1><p>Weevcrafts · { p.SellerName }</p><address>{ p.OrderDetail.RecipientName }<br/>{ p.OrderDetail.Line1 }<br/>{ p.OrderDetail.Line2 }<br/>{ p.OrderDetail.City }, { p.OrderDetail.State } { p.OrderDetail.PostalCode }<br/>{ p.OrderDetail.CountryCode }</address><p>Order: { p.OrderDetail.Number } · { p.OrderDetail.Carrier } · { p.OrderDetail.TrackingNumber }</p></div>
 			<div class="seller-print-document" data-print-document="packing-slip">
 				<h1>Packing slip · { p.OrderDetail.Number }</h1>
 				for _, item := range p.OrderDetail.Items {
@@ -507,7 +511,7 @@ templ SellerOrderDetailRegion(p viewmodels.SellerAdminPage) {
 				}
 			</div>
 			<div class="seller-print-document" data-print-document="invoice">
-				<h1>Order invoice · { p.OrderDetail.Number }</h1>
+				<h1>Order summary · { p.OrderDetail.Number }</h1>
 				<p>Seller: { p.SellerName } · Customer: { p.OrderDetail.RecipientName }</p>
 				for _, item := range p.OrderDetail.Items {
 					<p>{ item.Name } · { item.Quantity } × { item.UnitPrice } · { item.LineTotal }</p>
@@ -791,6 +795,10 @@ templ PortalOnboarding(p viewmodels.SellerAdminPage) {
 
 templ PortalSettings(p viewmodels.SellerAdminPage) {
 	@Document(p) {
+if p.SellerStatus=="active" {
+<p class="seller-callout"><a href="/seller-admin/setup?kind=invoice">Submit legal invoice details for verification</a>. These details are separate from your public maker story.</p>
+}
+ <p><a class="seller-button outline" href="/seller-admin/setup?kind=invoice">Invoice identity and verification status</a></p>
 		<div class="seller-profile-layout"><section class="seller-panel">
 			<div class="seller-panel-heading"><div><h2>Your public maker story</h2><p>Share your real place, people and craft. These details appear on your maker storefront.</p></div></div>
 			<form class="seller-form-grid" data-store-profile novalidate method="post" action="/seller-admin/settings" enctype="multipart/form-data">

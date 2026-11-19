@@ -436,7 +436,7 @@ func (h *Handler) Order(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	orderNumber := strings.TrimPrefix(r.URL.Path, "/api/v1/orders/")
-	detail, err := h.orders.Get(r.Context(), session.UserID, orderNumber)
+	detail, err := h.orders.Get(ports.WithOrderWorkspaceMetadata(r.Context()), session.UserID, orderNumber)
 	if errors.Is(err, ports.ErrOrderNotFound) {
 		writeError(w, http.StatusNotFound, "ORDER_NOT_FOUND", "Order not found.")
 		return

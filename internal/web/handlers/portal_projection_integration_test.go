@@ -66,10 +66,10 @@ INSERT INTO categories(slug,name) VALUES('projection','Projection');
 INSERT INTO brands(slug,name) VALUES('projection','Projection');
 INSERT INTO products(id,slug,brand_slug,category_slug,name,price_cents,seller_id,status) VALUES(900001,'projection','projection','projection','Projection Product',1000,900001,'approved');
 INSERT INTO product_variants(id,product_id,sku,price_cents) VALUES(900001,900001,'PROJECTION-SKU',1000);
-INSERT INTO orders(id,order_number,user_id,status,subtotal_cents,total_cents,address_snapshot,idempotency_scope,idempotency_key,created_at)
-SELECT 900000+n,CASE WHEN n=1 THEN 'needle-order' ELSE 'projection-order-'||n END,900001,'paid',1000,1000,'{}','projection',n::text,NOW()-INTERVAL '226 days'+n*INTERVAL '1 day' FROM generate_series(1,225) n;
-INSERT INTO order_items(order_id,variant_id,product_name,sku,unit_price_cents,quantity,line_total_cents)
-SELECT id,900001,'Projection Product','PROJECTION-SKU',1000,1,1000 FROM orders;
+INSERT INTO orders(id,order_number,user_id,status,subtotal_cents,total_cents,address_snapshot,idempotency_scope,idempotency_key,created_at,workflow_version)
+SELECT 900000+n,CASE WHEN n=1 THEN 'needle-order' ELSE 'projection-order-'||n END,900001,'paid',1000,1000,'{}','projection',n::text,NOW()-INTERVAL '226 days'+n*INTERVAL '1 day',1 FROM generate_series(1,225) n;
+INSERT INTO order_items(order_id,variant_id,seller_id,product_name,sku,unit_price_cents,quantity,line_total_cents)
+SELECT id,900001,900001,'Projection Product','PROJECTION-SKU',1000,1,1000 FROM orders;
 INSERT INTO return_requests(order_id,user_id,reason,created_at)
 SELECT id,900001,CASE WHEN order_number='needle-order' THEN 'needle-reason' ELSE 'Projection reason' END,created_at FROM orders ORDER BY id;
 INSERT INTO payment_attempts(order_id,provider,status,amount_cents,created_at)
@@ -108,7 +108,7 @@ INSERT INTO support_ticket_messages(ticket_id,author_id,author_role,body) SELECT
 	if rows := h.sellerOrders(r, 900001); len(rows) != 0 {
 		t.Fatalf("unverified order appeared in the seller queue: %+v", rows)
 	}
-	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/returns?q=needle-reason", nil))
+	r = projectionRequest(httptest.NewRequest("GET", "/seller-admin/returns?q=needle-order", nil))
 	if rows := h.sellerReturns(r, 900001); len(rows) != 1 {
 		t.Fatalf("old seller return missing: %+v", rows)
 	}

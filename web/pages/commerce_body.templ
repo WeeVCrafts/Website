@@ -1,0 +1,11 @@
+package pages
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ CustomerCommerceBody(p viewmodels.CustomerPage,active string, body templ.Component) {
+ <section class="container account-layout commerce-account-layout">
+  @LiveAccountSidebar(p,active)
+  <div class="account-content">
+   @body
+  </div>
+ </section>
+}

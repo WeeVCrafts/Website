@@ -29,6 +29,16 @@ func TestMarketplaceBrowserFixture(t *testing.T) {
 	x.capture(t)
 	var policyOrder string
 	if os.Getenv("MARKETPLACE_POLICY_UI") == "1" {
+		// The policy fixture resets its global setting during cleanup. Re-publish
+		// after that cleanup so the real public policy handler remains usable.
+		t.Cleanup(func() {
+			if err := x.repo.ConfigurePolicy(context.Background(), x.admin, "publish_policy", "Isolated browser policy publication after fixture cleanup", 0, 0); err != nil {
+				t.Error(err)
+			}
+		})
+		if err := x.repo.ConfigurePolicy(context.Background(), x.admin, "publish_policy", "Isolated browser policy fixture publication", 0, 0); err != nil {
+			t.Fatal(err)
+		}
 		px, item, parcel := policyFixture(t)
 		submitPolicyClaim(t, px, item, parcel, "change_of_mind")
 		if _, err := px.pool.Exec(context.Background(), `UPDATE orders SET user_id=$2 WHERE id=$1`, px.order.ID, x.f.userIDs[0]); err != nil {
@@ -40,6 +50,15 @@ func TestMarketplaceBrowserFixture(t *testing.T) {
 		policyOrder = px.order.OrderNumber
 	}
 
+	mixed, second := mixedCommerceFixture(t, x)
+	legacy := newMarketplaceFixtureWithPool(t, x.pool)
+	legacy.capture(t)
+	if _, err := x.pool.Exec(context.Background(), `UPDATE orders SET workflow_version=1,status='delivered',lifecycle_status='awaiting_payment' WHERE id=$1`, legacy.order.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := x.pool.Exec(context.Background(), `UPDATE seller_fulfillments SET status='delivered',carrier='Recorded historical carrier',tracking_number='HISTORICAL-SAVED-TRACK' WHERE order_id=$1`, legacy.order.ID); err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
 	if _, err := x.pool.Exec(ctx, `UPDATE order_delivery_decisions SET decision='manual_fallback' WHERE order_id=$1`, x.order.ID); err != nil {
 		t.Fatal(err)
@@ -59,11 +78,11 @@ func TestMarketplaceBrowserFixture(t *testing.T) {
 		UserID      int64
 	}
 	result := struct {
-		Order, PolicyOrder  string
-		SellerID, VariantID int64
-		Roles               map[string]identity
-	}{Order: x.order.OrderNumber, PolicyOrder: policyOrder, SellerID: x.seller, VariantID: x.f.variantID, Roles: map[string]identity{}}
-	for role, user := range map[string]int64{"customer": x.f.userIDs[0], "seller": x.f.ownerID, "admin": admin, "super_admin": x.admin} {
+		Order, PolicyOrder, MixedOrder, LegacyOrder string
+		SellerID, VariantID, SecondSellerID         int64
+		Roles                                       map[string]identity
+	}{Order: x.order.OrderNumber, LegacyOrder: legacy.order.OrderNumber, PolicyOrder: policyOrder, MixedOrder: mixed.order.OrderNumber, SecondSellerID: second.seller, SellerID: x.seller, VariantID: x.f.variantID, Roles: map[string]identity{}}
+	for role, user := range map[string]int64{"customer": x.f.userIDs[0], "seller": x.f.ownerID, "second_seller": second.f.ownerID, "legacy_customer": legacy.f.userIDs[0], "legacy_seller": legacy.f.ownerID, "admin": admin, "super_admin": x.admin} {
 		b := make([]byte, 32)
 		if _, err := rand.Read(b); err != nil {
 			t.Fatal(err)
@@ -74,7 +93,15 @@ func TestMarketplaceBrowserFixture(t *testing.T) {
 		}
 		csrf := hex.EncodeToString(b)
 		now := time.Now().UTC()
-		session := ports.SessionRecord{ID: token, UserID: user, RoleSlugs: []string{role}, CSRFToken: csrf, CreatedAt: now, LastSeenAt: now, ExpiresAt: now.Add(3 * time.Hour)}
+		session := ports.SessionRecord{ID: token, UserID: user, RoleSlugs: []string{func() string {
+			if role == "legacy_customer" {
+				return "customer"
+			}
+			if role == "second_seller" || role == "legacy_seller" {
+				return "seller"
+			}
+			return role
+		}()}, CSRFToken: csrf, CreatedAt: now, LastSeenAt: now, ExpiresAt: now.Add(3 * time.Hour)}
 		if err := store.Create(ctx, session); err != nil {
 			t.Fatal(err)
 		}

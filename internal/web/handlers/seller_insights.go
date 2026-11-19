@@ -39,13 +39,13 @@ func (h *LivePortalHandler) sellerWorkspaceStats(r *http.Request, sellerID int64
 		icons = [4]string{"inventory_2", "category", "bookmark", "bar_chart"}
 		tones = [4]string{"green", "gold", "orange", "blue"}
 	case "orders":
-		err = h.queryRow(r, `SELECT COUNT(*) FILTER(WHERE o.created_at>=date_trunc('week',NOW())),COUNT(*) FILTER(WHERE COALESCE(sf.status,'pending') IN ('pending','packing','processing')),COUNT(*) FILTER(WHERE sf.status IN ('shipped','out_for_delivery')),COUNT(*) FILTER(WHERE sf.status='delivered') FROM orders o LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1 WHERE o.status IN ('paid','processing','shipped','delivered') AND EXISTS(SELECT 1 FROM order_items oi JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id WHERE oi.order_id=o.id AND p.seller_id=$1)`, sellerID).Scan(&values[0], &values[1], &values[2], &values[3])
-		labels = [4]string{"Orders · This week", "Pending fulfilment", "Shipped", "Completed"}
+		err = h.queryRow(r, `WITH scoped AS (SELECT o.created_at,CASE WHEN o.workflow_version=2 THEN sf.lifecycle_status ELSE CASE COALESCE(sf.status,'pending') WHEN 'pending' THEN 'new' WHEN 'processing' THEN 'accepted' WHEN 'out_for_delivery' THEN 'shipped' ELSE sf.status END END AS stage FROM orders o LEFT JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=$1 WHERE EXISTS(SELECT 1 FROM order_items oi WHERE oi.order_id=o.id AND oi.seller_id=$1) AND (o.funding_status='funded' OR EXISTS(SELECT 1 FROM payment_attempts pa WHERE pa.order_id=o.id AND pa.status IN ('captured','refunded','funded'))) AND ((o.workflow_version=2 AND sf.order_id IS NOT NULL) OR o.status IN ('paid','processing','shipped','delivered','cancelled'))) SELECT COUNT(*) FILTER(WHERE created_at>=date_trunc('week',NOW())),COUNT(*) FILTER(WHERE stage IN ('new','accepted','packing','ready_to_ship')),COUNT(*) FILTER(WHERE stage='shipped'),COUNT(*) FILTER(WHERE stage='delivered') FROM scoped`, sellerID).Scan(&values[0], &values[1], &values[2], &values[3])
+		labels = [4]string{"Orders · This week", "Awaiting dispatch", "Shipped", "Delivered"}
 		icons = [4]string{"shopping_bag", "sell", "local_shipping", "check_circle"}
 		tones = [4]string{"green", "orange", "gold", "green"}
 	case "returns":
-		err = h.queryRow(r, `SELECT COUNT(*),COUNT(*) FILTER(WHERE rr.status='pending'),COUNT(*) FILTER(WHERE rr.status='approved'),COUNT(*) FILTER(WHERE rr.status IN ('rejected','received')) FROM return_requests rr WHERE EXISTS(SELECT 1 FROM order_items oi JOIN product_variants v ON v.id=oi.variant_id JOIN products p ON p.id=v.product_id WHERE oi.order_id=rr.order_id AND p.seller_id=$1)`, sellerID).Scan(&values[0], &values[1], &values[2], &values[3])
-		labels = [4]string{"Total return requests", "Awaiting review", "Approved returns", "Closed requests"}
+		err = h.queryRow(r, `SELECT COUNT(*),COUNT(*) FILTER(WHERE rr.bucket='needs_review'),COUNT(*) FILTER(WHERE rr.bucket='in_progress'),COUNT(*) FILTER(WHERE rr.bucket IN ('completed','rejected')) FROM commerce_request_summary rr WHERE rr.seller_id=$1 OR (rr.seller_id IS NULL AND EXISTS(SELECT 1 FROM order_items oi WHERE oi.order_id=rr.order_id AND oi.seller_id=$1))`, sellerID).Scan(&values[0], &values[1], &values[2], &values[3])
+		labels = [4]string{"Total requests", "Needs review", "In progress", "Completed or rejected"}
 		icons = [4]string{"undo", "schedule", "check", "verified_user"}
 		tones = [4]string{"orange", "gold", "green", "blue"}
 	default:
