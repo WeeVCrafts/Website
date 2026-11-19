@@ -37,6 +37,14 @@ async function ready(page, route) {
   await page.evaluate(() => document.fonts.ready);
 }
 
+async function openCheckoutSummary(page) {
+  const disclosure = page.locator('.checkout-summary-disclosure');
+  if (!(await disclosure.evaluate(element => element.open))) {
+    await disclosure.locator('summary').click();
+  }
+  await expect(page.locator('#checkout-coupon-code')).toBeVisible();
+}
+
 for (const width of [320,390,720,1440]) {
   test(`cart and checkout align at ${width}px with long names and large totals`, async ({page}) => {
     await page.setViewportSize({width,height:1000});
@@ -53,6 +61,7 @@ for (const width of [320,390,720,1440]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({path:path.join(os.tmpdir(),`weev-customer-cart-${width}.png`),fullPage:true});
     await page.goto('/checkout');
+    await openCheckoutSummary(page);
     const coupon = page.locator('#checkout-coupon-code');
     const input = await coupon.boundingBox();
     const button = await page.locator('[data-preview-quote]').boundingBox();
@@ -72,7 +81,7 @@ for (const width of [320,390,720,1440]) {
     await expect(page.locator('#ui-toast')).toContainText('Coupon is not available');
     await coupon.fill('');
     for (const [name,value] of Object.entries({line1:'12 Craft Lane',city:'Pune',state:'Maharashtra',postal_code:'411001'})) await page.locator(`[name="${name}"]`).fill(value);
-    await page.getByRole('button',{name:'Review & pay',exact:true}).click();
+    await page.getByRole('button',{name:'Continue to review',exact:true}).click();
     await expect(page.locator('.checkout-card[data-step="2"]')).toBeVisible();
     await page.getByRole('button',{name:'Edit address',exact:true}).click();
     await expect(page.locator('[name=line1]')).toHaveValue('12 Craft Lane');
@@ -97,11 +106,12 @@ test('cart controls retain variant selection after reflow and refresh', async ({
 test('checkout quote errors offer recovery without clearing the address', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await ready(page, '/checkout');
+  await openCheckoutSummary(page);
   const address = { recipient_name: 'Fixture buyer', phone: '9876543210', line1: '12 Craft Lane', city: 'Pune', state: 'Maharashtra', postal_code: '100001' };
   const form = page.locator('#checkout-address-form');
   const pin = form.locator('[name=postal_code]');
   for (const [field, value] of Object.entries(address)) await form.locator(`[name="${field}"]`).fill(value);
-  const review = page.getByRole('button', { name: 'Review & pay', exact: true });
+  const review = page.getByRole('button', { name: 'Continue to review', exact: true });
   await review.click();
   await expect(page.locator('#checkout-postal-error')).toContainText('Delivery is unavailable');
   await expect(pin).toHaveAttribute('aria-invalid', 'true');
