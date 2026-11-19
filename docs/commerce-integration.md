@@ -48,8 +48,7 @@ indicate additional records; the normal order workspace remains available.
 
 1. Seller opens Complete product setup from Products or Store profile.
 2. Seller records legal invoice identity once per business, and tax/return
-   details for each option. Packed weight/dimensions and stock remain in the
-   existing product editor. Pickup verification remains a company task.
+   details for each option. Sellers can assign reusable measured parcel profiles in Fulfillment Setup. Existing variant measurements override profiles. Stock stays in Inventory and pickup verification stays with Super Admin.
 3. Save draft preserves work without changing approved profiles or checkout.
 4. Submit for review records an immutable version and places a hold on new
    purchases for that seller (invoice) or option (tax).
@@ -86,7 +85,7 @@ funded shipping wallet and a genuine shipment. The delivered-pilot and verified
 assortment gates must not be satisfied by fabricated provider events or business
 data.
 
-Migrations 72–74 are additive. Take a current recovery point before deployment;
+Migrations 72–75 are additive. Take a current recovery point before deployment;
 roll back application code using a reviewed compatible release if needed. Keep
 the new audit, submission and order snapshot records. Do not drop financial or
 historical evidence as a rollback shortcut.

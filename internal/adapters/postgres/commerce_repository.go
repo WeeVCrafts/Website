@@ -1081,6 +1081,18 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		if len(lines) != cartItemCount {
 			return ports.ErrInvalidState
 		}
+		if expectedItems := domaincommerce.ExpectedCartItems(transactionContext); expectedItems != "" {
+			var actual strings.Builder
+			for i, item := range lines {
+				if i > 0 {
+					actual.WriteByte(',')
+				}
+				fmt.Fprintf(&actual, "%d:%d:%d", item.variantID, item.quantity, item.price)
+			}
+			if actual.String() != expectedItems {
+				return ports.ErrQuoteChanged
+			}
+		}
 		orderNumber := newOrderNumber(userID)
 		revision, policyErr := readPlacementPolicy(transactionContext, tx)
 		if policyErr != nil {

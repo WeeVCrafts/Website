@@ -1,6 +1,7 @@
 package components
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -44,12 +45,6 @@ func commerceReadinessMissing(x ports.SellerReadinessOption) string {
 	var missing []string
 	if x.ProductStatus != "approved" {
 		missing = append(missing, "product approval")
-	}
-	if !x.InvoiceReady {
-		missing = append(missing, "seller invoice verification")
-	}
-	if !x.PickupReady {
-		missing = append(missing, "verified pickup")
 	}
 	if !x.ParcelReady() {
 		missing = append(missing, "packed measurements")
@@ -97,4 +92,59 @@ func commerceSetupSteps(p viewmodels.CommerceSetupPage) []struct{ Label, State s
 		review = commerceLabel(p.Selected.Status)
 	}
 	return []struct{ Label, State string }{{"Seller invoice details", state(x.InvoiceReady)}, {"Pickup location", state(x.PickupReady)}, {"Packed measurements", state(x.ParcelReady())}, {"Tax & return details", state(x.TaxReady && x.Classified)}, {"Admin review", review}}
+}
+
+type matchingTaxGroup struct {
+	Details     ports.SetupSubmissionData
+	Submissions []ports.SetupSubmission
+}
+
+func matchingTaxGroups(submissions []ports.SetupSubmission) []matchingTaxGroup {
+	type key struct {
+		Seller           int64
+		HSN, ReturnClass string
+		Rate             int
+	}
+	var groups []matchingTaxGroup
+	index := make(map[key]int)
+	for _, submission := range submissions {
+		if submission.Kind != "tax" || submission.Status != "submitted" {
+			continue
+		}
+		var details ports.SetupSubmissionData
+		if json.Unmarshal(submission.Payload, &details) != nil {
+			continue
+		}
+		k := key{submission.SellerID, details.HSN, details.ReturnClass, details.RateBasisPoints}
+		i, ok := index[k]
+		if !ok {
+			i = len(groups)
+			index[k] = i
+			groups = append(groups, matchingTaxGroup{Details: details})
+		}
+		groups[i].Submissions = append(groups[i].Submissions, submission)
+	}
+	var matching []matchingTaxGroup
+	for _, group := range groups {
+		if len(group.Submissions) > 1 {
+			matching = append(matching, group)
+		}
+	}
+	return matching
+}
+
+func sellerInvoiceNext(setup ports.SellerFulfillmentSetup) string {
+	switch setup.InvoiceSubmissionStatus {
+	case "submitted":
+		return "Waiting for Super Admin verification."
+	case "changes_requested":
+		return "Review the requested changes and resubmit."
+	case "draft":
+		return "Continue your draft and submit it for verification."
+	default:
+		if setup.InvoiceVerified {
+			return "Verified for this seller."
+		}
+		return "Submit your verified business details."
+	}
 }

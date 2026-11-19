@@ -16,7 +16,7 @@ test.beforeAll(async({baseURL})=>{
 test('two-step checkout retains address, validates delivery early and reflows',async({page},testInfo)=>{
  await login(page);const form=await checkoutPage(page);
  for(const width of[320,390,768,1024,1536]){
-  await page.setViewportSize({width,height:1000});await expect(page.locator('.steps [role=listitem]')).toHaveCount(2);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.setViewportSize({width,height:1000});await expect(page.locator('.steps > li')).toHaveCount(2);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await review(page);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await page.screenshot({path:path.join(os.tmpdir(),`weev-checkout-two-step-${testInfo.project.name}-${width}.png`),fullPage:true});
   await page.getByRole('button',{name:'Edit address',exact:true}).press('Enter');await expect(form.locator('[name=line1]')).toHaveValue('18 QA Craft Lane');
@@ -24,7 +24,7 @@ test('two-step checkout retains address, validates delivery early and reflows',a
  await page.setViewportSize({width:768,height:1000});await page.evaluate(()=>document.documentElement.style.zoom='2');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await page.evaluate(()=>document.documentElement.style.zoom='');
  const invalid=await page.request.get('/api/v1/checkout/quote?postal_code=123');expect(invalid.status()).toBe(422);expect((await invalid.json()).error.code).toBe('PIN_INVALID');
  await page.route('**/api/v1/checkout/quote?**',route=>route.fulfill({status:422,contentType:'application/json',body:'{"error":{"code":"PIN_UNSERVICEABLE","message":"Delivery is not currently available to this PIN code."}}'}),{times:1});
- await page.locator('[data-checkout-review]').click();await expect(page.locator('[data-checkout-address-feedback]')).toContainText('Delivery is not currently available');await expect(form.locator('[name=line1]')).toHaveValue('18 QA Craft Lane');await expect(form).toBeVisible();
+ await page.locator('[data-checkout-review]').click();await expect(page.locator('#checkout-postal-error')).toContainText('Delivery is not currently available');await expect(form.locator('[name=line1]')).toHaveValue('18 QA Craft Lane');await expect(form).toBeVisible();
  const before=Number(sql("SELECT count(*) FROM addresses WHERE user_id=(SELECT id FROM users WHERE email='demo.customer08@weevcrafts.local') AND line1='18 QA Craft Lane'"));
  await page.locator('[data-checkout-save-address]').click();await expect(page.locator('[data-checkout-address-feedback]')).toContainText('Address saved');await page.locator('[data-checkout-save-address]').click();await expect(page.locator('[data-checkout-address-feedback]')).toContainText('Address saved');
  const after=Number(sql("SELECT count(*) FROM addresses WHERE user_id=(SELECT id FROM users WHERE email='demo.customer08@weevcrafts.local') AND line1='18 QA Craft Lane'"));expect(after).toBe(before||1);

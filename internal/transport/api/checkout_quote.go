@@ -25,7 +25,7 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if revision, exists := storefront.Current(r.Context()); exists && !revision.Config.Settings.Policy.Serves(pin) {
-			writeError(w, http.StatusUnprocessableEntity, "PIN_UNSERVICEABLE", "Delivery is not currently available to this PIN code. Your cart is saved.")
+			writeError(w, http.StatusUnprocessableEntity, "PIN_OUTSIDE_COVERAGE", "This PIN code is outside our delivery area. Try another address. Your cart is saved.")
 			return
 		}
 	}
@@ -43,7 +43,7 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 	}
 	quote, err := h.orders.Quote(r.Context(), session.UserID, cart.ID, r.URL.Query().Get("coupon_code"))
 	if err == nil && pin != "" {
-		err = h.orders.CheckDelivery(r.Context(), session.UserID, cart.ID, pin)
+		quote.CheckoutDelivery, err = h.orders.PreviewDelivery(r.Context(), session.UserID, cart.ID, pin)
 	}
 	if err != nil {
 		switch {

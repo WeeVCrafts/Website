@@ -48,9 +48,9 @@ test('Normal order links share role-scoped financial, package and request views'
 test('Seller setup is discoverable, validates entries, preserves drafts and requires Super Admin review',async({browser})=>{
  const seller=await actor(browser,'seller',390);
  await seller.page.goto(`${base}/seller-admin/products`);
- await seller.page.getByRole('link',{name:/Check missing invoice/}).click();
- await expect(seller.page.getByRole('heading',{name:'Complete product setup',exact:true})).toBeVisible();await audit(seller.page);
- await seller.page.getByRole('link',{name:'Seller invoice details',exact:true}).click();
+ await seller.page.getByRole('link',{name:'Open fulfillment setup',exact:true}).click();
+ await expect(seller.page.getByRole('heading',{name:'Fulfillment setup',exact:true})).toBeVisible();await audit(seller.page);
+ await seller.page.getByRole('link',{name:'Open invoice details',exact:true}).click();
  const form=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Save draft',exact:true})});
  await form.getByLabel('Legal name',{exact:true}).fill('');
  await form.getByRole('button',{name:'Submit for review',exact:true}).click();
@@ -179,5 +179,31 @@ test('Historical orders keep recorded delivery progress and their customer payme
    const response=await a.page.request.get(new URL(await receipt.getAttribute('href'),base).href);expect(response.status()).toBe(200);expect((await response.body()).subarray(0,4).toString()).toBe('%PDF');
   }
   await a.context.close();
+ }
+});
+
+test('Seller parcel default is previewed before it is applied',async({browser})=>{
+ const seller=await actor(browser,'seller',390);
+ try {
+  await seller.page.goto(`${base}/seller-admin/fulfillment?tab=setup`);
+  await seller.page.getByRole('link',{name:'Manage parcel profiles'}).press('Enter');
+  await expect(seller.page.getByRole('heading',{name:'Parcel profiles',exact:true})).toBeVisible();
+  const name='Isolated parcel profile '+Date.now();
+  await seller.page.getByLabel('Profile name').fill(name);
+  await seller.page.getByLabel('Packed weight (g)',{exact:true}).fill('600');
+  await seller.page.getByLabel('Length (cm)',{exact:true}).fill('25');
+  await seller.page.getByLabel('Width (cm)',{exact:true}).fill('20');
+  await seller.page.getByLabel('Height (cm)',{exact:true}).fill('8');
+  await seller.page.getByRole('button',{name:'Create profile'}).press('Enter');
+  const select=seller.page.getByRole('combobox',{name:'Seller default',exact:true});
+  const [profile]=await select.selectOption({label:name+' · 600 g · 25 × 20 × 8 cm'});
+  await seller.page.getByRole('button',{name:'Preview default change'}).press('Enter');
+  await expect(seller.page.getByRole('heading',{name:'Review the change'})).toBeFocused();
+  await expect(seller.page.getByText(name,{exact:false})).toBeVisible();
+  await seller.page.getByRole('button',{name:'Apply change'}).press('Enter');
+  await expect(select).toHaveValue(profile);
+  expect(await seller.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ } finally {
+  await seller.context.close();
  }
 });

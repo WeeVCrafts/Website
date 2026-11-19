@@ -40,9 +40,10 @@ func (r *ProductDeliveryRepository) ProductDelivery(ctx context.Context, slug st
 	var availableStock int
 	err := r.pool.QueryRow(ctx, `
 		SELECT p.seller_id,COALESCE(sp.postal_code,''),COALESCE(i.available_quantity,0),
-			v.shipping_weight_g,v.shipping_length_cm,v.shipping_width_cm,v.shipping_height_cm
+			parcel.shipping_weight_g,parcel.shipping_length_cm,parcel.shipping_width_cm,parcel.shipping_height_cm
 		FROM products p JOIN sellers s ON s.id=p.seller_id AND s.status='active'
 		JOIN product_variants v ON v.product_id=p.id AND v.status='active'
+		JOIN marketplace_variant_parcels parcel ON parcel.variant_id=v.id
 		LEFT JOIN marketplace_shipping_profiles sp ON sp.seller_id=p.seller_id AND sp.verified
 		LEFT JOIN inventory_stock i ON i.variant_id=v.id
 		WHERE p.slug=$1 AND p.status='approved' AND v.id=$2

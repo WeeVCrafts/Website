@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
@@ -31,6 +32,7 @@ type deliveryRoute struct {
 
 type deliveryCacheEntry struct {
 	available bool
+	days      int
 	expires   time.Time
 }
 
@@ -42,6 +44,7 @@ type deliveryLine struct {
 type deliveryDecision struct {
 	seller   int64
 	method   string
+	days     int
 	estimate ports.Parcel
 }
 
@@ -54,12 +57,26 @@ type deliveryQuery interface {
 }
 
 func checkoutDeliveryLines(ctx context.Context, q deliveryQuery, user, cart int64, lock bool) ([]deliveryLine, error) {
-	query := `SELECT v.id,COALESCE(p.seller_id,0),ci.quantity,v.shipping_weight_g,v.shipping_length_cm,v.shipping_width_cm,v.shipping_height_cm
-	FROM carts c JOIN cart_items ci ON ci.cart_id=c.id JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id
-	WHERE c.id=$1 AND c.user_id=$2 AND c.status='active' AND c.expires_at>now() ORDER BY v.id`
 	if lock {
-		query += ` FOR SHARE OF v`
+		// Read effective profile measurements in a fresh statement after taking
+		// the variant locks, so a concurrent default change is visible.
+		locked, err := q.Query(ctx, `SELECT v.id FROM carts c JOIN cart_items ci ON ci.cart_id=c.id
+			JOIN product_variants v ON v.id=ci.variant_id
+			WHERE c.id=$1 AND c.user_id=$2 AND c.status='active' AND c.expires_at>now()
+			ORDER BY v.id FOR SHARE OF v`, cart, user)
+		if err != nil {
+			return nil, err
+		}
+		for locked.Next() {
+		}
+		if err := locked.Err(); err != nil {
+			return nil, err
+		}
 	}
+	query := `SELECT v.id,COALESCE(p.seller_id,0),ci.quantity,parcel.shipping_weight_g,parcel.shipping_length_cm,parcel.shipping_width_cm,parcel.shipping_height_cm
+	FROM carts c JOIN cart_items ci ON ci.cart_id=c.id JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id
+	JOIN marketplace_variant_parcels parcel ON parcel.variant_id=v.id
+	WHERE c.id=$1 AND c.user_id=$2 AND c.status='active' AND c.expires_at>now() ORDER BY v.id`
 	rows, err := q.Query(ctx, query, cart, user)
 	if err != nil {
 		return nil, err
@@ -77,19 +94,40 @@ func checkoutDeliveryLines(ctx context.Context, q deliveryQuery, user, cart int6
 }
 
 func (r *CommerceRepository) CheckDelivery(ctx context.Context, user, cart int64, pin string) error {
+	_, err := r.PreviewDelivery(ctx, user, cart, pin)
+	return err
+}
+
+func (r *CommerceRepository) PreviewDelivery(ctx context.Context, user, cart int64, pin string) (domain.CheckoutDelivery, error) {
+	var result domain.CheckoutDelivery
 	if r.delivery == nil || pin == "" {
-		return nil
+		return result, nil
 	}
 	lines, err := checkoutDeliveryLines(ctx, r.pool, user, cart, false)
 	if err != nil {
-		return err
+		return result, err
 	}
 	profiles, err := r.deliveryProfiles(ctx)
 	if err != nil {
-		return err
+		return result, err
 	}
-	_, err = r.delivery.check(ctx, lines, pin, profiles)
-	return err
+	decisions, err := r.delivery.check(ctx, lines, pin, profiles)
+	if err != nil || len(decisions) == 0 {
+		return result, err
+	}
+	result.State = "confirmed"
+	allEstimated := true
+	for _, decision := range decisions {
+		if decision.method != "shiprocket" {
+			result.State = "assisted"
+		}
+		allEstimated = allEstimated && decision.days > 0
+		result.TransitDays = max(result.TransitDays, decision.days)
+	}
+	if !allEstimated || result.State != "confirmed" {
+		result.TransitDays = 0
+	}
+	return result, nil
 }
 
 func (r *CommerceRepository) deliveryProfiles(ctx context.Context) (map[int64]DeliveryProfile, error) {
@@ -179,7 +217,7 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 		if !mapped {
 			continue
 		}
-		available, err := d.available(checkCtx, deliveryRoute{profile.PostalCode, pin, decision.estimate})
+		available, days, err := d.available(checkCtx, deliveryRoute{profile.PostalCode, pin, decision.estimate})
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
@@ -191,24 +229,32 @@ func (d *checkoutDelivery) check(ctx context.Context, lines []deliveryLine, pin 
 			return nil, ports.ErrDeliveryUnavailable
 		}
 		decision.method = "shiprocket"
+		decision.days = days
 	}
 	return decisions, nil
 }
 
-func (d *checkoutDelivery) available(ctx context.Context, route deliveryRoute) (bool, error) {
+func (d *checkoutDelivery) available(ctx context.Context, route deliveryRoute) (bool, int, error) {
 	now := time.Now()
 	d.mu.Lock()
 	entry, ok := d.cache[route]
 	d.mu.Unlock()
 	if ok && now.Before(entry.expires) {
-		return entry.available, nil
+		return entry.available, entry.days, nil
 	}
 	if err := ctx.Err(); err != nil {
-		return false, err
+		return false, 0, err
 	}
-	available, err := d.checker.DeliveryAvailable(ctx, route.origin, route.destination, route.parcel)
+	var available bool
+	var days int
+	var err error
+	if gateway, ok := d.checker.(ports.DeliveryEstimateGateway); ok {
+		available, days, err = gateway.DeliveryEstimate(ctx, route.origin, route.destination, route.parcel)
+	} else {
+		available, err = d.checker.DeliveryAvailable(ctx, route.origin, route.destination, route.parcel)
+	}
 	if err != nil {
-		return false, err
+		return false, 0, err
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -220,9 +266,9 @@ func (d *checkoutDelivery) available(ctx context.Context, route deliveryRoute) (
 		}
 	}
 	if len(d.cache) < 4096 {
-		d.cache[route] = deliveryCacheEntry{available, time.Now().Add(5 * time.Minute)}
+		d.cache[route] = deliveryCacheEntry{available: available, days: days, expires: time.Now().Add(5 * time.Minute)}
 	}
-	return available, nil
+	return available, days, nil
 }
 
 func (d *checkoutDelivery) saveDecisions(ctx context.Context, tx pgx.Tx, order int64, decisions []deliveryDecision) error {

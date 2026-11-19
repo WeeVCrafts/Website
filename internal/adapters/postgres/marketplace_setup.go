@@ -66,12 +66,12 @@ func (r *MarketplaceRepository) FulfillmentSetup(ctx context.Context, actor int6
 		if !found {
 			d.Sellers = append([]ports.MarketplaceSetupOption{selected}, d.Sellers...)
 		}
-		err = r.pool.QueryRow(ctx, `SELECT seller_id,legal_name,address,state_code,gstin,registration,prefix FROM seller_invoice_profiles WHERE seller_id=$1`, q.SellerID).Scan(&d.Invoice.SellerID, &d.Invoice.LegalName, &d.Invoice.Address, &d.Invoice.StateCode, &d.Invoice.GSTIN, &d.Invoice.Registration, &d.Invoice.Prefix)
+		err = r.pool.QueryRow(ctx, `SELECT seller_id,legal_name,address,state_code,gstin,registration,prefix,NOT checkout_review_hold FROM seller_invoice_profiles WHERE seller_id=$1`, q.SellerID).Scan(&d.Invoice.SellerID, &d.Invoice.LegalName, &d.Invoice.Address, &d.Invoice.StateCode, &d.Invoice.GSTIN, &d.Invoice.Registration, &d.Invoice.Prefix, &d.InvoiceReady)
 		d.InvoiceSaved = err == nil
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return d, err
 		}
-		err = r.pool.QueryRow(ctx, `SELECT pickup_location,postal_code FROM marketplace_shipping_profiles WHERE seller_id=$1`, q.SellerID).Scan(&d.PickupLocation, &d.PickupPIN)
+		err = r.pool.QueryRow(ctx, `SELECT pickup_location,postal_code,verified FROM marketplace_shipping_profiles WHERE seller_id=$1`, q.SellerID).Scan(&d.PickupLocation, &d.PickupPIN, &d.PickupReady)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return d, err
 		}

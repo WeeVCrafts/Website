@@ -22,6 +22,10 @@ templ OrderConfirmationContent(p viewmodels.CustomerPage) {
     <span class="material-symbols-outlined confirmation-state-icon" aria-hidden="true">check_circle</span>
     <h1 id="confirmation-title">Order confirmed</h1>
     <p class="confirmation-lead">Payment captured. Your maker can now prepare your order.</p>
+   } else if p.SelectedOrder.PaymentInProgress && !p.SelectedOrder.PaymentReview && !p.SelectedOrder.PaymentCreationReview && !p.SelectedOrder.PaymentExpired {
+    <span class="material-symbols-outlined confirmation-state-icon" aria-hidden="true">info</span>
+    <h1 id="confirmation-title">Checking your payment</h1>
+    <p class="confirmation-lead">Your order reference is saved. Check the latest status while we verify your payment.</p>
    } else {
     <span class="material-symbols-outlined confirmation-state-icon" aria-hidden="true">info</span>
     <h1 id="confirmation-title">{ orderStatusTitle(p.SelectedOrder) }</h1>

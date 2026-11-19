@@ -37,6 +37,12 @@ components:
 
 # WeevCrafts visual standards
 
+## Shared storefront and checkout
+
+The shared customer header uses the desktop storefront reference across shopping, account and sign-in routes. The responsive shell keeps visible, accessible shopping actions and a dedicated mobile search row. Homepage content remains in its own stylesheet.
+
+Checkout uses the shared shell, a two-step progress indicator, the existing forest and paper tokens and an order summary grouped by maker. The summary is expandable on phones. Delivery errors sit with the relevant field and payment verification has its own heading and order reference.
+
 ## Fulfillment setup — 17 November 2026
 
 Fulfillment uses URL-backed Operations and Setup navigation inside the existing

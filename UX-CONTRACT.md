@@ -1,5 +1,13 @@
 # Weevcrafts UX contract
 
+## Seller fulfillment and guided checkout
+
+Seller Fulfillment links Operations and Setup. The seller submits invoice details once and Super Admin verifies invoice and pickup once. Product options show parcel, tax, return and inventory exceptions. Reusable parcel profiles apply by explicit selection or confirmed seller default. Valid variant measurements take precedence. A preview lists affected options before assignment or a default change. Setup and public checkout eligibility have distinct statuses. Super Admin can approve matching submitted tax and return details within one seller after verifying all listed options.
+
+Checkout progresses from Delivery address to Review and pay. A quote reflects the current PIN, cart lines, prices and credits. Back navigation preserves form values. Recovery identifies the protected field or offers a route back to the saved cart. Only provider-confirmed transit estimates are shown. Payment verification uses the saved order reference and server payment state.
+
+Seller and Super Admin workspace guidance shares the portal task component. Catalog, inventory, orders, returns, support, publishing, finance and access workflows have contextual next actions. Read-only dashboards, reports and audit screens point to the relevant records. Existing record pages and forms retain their permission checks, confirmation and audit behavior.
+
 ## Fulfillment setup — 17 November 2026
 
 Super Admin Fulfillment opens the approved guided Setup; `tab=operations` opens

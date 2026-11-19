@@ -1,0 +1,30 @@
+package components
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ SellerPortalTask(p viewmodels.SellerAdminPage) {
+	@PortalTask(sellerPortalTask(p), sellerPortalSteps(p))
+}
+
+templ SuperAdminPortalTask(p viewmodels.AdminPage) {
+	@PortalTask(superAdminPortalTask(p), superAdminPortalSteps(p))
+}
+
+templ PortalTask(task portalTask, steps []string) {
+	if task.Title != "" {
+		<aside class="portal-task" aria-label="Next step">
+			<div><strong>{task.Title}</strong><p>{task.Detail}</p>
+				if len(steps) > 0 {
+					<details><summary>View steps</summary><ol>
+						for _, step := range steps {
+							<li>{step}</li>
+						}
+					</ol></details>
+				}
+			</div>
+			if task.URL != "" {
+				<a href={templ.SafeURL(task.URL)}>{task.Link}</a>
+			}
+		</aside>
+	}
+}

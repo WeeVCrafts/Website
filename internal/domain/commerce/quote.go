@@ -1,6 +1,15 @@
 package commerce
 
+import "context"
+
+type CheckoutDelivery struct {
+	State       string `json:"delivery_state,omitempty"`
+	TransitDays int    `json:"delivery_transit_days,omitempty"`
+}
+
 type CheckoutQuote struct {
+	CartItemsKey string `json:"cart_items_key,omitempty"`
+	CheckoutDelivery
 	CreditAvailableCents int64 `json:"credit_available_cents"`
 	CreditCents          int64 `json:"credit_cents"`
 	CashDueCents         int64 `json:"cash_due_cents"`
@@ -19,4 +28,15 @@ func CheckoutShipping(subtotal int64) int64 {
 		return 9900
 	}
 	return 0
+}
+
+type expectedCartItemsKey struct{}
+
+func WithExpectedCartItems(ctx context.Context, key string) context.Context {
+	return context.WithValue(ctx, expectedCartItemsKey{}, key)
+}
+
+func ExpectedCartItems(ctx context.Context) string {
+	key, _ := ctx.Value(expectedCartItemsKey{}).(string)
+	return key
 }

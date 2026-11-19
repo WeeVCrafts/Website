@@ -12,6 +12,8 @@ templ CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) {
   <nav aria-label="Breadcrumb"><a href="/super-admin/fulfillment">Fulfillment</a> / <a href="/super-admin/fulfillment/reviews">Setup review</a></nav>
   if p.Selected==nil {
    <h1>Seller setup review</h1><p>Review submitted invoice and tax details before clearing their checkout hold.</p>
+   @CommerceSetupMessages(p)
+   @CommerceMatchingTaxGroups(p)
    @CommerceSubmissionList(p)
   } else {
    <h1>Review seller {p.Kind} details</h1><p>Seller: <strong>{p.Selected.Seller}</strong> · {p.Selected.Product}</p>
@@ -52,11 +54,31 @@ templ CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) {
    </section>
   }
  } else {
-  <a href="/seller-admin/products">Back to products</a><h1>Complete product setup</h1>
+  @SellerFulfillmentTabs(true)
+  <h1>Fulfillment setup</h1>
   @CommerceSetupMessages(p)
   if p.Kind=="" {
-   <p>Product approval and checkout readiness are separate. Each option shows its next required setup work.</p>
-   <a class="commerce-button" href="/seller-admin/setup?kind=invoice">Seller invoice details</a>
+   <section class="commerce-panel">
+    <h2>Shared setup for {p.Actor.Seller}</h2>
+    <ul>
+     <li><strong>Invoice details</strong> · {sellerInvoiceNext(p.Shared)}
+      if p.Shared.InvoiceSubmissionID > 0 {
+       <a href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?submission_id=%d",p.Shared.InvoiceSubmissionID))}>Open invoice submission</a>
+      } else {
+       <a href="/seller-admin/setup?kind=invoice">Open invoice details</a>
+      }
+     </li>
+     <li><strong>Pickup location</strong> ·
+      if p.Shared.PickupVerified {
+       Verified
+      } else {
+       Super Admin needs to verify your pickup location.
+      }
+     </li>
+     <li><strong>Packed measurements</strong> · Reuse a profile for options that ship the same way. <a href="/seller-admin/setup?kind=parcel">Manage parcel profiles</a></li>
+    </ul>
+   </section>
+   <h2>Product options</h2><p>Review remaining measurement, tax, return classification, and inventory tasks by option.</p>
    for _,row:=range p.Rows {
     <section class="commerce-panel"><h2>{row.Product}</h2><p>{row.SKU} · Product: {commerceLabel(row.ProductStatus)}</p><p>{commerceReadinessMissing(row)}</p>
      <div class="commerce-actions"><a class="commerce-button secondary" href={templ.SafeURL(fmt.Sprintf("/seller-admin/setup?kind=tax&variant_id=%d",row.VariantID))}>Tax & return details</a><a class="commerce-button secondary" href={templ.SafeURL(fmt.Sprintf("/seller-admin/products/%d/edit",row.ProductID))}>Edit packed measurements or stock</a></div>
@@ -171,4 +193,28 @@ templ CommerceSubmissionList(p viewmodels.CommerceSetupPage) {
    <a href={templ.SafeURL(fmt.Sprintf("/super-admin/fulfillment/reviews?review_before=%d",p.NextReview))}>More submissions</a>
   }
  </section>
+}
+
+templ CommerceMatchingTaxGroups(p viewmodels.CommerceSetupPage) {
+ for _, group := range matchingTaxGroups(p.Submissions) {
+  <section class="commerce-panel">
+   <h2>Review matching tax submissions</h2>
+   <p>{group.Submissions[0].Seller} · HSN {group.Details.HSN} · {commercePercent(group.Details.RateBasisPoints)}% · {commerceLabel(group.Details.ReturnClass)}</p>
+   <ul>
+    for _, submission := range group.Submissions {
+     <li><a href={templ.SafeURL(fmt.Sprintf("/super-admin/fulfillment/reviews/%d",submission.ID))}>{submission.Product} · Submission #{fmt.Sprint(submission.ID)}</a></li>
+    }
+   </ul>
+   <form class="marketplace-form" method="post">
+    <input type="hidden" name="csrf_token" value={p.CSRFToken}/>
+    <input type="hidden" name="decision" value="approve_matching_tax"/>
+    for _, submission := range group.Submissions {
+     <input type="hidden" name="review" value={fmt.Sprintf("%d:%d",submission.ID,submission.Revision)}/>
+    }
+    <label>Verification note<textarea name="review_note" minlength="4" maxlength="1000" rows="3" required></textarea></label>
+    <label><input type="checkbox" name="confirmed" value="yes" required/>I verified these details for every listed option.</label>
+    <button type="submit">Approve matching submissions</button>
+   </form>
+  </section>
+ }
 }

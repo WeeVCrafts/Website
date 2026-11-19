@@ -27,6 +27,10 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 			return
 		}
 	}
+	if !review && r.URL.Query().Get("kind") == "parcel" {
+		h.serveSellerParcelSetup(w, r, actor, csrf, a)
+		return
+	}
 	id := commerceSubmissionID(r.URL.Path)
 	if !review {
 		id, _ = strconv.ParseInt(r.URL.Query().Get("submission_id"), 10, 64)
@@ -110,7 +114,19 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 	if r.Method == "POST" {
 		f := r.PostForm
 		p.Values = f
-		if review {
+		if review && p.Selected == nil && f.Get("decision") == "approve_matching_tax" {
+			if f.Get("confirmed") != "yes" {
+				p.Error = "Confirm that you verified the shared tax and return details for every option."
+			} else {
+				revisions := matchingTaxRevisions(f["review"])
+				err = h.Repository.ApproveMatchingTaxSubmissions(r.Context(), actor, revisions, f.Get("review_note"))
+				if err == nil {
+					http.Redirect(w, r, "/super-admin/fulfillment/reviews?saved=1", http.StatusSeeOther)
+					return
+				}
+				p.Error = "These submissions could not be approved together. Check the verified values, review note and current submission status."
+			}
+		} else if review {
 			approve := f.Get("decision") == "approve"
 			if p.Selected == nil || f.Get("decision") != "approve" && f.Get("decision") != "changes" {
 				http.Error(w, "Invalid review", 400)
@@ -191,6 +207,13 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 		p.Notice = "Saved. Review status and remaining checkout requirements are shown below."
 	}
 	if p.Kind == "" && p.Selected == nil {
+		if !review {
+			p.Shared, err = h.Repository.SellerFulfillmentSetup(r.Context(), actor)
+			if err != nil {
+				marketplaceHTTPError(w, err)
+				return
+			}
+		}
 		before, _ := strconv.ParseInt(r.URL.Query().Get("review_before"), 10, 64)
 		p.Submissions, p.NextReview, err = h.Repository.SetupSubmissions(r.Context(), actor, 0, before)
 		if err != nil {
@@ -202,9 +225,26 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(422)
 	}
-	title, active := "Complete product setup", "products"
+	title, active := "Fulfillment setup", "fulfillment"
 	if review {
 		title, active = "Seller setup review", "fulfillment"
 	}
 	h.renderCommerceShell(w, r, a, csrf, title, active, components.CommerceSetupWorkspace(p))
+}
+
+func matchingTaxRevisions(values []string) map[int64]int64 {
+	if len(values) < 2 || len(values) > 25 {
+		return nil
+	}
+	revisions := make(map[int64]int64, len(values))
+	for _, value := range values {
+		key, current, ok := strings.Cut(value, ":")
+		id, idErr := strconv.ParseInt(key, 10, 64)
+		revision, revisionErr := strconv.ParseInt(current, 10, 64)
+		if !ok || idErr != nil || revisionErr != nil || id <= 0 || revision <= 0 || revisions[id] != 0 {
+			return nil
+		}
+		revisions[id] = revision
+	}
+	return revisions
 }

@@ -46,8 +46,8 @@ type FulfillmentQueueItem struct {
 	Number, Seller, Issue string
 }
 type MarketplaceOrderSummary struct {
-	ID             int64
-	Number, Status string
+	ID                          int64
+	Number, Status, SellerStage string
 }
 type MarketplaceJobSummary struct {
 	ID                      int64

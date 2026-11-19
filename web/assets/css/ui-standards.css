@@ -428,3 +428,13 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
 .commerce-panel dd{overflow-wrap:anywhere}.commerce-review-table td{white-space:normal}.commerce-support-row{min-width:0;overflow-wrap:anywhere}
 
 .commerce-workspace nav[aria-label="Breadcrumb"] a{text-decoration:underline}.seller-skip-link{color:#fff!important;background:#143f34!important}
+
+.portal-task {display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 20px;margin-block:0 16px;padding:12px 16px;border:1px solid var(--brand-line,#dfd8ca);border-inline-start:3px solid var(--brand-primary,#123f32);border-radius:6px;color:var(--brand-ink,#20362d);background:var(--brand-paper,#fffdf8);}
+.portal-task > div {flex:1 1 20rem;min-width:0;}
+.portal-task strong {font-weight:700;}
+.portal-task p {margin:3px 0 0;}
+.portal-task a {display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:.18em;}
+.portal-task details {margin-top:4px;}
+.portal-task summary {width:fit-content;min-height:44px;align-content:center;cursor:pointer;}
+.portal-task ol {margin:0;padding-inline-start:1.35rem;}
+.portal-task li + li {margin-block-start:4px;}

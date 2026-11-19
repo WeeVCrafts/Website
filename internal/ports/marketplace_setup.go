@@ -16,7 +16,7 @@ type MarketplaceSetup struct {
 	Sellers, Variants, Customers, LaunchVariants      []MarketplaceSetupOption
 	NextSeller, NextVariant, NextCustomer, NextLaunch int64
 	Invoice                                           SellerInvoiceProfile
-	InvoiceSaved, TaxSaved                            bool
+	InvoiceSaved, InvoiceReady, PickupReady, TaxSaved bool
 	HSN, ReturnClass, PickupLocation, PickupPIN       string
 	TaxBasisPoints                                    int
 	Product, Seller, SKU                              string

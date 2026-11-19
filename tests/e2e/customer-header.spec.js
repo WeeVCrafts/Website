@@ -1,7 +1,8 @@
 const {test,expect}=require('@playwright/test');
 const path=require('node:path');
+const fs=require('node:fs');
 const {output}=require('../../scripts/ui-ux-qa-paths.cjs');
-require('node:fs').mkdirSync(output,{recursive:true});
+fs.mkdirSync(output,{recursive:true});
 const widths=[320,390,768,800,801,1024,1440,1920];
 const credentials={email:'demo.customer01@weevcrafts.local',password:'WeeVCrafts-Demo-2026!'};
 
@@ -24,11 +25,20 @@ async function checkActions(page) {
 
 test('guest shopping actions are uniform across customer and auth screens',async({page,browserName})=>{
   test.setTimeout(120000);
-  for(const route of ['/','/products','/categories','/products/blue-tote','/makers','/search?q=art','/featured-products','/shipping','/cart','/login','/register','/forgot-password']) {
+  await page.goto('/products');
+  const productPath=await page.locator('a[href^="/products/"]').first().getAttribute('href');
+  expect(productPath).toMatch(/^\/products\/[^/]+$/);
+  for(const route of ['/','/products','/categories',productPath,'/makers','/search?q=art','/featured-products','/shipping','/cart','/login','/register','/forgot-password']) {
     await page.goto(route);await page.evaluate(()=>document.fonts.ready);
     for(const width of widths) {
       await page.setViewportSize({width,height:900});await checkActions(page);
       await expect(page.getByRole('link',{name:'Sign in',exact:true}).first()).toBeVisible();
+      const header=page.locator('.customer-shopping-header');
+      if (width>=1200) {
+        await expect(header.locator('.homepage-delivery')).toBeVisible();
+        await expect(header.locator('.storefront-nav .homepage-offers')).toBeVisible();
+      }
+      await expect(header.locator('.storefront-nav a[href="/featured-products"]')).toHaveCount(0);
       if(width<=800) {
         const search=await page.locator('.search-shell').boundingBox(),actions=await page.locator('.header-actions').boundingBox();
         expect(search.y).toBeGreaterThanOrEqual(actions.y+actions.height);
@@ -40,7 +50,14 @@ test('guest shopping actions are uniform across customer and auth screens',async
 
 test('signed-in customers keep three actions and notification access inside Account',async({page})=>{
   test.setTimeout(120000);
-  expect((await page.request.post('/api/v1/auth/login',{data:credentials})).ok()).toBe(true);
+  if(process.env.MARKETPLACE_UI_FIXTURE_FILE) {
+    const baseURL=test.info().project.use.baseURL;
+    expect(new URL(baseURL).hostname).toBe('127.0.0.1');
+    const fixture=JSON.parse(fs.readFileSync(process.env.MARKETPLACE_UI_FIXTURE_FILE,'utf8'));
+    await page.context().addCookies([{name:'wecratfs_session',value:fixture.Roles.customer.Token,url:baseURL,httpOnly:true}]);
+  } else {
+    expect((await page.request.post('/api/v1/auth/login',{data:credentials})).ok()).toBe(true);
+  }
   for(const route of ['/','/products','/account','/orders','/wishlist','/cart']) {
     await page.goto(route);await page.evaluate(()=>document.fonts.ready);
     for(const width of widths) {
@@ -49,7 +66,7 @@ test('signed-in customers keep three actions and notification access inside Acco
         await page.locator('#wishlist-count em,#cart-count em').evaluateAll((elements,value)=>elements.forEach(e=>e.textContent=value),value);
         await checkActions(page);
       }
-      const toggle=page.getByRole('button',{name:'Open profile menu'});
+      const toggle=page.getByRole('button',{name:'Account menu',exact:true});
       await toggle.press('Enter');await expect(page.locator('#profile-dropdown')).toBeVisible();
       await expect(page.locator('#profile-dropdown [data-notification-bell]')).toBeVisible();
       await expect(page.locator('#profile-dropdown').getByRole('button',{name:'Sign out'})).toBeVisible();

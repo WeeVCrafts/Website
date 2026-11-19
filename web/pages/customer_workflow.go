@@ -1,8 +1,11 @@
 package pages
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"strconv"
+	"strings"
 
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -23,12 +26,33 @@ func checkoutMakersLabel(items []viewmodels.CartItem) string {
 	return fmt.Sprintf("%d makers", count)
 }
 
+type checkoutMakerGroup struct {
+	Name  string
+	Items []viewmodels.CartItem
+}
+
 func checkoutSellerCount(items []viewmodels.CartItem) int {
-	makers := make(map[string]struct{})
+	return len(checkoutMakerGroups(items))
+}
+
+func checkoutMakerGroups(items []viewmodels.CartItem) []checkoutMakerGroup {
+	var groups []checkoutMakerGroup
+	index := make(map[[2]string]int)
 	for _, item := range items {
-		makers[item.Product.SellerSlug+":"+item.Product.Seller] = struct{}{}
+		key := [2]string{item.Product.SellerSlug, item.Product.Seller}
+		i, exists := index[key]
+		if !exists {
+			i = len(groups)
+			index[key] = i
+			name := item.Product.Seller
+			if name == "" {
+				name = "Maker"
+			}
+			groups = append(groups, checkoutMakerGroup{Name: name})
+		}
+		groups[i].Items = append(groups[i].Items, item)
 	}
-	return len(makers)
+	return groups
 }
 
 type shipmentStep struct{ Label, Class, Icon, State string }
@@ -131,4 +155,19 @@ func purchaseQuantityLimit(available int, inStock bool) int {
 	}
 	// Isolated mock storefront products may provide only an in-stock flag.
 	return min(99, max(1, available))
+}
+
+func checkoutCartItemsKey(items []viewmodels.CartItem) string {
+	items = slices.Clone(items)
+	slices.SortFunc(items, func(a, b viewmodels.CartItem) int {
+		return cmp.Compare(a.Product.VariantID, b.Product.VariantID)
+	})
+	var key strings.Builder
+	for i, item := range items {
+		if i > 0 {
+			key.WriteByte(',')
+		}
+		fmt.Fprintf(&key, "%d:%d:%d", item.Product.VariantID, item.Quantity, item.Product.PriceCents)
+	}
+	return key.String()
 }

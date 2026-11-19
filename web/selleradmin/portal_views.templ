@@ -85,10 +85,6 @@ templ PortalTerms(p viewmodels.SellerAdminPage) {
 
 templ PortalProducts(p viewmodels.SellerAdminPage) {
 	@Document(p) {
-if p.SellerStatus=="active" {
-<p class="seller-callout">Approval and checkout readiness are separate. <a href="/seller-admin/setup">Check missing invoice, tax, pickup and parcel details</a>.</p>
-}
- <div class="seller-callout"><p>Approval and checkout readiness are separate. Check missing invoice, tax, pickup and parcel details for every option.</p><a class="seller-button outline" href="/seller-admin/setup">Complete product setup</a></div>
 		if p.SellerStatus != "active" {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}

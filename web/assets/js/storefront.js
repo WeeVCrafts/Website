@@ -684,19 +684,52 @@
     checkout.open();
   }
 
+  function updateCheckoutDelivery(quote) {
+    const feedback = document.querySelector("[data-checkout-delivery-feedback]");
+    const detail = document.querySelector("[data-checkout-delivery-detail]");
+    const days = quote?.delivery_transit_days;
+    const estimated = Number.isInteger(days) && days > 0;
+    const estimate = estimated ? "Estimated transit: " + days + (days === 1 ? " day" : " days") : "";
+    if (detail) {
+      detail.hidden = !estimated;
+      detail.querySelector("[data-checkout-delivery-summary]").textContent = estimate;
+    }
+    if (feedback) {
+      const assisted = quote?.delivery_state === "assisted";
+      feedback.textContent = assisted
+        ? "A live delivery estimate is unavailable. You can continue with assisted delivery."
+        : estimate || (quote?.delivery_state === "confirmed" ? "Delivery is available to this PIN." : "");
+    }
+  }
+
   async function previewCheckoutQuote() {
     clearCheckoutErrors();
     const code = document.getElementById("checkout-coupon-code")?.value.trim() || "";
-    const pin = document.querySelector('#checkout-address-form [name="postal_code"]')?.value.trim() || '';
+    const pinField = document.querySelector('#checkout-address-form [name="postal_code"]');
+    const pin = pinField?.value.trim() || '';
     const useCredit=!!document.querySelector('[name="use_store_credit"]')?.checked;
     const response = await fetch("/api/v1/checkout/quote?coupon_code=" + encodeURIComponent(code) + '&use_store_credit='+String(useCredit) + (pin?'&postal_code='+encodeURIComponent(pin):'') + (checkoutIntent?"&intent="+encodeURIComponent(checkoutIntent):""), { credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(20000) });
     const body = await response.json().catch(() => null);
+    if (pin !== (pinField?.value.trim() || "") ||
+        code !== (document.getElementById("checkout-coupon-code")?.value.trim() || "") ||
+        useCredit !== !!document.querySelector('[name="use_store_credit"]')?.checked) {
+      throw new Error("Your checkout details changed. Check the current details and try again.");
+    }
     if (!response.ok || !body) {
       const error = new Error(body?.error?.message || "Could not preview checkout. Please try again.");
       error.code = body?.error?.code;
       throw error;
     }
     const quote = unwrap(body);
+    const layout = document.querySelector("[data-checkout-item-count]");
+    if (layout && (quote.cart_items_key
+      ? quote.cart_items_key !== layout.dataset.checkoutItemsKey
+      : Number.isInteger(quote.item_count) && quote.item_count !== Number(layout.dataset.checkoutItemCount))) {
+      const error = new Error("Your cart changed. Return to your cart to review the current items.");
+      error.code = "CART_CHANGED";
+      throw error;
+    }
+    updateCheckoutDelivery(pin ? quote : null);
     global.weevcraftsPolicyRevision=quote.policy_revision;
     global.weevcraftsCreditQuote=quote.credit_cents||0;
     document.querySelectorAll('[data-quote-credit]').forEach(el=>{el.textContent=checkoutMoney(quote.credit_cents||0);});
@@ -722,6 +755,8 @@
 
   function clearCheckoutErrors() {
     clearCheckoutFieldError("checkout-postal-error");
+    const pinRecovery = document.querySelector("[data-checkout-pin-recovery]");
+    if (pinRecovery) pinRecovery.hidden = true;
     clearCheckoutFieldError("checkout-coupon-error");
     document.querySelectorAll("[data-checkout-error-recovery]").forEach(recovery => {
       recovery.hidden = true;
@@ -729,16 +764,23 @@
   }
 
   async function showCheckoutError(error, feedback) {
-    if (["PIN_INVALID", "PIN_UNSERVICEABLE", "COUPON_INVALID"].includes(error.code)) {
+    if (["PIN_INVALID", "PIN_OUTSIDE_COVERAGE", "PIN_UNSERVICEABLE", "COUPON_INVALID"].includes(error.code)) {
       const couponError = error.code === "COUPON_INVALID";
       const message = document.getElementById(couponError ? "checkout-coupon-error" : "checkout-postal-error");
       const field = message?.parentElement.querySelector("input");
       if (field) {
+        if (couponError) {
+          const summary = message.closest("details");
+          if (summary) summary.open = true;
+        }
         if (feedback) feedback.textContent = "";
         message.textContent = error.message;
         message.hidden = false;
         field.setAttribute("aria-invalid", "true");
         if (!couponError) {
+          updateCheckoutDelivery(null);
+          const pinRecovery = document.querySelector("[data-checkout-pin-recovery]");
+          if (pinRecovery) pinRecovery.hidden = error.code === "PIN_INVALID";
           global.Alpine.$data(document.getElementById("page")).checkoutStep = 1;
           await global.Alpine.nextTick();
         }
@@ -746,7 +788,7 @@
         return;
       }
     }
-    if (["CART_EMPTY", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "INSUFFICIENT_STOCK"].includes(error.code) ||
+    if (["CART_EMPTY", "CART_CHANGED", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "INSUFFICIENT_STOCK"].includes(error.code) ||
         (error.code === "CART_UNAVAILABLE" && checkoutIntent)) {
       const step = global.Alpine.$data(document.getElementById("page")).checkoutStep;
       const recovery = document.querySelector('.checkout-card[data-step="' + step + '"] [data-checkout-error-recovery]');
@@ -754,7 +796,7 @@
         if (feedback) feedback.textContent = "";
         recovery.hidden = false;
         const message = recovery.querySelector("[data-checkout-error-message]");
-        message.textContent = checkoutIntent
+        message.textContent = checkoutIntent && error.code !== "CART_CHANGED"
           ? "This Buy Now checkout has expired or the item is unavailable. Your shopping cart is saved."
           : error.message;
         message.focus();
@@ -799,7 +841,6 @@
     const retry = pending && pending.fingerprint === fingerprint && pending.key && pending.quote;
     const currentQuote = retry ? pending.quote : await previewCheckoutQuote();
     global.weevcraftsCreditQuote=currentQuote.credit_cents||0;
-    global.weevcraftsCreditQuote=currentQuote.credit_cents||0;
     if (!retry && previousTotal !== undefined && previousTotal !== String(currentQuote.total_cents)) {
       notice("Your total has changed. Review the updated amount, then place your order again.", true);
       return;
@@ -814,7 +855,7 @@
       // The order transaction saves this address once, including idempotent retries.
       const couponCode = acceptedCoupon;
       const key = pending.key;
-      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision))) || {};
+      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision, currentQuote.cart_items_key) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision, currentQuote.cart_items_key))) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       button.dataset.orderCreated='true';
@@ -851,21 +892,51 @@
   }
 
   function bindActions() {
+    const checkoutSummary = document.querySelector(".checkout-summary-disclosure");
+    if (checkoutSummary) {
+      const narrow = global.matchMedia("(max-width: 860px)");
+      checkoutSummary.open = !narrow.matches;
+      narrow.addEventListener("change", event => { checkoutSummary.open = !event.matches; });
+    }
+    const checkPIN = document.querySelector("[data-checkout-check-pin]");
+    const deliveryFeedback = document.querySelector("[data-checkout-delivery-feedback]");
+    checkPIN?.addEventListener("click", async () => {
+      const field = document.querySelector('#checkout-address-form [name="postal_code"]');
+      if (checkPIN.disabled || !field?.reportValidity()) return;
+      checkPIN.disabled = true;
+      global.WVUI?.busy(checkPIN, true);
+      deliveryFeedback.textContent = "Checking delivery…";
+      try {
+        const quote = await previewCheckoutQuote();
+        if (!quote.delivery_state) deliveryFeedback.textContent = "A live delivery estimate is unavailable. Try again or continue to review.";
+      } catch (error) {
+        await showCheckoutError(error, deliveryFeedback);
+      } finally {
+        checkPIN.disabled = false;
+        global.WVUI?.busy(checkPIN, false);
+      }
+    });
+    document.querySelector('[data-checkout-step="1"]')?.addEventListener("click", async () => {
+      global.Alpine.$data(document.getElementById("page")).checkoutStep = 1;
+      await global.Alpine.nextTick();
+      document.querySelector('.checkout-card[data-step="1"] h2')?.focus();
+    });
     const reviewButton=document.querySelector('[data-checkout-review]');
     reviewButton?.addEventListener('click',async()=>{
       const form=document.getElementById('checkout-address-form');
-      if(reviewButton.disabled || !global.WVUI.validate(form))return;
+      if(reviewButton.disabled || checkPIN?.disabled || !global.WVUI.validate(form))return;
       reviewButton.disabled=true;global.WVUI?.busy(reviewButton,true);
       const feedback=document.querySelector('[data-checkout-address-feedback]');
       try{
         if(feedback)feedback.textContent='Checking delivery and your final total…';
+        if (checkPIN) checkPIN.disabled = true;
         await previewCheckoutQuote();
         global.Alpine.$data(document.getElementById('page')).checkoutStep=2;
         if(feedback)feedback.textContent='';
         await global.Alpine.nextTick();
         requestAnimationFrame(()=>{const heading=document.querySelector('.checkout-card[data-step="2"] h2');if(heading){heading.tabIndex=-1;heading.focus();}});
       }catch(error){await showCheckoutError(error, feedback);}
-      finally{reviewButton.disabled=false;global.WVUI?.busy(reviewButton,false);}
+      finally{reviewButton.disabled=false;if(checkPIN)checkPIN.disabled=false;global.WVUI?.busy(reviewButton,false);}
     });
     const saveAddress=document.querySelector('[data-checkout-save-address]');
     saveAddress?.addEventListener('click',async()=>{
@@ -928,12 +999,18 @@
         if (deliveryLocation) deliveryLocation.textContent = [values.city, values.state || values.region].filter(Boolean).join(', ') || 'Choose delivery location';
       };
       checkoutAddressForm.addEventListener("input", event => {
-        if (event.target.name === "postal_code") clearCheckoutFieldError("checkout-postal-error");
+        if (event.target.name === "postal_code") {
+          clearCheckoutFieldError("checkout-postal-error");
+          const pinRecovery = document.querySelector("[data-checkout-pin-recovery]");
+          if (pinRecovery) pinRecovery.hidden = true;
+          updateCheckoutDelivery(null);
+        }
         updateSummary();
       });
       checkoutAddressForm.addEventListener("change", function () {
         queueMicrotask(() => {
           clearCheckoutFieldError("checkout-postal-error");
+          updateCheckoutDelivery(null);
           updateSummary();
         });
       });

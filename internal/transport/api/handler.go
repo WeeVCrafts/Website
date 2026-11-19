@@ -301,6 +301,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		CouponCode     string                      `json:"coupon_code"`
 		UseStoreCredit bool                        `json:"use_store_credit"`
 		ExpectedCredit *int64                      `json:"expected_credit_cents"`
+		ExpectedItems  string                      `json:"expected_cart_items_key"`
 		ExpectedPolicy *int64                      `json:"expected_policy_revision"`
 		ExpectedTotal  *int64                      `json:"expected_total_cents"`
 		Address        domaincommerce.AddressInput `json:"address"`
@@ -341,6 +342,9 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 			missing := int64(-1)
 			input.ExpectedPolicy = &missing
 		}
+	}
+	if input.ExpectedItems != "" {
+		r = r.WithContext(domaincommerce.WithExpectedCartItems(r.Context(), input.ExpectedItems))
 	}
 	if input.ExpectedPolicy != nil {
 		r = r.WithContext(storefront.WithExpectedPolicy(r.Context(), *input.ExpectedPolicy))

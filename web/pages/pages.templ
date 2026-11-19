@@ -405,15 +405,23 @@ templ CheckoutItems(items []viewmodels.CartItem) {
 }
 
 templ CheckoutSummaryItems(items []viewmodels.CartItem) {
-  for _, item := range items {
-    <p><span>{ item.Product.Name }
-        if item.CheckoutBlocked {
-          <p>Checkout is unavailable for this option.</p>
+  for _, group := range checkoutMakerGroups(items) {
+    <section class="checkout-maker-group">
+      <h3>{ group.Name }</h3>
+      <ul>
+        for _, item := range group.Items {
+          <li><img src={ item.Product.ImageURL } alt="" width="48" height="52" loading="lazy"/><div><span>{ item.Product.Name }</span>
+            if item.VariantName != "" {
+              <small>{ components.CustomerOption(item.VariantName) }</small>
+            }
+            <small>Qty { item.Quantity }</small>
+            if item.CheckoutBlocked {
+              <small class="ui-field-error">Checkout is unavailable for this option.</small>
+            }
+          </div><b>{ checkoutMoney("INR "+storefrontReadMoney(item.Product.PriceCents*int64(item.Quantity))) }</b></li>
         }
-        if item.VariantName != "" {
-        <small>{ components.CustomerOption(item.VariantName) }</small>
-      }
-      <small>x { item.Quantity }</small></span><b>{ checkoutMoney(item.Product.Price) }</b></p>
+      </ul>
+    </section>
   }
 }
 
@@ -1160,19 +1168,20 @@ templ Checkout(p viewmodels.CustomerPage) {
     if len(p.Cart) == 0 {
       <section class="container page-intro compact-intro">@Breadcrumb("Home", "Checkout")<h1>{ storefrontNativeHeading(p,"Your cart is empty") }</h1><p>Choose a handmade piece before checking out.</p><a class="primary-button" href="/products">Continue shopping</a></section>
     } else {
-    <section class="container page-intro checkout-intro checkout-reference">
-      <div class="checkout-topbar"><a class="checkout-brand" href="/"><img src={ assets.URL("images/brand/weevcrafts-logo.png") } alt="" width="32" height="32"/><span>Weevcrafts</span></a><span class="checkout-secure"><span class="material-symbols-outlined" aria-hidden="true">lock</span> Secure checkout</span></div>
-      @Breadcrumb("Home", "Checkout")
-      <h1>{ storefrontNativeHeading(p,"Checkout") }</h1>
-      <div class="steps" role="list" aria-label="Checkout progress"><span class="active" role="listitem"><i>1</i><b>Address</b></span><i></i><span :class="checkoutStep >= 2 ? 'active' : ''" role="listitem"><i>2</i><b>Review &amp; pay</b></span></div>
+    <section class="container checkout-intro checkout-reference">
+      <h1 class="sr-only">{ storefrontNativeHeading(p,"Checkout") }</h1>
+      <ol class="steps" aria-label="Checkout progress">
+        <li class="active" :aria-current="checkoutStep === 1 ? 'step' : null"><i aria-hidden="true">1</i><b>Delivery address</b></li>
+        <li :class="checkoutStep === 2 ? 'active' : ''" :aria-current="checkoutStep === 2 ? 'step' : null"><i aria-hidden="true">2</i><b>Review and pay</b></li>
+      </ol>
     </section>
     if p.CheckoutIntentID!="" {
-<div class="container utility-callout" data-checkout-intent={p.CheckoutIntentID}><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><p><strong>Buying this item only</strong>Your other cart items are saved. <a href="/cart">View your shopping cart</a></p></div>
+<div class="container utility-callout checkout-intent-notice" data-checkout-intent={p.CheckoutIntentID}><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><p><strong>Buying this item only</strong>Your other cart items are saved. <a href="/cart">View your shopping cart</a></p></div>
 }
-<section class="container checkout-layout">
+<section class="container checkout-layout checkout-guided" data-checkout-item-count={fmt.Sprint(p.CartCount)} data-checkout-items-key={checkoutCartItemsKey(p.Cart)}>
       <div class="checkout-main">
         <section class="checkout-card checkout-step-card" data-step="1" x-show="checkoutStep === 1">
-          <header><h2><span>1</span> Delivery address</h2></header>
+          <header><h2 tabindex="-1">Delivery address</h2></header>
           <form id="checkout-address-form" class="utility-form" data-backend-address>
             <input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="policy_revision" value={ fmt.Sprint(p.StorefrontRevision) }/>
             if len(p.Addresses) > 0 {
@@ -1183,29 +1192,31 @@ templ Checkout(p viewmodels.CustomerPage) {
               </select></label>
             }
             if p.UserName != "" || p.UserPhone != "" {
-              <div class="checkout-quick-fill"><div><strong>Save time</strong><small>Use your account details for the contact fields.</small></div><button class="outline-button" type="button" data-checkout-prefill="account" data-name={ p.UserName } data-phone={ p.UserPhone }><span class="material-symbols-outlined" aria-hidden="true">auto_fix_high</span>Use account details</button></div>
+              <div class="checkout-quick-fill"><button class="outline-button" type="button" data-checkout-prefill="account" data-name={ p.UserName } data-phone={ p.UserPhone }><span class="material-symbols-outlined" aria-hidden="true">auto_fix_high</span>Use account details</button></div>
             }
             <p class="checkout-prefill-status" data-checkout-prefill-status role="status" aria-live="polite" aria-atomic="true"></p>
-            <label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
-            <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" inputmode="tel" autocomplete="tel" required maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed"/></label>
+            <div class="checkout-address-locality"><label>Recipient name<input name="recipient_name" value={ p.Address.Name } autocomplete="name" required minlength="2"/></label>
+            <label>Phone number<input name="phone" value={ p.Address.Phone } type="tel" inputmode="tel" autocomplete="tel" required maxlength="24" pattern="\+?[0-9][0-9 ()\x2D]{5,22}" title="Enter 7 to 15 digits; spaces, parentheses and hyphens are allowed"/></label></div>
             <label>Address line<input name="line1" value={ p.Address.Line1 } autocomplete="address-line1" required minlength="4"/></label>
             <label>Apartment / landmark (optional)<input name="line2" value={ p.Address.Line2 } autocomplete="address-line2"/></label>
-            <label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
+            <div class="checkout-address-locality"><label>City<input name="city" value={ p.Address.City } autocomplete="address-level2" required/></label>
             <label>State / region<input name="state" value={ p.Address.State } autocomplete="address-level1" list="indian-states" required/></label>
             <input name="region" type="hidden" value={ p.Address.State }/>
-            <label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code" aria-describedby="checkout-postal-error"/><span id="checkout-postal-error" class="ui-field-error" hidden></span></label>
-            <label>Delivery country<input value="India" disabled/><input name="country_code" type="hidden" value="IN"/></label>
+            <div class="checkout-pin"><label>Postal code<input name="postal_code" value={ p.Address.PostalCode } autocomplete="postal-code" required inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" title="Enter a valid six-digit Indian PIN code" aria-describedby="checkout-postal-error"/><span id="checkout-postal-error" class="ui-field-error" hidden></span></label><button type="button" class="outline-button" data-checkout-check-pin>Check delivery</button></div><p class="checkout-delivery-feedback" data-checkout-delivery-feedback role="status"></p><a class="text-link" href="/cart" data-checkout-pin-recovery hidden>Back to cart</a></div>
+            <input name="country_code" type="hidden" value="IN"/>
             <datalist id="indian-states"><option value="Andhra Pradesh"/><option value="Assam"/><option value="Bihar"/><option value="Delhi"/><option value="Goa"/><option value="Gujarat"/><option value="Haryana"/><option value="Karnataka"/><option value="Kerala"/><option value="Madhya Pradesh"/><option value="Maharashtra"/><option value="Odisha"/><option value="Punjab"/><option value="Rajasthan"/><option value="Tamil Nadu"/><option value="Telangana"/><option value="Uttar Pradesh"/><option value="Uttarakhand"/><option value="West Bengal"/></datalist>
-            <button class="primary-button full" type="button" data-checkout-review>Review &amp; pay <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+            <button class="primary-button full" type="button" data-checkout-review>Continue to review <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
             <button class="outline-button full" type="button" data-checkout-save-address>Save address for later</button><p data-checkout-address-feedback role="status"></p>
             @CheckoutErrorRecovery(p)
           </form>
         </section>
         <section class="checkout-card checkout-step-card" data-step="2" x-show="checkoutStep === 2" x-cloak>
-          <header><h2><span>2</span> Review &amp; pay</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
-          <button class="text-button checkout-back" type="button" data-checkout-step="1" @click="checkoutStep=1"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Edit address</button>
-          @CheckoutItems(p.Cart)
-          <div class="checkout-review"><p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span></p><p><strong>Total payable</strong><span class="checkout-amount" data-quote-total>{ checkoutMoney(p.Total) }</span></p></div>
+          <header><h2 tabindex="-1">Review and pay</h2><span class="muted">{ checkoutItemsLabel(p.CartCount) } from { checkoutMakersLabel(p.Cart) }</span></header>
+          <div class="checkout-review">
+            <p><strong>Delivery address</strong><span data-checkout-address-summary>Enter your address in the first step</span><button class="text-button checkout-back" type="button" data-checkout-step="1">Edit address</button></p>
+            <p data-checkout-delivery-detail hidden><strong>Delivery estimate</strong><span data-checkout-delivery-summary></span></p>
+            <p><strong>Payment method</strong><span>Prepaid online payment</span></p>
+          </div>
           <div id="checkout-payment-config" data-payment-mode={ p.PaymentMode } data-payment-public-key={ p.PaymentPublicKey } data-contact-email={p.UserEmail} hidden></div>
           if p.NoPaymentDemo {
             <div class="utility-callout"><span class="material-symbols-outlined" aria-hidden="true">science</span><p>Demo checkout. Your order is saved pending payment. No money is collected.</p></div>
@@ -1226,7 +1237,7 @@ templ Checkout(p viewmodels.CustomerPage) {
           @CheckoutErrorRecovery(p)
         </section>
       </div>
-      <aside class="summary checkout-summary"><h2>Order summary ({ checkoutItemsLabel(p.CartCount) })</h2><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ checkoutMoney(p.ItemsTotal) }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ checkoutMoney(p.ShippingTotal) }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ checkoutMoney(p.DiscountTotal) }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code" aria-describedby="checkout-coupon-error"/><span id="checkout-coupon-error" class="ui-field-error" data-checkout-coupon-error hidden></span><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><button type="button" class="outline-button" data-remove-checkout-coupon hidden?={ p.CouponCode == "" }>Remove coupon</button><small>Review the updated total before placing your order.</small></div><label><input type="checkbox" name="use_store_credit" data-use-store-credit/>Use available store credit (<span data-quote-credit-available>check quote</span>)</label><p>Store credit applied <b data-quote-credit>INR 0.00</b></p><p>Due through Razorpay <b data-quote-cash>{ checkoutMoney(p.Total) }</b></p><hr/><h3>Total payable <strong data-quote-total>{ checkoutMoney(p.Total) }</strong></h3><p>Prepaid orders only. Review the <a href="/returns-replacements-authenticity">returns, replacements and authenticity policy</a> before ordering. Eligible claim windows and return fees apply.</p><small>Items are held for up to 30 minutes while payment is completed.</small></aside>
+      <aside class="checkout-summary" aria-label="Order summary"><details class="checkout-summary-disclosure" open><summary><strong class="checkout-summary-title">Order summary</strong><span data-quote-total>{ checkoutMoney(p.Total) }</span></summary><div class="summary"><div class="summary-items">@CheckoutSummaryItems(p.Cart)</div><p>Subtotal <b data-quote-subtotal>{ checkoutMoney(p.ItemsTotal) }</b></p><p><span data-quote-shipping-label>Estimated shipping</span> <b data-quote-shipping>{ checkoutMoney(p.ShippingTotal) }</b></p><p class="discount">Coupon discount <b data-quote-discount>{ checkoutMoney(p.DiscountTotal) }</b></p><div class="checkout-coupon"><label for="checkout-coupon-code">Coupon code</label><input id="checkout-coupon-code" name="coupon_code" value={ p.CouponCode } autocomplete="off" maxlength="40" placeholder="Enter code" aria-describedby="checkout-coupon-error"/><span id="checkout-coupon-error" class="ui-field-error" data-checkout-coupon-error hidden></span><button type="button" class="outline-button" data-preview-quote>Apply coupon</button><button type="button" class="outline-button" data-remove-checkout-coupon hidden?={ p.CouponCode == "" }>Remove coupon</button><small>Review the updated total before placing your order.</small></div><label><input type="checkbox" name="use_store_credit" data-use-store-credit/>Use available store credit (<span data-quote-credit-available>check quote</span>)</label><p>Store credit applied <b data-quote-credit>INR 0.00</b></p><p>Due through Razorpay <b data-quote-cash>{ checkoutMoney(p.Total) }</b></p><hr/><h3>Total payable <strong data-quote-total>{ checkoutMoney(p.Total) }</strong></h3><p class="checkout-summary-policy">Prepaid orders only. Review the <a href="/returns-replacements-authenticity">returns, replacements and authenticity policy</a> before ordering. Eligible claim windows and return fees apply.</p><small>Items are held for up to 30 minutes while payment is completed.</small></div></details></aside>
     </section>
     }
   }

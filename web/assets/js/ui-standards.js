@@ -412,7 +412,7 @@
   // Do not automatically retry a request whose completion is uncertain.
   document.addEventListener("submit",async event=> {
     const form=event.target;
-    if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.hasAttribute('hx-post')) return;
+    if(event.defaultPrevented || form.method.toLowerCase()!=="post" || form.matches('[hx-post],[data-native-submit]')) return;
     const action=new URL(event.submitter?.getAttribute("formaction") || form.getAttribute("action") || location.href,location.href);
     const customerForm = customerFormPath(action.pathname) || action.pathname === '/account/fulfillment/action';
     if(action.origin!==location.origin || (!customerForm && !/^\/(admin|seller-admin|support-portal|marketplace-admin|super-admin|finance-portal|operations-portal)\//.test(action.pathname))) return;

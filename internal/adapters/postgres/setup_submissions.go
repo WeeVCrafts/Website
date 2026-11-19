@@ -9,6 +9,7 @@ import (
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -119,74 +120,86 @@ func (r *MarketplaceRepository) ReviewSetupSubmission(ctx context.Context, actor
 		return ports.ErrInvalidState
 	}
 	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
-		a, err := marketplaceIdentity(ctx, tx, actor)
+		if err := requireSetupReviewer(ctx, tx, actor); err != nil {
+			return err
+		}
+		return reviewSetupSubmission(ctx, tx, actor, id, revision, approve, note)
+	})
+}
+
+func requireSetupReviewer(ctx context.Context, tx pgx.Tx, actor int64) error {
+	a, err := marketplaceIdentity(ctx, tx, actor)
+	if err != nil {
+		return err
+	}
+	if a.role != "super_admin" {
+		return ports.ErrForbidden
+	}
+	return nil
+}
+
+func reviewSetupSubmission(ctx context.Context, tx pgx.Tx, actor, id, revision int64, approve bool, note string) error {
+	var err error
+	// Match checkout's seller-first lock ordering before locking the review.
+	var seller, variant, current int64
+	var kind, status, previousNote string
+	var payload []byte
+	if err = tx.QueryRow(ctx, `SELECT seller_id FROM marketplace_setup_submissions WHERE id=$1`, id).Scan(&seller); err != nil {
+		return err
+	}
+	if err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE id=$1 AND status='active' FOR UPDATE`, seller).Scan(&seller); err != nil {
+		return err
+	}
+	if err = tx.QueryRow(ctx, `SELECT kind,status,revision,COALESCE(variant_id,0),payload,review_note FROM marketplace_setup_submissions WHERE id=$1 FOR UPDATE`, id).Scan(&kind, &status, &current, &variant, &payload, &previousNote); err != nil {
+		return err
+	}
+	if status == "approved" && approve && previousNote == note {
+		return nil
+	}
+	if current != revision || status != "submitted" {
+		return ports.ErrFulfillmentConflict
+	}
+	status = "changes_requested"
+	if approve {
+		var data ports.SetupSubmissionData
+		if json.Unmarshal(payload, &data) != nil || !validSetupSubmission(kind, data) {
+			return ports.ErrInvalidState
+		}
+		if kind == "invoice" {
+			prefix := "S" + strings.ToUpper(strconv.FormatInt(seller, 36))
+			if len(prefix) > 6 {
+				return ports.ErrInvalidState
+			}
+			_, err = tx.Exec(ctx, `INSERT INTO seller_invoice_profiles(seller_id,legal_name,address,state_code,gstin,registration,prefix,verified_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(seller_id) DO UPDATE SET legal_name=EXCLUDED.legal_name,address=EXCLUDED.address,state_code=EXCLUDED.state_code,gstin=EXCLUDED.gstin,registration=EXCLUDED.registration,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=seller_invoice_profiles.revision+1,checkout_review_hold=false`, seller, data.LegalName, data.Address, data.StateCode, data.GSTIN, data.Registration, prefix, actor)
+		} else {
+			var registration string
+			if err = tx.QueryRow(ctx, `SELECT registration FROM seller_invoice_profiles WHERE seller_id=$1 AND NOT checkout_review_hold FOR SHARE`, seller).Scan(&registration); err != nil {
+				return ports.ErrInvalidState
+			}
+			if registration == "unregistered" && data.RateBasisPoints != 0 {
+				return ports.ErrInvalidState
+			}
+			var owned int64
+			if err = tx.QueryRow(ctx, `SELECT v.id FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1 AND p.seller_id=$2 AND v.status='active' FOR UPDATE OF v`, variant, seller).Scan(&owned); err != nil {
+				return ports.ErrInvalidState
+			}
+			_, err = tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=variant_tax_profiles.revision+1,checkout_review_hold=false`, variant, data.HSN, data.RateBasisPoints, actor)
+			if err == nil {
+				_, err = tx.Exec(ctx, `UPDATE product_variants SET return_class=$2,return_class_request=$2,updated_at=now() WHERE id=$1`, variant, data.ReturnClass)
+			}
+		}
 		if err != nil {
 			return err
 		}
-		if a.role != "super_admin" {
-			return ports.ErrForbidden
-		}
-		// Match checkout's seller-first lock ordering before locking the review.
-		var seller, variant, current int64
-		var kind, status, previousNote string
-		var payload []byte
-		if err = tx.QueryRow(ctx, `SELECT seller_id FROM marketplace_setup_submissions WHERE id=$1`, id).Scan(&seller); err != nil {
-			return err
-		}
-		if err = tx.QueryRow(ctx, `SELECT id FROM sellers WHERE id=$1 AND status='active' FOR UPDATE`, seller).Scan(&seller); err != nil {
-			return err
-		}
-		if err = tx.QueryRow(ctx, `SELECT kind,status,revision,COALESCE(variant_id,0),payload,review_note FROM marketplace_setup_submissions WHERE id=$1 FOR UPDATE`, id).Scan(&kind, &status, &current, &variant, &payload, &previousNote); err != nil {
-			return err
-		}
-		if status == "approved" && approve && previousNote == note {
-			return nil
-		}
-		if current != revision || status != "submitted" {
-			return ports.ErrFulfillmentConflict
-		}
-		status = "changes_requested"
-		if approve {
-			var data ports.SetupSubmissionData
-			if json.Unmarshal(payload, &data) != nil || !validSetupSubmission(kind, data) {
-				return ports.ErrInvalidState
-			}
-			if kind == "invoice" {
-				prefix := "S" + strings.ToUpper(strconv.FormatInt(seller, 36))
-				if len(prefix) > 6 {
-					return ports.ErrInvalidState
-				}
-				_, err = tx.Exec(ctx, `INSERT INTO seller_invoice_profiles(seller_id,legal_name,address,state_code,gstin,registration,prefix,verified_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(seller_id) DO UPDATE SET legal_name=EXCLUDED.legal_name,address=EXCLUDED.address,state_code=EXCLUDED.state_code,gstin=EXCLUDED.gstin,registration=EXCLUDED.registration,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=seller_invoice_profiles.revision+1,checkout_review_hold=false`, seller, data.LegalName, data.Address, data.StateCode, data.GSTIN, data.Registration, prefix, actor)
-			} else {
-				var registration string
-				if err = tx.QueryRow(ctx, `SELECT registration FROM seller_invoice_profiles WHERE seller_id=$1 AND NOT checkout_review_hold FOR SHARE`, seller).Scan(&registration); err != nil {
-					return ports.ErrInvalidState
-				}
-				if registration == "unregistered" && data.RateBasisPoints != 0 {
-					return ports.ErrInvalidState
-				}
-				var owned int64
-				if err = tx.QueryRow(ctx, `SELECT v.id FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1 AND p.seller_id=$2 AND v.status='active' FOR UPDATE OF v`, variant, seller).Scan(&owned); err != nil {
-					return ports.ErrInvalidState
-				}
-				_, err = tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=variant_tax_profiles.revision+1,checkout_review_hold=false`, variant, data.HSN, data.RateBasisPoints, actor)
-				if err == nil {
-					_, err = tx.Exec(ctx, `UPDATE product_variants SET return_class=$2,return_class_request=$2,updated_at=now() WHERE id=$1`, variant, data.ReturnClass)
-				}
-			}
-			if err != nil {
-				return err
-			}
-			status = "approved"
-		}
-		if _, err = tx.Exec(ctx, `UPDATE marketplace_setup_submissions SET status=$2,review_note=$3,reviewed_by=$4,reviewed_at=now(),revision=revision+1,updated_at=now() WHERE id=$1`, id, status, note, actor); err != nil {
-			return err
-		}
-		if err = setupReviewNotice(ctx, tx, id, "Seller details "+strings.ReplaceAll(status, "_", " ")); err != nil {
-			return err
-		}
-		return marketplaceAudit(ctx, tx, actor, 0, "setup_"+status, fmt.Sprintf("Submission %d: %s", id, note))
-	})
+		status = "approved"
+	}
+	if _, err = tx.Exec(ctx, `UPDATE marketplace_setup_submissions SET status=$2,review_note=$3,reviewed_by=$4,reviewed_at=now(),revision=revision+1,updated_at=now() WHERE id=$1`, id, status, note, actor); err != nil {
+		return err
+	}
+	if err = setupReviewNotice(ctx, tx, id, "Seller details "+strings.ReplaceAll(status, "_", " ")); err != nil {
+		return err
+	}
+	return marketplaceAudit(ctx, tx, actor, 0, "setup_"+status, fmt.Sprintf("Submission %d: %s", id, note))
 }
 
 func setupReviewNotice(ctx context.Context, tx pgx.Tx, id int64, title string) error {
@@ -224,4 +237,53 @@ func (r *MarketplaceRepository) SetupSubmissions(ctx context.Context, actor, id,
 		list = list[:25]
 	}
 	return list, next, rows.Err()
+}
+
+func (r *MarketplaceRepository) ApproveMatchingTaxSubmissions(ctx context.Context, actor int64, revisions map[int64]int64, note string) error {
+	note = strings.TrimSpace(note)
+	if len(revisions) < 2 || len(revisions) > 25 || len(note) < 4 || len(note) > 1000 {
+		return ports.ErrInvalidState
+	}
+	ids := make([]int64, 0, len(revisions))
+	for id := range revisions {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		if err := requireSetupReviewer(ctx, tx, actor); err != nil {
+			return err
+		}
+		var seller int64
+		if err := tx.QueryRow(ctx, `SELECT s.id FROM sellers s JOIN marketplace_setup_submissions m ON m.seller_id=s.id
+			WHERE m.id=$1 AND s.status='active' FOR UPDATE OF s`, ids[0]).Scan(&seller); err != nil {
+			return err
+		}
+		var shared ports.SetupSubmissionData
+		for i, id := range ids {
+			var payload []byte
+			if err := tx.QueryRow(ctx, `SELECT payload FROM marketplace_setup_submissions
+				WHERE id=$1 AND seller_id=$2 AND kind='tax' AND status='submitted' AND revision=$3 FOR UPDATE`,
+				id, seller, revisions[id]).Scan(&payload); err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return ports.ErrFulfillmentConflict
+				}
+				return err
+			}
+			var data ports.SetupSubmissionData
+			if json.Unmarshal(payload, &data) != nil || !validSetupSubmission("tax", data) {
+				return ports.ErrInvalidState
+			}
+			if i == 0 {
+				shared = data
+			} else if data.HSN != shared.HSN || data.RateBasisPoints != shared.RateBasisPoints || data.ReturnClass != shared.ReturnClass {
+				return ports.ErrInvalidState
+			}
+		}
+		for _, id := range ids {
+			if err := reviewSetupSubmission(ctx, tx, actor, id, revisions[id], true, note); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

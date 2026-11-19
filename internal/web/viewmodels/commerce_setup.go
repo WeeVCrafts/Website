@@ -6,6 +6,7 @@ import (
 )
 
 type CommerceSetupPage struct {
+	Shared                         ports.SellerFulfillmentSetup
 	Actor                          ports.CommerceActor
 	CSRFToken, Error, Notice, Root string
 	Rows                           []ports.SellerReadinessOption

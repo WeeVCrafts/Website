@@ -38,6 +38,7 @@ templ Document(p viewmodels.SellerAdminPage) {
           <main id="seller-main" class="seller-content">
             if !p.OwnContentHeading {
  @SellerPageIntro(p)
+ @components.SellerPortalTask(p)
  }
             if p.Notice != "" {
               <div class="seller-notice" role="status"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>{ p.Notice }</div>
@@ -106,7 +107,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
       }
       if p.CanOrders {
         @SellerNav("orders", "Orders & Fulfilment", "inventory_2", p.Active, "/seller-admin/orders")
-        @SellerNav("fulfillment", "Packages & pickups", "local_shipping", p.Active, "/seller-admin/fulfillment")
+        @SellerNav("fulfillment", "Fulfillment", "local_shipping", p.Active, "/seller-admin/fulfillment")
       }
       if p.CanReports {
         @SellerNav("earnings", "Earnings", "account_balance_wallet", p.Active, "/seller-admin/earnings")

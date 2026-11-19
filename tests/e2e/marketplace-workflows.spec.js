@@ -45,7 +45,7 @@ test('HTML policy and claim evidence work at phone and desktop widths', async ({
   }
   const admin=await rolePage(browser,'super_admin',390);
   await admin.page.goto(`${base}${admin.root}?tab=setup`);
-  await expect(admin.page.getByRole('heading',{name:'Finish product setup'})).toBeVisible();
+  await expect(admin.page.getByRole('heading',{name:'Finish seller setup'})).toBeVisible();
   await expect(admin.page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
   expect(await admin.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   await admin.page.screenshot({path:path.resolve('.tmp/policy-super-admin-390.png'),fullPage:true});
@@ -143,7 +143,7 @@ const setupURL=(root,step='')=>`${base}${root}?tab=setup&seller_id=${fixture.Sel
 test('Guided setup shows one form, saves each task, and explains checkout gates',async({browser})=>{
  const {context,page,root}=await rolePage(browser,'super_admin',1536);await page.setViewportSize({width:1536,height:1024});
  await page.goto(`${base}${root}?tab=setup`);
- await expect(page.getByRole('heading',{name:'Finish product setup',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Finish seller setup',exact:true})).toBeVisible();
  await expect(page.getByRole('link',{name:'Fulfillment & exceptions',exact:true})).toHaveAttribute('aria-current','page');
  await expect(page.locator('form[data-fulfillment-setup-action]')).toHaveCount(0);
  await page.getByLabel('Find product',{exact:true}).fill('no-such-approved-product');await page.getByRole('button',{name:'Apply filters',exact:true}).click();
@@ -214,7 +214,7 @@ test('Guided screens fit phone widths and keyboard navigation preserves unfinish
  }
  await page.keyboard.press('Tab');
  await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Fulfillment & exceptions',exact:true})).toBeVisible();await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Open admin navigation'})).toBeFocused();
- await page.goto(setupURL(root,'invoice'));await page.getByLabel('Legal name',{exact:true}).fill('Unsaved isolated edit');await page.getByRole('link',{name:'Back to products',exact:true}).click();await page.getByRole('button',{name:'Discard changes',exact:true}).click();await expect(page.getByRole('heading',{name:'Finish product setup'})).toBeVisible();
+ await page.goto(setupURL(root,'invoice'));await page.getByLabel('Legal name',{exact:true}).fill('Unsaved isolated edit');await page.getByRole('link',{name:'Back to products',exact:true}).click();await page.getByRole('button',{name:'Discard changes',exact:true}).click();await expect(page.getByRole('heading',{name:'Finish seller setup'})).toBeVisible();
  await context.close();
 });
 

@@ -9,10 +9,13 @@ import (
 
 templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 	<div class="fulfillment-operations">
+ if p.Role=="seller" {
+  @SellerFulfillmentTabs(false)
+ }
 		if p.Role=="customer" {
  @MarketplacePolicyControls(p)
 }
-		<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
+		<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><input type="hidden" name="tab" value="operations"/><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
 		if p.Number=="" {
 if p.Role=="super_admin" {
 <p><a class="commerce-button secondary" href="/super-admin/fulfillment/reviews">Review seller invoice and tax submissions</a></p>
@@ -24,9 +27,11 @@ if p.Role=="super_admin" {
 			<ul>
 				for _,o:=range p.Orders {
 					<li>
-						<a href={ templ.SafeURL(p.Root + "?order=" + url.QueryEscape(o.Number)) }>
-							{ o.Number }
-						</a> — { strings.ReplaceAll(o.Status,"_"," ") }
+						if p.Role=="seller" {
+							<a href={templ.SafeURL("/seller-admin/orders/"+url.PathEscape(o.Number)+"?tab=packages")}>{o.Number}</a> · {sellerFulfillmentNextAction(o)}
+						} else {
+							<a href={templ.SafeURL(p.Root+"?order="+url.QueryEscape(o.Number))}>{o.Number}</a> · {strings.ReplaceAll(o.Status,"_"," ")}
+						}
 					</li>
 				}
 			</ul>

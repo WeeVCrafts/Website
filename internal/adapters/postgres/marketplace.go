@@ -59,13 +59,18 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		return v, err
 	}
 	if number == "" {
-		rows, e := r.readSource().Query(ctx, `SELECT o.id,o.order_number,o.lifecycle_status FROM orders o WHERE ($1 OR ($2='customer' AND o.user_id=$3) OR ($2='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$4))) AND ($5=0 OR o.id<$5) ORDER BY o.id DESC LIMIT 51`, a.company(), a.role, actor, a.seller, before)
+		rows, e := r.readSource().Query(ctx, `SELECT o.id,o.order_number,o.lifecycle_status,
+			CASE WHEN $2='seller' AND o.workflow_version=2 THEN
+				CASE WHEN o.lifecycle_status='awaiting_payment' THEN 'awaiting_payment'
+				     ELSE COALESCE((SELECT sf.lifecycle_status FROM seller_fulfillments sf WHERE sf.order_id=o.id AND sf.seller_id=$4),'') END
+			ELSE '' END
+			FROM orders o WHERE ($1 OR ($2='customer' AND o.user_id=$3) OR ($2='seller' AND EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND seller_id=$4))) AND ($5=0 OR o.id<$5) ORDER BY o.id DESC LIMIT 51`, a.company(), a.role, actor, a.seller, before)
 		if e != nil {
 			return v, e
 		}
 		for rows.Next() {
 			var x ports.MarketplaceOrderSummary
-			if e = rows.Scan(&x.ID, &x.Number, &x.Status); e != nil {
+			if e = rows.Scan(&x.ID, &x.Number, &x.Status, &x.SellerStage); e != nil {
 				break
 			}
 			v.Orders = append(v.Orders, x)

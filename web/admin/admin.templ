@@ -150,6 +150,9 @@ if p.GuidedFulfillment {
             }
 
             @UserManagementNavigation(p)
+            if p.PortalRoot == "/super-admin" && !p.GuidedFulfillment {
+              @components.SuperAdminPortalTask(p)
+            }
             { children... }
 
             @components.PortalPagination(p.Pagination)

@@ -55,6 +55,12 @@ type CommerceActor struct {
 	Role, Name, Email, Seller string
 	SellerID                  int64
 }
+type SellerFulfillmentSetup struct {
+	InvoiceVerified, PickupVerified bool
+	InvoiceSubmissionID             int64
+	InvoiceSubmissionStatus         string
+}
+
 type SellerReadinessOption struct {
 	ShippingReadiness
 	ProductStatus string

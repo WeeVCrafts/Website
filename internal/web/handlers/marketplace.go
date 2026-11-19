@@ -89,6 +89,10 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 		if number == "" {
 			number = r.URL.Query().Get("order")
 		}
+		if root == "/seller-admin/fulfillment" && number == "" && r.URL.Query().Get("tab") == "setup" && (r.Method == "GET" || r.Method == "HEAD") {
+			http.Redirect(w, r, "/seller-admin/setup", http.StatusSeeOther)
+			return
+		}
 		if len(number) > 120 {
 			http.Error(w, "Invalid order", 400)
 			return
@@ -296,7 +300,13 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 							marketplaceHTTPError(w, err)
 							return
 						}
-						q.Set("step", next.FirstMissingStep())
+						if next.Setup.Query.VariantID > 0 {
+							q.Set("step", next.FirstMissingStep())
+						} else if c.Action == "save_invoice_profile" && !next.Setup.PickupReady {
+							q.Set("step", "pickup")
+						} else {
+							q.Del("step")
+						}
 					}
 					q.Set("saved", "1")
 					q.Set("saved_action", c.Action)
@@ -444,7 +454,7 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 		var document templ.Component
 		switch view.Role {
 		case "seller":
-			document = sellerpages.Document(viewmodels.SellerAdminPage{Title: "Order fulfillment", Active: "orders", DisplayName: "Seller", CSRFToken: session.CSRFToken, CanOrders: true, CanProducts: true, CanInventory: true, CanReturns: true, CanReports: true})
+			document = sellerpages.Document(viewmodels.SellerAdminPage{Title: "Order fulfillment", Active: "fulfillment", DisplayName: "Seller", CSRFToken: session.CSRFToken, CanOrders: true, CanProducts: true, CanInventory: true, CanReturns: true, CanReports: true})
 		case "admin", "super_admin":
 			label := "Admin"
 			if view.Role == "super_admin" {

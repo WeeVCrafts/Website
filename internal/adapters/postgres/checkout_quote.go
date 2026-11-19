@@ -77,10 +77,11 @@ func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int6
 		}
 		quote.PolicyRevision = revision.ID
 		err := tx.QueryRow(ctx, `SELECT COALESCE(SUM(ci.quantity*pv.price_cents),0),COALESCE(SUM(ci.quantity),0),
+	 COALESCE(string_agg(ci.variant_id::text||':'||ci.quantity::text||':'||pv.price_cents::text, ',' ORDER BY ci.variant_id),''),
 	 COALESCE(BOOL_AND(COALESCE(p.status='approved' AND s.status='active' AND pv.status='active',false) AND COALESCE(i.available_quantity,0)>=ci.quantity),false)
 	 FROM carts c JOIN cart_items ci ON ci.cart_id=c.id JOIN product_variants pv ON pv.id=ci.variant_id
 	 JOIN products p ON p.id=pv.product_id LEFT JOIN sellers s ON s.id=p.seller_id LEFT JOIN inventory_stock i ON i.variant_id=pv.id
-	 WHERE c.id=$1 AND c.user_id=$2 AND c.status='active' AND c.expires_at>NOW()`, cartID, userID).Scan(&quote.SubtotalCents, &quote.ItemCount, &quote.Available)
+	 WHERE c.id=$1 AND c.user_id=$2 AND c.status='active' AND c.expires_at>NOW()`, cartID, userID).Scan(&quote.SubtotalCents, &quote.ItemCount, &quote.CartItemsKey, &quote.Available)
 		if err != nil {
 			return err
 		}

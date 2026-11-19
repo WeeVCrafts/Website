@@ -8,7 +8,18 @@ import (
 templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
  <div class="guided-workspace">
   if p.Setup.Query.VariantID==0 {
-   @GuidedOverview(p)
+   if p.SetupStep=="invoice" || p.SetupStep=="pickup" {
+    <header class="guided-heading"><div><h1>{p.Setup.Seller} fulfillment setup</h1><a href={templ.SafeURL(p.OverviewURL())}>Back to seller setup</a></div></header>
+    <div class="guided-task">
+     if p.SetupStep=="invoice" {
+      @MarketplaceInvoiceSetup(p)
+     } else {
+      @MarketplacePickupSetup(p)
+     }
+    </div>
+   } else {
+    @GuidedOverview(p)
+   }
   } else {
    <header class="guided-heading"><h1>Product setup</h1><a aria-label="Back to products" href={templ.SafeURL(p.OverviewURL())}>← Back to products</a></header>
    <div class="guided-product"><div><h2>{p.Setup.Product}</h2><p>{p.Setup.Seller}<span class="guided-sku"> · {p.Setup.SKU}</span></p></div><p>
@@ -65,11 +76,25 @@ templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
 templ GuidedOverview(p viewmodels.MarketplacePage) {
  <div class="guided-overview-chrome"><strong>Fulfillment</strong><span><i class="material-symbols-outlined" aria-hidden="true">person</i>Super Admin</span></div>
  <nav class="guided-overview-tabs" aria-label="Fulfillment sections"><a href={templ.SafeURL(p.Root+"?tab=operations")}>Operations</a><a href={templ.SafeURL(p.SetupURL())} aria-current="page">Guided setup</a></nav>
- <header class="guided-heading"><div><h1>Finish product setup</h1><p>Choose a product. We will guide you through only the missing details.</p></div></header>
+ <header class="guided-heading"><div><h1>Finish seller setup</h1><p>Choose a seller to verify shared details and review product exceptions.</p></div></header>
  <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/>
   <label>Seller<select name="seller_id">@SetupOptions(p.Setup.Sellers,p.Setup.Query.SellerID,"All sellers")</select></label>
   <label>Find product<input name="product_q" value={p.Setup.Query.ProductSearch} maxlength="120" placeholder="Search product name or SKU"/></label><button type="submit">Apply filters</button>
  </form>
+ if p.Setup.Query.SellerID > 0 {
+  <section class="commerce-panel">
+   <h2>{p.Setup.Seller}</h2>
+   <p>These verified details apply to the seller’s catalog.</p>
+   <ul>
+    <li>Invoice details · {guidedVerifiedLabel(p.Setup.InvoiceReady)} <a href={templ.SafeURL(p.SetupURL("step","invoice"))}>Open invoice setup</a></li>
+    <li>Pickup location · {guidedVerifiedLabel(p.Setup.PickupReady)} <a href={templ.SafeURL(p.SetupURL("step","pickup"))}>Open pickup setup</a></li>
+    <li><a href="/super-admin/fulfillment/reviews">Review seller submissions</a></li>
+   </ul>
+  </section>
+ }
+ if p.Setup.Query.SellerID==0 && p.Setup.Query.ProductSearch=="" {
+  <section class="guided-empty"><h2>Choose a seller to start</h2><p>Select a seller above to see shared setup and product options.</p></section>
+ } else {
  <div class="guided-catalog"><div class="guided-catalog-head" aria-hidden="true"><span>Product</span><span>Missing details</span><span>Next action</span></div>
   for _,r:=range p.Readiness {
    <article class="guided-product-row"><div><h2>{r.Product}</h2><p>{r.Seller}</p><small>{r.SKU}</small></div><div class="guided-missing-list">
@@ -87,6 +112,7 @@ templ GuidedOverview(p viewmodels.MarketplacePage) {
     }
     if guidedDetailsReady(r) {
      <strong class="guided-complete">Setup complete</strong>
+     <span>{guidedCatalogState(p,r)}</span>
     }
     <small>{guidedCompleted(r)} of 4 tasks complete</small>
    </div><a class="guided-primary" href={templ.SafeURL(p.SetupURL("seller_id",fmt.Sprint(r.SellerID),"variant_id",fmt.Sprint(r.VariantID),"step","","pickup_choices",""))} aria-label={"Continue setup for "+r.Product+" · "+r.SKU}>Continue setup <span aria-hidden="true">→</span></a></article>
@@ -95,6 +121,7 @@ templ GuidedOverview(p viewmodels.MarketplacePage) {
    <div class="guided-empty"><h2>No approved products match</h2><p>Try another seller or product name. Products must be approved and active to appear here.</p><a href={templ.SafeURL(p.SetupURL("seller_id","","product_q","","setup_before",""))}>Clear filters</a></div>
   }
  </div>
+ }
  <nav class="guided-pagination" aria-label="Product pages">
   if p.NextSetupID>0 {
    <a href={templ.SafeURL(p.SetupURL("setup_before",fmt.Sprint(p.NextSetupID)))}>More products →</a>

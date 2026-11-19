@@ -266,18 +266,18 @@
       if(!variantId)throw new Error('Choose an available product option.');
       return unwrap(await this.call(ROOT+'/checkout/intents',{method:'POST',authenticated:true,headers:{'Idempotency-Key':key},body:{variant_id:variantId,quantity:Number(quantity||1)}}));
     }
-    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
-		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
+    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey);
 	}
-    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
-		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision);
+    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
+		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey);
 	}
-    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision) {
+    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
       if (!cartID) cartID = unwrap(await this.call(ROOT + "/cart")).id;
 	  return this.call(ROOT + path, {
         method: "POST", authenticated: true,
         headers: { "Idempotency-Key": idempotencyKey },
-        body: { cart_id: cartID, idempotency_key: idempotencyKey, address: {
+        body: { cart_id: cartID, idempotency_key: idempotencyKey, expected_cart_items_key: itemsKey, address: {
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"

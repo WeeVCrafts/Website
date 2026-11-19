@@ -22,13 +22,18 @@ type OrderService struct {
 	repository ports.OrderRepository
 }
 
-func (s *OrderService) CheckDelivery(ctx context.Context, userID, cartID int64, pin string) error {
+func (s *OrderService) PreviewDelivery(ctx context.Context, userID, cartID int64, pin string) (domaincommerce.CheckoutDelivery, error) {
+	if repo, ok := s.repository.(interface {
+		PreviewDelivery(context.Context, int64, int64, string) (domaincommerce.CheckoutDelivery, error)
+	}); ok {
+		return repo.PreviewDelivery(ctx, userID, cartID, pin)
+	}
 	if repo, ok := s.repository.(interface {
 		CheckDelivery(context.Context, int64, int64, string) error
 	}); ok {
-		return repo.CheckDelivery(ctx, userID, cartID, pin)
+		return domaincommerce.CheckoutDelivery{}, repo.CheckDelivery(ctx, userID, cartID, pin)
 	}
-	return nil
+	return domaincommerce.CheckoutDelivery{}, nil
 }
 
 func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon string) (domaincommerce.CheckoutQuote, error) {

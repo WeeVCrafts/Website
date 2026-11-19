@@ -91,7 +91,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if p.Route == "/" {
+		if !p.SellerNotifications {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a class=\"homepage-delivery\" href=\"/shipping\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -328,7 +328,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if p.Route != "/" {
+		if p.SellerNotifications {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<a href=\"/featured-products\">Featured products</a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -373,7 +373,7 @@ func Header(p viewmodels.CustomerPage) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if p.Route == "/" {
+		if !p.SellerNotifications {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<a class=\"homepage-offers\" href=\"/deals\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_offer</span>Offers</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

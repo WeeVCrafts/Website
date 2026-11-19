@@ -195,6 +195,8 @@ func (h *MarketplaceHandler) loadSetup(ctx context.Context, actor int64, p *view
 		default:
 			p.SetupStep = p.FirstMissingStep()
 		}
+	} else if d.Query.SellerID > 0 && (q.Get("step") == "invoice" || q.Get("step") == "pickup") {
+		p.SetupStep = q.Get("step")
 	}
 	// A live read is requested explicitly; routine invoice/tax editing does not
 	// wait on Shiprocket. Saving always revalidates with the provider.

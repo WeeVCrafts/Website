@@ -46,6 +46,8 @@ func (p MarketplacePage) GuidedSteps() []GuidedSetupStep {
 		return steps
 	}
 	steps[0].Complete = r.Query.VariantID > 0
+	steps[1].Complete = r.InvoiceReady
+	steps[2].Complete = r.PickupReady
 	if r.Selected != nil {
 		s := r.Selected
 		steps[1].Complete = s.InvoiceReady
