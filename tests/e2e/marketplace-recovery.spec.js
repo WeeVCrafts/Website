@@ -171,8 +171,7 @@ test('seller refresh updates a pristine view and print data together', async ({ 
   await expect(detail).toContainText('Fulfilment: Delivered');
   await expect(detail.locator('[data-fulfillment-form]')).toHaveCount(0);
   await expect(printing).toContainText('QA-NEW-TRACKING');
-  const print = detail.getByRole('button', { name: 'Print shipping label' });
-  if (!await print.isVisible()) await detail.getByText('Print documents', { exact: true }).click();
+  const print = detail.getByRole('button', { name: 'Print address sheet', exact: true });
   await print.click();
   await expect.poll(() => page.evaluate(() => window.fixturePrinted)).toBe('label');
 });
