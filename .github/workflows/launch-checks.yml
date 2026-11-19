@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   application:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
       postgres:
@@ -70,7 +70,7 @@ jobs:
         run: npx playwright test -c tests/e2e/fulfillment-navigation.config.js
       - run: npx playwright test -c tests/e2e/finance-controls.config.js
   authenticated-marketplace:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       postgres:
@@ -121,7 +121,7 @@ jobs:
         run: |
           touch "$MARKETPLACE_PREVIEW_URL_FILE.stop"
           if [ -f /tmp/weev-marketplace-preview.pid ]; then kill "$(cat /tmp/weev-marketplace-preview.pid)" 2>/dev/null || true; fi
-          cat /tmp/weev-marketplace-preview.log
+          if [ -f /tmp/weev-marketplace-preview.log ]; then cat /tmp/weev-marketplace-preview.log; fi
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -130,7 +130,7 @@ jobs:
             /tmp/weevcrafts-playwright
             /tmp/weev-marketplace-preview.log
   security:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
