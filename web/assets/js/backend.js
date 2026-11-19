@@ -266,13 +266,13 @@
       if(!variantId)throw new Error('Choose an available product option.');
       return unwrap(await this.call(ROOT+'/checkout/intents',{method:'POST',authenticated:true,headers:{'Idempotency-Key':key},body:{variant_id:variantId,quantity:Number(quantity||1)}}));
     }
-    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
-		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey);
+    async checkout(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey, expectedShipping) {
+		return this.checkoutAt("/checkout", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey, expectedShipping);
 	}
-    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
-		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey);
+    async checkoutNoPayment(address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey, expectedShipping) {
+		return this.checkoutAt("/checkout/no-payment", address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey, expectedShipping);
 	}
-    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey) {
+    async checkoutAt(path, address, idempotencyKey, couponCode, expectedTotal, cartID, policyRevision, itemsKey, expectedShipping) {
       if (!cartID) cartID = unwrap(await this.call(ROOT + "/cart")).id;
 	  return this.call(ROOT + path, {
         method: "POST", authenticated: true,
@@ -281,7 +281,7 @@
           recipient_name: address.recipient_name, phone: address.phone, line1: address.line1,
           line2: address.line2 || "", city: address.city, state: address.state || address.region || "",
           postal_code: address.postal_code, country_code: address.country_code || "IN"
-        }, coupon_code: couponCode || "", use_store_credit: !!document.querySelector('[name="use_store_credit"]')?.checked, expected_credit_cents: global.weevcraftsCreditQuote || 0, expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
+        }, coupon_code: couponCode || "", use_store_credit: !!document.querySelector('[name="use_store_credit"]')?.checked, expected_credit_cents: global.weevcraftsCreditQuote || 0, expected_shipping_cents: expectedShipping, expected_total_cents: expectedTotal, expected_policy_revision: policyRevision, checkout_intent_id: document.querySelector("[data-checkout-intent]")?.dataset.checkoutIntent || undefined }
       });
     }
 

@@ -26,7 +26,7 @@ func TestPrepaidDeliveryEstimateRequiresNoShipment(t *testing.T) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		fmt.Fprint(w, `{"data":{"recommended_courier_company_id":51,"available_courier_companies":[{"courier_company_id":51,"courier_name":"Fixture","estimated_delivery_days":"4"},{"courier_company_id":52,"courier_name":"Blocked","blocked":1,"estimated_delivery_days":"1"}]}}`)
+		fmt.Fprint(w, `{"currency":"INR","data":{"recommended_courier_company_id":51,"available_courier_companies":[{"courier_company_id":51,"courier_name":"Fixture","rate":"63.42","estimated_delivery_days":"4"},{"courier_company_id":52,"courier_name":"Blocked","blocked":1,"rate":10,"estimated_delivery_days":"1"},{"courier_company_id":53,"courier_name":"Cheaper","rate":40,"estimated_delivery_days":6}]}}`)
 	}))
 	defer server.Close()
 	gateway := New(server.URL, "fixture@example.com", "fixture")
@@ -39,6 +39,10 @@ func TestPrepaidDeliveryEstimateRequiresNoShipment(t *testing.T) {
 	available, days, err := estimate.DeliveryEstimate(t.Context(), "500079", "110030", ports.Parcel{WeightGrams: 500, LengthCM: 10, WidthCM: 10, HeightCM: 10})
 	if err != nil || !available || days != 4 {
 		t.Fatalf("got available=%t days=%d err=%v", available, days, err)
+	}
+	rate, err := gateway.DeliveryRate(t.Context(), "500079", "110030", ports.Parcel{WeightGrams: 500, LengthCM: 10, WidthCM: 10, HeightCM: 10})
+	if err != nil || rate.ID != 51 || rate.RateCents != 6342 || rate.EstimatedDays != "4" {
+		t.Fatalf("got rate=%+v err=%v", rate, err)
 	}
 }
 

@@ -10,6 +10,7 @@ type CheckoutDelivery struct {
 type CheckoutQuote struct {
 	CartItemsKey string `json:"cart_items_key,omitempty"`
 	CheckoutDelivery
+	ShippingPending      bool  `json:"shipping_pending,omitempty"`
 	CreditAvailableCents int64 `json:"credit_available_cents"`
 	CreditCents          int64 `json:"credit_cents"`
 	CashDueCents         int64 `json:"cash_due_cents"`
@@ -39,4 +40,15 @@ func WithExpectedCartItems(ctx context.Context, key string) context.Context {
 func ExpectedCartItems(ctx context.Context) string {
 	key, _ := ctx.Value(expectedCartItemsKey{}).(string)
 	return key
+}
+
+type expectedShippingKey struct{}
+
+func WithExpectedShipping(ctx context.Context, cents int64) context.Context {
+	return context.WithValue(ctx, expectedShippingKey{}, cents)
+}
+
+func ExpectedShipping(ctx context.Context) (int64, bool) {
+	cents, ok := ctx.Value(expectedShippingKey{}).(int64)
+	return cents, ok
 }

@@ -34,15 +34,7 @@ func (g *Gateway) DeliveryAvailable(ctx context.Context, pickup, destination str
 }
 
 func (g *Gateway) DeliveryEstimate(ctx context.Context, pickup, destination string, parcel ports.Parcel) (bool, int, error) {
-	if !indianPostcode(pickup) || !indianPostcode(destination) || !parcel.Valid() {
-		return false, 0, ports.ErrShippingInput
-	}
-	query := url.Values{"pickup_postcode": {pickup}, "delivery_postcode": {destination}, "cod": {"0"}, "weight": {strconv.FormatFloat(float64(parcel.WeightGrams)/1000, 'f', 3, 64)}, "length": {strconv.Itoa(parcel.LengthCM)}, "breadth": {strconv.Itoa(parcel.WidthCM)}, "height": {strconv.Itoa(parcel.HeightCM)}}
-	options, err := g.availableCouriers(ctx, query)
-	available := len(options) > 0
-	if g.courierResult != nil {
-		g.courierResult(available, err)
-	}
+	options, err := g.deliveryOptions(ctx, pickup, destination, parcel)
 	days := 0
 	for _, option := range options {
 		estimate, _ := strconv.Atoi(option.EstimatedDays)
@@ -50,7 +42,44 @@ func (g *Gateway) DeliveryEstimate(ctx context.Context, pickup, destination stri
 			days = estimate
 		}
 	}
-	return available, days, err
+	return len(options) > 0, days, err
+}
+
+func (g *Gateway) DeliveryRate(ctx context.Context, pickup, destination string, parcel ports.Parcel) (ports.CourierOption, error) {
+	options, err := g.deliveryOptions(ctx, pickup, destination, parcel)
+	if err != nil {
+		return ports.CourierOption{}, err
+	}
+	if len(options) == 0 {
+		return ports.CourierOption{}, ports.ErrDeliveryUnavailable
+	}
+	var selected ports.CourierOption
+	for _, option := range options {
+		if option.RateCents <= 0 {
+			continue
+		}
+		if selected.ID == 0 || (option.Recommended && !selected.Recommended) ||
+			(option.Recommended == selected.Recommended &&
+				(option.RateCents < selected.RateCents || option.RateCents == selected.RateCents && option.ID < selected.ID)) {
+			selected = option
+		}
+	}
+	if selected.ID == 0 {
+		return selected, ports.ErrShippingUnavailable
+	}
+	return selected, nil
+}
+
+func (g *Gateway) deliveryOptions(ctx context.Context, pickup, destination string, parcel ports.Parcel) ([]ports.CourierOption, error) {
+	if !indianPostcode(pickup) || !indianPostcode(destination) || !parcel.Valid() {
+		return nil, ports.ErrShippingInput
+	}
+	query := url.Values{"pickup_postcode": {pickup}, "delivery_postcode": {destination}, "cod": {"0"}, "weight": {strconv.FormatFloat(float64(parcel.WeightGrams)/1000, 'f', 3, 64)}, "length": {strconv.Itoa(parcel.LengthCM)}, "breadth": {strconv.Itoa(parcel.WidthCM)}, "height": {strconv.Itoa(parcel.HeightCM)}}
+	options, err := g.availableCouriers(ctx, query)
+	if g.courierResult != nil {
+		g.courierResult(len(options) > 0, err)
+	}
+	return options, err
 }
 
 func (g *Gateway) availableCouriers(ctx context.Context, query url.Values) ([]ports.CourierOption, error) {

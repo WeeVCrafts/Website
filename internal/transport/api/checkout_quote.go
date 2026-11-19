@@ -41,20 +41,21 @@ func (h *Handler) CheckoutQuote(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusServiceUnavailable, "CART_UNAVAILABLE", "This checkout is unavailable or expired. Return to the product and start again.")
 		return
 	}
-	quote, err := h.orders.Quote(r.Context(), session.UserID, cart.ID, r.URL.Query().Get("coupon_code"))
-	if err == nil && pin != "" {
-		quote.CheckoutDelivery, err = h.orders.PreviewDelivery(r.Context(), session.UserID, cart.ID, pin)
-	}
+	quote, err := h.orders.Quote(r.Context(), session.UserID, cart.ID, r.URL.Query().Get("coupon_code"), pin)
 	if err != nil {
 		switch {
 		case errors.Is(err, ports.ErrDeliveryUnavailable):
 			writeError(w, http.StatusUnprocessableEntity, "PIN_UNSERVICEABLE", "Delivery is not currently available to this PIN code. Your cart is saved.")
 		case errors.Is(err, ports.ErrShippingParcelMissing):
 			writeError(w, http.StatusUnprocessableEntity, "PARCEL_UNAVAILABLE", "One or more items are temporarily unavailable for delivery. Your cart is saved.")
+		case errors.Is(err, ports.ErrShippingUnavailable), errors.Is(err, ports.ErrShippingPending), errors.Is(err, ports.ErrShippingInput), errors.Is(err, ports.ErrShippingRejected):
+			writeError(w, http.StatusServiceUnavailable, "SHIPPING_QUOTE_UNAVAILABLE", "We couldn’t get a delivery price from Shiprocket. Your cart is saved. Please try again.")
 		case errors.Is(err, ports.ErrCouponInvalid):
 			writeError(w, http.StatusUnprocessableEntity, "COUPON_INVALID", "This coupon is invalid, expired, or unavailable for your items.")
 		case errors.Is(err, ports.ErrCartNotFound):
 			writeError(w, http.StatusUnprocessableEntity, "CART_EMPTY", "Your cart is empty or has expired. Add items before checkout.")
+		case errors.Is(err, ports.ErrQuoteChanged):
+			writeError(w, http.StatusConflict, "CART_CHANGED", "Your cart changed. Return to your cart to review the current items.")
 		case errors.Is(err, ports.ErrInsufficientStock), errors.Is(err, ports.ErrInvalidState):
 			writeError(w, http.StatusUnprocessableEntity, "ITEMS_UNAVAILABLE", "Some items are unavailable or exceed current stock. Update your cart.")
 		default:

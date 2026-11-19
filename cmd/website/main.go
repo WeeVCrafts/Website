@@ -530,7 +530,7 @@ func main() {
 			profile := cfg.Shipping.ParcelProfiles[seller]
 			profiles[seller] = postgres.DeliveryProfile{PostalCode: profile.PostalCode, PackingGrams: profile.PackingGrams, PackingCM: profile.PackingCM}
 		}
-		if cfg.Shipping.BookingsEnabled {
+		if cfg.Shipping.BookingsEnabled || cfg.Shipping.Mode == "live" {
 			commerceRepository.ConfigureCheckoutDelivery(gateway, profiles, cfg.Shipping.Mode)
 		}
 		if cfg.Shipping.Mode == "live" {

@@ -144,13 +144,14 @@ paths:
       summary: Preview current stock, prices, shipping and eligible coupon discount
       security: [{cookieSession: []}]
       parameters:
-        - {name: postal_code, in: query, schema: {type: string, pattern: "^[1-9][0-9]{5}$"}, description: Indian delivery PIN for a serviceability check}
+        - {name: postal_code, in: query, schema: {type: string, pattern: "^[1-9][0-9]{5}$"}, description: Indian delivery PIN for serviceability and live shipping rates}
         - {name: coupon_code, in: query, schema: {type: string, maxLength: 40}}
         - {name: intent, in: query, schema: {type: string, minLength: 48, maxLength: 48}, description: Owned Buy now context; absent uses the normal shopping cart}
       responses:
-        '200': {description: Integer minor-unit subtotal_cents, shipping_cents, discount_cents and total_cents with cart_id and policy_revision}
+        '200': {description: Minor-unit amounts and policy revision. Live quotes without a PIN return shipping_pending and the total is provisional.}
         '403': {description: Authentication required}
         '422': {description: Coupon or cart unavailable, invalid PIN, PIN_UNSERVICEABLE, or PARCEL_UNAVAILABLE}
+        '503': {description: A shipping price could not be retrieved or the checkout service is unavailable}
   /api/v1/checkout:
     post:
       summary: Create one pending-payment order idempotently
@@ -360,6 +361,7 @@ components:
         checkout_intent_id: {type: string, minLength: 48, maxLength: 48, description: Optional owned Buy now context. Its cart must match cart_id when both are supplied.}
         expected_policy_revision: {type: integer, format: int64, minimum: 1, description: Policy revision returned by the reviewed quote; publication invalidates stale quotes even when the total is unchanged}
         expected_total_cents: {type: integer, format: int64, minimum: 0, description: Reviewed quote total; changed totals reject placement without reserving inventory}
+        expected_shipping_cents: {type: integer, format: int64, minimum: 0, description: Reviewed Shiprocket shipping charge; changed charges reject placement even when a coupon absorbs the difference}
         cart_id: {type: integer, format: int64, minimum: 1}
         idempotency_key: {type: string, minLength: 16, description: Used only when the Idempotency-Key header is absent}
         address:

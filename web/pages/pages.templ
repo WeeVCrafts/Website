@@ -1178,7 +1178,7 @@ templ Checkout(p viewmodels.CustomerPage) {
     if p.CheckoutIntentID!="" {
 <div class="container utility-callout checkout-intent-notice" data-checkout-intent={p.CheckoutIntentID}><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span><p><strong>Buying this item only</strong>Your other cart items are saved. <a href="/cart">View your shopping cart</a></p></div>
 }
-<section class="container checkout-layout checkout-guided" data-checkout-item-count={fmt.Sprint(p.CartCount)} data-checkout-items-key={checkoutCartItemsKey(p.Cart)}>
+<section class="container checkout-layout checkout-guided" data-checkout-item-count={fmt.Sprint(p.CartCount)} data-checkout-items-key={checkoutCartItemsKey(p.Cart)} data-checkout-live-rates?={p.LiveDeliveryRates}>
       <div class="checkout-main">
         <section class="checkout-card checkout-step-card" data-step="1" x-show="checkoutStep === 1">
           <header><h2 tabindex="-1">Delivery address</h2></header>
@@ -1229,7 +1229,13 @@ templ Checkout(p viewmodels.CustomerPage) {
             } else {
             <p>Pay securely through Razorpay. We’ll confirm your order once payment is captured.</p>
             }
-            <button class="primary-button full" type="button" data-backend-action="checkout"><span data-checkout-pay-label>Pay { checkoutMoney(p.Total) }</span><span class="material-symbols-outlined" aria-hidden="true">lock</span></button>
+            <button class="primary-button full" type="button" data-backend-action="checkout"><span data-checkout-pay-label>
+              if p.LiveDeliveryRates {
+                Review total to pay
+              } else {
+                Pay { checkoutMoney(p.Total) }
+              }
+            </span><span class="material-symbols-outlined" aria-hidden="true">lock</span></button>
           } else {
             <p class="utility-notice is-error" role="alert">Payments are temporarily unavailable. Your cart is saved.</p><button class="primary-button full" type="button" data-backend-action="checkout" disabled>Payment unavailable</button>
           }

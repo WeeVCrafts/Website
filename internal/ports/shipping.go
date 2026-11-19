@@ -65,6 +65,10 @@ type DeliveryEstimateGateway interface {
 	DeliveryEstimate(context.Context, string, string, Parcel) (available bool, days int, err error)
 }
 
+type PricedDeliveryGateway interface {
+	DeliveryRate(context.Context, string, string, Parcel) (CourierOption, error)
+}
+
 type ProductDeliveryResult struct {
 	State       string `json:"state"`
 	TransitDays int    `json:"transit_days,omitempty"`

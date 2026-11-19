@@ -188,6 +188,7 @@ type CustomerPage struct {
 	OrderCount                                       int
 	SavedProducts                                    []Product
 	ItemsTotal, ShippingTotal, DiscountTotal, Total  string
+	LiveDeliveryRates                                bool
 	Products                                         []Product
 	FilterCounts                                     map[string]int
 	Categories                                       []Category

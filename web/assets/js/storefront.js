@@ -684,6 +684,18 @@
     checkout.open();
   }
 
+  let quotedShippingPIN = "";
+
+  function resetCheckoutShipping() {
+    quotedShippingPIN = "";
+    document.querySelectorAll("[data-quote-shipping], [data-quote-total], [data-quote-cash]").forEach(element => {
+      element.textContent = element.hasAttribute("data-quote-shipping") ? "Calculated with your PIN" : "—";
+      delete element.dataset.cents;
+    });
+    const payLabel = document.querySelector("[data-checkout-pay-label]");
+    if (payLabel) payLabel.textContent = "Review total to pay";
+  }
+
   function updateCheckoutDelivery(quote) {
     const feedback = document.querySelector("[data-checkout-delivery-feedback]");
     const detail = document.querySelector("[data-checkout-delivery-detail]");
@@ -730,6 +742,7 @@
       throw error;
     }
     updateCheckoutDelivery(pin ? quote : null);
+    quotedShippingPIN = quote.shipping_pending ? "" : pin;
     global.weevcraftsPolicyRevision=quote.policy_revision;
     global.weevcraftsCreditQuote=quote.credit_cents||0;
     document.querySelectorAll('[data-quote-credit]').forEach(el=>{el.textContent=checkoutMoney(quote.credit_cents||0);});
@@ -742,6 +755,7 @@
     document.querySelectorAll("[data-quote-shipping-label]").forEach(label => { label.textContent="Shipping"; });
     const payLabel = document.querySelector("[data-checkout-pay-label]");
     if (payLabel) payLabel.textContent = quote.cash_due_cents===0 ? "Confirm prepaid order" : "Pay " + checkoutMoney(quote.cash_due_cents);
+    if (quote.shipping_pending) resetCheckoutShipping();
     return quote;
   }
 
@@ -818,6 +832,7 @@
     const acceptedCoupon = couponInput ? couponInput.value.trim() : "";
     const totalElement = document.querySelector("[data-quote-total]");
     const previousTotal = totalElement?.dataset.cents || (totalElement ? String(Math.round(Number(totalElement.textContent.replace(/[^0-9.]/g, "")) * 100)) : undefined);
+    const previousShipping = document.querySelector("[data-quote-shipping]")?.dataset.cents;
     const values = formData(form);
     const resolvedState = (values.state || values.region || "").trim();
     const resolvedCity = (values.city || "").trim();
@@ -841,7 +856,9 @@
     const retry = pending && pending.fingerprint === fingerprint && pending.key && pending.quote;
     const currentQuote = retry ? pending.quote : await previewCheckoutQuote();
     global.weevcraftsCreditQuote=currentQuote.credit_cents||0;
-    if (!retry && previousTotal !== undefined && previousTotal !== String(currentQuote.total_cents)) {
+    if (currentQuote.shipping_pending) return;
+    if (!retry && (previousTotal !== undefined && previousTotal !== String(currentQuote.total_cents) ||
+        previousShipping !== undefined && previousShipping !== String(currentQuote.shipping_cents))) {
       notice("Your total has changed. Review the updated amount, then place your order again.", true);
       return;
     }
@@ -855,7 +872,9 @@
       // The order transaction saves this address once, including idempotent retries.
       const couponCode = acceptedCoupon;
       const key = pending.key;
-      const result = unwrap(await (noPaymentDemo ? ensureBackend().checkoutNoPayment(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision, currentQuote.cart_items_key) : ensureBackend().checkout(address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision, currentQuote.cart_items_key))) || {};
+      const backend = ensureBackend();
+      const placeOrder = noPaymentDemo ? backend.checkoutNoPayment : backend.checkout;
+      const result = unwrap(await placeOrder.call(backend, address, key, couponCode.trim(), currentQuote.total_cents, pending.cartID, currentQuote.policy_revision, currentQuote.cart_items_key, currentQuote.shipping_cents)) || {};
       orderNumber = result.order_number || result.orderNumber || "";
       if (!orderNumber) throw new Error("The order was created, but the server did not return its number. Open your orders to check its status.");
       button.dataset.orderCreated='true';
@@ -874,7 +893,7 @@
         }
       }
     } catch (error) {
-      if (["QUOTE_CHANGED", "COUPON_INVALID", "INSUFFICIENT_STOCK", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "CART_EMPTY"].includes(error.code)) global.sessionStorage.removeItem(CHECKOUT_KEY);
+      if (["QUOTE_CHANGED", "COUPON_INVALID", "INSUFFICIENT_STOCK", "ITEMS_UNAVAILABLE", "PARCEL_UNAVAILABLE", "CART_EMPTY", "SHIPPING_QUOTE_UNAVAILABLE", "DELIVERY_UNAVAILABLE"].includes(error.code)) global.sessionStorage.removeItem(CHECKOUT_KEY);
       if (orderNumber) {
         paymentReceipt(orderNumber, error.message + " Your order is saved; check its current status before trying again.", false);
       } else {
@@ -991,8 +1010,13 @@
     });
     const checkoutAddressForm = document.getElementById("checkout-address-form");
     if (checkoutAddressForm) {
+      const liveRates = !!document.querySelector("[data-checkout-live-rates]");
       const updateSummary = function () {
         const values = formData(checkoutAddressForm);
+        if (liveRates && quotedShippingPIN && quotedShippingPIN !== (values.postal_code || "").trim()) {
+          resetCheckoutShipping();
+          updateCheckoutDelivery(null);
+        }
         const summary = document.querySelector("[data-checkout-address-summary]");
         if (summary) summary.textContent = [values.recipient_name, values.line1, values.city, values.state || values.region, values.postal_code].filter(Boolean).join(" · ") || "Enter your delivery address";
         const deliveryLocation = document.querySelector('.header-main .location small');

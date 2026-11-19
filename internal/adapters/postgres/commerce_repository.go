@@ -963,14 +963,7 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return order, err
 		}
 		if !saved {
-			deliveryLines, deliveryErr = checkoutDeliveryLines(ctx, r.pool, userID, cartID, false)
-			if deliveryErr == nil {
-				profiles, profileErr := r.deliveryProfiles(ctx)
-				deliveryErr = profileErr
-				if profileErr == nil {
-					deliveryDecisions, deliveryErr = r.delivery.check(ctx, deliveryLines, address.PostalCode, profiles)
-				}
-			}
+			deliveryLines, deliveryDecisions, deliveryErr = r.planCheckoutDelivery(ctx, userID, cartID, address.PostalCode)
 		}
 	}
 	err = WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
@@ -1120,6 +1113,18 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return ports.ErrCouponInvalid
 		}
 		shipping := revision.Config.Settings.Policy.Shipping(subtotal)
+		if r.LiveDeliveryRates() {
+			if expected == nil {
+				return ports.ErrQuoteChanged
+			}
+			shipping, err = checkoutDeliveryCharge(deliveryDecisions)
+			if err != nil {
+				return err
+			}
+			if quoted, ok := domaincommerce.ExpectedShipping(transactionContext); ok && quoted != shipping {
+				return ports.ErrQuoteChanged
+			}
+		}
 		couponID, promotionID, discount, err := checkoutDiscount(transactionContext, tx, userID, cartID, shipping, couponCode, true)
 		if err != nil {
 			return err

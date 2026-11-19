@@ -107,8 +107,13 @@ an available catalog product, without creating a cart or reserving stock.
 Store settings contain INR shipping amounts, the free-shipping threshold,
 optional Indian PIN restrictions, return windows, optional shopping actions and
 availability of payment options already configured by the app. Credentials and
-runtime payment mode are not editable here. The initial policy remains ₹99 below
-₹1,500 and free shipping from ₹1,500, with new restrictions inactive.
+runtime payment mode are not editable here. Live Shiprocket checkout calculates
+shipping from the delivery PIN, verified seller pickup and estimated packed
+parcel. It adds one courier rate per seller shipment. It uses Shiprocket's
+priced recommendation when available and otherwise the lowest available priced
+courier. The flat fee and automatic free-shipping threshold apply only outside
+live Shiprocket checkout. Published free-shipping coupons can still cover the
+calculated shipping charge.
 
 Coupon definitions, product eligibility, dates, limits and activation require
 publication. Dates use India time with an inclusive end date. Publishing and

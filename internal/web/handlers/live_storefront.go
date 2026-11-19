@@ -1035,6 +1035,11 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 			page.CartCount = liveCartCount(items)
 		}
 		page.ItemsTotal, page.ShippingTotal, page.DiscountTotal, page.Total = liveTotalsWithPolicy(page.Cart, page.Storefront.Settings.Policy)
+		if h.orders.LiveDeliveryRates() {
+			page.LiveDeliveryRates = true
+			page.ShippingTotal = "Calculated with your PIN"
+			page.Total = "—"
+		}
 	}
 	if authenticated && needsAccountData(r.URL.Path) {
 		if err := h.loadCustomerData(r.Context(), userID, &page, r.URL.Query().Get("ticket_id")); err != nil {

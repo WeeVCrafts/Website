@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
@@ -14,6 +15,78 @@ type checkoutProvider struct {
 	result   bool
 	err      error
 	expected ports.Parcel
+}
+
+type pricedCheckoutProvider struct {
+	checkoutProvider
+	rate int64
+}
+
+func (p *pricedCheckoutProvider) DeliveryRate(ctx context.Context, origin, destination string, parcel ports.Parcel) (ports.CourierOption, error) {
+	available, err := p.DeliveryAvailable(ctx, origin, destination, parcel)
+	if err == nil && !available {
+		err = ports.ErrDeliveryUnavailable
+	}
+	return ports.CourierOption{ID: 6, RateCents: p.rate, EstimatedDays: "2"}, err
+}
+
+func TestLiveShiprocketCheckoutQuoteAndPlacementAgree(t *testing.T) {
+	pool := openIntegrationPool(t)
+	ctx := t.Context()
+	fixture := newCommerceFixture(t, pool, 1, 2)
+	var seller int64
+	if err := pool.QueryRow(ctx, `INSERT INTO marketplace_shipping_profiles (seller_id,pickup_location,postal_code,verified)
+		SELECT id,'Test Pickup','110030',true FROM sellers WHERE owner_user_id=$1 RETURNING seller_id`, fixture.ownerID).Scan(&seller); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM marketplace_shipping_profiles WHERE seller_id=$1`, seller)
+	})
+	parcel := ports.Parcel{WeightGrams: 500, LengthCM: 15, WidthCM: 12, HeightCM: 9}
+	if _, err := pool.Exec(ctx, `UPDATE product_variants SET shipping_weight_g=500,shipping_length_cm=15,shipping_width_cm=12,shipping_height_cm=9 WHERE id=$1`, fixture.variantID); err != nil {
+		t.Fatal(err)
+	}
+	provider := &pricedCheckoutProvider{checkoutProvider: checkoutProvider{expected: parcel, result: true}, rate: 6543}
+	repo := NewCommerceRepository(pool)
+	repo.ConfigureCheckoutDelivery(provider, nil, "live")
+	user, cart := fixture.userIDs[0], fixture.cartIDs[0]
+	address := domain.AddressInput{PostalCode: "411001", CountryCode: "IN"}
+	pending, err := repo.QuoteOrder(ctx, user, cart, "")
+	if err != nil || !pending.ShippingPending || pending.ShippingCents != 0 || provider.calls != 0 {
+		t.Fatalf("pending=%+v calls=%d err=%v", pending, provider.calls, err)
+	}
+	quote, err := repo.QuoteOrderForDelivery(ctx, user, cart, "", address.PostalCode)
+	if err != nil || quote.ShippingPending || quote.ShippingCents != 6543 || quote.TotalCents != 7543 || quote.TransitDays != 2 {
+		t.Fatalf("quote=%+v err=%v", quote, err)
+	}
+	for route, cached := range repo.delivery.cache {
+		cached.expires = time.Now().Add(-time.Second)
+		repo.delivery.cache[route] = cached
+	}
+	provider.rate = 5041
+	if _, err := repo.CreateQuotedOrder(domain.WithExpectedShipping(ctx, quote.ShippingCents), user, cart, "live-rate-test", address, "", quote.TotalCents); !errors.Is(err, ports.ErrQuoteChanged) {
+		t.Fatalf("stale rate placement: %v", err)
+	}
+	provider.err = ports.ErrShippingUnavailable
+	clear(repo.delivery.cache)
+	if _, err := repo.QuoteOrderForDelivery(ctx, user, cart, "", address.PostalCode); !errors.Is(err, ports.ErrShippingUnavailable) {
+		t.Fatalf("carrier outage quote: %v", err)
+	}
+	if _, err := repo.CreateQuotedOrder(ctx, user, cart, "live-rate-test", address, "", quote.TotalCents); !errors.Is(err, ports.ErrShippingUnavailable) {
+		t.Fatalf("carrier outage placement: %v", err)
+	}
+	provider.err = nil
+	quote, err = repo.QuoteOrderForDelivery(ctx, user, cart, "", address.PostalCode)
+	if err != nil || quote.ShippingCents != 5041 || quote.TotalCents != 6041 {
+		t.Fatalf("updated quote=%+v err=%v", quote, err)
+	}
+	order, err := repo.CreateQuotedOrder(domain.WithExpectedShipping(ctx, quote.ShippingCents), user, cart, "live-rate-test", address, "", quote.TotalCents)
+	if err != nil || order.ShippingCents != quote.ShippingCents || order.TotalCents != quote.TotalCents {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	t.Cleanup(func() {
+		_, _ = pool.Exec(context.Background(), `DELETE FROM order_delivery_decisions WHERE order_id=$1`, order.ID)
+	})
 }
 
 func (p *checkoutProvider) DeliveryAvailable(_ context.Context, origin, destination string, parcel ports.Parcel) (bool, error) {

@@ -36,9 +36,22 @@ func (s *OrderService) PreviewDelivery(ctx context.Context, userID, cartID int64
 	return domaincommerce.CheckoutDelivery{}, nil
 }
 
-func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon string) (domaincommerce.CheckoutQuote, error) {
+func (s *OrderService) LiveDeliveryRates() bool {
+	if s == nil {
+		return false
+	}
+	repo, ok := s.repository.(interface{ LiveDeliveryRates() bool })
+	return ok && repo.LiveDeliveryRates()
+}
+
+func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon, pin string) (domaincommerce.CheckoutQuote, error) {
 	if userID <= 0 || cartID <= 0 {
 		return domaincommerce.CheckoutQuote{}, ports.ErrForbidden
+	}
+	if repo, ok := s.repository.(interface {
+		QuoteOrderForDelivery(context.Context, int64, int64, string, string) (domaincommerce.CheckoutQuote, error)
+	}); ok {
+		return repo.QuoteOrderForDelivery(ctx, userID, cartID, coupon, pin)
 	}
 	repo, ok := s.repository.(interface {
 		QuoteOrder(context.Context, int64, int64, string) (domaincommerce.CheckoutQuote, error)
@@ -46,7 +59,11 @@ func (s *OrderService) Quote(ctx context.Context, userID, cartID int64, coupon s
 	if !ok {
 		return domaincommerce.CheckoutQuote{}, errors.New("checkout quote unavailable")
 	}
-	return repo.QuoteOrder(ctx, userID, cartID, coupon)
+	quote, err := repo.QuoteOrder(ctx, userID, cartID, coupon)
+	if err == nil && pin != "" {
+		quote.CheckoutDelivery, err = s.PreviewDelivery(ctx, userID, cartID, pin)
+	}
+	return quote, err
 }
 
 func NewOrderService(repository ports.OrderRepository) *OrderService {

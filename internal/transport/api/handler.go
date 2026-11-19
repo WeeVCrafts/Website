@@ -295,16 +295,17 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		return
 	}
 	var input struct {
-		CartID         int64                       `json:"cart_id"`
-		IntentID       string                      `json:"checkout_intent_id"`
-		IdempotencyKey string                      `json:"idempotency_key"`
-		CouponCode     string                      `json:"coupon_code"`
-		UseStoreCredit bool                        `json:"use_store_credit"`
-		ExpectedCredit *int64                      `json:"expected_credit_cents"`
-		ExpectedItems  string                      `json:"expected_cart_items_key"`
-		ExpectedPolicy *int64                      `json:"expected_policy_revision"`
-		ExpectedTotal  *int64                      `json:"expected_total_cents"`
-		Address        domaincommerce.AddressInput `json:"address"`
+		CartID           int64                       `json:"cart_id"`
+		IntentID         string                      `json:"checkout_intent_id"`
+		IdempotencyKey   string                      `json:"idempotency_key"`
+		CouponCode       string                      `json:"coupon_code"`
+		UseStoreCredit   bool                        `json:"use_store_credit"`
+		ExpectedCredit   *int64                      `json:"expected_credit_cents"`
+		ExpectedItems    string                      `json:"expected_cart_items_key"`
+		ExpectedPolicy   *int64                      `json:"expected_policy_revision"`
+		ExpectedTotal    *int64                      `json:"expected_total_cents"`
+		ExpectedShipping *int64                      `json:"expected_shipping_cents"`
+		Address          domaincommerce.AddressInput `json:"address"`
 	}
 	if !decodeJSON(w, r, &input) {
 		return
@@ -349,6 +350,9 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	if input.ExpectedPolicy != nil {
 		r = r.WithContext(storefront.WithExpectedPolicy(r.Context(), *input.ExpectedPolicy))
 	}
+	if input.ExpectedShipping != nil {
+		r = r.WithContext(domaincommerce.WithExpectedShipping(r.Context(), *input.ExpectedShipping))
+	}
 	var order domaincommerce.Order
 	var err error
 	if input.ExpectedTotal != nil {
@@ -358,7 +362,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 	}
 	if err != nil {
 		if errors.Is(err, ports.ErrQuoteChanged) {
-			writeError(w, http.StatusConflict, "QUOTE_CHANGED", "Prices or store policies changed. Refresh the quote and confirm the current total.")
+			writeError(w, http.StatusConflict, "QUOTE_CHANGED", "Your checkout quote changed. Refresh the quote and confirm the current total.")
 			return
 		}
 		if errors.Is(err, ports.ErrIdempotencyConflict) {
@@ -379,6 +383,10 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 		}
 		if errors.Is(err, ports.ErrShippingParcelMissing) {
 			writeError(w, http.StatusUnprocessableEntity, "PARCEL_UNAVAILABLE", "One or more items are temporarily unavailable for delivery. Your cart is saved.")
+			return
+		}
+		if errors.Is(err, ports.ErrShippingUnavailable) || errors.Is(err, ports.ErrShippingPending) || errors.Is(err, ports.ErrShippingInput) || errors.Is(err, ports.ErrShippingRejected) {
+			writeError(w, http.StatusServiceUnavailable, "SHIPPING_QUOTE_UNAVAILABLE", "We couldn’t get a delivery price from Shiprocket. Your cart is saved. Please try again.")
 			return
 		}
 		if errors.Is(err, ports.ErrDeliveryUnavailable) {

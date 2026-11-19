@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -63,6 +64,10 @@ func checkoutDiscount(ctx context.Context, q catalogProductQuerier, userID, cart
 }
 
 func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int64, coupon string) (domaincommerce.CheckoutQuote, error) {
+	return r.QuoteOrderForDelivery(ctx, userID, cartID, coupon, "")
+}
+
+func (r *CommerceRepository) QuoteOrderForDelivery(ctx context.Context, userID, cartID int64, coupon, pin string) (domaincommerce.CheckoutQuote, error) {
 	var quote domaincommerce.CheckoutQuote
 	quote.CartID = cartID
 	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
@@ -94,7 +99,40 @@ func (r *CommerceRepository) QuoteOrder(ctx context.Context, userID, cartID int6
 		if strings.TrimSpace(coupon) != "" && !revision.Config.Settings.Features.Coupons {
 			return ports.ErrCouponInvalid
 		}
-		quote.ShippingCents = revision.Config.Settings.Policy.Shipping(quote.SubtotalCents)
+		if !r.LiveDeliveryRates() {
+			quote.ShippingCents = revision.Config.Settings.Policy.Shipping(quote.SubtotalCents)
+		}
+		if pin != "" && !revision.Config.Settings.Policy.Serves(pin) {
+			return ports.ErrDeliveryUnavailable
+		}
+		if r.delivery != nil && pin != "" {
+			lines, err := checkoutDeliveryLines(ctx, tx, userID, cartID, false)
+			if err != nil {
+				return err
+			}
+			var cartKey strings.Builder
+			for i, line := range lines {
+				if i > 0 {
+					cartKey.WriteByte(',')
+				}
+				fmt.Fprintf(&cartKey, "%d:%d:%d", line.variant, line.quantity, line.price)
+			}
+			if cartKey.String() != quote.CartItemsKey {
+				return ports.ErrQuoteChanged
+			}
+			decisions, err := r.checkCheckoutDelivery(ctx, lines, pin)
+			if err != nil {
+				return err
+			}
+			quote.CheckoutDelivery = summarizeCheckoutDelivery(decisions)
+			if r.LiveDeliveryRates() {
+				quote.ShippingCents, err = checkoutDeliveryCharge(decisions)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		quote.ShippingPending = r.LiveDeliveryRates() && pin == ""
 		_, _, quote.DiscountCents, err = checkoutDiscount(ctx, tx, userID, cartID, quote.ShippingCents, strings.TrimSpace(coupon), false)
 		quote.TotalCents = quote.SubtotalCents + quote.ShippingCents - quote.DiscountCents
 		if err == nil {
