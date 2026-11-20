@@ -22,8 +22,9 @@ type MarketplacePackage struct {
 	Items          []MarketplacePackageItem
 }
 type MarketplacePackageItem struct {
-	Name, SKU string
-	Quantity  int
+	OrderItemID int64 `json:"-"`
+	Name, SKU   string
+	Quantity    int
 }
 type MarketplaceSellerOrder struct {
 	SellerID, Revision           int64

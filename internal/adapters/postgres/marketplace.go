@@ -206,13 +206,13 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 			return v, err
 		}
 	}
-	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,reference,status,provider_status,awb,courier,label_url,manifest_url,pickup_reference,pending_action,delivered_at,delivery_method FROM marketplace_packages WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,reference,status,provider_status,awb,courier,label_url,manifest_url,pickup_reference,pending_action,delivered_at,delivery_method,weight_grams,length_cm,width_cm,height_cm FROM marketplace_packages WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
 	for rows.Next() {
 		var x ports.MarketplacePackage
-		if err = rows.Scan(&x.ID, &x.SellerID, &x.Reference, &x.Status, &x.ProviderStatus, &x.AWB, &x.Courier, &x.LabelURL, &x.ManifestURL, &x.PickupReference, &x.PendingAction, &x.DeliveredAt, &x.DeliveryMethod); err != nil {
+		if err = rows.Scan(&x.ID, &x.SellerID, &x.Reference, &x.Status, &x.ProviderStatus, &x.AWB, &x.Courier, &x.LabelURL, &x.ManifestURL, &x.PickupReference, &x.PendingAction, &x.DeliveredAt, &x.DeliveryMethod, &x.WeightGrams, &x.LengthCM, &x.WidthCM, &x.HeightCM); err != nil {
 			break
 		}
 		v.Packages = append(v.Packages, x)
@@ -223,13 +223,13 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 		return v, err
 	}
 	for i := range v.Packages {
-		contents, e := r.readSource().Query(ctx, `SELECT oi.product_name,oi.sku,pi.quantity FROM marketplace_package_items pi JOIN order_items oi ON oi.id=pi.order_item_id WHERE pi.package_id=$1 ORDER BY oi.id`, v.Packages[i].ID)
+		contents, e := r.readSource().Query(ctx, `SELECT oi.id,oi.product_name,oi.sku,pi.quantity FROM marketplace_package_items pi JOIN order_items oi ON oi.id=pi.order_item_id WHERE pi.package_id=$1 ORDER BY oi.id`, v.Packages[i].ID)
 		if e != nil {
 			return v, e
 		}
 		for contents.Next() {
 			var item ports.MarketplacePackageItem
-			if e = contents.Scan(&item.Name, &item.SKU, &item.Quantity); e != nil {
+			if e = contents.Scan(&item.OrderItemID, &item.Name, &item.SKU, &item.Quantity); e != nil {
 				break
 			}
 			v.Packages[i].Items = append(v.Packages[i].Items, item)
@@ -376,7 +376,7 @@ func (r *MarketplaceRepository) Act(ctx context.Context, actor int64, c ports.Ma
 			if c.Action == "manual_delivered" {
 				target = "delivered"
 			}
-			result, e := tx.Exec(ctx, `UPDATE marketplace_packages p SET status=$3,courier=$4,awb=$5,provider_status=$6,delivered_at=CASE WHEN $3='delivered' THEN now() ELSE delivered_at END,revision=revision+1,updated_at=now() WHERE p.id=$1 AND order_id=$2 AND delivery_method='manual' AND ($7 OR seller_id=$8) AND (($3='in_transit' AND status='created' AND EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=p.order_id AND sf.seller_id=p.seller_id AND sf.lifecycle_status='ready_to_ship')) OR ($3='delivered' AND status IN ('in_transit','out_for_delivery'))) AND NOT EXISTS(SELECT 1 FROM marketplace_cancellations mc JOIN marketplace_package_items pi ON pi.order_item_id=mc.order_item_id WHERE pi.package_id=p.id AND mc.status='requested')`, c.PackageID, order, target, c.Carrier, c.Tracking, c.Reason, a.company(), a.seller)
+			result, e := tx.Exec(ctx, `UPDATE marketplace_packages p SET status=$3,courier=$4,awb=$5,provider_status=$6,delivered_at=CASE WHEN $3='delivered' THEN now() ELSE delivered_at END,revision=revision+1,updated_at=now() WHERE p.id=$1 AND order_id=$2 AND delivery_method='manual' AND ($7 OR seller_id=$8) AND (($3='in_transit' AND status='created' AND EXISTS(SELECT 1 FROM seller_fulfillments sf WHERE sf.order_id=p.order_id AND sf.seller_id=p.seller_id AND sf.lifecycle_status IN ('ready_to_ship','shipped'))) OR ($3='delivered' AND status IN ('in_transit','out_for_delivery'))) AND NOT EXISTS(SELECT 1 FROM marketplace_cancellations mc JOIN marketplace_package_items pi ON pi.order_item_id=mc.order_item_id WHERE pi.package_id=p.id AND mc.status='requested')`, c.PackageID, order, target, c.Carrier, c.Tracking, c.Reason, a.company(), a.seller)
 			if e != nil {
 				return e
 			}

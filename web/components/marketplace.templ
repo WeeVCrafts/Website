@@ -2,10 +2,104 @@ package components
 
 import (
 	"fmt"
+	"github.com/wecratfs/commerce/internal/ports"
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
 	"net/url"
 	"strings"
 )
+
+templ MarketplaceShippingProgress(step int, method string) {
+	if step>0 {
+		<ol class="commerce-shipping-steps" aria-label="Shipping progress">
+			<li if step==1 { aria-current="step" }>Pack</li>
+			<li if step==2 { aria-current="step" }>
+				if method=="shiprocket" {
+					Book shipment
+				} else {
+					Hand over
+				}
+			</li>
+			<li if step==3 { aria-current="step" }>Track</li>
+		</ol>
+	}
+}
+
+templ MarketplacePackForm(p viewmodels.MarketplacePage, seller ports.MarketplaceSellerOrder, lines []commercePackingLine) {
+	<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
+		@MarketplaceFields(p, "package")
+		<input type="hidden" name="seller_id" value={ fmt.Sprint(seller.SellerID) }/>
+		<fieldset class="commerce-pack-group">
+			<legend>Items left to pack</legend>
+			<p class="commerce-muted">Adjust the quantities if you’re splitting the order into parcels.</p>
+			for _, line := range lines {
+				<label class="commerce-pack-item">
+					<span>{ line.Item.Name } <small>{ fmt.Sprintf("%s · %d remaining", line.Item.SKU, line.Remaining) }</small></span>
+					<input type="number" inputmode="numeric" name={ fmt.Sprintf("item_%d", line.Item.ID) } min="0" max={ fmt.Sprint(line.Remaining) } value={ fmt.Sprint(line.Remaining) }/>
+				</label>
+			}
+		</fieldset>
+		<fieldset class="commerce-pack-group">
+			<legend>Parcel details</legend>
+			<p class="commerce-muted">Weigh and measure the sealed parcel, including all packaging.</p>
+			<div class="commerce-pack-measurements">
+				<label>Weight (grams)<input name="weight_grams" type="number" inputmode="numeric" min="100" max="50000" required/></label>
+				<label>Length (cm)<input name="length_cm" type="number" inputmode="numeric" min="1" max="200" required/></label>
+				<label>Width (cm)<input name="width_cm" type="number" inputmode="numeric" min="1" max="200" required/></label>
+				<label>Height (cm)<input name="height_cm" type="number" inputmode="numeric" min="1" max="200" required/></label>
+			</div>
+		</fieldset>
+		<button type="submit">Save package</button>
+	</form>
+}
+
+templ MarketplaceReadyForm(p viewmodels.MarketplacePage, seller ports.MarketplaceSellerOrder) {
+	<h4>All items are packed</h4>
+	<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
+		@MarketplaceFields(p, "ready")
+		<input type="hidden" name="seller_id" value={ fmt.Sprint(seller.SellerID) }/>
+		<input type="hidden" name="revision" value={ fmt.Sprint(seller.Revision) }/>
+		if seller.DeliveryMethod=="shiprocket" {
+			if p.BookingsEnabled {
+				<p>Ready to ship sends the saved parcels to Shiprocket for booking.</p>
+			} else {
+				<p>Shiprocket booking is paused. Your packing details are saved.</p>
+			}
+		} else {
+			<p>Confirm packing to open the courier handover form.</p>
+		}
+		<label class="commerce-pack-confirm"><input type="checkbox" name="confirmed" value="yes" required/> I confirm the package contents, weight and dimensions.</label>
+		if p.NewReturnPolicy {
+			<label>
+				Pre-dispatch quality-check evidence
+				<input name="qc_evidence" minlength="10" maxlength="1000" required aria-describedby={ fmt.Sprintf("packing-check-%d", seller.SellerID) }/>
+			</label>
+			<p id={ fmt.Sprintf("packing-check-%d", seller.SellerID) } class="commerce-muted">Briefly record what you checked before sealing the parcel.</p>
+		}
+		<button type="submit" disabled?={ !p.BookingsEnabled && seller.DeliveryMethod=="shiprocket" }>Ready to ship</button>
+	</form>
+}
+
+templ MarketplaceSellerShipmentStatus(p viewmodels.MarketplacePage, pkg ports.MarketplacePackage) {
+	if pkg.PendingAction!="" {
+		<p role="status">Shiprocket is confirming an update. Wait for it to finish before making another booking change.</p>
+	} else if pkg.Status=="created" {
+		if commerceParcelAwaitingConfirmation(p,pkg) {
+			<p>Package saved. Confirm packing to start booking.</p>
+		} else if pkg.AWB!="" {
+			<p>Tracking number assigned. Waiting for pickup confirmation.</p>
+		} else {
+			<p>Booking requested. Refresh shipment to check for updates.</p>
+		}
+	} else if pkg.Status=="pickup_scheduled" {
+		if pkg.LabelURL!="" && pkg.AWB!="" {
+			<p>Print and attach the carrier label before handing over the parcel at pickup.</p>
+		} else {
+			<p>Pickup is scheduled. The carrier label will appear here when Shiprocket provides it.</p>
+		}
+	} else if pkg.Status=="ndr" {
+		<p>Delivery needs attention. Contact WeevCrafts support with the tracking number.</p>
+	}
+}
 
 templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 	<div class="fulfillment-operations">
@@ -127,13 +221,13 @@ if p.Role=="super_admin" {
 					<h3>
 						{ s.Name }
 					</h3>
-					<p>
-						{ strings.ReplaceAll(s.Status,"_"," ") }
-					</p>
-					if p.Role!="customer" {
+					<p>{ commerceLabel(s.Status) }</p>
+					if p.Role!="customer" && (p.Role!="seller" || p.WorkflowVersion!=2) {
 						<p>Settlement: {strings.ReplaceAll(s.SettlementStatus,"_"," ")}</p>
 					}
 					if p.Role=="seller" && p.WorkflowVersion==2 {
+						{{ lines := commercePackingLines(p, s.SellerID) }}
+						@MarketplaceShippingProgress(commerceShippingStep(p, s, len(lines)>0), s.DeliveryMethod)
 						if s.Status=="new" || s.Status=="accepted" {
 							<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
 								@MarketplaceFields(p, "")
@@ -147,35 +241,11 @@ if p.Role=="super_admin" {
 						}
 						if s.Status=="packing" {
 							if p.ShippingConfigured || s.DeliveryMethod!="shiprocket" {
-								<h4>Prepare a package</h4>
-								<p>Select the quantities in this package. Final weight and dimensions include all packaging.</p>
-if !p.Workspace || commerceNeedsPacking(p,s.SellerID) {
-								<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-									@MarketplaceFields(p, "package")
-									<input type="hidden" name="seller_id" value={ fmt.Sprint(s.SellerID) }/>
-									for _,item:=range p.Lines {
-										if item.SellerID==s.SellerID && item.Quantity>item.Cancelled && (!p.Workspace || commercePackRemaining(p,item.ID)>0) {
-											<label>
-												{ item.Name }
-												<input type="number" name={ fmt.Sprintf("item_%d", item.ID) } min="0" max={ fmt.Sprint(commercePackRemaining(p,item.ID)) } value="0"/>
-											</label>
-										}
-									}
-									<label>Weight (grams)<input name="weight_grams" type="number" min="100" max="50000" required/></label><label>Length (cm)<input name="length_cm" type="number" min="1" max="200" required/></label><label>Width (cm)<input name="width_cm" type="number" min="1" max="200" required/></label><label>Height (cm)<input name="height_cm" type="number" min="1" max="200" required/></label><button type="submit">Save package</button>
-								</form>
-}
-
-if !p.Workspace || !commerceNeedsPacking(p,s.SellerID) {
-								<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-									@MarketplaceFields(p, "ready")
-									<input type="hidden" name="seller_id" value={ fmt.Sprint(s.SellerID) }/><input type="hidden" name="revision" value={ fmt.Sprint(s.Revision) }/><label><input type="checkbox" name="confirmed" value="yes" required/> I confirm the package contents, weight and dimensions. Start shipping the confirmed packages.</label>
-if p.NewReturnPolicy {
-<label>Pre-dispatch quality-check evidence<input name="qc_evidence" minlength="10" maxlength="1000" required/></label>
-}
-<button type="submit" disabled?={ !p.BookingsEnabled && s.DeliveryMethod=="shiprocket" }>Ready to ship</button>
-								</form>
-}
-
+								if len(lines)>0 {
+									@MarketplacePackForm(p, s, lines)
+								} else {
+									@MarketplaceReadyForm(p, s)
+								}
 							} else {
 								<p>Shipping setup is incomplete. Contact company support to arrange delivery.</p>
 							}
@@ -233,18 +303,34 @@ if p.NewReturnPolicy {
 					<h3>
 						Package { fmt.Sprint(pkg.ID) }
 					</h3>
-					<p>
-						{ strings.ReplaceAll(pkg.Status,"_"," ") } · { pkg.Courier } · { pkg.AWB }
-					</p>
+					<p><strong>{ commerceLabel(pkg.Status) }</strong></p>
+					if pkg.Courier!="" || pkg.AWB!="" {
+						<p>
+							if pkg.Courier!="" {
+								{ pkg.Courier }
+							}
+							if pkg.Courier!="" && pkg.AWB!="" {
+								<span aria-hidden="true"> · </span>
+							}
+							if pkg.AWB!="" {
+								<span>Tracking number { pkg.AWB }</span>
+							}
+						</p>
+					}
 					<ul>
 						for _,content:=range pkg.Items {
 							<li>{ content.Name } — { content.SKU } × { fmt.Sprint(content.Quantity) }</li>
 						}
 					</ul>
+					if p.Role=="seller" && pkg.Parcel.Valid() {
+						<p class="commerce-muted">{ fmt.Sprintf("%d g · %d × %d × %d cm (L × W × H)", pkg.WeightGrams, pkg.LengthCM, pkg.WidthCM, pkg.HeightCM) }</p>
+					}
 					if p.Role!="customer" {
 						<a href={ templ.SafeURL(p.Root + "?order=" + url.QueryEscape(p.Number) + "&packing_slip=" + fmt.Sprint(pkg.ID)) }>Download package packing slip</a>
 					}
-					if pkg.PendingAction!="" {
+					if p.Role=="seller" && pkg.DeliveryMethod=="shiprocket" {
+						@MarketplaceSellerShipmentStatus(p, pkg)
+					} else if pkg.PendingAction!="" {
 						<p role="status">Waiting for the carrier to confirm { pkg.PendingAction }. Please do not create a replacement shipment.</p>
 					}
 					if (p.Role=="admin" || p.Role=="super_admin") && pkg.Status=="ndr" {
@@ -253,7 +339,7 @@ if p.NewReturnPolicy {
 							<input type="hidden" name="package_id" value={ fmt.Sprint(pkg.ID) }/><label>Customer contact outcome<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><label>Preferred redelivery date (required for reattempt)<input name="preferred_date" type="date"/></label><button type="submit" name="action" value="ndr_reattempt">Request delivery reattempt</button><button type="submit" name="action" value="ndr_return">Request return to origin</button>
 						</form>
 					}
-					if pkg.DeliveryMethod=="manual" && ((p.Role=="seller" && pkg.Status=="created") || ((p.Role=="admin" || p.Role=="super_admin") && pkg.Status=="in_transit")) {
+					if pkg.DeliveryMethod=="manual" && ((p.Role=="seller" && pkg.Status=="created" && (p.WorkflowVersion!=2 || commerceSellerReady(p,pkg.SellerID))) || ((p.Role=="admin" || p.Role=="super_admin") && pkg.Status=="in_transit")) {
 						<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
 							@MarketplaceFields(p, "")
 							<input type="hidden" name="package_id" value={ fmt.Sprint(pkg.ID) }/><input type="hidden" name="seller_id" value={ fmt.Sprint(pkg.SellerID) }/><label>Actual carrier<input name="carrier" value={ pkg.Courier } minlength="2" maxlength="80" required/></label><label>Actual tracking number<input name="tracking_number" value={ pkg.AWB } minlength="3" maxlength="120" required/></label><label>Courier handover / delivery evidence<textarea style="resize:none" name="reason" minlength="10" maxlength="1000" required></textarea></label>
@@ -277,13 +363,17 @@ if p.NewReturnPolicy {
 						if pkg.ManifestURL!="" {
 							<a href={ templ.SafeURL(pkg.ManifestURL) } target="_blank" rel="noopener noreferrer">Download pickup manifest</a>
 						}
-						<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-							@MarketplaceFields(p, "")
-							<input type="hidden" name="package_id" value={ fmt.Sprint(pkg.ID) }/><input type="hidden" name="seller_id" value={ fmt.Sprint(pkg.SellerID) }/><button type="submit" name="action" value="refresh_package">Refresh shipment</button>
-							if pkg.Status=="pickup_scheduled" {
-								<button type="submit" name="action" value="reschedule_pickup" data-confirm="Reschedule pickup for this package? Confirm that the courier has not collected it.">Reschedule missed pickup</button>
-							}
-						</form>
+						if pkg.Status!="delivered" && pkg.Status!="cancelled" && (p.Role!="seller" || !commerceParcelAwaitingConfirmation(p,pkg)) {
+							<form class="marketplace-form commerce-shipment-actions" method="post" action={ templ.SafeURL(p.ActionPath) }>
+								@MarketplaceFields(p, "")
+								<input type="hidden" name="package_id" value={ fmt.Sprint(pkg.ID) }/>
+								<input type="hidden" name="seller_id" value={ fmt.Sprint(pkg.SellerID) }/>
+								<button type="submit" name="action" value="refresh_package">Refresh shipment</button>
+								if pkg.Status=="pickup_scheduled" && pkg.PendingAction=="" {
+									<button type="submit" name="action" value="reschedule_pickup" data-confirm="Reschedule pickup for this package? Confirm that the courier has not collected it.">Reschedule missed pickup</button>
+								}
+							</form>
+						}
 					}
 				</article>
 			}

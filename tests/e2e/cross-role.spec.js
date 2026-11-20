@@ -131,6 +131,11 @@ test('Two sellers fulfill independent packages after a partial refund; all roles
  await expect(customer.page.getByText('Payment: Partially refunded',{exact:true})).toBeVisible();
  await expect(customer.page.getByRole('rowheader',{name:/Second seller private product/})).toBeVisible();
  await expect(customer.page.locator('.commerce-financial')).toContainText('₹10.00');
+ const saveParcel=async(page,pack)=>{
+  await expect(pack.getByLabel('Weight (grams)',{exact:true})).toHaveValue('');
+  for(const [label,value] of [['Weight (grams)','500'],['Length (cm)','15'],['Width (cm)','12'],['Height (cm)','8']]) await pack.getByLabel(label,{exact:true}).fill(value);
+  await save(page,pack.getByRole('button',{name:'Save package',exact:true}));
+ };
  for(const role of ['seller','second_seller']){
   const seller=await actor(browser,role,390);
   await seller.page.goto(`${base}/seller-admin/orders/${fixture.MixedOrder}?tab=overview`);
@@ -142,31 +147,53 @@ test('Two sellers fulfill independent packages after a partial refund; all roles
   const start=seller.page.getByRole('button',{name:'Start packing',exact:true});
   if(await start.count()) await save(seller.page,start);
   const pack=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Save package',exact:true})});
-  await pack.locator('input[name^="item_"]').fill('2');
-  for(const [label,value] of [['Weight (grams)','500'],['Length (cm)','15'],['Width (cm)','12'],['Height (cm)','8']]) await pack.getByLabel(label,{exact:true}).fill(value);
-  await save(seller.page,pack.getByRole('button',{name:'Save package',exact:true}));
+  const step=seller.page.locator('.commerce-shipping-steps [aria-current="step"]');
+  await expect(step).toHaveText('Pack');
+  const quantity=pack.locator('input[name^="item_"]');
+  await expect(quantity).toHaveValue('2');
+  if(role==='seller'){
+   await quantity.focus();
+   await seller.page.keyboard.press('ArrowDown');
+   await expect(quantity).toHaveValue('1');
+   await saveParcel(seller.page,pack);
+   await expect(step).toHaveText('Pack');
+   await expect(quantity).toHaveValue('1');
+   await expect(quantity).toHaveAttribute('max','1');
+   await expect(seller.page.getByRole('button',{name:'Ready to ship',exact:true})).toHaveCount(0);
+  }
+  await saveParcel(seller.page,pack);
+  await expect(step).toHaveText('Hand over');
+  await expect(seller.page.getByRole('heading',{name:'All items are packed'})).toBeVisible();
+  const parcelCount=role==='seller'?2:1;
+  await expect(seller.page.getByText('500 g · 15 × 12 × 8 cm (L × W × H)',{exact:true})).toHaveCount(parcelCount);
+  await expect(seller.page.getByRole('button',{name:'Record courier handover',exact:true})).toHaveCount(0);
   await seller.page.getByLabel(/I confirm the package contents/).check();
   await seller.page.getByLabel('Pre-dispatch quality-check evidence',{exact:true}).fill('Isolated fixture pre-dispatch inspection confirms packaging and contents.');
   await save(seller.page,seller.page.getByRole('button',{name:'Ready to ship',exact:true}));
   await expect(seller.page.getByRole('link',{name:'Download carrier label',exact:true})).toHaveCount(0);
-  const handover=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Record courier handover',exact:true})});
-  await handover.getByLabel('Actual carrier',{exact:true}).fill('Isolated fixture carrier');
-  await handover.getByLabel('Actual tracking number',{exact:true}).fill(`ISOLATED-${role}`);
-  await handover.getByLabel('Courier handover / delivery evidence').fill('Isolated browser test handover; no external booking or real delivery.');
-  await save(seller.page,handover.getByRole('button',{name:'Record courier handover',exact:true}));
+  const handovers=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Record courier handover',exact:true})});
+  for(let index=0;index<parcelCount;index++){
+   await expect(handovers).toHaveCount(parcelCount-index);
+   const handover=handovers.first();
+   await handover.getByLabel('Actual carrier',{exact:true}).fill('Isolated fixture carrier');
+   await handover.getByLabel('Actual tracking number',{exact:true}).fill(`ISOLATED-${role}-${index}`);
+   await handover.getByLabel('Courier handover / delivery evidence').fill('Isolated browser test handover; no external booking or real delivery.');
+   await save(seller.page,handover.getByRole('button',{name:'Record courier handover',exact:true}));
+  }
+  await expect(step).toHaveText('Track');
   await audit(seller.page);await seller.context.close();
  }
  const admin=await actor(browser,'super_admin');
  await admin.page.goto(`${base}/super-admin/orders/${fixture.MixedOrder}?tab=packages`);
  await expect(admin.page.getByText('ISOLATED-seller',{exact:false}).first()).toBeVisible();
- for(let i=0;i<2;i++){
+ for(let i=0;i<3;i++){
   const delivery=admin.page.locator('form').filter({has:admin.page.getByRole('button',{name:'Confirm verified delivery',exact:true})}).first();
   await delivery.getByLabel('Courier handover / delivery evidence').fill('Isolated simulated delivery evidence; not a production delivery.');
   await save(admin.page,delivery.getByRole('button',{name:'Confirm verified delivery',exact:true}));
  }
  await expect(admin.page.getByText('Order: Completed',{exact:true})).toBeVisible();
  await customer.page.goto(`${base}/orders/${fixture.MixedOrder}?tab=packages`);
- await expect(customer.page.locator('.commerce-tabs')).toContainText('Packages (2)');
+ await expect(customer.page.locator('.commerce-tabs')).toContainText('Packages (3)');
  await expect(customer.page.getByText('Order: Completed',{exact:true})).toBeVisible();
  await customer.page.getByRole('link',{name:'Documents',exact:true}).click();
  const invoices=customer.page.getByRole('link',{name:/^Download invoice/});await expect(invoices).toHaveCount(2);

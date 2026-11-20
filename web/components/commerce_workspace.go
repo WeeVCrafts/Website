@@ -41,35 +41,66 @@ func commercePageURL(p viewmodels.MarketplacePage, page int) string {
 	return p.OrderURL + "?" + q.Encode()
 }
 
-func commercePackRemaining(p viewmodels.MarketplacePage, itemID int64) int {
-	for _, item := range p.Lines {
-		if item.ID == itemID {
-			remaining := item.Quantity - item.Cancelled
-			for _, pkg := range p.Packages {
-				if pkg.Status == "cancelled" || strings.HasPrefix(pkg.Reference, "WC-RPL-") {
-					continue
-				}
-				for _, piece := range pkg.Items {
-					if piece.SKU == item.SKU {
-						remaining -= piece.Quantity
-					}
-				}
-			}
-			if remaining < 0 {
-				return 0
-			}
-			return remaining
+type commercePackingLine struct {
+	Item      ports.MarketplaceLine
+	Remaining int
+}
+
+func commercePackingLines(p viewmodels.MarketplacePage, seller int64) []commercePackingLine {
+	allocated := make(map[int64]int)
+	for _, pkg := range p.Packages {
+		if pkg.SellerID != seller || pkg.Status == "cancelled" || strings.HasPrefix(pkg.Reference, "WC-RPL-") {
+			continue
+		}
+		for _, piece := range pkg.Items {
+			allocated[piece.OrderItemID] += piece.Quantity
 		}
 	}
-	return 0
-}
-func commerceNeedsPacking(p viewmodels.MarketplacePage, seller int64) bool {
+	var lines []commercePackingLine
 	for _, item := range p.Lines {
-		if item.SellerID == seller && commercePackRemaining(p, item.ID) > 0 {
+		remaining := item.Quantity - item.Cancelled - allocated[item.ID]
+		if item.SellerID == seller && remaining > 0 {
+			lines = append(lines, commercePackingLine{Item: item, Remaining: remaining})
+		}
+	}
+	return lines
+}
+
+func commerceShippingStep(p viewmodels.MarketplacePage, seller ports.MarketplaceSellerOrder, hasUnpacked bool) int {
+	switch seller.Status {
+	case "new", "accepted":
+		return 1
+	case "packing":
+		if hasUnpacked {
+			return 1
+		}
+		return 2
+	case "ready_to_ship", "shipped":
+		for _, pkg := range p.Packages {
+			if pkg.SellerID == seller.SellerID && pkg.Status == "created" {
+				return 2
+			}
+		}
+		return 3
+	case "out_for_delivery", "delivered", "completed":
+		return 3
+	default:
+		return 0
+	}
+}
+
+func commerceSellerReady(p viewmodels.MarketplacePage, sellerID int64) bool {
+	for _, seller := range p.Sellers {
+		if seller.SellerID == sellerID && (seller.Status == "ready_to_ship" || seller.Status == "shipped") {
 			return true
 		}
 	}
 	return false
+}
+
+func commerceParcelAwaitingConfirmation(p viewmodels.MarketplacePage, pkg ports.MarketplacePackage) bool {
+	return pkg.Status == "created" && pkg.PendingAction == "" && pkg.AWB == "" &&
+		!strings.HasPrefix(pkg.Reference, "WC-RPL-") && !commerceSellerReady(p, pkg.SellerID)
 }
 
 func commerceLegacyRefundExists(p viewmodels.MarketplacePage) bool {

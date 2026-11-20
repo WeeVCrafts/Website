@@ -410,6 +410,21 @@ button.primary-button.ui-busy::after { border-color: white; border-right-color: 
 .marketplace-form button:disabled{opacity:.6;cursor:wait}.marketplace-workspace a{text-decoration:underline;text-underline-offset:3px}.marketplace-workspace summary{cursor:pointer;min-height:44px;padding-block:12px}
 @media(max-width:600px){.marketplace-workspace{padding:16px 8px}.marketplace-form{max-width:100%}.marketplace-form button{width:100%}}
 
+.commerce-shipping-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;max-width:42rem;list-style:none;padding:0;margin:16px 0;color:var(--ui-muted)}
+.commerce-shipping-steps li{padding:10px 4px;border-top:3px solid var(--ui-line);text-align:center;font-size:.875rem}
+.commerce-shipping-steps [aria-current=step]{border-color:var(--ui-primary);color:var(--ui-primary);font-weight:700}
+.commerce-pack-group{min-width:0;margin:0;padding:12px;border:1px solid var(--ui-line);border-radius:6px}
+.commerce-pack-group legend{padding-inline:6px;font-weight:700}
+.commerce-pack-group p{margin:0 0 10px}
+.marketplace-form .commerce-pack-item{grid-template-columns:minmax(0,1fr) minmax(4rem,5rem);align-items:center;gap:10px;padding-block:8px}
+.commerce-pack-item span{overflow-wrap:anywhere}.commerce-pack-item small{display:block;color:var(--ui-muted)}
+.commerce-pack-measurements{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.marketplace-form .commerce-pack-confirm{grid-template-columns:20px minmax(0,1fr);align-items:start;gap:10px;min-height:44px;padding-block:8px}
+.commerce-pack-confirm input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ui-primary)}
+.marketplace-form.commerce-shipment-actions{display:flex;flex-wrap:wrap;gap:8px}
+.marketplace-form.commerce-shipment-actions button{background:var(--ui-surface);color:var(--ui-primary)}
+@media(max-width:720px){.commerce-pack-measurements{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 /* Shared cross-role commerce content; role documents retain their own shells. */
 .commerce-workspace{max-width:1440px;margin:0 auto;padding:24px;min-width:0;color:var(--ui-ink);font-family:var(--ui-font)}
 .commerce-workspace h1{font-size:clamp(24px,2.5vw,36px);margin:14px 0;line-height:1.25}.commerce-workspace h2{font-size:23px;margin:0 0 18px}.commerce-workspace h3{font-size:18px;margin:0 0 8px}
