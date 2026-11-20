@@ -142,6 +142,8 @@ test('Two sellers fulfill independent packages after a partial refund; all roles
   await expect(seller.page.locator('.commerce-panel table tbody tr')).toHaveCount(1);
   if(role==='seller') await expect(seller.page.getByRole('rowheader',{name:/Second seller private product/})).toHaveCount(0);
   await seller.page.getByRole('navigation',{name:'Order sections'}).getByRole('link',{name:/^Packages/}).click();
+  await expect(seller.page.getByRole('button',{name:'Open order',exact:true})).toHaveCount(0);
+  await expect(seller.page.locator('.fulfillment-tabs')).toHaveCount(0);
   const accept=seller.page.getByRole('button',{name:'Accept order',exact:true});
   if(await accept.count()) await save(seller.page,accept);
   const start=seller.page.getByRole('button',{name:'Start packing',exact:true});

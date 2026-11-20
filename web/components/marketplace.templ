@@ -103,13 +103,15 @@ templ MarketplaceSellerShipmentStatus(p viewmodels.MarketplacePage, pkg ports.Ma
 
 templ MarketplaceOperations(p viewmodels.MarketplacePage) {
 	<div class="fulfillment-operations">
- if p.Role=="seller" {
-  @SellerFulfillmentTabs(false)
- }
+		if !p.Workspace && p.Role=="seller" {
+			@SellerFulfillmentTabs(false)
+		}
 		if p.Role=="customer" {
  @MarketplacePolicyControls(p)
 }
-		<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><input type="hidden" name="tab" value="operations"/><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
+		if !p.Workspace {
+			<form class="marketplace-form" method="get" action={ templ.SafeURL(p.Root) }><input type="hidden" name="tab" value="operations"/><label>Find order<input name="order" value={ p.Number } maxlength="120" required/></label><button type="submit">Open order</button></form>
+		}
 		if p.Number=="" {
 if p.Role=="super_admin" {
 <p><a class="commerce-button secondary" href="/super-admin/fulfillment/reviews">Review seller invoice and tax submissions</a></p>
@@ -296,7 +298,11 @@ if p.Role=="super_admin" {
 			if !p.Workspace || p.OrderTab=="packages" {
 			<h2>Packages</h2>
 			if len(p.Packages)==0 {
-				<p>Packages appear after the seller confirms packing.</p>
+				if p.Role=="seller" {
+					<p>Your saved packages will appear here.</p>
+				} else {
+					<p>Package details will appear here when the seller saves them.</p>
+				}
 			}
 			for _,pkg:=range p.Packages {
 				<article class="seller-panel">
