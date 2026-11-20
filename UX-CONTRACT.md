@@ -43,6 +43,10 @@ Customer item cancellation/refund/exception-return controls follow server
 eligibility. Company refund approval is explicit; pending provider work never
 claims completed payment, delivery or refund. Forms retain rejected entries and
 avoid blind retry. Existing support conversation boundaries remain intact.
+Company users can start an eligible paid-item cancellation from the order's
+Returns & refunds workspace. The guided item review creates a pending refund
+request and clearly states that no provider money movement occurs until an
+authorized finance approval.
 Historical orders keep their recorded return policy. New handmade purchases
 exclude standard returns; company staff review exceptions. See
 `docs/marketplace-fulfillment.md` for the state, financial and launch contract.

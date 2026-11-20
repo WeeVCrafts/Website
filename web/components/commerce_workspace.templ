@@ -67,6 +67,10 @@ templ CommerceOrderWorkspace(p viewmodels.MarketplacePage) {
    if p.Role=="customer" && !p.RequestTask && p.Focus=="" {
 <a class="commerce-button" href={templ.SafeURL(commerceTabURL(p,"returns")+"&task=new")}>Request help or cancel items</a>
 }
+   if (p.Role=="admin" || p.Role=="super_admin") && !p.RequestTask && p.Focus=="" {
+<p class="commerce-muted">If a paid item was cancelled before courier collection, start the item review here. This creates a refund request for explicit finance approval; it does not send money automatically.</p>
+<a class="commerce-button" href={templ.SafeURL(commerceTabURL(p,"returns")+"&task=new")}>Start item cancellation</a>
+}
 
    if p.RequestTask || p.Focus!="" {
     <a href={templ.SafeURL(commerceTabURL(p,"returns"))}>Back to requests</a>
