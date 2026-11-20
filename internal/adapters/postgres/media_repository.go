@@ -52,6 +52,10 @@ func (r *MediaRepository) GetOwnedMedia(ctx context.Context, sellerOwnerID, medi
 func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, mediaID int64, publicPath, contentType string, byteSize int64) (domaincommerce.MediaRecord, error) {
 	var record domaincommerce.MediaRecord
 	err := WithinTransaction(ctx, r.pool, func(transactionContext context.Context, tx pgx.Tx) error {
+		requiresReview, err := lockMediaListing(transactionContext, tx, sellerOwnerID, mediaID)
+		if err != nil {
+			return err
+		}
 		row := tx.QueryRow(transactionContext, mediaRecordSelect+`JOIN sellers s ON s.id=pm.seller_id WHERE pm.id=$1 AND `+mediaManageCondition+` FOR UPDATE OF pm`, mediaID, sellerOwnerID)
 		current, err := scanMediaRecord(row)
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -69,14 +73,24 @@ func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, medi
 		}
 		row = tx.QueryRow(transactionContext, `
 			UPDATE product_media
-			SET content_type = $1, byte_size = $2, status = 'ready', public_url = $3, updated_at = NOW()
+			SET content_type = $1, byte_size = $2, status = 'ready', public_url = $3,
+			    visibility=CASE WHEN $5 THEN 'private' ELSE visibility END,updated_at = NOW()
 			WHERE id = $4
-			RETURNING id, product_id, seller_id, object_key, content_type, byte_size, visibility, status, public_url, created_at`, contentType, byteSize, publicPath, mediaID)
+			RETURNING id, product_id, seller_id, object_key, content_type, byte_size, visibility, status, public_url, created_at`, contentType, byteSize, publicPath, mediaID, requiresReview)
 		record, err = scanMediaRecord(row)
 		if err != nil {
 			return err
 		}
-		if strings.HasPrefix(contentType, "image/") {
+		if requiresReview {
+			if err := stageListingMedia(transactionContext, tx, record.ProductID, record.ID, true); err != nil {
+				return err
+			}
+			if strings.HasPrefix(contentType, "image/") {
+				if err := stageListingCover(transactionContext, tx, record.ProductID, publicPath); err != nil {
+					return err
+				}
+			}
+		} else if strings.HasPrefix(contentType, "image/") {
 			if _, err := tx.Exec(transactionContext, `UPDATE products SET image_url = $1, updated_at = NOW() WHERE id = $2`, publicPath, record.ProductID); err != nil {
 				return err
 			}
@@ -85,6 +99,18 @@ func (r *MediaRepository) FinalizeMedia(ctx context.Context, sellerOwnerID, medi
 		return err
 	})
 	return record, err
+}
+
+func lockMediaListing(ctx context.Context, tx pgx.Tx, actorID, mediaID int64) (bool, error) {
+	var review bool
+	err := tx.QueryRow(ctx, `SELECT p.status='approved' AND NOT EXISTS (
+		SELECT 1 FROM user_roles ur WHERE ur.user_id=$2 AND ur.role_slug IN ('admin','super_admin'))
+		FROM product_media pm JOIN products p ON p.id=pm.product_id JOIN sellers s ON s.id=pm.seller_id
+		WHERE pm.id=$1 AND `+mediaManageCondition+` FOR UPDATE OF p`, mediaID, actorID).Scan(&review)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, ports.ErrForbidden
+	}
+	return review, err
 }
 
 func (r *MediaRepository) GetPublicMedia(ctx context.Context, mediaID int64) (domaincommerce.MediaRecord, error) {
@@ -96,7 +122,42 @@ func (r *MediaRepository) GetPublicMedia(ctx context.Context, mediaID int64) (do
 }
 
 func (r *MediaRepository) ClaimOwnedMedia(ctx context.Context, sellerOwnerID, mediaID int64) (domaincommerce.MediaRecord, error) {
-	row := r.pool.QueryRow(ctx, `
+	var record domaincommerce.MediaRecord
+	err := WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		review, err := lockMediaListing(ctx, tx, sellerOwnerID, mediaID)
+		if err != nil {
+			return err
+		}
+		if review {
+			record, err = scanMediaRecord(tx.QueryRow(ctx, mediaRecordSelect+`WHERE pm.id=$1 FOR UPDATE`, mediaID))
+			if err != nil {
+				return err
+			}
+			if record.Status == "ready" && record.Visibility == "public" {
+				if err := stageListingMedia(ctx, tx, record.ProductID, mediaID, false); err != nil {
+					return err
+				}
+				record.Status = ports.MediaRemovalInReview
+				return nil
+			}
+			if record.Status == "ready" && record.Visibility == "private" {
+				if _, err := tx.Exec(ctx, `WITH removed AS (
+					DELETE FROM listing_media_changes WHERE media_id=$1 AND publish RETURNING product_id)
+					UPDATE listing_change_reviews c SET revision=revision+1,updated_at=now(),
+					cover_base=CASE WHEN cover_proposed=$2 THEN NULL ELSE cover_base END,
+					cover_proposed=CASE WHEN cover_proposed=$2 THEN NULL ELSE cover_proposed END
+					FROM removed r WHERE c.product_id=r.product_id`, mediaID, record.PublicPath); err != nil {
+					return err
+				}
+				if _, err := tx.Exec(ctx, `UPDATE listing_change_reviews c SET status='changes_requested',review_note='Seller withdrew the last proposed media change.'
+					WHERE c.product_id=$1 AND c.status='pending' AND cover_proposed IS NULL
+					AND NOT EXISTS(SELECT 1 FROM listing_media_changes m WHERE m.product_id=c.product_id)
+					AND NOT EXISTS(SELECT 1 FROM listing_price_changes p WHERE p.product_id=c.product_id)`, record.ProductID); err != nil {
+					return err
+				}
+			}
+		}
+		row := tx.QueryRow(ctx, `
 		WITH candidate AS (
 			SELECT pm.id
 			FROM product_media pm
@@ -110,10 +171,12 @@ func (r *MediaRepository) ClaimOwnedMedia(ctx context.Context, sellerOwnerID, me
 		WHERE pm.id = c.id
 		RETURNING pm.id, pm.product_id, pm.seller_id, pm.object_key, pm.content_type,
 		          pm.byte_size, pm.visibility, pm.status, pm.public_url, pm.created_at`, mediaID, sellerOwnerID)
-	record, err := scanMediaRecord(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return domaincommerce.MediaRecord{}, ports.ErrForbidden
-	}
+		record, err = scanMediaRecord(row)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrForbidden
+		}
+		return err
+	})
 	return record, err
 }
 

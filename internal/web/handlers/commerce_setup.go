@@ -60,6 +60,11 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 		p.Data = decodeSubmissionData(p.Selected)
 	}
 	if !review {
+		p.Shared, err = h.Repository.SellerFulfillmentSetup(r.Context(), actor)
+		if err != nil {
+			marketplaceHTTPError(w, err)
+			return
+		}
 		before, _ := strconv.ParseInt(r.URL.Query().Get("before"), 10, 64)
 		selectedVariant := p.VariantID
 		if selectedVariant == 0 {
@@ -152,7 +157,14 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 			}
 			p.Values = f
 			p.Data = ports.SetupSubmissionData{LegalName: strings.TrimSpace(f.Get("legal_name")), Address: strings.TrimSpace(f.Get("address")), StateCode: f.Get("state_code"), Registration: f.Get("registration"), GSTIN: strings.ToUpper(strings.TrimSpace(f.Get("gstin"))), HSN: strings.TrimSpace(f.Get("hsn")), ReturnClass: f.Get("return_class")}
-			submit := f.Get("intent") == "submit"
+			intent := f.Get("intent")
+			if intent != "draft" && intent != "submit" && intent != "confirm" {
+				http.Error(w, "Choose how to save these details.", http.StatusBadRequest)
+				return
+			}
+			confirm := intent == "confirm"
+			submit := confirm || intent == "submit"
+			var profileRevision int64
 			action := "save_invoice_profile"
 			if p.Kind == "tax" {
 				action = "save_setup_tax"
@@ -178,9 +190,24 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 				v.Set("prefix", "S"+strings.ToUpper(strconv.FormatInt(a.SellerID, 36)))
 				p.Errors = validateSetup(action, v)
 			}
+			if confirm {
+				if f.Get("acknowledged") != "yes" {
+					p.Errors["acknowledged"] = "Confirm that these details match your business records."
+				}
+				var revisionErr error
+				profileRevision, revisionErr = strconv.ParseInt(f.Get("profile_revision"), 10, 64)
+				if revisionErr != nil || profileRevision < 0 {
+					p.Errors["profile_revision"] = "Reload to check the latest saved details before confirming."
+				}
+				if p.Kind == "invoice" && p.Data.Registration == "registered" && p.Errors["gstin"] == "" &&
+					p.Errors["state_code"] == "" && !strings.HasPrefix(p.Data.GSTIN, p.Data.StateCode) {
+					p.Errors["gstin"] = "Choose the state that matches the first two digits of the GSTIN."
+				}
+			}
 			if len(p.Errors) == 0 {
 				payload, _ := json.Marshal(p.Data)
-				in := ports.SetupSubmissionInput{Kind: p.Kind, SellerID: a.SellerID, VariantID: p.VariantID, Payload: payload, Submit: submit, Note: f.Get("note")}
+				in := ports.SetupSubmissionInput{Kind: p.Kind, SellerID: a.SellerID, VariantID: p.VariantID,
+					Payload: payload, Submit: submit, Attest: confirm, ExpectedProfileRevision: profileRevision, Note: f.Get("note")}
 				in.ID, _ = strconv.ParseInt(f.Get("submission_id"), 10, 64)
 				in.ExpectedRevision, _ = strconv.ParseInt(f.Get("revision"), 10, 64)
 				var saved int64
@@ -189,13 +216,21 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 					http.Redirect(w, r, "/seller-admin/setup?submission_id="+strconv.FormatInt(saved, 10)+"&saved=1", 303)
 					return
 				}
-				if errors.Is(err, ports.ErrFulfillmentConflict) {
-					p.Error = "These details changed or were already submitted. Reload to review the current version; your entered values are shown below."
-				} else {
+				switch {
+				case errors.Is(err, ports.ErrFulfillmentConflict):
+					p.Error = "These details changed since this page was opened. Reload to see the saved values before confirming. Your entries are still shown below."
+				case errors.Is(err, ports.ErrSetupReviewRequired):
+					p.Error = "These details have an open review. Submit the corrections for Super Admin to check."
+				case errors.Is(err, ports.ErrSetupBillingRequired):
+					p.Error = "Confirm your business details before confirming product tax."
+				case errors.Is(err, ports.ErrSetupTaxRegistration):
+					p.Error = "Only a zero tax rate can be applied with your current unregistered billing profile."
+					p.Errors["tax_rate_percent"] = "Enter 0 or update the seller’s registration details first."
+				default:
 					p.Error = "The details could not be saved. Check the values and reload to verify the current status before retrying."
 				}
 			} else {
-				p.Error = "Check the highlighted details before submitting for review."
+				p.Error = "Check the highlighted details before continuing."
 			}
 		}
 	} else if r.Method != "GET" && r.Method != "HEAD" {
@@ -204,18 +239,29 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 		return
 	}
 	if r.URL.Query().Get("saved") == "1" {
-		p.Notice = "Saved. Review status and remaining checkout requirements are shown below."
+		p.Notice = "Details saved."
+		if !review && p.Selected != nil && p.Selected.Status == "attested" {
+			p.Notice = "Details confirmed for new orders. Check the remaining setup tasks below."
+		}
 	}
-	if p.Kind == "" && p.Selected == nil {
-		if !review {
-			p.Shared, err = h.Repository.SellerFulfillmentSetup(r.Context(), actor)
-			if err != nil {
-				marketplaceHTTPError(w, err)
-				return
+	if !review && p.Kind != "" && (p.Selected == nil || p.Selected.Status == "draft" || p.Selected.Status == "changes_requested") {
+		p.Confirmation, err = h.Repository.SellerSetupConfirmation(r.Context(), actor, p.VariantID, p.Kind)
+		if err != nil {
+			marketplaceHTTPError(w, err)
+			return
+		}
+		if p.Error != "" && p.Values.Get("intent") == "confirm" {
+			if expected, parseErr := strconv.ParseInt(p.Values.Get("profile_revision"), 10, 64); parseErr == nil {
+				// An error response retains the revision the seller saw as well
+				// as the entered values. Reload is required to resolve a conflict.
+				p.Confirmation.ProfileRevision = expected
 			}
 		}
+	}
+	if p.Kind == "" && p.Selected == nil {
 		before, _ := strconv.ParseInt(r.URL.Query().Get("review_before"), 10, 64)
-		p.Submissions, p.NextReview, err = h.Repository.SetupSubmissions(r.Context(), actor, 0, before)
+		p.Confirmations = review && r.URL.Query().Get("history") == "confirmed"
+		p.Submissions, p.NextReview, err = h.Repository.SetupSubmissions(r.Context(), actor, 0, before, p.Confirmations)
 		if err != nil {
 			marketplaceHTTPError(w, err)
 			return

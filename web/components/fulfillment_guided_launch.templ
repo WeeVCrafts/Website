@@ -40,10 +40,23 @@ templ GuidedLaunchStep(p viewmodels.MarketplacePage) {
   }
   <form class="marketplace-form" data-fulfillment-setup-action="configure_pilot" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"configure_pilot") @SetupErrors(p,"configure_pilot")<input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Customer account<select name="customer_id" required>@SetupOptions(p.Setup.Customers,setupFormID(p,"configure_pilot","customer_id"),"Choose an active customer")</select></label>@SetupFieldError(p,"configure_pilot","customer_id") @GuidedLaunchReason(p,"configure_pilot","Activation reason","Wallet is funded and this customer and product are ready for a genuine shipment","Enable one-order pilot")</form>
  } else if p.SetupStep=="launch" {
-  <h2>Two-seller launch catalog</h2><p>Select one ready option per seller after the genuine prepaid pilot has been delivered through Shiprocket. The backend checks the pilot and each selected option again.</p>
+  <h2>Launch catalog</h2><p>After the prepaid Shiprocket pilot is delivered, you can open checkout for the pilot seller or expand to all ready options.</p>
   if p.Policy.PilotOrderID==0 {
    <p class="guided-alert">A genuine pilot order is required first. <a href={templ.SafeURL(guidedStepURL(p,"pilot"))}>Open pilot setup</a></p>
   } else {
+   if p.Policy.LiveCatalogScope=="seller" {
+    <p class="guided-success">Only ready options from the activated seller are eligible for public checkout.</p>
+   } else if p.Policy.LiveCatalogScope=="ready" {
+    <p class="guided-success">All ready options are eligible for public checkout.</p>
+   }
+   if p.Policy.LiveCatalogScope=="seller" || p.Policy.LiveCatalogScope=="ready" {
+    <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"restore_limited_catalog") @SetupErrors(p,"restore_limited_catalog") @GuidedLaunchReason(p,"restore_limited_catalog","Reason","Only options in the saved limited catalog will remain eligible","Restore limited catalog")</form>
+   }
+   if p.Policy.LiveCatalogScope!="ready" {
+    <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"activate_pilot_seller") @SetupErrors(p,"activate_pilot_seller")<input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/>@GuidedLaunchReason(p,"activate_pilot_seller","Launch reason","I verified this seller’s delivered pilot and live shipping setup","Enable checkout for "+p.Setup.Seller)</form>
+    <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>@MarketplaceFields(p,"activate_ready_catalog") @SetupErrors(p,"activate_ready_catalog") @GuidedLaunchReason(p,"activate_ready_catalog","Launch reason","I verified the delivered pilot and the live shipping setup","Enable all ready options")</form>
+   }
+   <h3>Limited launch catalog</h3><p>Choose one ready option from each of two sellers.</p>
    <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/><input type="hidden" name="step" value="launch"/><input type="hidden" name="seller_id" value={fmt.Sprint(p.Setup.Query.SellerID)}/><input type="hidden" name="variant_id" value={fmt.Sprint(p.Setup.Query.VariantID)}/><label>Find ready launch options<input name="launch_q" value={p.Setup.Query.LaunchSearch} maxlength="120"/></label><button type="submit">Find ready options</button></form>
    if p.Setup.NextLaunch>0 {
     <a href={templ.SafeURL(p.SetupURL("launch_before",fmt.Sprint(p.Setup.NextLaunch)))}>More ready options</a>

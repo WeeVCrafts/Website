@@ -26,7 +26,19 @@ func (r *MarketplaceRepository) SellerReadiness(ctx context.Context, actor, befo
 	if len(selected) > 0 {
 		variant = selected[0]
 	}
-	rows, err := r.pool.Query(ctx, `SELECT v.id,p.id,p.seller_id,p.name,v.sku,s.display_name,p.status,parcel.shipping_weight_g,parcel.shipping_length_cm,parcel.shipping_width_cm,parcel.shipping_height_cm,COALESCE(sp.verified,false),ip.seller_id IS NOT NULL AND NOT ip.checkout_review_hold,COALESCE(tp.variant_id IS NOT NULL AND NOT tp.checkout_review_hold AND (ip.registration<>'unregistered' OR tp.rate_basis_points=0),false),v.return_class<>'unclassified',COALESCE(i.available_quantity,0),lv.variant_id IS NOT NULL,COALESCE(review.id,0),COALESCE(review.status,'') FROM products p JOIN product_variants v ON v.product_id=p.id JOIN sellers s ON s.id=p.seller_id JOIN marketplace_variant_parcels parcel ON parcel.variant_id=v.id LEFT JOIN inventory_stock i ON i.variant_id=v.id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=s.id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id LEFT JOIN marketplace_shipping_profiles sp ON sp.seller_id=s.id LEFT JOIN marketplace_launch_variants lv ON lv.variant_id=v.id LEFT JOIN LATERAL(SELECT id,status FROM marketplace_setup_submissions WHERE seller_id=s.id AND (variant_id=v.id OR kind='invoice') AND status IN ('submitted','changes_requested') ORDER BY updated_at DESC LIMIT 1) review ON true WHERE p.seller_id=$1 AND p.status<>'archived' AND v.status='active' AND ($2=0 OR v.id<$2) AND ($3=0 OR v.id=$3) ORDER BY v.id DESC LIMIT 26`, a.seller, before, variant)
+	rows, err := r.pool.Query(ctx, `
+		SELECT f.variant_id,f.product_id,f.seller_id,f.product,f.sku,f.seller,f.product_status,
+			f.shipping_weight_g,f.shipping_length_cm,f.shipping_width_cm,f.shipping_height_cm,
+			f.pickup_ready,f.invoice_ready,f.tax_ready,f.classified,f.stock,f.selected,
+			COALESCE(review.id,0),COALESCE(review.status,'')
+		FROM marketplace_option_setup_facts f
+		LEFT JOIN LATERAL (
+			SELECT id,status FROM marketplace_setup_submissions
+			WHERE seller_id=f.seller_id AND (variant_id=f.variant_id OR kind='invoice')
+				AND status IN ('submitted','changes_requested') ORDER BY updated_at DESC,id DESC LIMIT 1
+		) review ON true
+		WHERE f.seller_id=$1 AND ($2=0 OR f.variant_id<$2) AND ($3=0 OR f.variant_id=$3)
+		ORDER BY f.variant_id DESC LIMIT 26`, a.seller, before, variant)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -55,6 +67,7 @@ func (r *MarketplaceRepository) SellerFulfillmentSetup(ctx context.Context, acto
 		return setup, ports.ErrForbidden
 	}
 	err = r.pool.QueryRow(ctx, `SELECT i.seller_id IS NOT NULL AND NOT i.checkout_review_hold,
+		i.attested_by IS NOT NULL,
 		COALESCE(pickup.verified,false),COALESCE(review.id,0),COALESCE(review.status,'')
 		FROM sellers s LEFT JOIN seller_invoice_profiles i ON i.seller_id=s.id
 		LEFT JOIN marketplace_shipping_profiles pickup ON pickup.seller_id=s.id
@@ -62,6 +75,6 @@ func (r *MarketplaceRepository) SellerFulfillmentSetup(ctx context.Context, acto
 			WHERE seller_id=s.id AND kind='invoice' AND status IN ('draft','submitted','changes_requested')
 			ORDER BY id DESC LIMIT 1) review ON true
 		WHERE s.id=$1 AND s.status='active'`, a.seller).
-		Scan(&setup.InvoiceVerified, &setup.PickupVerified, &setup.InvoiceSubmissionID, &setup.InvoiceSubmissionStatus)
+		Scan(&setup.InvoiceReady, &setup.InvoiceAttested, &setup.PickupVerified, &setup.InvoiceSubmissionID, &setup.InvoiceSubmissionStatus)
 	return setup, err
 }

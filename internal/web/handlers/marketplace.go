@@ -164,7 +164,7 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 				if f.Get("setup_context") != "" && (f.Get("action") == "save_invoice_profile" || f.Get("action") == "save_shipping_profile") && f.Get("seller_id") != setupPostContext(f).Get("seller_id") {
 					setupErrors["seller_id"] = "Choose the seller again before saving."
 				}
-				if f.Get("setup_context") != "" && (f.Get("action") == "save_tax_profile" || f.Get("action") == "classify_variant" || f.Get("action") == "configure_pilot" || f.Get("action") == "save_setup_parcel" || f.Get("action") == "save_setup_tax") {
+				if f.Get("setup_context") != "" && (f.Get("action") == "save_tax_profile" || f.Get("action") == "classify_variant" || f.Get("action") == "configure_pilot" || f.Get("action") == "save_setup_parcel" || f.Get("action") == "save_setup_tax" || f.Get("action") == "activate_pilot_seller") {
 					q := setupPostContext(f)
 					sid, _ := strconv.ParseInt(q.Get("seller_id"), 10, 64)
 					vid, _ := strconv.ParseInt(f.Get("variant_id"), 10, 64)
@@ -213,13 +213,17 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 						return
 					}
 					e = h.uploadClaimEvidence(r.Context(), session.UserID, c.CaseID, r.MultipartForm.File["evidence"][0])
-				case "publish_policy", "pause_shipping", "configure_pilot", "classify_variant":
+				case "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 					if f.Get("confirmed") != "yes" {
 						http.Error(w, "Confirm the policy or shipping change", 422)
 						return
 					}
 					if c.Action == "configure_pilot" && !h.BookingsEnabled {
 						setupErrors["form"] = "New shipping bookings are paused in the application configuration. Product setup can still be saved."
+						break
+					}
+					if (c.Action == "activate_ready_catalog" || c.Action == "activate_pilot_seller") && (!h.BookingsEnabled || !h.CheckoutEnabled || !h.ShippingConfigured) {
+						setupErrors["form"] = "Enable production checkout and live Shiprocket bookings before expanding the catalog."
 						break
 					}
 					if c.Action == "classify_variant" {

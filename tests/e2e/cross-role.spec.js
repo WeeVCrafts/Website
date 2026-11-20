@@ -45,7 +45,7 @@ test('Normal order links share role-scoped financial, package and request views'
   }
  }
 });
-test('Seller setup is discoverable, validates entries, preserves drafts and requires Super Admin review',async({browser})=>{
+test('Seller setup confirms routine details and keeps existing reviews with Super Admin',async({browser})=>{
  const seller=await actor(browser,'seller',390);
  await seller.page.goto(`${base}/seller-admin/products`);
  await seller.page.getByRole('link',{name:'Open fulfillment setup',exact:true}).click();
@@ -53,22 +53,38 @@ test('Seller setup is discoverable, validates entries, preserves drafts and requ
  await seller.page.getByRole('link',{name:'Open invoice details',exact:true}).click();
  const form=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Save draft',exact:true})});
  await form.getByLabel('Legal name',{exact:true}).fill('');
- await form.getByRole('button',{name:'Submit for review',exact:true}).click();
+ await form.getByRole('button',{name:'Confirm details',exact:true}).click();
  await expect(form.getByLabel('Legal name',{exact:true})).toHaveAttribute('aria-invalid','true');
  await expect(form.getByLabel('Legal name',{exact:true})).toBeFocused();
- await form.getByLabel('Legal name',{exact:true}).fill('Fixture reviewed legal identity');
+ await form.getByLabel('Legal name',{exact:true}).fill('Fixture confirmed legal identity');
  await form.getByLabel('State or union territory',{exact:true}).focus();await seller.page.keyboard.press('ArrowDown');await seller.page.keyboard.press('Escape');
  await form.getByLabel('State or union territory',{exact:true}).selectOption('27');
  await form.getByLabel('Registered invoice address',{exact:true}).fill('abc');
  await save(seller.page,form.getByRole('button',{name:'Save draft',exact:true}),'/seller-admin/setup');
- await expect(form.getByLabel('Legal name',{exact:true})).toHaveValue('Fixture reviewed legal identity');
+ await expect(form.getByLabel('Legal name',{exact:true})).toHaveValue('Fixture confirmed legal identity');
  await expect(form.getByLabel('Registered invoice address',{exact:true})).toHaveValue('abc');
  await form.getByLabel('Registered invoice address',{exact:true}).fill('Verified isolated merchant address Pune 411001');
- await save(seller.page,form.getByRole('button',{name:'Submit for review',exact:true}),'/seller-admin/setup');
+ await form.getByLabel('These details match my business records.').check();
+ await save(seller.page,form.getByRole('button',{name:'Confirm details',exact:true}),'/seller-admin/setup');
+ await expect(seller.page.getByText('Confirmed by seller',{exact:true}).first()).toBeVisible();
+ const confirmedID=new URL(seller.page.url()).searchParams.get('submission_id');
+ const admin=await actor(browser,'super_admin',390);
+ await admin.page.goto(`${base}/super-admin/fulfillment/reviews`);
+ await admin.page.getByRole('link',{name:'View seller confirmations'}).click();
+ await expect(admin.page.getByRole('link',{name:'View confirmation'}).filter({hasNotText:'Review submission'}).first()).toBeVisible();
+ await admin.page.goto(`${base}/super-admin/fulfillment/reviews/${confirmedID}`);
+ await expect(admin.page.getByText('Confirmed by seller',{exact:true})).toBeVisible();await audit(admin.page);
+
+ // Requests from the previous form still create a review and a checkout hold.
+ await seller.page.goto(`${base}/seller-admin/setup?kind=invoice`);
+ const csrf=await seller.page.locator('form[data-fulfillment-setup-action] [name=csrf_token]').inputValue();
+ const priorForm=await seller.page.request.post(`${base}/seller-admin/setup`,{form:{csrf_token:csrf,kind:'invoice',intent:'submit',
+  legal_name:'Fixture reviewed legal identity',address:'Verified isolated merchant address Pune 411001',state_code:'27',registration:'unregistered'}});
+ expect(priorForm.ok()).toBe(true);
+ await seller.page.goto(priorForm.url());
  await expect(seller.page.getByText('Submitted',{exact:true}).first()).toBeVisible();
  const id=new URL(seller.page.url()).searchParams.get('submission_id');expect(id).toMatch(/^\d+$/);
  const denied=await seller.page.request.get(`${base}/super-admin/fulfillment/reviews/${id}`);expect(denied.status()).toBe(403);
- const admin=await actor(browser,'super_admin',390);
  await admin.page.goto(`${base}/super-admin/fulfillment/reviews/${id}`);await audit(admin.page);
  await admin.page.screenshot({path:path.resolve('.tmp/cross-role-review-390.png'),fullPage:true});
  await expect(admin.page.locator('td[data-label="Submitted details"]').filter({hasText:'Fixture reviewed legal identity'})).toBeVisible();
@@ -78,23 +94,19 @@ test('Seller setup is discoverable, validates entries, preserves drafts and requ
  await seller.page.reload();await expect(seller.page.getByText('Approved',{exact:true}).first()).toBeVisible();
  await seller.page.goto(`${base}/seller-admin/setup?kind=tax&variant_id=${fixture.VariantID}`);
  const tax=seller.page.locator('form').filter({has:seller.page.getByRole('button',{name:'Save draft',exact:true})});
- await tax.getByLabel('Verified tax rate (%)',{exact:true}).fill('');
+ await tax.getByLabel('Tax rate (%)',{exact:true}).fill('');
  await save(seller.page,tax.getByRole('button',{name:'Save draft',exact:true}),'/seller-admin/setup');
- await expect(tax.getByLabel('Verified tax rate (%)',{exact:true})).toHaveValue('');
- await tax.getByLabel('Verified tax rate (%)',{exact:true}).fill('5.555');
+ await expect(tax.getByLabel('Tax rate (%)',{exact:true})).toHaveValue('');
+ await tax.getByLabel('Tax rate (%)',{exact:true}).fill('5.555');
  await tax.getByRole('button',{name:'Save draft',exact:true}).click();
- await expect(tax.getByLabel('Verified tax rate (%)',{exact:true})).toHaveAttribute('aria-invalid','true');
- await expect(tax.getByLabel('Verified tax rate (%)',{exact:true})).toHaveValue('5.555');
- await tax.getByLabel('Verified tax rate (%)',{exact:true}).fill('0');
+ await expect(tax.getByLabel('Tax rate (%)',{exact:true})).toHaveAttribute('aria-invalid','true');
+ await expect(tax.getByLabel('Tax rate (%)',{exact:true})).toHaveValue('5.555');
+ await tax.getByLabel('Tax rate (%)',{exact:true}).fill('0');
  await tax.getByLabel('HSN (4–8 digits)',{exact:true}).fill('4420');
  await tax.getByLabel('Return category',{exact:true}).selectOption('fragile_art');
- await save(seller.page,tax.getByRole('button',{name:'Submit for review',exact:true}),'/seller-admin/setup');
- const taxID=new URL(seller.page.url()).searchParams.get('submission_id');
- await admin.page.goto(`${base}/super-admin/fulfillment/reviews/${taxID}`);
- await admin.page.getByLabel('Review note',{exact:true}).fill('Verified isolated tax and return classification.');
- await admin.page.getByLabel(/I verified/).check();
- await save(admin.page,admin.page.getByRole('button',{name:'Approve verified details',exact:true}),`/fulfillment/reviews/${taxID}`);
- await seller.page.reload();await expect(seller.page.getByText('Approved',{exact:true}).first()).toBeVisible();
+ await tax.getByLabel('These details match my business records.').check();
+ await save(seller.page,tax.getByRole('button',{name:'Confirm details',exact:true}),'/seller-admin/setup');
+ await expect(seller.page.getByText('Confirmed by seller',{exact:true}).first()).toBeVisible();
  await seller.context.close();await admin.context.close();
 });
 

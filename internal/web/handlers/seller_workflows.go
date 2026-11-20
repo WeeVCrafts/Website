@@ -69,7 +69,7 @@ func (h *LivePortalHandler) delegateSellerProduct(w http.ResponseWriter, r *http
 	h.delegateWithPortalRedirect(response, mutation, "/seller-admin")
 	if response.status == http.StatusUnprocessableEntity || response.status == http.StatusServiceUnavailable {
 		input := make(map[string]string)
-		for _, name := range []string{"name", "category_slug", "category_name", "sku", "price_rupees", "compare_at_rupees", "cost_price_rupees", "initial_stock", "description", "delivery_label", "materials", "dimensions", "care", "technique", "search_tags", "image_url"} {
+		for _, name := range []string{"name", "category_slug", "category_name", "sku", "price_rupees", "compare_at_rupees", "cost_price_rupees", "initial_stock", "description", "delivery_label", "materials", "dimensions", "care", "technique", "search_tags", "image_url", "listing_parcel", "shipping_weight_g", "shipping_length_cm", "shipping_width_cm", "shipping_height_cm"} {
 			input[name] = mutation.FormValue(name)
 		}
 		for _, prefix := range []string{"price", "compare_at", "cost_price"} {
@@ -92,6 +92,10 @@ func (h *LivePortalHandler) delegateSellerProduct(w http.ResponseWriter, r *http
 			message = "Enter a whole stock quantity between zero and 100,000."
 		case "image_file":
 			message = "Choose a JPEG, PNG or WebP image up to 25 MB."
+		case "listing_parcel":
+			message = "Choose an available seller parcel default or enter this product’s packed measurements."
+		case "shipping_weight_g":
+			message = "Enter a packed weight of at least 100 grams and all three dimensions in whole centimetres."
 		default:
 			field = ""
 		}

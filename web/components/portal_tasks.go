@@ -29,7 +29,7 @@ func sellerPortalTask(p viewmodels.SellerAdminPage) portalTask {
 		return portalTask{"Check who owns the next step", "Open a request to see its current status and the actions available for that order.", "", ""}
 	case "settings":
 		if p.CanManageStore {
-			return portalTask{"Review what buyers see", "Preview your studio details before saving. Use fulfillment setup for the invoice details Super Admin verifies.", "Open fulfillment setup", "/seller-admin/setup"}
+			return portalTask{"Review what buyers see", "Preview your studio details before saving. Confirm the shared business details for new orders in fulfillment setup.", "Open fulfillment setup", "/seller-admin/setup"}
 		}
 	case "onboarding":
 		return portalTask{"Review your application status", "Open the storefront profile once the application is approved. Fulfillment setup then shows what you need to sell.", "", ""}

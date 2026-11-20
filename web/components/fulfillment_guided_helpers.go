@@ -42,8 +42,8 @@ func guidedCatalogState(p viewmodels.MarketplacePage, r ports.ShippingReadiness)
 	switch {
 	case r.Stock <= 0:
 		return "Needs available stock"
-	case r.Selected && p.Policy.ShippingMode == "live" && p.CheckoutEnabled && p.BookingsEnabled && p.ShippingConfigured && p.Policy.PublishedAt != nil:
-		return "Live checkout"
+	case p.LiveOptionAllowed(r):
+		return "Ready to buy"
 	case p.Policy.ShippingMode == "pilot" && p.Policy.PilotVariantID == r.VariantID:
 		return "Selected for pilot"
 	case p.CheckoutEnabled && p.BookingsEnabled && p.ShippingConfigured && p.Policy.PublishedAt != nil:

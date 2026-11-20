@@ -79,7 +79,7 @@ templ PortalProducts(p viewmodels.AdminPage) {
 				if p.CanManageCatalog {
 					<div class="action-row">
      if p.CanSecurity {
- <a class="admin-button secondary" href={p.PortalRoot+"/category-management"}>Manage categories</a><a class="admin-button secondary" href={p.PortalRoot+"/category-management?new=1"}>Add category</a>
+ <a class="admin-button secondary" href="/super-admin/products/listing-review">Review listing changes</a><a class="admin-button secondary" href={p.PortalRoot+"/category-management"}>Manage categories</a><a class="admin-button secondary" href={p.PortalRoot+"/category-management?new=1"}>Add category</a>
  }
      <a class="admin-button primary" href={ p.PortalRoot + "/products/new" }>Add product</a></div>
 				}
@@ -96,9 +96,11 @@ templ PortalProducts(p viewmodels.AdminPage) {
 								<form method="post" action={ p.PortalRoot + "/products/submit" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="admin-button primary" type="submit">Submit for review</button></form>
 							}
 						}
-						if product.Status == "pending_review" {
+						if product.Status == "pending_review" && p.CanSecurity {
 							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
 							<form method="post" action={ p.PortalRoot + "/products/review" }><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="reject"/><input name="reason" minlength="4" maxlength="1000" placeholder="Rejection reason" required/><button class="admin-button danger" type="submit">Reject</button></form>
+						} else if product.Status == "pending_review" {
+							<span>Awaiting Super Admin review</span>
 						} else {
 							<span>—</span>
 						}

@@ -23,7 +23,8 @@ type ReturnShippingStore interface {
 
 type PolicySettings struct {
 	PublishedAt                               *time.Time
-	Version, ShippingMode                     string
+	Version, ShippingMode, LiveCatalogScope   string
+	LiveCatalogSellerID                       int64
 	PilotUserID, PilotVariantID, PilotOrderID int64
 }
 type PolicyClaim struct {

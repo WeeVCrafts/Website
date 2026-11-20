@@ -959,12 +959,16 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await setHiddenInputValue(sellerProductForm.locator('input[name="brand_name"]'), `QA Artisan ${suffix}`);
     await setHiddenInputValue(sellerProductForm.locator('input[name="brand_slug"]'), `qa-artisan-${suffix}`);
     await sellerProductForm.locator('select[name="category_slug"]').selectOption("crafts");
+    await sellerProductForm.getByText("Advanced identifiers", { exact: true }).click();
     await sellerProductForm.locator('input[name="sku"]').fill(sku);
-    await sellerProductForm.locator('input[name="price_rupees"]').fill("2499.00");
-    await sellerProductForm.locator('input[name="compare_at_rupees"]').fill("2999.00");
-    await sellerProductForm.locator('input[name="initial_stock"]').fill("5");
     await sellerProductForm.locator('input[name="delivery_label"]').fill("Delivery to serviceable PIN codes in India");
     await sellerProductForm.locator('textarea[name="description"]').fill("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
+    await sellerProductForm.locator("[data-product-next]").click();
+    await sellerProductForm.locator('input[name="price_rupees"]').fill("2499.00");
+    await sellerProductForm.locator("details").filter({ has: seller.locator("[name=compare_at_rupees]") }).locator("summary").click();
+    await sellerProductForm.locator('input[name="compare_at_rupees"]').fill("2999.00");
+    await sellerProductForm.locator("[data-product-next]").click();
+    await sellerProductForm.locator('input[name="initial_stock"]').fill("5");
     await sellerProductForm.getByRole("button", { name: "Save product draft" }).click();
 
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
@@ -983,14 +987,16 @@ test("seller listing approval, mock-paid order, fulfilment and return handling w
     await expect(editForm.locator('input[name="compare_at_rupees"]')).toHaveValue("2999.00");
     await expect(editForm.locator('input[name="delivery_label"]')).toHaveValue("Delivery to serviceable PIN codes in India");
     await expect(editForm.locator('textarea[name="description"]')).toHaveValue("A locally created browser test listing used to verify the Weevcrafts cross-role order flow.");
-    await editForm.locator('input[name="price_rupees"]').fill("2599.00");
     await editForm.locator('textarea[name="description"]').fill("Updated local browser test product description.");
+    await editForm.locator("[data-product-next]").click();
+    await editForm.locator('input[name="price_rupees"]').fill("2599.00");
     await editForm.getByRole("button", { name: "Save product draft" }).click();
     await expect(seller).toHaveURL(/\/seller-admin\/products/);
     await seller.goto(`/seller-admin/products?q=${encodeURIComponent(sku)}`);
     const updatedSellerProduct = seller.locator(".portal-product-row, .seller-product-row").filter({ hasText: productName });
     await expect(updatedSellerProduct).toContainText("2599");
     await updatedSellerProduct.getByRole("link", { name: "Edit product" }).click();
+    await seller.locator('[data-product-step-link="shipping"]').click();
     const variantForm = seller.locator('form[action="/seller-admin/products/variants/create"]');
     await variantForm.locator('input[name="name"]').fill("Indigo edition");
     await variantForm.locator('input[name="sku"]').fill(`QA-ALT-${suffix}`);

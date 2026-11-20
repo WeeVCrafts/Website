@@ -47,18 +47,21 @@ indicate additional records; the normal order workspace remains available.
 ## Seller details and verification
 
 1. Seller opens Complete product setup from Products or Store profile.
-2. Seller records legal invoice identity once per business, and tax/return
-   details for each option. Sellers can assign reusable measured parcel profiles in Fulfillment Setup. Existing variant measurements override profiles. Stock stays in Inventory and pickup verification stays with Super Admin.
-3. Save draft preserves work without changing approved profiles or checkout.
-4. Submit for review records an immutable version and places a hold on new
-   purchases for that seller (invoice) or option (tax).
-5. Super Admin compares submitted and verified values, records verification
-   notes, and approves or requests changes. Requested changes retain the hold.
-6. Approval publishes only that reviewed version and clears its review hold.
-   Other stock, parcel, pickup, tax, policy and launch checks still apply.
+2. An active seller confirms business details once, and confirms tax and
+   return details for each product option. Sellers can reuse their parcel
+   profiles. Measured option overrides take precedence. Stock stays in
+   Inventory, and pickup verification stays with Super Admin.
+3. Save draft preserves work and the currently effective checkout details.
+   Confirm details records the seller and applies that version to new orders.
+4. Existing reviews and their holds continue through Super Admin. A requested
+   correction can be saved as a draft and then submitted for review. Approval
+   applies the exact reviewed version and clears that hold.
+5. Super Admin can open Seller confirmations from the setup review queue to
+   see which changes came from seller records. Stock, parcel, pickup, tax,
+   policy and launch checks still apply.
 
-Revisions reject stale edits/reviews. Identical submitted/approved retries are
-idempotent. Audit history and account notifications are recorded transactionally;
+Revisions reject stale edits, confirmations and reviews. Identical write retries
+are idempotent. Audit history and account notifications for reviewed changes are recorded transactionally;
 the existing worker sends email and retains provider delivery outcomes.
 Invoice numbering remains platform-managed. New orders freeze seller invoice
 identity when items are created, alongside recorded item tax data. Profile edits

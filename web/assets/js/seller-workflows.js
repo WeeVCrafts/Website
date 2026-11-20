@@ -16,25 +16,37 @@
   document.addEventListener('ui:seller-order-refresh', event => enhanceFulfillment(event.detail));
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-product-builder]');
-    if(form?.hasAttribute('data-product-simple')) {
-      form.addEventListener('input',()=>{const submit=document.querySelector('[data-review-submit] button');if(submit)submit.disabled=true;});
-      form.addEventListener('ui:invalid',event=>{let details=event.target.closest('details');while(details){details.open=true;details=details.parentElement.closest('details');}});
-    }
-
-    if (form && !form.hasAttribute("data-product-simple")) {
-      const keys = ['details', 'pricing', 'photos', 'review'];
+    if (form) {
+      const keys = ['details', 'photos', 'shipping', 'review'];
       const panels = keys.map(key => form.querySelector('[data-product-step="' + key + '"]'));
+      const workbenches = Array.from(form.parentElement.querySelectorAll('[data-product-workbench]'));
       const links = Array.from(form.querySelectorAll('[data-product-step-link]'));
       const back = form.querySelector('[data-product-back]'), next = form.querySelector('[data-product-next]');
       const save = form.querySelector('[data-product-save]');
-      let current = 0, completed = form.dataset.savedProduct ? 3 : 0;
+      const saved = Boolean(form.dataset.savedProduct);
+      let current = 0, completed = saved ? 3 : 0;
+      const parcel = form.querySelector('[data-listing-parcel]');
+      const parcelFields = form.querySelector('[data-listing-parcel-fields]');
+      const packedWeight = parcelFields?.querySelector('[name=shipping_weight_g]');
+      if (packedWeight) packedWeight.min = '100';
+      function syncParcel() {
+        if (!parcel || !parcelFields) return;
+        const custom = parcel.value === 'custom';
+        parcelFields.hidden = !custom;
+        for (const field of parcelFields.querySelectorAll('input')) {
+          field.disabled = !custom;
+          field.required = custom;
+        }
+      }
+      parcel?.addEventListener('change', syncParcel);
+      syncParcel();
       function review() {
         const target = form.querySelector('[data-product-review]');
         target.replaceChildren();
         const sections = [
-          ['details', 'Details', ['name', 'category_slug', 'sku', 'description', 'delivery_label', 'materials', 'dimensions', 'care', 'technique']],
-          ['pricing', 'Pricing & stock', ['price_rupees', 'compare_at_rupees', 'cost_price_rupees', 'initial_stock']],
-          ['photos', 'Photos', ['image_file', 'image_url']]
+          ['details', 'Basics', ['name', 'category_slug', 'description']],
+          ['photos', 'Photos and price', ['price_rupees', 'compare_at_rupees', 'image_file']],
+          ['shipping', 'Stock and shipping', ['initial_stock', 'listing_parcel', 'shipping_weight_g', 'shipping_length_cm', 'shipping_width_cm', 'shipping_height_cm']]
         ];
         sections.forEach(([key, title, fields]) => {
           const section = document.createElement('section'), heading = document.createElement('h3');
@@ -43,7 +55,7 @@
           edit.textContent = 'Edit ' + title.toLowerCase(); edit.addEventListener('click', () => show(keys.indexOf(key)));
           const list = document.createElement('dl');
           fields.forEach(name => {
-            const field = form.elements.namedItem(name); if (!field || field.type === 'hidden') return;
+            const field = form.elements.namedItem(name); if (!field || field.disabled || field.type === 'hidden') return;
             const value = field.type === 'file' ? field.files[0]?.name : field.tagName === 'SELECT' ? field.selectedOptions[0]?.textContent : field.value;
             if (!value) return;
             const label = document.createElement('dt'), text = document.createElement('dd');
@@ -55,19 +67,37 @@
             if (preview) section.append(preview.cloneNode());
             else { const empty = document.createElement('p'); empty.textContent = 'No cover selected yet.'; section.append(empty); }
           }
+          if (key === 'shipping' && saved) {
+            const text = document.createElement('p');
+            text.textContent = 'Manage stock in Inventory and packed measurements under Stock & shipping.';
+            section.append(text);
+          }
           section.append(heading, list, edit); target.append(section);
         });
       }
       function show(index, focus = true) {
         current = index; form.dataset.wizardStep = keys[index];
         panels.forEach((panel, i) => { panel.hidden = i !== index; });
+        workbenches.forEach(section => { section.hidden = section.dataset.productWorkbench !== keys[index]; });
         links.forEach((link, i) => {
           link.disabled = i > completed;
           if (i === index) link.setAttribute('aria-current', 'step'); else link.removeAttribute('aria-current');
         });
-        back.hidden = index === 0; next.hidden = index === 3; save.hidden = index !== 3;
+        back.hidden = index === 0;
+        next.hidden = index === 3;
+        save.hidden = index === 0 && !saved;
         if (index === 3) review();
-        if (focus) panels[index].querySelector('legend,h2').focus({preventScroll:true});
+        if (focus) {
+          const heading = panels[index].querySelector('legend,h2');
+          heading.focus({preventScroll:true});
+          heading.scrollIntoView({block:'nearest'});
+          if (saved) {
+            const url = new URL(location.href);
+            url.searchParams.set('step', keys[index]);
+            url.hash = '';
+            history.replaceState(history.state, '', url);
+          }
+        }
       }
       function advance() {
         const fields = panels[current].querySelectorAll('input,select,textarea');
@@ -83,18 +113,28 @@
         const panel = event.target.closest('[data-product-step]');
         if (panel) { const index = keys.indexOf(panel.dataset.productStep); completed = Math.max(completed,index); show(index,false); }
       });
-      // Submitting an older persisted draft while the editor has unsaved changes
-      // would silently omit those changes from the marketplace review.
+      // The review or publish action works on the saved listing.
       form.addEventListener('input', () => {
         const submit = document.querySelector('[data-review-submit] button');
         if (submit && !submit.disabled) {
           submit.disabled = true;
-          const hint = document.createElement('p'); hint.textContent = 'Save your changes before submitting for review.';
+          const hint = document.createElement('p'); hint.textContent = 'Save your changes to continue.';
           hint.role = 'status'; submit.after(hint);
         }
       });
+      const anchorSteps = {'#product-gallery': 'photos', '#product-variants': 'shipping'};
+      const aliasSteps = {pricing: 'photos'};
       const requested = new URLSearchParams(location.search).get('step');
-      show(form.dataset.savedProduct && keys.includes(requested) ? keys.indexOf(requested) : 0, false);
+      const initial = anchorSteps[location.hash] || aliasSteps[requested] || requested;
+      show(saved && keys.includes(initial) ? keys.indexOf(initial) : 0, false);
+      window.addEventListener('hashchange', () => {
+        const key = anchorSteps[location.hash];
+        if (saved && key) {
+          show(keys.indexOf(key), false);
+          const target = document.getElementById(location.hash.slice(1));
+          target?.scrollIntoView({block:'start'});
+        }
+      });
       if (form.querySelector('.seller-form-error')) {
         completed = 3; show(3, false);
         const serverField = form.querySelector('[data-server-product-field]');

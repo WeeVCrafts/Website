@@ -36,7 +36,7 @@ func ResponsiveImageSrcSet(src, existing string) string {
 		}
 		q := u.Query()
 		candidates := []string{}
-		for _, width := range []string{"320", "640", "960"} {
+		for _, width := range []string{"320", "480", "640", "960"} {
 			q.Set("w", width)
 			u.RawQuery = q.Encode()
 			candidates = append(candidates, u.String()+" "+width+"w")

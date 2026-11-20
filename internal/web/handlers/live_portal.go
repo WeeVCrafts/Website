@@ -366,6 +366,10 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	currentRole := roles[0]
+	if r.URL.Path == adminListingReview || r.URL.Path == sellerListingReview {
+		h.serveListingReview(w, r, session.UserID, currentRole, session.CSRFToken)
+		return
+	}
 	if r.Method == http.MethodGet && (r.URL.Path == "/super-admin/returns/export" || r.URL.Path == "/super-admin/analytics/export") {
 		if currentRole != domainidentity.RoleSuperAdmin {
 			denyPortalAccess(w, r)
@@ -2004,6 +2008,17 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 	page.CanManageStore = isOwner
 
 	form := viewmodels.SellerProductForm{Action: "/seller-admin/products", InitialStock: "0", DeliveryLabel: "Delivery to serviceable PIN codes in India", BrandName: page.SellerName, BrandSlug: productSlugForPortal(page.SellerName)}
+	if err := h.queryRow(r, `SELECT COALESCE((SELECT pp.name FROM sellers s
+		JOIN seller_parcel_defaults d ON d.seller_id=s.id
+		JOIN seller_parcel_profiles pp ON pp.id=d.profile_id AND pp.seller_id=s.id
+		WHERE s.owner_user_id=$1 AND s.status='active' ORDER BY s.id LIMIT 1),'')`, userID).Scan(&form.ParcelDefaultName); err != nil {
+		http.Error(w, "Seller shipping profile unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	form.ParcelStep = "later"
+	if form.ParcelDefaultName != "" {
+		form.ParcelStep = "default"
+	}
 	if categoryRows, categoryErr := h.query(r, `SELECT slug,name FROM categories ORDER BY name`); categoryErr == nil {
 		for categoryRows.Next() {
 			var category viewmodels.SellerCategoryChoice
@@ -2049,6 +2064,10 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		}
 		form.InitialStock = strconv.FormatInt(stock, 10)
 		form.Action = "/seller-admin/products/" + idText + "/edit"
+		if err := h.queryRow(r, `SELECT COALESCE((SELECT status FROM listing_change_reviews WHERE product_id=$1),'')`, id).Scan(&form.ListingReviewState); err != nil {
+			http.Error(w, "Product review status unavailable", http.StatusServiceUnavailable)
+			return
+		}
 		form.Variants, err = h.productVariantViews(r, id)
 		if err != nil {
 			http.Error(w, "Could not load product variants", http.StatusServiceUnavailable)
@@ -2061,13 +2080,16 @@ func (h *LivePortalHandler) renderSellerProductForm(w http.ResponseWriter, r *ht
 		}
 		productMediaPreviewURLs(form.Media)
 		form.Image = productImagePreviewURL(form.Image)
-		page.Title = "Edit product draft"
+		page.Title = "Edit product"
 	} else {
 		page.Title = "Create product draft"
 	}
 	applySellerProductInput(r, &form)
 	page.Pagination = viewmodels.PortalPagination{}
-	page.Subtitle = "Save a product draft, then submit it for marketplace review. Products ship to serviceable PIN codes in India."
+	page.Subtitle = "Add the product details, price, and packed measurements. Save your work and submit when it’s ready."
+	if form.Status == "approved" {
+		page.Subtitle = "Routine changes go live when saved. Price and media changes go to Super Admin for review."
+	}
 	if form.ID != "" {
 		if err := h.queryRow(r, `SELECT array_to_string(search_tags,', ') FROM products WHERE id=$1`, form.ID).Scan(&form.SearchTags); err != nil {
 			http.Error(w, "Product tags unavailable", 503)
@@ -2125,9 +2147,13 @@ func productImagePreviewURL(image string) string {
 }
 
 func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64) ([]viewmodels.ProductVariant, error) {
-	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
-		pv.compare_at_cents IS NOT NULL,COALESCE(pv.cost_price_cents::text,''),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,''),pv.return_class,pv.return_class_request
+	rows, err := h.query(r, `SELECT pv.id,pv.name,pv.sku,COALESCE(proposal.proposed_price,pv.price_cents),
+		COALESCE(CASE WHEN proposal.variant_id IS NOT NULL THEN proposal.proposed_compare_at ELSE pv.compare_at_cents END,0),
+		(CASE WHEN proposal.variant_id IS NOT NULL THEN proposal.proposed_compare_at ELSE pv.compare_at_cents END) IS NOT NULL,
+		COALESCE(pv.cost_price_cents::text,''),COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,COALESCE(NULLIF(pv.shipping_weight_g,0)::text,''),COALESCE(NULLIF(pv.shipping_length_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_width_cm,0)::text,''),COALESCE(NULLIF(pv.shipping_height_cm,0)::text,''),pv.return_class,pv.return_class_request,COALESCE(parcel.source,'')
 		FROM product_variants pv LEFT JOIN inventory_stock i ON i.variant_id=pv.id
+		LEFT JOIN marketplace_variant_parcels parcel ON parcel.variant_id=pv.id
+		LEFT JOIN listing_price_changes proposal ON proposal.product_id=pv.product_id AND proposal.variant_id=pv.id AND pv.status='pending_review'
 		WHERE pv.product_id=$1 ORDER BY CASE WHEN pv.status='active' THEN 0 ELSE 1 END,pv.id`, productID)
 	if err != nil {
 		return nil, err
@@ -2138,12 +2164,12 @@ func (h *LivePortalHandler) productVariantViews(r *http.Request, productID int64
 		var id, price, compareAt, available, reserved int64
 		var name, sku, status, cost string
 		var hasCompare bool
-		var weight, length, width, height, returnClass, returnClassRequest string
-		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &cost, &available, &reserved, &status, &weight, &length, &width, &height, &returnClass, &returnClassRequest); err != nil {
+		var weight, length, width, height, returnClass, returnClassRequest, shippingSource string
+		if err := rows.Scan(&id, &name, &sku, &price, &compareAt, &hasCompare, &cost, &available, &reserved, &status, &weight, &length, &width, &height, &returnClass, &returnClassRequest, &shippingSource); err != nil {
 			return nil, err
 		}
 		variant := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10), CostPriceCents: cost,
-			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, ReturnClass: returnClass, ReturnClassRequest: returnClassRequest, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height}
+			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status, ReturnClass: returnClass, ReturnClassRequest: returnClassRequest, HasCompareAt: hasCompare, ShippingWeight: weight, ShippingLength: length, ShippingWidth: width, ShippingHeight: height, ShippingSource: shippingSource}
 		if hasCompare {
 			variant.CompareAtCents = strconv.FormatInt(compareAt, 10)
 		}
@@ -2162,7 +2188,10 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 	var sellerID int64
 	var name, sellerStatus string
 	var lowStockThreshold int
-	if err := h.queryRow(r, `SELECT s.id,s.display_name,s.status,s.low_stock_threshold FROM sellers s WHERE s.owner_user_id=$1  ORDER BY CASE WHEN s.owner_user_id=$1 THEN 0 ELSE 1 END,s.id LIMIT 1`, userID).Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold); err != nil {
+	var canPublish bool
+	if err := h.queryRow(r, `SELECT s.id,s.display_name,s.status,s.low_stock_threshold,
+		seller_catalog_can_publish(s.id) FROM sellers s WHERE s.owner_user_id=$1 ORDER BY s.id LIMIT 1`, userID).
+		Scan(&sellerID, &name, &sellerStatus, &lowStockThreshold, &canPublish); err != nil {
 		return viewmodels.SellerAdminPage{Active: active, Title: "Seller workspace", Subtitle: "No seller profile is assigned to this account.", DataWarning: projectionWarning(r, "")}
 	}
 	period := r.URL.Query().Get("range")
@@ -2170,7 +2199,7 @@ func (h *LivePortalHandler) sellerPage(r *http.Request, userID int64, isOwner bo
 		period = "week"
 	}
 	rangeLabel := map[string]string{"day": "Today", "week": "This week", "month": "This month"}[period]
-	page := viewmodels.SellerAdminPage{LocalDeliverySimulation: h.localMode, Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: period, RangeLabel: rangeLabel, Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus, LowStockThreshold: lowStockThreshold}
+	page := viewmodels.SellerAdminPage{CanPublishListings: canPublish, LocalDeliverySimulation: h.localMode, Active: active, Workspace: active, Title: title(active), Subtitle: name + " · seller workspace", Query: r.URL.Query().Get("q"), Tab: r.URL.Query().Get("tab"), Range: period, RangeLabel: rangeLabel, Notice: r.URL.Query().Get("notice"), SellerName: name, SellerStatus: sellerStatus, LowStockThreshold: lowStockThreshold}
 	if (active == "dashboard" || active == "products") && sellerPortalAllowed("/seller-admin/products", isOwner, permissions) {
 		page.Products = h.sellerProducts(r, sellerID, portalQuery(page.Query))
 		if page.Products == nil {
@@ -2346,7 +2375,29 @@ func joinPortalWarning(current, warning string) string {
 }
 
 func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, query string) []viewmodels.SellerAdminProduct {
-	rows, err := h.projectionRows(r, "seller-products", `SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,COALESCE(stock.available,0),(SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id=p.id AND pv.status='active'),COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),COALESCE((SELECT string_agg(sku,' ') FROM product_variants WHERE product_id=p.id AND status='active'),'') FROM products p JOIN categories c ON c.slug=p.category_slug LEFT JOIN LATERAL (SELECT id,sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE LEFT JOIN LATERAL (SELECT SUM(st.available_quantity) AS available FROM product_variants av JOIN inventory_stock st ON st.variant_id=av.id WHERE av.product_id=p.id AND av.status='active') stock ON TRUE WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%' OR EXISTS (SELECT 1 FROM product_variants pvx WHERE pvx.product_id=p.id AND pvx.status='active' AND pvx.sku ILIKE '%'||$2||'%') OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%') AND ($3='' OR ($3='stock' AND COALESCE(stock.available,0)=0) OR p.status=$3) ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r))
+	checkoutEnabled := h.storefrontPreview != nil && h.storefrontPreview.checkoutEnabled
+	rows, err := h.projectionRows(r, "seller-products", `
+		SELECT p.id,p.name,COALESCE(v.sku,''),c.name,COALESCE(v.price_cents,p.price_cents),p.status,
+			COALESCE(stock.available,0),COALESCE(stock.options,0),
+			COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id
+				AND pm.status='ready' AND pm.visibility='public' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),''),
+			COALESCE(cr.ready_count,0),COALESCE(cr.next_step,'Add an active product option'),COALESCE(stock.skus,''),
+			COALESCE(review.status,'')
+		FROM products p JOIN categories c ON c.slug=p.category_slug
+		LEFT JOIN marketplace_product_checkout_summary cr ON cr.product_id=p.id
+		LEFT JOIN listing_change_reviews review ON review.product_id=p.id AND p.status='approved'
+		LEFT JOIN LATERAL (SELECT sku,price_cents FROM product_variants WHERE product_id=p.id AND status='active' ORDER BY id LIMIT 1) v ON TRUE
+		LEFT JOIN LATERAL (SELECT SUM(st.available_quantity) AS available,COUNT(*) AS options,string_agg(av.sku,' ') AS skus
+			FROM product_variants av LEFT JOIN inventory_stock st ON st.variant_id=av.id
+			WHERE av.product_id=p.id AND av.status='active') stock ON TRUE
+		WHERE p.seller_id=$1 AND ($2='' OR p.name ILIKE '%'||$2||'%' OR p.slug ILIKE '%'||$2||'%'
+			OR COALESCE(stock.skus,'') ILIKE '%'||$2||'%' OR c.name ILIKE '%'||$2||'%' OR p.status ILIKE '%'||$2||'%')
+		AND ($3='' OR ($3='ready' AND $4 AND COALESCE(cr.ready_count,0)>0)
+			OR ($3='needs-action' AND p.status='approved' AND (NOT $4 OR COALESCE(cr.ready_count,0)=0))
+			OR ($3='stock' AND COALESCE(stock.available,0)=0)
+			OR ($3='pending_review' AND review.status='pending')
+			OR ($3='changes_requested' AND (review.status='changes_requested' OR p.status='rejected')) OR p.status=$3)
+		ORDER BY p.created_at DESC,p.id DESC`, sellerID, query, sellerProductProjectionStatus(r), checkoutEnabled)
 	if err != nil {
 		return nil
 	}
@@ -2356,12 +2407,31 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 		var id int64
 		var name, sku, category, status, image, searchSKUs string
 		var price, stock int64
-		var variants int
-		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image, &searchSKUs) != nil {
+		var variants, ready int
+		var nextStep, reviewState string
+		if rows.Scan(&id, &name, &sku, &category, &price, &status, &stock, &variants, &image, &ready, &nextStep, &searchSKUs, &reviewState) != nil {
 			return nil
 		}
 		image = productImagePreviewURL(strings.TrimSpace(image))
-		result = append(result, viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image})
+		product := viewmodels.SellerAdminProduct{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, SearchSKUs: searchSKUs, Category: category, Price: money(price), Stock: strconv.FormatInt(stock, 10), Status: status, Variants: strconv.Itoa(variants), Availability: "D", Image: image, ListingReviewState: reviewState}
+		if status == "approved" {
+			product.Buyability = nextStep
+			switch {
+			case checkoutEnabled && ready > 0 && ready == variants:
+				product.Buyability = "Ready to buy"
+			case checkoutEnabled && ready > 0:
+				product.Buyability = fmt.Sprintf("%d of %d options ready to buy", ready, variants)
+			case !checkoutEnabled && nextStep == "Awaiting marketplace launch":
+				product.Buyability = "Marketplace checkout paused"
+			}
+			if ready == 0 && nextStep != "Awaiting marketplace launch" {
+				product.ReadinessAction = "/seller-admin/setup"
+				if nextStep == "Out of stock" {
+					product.ReadinessAction = "/seller-admin/inventory?q=" + url.QueryEscape(name)
+				}
+			}
+		}
+		result = append(result, product)
 	}
 	if rows.Err() != nil {
 		return nil
@@ -2929,10 +2999,10 @@ func sellerProductProjectionStatus(r *http.Request) string {
 	switch r.URL.Query().Get("tab") {
 	case "review", "approval":
 		return "pending_review"
-	case "draft", "approved", "rejected", "archived", "stock":
+	case "draft", "approved", "rejected", "archived", "stock", "ready", "needs-action":
 		return r.URL.Query().Get("tab")
 	case "changes":
-		return "changes_required"
+		return "changes_requested"
 	}
 	return ""
 }

@@ -37,7 +37,7 @@ func Prepare(ctx context.Context, store Storage, repository ports.MediaDerivativ
 			return fmt.Errorf("image source metadata mismatch")
 		}
 		identity := sha256.Sum256([]byte(fmt.Sprintf("v1/%d/%s/%s/%d", media.ID, media.ObjectKey, media.ContentType, media.ByteSize)))
-		for _, width := range []int{320, 640, 960} {
+		for _, width := range []int{320, 480, 640, 960} {
 			if _, err := repository.PublicDerivative(ctx, media, width); err == nil {
 				continue
 			}

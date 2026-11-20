@@ -38,7 +38,7 @@ func (r *MediaRepository) DerivativeCandidates(ctx context.Context, limit int) (
 		AND pm.content_type IN ('image/jpeg','image/png','image/webp')
 		AND (pm.derivatives_checked_at IS NULL OR pm.derivatives_checked_at<now()-interval '10 minutes')
 		AND EXISTS(SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.id=pm.product_id AND p.status='approved' AND s.status='active')
-		AND (SELECT count(*) FROM product_image_derivatives d WHERE d.media_id=pm.id AND d.source_key=pm.object_key AND d.source_type=pm.content_type AND d.source_bytes=pm.byte_size)<3
+		AND (SELECT count(*) FROM product_image_derivatives d WHERE d.media_id=pm.id AND d.source_key=pm.object_key AND d.source_type=pm.content_type AND d.source_bytes=pm.byte_size)<4
 		ORDER BY pm.derivatives_checked_at NULLS FIRST,pm.id LIMIT $1
 	`, limit)
 	if err != nil {

@@ -142,11 +142,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     panel.querySelectorAll("[data-media-delete]").forEach(function (button) {
       button.addEventListener("click", async function () {
-        if (!await window.WVUI.confirmAction("Delete this uploaded product media? It will be removed from the product gallery.", button, "Delete media", {intent:'danger'})) return;
+        if (!await window.WVUI.confirmAction("Remove this product media? Removal from a published listing requires approval.", button, "Remove media", {intent:'danger'})) return;
         button.disabled = true; status.textContent = "Removing product image...";
         try {
           var result = await fetch("/api/v1/seller/products/media-delete", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-CSRF-Token": panel.dataset.csrfToken }, body: JSON.stringify({ media_id: Number(button.dataset.mediaId) }) }).then(function (response) { return response.json(); });
           if (!result.data) throw new Error("Image could not be removed.");
+          if (result.data.status === "removal_in_review") {
+            status.textContent = "Removal sent for review. This file stays on the listing until approval.";
+            return;
+          }
           window.location.reload();
         } catch (error) { status.textContent = error.message || "Media removal failed."; button.disabled = false; }
       });

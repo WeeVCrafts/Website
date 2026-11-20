@@ -105,6 +105,7 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 		11: {domainidentity.RoleSeller: true},
 		13: {domainidentity.Role("seller_staff"): true},
 		12: {domainidentity.RoleAdmin: true},
+		14: {domainidentity.RoleSuperAdmin: true},
 	}, permissions: map[int64]map[string]bool{13: {domaincommerce.SellerPermissionProductWrite: true}}}
 	service := NewCatalogServiceWithRoles(catalogRepository{}, checker)
 	if _, err := service.EnsureSeller(context.Background(), 10, "Customer self promotion"); !errors.Is(err, ports.ErrForbidden) {
@@ -123,8 +124,11 @@ func TestCatalogServiceAppliesRolePolicyBeforeRepository(t *testing.T) {
 	if err := service.ApproveProduct(context.Background(), 11, 1, true, ""); !errors.Is(err, ports.ErrForbidden) {
 		t.Fatalf("seller owner approved a product: %v", err)
 	}
-	if err := service.ApproveProduct(context.Background(), 12, 1, true, "reviewed"); err != nil {
-		t.Fatalf("marketplace admin was denied approval: %v", err)
+	if err := service.ApproveProduct(context.Background(), 12, 1, true, "reviewed"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("ordinary admin approved a listing: %v", err)
+	}
+	if err := service.ApproveProduct(context.Background(), 14, 1, true, "reviewed"); err != nil {
+		t.Fatalf("Super Admin was denied approval: %v", err)
 	}
 }
 

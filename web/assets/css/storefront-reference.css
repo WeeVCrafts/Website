@@ -71,7 +71,7 @@
 .storefront-body .home-product-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
 .storefront-body .product-card { display:flex; flex-direction:column; min-width:0; border:1px solid var(--line); border-radius:5px; background:var(--surface); overflow:hidden; box-shadow:none; }
 .storefront-body .product-card .product-media { width:100%; aspect-ratio:2.2; position:relative; min-height:0; background:#efe8dc; }
-.storefront-body .product-card .product-media img { height:100%; width:100%; object-fit:contain; }
+.storefront-body .product-card .product-media img { height:100%; width:100%; object-fit:cover; object-position:center; }
 .storefront-body .product-card--compact .product-media { aspect-ratio:1.7; }
 .storefront-body .product-card .heart { width:44px; height:44px; min-height:44px; right:6px; top:6px; background:#fffdf9; color:#49463d; box-shadow:none; }
 .storefront-body .product-card .heart .material-symbols-outlined { font-size:21px; }

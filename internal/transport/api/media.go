@@ -99,6 +99,10 @@ func (h *Handler) MediaDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.media.DeleteUpload(r.Context(), session.UserID, input.MediaID); err != nil {
+		if errors.Is(err, applicationcommerce.ErrMediaRemovalInReview) {
+			writeJSON(w, http.StatusAccepted, map[string]any{"data": map[string]string{"status": ports.MediaRemovalInReview}})
+			return
+		}
 		h.writeMediaError(w, err)
 		return
 	}

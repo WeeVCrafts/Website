@@ -83,24 +83,26 @@ type SellerStaffMember struct {
 }
 
 type ProductDraftInput struct {
-	SearchTags     []string
-	FeaturedPinned *bool
-	CategorySlugs  []string
-	FeaturedRank   *int
-	Slug           string
-	BrandSlug      string
-	BrandName      string
-	CategorySlug   string
-	CategoryName   string
-	Name           string
-	Description    string
-	PriceCents     int64
-	CostPriceCents *int64
-	CompareAtCents *int64
-	SKU            string
-	InitialStock   int
-	DeliveryLabel  string
-	ImageURL       string
+	ShippingParcel         *ParcelDimensions
+	UseSellerParcelDefault bool
+	SearchTags             []string
+	FeaturedPinned         *bool
+	CategorySlugs          []string
+	FeaturedRank           *int
+	Slug                   string
+	BrandSlug              string
+	BrandName              string
+	CategorySlug           string
+	CategoryName           string
+	Name                   string
+	Description            string
+	PriceCents             int64
+	CostPriceCents         *int64
+	CompareAtCents         *int64
+	SKU                    string
+	InitialStock           int
+	DeliveryLabel          string
+	ImageURL               string
 }
 
 // ProductVariantInput contains catalogue fields managed by product writers.

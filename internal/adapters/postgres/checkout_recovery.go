@@ -36,8 +36,8 @@ func (r *MarketplaceRepository) RecoverCheckout(ctx context.Context, sender port
 			AND (SELECT array_agg(role_slug ORDER BY role_slug) FROM user_roles WHERE user_id=u.id)=ARRAY['customer']::text[]
 			AND NOT EXISTS(SELECT 1 FROM orders o WHERE o.user_id=u.id AND o.created_at>=cr.first_quoted_at)
 			AND EXISTS(SELECT 1 FROM cart_items WHERE cart_id=c.id)
-			AND NOT EXISTS(SELECT 1 FROM cart_items ci LEFT JOIN marketplace_ready_variants v ON v.variant_id=ci.variant_id
-				WHERE ci.cart_id=c.id AND NOT COALESCE(v.selected AND v.stock>=ci.quantity,false))
+			AND NOT EXISTS(SELECT 1 FROM cart_items ci
+				WHERE ci.cart_id=c.id AND NOT marketplace_option_can_checkout(ci.variant_id,c.user_id,ci.quantity))
 			AND EXISTS(SELECT 1 FROM marketplace_policy_settings WHERE id AND published_at IS NOT NULL AND shipping_mode='live')
 		ORDER BY cr.last_quoted_at,c.id LIMIT 1 FOR UPDATE OF cr,c,mp SKIP LOCKED
 	`).Scan(&cart, &user, &message.To, &message.DisplayName)

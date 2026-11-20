@@ -1,11 +1,60 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 )
+
+func TestSellerDraftCanStartWithReusableOrMeasuredParcel(t *testing.T) {
+	x := newMarketplaceFixture(t)
+	ctx := t.Context()
+	catalog := NewCommerceRepository(x.pool)
+	input := commerce.ProductDraftInput{Slug: x.f.brandSlug + "-follows-default", BrandSlug: x.f.brandSlug, BrandName: "Fixture Brand",
+		CategorySlug: x.f.category, CategoryName: "Fixture Category", Name: "Draft with shared shipping", Description: "Fixture",
+		PriceCents: 1000, SKU: x.f.brandSlug + "-default", UseSellerParcelDefault: true}
+	if _, err := catalog.CreateDraft(ctx, x.f.ownerID, input); !errors.Is(err, ports.ErrShippingInput) {
+		t.Fatalf("missing seller default: %v", err)
+	}
+	var profileID int64
+	if err := x.pool.QueryRow(ctx, `INSERT INTO seller_parcel_profiles(seller_id,name,weight_grams,length_cm,width_cm,height_cm)
+		VALUES($1,'Fixture box',250,20,12,6) RETURNING id`, x.seller).Scan(&profileID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := x.pool.Exec(ctx, `INSERT INTO seller_parcel_defaults(seller_id,profile_id) VALUES($1,$2)`, x.seller, profileID); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = x.pool.Exec(context.Background(), `DELETE FROM seller_parcel_defaults WHERE seller_id=$1`, x.seller)
+		_, _ = x.pool.Exec(context.Background(), `DELETE FROM seller_parcel_profiles WHERE seller_id=$1`, x.seller)
+	})
+	checkDraft := func(choice commerce.ProductDraftInput, weight int, inherited bool) {
+		t.Helper()
+		product, err := catalog.CreateDraft(ctx, x.f.ownerID, choice)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			_, _ = x.pool.Exec(context.Background(), `DELETE FROM inventory_stock WHERE variant_id=$1`, product.VariantID)
+			_, _ = x.pool.Exec(context.Background(), `DELETE FROM products WHERE id=$1`, product.ID)
+		})
+		var gotWeight int
+		var follows bool
+		if err := x.pool.QueryRow(ctx, `SELECT p.shipping_weight_g,v.use_seller_parcel_default
+			FROM marketplace_variant_parcels p JOIN product_variants v ON v.id=p.variant_id WHERE p.variant_id=$1`, product.VariantID).
+			Scan(&gotWeight, &follows); err != nil || gotWeight != weight || follows != inherited {
+			t.Fatalf("effective weight=%d default=%t error=%v", gotWeight, follows, err)
+		}
+	}
+	checkDraft(input, 250, true)
+	input.Slug, input.SKU = x.f.brandSlug+"-measured", x.f.brandSlug+"-measured"
+	input.UseSellerParcelDefault = false
+	input.ShippingParcel = &commerce.ParcelDimensions{WeightGrams: 740, LengthCM: 29, WidthCM: 18, HeightCM: 7}
+	checkDraft(input, 740, false)
+}
 
 func TestSellerParcelProfilesResolveOverridesAndRejectStaleChanges(t *testing.T) {
 	x := newMarketplaceFixture(t)

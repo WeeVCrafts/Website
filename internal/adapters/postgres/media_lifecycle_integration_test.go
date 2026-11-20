@@ -14,12 +14,23 @@ import (
 func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	pool := openIntegrationPool(t)
 	fixture := newCommerceFixture(t, pool, 1, 1)
-	if _, err := pool.Exec(context.Background(), `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller')`, fixture.ownerID); err != nil {
+	if _, err := pool.Exec(context.Background(), `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller'),($2,'super_admin')`, fixture.ownerID, fixture.userIDs[0]); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	repository := NewMediaRepository(pool)
+	adminCatalog := NewCommerceRepository(pool)
+	approveGallery := func() {
+		t.Helper()
+		change, err := adminCatalog.ListingChange(ctx, fixture.userIDs[0], fixture.productID)
+		if err != nil || change.State != "pending" {
+			t.Fatalf("review media: %+v %v", change, err)
+		}
+		if err := adminCatalog.ReviewListingChange(ctx, fixture.userIDs[0], fixture.productID, change.Revision, true, "Reviewed media"); err != nil {
+			t.Fatalf("approve media: %v", err)
+		}
+	}
 
 	mediaID, err := repository.PrepareUpload(ctx, fixture.ownerID, fixture.productID, "products/media-fixture/object", "image/png", 12)
 	if err != nil {
@@ -49,9 +60,13 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if err != nil {
 		t.Fatalf("finalize media: %v", err)
 	}
-	if ready.Status != "ready" || ready.Visibility != "public" || ready.PublicPath == "" {
+	if ready.Status != "ready" || ready.Visibility != "private" || ready.PublicPath == "" {
 		t.Fatalf("unexpected ready media: %+v", ready)
 	}
+	if _, err := repository.GetPublicMedia(ctx, mediaID); !errors.Is(err, ports.ErrNotFound) {
+		t.Fatalf("media should remain private during review: %v", err)
+	}
+	approveGallery()
 	public, err := repository.GetPublicMedia(ctx, mediaID)
 	if err != nil || public.PublicPath != ready.PublicPath {
 		t.Fatalf("read public media: record=%+v err=%v", public, err)
@@ -99,6 +114,7 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if _, err := repository.FinalizeMedia(ctx, fixture.ownerID, secondMediaID, latestPath, "image/png", 16); err != nil {
 		t.Fatalf("finalize latest media: %v", err)
 	}
+	approveGallery()
 	detail, err = catalog.GetApprovedBySlug(ctx, productSlug)
 	if err != nil || detail.ImageURL != latestPath {
 		t.Fatalf("detail page did not select newest image: image=%q want=%q err=%v", detail.ImageURL, latestPath, err)
@@ -112,11 +128,12 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if _, err := repository.FinalizeMedia(ctx, fixture.ownerID, videoMediaID, videoPath, "video/mp4", 20); err != nil {
 		t.Fatalf("finalize video media: %v", err)
 	}
+	approveGallery()
 	detail, err = catalog.GetApprovedBySlug(ctx, productSlug)
 	if err != nil || detail.ImageURL != latestPath {
 		t.Fatalf("newer video replaced primary image: image=%q want=%q err=%v", detail.ImageURL, latestPath, err)
 	}
-	claimedVideo, err := repository.ClaimOwnedMedia(ctx, fixture.ownerID, videoMediaID)
+	claimedVideo, err := repository.ClaimOwnedMedia(ctx, fixture.userIDs[0], videoMediaID)
 	if err != nil || claimedVideo.Status != "deleting" {
 		t.Fatalf("claim video deletion: record=%+v err=%v", claimedVideo, err)
 	}
@@ -124,10 +141,6 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 		t.Fatalf("mark video deleted: %v", err)
 	}
 	// Editing metadata/cover must not rewrite every ready gallery object's URL.
-	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'admin')`, fixture.userIDs[0]); err != nil {
-		t.Fatal(err)
-	}
-	adminCatalog := NewCommerceRepository(pool)
 	var sku string
 	if err := pool.QueryRow(ctx, `SELECT sku FROM product_variants WHERE id=$1`, fixture.variantID).Scan(&sku); err != nil {
 		t.Fatal(err)
@@ -152,7 +165,7 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if auditCount != 1 {
 		t.Fatalf("expected one media finalization audit, got %d", auditCount)
 	}
-	claimed, err := repository.ClaimOwnedMedia(ctx, fixture.ownerID, secondMediaID)
+	claimed, err := repository.ClaimOwnedMedia(ctx, fixture.userIDs[0], secondMediaID)
 	if err != nil || claimed.Status != "deleting" {
 		t.Fatalf("claim latest media deletion: record=%+v err=%v", claimed, err)
 	}
@@ -172,7 +185,7 @@ func TestMediaLifecyclePersistsOnlyVerifiedReadyReferences(t *testing.T) {
 	if err != nil || detail.ImageURL != ready.PublicPath {
 		t.Fatalf("detail page did not fall back to prior image: image=%q err=%v", detail.ImageURL, err)
 	}
-	claimed, err = repository.ClaimOwnedMedia(ctx, fixture.ownerID, mediaID)
+	claimed, err = repository.ClaimOwnedMedia(ctx, fixture.userIDs[0], mediaID)
 	if err != nil || claimed.Status != "deleting" {
 		t.Fatalf("claim remaining media deletion: record=%+v err=%v", claimed, err)
 	}

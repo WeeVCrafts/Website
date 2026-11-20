@@ -319,7 +319,7 @@ func (s *CatalogService) RestoreAdminProduct(ctx context.Context, actorID, produ
 }
 
 func (s *CatalogService) ApproveProduct(ctx context.Context, actorID, productID int64, approved bool, reason string) error {
-	if productID <= 0 || !s.allowed(ctx, actorID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin) {
+	if productID <= 0 || !s.allowed(ctx, actorID, domainidentity.RoleSuperAdmin) {
 		return ports.ErrForbidden
 	}
 	return s.repository.ApproveProduct(ctx, actorID, productID, approved, strings.TrimSpace(reason))
@@ -371,6 +371,9 @@ func validSlug(value string) bool {
 }
 
 func normalizeDraft(input domaincommerce.ProductDraftInput) (domaincommerce.ProductDraftInput, error) {
+	if input.ShippingParcel != nil && (!input.ShippingParcel.Valid() || input.ShippingParcel.WeightGrams < 100 || input.UseSellerParcelDefault) {
+		return input, ports.ErrShippingInput
+	}
 	if input.Slug == "" || input.SKU == "" {
 		var random [12]byte
 		if _, err := rand.Read(random[:]); err != nil {

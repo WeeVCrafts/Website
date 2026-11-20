@@ -43,7 +43,7 @@ func setupPostContext(values url.Values) url.Values {
 
 func isMarketplaceSetupAction(action string) bool {
 	switch action {
-	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "save_setup_parcel", "save_setup_tax", "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "configure_live_catalog":
+	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "save_setup_parcel", "save_setup_tax", "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 		return true
 	}
 	return false
@@ -90,13 +90,14 @@ func parseTaxPercent(values url.Values) (int, error) {
 func validateSetup(action string, f url.Values) map[string]string {
 	e := map[string]string{}
 	minimum := 4
-	if action == "publish_policy" || action == "pause_shipping" || action == "configure_pilot" || action == "configure_live_catalog" {
+	switch action {
+	case "publish_policy", "pause_shipping", "configure_pilot", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 		minimum = 10
 	}
 	if action != "classify_variant" && action != "save_setup_parcel" && len(strings.TrimSpace(f.Get("reason"))) < minimum {
 		e["reason"] = fmt.Sprintf("Enter a reason of at least %d characters.", minimum)
 	}
-	if action == "publish_policy" || action == "pause_shipping" || action == "configure_pilot" || action == "configure_live_catalog" || action == "classify_variant" {
+	if minimum == 10 || action == "classify_variant" {
 		if f.Get("confirmed") != "yes" {
 			e["confirmed"] = "Confirm the policy or shipping change before saving."
 		}
@@ -169,6 +170,8 @@ func validateSetup(action string, f url.Values) map[string]string {
 	case "configure_pilot":
 		positive("variant_id", "a product option")
 		positive("customer_id", "an active customer")
+	case "activate_pilot_seller":
+		positive("variant_id", "a ready product option for the pilot seller")
 	case "configure_live_catalog":
 		positive("variant_id", "the first ready option")
 		positive("second_variant_id", "a different seller’s ready option")

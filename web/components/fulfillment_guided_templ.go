@@ -1488,7 +1488,7 @@ func GuidedReview(p viewmodels.MarketplacePage) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			if p.Policy.ShippingMode != "live" || !p.Setup.Selected.Selected {
+			if p.Policy.ShippingMode != "live" || !p.CatalogIncludes(*p.Setup.Selected) {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "<li>Complete a genuine prepaid delivery pilot, then select the approved launch catalog.</li>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

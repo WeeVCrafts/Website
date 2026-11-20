@@ -94,15 +94,28 @@ func (r *CommerceRepository) createProductVariant(ctx context.Context, actorID, 
 		} else if err := lockSellerVariantProduct(txctx, tx, actorID, productID); err != nil {
 			return err
 		}
-		if err := tx.QueryRow(txctx, `INSERT INTO product_variants(product_id,name,sku,price_cents,compare_at_cents,cost_price_cents)
-			VALUES($1,$2,$3,$4,$5,$6) RETURNING id`, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents).Scan(&variant.ID); err != nil {
+		status := "active"
+		var published bool
+		if err := tx.QueryRow(txctx, `SELECT status='approved' FROM products WHERE id=$1`, productID).Scan(&published); err != nil {
+			return err
+		}
+		if !admin && published {
+			status = "pending_review"
+		}
+		if err := tx.QueryRow(txctx, `INSERT INTO product_variants(product_id,name,sku,price_cents,compare_at_cents,cost_price_cents,status)
+			VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, status).Scan(&variant.ID); err != nil {
 			return mapCommerceError(err)
+		}
+		if status == "pending_review" {
+			if err := stageListingPrice(txctx, tx, productID, variant.ID, input.PriceCents, input.CompareAtCents, true); err != nil {
+				return err
+			}
 		}
 		if _, err := tx.Exec(txctx, `INSERT INTO inventory_stock(variant_id,available_quantity) VALUES($1,$2)`, variant.ID, input.InitialStock); err != nil {
 			return err
 		}
 		variant.ProductID, variant.Name, variant.SKU = productID, input.Name, input.SKU
-		variant.PriceCents, variant.CostPriceCents, variant.Available, variant.Status = input.PriceCents, input.CostPriceCents, input.InitialStock, "active"
+		variant.PriceCents, variant.CostPriceCents, variant.Available, variant.Status = input.PriceCents, input.CostPriceCents, input.InitialStock, status
 		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
 			return err
 		}
@@ -145,24 +158,37 @@ func (r *CommerceRepository) updateProductVariant(ctx context.Context, actorID, 
 		} else if err := lockSellerVariantProduct(txctx, tx, actorID, productID); err != nil {
 			return err
 		}
-		result, err := tx.Exec(txctx, `UPDATE product_variants SET name=$3,sku=$4,price_cents=$5,compare_at_cents=$6,cost_price_cents=$7,updated_at=NOW()
-			WHERE id=$1 AND product_id=$2 AND status='active'`, variantID, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents)
+		var published bool
+		var status string
+		err := tx.QueryRow(txctx, `SELECT p.status='approved',v.status FROM product_variants v JOIN products p ON p.id=v.product_id
+			WHERE v.id=$1 AND p.id=$2 AND v.status IN ('active','pending_review')`, variantID, productID).Scan(&published, &status)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ports.ErrInvalidState
+		}
+		if err != nil {
+			return err
+		}
+		reviewPrice := (!admin && published) || status == "pending_review"
+		if reviewPrice {
+			if err := stageListingPrice(txctx, tx, productID, variantID, input.PriceCents, input.CompareAtCents, status == "pending_review"); err != nil {
+				return err
+			}
+		}
+		variant = commerce.ProductVariant{ID: variantID, ProductID: productID, Name: input.Name, SKU: input.SKU, CostPriceCents: input.CostPriceCents, Status: status}
+		err = tx.QueryRow(txctx, `UPDATE product_variants SET name=$3,sku=$4,
+			price_cents=CASE WHEN $8 THEN price_cents ELSE $5 END,
+			compare_at_cents=CASE WHEN $8 THEN compare_at_cents ELSE $6 END,cost_price_cents=$7,updated_at=now()
+			WHERE id=$1 AND product_id=$2 RETURNING price_cents,COALESCE(compare_at_cents,0),compare_at_cents IS NOT NULL`,
+			variantID, productID, input.Name, input.SKU, input.PriceCents, input.CompareAtCents, input.CostPriceCents, reviewPrice).
+			Scan(&variant.PriceCents, &variant.CompareAtCents, &variant.HasCompareAt)
 		if err != nil {
 			return mapCommerceError(err)
 		}
-		if result.RowsAffected() != 1 {
-			return ports.ErrInvalidState
-		}
-		variant = commerce.ProductVariant{ID: variantID, ProductID: productID, Name: input.Name, SKU: input.SKU, PriceCents: input.PriceCents, CostPriceCents: input.CostPriceCents, Status: "active"}
 		if err := saveVariantParcel(txctx, tx, &variant, input.Parcel); err != nil {
 			return err
 		}
 		if err := saveReturnClassRequest(txctx, tx, variant.ID, input.ReturnClassRequest); err != nil {
 			return err
-		}
-		variant.HasCompareAt = input.CompareAtCents != nil
-		if input.CompareAtCents != nil {
-			variant.CompareAtCents = *input.CompareAtCents
 		}
 		if err := tx.QueryRow(txctx, `SELECT available_quantity,reserved_quantity FROM inventory_stock WHERE variant_id=$1 FOR UPDATE`, variantID).Scan(&variant.Available, &variant.Reserved); err != nil {
 			return err
@@ -227,21 +253,38 @@ func (r *CommerceRepository) archiveProductVariant(ctx context.Context, actorID,
 		if err != nil {
 			return err
 		}
-		if status != "active" {
+		if status != "active" && status != "pending_review" {
 			return ports.ErrInvalidState
 		}
 		if reserved > 0 {
 			return ports.ErrVariantReservedStock
 		}
-		var activeCount int
-		if err := tx.QueryRow(txctx, `SELECT count(*) FROM product_variants WHERE product_id=$1 AND status='active'`, productID).Scan(&activeCount); err != nil {
-			return err
-		}
-		if activeCount <= 1 {
-			return ports.ErrFinalActiveVariant
+		if status == "active" {
+			var activeCount int
+			if err := tx.QueryRow(txctx, `SELECT count(*) FROM product_variants WHERE product_id=$1 AND status='active'`, productID).Scan(&activeCount); err != nil {
+				return err
+			}
+			if activeCount <= 1 {
+				return ports.ErrFinalActiveVariant
+			}
 		}
 		if _, err := tx.Exec(txctx, `UPDATE product_variants SET status='archived',updated_at=NOW() WHERE id=$1`, variantID); err != nil {
 			return err
+		}
+		removed, err := tx.Exec(txctx, `DELETE FROM listing_price_changes WHERE product_id=$1 AND variant_id=$2`, productID, variantID)
+		if err != nil {
+			return err
+		}
+		if removed.RowsAffected() > 0 {
+			_, err := tx.Exec(txctx, `UPDATE listing_change_reviews c SET revision=revision+1,updated_at=now(),
+				status=CASE WHEN c.cover_proposed IS NOT NULL OR remaining.present THEN c.status ELSE 'changes_requested' END,
+				review_note=CASE WHEN c.cover_proposed IS NOT NULL OR remaining.present THEN c.review_note ELSE 'The remaining proposed option or price was withdrawn.' END
+				FROM (SELECT EXISTS(SELECT 1 FROM listing_price_changes WHERE product_id=$1)
+					OR EXISTS(SELECT 1 FROM listing_media_changes WHERE product_id=$1) AS present) remaining
+				WHERE c.product_id=$1`, productID)
+			if err != nil {
+				return err
+			}
 		}
 		metadata := map[string]any{"source": variantSource(admin), "reason": reason}
 		if err := recordVariantChange(txctx, tx, actorID, commerce.ProductVariant{ID: variantID, ProductID: productID, Status: "archived"}, "catalog.product_variant_archived", metadata); err != nil {

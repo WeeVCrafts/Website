@@ -18,6 +18,7 @@ import (
 
 var ErrInvalidMedia = errors.New("media upload is invalid")
 var ErrMediaNotReady = errors.New("media upload is not ready")
+var ErrMediaRemovalInReview = errors.New("media removal was submitted for review")
 
 type MediaService struct {
 	storage     ports.ObjectStorage
@@ -248,6 +249,9 @@ func (s *MediaService) DeleteUpload(ctx context.Context, sellerOwnerID, mediaID 
 	record, err := lifecycle.ClaimOwnedMedia(ctx, sellerOwnerID, mediaID)
 	if err != nil {
 		return err
+	}
+	if record.Status == ports.MediaRemovalInReview {
+		return ErrMediaRemovalInReview
 	}
 	if err := reader.DeleteObject(ctx, record.ObjectKey); err != nil {
 		_ = lifecycle.RestoreMedia(ctx, record.ID)

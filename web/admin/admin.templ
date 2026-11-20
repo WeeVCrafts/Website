@@ -812,7 +812,7 @@ templ Products(p viewmodels.AdminPage) {
 
         <div class="table-row"><span class="person-cell"><img width="1254" height="1254" src={ product.Image } alt=""/>{ product.Name }</span><span>{ product.SKU }</span><span>{ product.Seller }</span><span>{ product.Category }</span><span>{ product.Price }</span><span class={ "status " + statusClass(product.Status) }>{ product.Status }</span><span>{ product.Submitted }</span><span class="row-actions">
 
-          if product.Status == "pending_review" {
+          if product.Status == "pending_review" && p.CanSecurity {
 
             <form method="post" action="/admin/products/review"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input type="hidden" name="decision" value="approve"/><button class="admin-button primary" type="submit">Approve</button></form>
 

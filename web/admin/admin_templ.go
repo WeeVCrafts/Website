@@ -4472,7 +4472,7 @@ func Products(p viewmodels.AdminPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				if product.Status == "pending_review" {
+				if product.Status == "pending_review" && p.CanSecurity {
 					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 379, "<form method=\"post\" action=\"/admin/products/review\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err

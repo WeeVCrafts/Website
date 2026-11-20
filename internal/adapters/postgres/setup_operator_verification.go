@@ -19,11 +19,11 @@ func guardSetupReview(ctx context.Context, tx pgx.Tx, actor, seller, variant int
 	if err := tx.QueryRow(ctx, `SELECT id FROM sellers WHERE id=$1 AND status='active' FOR UPDATE`, seller).Scan(&locked); err != nil {
 		return err
 	}
-	var pending bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM marketplace_setup_submissions WHERE seller_id=$1 AND kind=$2 AND COALESCE(variant_id,0)=$3 AND status IN ('submitted','changes_requested')) OR ($2='invoice' AND EXISTS(SELECT 1 FROM seller_invoice_profiles WHERE seller_id=$1 AND checkout_review_hold)) OR ($2='tax' AND EXISTS(SELECT 1 FROM variant_tax_profiles WHERE variant_id=$3 AND checkout_review_hold))`, seller, kind, variant).Scan(&pending); err != nil {
+	state, err := readSetupConfirmation(ctx, tx, seller, variant, kind)
+	if err != nil {
 		return err
 	}
-	if pending {
+	if state.ReviewRequired {
 		return ports.ErrFulfillmentConflict
 	}
 	return nil

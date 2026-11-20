@@ -161,9 +161,8 @@ func checkPolicyCheckout(ctx context.Context, tx pgx.Tx, user, cart int64, lock 
 	var actual int64
 	var ready bool
 	if err := tx.QueryRow(ctx, `SELECT count(*),COALESCE(sum(ci.quantity),0),COALESCE(min(ci.variant_id),0),
-	      COALESCE(bool_and(COALESCE(v.stock>=ci.quantity AND ($2<>'live' OR v.selected),false)),false)
-	    FROM cart_items ci LEFT JOIN marketplace_ready_variants v ON v.variant_id=ci.variant_id
-	    WHERE ci.cart_id=$1`, cart, mode).Scan(&count, &quantity, &actual, &ready); err != nil {
+	      COALESCE(bool_and(marketplace_option_can_checkout(ci.variant_id,$2,ci.quantity)),false)
+	    FROM cart_items ci WHERE ci.cart_id=$1`, cart, user).Scan(&count, &quantity, &actual, &ready); err != nil {
 		return err
 	}
 	if !ready || mode == "pilot" && (user != allowedUser || variant != actual || count != 1 || quantity != 1 || order != 0) {

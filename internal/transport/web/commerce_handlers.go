@@ -792,10 +792,33 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		h.renderError(w, http.StatusUnprocessableEntity, "Product image not saved", "Upload a PNG, JPEG or WebP image up to 25 MB. If the problem continues, check image storage and try again.")
 		return
 	}
+	parcelChoice := r.FormValue("listing_parcel")
+	var parcel *domaincommerce.ParcelDimensions
+	switch parcelChoice {
+	case "", "later", "default":
+	case "custom":
+		parcel, err = productParcelFromForm(r)
+		if err == nil && parcel != nil && parcel.WeightGrams >= 100 {
+			break
+		}
+		w.Header().Set("X-Seller-Product-Field", "shipping_weight_g")
+		h.renderError(w, http.StatusUnprocessableEntity, "Shipping measurements incomplete or invalid", "Enter a packed weight of at least 100 grams and all three dimensions in whole centimetres.")
+		return
+	default:
+		w.Header().Set("X-Seller-Product-Field", "listing_parcel")
+		h.renderError(w, http.StatusUnprocessableEntity, "Shipping choice invalid", "Choose how to set the packed measurements.")
+		return
+	}
 	product, err := h.commerceCatalog.CreateDraft(r.Context(), session.UserID, domaincommerce.ProductDraftInput{
-		SearchTags: strings.Split(r.FormValue("search_tags"), ","), Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: "Delivery to serviceable PIN codes in India", ImageURL: imageURL,
+		ShippingParcel: parcel, UseSellerParcelDefault: parcelChoice == "default",
+		SearchTags: strings.Split(r.FormValue("search_tags"), ","), Slug: productSlugValue, BrandSlug: brandSlug, BrandName: brandName, CategorySlug: r.FormValue("category_slug"), CategoryName: r.FormValue("category_name"), Name: name, Description: productDescriptionFromForm(r), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: r.FormValue("sku"), InitialStock: stock, DeliveryLabel: r.FormValue("delivery_label"), ImageURL: imageURL,
 	})
 	if err != nil {
+		if errors.Is(err, ports.ErrShippingInput) {
+			w.Header().Set("X-Seller-Product-Field", "listing_parcel")
+			h.renderError(w, http.StatusUnprocessableEntity, "Seller shipping default unavailable", "Choose a saved seller parcel default or enter this product’s packed measurements.")
+			return
+		}
 		if errors.Is(err, applicationcommerce.ErrInvalidProduct) && compareAt != nil && *compareAt < price {
 			w.Header().Set("X-Seller-Product-Field", "compare_at_rupees")
 		}
@@ -841,7 +864,15 @@ func (h *Handler) sellerSubmitProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.commerceCatalog.SubmitProduct(r.Context(), session.UserID, productID); err != nil {
+		if errors.Is(err, ports.ErrFirstListingInReview) {
+			h.renderError(w, http.StatusConflict, "First listing in review", "Your first listing is with Super Admin. Keep this product as a draft until that review is complete.")
+			return
+		}
 		h.renderCommerceError(w, r, err, "We could not submit this product for review.")
+		return
+	}
+	if product, err := h.commerceCatalog.GetSellerProduct(r.Context(), session.UserID, productID); err == nil && product.Status == "approved" {
+		h.redirect(w, r, "/seller-admin/products?notice=Product+published")
 		return
 	}
 	h.redirect(w, r, "/seller-admin/products?notice=Product+submitted+for+review")
@@ -985,11 +1016,11 @@ func (h *Handler) mutateProductVariant(w http.ResponseWriter, r *http.Request, a
 		h.renderCommerceError(w, r, err, "We could not save that product variant.")
 		return
 	}
-	prefix, notice := "/seller/products/", "Product+variant+saved"
+	prefix, destination := "/seller/products/", "?step=shipping&notice=Product+variant+saved"
 	if admin {
-		prefix, notice = "/admin/products/", "Product+variant+saved"
+		prefix, destination = "/admin/products/", "?notice=Product+variant+saved"
 	}
-	h.redirect(w, r, prefix+strconv.FormatInt(productID, 10)+"/edit?notice="+notice)
+	h.redirect(w, r, prefix+strconv.FormatInt(productID, 10)+"/edit"+destination)
 }
 
 func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.ProductVariantInput, error) {
@@ -1024,6 +1055,11 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 	}
 	input := domaincommerce.ProductVariantInput{Name: r.FormValue("name"), SKU: r.FormValue("sku"), PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, InitialStock: stock}
 	input.ReturnClassRequest = strings.TrimSpace(r.FormValue("return_class_request"))
+	input.Parcel, err = productParcelFromForm(r)
+	return input, err
+}
+
+func productParcelFromForm(r *http.Request) (*domaincommerce.ParcelDimensions, error) {
 	fields := []string{"shipping_weight_g", "shipping_length_cm", "shipping_width_cm", "shipping_height_cm"}
 	var parcel domaincommerce.ParcelDimensions
 	values := []*int{&parcel.WeightGrams, &parcel.LengthCM, &parcel.WidthCM, &parcel.HeightCM}
@@ -1034,18 +1070,19 @@ func productVariantFromForm(r *http.Request, includeStock bool) (domaincommerce.
 			continue
 		}
 		supplied = true
-		*values[i], err = strconv.Atoi(raw)
+		value, err := strconv.Atoi(raw)
 		if err != nil {
-			return input, ports.ErrShippingInput
+			return nil, ports.ErrShippingInput
 		}
+		*values[i] = value
 	}
 	if supplied {
 		if !parcel.Valid() {
-			return input, ports.ErrShippingInput
+			return nil, ports.ErrShippingInput
 		}
-		input.Parcel = &parcel
+		return &parcel, nil
 	}
-	return input, nil
+	return nil, nil
 }
 
 func (h *Handler) adminProductSave(w http.ResponseWriter, r *http.Request) {

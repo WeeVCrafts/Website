@@ -88,11 +88,12 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 		if p.SellerStatus != "active" {
 			<div class="seller-callout" role="status"><span class="material-symbols-outlined" aria-hidden="true">info</span><p><strong>Product management is locked</strong><small>Your seller profile must be approved before you can create or change listings. <a href="/seller-admin/onboarding">View application status</a>.</small></p></div>
 		}
-        @SellerStatGrid(p)
 		<form class="seller-toolbar" action="/seller-admin/products" method="get">
-			<label class="seller-toolbar-search" for="portal-product-query">Search products<input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/></label><button class="seller-button outline" type="submit">Search</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
+			<label class="seller-toolbar-search" for="portal-product-query">Search products<input id="portal-product-query" name="q" value={ p.Query } placeholder="Search your products"/></label>
+			<label>Show<select name="tab"><option value="">All products</option><option value="ready" selected?={ p.Tab=="ready" }>Ready to buy</option><option value="needs-action" selected?={ p.Tab=="needs-action" }>Checkout needs action</option><option value="review" selected?={ p.Tab=="review" || p.Tab=="approval" }>In review</option><option value="changes" selected?={ p.Tab=="changes" }>Changes requested</option><option value="draft" selected?={ p.Tab=="draft" }>Drafts</option><option value="archived" selected?={ p.Tab=="archived" }>Archived</option></select></label>
+			<button class="seller-button outline" type="submit">Apply filters</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
-				<a class="seller-button primary" href="/seller-admin/products/new">Create product draft</a>
+				<a class="seller-button primary" href="/seller-admin/products/new">Add product</a>
 			}
 		</form>
 		<section class="seller-panel">
@@ -100,7 +101,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 			<div class="seller-table-scroll">
 				<div class="ui-table-region" tabindex="0" role="region" aria-label="Product catalogue">
 					<table class="ui-table ui-table--records">
-						<thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+						<thead><tr><th scope="col">Product</th><th scope="col">SKU</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Readiness</th><th scope="col">Actions</th></tr></thead>
 						<tbody>
 							for _, product := range p.Products {
 								<tr>
@@ -118,6 +119,15 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 													<b title={ product.Name }>{ product.Name }</b>
 												}
 												<small>{ components.StatusLabel(product.Status) }</small>
+												if product.ListingReviewState == "pending" || product.ListingReviewState == "changes_requested" {
+													<a href={ templ.SafeURL("/seller-admin/products/listing-review?product_id="+product.ID) }>
+														if product.ListingReviewState == "pending" {
+															Changes in review
+														} else {
+															View review feedback
+														}
+													</a>
+												}
 											</span>
 										</div>
 									</td>
@@ -125,8 +135,17 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 									<td data-label="Category">{ product.Category }</td>
 									<td data-label="Price">{ product.Price }</td>
 									<td data-label="Stock">{ product.Stock }</td>
-									<td data-label="Status"><span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span></td>
+									<td data-label="Readiness">
+										if product.Buyability == "" {
+											<span class={ "ui-status " + components.StatusTone(product.Status) }>{ components.StatusLabel(product.Status) }</span>
+										} else {
+											<span>{ product.Buyability }</span>
+										}
+									</td>
 									<td data-label="Actions" class="row-actions">
+										if p.CanProductWrite && product.ReadinessAction != "" {
+											<a class="seller-button outline" href={ templ.SafeURL(product.ReadinessAction) }>Fix readiness</a>
+										}
 										<details>
 											<summary>Manage product</summary>
 											if p.CanProductWrite && product.Status != "archived" {
@@ -137,7 +156,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 												<form method="post" action="/seller-admin/products/restore" data-confirm="Restore this as a private draft? It must be resubmitted for review before customers can see it."><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><input name="reason" minlength="4" maxlength="1000" placeholder="Reason to restore" required/><button class="seller-button outline" type="submit">Restore draft</button></form>
 											}
 											if p.CanProductWrite && (product.Status == "draft" || product.Status == "rejected") {
-												<form method="post" action="/seller-admin/products/submit"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ product.ID }/><button class="seller-button primary" type="submit">Submit for review</button></form>
+												@SellerPublishListing(p, product.ID, false)
 											}
 										</details>
 									</td>
@@ -158,15 +177,26 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 	@Document(p) {
 		<section class="seller-panel seller-form-panel">
 			if form.ID != "" {
-				<section class="seller-draft-checklist" aria-label="Saved draft checklist">
+				<section class="seller-draft-checklist" aria-label="Saved listing status" data-product-workbench="review">
 					<h2>Saved product · { components.StatusLabel(form.Status) }</h2>
-					<ul><li><a href="#product-variants">Edit shipping measurements</a></li><li><a href="#product-gallery">Review photos and gallery</a></li><li>Submit separately for marketplace review when ready</li></ul>
+					<ul><li><a href="#product-variants">Edit shipping measurements</a></li><li><a href="#product-gallery">Review photos and gallery</a></li>
 					if form.Status == "draft" || form.Status == "rejected" {
-						<form method="post" action="/seller-admin/products/submit" data-review-submit><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><button class="seller-button outline" type="submit">Submit for review</button></form>
+						if p.CanPublishListings {
+							<li>Publish when the saved listing is ready</li>
+						} else {
+							<li>Super Admin reviews the first listing for your store</li>
+						}
+					}
+					if form.Status == "approved" && form.ListingReviewState != "" {
+						<li><a href={ templ.SafeURL("/seller-admin/products/listing-review?product_id="+form.ID) }>View listing review</a> · { components.StatusLabel(form.ListingReviewState) }</li>
+					}
+					</ul>
+					if form.Status == "draft" || form.Status == "rejected" {
+						@SellerPublishListing(p, form.ID, true)
 					}
 				</section>
 			}
-			<form class="seller-form-grid seller-product-wizard" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder data-product-simple data-saved-product={ form.ID } novalidate>
+			<form class="seller-form-grid seller-product-wizard" action={ form.Action } method="post" enctype="multipart/form-data" data-product-builder data-saved-product={ form.ID } novalidate>
 				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
 				<input type="hidden" name="slug" value={ form.Slug }/><input type="hidden" name="brand_name" value={ form.BrandName }/><input type="hidden" name="brand_slug" value={ form.BrandSlug }/>
 				if form.ErrorMessage != "" {
@@ -178,7 +208,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					</p>
 				}
 				<nav class="seller-product-steps seller-form-wide" aria-label="Product entry steps" data-product-steps hidden>
-					<button type="button" data-product-step-link="details">1. Details</button><button type="button" data-product-step-link="pricing">2. Pricing &amp; stock</button><button type="button" data-product-step-link="photos">3. Photos</button><button type="button" data-product-step-link="review">4. Review</button>
+					<button type="button" data-product-step-link="details">1. Basics</button><button type="button" data-product-step-link="photos">2. Photos &amp; price</button><button type="button" data-product-step-link="shipping">3. Stock &amp; shipping</button><button type="button" data-product-step-link="review">4. Review</button>
 				</nav>
 				<fieldset class="ui-form-section seller-form-wide" data-product-step="details">
 					<legend tabindex="-1">Product details</legend>
@@ -196,13 +226,6 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					<label class="seller-form-wide">Search tags<input name="search_tags" value={ sellerProductInput(form,"search_tags",form.SearchTags) } placeholder="ceramic, coffee mug, floral"/><small>Up to 20 comma-separated tags, 40 characters each.</small></label>
 					<label class="seller-form-wide">Description<textarea name="description" required rows="5" maxlength="10000">{ components.ProductStory(form.Description) }</textarea></label>
 					<label class="seller-form-wide">Delivery note<input name="delivery_label" value={ form.DeliveryLabel } maxlength="180" placeholder="Delivery to serviceable PIN codes in India"/></label>
-					<p class="seller-form-wide seller-form-note">Product dimensions appear on the listing. Enter the packed weight and dimensions under
-						if form.ID != "" {
-							<a href="#product-variants">Edit shipping measurements</a>.
-						} else {
-							Shipping measurements after saving the draft.
-						}
-					</p>
 					<details class="seller-form-wide seller-optional-details">
 						<summary>Advanced specifications</summary>
 						<div class="seller-form-grid">
@@ -212,24 +235,12 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						</div>
 					</details>
 				</fieldset>
-				<fieldset class="ui-form-section seller-form-wide" data-product-step="pricing">
-					<legend tabindex="-1">Pricing &amp; stock</legend>
+				<fieldset class="ui-form-section seller-form-wide" data-product-step="photos">
+					<legend tabindex="-1">Photos and price</legend>
 					<p>Enter prices in rupees, with up to two decimal places.</p>
 					<label>Price (INR)<input id="product-price_rupees" aria-invalid={ sellerProductInvalid(form, "price_rupees") } aria-describedby={ sellerProductErrorID(form, "price_rupees") } name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "price_rupees", rupeeInput(form.PriceCents)) } required/></label>
 					<details><summary>Compare-at price (INR, optional)</summary><label>Compare-at price (INR, optional)<input id="product-compare_at_rupees" aria-invalid={ sellerProductInvalid(form, "compare_at_rupees") } aria-describedby={ sellerProductErrorID(form, "compare_at_rupees") } name="compare_at_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "compare_at_rupees", rupeeInput(form.CompareAtCents)) }/></label></details>
 					<details><summary>Unit cost (INR, optional)</summary><label>Unit cost (INR, optional)<input id="product-cost_price_rupees" aria-invalid={ sellerProductInvalid(form, "cost_price_rupees") } aria-describedby={ sellerProductErrorID(form, "cost_price_rupees") } name="cost_price_rupees" type="number" min="0" step="0.01" inputmode="decimal" value={ sellerProductInput(form, "cost_price_rupees", rupeeInput(form.CostPriceCents)) }/></label></details>
-					if form.ID == "" {
-						if p.CanInventoryWrite {
-							<label>Stock quantity<input id="product-initial_stock" aria-invalid={ sellerProductInvalid(form, "initial_stock") } aria-describedby={ sellerProductErrorID(form, "initial_stock") } name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
-						} else {
-							<input type="hidden" id="product-initial_stock" name="initial_stock" value="0"/>
-						}
-					} else {
-						<p class="seller-form-wide seller-form-note">Use <a href={ "/seller-admin/inventory?q="+form.SKU }>Inventory for this product</a> to change available units. Saving this listing does not change stock.</p>
-					}
-				</fieldset>
-				<fieldset class="ui-form-section seller-form-wide" data-product-step="photos">
-					<legend tabindex="-1">Main product image</legend>
 					<p>Choose a clear photo of this exact product. Additional gallery images and videos can be added below after the first draft save.</p>
 					<label class="seller-form-wide">Choose image (JPEG, PNG or WebP, up to 25 MB)<input type="file" id="product-image_file" aria-invalid={ sellerProductInvalid(form, "image_file") } aria-describedby={ sellerProductErrorID(form, "image_file") } name="image_file" accept="image/png,image/jpeg,image/webp" data-main-image/></label>
 					<div class="seller-form-wide" data-main-image-preview>
@@ -239,13 +250,53 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					</div>
 					<details class="seller-form-wide"><summary>Use an existing image URL</summary><label>Product image URL<input name="image_url" value={ form.Image }/></label></details>
 				</fieldset>
-				<section class="seller-form-wide seller-product-review" data-product-step="review" hidden><h2 tabindex="-1">Review product draft</h2><p>Check your details before saving. Saving a draft does not submit it for marketplace review.</p><div data-product-review></div></section>
-				<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button outline" type="button" data-product-back hidden>Back</button><button class="seller-button primary" type="button" data-product-next hidden>Next</button><button class="seller-button primary" type="submit" data-product-save>Save product draft</button></div>
+				<fieldset class="ui-form-section seller-form-wide" data-product-step="shipping">
+					<legend tabindex="-1">Stock and shipping</legend>
+					if form.ID == "" {
+						if p.CanInventoryWrite {
+							<label>Stock quantity<input id="product-initial_stock" aria-invalid={ sellerProductInvalid(form, "initial_stock") } aria-describedby={ sellerProductErrorID(form, "initial_stock") } name="initial_stock" type="number" min="0" max="100000" value={ form.InitialStock } required/></label>
+						} else {
+							<input type="hidden" id="product-initial_stock" name="initial_stock" value="0"/>
+						}
+						<label class="seller-form-wide">Packed measurements
+							<select name="listing_parcel" id="product-listing_parcel" data-listing-parcel aria-invalid={ sellerProductInvalid(form,"listing_parcel") } aria-describedby={ sellerProductErrorID(form,"listing_parcel") }>
+								if form.ParcelDefaultName != "" {
+									<option value="default" selected?={ sellerProductInput(form,"listing_parcel",form.ParcelStep) == "default" }>Seller default · { form.ParcelDefaultName }</option>
+								}
+								<option value="custom" selected?={ sellerProductInput(form,"listing_parcel",form.ParcelStep) == "custom" }>Enter measurements for this product</option>
+								<option value="later" selected?={ sellerProductInput(form,"listing_parcel",form.ParcelStep) == "later" }>Add measurements later</option>
+							</select>
+						</label>
+						<div class="seller-form-wide" data-listing-parcel-fields>
+							@components.ProductParcelFields(viewmodels.ProductVariant{
+								ShippingWeight: sellerProductInput(form,"shipping_weight_g",""),
+								ShippingLength: sellerProductInput(form,"shipping_length_cm",""),
+								ShippingWidth: sellerProductInput(form,"shipping_width_cm",""),
+								ShippingHeight: sellerProductInput(form,"shipping_height_cm",""),
+							})
+						</div>
+						<p class="seller-form-wide seller-form-note">Set or update your reusable measurements in <a href="/seller-admin/setup?kind=parcel">Parcel profiles</a>.</p>
+					} else {
+						<p class="seller-form-wide seller-form-note"><a href={ "/seller-admin/inventory?q="+form.SKU }>Update available stock in Inventory</a>. Set each option’s packed measurements below or assign a shared profile in <a href="/seller-admin/setup?kind=parcel">Parcel profiles</a>.</p>
+					}
+				</fieldset>
+				<section class="seller-form-wide seller-product-review" data-product-step="review" hidden><h2 tabindex="-1">Review listing</h2><div data-product-review></div></section>
+				<div class="seller-form-wide seller-form-actions"><a class="seller-button outline" href="/seller-admin/products">Cancel</a><button class="seller-button outline" type="button" data-product-back hidden>Back</button><button class="seller-button primary" type="button" data-product-next hidden>Continue</button><button class="seller-button primary" type="submit" data-product-save>
+					if form.Status == "approved" {
+						Save changes
+					} else {
+						Save product draft
+					}
+				</button></div>
 			</form>
 			if form.ID != "" {
-				<fieldset id="product-gallery" class="seller-panel product-media-upload" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
+				<fieldset id="product-gallery" class="seller-panel product-media-upload" data-product-workbench="photos" data-product-media data-product-id={ form.ID } data-csrf-token={ p.CSRFToken }>
 					<legend>Product images</legend>
-					<p>Images update the main product photo and appear in the customer product gallery.</p>
+					if form.Status == "approved" {
+						<p>Uploads and removals go to Super Admin for review. The approved gallery stays live during review.</p>
+					} else {
+						<p>Images update the main product photo and appear in the customer product gallery after approval.</p>
+					}
 					<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button>
 					<div class="product-media-selection" data-media-selection></div>
 					<p role="status" aria-live="polite" data-media-status></p>
@@ -268,20 +319,21 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						}
 					</div>
 				</fieldset>
-				<details class="seller-panel" open><summary>Shipping measurements and variants</summary><section id="product-variants" class="seller-panel product-variant-manager" tabindex="-1">
+				<details class="seller-panel" data-product-workbench="shipping" open><summary>Shipping measurements and variants</summary><section id="product-variants" class="seller-panel product-variant-manager" tabindex="-1">
 					<div class="seller-panel-heading"><div><span class="material-symbols-outlined" aria-hidden="true">style</span><span><h2>Product variants</h2><p>Enter the packed measurements for the variant you ship and select Save variant. Stock changes after creation belong in Inventory.</p></span></div></div>
 					for _, variant := range form.Variants {
+						{{ editable := variant.Status == "active" || variant.Status == "pending_review" }}
 						<div class="product-variant-row">
 							<form class="seller-form-grid product-variant-edit" method="post" action="/seller-admin/products/variants/update">
 								<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
 								<input type="hidden" name="cost_price_cents" value={ variant.CostPriceCents }/>
-								<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
-								<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ variant.Status != "active" }/></label>
-								<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.PriceCents) } required disabled?={ variant.Status != "active" }/></label>
-								<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.CompareAtCents) } disabled?={ variant.Status != "active" }/></label>
+								<label>Variant name<input name="name" value={ variant.Name } required maxlength="120" disabled?={ !editable }/></label>
+								<label>SKU<input name="sku" value={ variant.SKU } required maxlength="120" disabled?={ !editable }/></label>
+								<label>Price (INR)<input name="price_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.PriceCents) } required disabled?={ !editable }/></label>
+								<label>Compare-at price (INR, optional)<input name="compare_at_rupees" type="number" min="0.01" step="0.01" inputmode="decimal" value={ rupeeInput(variant.CompareAtCents) } disabled?={ !editable }/></label>
 								@SellerParcelFields(variant)
-<div class="variant-stock-summary">Available: <b>{ variant.Available }</b> · Reserved: <b>{ variant.Reserved }</b> · Status: <b>{ variant.Status }</b></div>
-								if variant.Status == "active" {
+								<div class="variant-stock-summary">Available <b>{ variant.Available }</b> · Reserved <b>{ variant.Reserved }</b> · <b>{ components.StatusLabel(variant.Status) }</b></div>
+								if editable {
 									<button class="seller-button primary" type="submit">Save variant</button>
 								}
 							</form>
@@ -289,6 +341,12 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 								<form method="post" action="/seller-admin/products/variants/archive" data-confirm="Archive this variant? Existing orders will remain intact.">
 									<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
 									<label>Archive reason<input name="reason" required minlength="4" maxlength="1000" placeholder="Why this option is being removed"/></label><button class="seller-button danger" type="submit">Archive variant</button>
+								</form>
+							}
+							if variant.Status == "pending_review" {
+								<form method="post" action="/seller-admin/products/variants/archive" data-confirm="Withdraw this option from the review queue?">
+									<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ form.ID }/><input type="hidden" name="variant_id" value={ variant.ID }/>
+									<input type="hidden" name="reason" value="Withdraw submitted option"/><button class="seller-button outline" type="submit">Withdraw proposed option</button>
 								</form>
 							}
 						</div>
@@ -312,6 +370,19 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 			}
 		</section>
 	}
+}
+
+templ SellerPublishListing(p viewmodels.SellerAdminPage, productID string, guided bool) {
+	<form method="post" action="/seller-admin/products/submit" data-review-submit?={ guided }>
+		<input type="hidden" name="csrf_token" value={ p.CSRFToken }/><input type="hidden" name="product_id" value={ productID }/>
+		<button class="seller-button primary" type="submit">
+			if p.CanPublishListings {
+				Publish listing
+			} else {
+				Submit for review
+			}
+		</button>
+	</form>
 }
 
 templ PortalInventory(p viewmodels.SellerAdminPage) {
@@ -829,7 +900,7 @@ if p.SellerStatus=="active" {
 
 templ SellerParcelFields(v viewmodels.ProductVariant) {
 	@components.ProductParcelFields(v)
-	if v.Status == "" || v.Status == "active" {
+	if v.Status == "" || v.Status == "active" || v.Status == "pending_review" {
 		<label class="seller-form-wide">Proposed return classification<select name="return_class_request"><option value="unclassified" selected?={ v.ReturnClassRequest == "" || v.ReturnClassRequest == "unclassified" }>Needs company review</option><option value="textile_craft" selected?={ v.ReturnClassRequest == "textile_craft" }>Textile or craft</option><option value="fragile_art" selected?={ v.ReturnClassRequest == "fragile_art" }>Fragile fine art, painting or sculpture</option></select><small>Company verification is required before this changes checkout eligibility.</small></label>
 	}
 }

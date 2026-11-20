@@ -251,7 +251,7 @@
       if (form.method.toLowerCase() === "post" && customerFormPath(new URL(form.action, location.href).pathname)) form.dataset.customerRetain = "true";
       form.addEventListener("input",event => { if (event.target.dataset.uiError) clearError(event.target); });
       form.addEventListener("submit",async event => {
-        if (form.dataset.wizardStep !== undefined && form.dataset.wizardStep !== 'review') {
+        if (form.dataset.wizardStep !== undefined && form.dataset.wizardStep !== 'review' && !event.submitter?.hasAttribute('data-product-save')) {
           event.preventDefault(); event.stopImmediatePropagation();
           form.dispatchEvent(new CustomEvent('ui:wizard-next')); return;
         }

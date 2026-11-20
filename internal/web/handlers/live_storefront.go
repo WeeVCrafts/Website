@@ -2432,12 +2432,9 @@ func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug st
 	}
 	rows, err := h.pool.Query(r.Context(), `SELECT pv.id,pv.name,pv.sku,pv.price_cents,COALESCE(pv.compare_at_cents,0),
 		pv.compare_at_cents IS NOT NULL,COALESCE(i.available_quantity,0),COALESCE(i.reserved_quantity,0),pv.status,
-		NOT $2 OR $3 AND COALESCE(m.published_at IS NOT NULL AND v.stock>0 AND (m.shipping_mode='live' AND v.selected
-			OR m.shipping_mode='pilot' AND m.pilot_user_id=$4 AND v.variant_id=m.pilot_variant_id AND m.pilot_order_id IS NULL),false)
+		NOT $2 OR $3 AND marketplace_option_can_checkout(pv.id,$4,1)
 		FROM products p JOIN product_variants pv ON pv.product_id=p.id AND pv.status='active'
 		LEFT JOIN inventory_stock i ON i.variant_id=pv.id
-		LEFT JOIN marketplace_ready_variants v ON v.variant_id=pv.id
-		LEFT JOIN marketplace_policy_settings m ON m.id
 		WHERE p.slug=$1 AND p.status='approved' ORDER BY (COALESCE(i.available_quantity,0)>0) DESC,pv.id`, slug, h.policyCheckout, h.checkoutEnabled, actor)
 	if err != nil {
 		return nil, err

@@ -214,7 +214,7 @@ templ GuidedReview(p viewmodels.MarketplacePage) {
    if !p.CheckoutEnabled||!p.BookingsEnabled||!p.ShippingConfigured {
     <li>Production checkout, shipping bookings or the shipping connection is unavailable. Product setup can still be saved.</li>
    }
-   if p.Policy.ShippingMode!="live"||!p.Setup.Selected.Selected {
+   if p.Policy.ShippingMode!="live"||!p.CatalogIncludes(*p.Setup.Selected) {
     <li>Complete a genuine prepaid delivery pilot, then select the approved launch catalog.</li>
    }
   </ul></div>

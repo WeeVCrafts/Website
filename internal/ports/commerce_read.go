@@ -56,9 +56,9 @@ type CommerceActor struct {
 	SellerID                  int64
 }
 type SellerFulfillmentSetup struct {
-	InvoiceVerified, PickupVerified bool
-	InvoiceSubmissionID             int64
-	InvoiceSubmissionStatus         string
+	InvoiceReady, InvoiceAttested, PickupVerified bool
+	InvoiceSubmissionID                           int64
+	InvoiceSubmissionStatus                       string
 }
 
 type SellerReadinessOption struct {
@@ -78,9 +78,17 @@ type SetupSubmission struct {
 
 type SetupSubmissionInput struct {
 	ID, SellerID, VariantID, ExpectedRevision int64
+	ExpectedProfileRevision                   int64
 	Kind, Note                                string
 	Payload                                   json.RawMessage
 	Submit                                    bool
+	Attest                                    bool
+}
+
+type SetupConfirmation struct {
+	ProfileRevision int64
+	ReviewRequired  bool
+	Registration    string
 }
 
 type SetupSubmissionData struct {

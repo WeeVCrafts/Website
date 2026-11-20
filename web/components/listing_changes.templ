@@ -1,0 +1,124 @@
+package components
+
+import (
+	"fmt"
+	"strings"
+	"github.com/wecratfs/commerce/internal/domain/commerce"
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ ListingReviewQueue(queue []viewmodels.ListingReviewRow) {
+	<section class="commerce-workspace">
+		<a href="/super-admin/products">Back to products and new listings</a>
+		<h1>Listing reviews</h1>
+		<p>Review updates to published prices and media. Customers continue to see the approved listing during review.</p>
+		if len(queue) == 0 {
+			<p>No price or media changes are waiting for review.</p>
+		} else {
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Pending listing changes">
+				<table class="ui-table ui-table--records"><thead><tr><th scope="col">Product</th><th scope="col">Seller</th><th scope="col">Changes</th><th scope="col">Action</th></tr></thead><tbody>
+				for _, row := range queue {
+					<tr><th scope="row">{ row.Product }</th><td data-label="Seller">{ row.Seller }</td><td data-label="Changes">{ listingReviewKind(row) }</td><td data-label="Action"><a class="commerce-button secondary" href={ templ.SafeURL(fmt.Sprintf("/super-admin/products/listing-review?product_id=%d",row.ID)) }>Review changes</a></td></tr>
+				}
+				</tbody></table>
+			</div>
+		}
+	</section>
+}
+
+templ ListingReviewDetails(change commerce.ListingChange, admin bool, csrf, message string, preview func(string) string) {
+	<section class="commerce-workspace">
+		if admin {
+			<a href="/super-admin/products/listing-review">Back to review queue</a>
+		} else {
+			<a href={ templ.SafeURL(fmt.Sprintf("/seller-admin/products/%d/edit",change.ProductID)) }>Back to product</a>
+		}
+		<h1>Review listing changes</h1><p>{ change.Product } · { change.Seller }</p>
+		if message != "" {
+			<p class="commerce-notice" role="status">{ message }</p>
+		}
+		switch change.State {
+			case "pending":
+				<p>The current listing stays live until approval.</p>
+			case "changes_requested":
+				<p>Changes requested. The current listing stays live.</p>
+			case "approved":
+				<p>Approved changes are live.</p>
+		}
+		if change.Note != "" {
+			<p>{ change.Note }</p>
+		}
+		if len(change.Prices) > 0 || change.ProposedCover != "" {
+			<div class="ui-table-region" role="region" tabindex="0" aria-label="Listing comparison">
+				<table class="ui-table ui-table--records"><thead><tr><th scope="col">Change</th><th scope="col">Currently live</th><th scope="col">Proposed</th></tr></thead><tbody>
+				for _, price := range change.Prices {
+					<tr><th scope="row">{ price.Option }</th><td data-label="Currently live">
+					if price.NewOption {
+						New option
+					} else {
+						@ListingReviewPrice(price.Current,price.CurrentCompareAt)
+					}
+					</td><td data-label="Proposed">@ListingReviewPrice(price.Proposed,price.ProposedCompareAt)</td></tr>
+				}
+				if change.ProposedCover != "" {
+					<tr><th scope="row">Cover photo</th><td data-label="Currently live">@ListingReviewPhoto(change.CurrentCover,preview)</td><td data-label="Proposed">@ListingReviewPhoto(change.ProposedCover,preview)</td></tr>
+				}
+				</tbody></table>
+			</div>
+		}
+		if len(change.Media) > 0 {
+			<h2>Gallery changes</h2>
+			<ul>
+			for _, media := range change.Media {
+				<li>
+				if media.Publish {
+					Add
+				} else {
+					Remove
+				}
+				if strings.HasPrefix(media.ContentType,"image/") {
+					@ListingReviewPhoto(media.Path,preview)
+				} else if preview(media.Path) != "" {
+					<a href={ templ.SafeURL(preview(media.Path)) }>Preview video</a>
+				}
+				</li>
+			}
+			</ul>
+		}
+		if admin && change.State == "pending" {
+			<form class="marketplace-form" method="post" novalidate>
+				<input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="revision" value={ fmt.Sprint(change.Revision) }/>
+				<label for="listing-review-note">Review note (required to request changes)</label>
+				<textarea id="listing-review-note" name="reason" rows="3" maxlength="1000" style="resize:none"></textarea>
+				<div class="commerce-actions"><button type="submit" name="decision" value="changes" class="commerce-button secondary">Request changes</button><button type="submit" name="decision" value="approve" class="commerce-button">Approve changes</button></div>
+			</form>
+		}
+	</section>
+}
+
+templ ListingReviewPrice(price int64, compareAt *int64) {
+	{ fmt.Sprintf("INR %d.%02d",price/100,price%100) }
+	if compareAt != nil {
+		<small>{ fmt.Sprintf("Compare at INR %d.%02d",*compareAt/100,*compareAt%100) }</small>
+	}
+}
+
+templ ListingReviewPhoto(path string, preview func(string) string) {
+	if preview(path) != "" {
+		<img width="144" height="144" class="product-media-square" src={ templ.SafeURL(preview(path)) } alt="Listing photo"/>
+	} else if path != "" {
+		<span>{ path }</span>
+	} else {
+		<span>No cover photo</span>
+	}
+}
+
+func listingReviewKind(row viewmodels.ListingReviewRow) string {
+	if row.Price && row.Media {
+		return "Price and media"
+	}
+	if row.Media {
+		return "Media"
+	}
+	return "Price"
+}

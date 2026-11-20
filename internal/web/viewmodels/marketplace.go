@@ -105,7 +105,23 @@ func (p MarketplacePage) OverviewURL() string {
 	return p.SetupURL("variant_id", "", "step", "", "pickup_choices", "")
 }
 func (p MarketplacePage) PurchaseReady() bool {
-	return p.Setup != nil && p.Setup.Selected != nil && p.Setup.Selected.Ready() && p.Setup.Selected.Selected && p.CheckoutEnabled && p.BookingsEnabled && p.ShippingConfigured && p.Policy.PublishedAt != nil && p.Policy.ShippingMode == "live"
+	return p.Setup != nil && p.Setup.Selected != nil && p.Setup.Selected.Ready() && p.LiveOptionAllowed(*p.Setup.Selected)
+}
+
+func (p MarketplacePage) CatalogIncludes(option ports.ShippingReadiness) bool {
+	switch p.Policy.LiveCatalogScope {
+	case "ready":
+		return true
+	case "seller":
+		return option.SellerID == p.Policy.LiveCatalogSellerID
+	default:
+		return option.Selected
+	}
+}
+
+func (p MarketplacePage) LiveOptionAllowed(option ports.ShippingReadiness) bool {
+	return p.CatalogIncludes(option) && p.CheckoutEnabled && p.BookingsEnabled &&
+		p.ShippingConfigured && p.Policy.PublishedAt != nil && p.Policy.ShippingMode == "live"
 }
 
 func (p MarketplacePage) SetupValue(name, fallback string) string {

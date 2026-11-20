@@ -29,36 +29,45 @@ test.beforeAll(()=>{
 
 test('guided product entry validates steps, retains edits and creates one reviewable draft',async({page})=>{
  await login(page);await page.goto('/seller-admin/products/new');
+ await page.setViewportSize({width:390,height:844});
  const form=page.locator('[data-product-builder]');
- await page.getByRole('button',{name:'Next',exact:true}).click();await expect(form.locator('[name=name]')).toBeFocused();
+ const next=form.locator('[data-product-next]');
+ await next.press('Enter');await expect(form.locator('[name=name]')).toBeFocused();
  const suffix=Date.now();await form.locator('[name=name]').fill('Workflow listing '+suffix);
- await form.locator('[name=category_slug]').selectOption('seller-workflow');await form.locator('[name=sku]').fill('WORKFLOW-'+suffix);
+ await form.locator('[name=category_slug]').selectOption('seller-workflow');await form.getByText('Advanced identifiers',{exact:true}).click();await form.locator('[name=sku]').fill('WORKFLOW-'+suffix);
  await form.locator('[name=description]').fill('A complete product description for isolated QA.');
  await form.getByRole('link',{name:'Cancel',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.getByRole('button',{name:'Keep editing',exact:true}).click();await expect(form.locator('[name=name]')).toHaveValue('Workflow listing '+suffix);
- await page.getByRole('button',{name:'Next',exact:true}).click();await expect(form.locator('[name=price_rupees]')).toBeVisible();
- await form.locator('[name=price_rupees]').fill('199.25');await form.locator('[name=initial_stock]').fill('7');
+ await next.press('Enter');await expect(form.locator('[name=price_rupees]')).toBeVisible();
+ await form.locator('[name=price_rupees]').fill('199.25');await form.locator('details').filter({has:page.locator('[name=compare_at_rupees]')}).locator('summary').click();
  await form.locator('[name=compare_at_rupees]').fill('100');
- await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Back',exact:true}).click();await expect(form.locator('[name=price_rupees]')).toHaveValue('199.25');
- await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(form.locator('[data-product-review]')).toContainText('199.25');await page.getByRole('button',{name:'Edit details',exact:true}).click();await expect(form.locator('[name=name]')).toHaveValue('Workflow listing '+suffix);
+ await next.press('Enter');await form.locator('[name=initial_stock]').fill('7');
+ await form.locator('[name=listing_parcel]').selectOption('custom');await next.press('Enter');await expect(form.locator('[name=shipping_weight_g]')).toBeFocused();
+ for(const [field,value] of Object.entries({shipping_weight_g:'325',shipping_length_cm:'18',shipping_width_cm:'12',shipping_height_cm:'5'}))await form.locator('[name='+field+']').fill(value);
+ await page.getByRole('button',{name:'Back',exact:true}).click();await expect(form.locator('[name=price_rupees]')).toHaveValue('199.25');
+ await next.press('Enter');await next.press('Enter');
+ await expect(form.locator('[data-product-review]')).toContainText('325');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await expect(form.locator('[data-product-review]')).toContainText('199.25');await page.getByRole('button',{name:'Edit basics',exact:true}).click();await expect(form.locator('[name=name]')).toHaveValue('Workflow listing '+suffix);
  await page.getByRole('button',{name:'4. Review',exact:true}).click();
  await page.getByRole('button',{name:'Save product draft',exact:true}).click();
- await expect(form.locator('[data-product-step=pricing]')).toBeVisible();await expect(form.locator('[name=compare_at_rupees]')).toBeFocused();await expect(form.locator('[name=name]')).toHaveValue('Workflow listing '+suffix);
+ await expect(form.locator('[data-product-step=photos]')).toBeVisible();await expect(form.locator('[name=compare_at_rupees]')).toBeFocused();await expect(form.locator('[name=name]')).toHaveValue('Workflow listing '+suffix);
  await form.locator('[name=compare_at_rupees]').fill('299.25');await page.getByRole('button',{name:'4. Review',exact:true}).click();
  await page.getByRole('button',{name:'Save product draft',exact:true}).click({clickCount:2});await expect(page).toHaveURL(/\/products\/\d+\/edit\?step=review/);
- expect(sql("SELECT count(*) FROM product_variants WHERE sku='WORKFLOW-"+suffix+"'")).toBe('1');
+ expect(sql("SELECT shipping_weight_g||'|'||shipping_length_cm FROM product_variants WHERE sku='WORKFLOW-"+suffix+"'")).toBe('325|18');
  await expect(page.locator('[data-review-submit]')).toBeVisible();
- await page.getByRole('button',{name:'Edit details',exact:true}).click();await page.getByLabel('Title',{exact:true}).fill('Edited workflow listing '+suffix);await expect(page.locator('[data-review-submit] button')).toBeDisabled();
+ await page.getByRole('button',{name:'Edit basics',exact:true}).click();await page.getByLabel('Title',{exact:true}).fill('Edited workflow listing '+suffix);await expect(page.locator('[data-review-submit] button')).toBeDisabled();
  await page.getByRole('button',{name:'4. Review',exact:true}).click();await page.getByRole('button',{name:'Save product draft',exact:true}).click();await expect(page.locator('.seller-notice')).toContainText('saved');
- await page.locator('[data-review-submit] button').click();await expect(page).toHaveURL(/notice=Product\+submitted/);
+ await expect(page.locator('[data-review-submit] button')).toHaveText('Publish listing');
+ await page.locator('[data-review-submit] button').click();await expect(page).toHaveURL(/notice=Product\+published/);
 });
 
 test('server rejects invalid native product submissions with retained values; no-JS form works',async({browser})=>{
  const context=await browser.newContext({baseURL:base,javaScriptEnabled:false});const page=await context.newPage();await login(page);await page.goto('/seller-admin/products/new');
- await page.getByLabel('Title',{exact:true}).fill('Native retained listing');await page.locator('[name=category_slug]').selectOption('seller-workflow');await page.locator('[name=sku]').fill('NATIVE-'+Date.now());await page.locator('[name=description]').fill('Native product draft with retained server values.');
+ await page.getByLabel('Title',{exact:true}).fill('Native retained listing');await page.locator('[name=category_slug]').selectOption('seller-workflow');await page.getByText('Advanced identifiers',{exact:true}).click();await page.locator('[name=sku]').fill('NATIVE-'+Date.now());await page.locator('[name=description]').fill('Native product draft with retained server values.');
+ await page.locator('details').filter({has:page.locator('[name=compare_at_rupees]')}).locator('summary').click();
  await page.getByLabel('Price (INR)',{exact:true}).fill('199.25');await page.getByLabel('Compare-at price (INR, optional)',{exact:true}).fill('1');
  await page.getByRole('button',{name:'Save product draft',exact:true}).click();await expect(page.locator('.seller-form-error')).toBeVisible();await expect(page.getByLabel('Title',{exact:true})).toHaveValue('Native retained listing');await expect(page.getByLabel('Compare-at price (INR, optional)',{exact:true})).toHaveValue('1');
- await page.getByLabel('Compare-at price (INR, optional)',{exact:true}).fill('299');await page.getByRole('button',{name:'Save product draft',exact:true}).click();await expect(page).toHaveURL(/\/products\/\d+\/edit/);await context.close();
+ await page.locator('details').filter({has:page.locator('[name=compare_at_rupees]')}).locator('summary').click();await page.getByLabel('Compare-at price (INR, optional)',{exact:true}).fill('299');await page.getByRole('button',{name:'Save product draft',exact:true}).click();await expect(page).toHaveURL(/\/products\/\d+\/edit/);await context.close();
 });
 
 test('cover upload failure keeps a saved draft and retry targets its existing ID',async({page})=>{

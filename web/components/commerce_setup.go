@@ -38,9 +38,15 @@ func commerceDate(t time.Time) string {
 	return t.In(time.FixedZone("IST", 19800)).Format("2 Jan 2006, 3:04 PM MST")
 }
 func commerceSetupReadOnly(p viewmodels.CommerceSetupPage) bool {
-	return p.Selected != nil && (p.Selected.Status == "submitted" || p.Selected.Status == "approved" || p.Selected.Status == "superseded") && p.Error == ""
+	return p.Selected != nil && (p.Selected.Status == "submitted" || p.Selected.Status == "approved" || p.Selected.Status == "attested" || p.Selected.Status == "superseded") && p.Error == ""
 }
 
+func commerceSetupStatus(status string) string {
+	if status == "attested" {
+		return "Confirmed by seller"
+	}
+	return commerceLabel(status)
+}
 func commerceReadinessMissing(x ports.SellerReadinessOption) string {
 	var missing []string
 	if x.ProductStatus != "approved" {
@@ -50,7 +56,7 @@ func commerceReadinessMissing(x ports.SellerReadinessOption) string {
 		missing = append(missing, "packed measurements")
 	}
 	if !x.TaxReady || !x.Classified {
-		missing = append(missing, "tax and return verification")
+		missing = append(missing, "tax and return details")
 	}
 	if x.Stock <= 0 {
 		missing = append(missing, "stock")
@@ -87,11 +93,7 @@ func commerceSetupSteps(p viewmodels.CommerceSetupPage) []struct{ Label, State s
 		}
 		return "Missing"
 	}
-	review := "Not submitted"
-	if p.Selected != nil {
-		review = commerceLabel(p.Selected.Status)
-	}
-	return []struct{ Label, State string }{{"Seller invoice details", state(x.InvoiceReady)}, {"Pickup location", state(x.PickupReady)}, {"Packed measurements", state(x.ParcelReady())}, {"Tax & return details", state(x.TaxReady && x.Classified)}, {"Admin review", review}}
+	return []struct{ Label, State string }{{"Business details", state(p.Shared.InvoiceReady)}, {"Pickup location", state(p.Shared.PickupVerified)}, {"Packed measurements", state(x.ParcelReady())}, {"Tax & return details", state(x.TaxReady && x.Classified)}}
 }
 
 type matchingTaxGroup struct {
@@ -140,11 +142,14 @@ func sellerInvoiceNext(setup ports.SellerFulfillmentSetup) string {
 	case "changes_requested":
 		return "Review the requested changes and resubmit."
 	case "draft":
-		return "Continue your draft and submit it for verification."
+		return "Continue your draft."
 	default:
-		if setup.InvoiceVerified {
+		if setup.InvoiceReady && setup.InvoiceAttested {
+			return "Confirmed by the seller for all product options."
+		}
+		if setup.InvoiceReady {
 			return "Verified for this seller."
 		}
-		return "Submit your verified business details."
+		return "Confirm your business details once."
 	}
 }

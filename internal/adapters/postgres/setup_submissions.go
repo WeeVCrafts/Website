@@ -10,7 +10,6 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -23,7 +22,8 @@ func validSetupSubmission(kind string, data ports.SetupSubmissionData) bool {
 
 func (r *MarketplaceRepository) SaveSetupSubmission(ctx context.Context, actor int64, in ports.SetupSubmissionInput) (id int64, err error) {
 	var data ports.SetupSubmissionData
-	if len(in.Payload) > 8192 || json.Unmarshal(in.Payload, &data) != nil || len(in.Note) > 1000 || in.Kind != "invoice" && in.Kind != "tax" {
+	if len(in.Payload) > 8192 || json.Unmarshal(in.Payload, &data) != nil || len(in.Note) > 1000 ||
+		(in.Kind != "invoice" && in.Kind != "tax") || (in.Attest && (!in.Submit || in.ExpectedProfileRevision < 0)) {
 		return 0, ports.ErrInvalidState
 	}
 	data.GSTIN = strings.ToUpper(strings.TrimSpace(data.GSTIN))
@@ -34,6 +34,9 @@ func (r *MarketplaceRepository) SaveSetupSubmission(ctx context.Context, actor i
 		data.DraftRatePercent = nil
 	}
 	if in.Submit && !validSetupSubmission(in.Kind, data) {
+		return 0, ports.ErrInvalidState
+	}
+	if in.Attest && in.Kind == "invoice" && data.Registration == "registered" && !strings.HasPrefix(data.GSTIN, data.StateCode) {
 		return 0, ports.ErrInvalidState
 	}
 	payload, _ := json.Marshal(data)
@@ -55,6 +58,31 @@ func (r *MarketplaceRepository) SaveSetupSubmission(ctx context.Context, actor i
 			}
 		} else if in.VariantID != 0 {
 			return ports.ErrInvalidState
+		}
+		if in.Attest {
+			state, err := readSetupConfirmation(ctx, tx, a.seller, in.VariantID, in.Kind)
+			if err != nil {
+				return err
+			}
+			if state.ReviewRequired {
+				return ports.ErrSetupReviewRequired
+			}
+			if state.ProfileRevision != in.ExpectedProfileRevision {
+				if state.ProfileRevision-1 != in.ExpectedProfileRevision {
+					return ports.ErrFulfillmentConflict
+				}
+				// A lost response may retry the write after the profile revision
+				// advanced. Only replay the newest matching confirmation.
+				err := tx.QueryRow(ctx, `SELECT id FROM (
+					SELECT id,payload,note,status,created_by FROM marketplace_setup_submissions
+					WHERE seller_id=$1 AND kind=$2 AND COALESCE(variant_id,0)=$3 ORDER BY id DESC LIMIT 1
+				) latest WHERE status='attested' AND payload=$4 AND note=$5 AND created_by=$6 AND ($7=0 OR id=$7)`,
+					a.seller, in.Kind, in.VariantID, payload, in.Note, actor, in.ID).Scan(&id)
+				if errors.Is(err, pgx.ErrNoRows) {
+					return ports.ErrFulfillmentConflict
+				}
+				return err
+			}
 		}
 		var previous ports.SetupSubmission
 		var oldPayload []byte
@@ -88,15 +116,22 @@ func (r *MarketplaceRepository) SaveSetupSubmission(ctx context.Context, actor i
 		if in.Submit {
 			status = "submitted"
 		}
+		if in.Attest {
+			status = "attested"
+		}
 		if previous.ID == 0 {
-			e = tx.QueryRow(ctx, `INSERT INTO marketplace_setup_submissions(seller_id,variant_id,kind,status,payload,note,created_by,submitted_at) VALUES($1,NULLIF($2,0),$3,$4,$5,$6,$7,CASE WHEN $4='submitted' THEN now() END) RETURNING id`, a.seller, in.VariantID, in.Kind, status, payload, in.Note, actor).Scan(&id)
+			e = tx.QueryRow(ctx, `INSERT INTO marketplace_setup_submissions(seller_id,variant_id,kind,status,payload,note,created_by,submitted_at) VALUES($1,NULLIF($2,0),$3,$4,$5,$6,$7,CASE WHEN $4 IN ('submitted','attested') THEN now() END) RETURNING id`, a.seller, in.VariantID, in.Kind, status, payload, in.Note, actor).Scan(&id)
 		} else {
-			e = tx.QueryRow(ctx, `UPDATE marketplace_setup_submissions SET payload=$2,note=$3,status=$4,revision=revision+1,submitted_at=CASE WHEN $4='submitted' THEN now() END,updated_at=now() WHERE id=$1 RETURNING id`, previous.ID, payload, in.Note, status).Scan(&id)
+			e = tx.QueryRow(ctx, `UPDATE marketplace_setup_submissions SET payload=$2,note=$3,status=$4,revision=revision+1,submitted_at=CASE WHEN $4 IN ('submitted','attested') THEN now() END,updated_at=now() WHERE id=$1 RETURNING id`, previous.ID, payload, in.Note, status).Scan(&id)
 		}
 		if e != nil {
 			return e
 		}
-		if in.Submit {
+		if in.Attest {
+			if e = applySetupProfile(ctx, tx, a.seller, in.VariantID, actor, in.Kind, data, true); e != nil {
+				return e
+			}
+		} else if in.Submit {
 			if in.Kind == "invoice" {
 				_, e = tx.Exec(ctx, `UPDATE seller_invoice_profiles SET checkout_review_hold=true WHERE seller_id=$1`, a.seller)
 			} else {
@@ -165,30 +200,7 @@ func reviewSetupSubmission(ctx context.Context, tx pgx.Tx, actor, id, revision i
 		if json.Unmarshal(payload, &data) != nil || !validSetupSubmission(kind, data) {
 			return ports.ErrInvalidState
 		}
-		if kind == "invoice" {
-			prefix := "S" + strings.ToUpper(strconv.FormatInt(seller, 36))
-			if len(prefix) > 6 {
-				return ports.ErrInvalidState
-			}
-			_, err = tx.Exec(ctx, `INSERT INTO seller_invoice_profiles(seller_id,legal_name,address,state_code,gstin,registration,prefix,verified_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(seller_id) DO UPDATE SET legal_name=EXCLUDED.legal_name,address=EXCLUDED.address,state_code=EXCLUDED.state_code,gstin=EXCLUDED.gstin,registration=EXCLUDED.registration,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=seller_invoice_profiles.revision+1,checkout_review_hold=false`, seller, data.LegalName, data.Address, data.StateCode, data.GSTIN, data.Registration, prefix, actor)
-		} else {
-			var registration string
-			if err = tx.QueryRow(ctx, `SELECT registration FROM seller_invoice_profiles WHERE seller_id=$1 AND NOT checkout_review_hold FOR SHARE`, seller).Scan(&registration); err != nil {
-				return ports.ErrInvalidState
-			}
-			if registration == "unregistered" && data.RateBasisPoints != 0 {
-				return ports.ErrInvalidState
-			}
-			var owned int64
-			if err = tx.QueryRow(ctx, `SELECT v.id FROM product_variants v JOIN products p ON p.id=v.product_id WHERE v.id=$1 AND p.seller_id=$2 AND v.status='active' FOR UPDATE OF v`, variant, seller).Scan(&owned); err != nil {
-				return ports.ErrInvalidState
-			}
-			_, err = tx.Exec(ctx, `INSERT INTO variant_tax_profiles(variant_id,hsn,rate_basis_points,verified_by) VALUES($1,$2,$3,$4) ON CONFLICT(variant_id) DO UPDATE SET hsn=EXCLUDED.hsn,rate_basis_points=EXCLUDED.rate_basis_points,verified_by=EXCLUDED.verified_by,verified_at=now(),revision=variant_tax_profiles.revision+1,checkout_review_hold=false`, variant, data.HSN, data.RateBasisPoints, actor)
-			if err == nil {
-				_, err = tx.Exec(ctx, `UPDATE product_variants SET return_class=$2,return_class_request=$2,updated_at=now() WHERE id=$1`, variant, data.ReturnClass)
-			}
-		}
-		if err != nil {
+		if err = applySetupProfile(ctx, tx, seller, variant, actor, kind, data, false); err != nil {
 			return err
 		}
 		status = "approved"
@@ -212,7 +224,7 @@ func setupReviewNotice(ctx context.Context, tx pgx.Tx, id int64, title string) e
 	return err
 }
 
-func (r *MarketplaceRepository) SetupSubmissions(ctx context.Context, actor, id, before int64) (list []ports.SetupSubmission, next int64, err error) {
+func (r *MarketplaceRepository) SetupSubmissions(ctx context.Context, actor, id, before int64, confirmed ...bool) (list []ports.SetupSubmission, next int64, err error) {
 	a, err := marketplaceIdentity(ctx, r.pool, actor)
 	if err != nil {
 		return nil, 0, err
@@ -220,7 +232,14 @@ func (r *MarketplaceRepository) SetupSubmissions(ctx context.Context, actor, id,
 	if a.role != "seller" && a.role != "super_admin" {
 		return nil, 0, ports.ErrForbidden
 	}
-	rows, err := r.pool.Query(ctx, `SELECT m.id,m.seller_id,COALESCE(m.variant_id,0),m.revision,m.kind,m.status,s.display_name,COALESCE(p.name,'Seller invoice details'),m.note,m.review_note,m.payload,m.submitted_at,m.created_at FROM marketplace_setup_submissions m JOIN sellers s ON s.id=m.seller_id LEFT JOIN product_variants v ON v.id=m.variant_id LEFT JOIN products p ON p.id=v.product_id WHERE ($1 OR m.seller_id=$2) AND ($3=0 OR m.id=$3) AND (NOT $1 OR $3<>0 OR m.status IN ('submitted','changes_requested')) AND ($4=0 OR m.id<$4) ORDER BY m.id DESC LIMIT 26`, a.role == "super_admin", a.seller, id, before)
+	history := len(confirmed) != 0 && confirmed[0]
+	rows, err := r.pool.Query(ctx, `SELECT m.id,m.seller_id,COALESCE(m.variant_id,0),m.revision,m.kind,m.status,
+		s.display_name,COALESCE(p.name,'Seller invoice details'),m.note,m.review_note,m.payload,m.submitted_at,m.created_at
+		FROM marketplace_setup_submissions m JOIN sellers s ON s.id=m.seller_id
+		LEFT JOIN product_variants v ON v.id=m.variant_id LEFT JOIN products p ON p.id=v.product_id
+		WHERE ($1 OR m.seller_id=$2) AND ($3=0 OR m.id=$3) AND ($4=0 OR m.id<$4)
+		AND (NOT $1 OR $3<>0 OR CASE WHEN $5 THEN m.status='attested' ELSE m.status IN ('submitted','changes_requested') END)
+		ORDER BY m.id DESC LIMIT 26`, a.role == "super_admin", a.seller, id, before, history)
 	if err != nil {
 		return nil, 0, err
 	}

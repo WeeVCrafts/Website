@@ -10,6 +10,10 @@ import (
 var (
 	ErrForbidden            = errors.New("forbidden")
 	ErrInvalidState         = errors.New("invalid state transition")
+	ErrFirstListingInReview = errors.New("the seller's first listing is already in review")
+	ErrSetupReviewRequired  = errors.New("seller setup has an unresolved review")
+	ErrSetupBillingRequired = errors.New("seller billing details are required before confirming product tax")
+	ErrSetupTaxRegistration = errors.New("the tax rate must match seller registration")
 	ErrInsufficientStock    = errors.New("insufficient stock")
 	ErrCartNotFound         = errors.New("cart not found")
 	ErrOrderNotFound        = errors.New("order not found")

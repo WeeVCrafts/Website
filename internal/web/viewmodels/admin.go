@@ -77,6 +77,12 @@ type AdminProduct struct {
 	SearchSKUs                                                       string
 }
 
+type ListingReviewRow struct {
+	ID              int64
+	Product, Seller string
+	Price, Media    bool
+}
+
 type AdminProductEditor struct {
 	SearchTags                                                                               string
 	FeaturedPinned                                                                           bool
@@ -89,6 +95,7 @@ type AdminProductEditor struct {
 }
 
 type ProductVariant struct {
+	ShippingSource                                                         string
 	ReturnClass, ReturnClassRequest                                        string
 	CostPriceCents                                                         string
 	ShippingWeight, ShippingLength, ShippingWidth, ShippingHeight          string
@@ -189,6 +196,7 @@ type AdminConfig struct {
 
 // SellerAdminPage is the view model for the live seller-scoped workspace.
 type SellerAdminPage struct {
+	CanPublishListings                                                               bool
 	OwnContentHeading                                                                bool
 	ReturnStatus, ReturnRange, StorefrontURL                                         string
 	InventoryFilter, SelectedVariant                                                 string
@@ -228,6 +236,8 @@ type SellerAdminBar struct {
 }
 
 type SellerAdminProduct struct {
+	ListingReviewState                                                           string
+	Buyability, ReadinessAction                                                  string
 	ID, Name, SKU, Category, Price, Variants, Stock, Status, Availability, Image string
 	SearchSKUs                                                                   string
 	UnitCost, UnitProfit, Margin                                                 string
@@ -333,6 +343,8 @@ type WorkspacePage struct {
 }
 
 type SellerProductForm struct {
+	ParcelDefaultName, ParcelStep                                                                            string
+	ListingReviewState                                                                                       string
 	SearchTags                                                                                               string
 	Status, ErrorMessage, ErrorField                                                                         string
 	Input                                                                                                    map[string]string

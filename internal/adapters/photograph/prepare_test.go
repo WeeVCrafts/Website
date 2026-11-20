@@ -49,7 +49,7 @@ func (f *photographFixture) SaveDerivative(_ context.Context, d ports.MediaDeriv
 	return nil
 }
 func (f *photographFixture) DerivativeCandidates(context.Context, int) ([]domain.MediaRecord, error) {
-	if len(f.derivatives) == 3 {
+	if len(f.derivatives) == 4 {
 		return nil, nil
 	}
 	return []domain.MediaRecord{f.original}, nil
@@ -76,7 +76,7 @@ func TestPrepareStoresResponsiveImagesAndReplaysWithoutSourceReads(t *testing.T)
 	if err := Prepare(t.Context(), fixture, fixture); err != nil {
 		t.Fatal(err)
 	}
-	for _, width := range []int{320, 640, 960} {
+	for _, width := range []int{320, 480, 640, 960} {
 		d, ok := fixture.derivatives[width]
 		if !ok {
 			t.Fatalf("missing %dpx derivative", width)

@@ -119,7 +119,7 @@ func photographETag(w http.ResponseWriter, data []byte) {
 func photographWidth(r *http.Request, info ports.ObjectInfo, public bool) int {
 	width, _ := strconv.Atoi(r.URL.Query().Get("w"))
 	supported := info.ContentType == "image/jpeg" || info.ContentType == "image/png" || info.ContentType == "image/webp"
-	if public && info.ByteSize > 0 && info.ByteSize <= 25<<20 && supported && (width == 320 || width == 640 || width == 960) {
+	if public && info.ByteSize > 0 && info.ByteSize <= 25<<20 && supported && (width == 320 || width == 480 || width == 640 || width == 960) {
 		return width
 	}
 	return 0

@@ -77,6 +77,7 @@ test('seller failed save retains product fields and offers correction without lo
   await form.locator('[name=description]').fill('A real field-retention browser check.');
   const category = await form.locator('[name=category_slug] option').nth(1).getAttribute('value');
   await form.locator('[name=category_slug]').selectOption(category);
+  await form.locator('[data-product-next]').click();
   await form.locator('[name=price_rupees]').fill('199.25');
   await page.route('**/seller-admin/products', route => route.request().method() === 'POST' ? route.fulfill({ status: 503, contentType: 'text/plain', body: 'Unavailable' }) : route.continue());
   await form.getByRole('button', { name: 'Save product draft', exact: true }).click();

@@ -8,7 +8,7 @@ import (
 func TestUploadedProductPhotographsHaveResponsiveDelivery(t *testing.T) {
 	src := "/media/products/17"
 	got := ResponsiveImageSrcSet(src, "")
-	for _, part := range []string{"v=2&w=320 320w", "v=2&w=640 640w", "v=2&w=960 960w"} {
+	for _, part := range []string{"v=2&w=320 320w", "v=2&w=480 480w", "v=2&w=640 640w", "v=2&w=960 960w"} {
 		if !strings.Contains(got, part) {
 			t.Fatalf("missing %s in %s", part, got)
 		}

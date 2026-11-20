@@ -7,6 +7,9 @@ import (
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 )
 
+// MediaRemovalInReview is a transient claim result. The published object stays available until review.
+const MediaRemovalInReview = "removal_in_review"
+
 type MediaRepository interface {
 	PrepareUpload(ctx context.Context, sellerOwnerID, productID int64, objectKey, contentType string, byteSize int64) (int64, error)
 }

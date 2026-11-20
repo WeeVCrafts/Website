@@ -16,6 +16,9 @@ func TestSellerProductVariantLifecycleGuards(t *testing.T) {
 	repository := NewCommerceRepository(pool)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	if _, err := pool.Exec(ctx, `UPDATE products SET status='draft' WHERE id=$1`, fixture.productID); err != nil {
+		t.Fatal(err)
+	}
 	var outsiderID int64
 	if err := pool.QueryRow(ctx, `INSERT INTO users(email,display_name,status) VALUES($1,'Variant Outsider','active') RETURNING id`, "variant-outsider-"+fixture.brandSlug+"@example.invalid").Scan(&outsiderID); err != nil {
 		t.Fatalf("create unrelated user: %v", err)
