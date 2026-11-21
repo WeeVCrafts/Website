@@ -248,7 +248,7 @@
     root.querySelectorAll("form").forEach(form => {
       if (form.dataset.uiBound) return;
       form.dataset.uiBound = "true"; form.noValidate = true;
-      if (form.method.toLowerCase() === "post" && customerFormPath(new URL(form.action, location.href).pathname)) form.dataset.customerRetain = "true";
+      if (form.method.toLowerCase() === "post" && customerFormPath(new URL(form.getAttribute("action") || location.href, location.href).pathname)) form.dataset.customerRetain = "true";
       form.addEventListener("input",event => { if (event.target.dataset.uiError) clearError(event.target); });
       form.addEventListener("submit",async event => {
         if (form.dataset.wizardStep !== undefined && form.dataset.wizardStep !== 'review' && !event.submitter?.hasAttribute('data-product-save')) {
@@ -260,9 +260,10 @@
         if (confirmation && !form.dataset.confirmed) {
           event.preventDefault(); event.stopImmediatePropagation();
           const submitter = event.submitter || form.querySelector('[type="submit"]');
-          const intent = /\/(delete|delete-draft)$/.test(form.action) ? 'danger' : /\/(archive|suspend)$/.test(form.action) ? 'warning' : 'primary';
+          const actionPath = new URL(form.getAttribute("action") || location.href, location.href).pathname;
+          const intent = /\/(delete|delete-draft)$/.test(actionPath) ? 'danger' : /\/(archive|suspend)$/.test(actionPath) ? 'warning' : 'primary';
           if (await confirmAction(confirmation, submitter, submitter?.textContent.trim(), {intent})) {
-            if (form.action.endsWith('/users/delete') && !form.querySelector('input[name="confirm"]')) {
+            if (actionPath.endsWith('/users/delete') && !form.querySelector('input[name="confirm"]')) {
               const confirmed = document.createElement('input'); confirmed.type = 'hidden'; confirmed.name = 'confirm'; confirmed.value = 'yes'; form.append(confirmed);
             }
             form.dataset.confirmed = "true"; form.requestSubmit(submitter); delete form.dataset.confirmed;

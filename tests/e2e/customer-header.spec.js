@@ -6,16 +6,18 @@ fs.mkdirSync(output,{recursive:true});
 const widths=[320,390,768,800,801,1024,1440,1920];
 const credentials={email:'demo.customer01@weevcrafts.local',password:'WeeVCrafts-Demo-2026!'};
 
-async function checkActions(page) {
+async function checkActions(page, signedIn = false) {
   const actions=page.locator('.customer-shopping-header .header-actions>a,.customer-shopping-header .header-actions>.profile-disclosure>.profile-toggle');
-  await expect(actions).toHaveCount(3);
+  await expect(actions).toHaveCount(signedIn ? 4 : 3);
   const defects=await actions.evaluateAll(elements=>elements.flatMap(element=>{
     const errors=[],r=element.getBoundingClientRect(),style=getComputedStyle(element);
     const label=element.querySelector('.header-action-label,.account-label'),icon=element.querySelector('.material-symbols-outlined,.header-avatar');
     if(r.width<48||r.height<48)errors.push('action target smaller than 48px');
-    if(!label||getComputedStyle(label).display==='none'||getComputedStyle(label).fontSize!=='14px')errors.push('label missing or inconsistent');
+    const iconOnlyBell = innerWidth <= 600 && element.matches('.shopping-notification-bell');
+    const labelSize = innerWidth <= 360 && element.closest('.header-actions').querySelector('.shopping-notification-bell') ? '12px' : '14px';
+    if(!iconOnlyBell&&(!label||getComputedStyle(label).display==='none'||getComputedStyle(label).fontSize!==labelSize))errors.push('label missing or inconsistent');
     if(style.flexDirection!=='column')errors.push('action is not stacked');
-    if(icon&&label&&icon.getBoundingClientRect().bottom>label.getBoundingClientRect().top+1)errors.push('icon overlaps label');
+    if(!iconOnlyBell&&icon&&label&&icon.getBoundingClientRect().bottom>label.getBoundingClientRect().top+1)errors.push('icon overlaps label');
     if(r.left<0||r.right>innerWidth+1)errors.push('action outside viewport');
     return errors;
   }));
@@ -48,7 +50,7 @@ test('guest shopping actions are uniform across customer and auth screens',async
   }
 });
 
-test('signed-in customers keep three actions and notification access inside Account',async({page})=>{
+test('signed-in customers can open notifications directly from the shared header',async({page})=>{
   test.setTimeout(120000);
   if(process.env.MARKETPLACE_UI_FIXTURE_FILE) {
     const baseURL=test.info().project.use.baseURL;
@@ -64,8 +66,11 @@ test('signed-in customers keep three actions and notification access inside Acco
       await page.setViewportSize({width,height:900});
       for(const value of ['0','12','123']) {
         await page.locator('#wishlist-count em,#cart-count em').evaluateAll((elements,value)=>elements.forEach(e=>e.textContent=value),value);
-        await checkActions(page);
+        await checkActions(page, true);
       }
+      const bell=page.locator('.header-actions > [data-notification-bell]');
+      await expect(bell).toBeVisible();
+      await expect(bell).toHaveAttribute('href','/notifications');
       const toggle=page.getByRole('button',{name:'Account menu',exact:true});
       await toggle.press('Enter');await expect(page.locator('#profile-dropdown')).toBeVisible();
       await expect(page.locator('#profile-dropdown [data-notification-bell]')).toBeVisible();
@@ -73,6 +78,9 @@ test('signed-in customers keep three actions and notification access inside Acco
       await page.keyboard.press('Escape');await expect(toggle).toBeFocused();
     }
   }
+  await page.locator('.header-actions > [data-notification-bell]').press('Enter');
+  await expect(page).toHaveURL(/\/notifications$/);
+  await expect(page.getByRole('heading',{name:'Notifications',exact:true})).toBeVisible();
 });
 
 test('customer password login defaults home and preserves safe continuation',async({browser,baseURL})=>{

@@ -9,11 +9,11 @@ templ ProductParcelFields(v viewmodels.ProductVariant) {
 			if v.ShippingSource != "" {
 				<p>{ v.ShippingSource }</p>
 			}
-			<p>Measure the parcel with its packaging. Enter all four values together. Confirm the final parcel again when packing an order.</p>
-			<label>Packed weight (grams)<input name="shipping_weight_g" type="number" min="1" max="50000" value={ v.ShippingWeight }/></label>
-			<label>Packed length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" value={ v.ShippingLength }/></label>
-			<label>Packed width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" value={ v.ShippingWidth }/></label>
-			<label>Packed height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" value={ v.ShippingHeight }/></label>
+			<p>Measure the parcel with its protective packaging. Enter all four values together (minimum weight 100g, box dimensions 1-200 cm).</p>
+			<label>Packed weight (grams)<input name="shipping_weight_g" type="number" min="100" max="50000" placeholder="e.g. 500" value={ v.ShippingWeight }/><small class="seller-field-hint">Minimum 100 grams. For light craft items, include the parcel box weight.</small></label>
+			<label>Packed length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" placeholder="e.g. 25" value={ v.ShippingLength }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
+			<label>Packed width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" placeholder="e.g. 15" value={ v.ShippingWidth }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
+			<label>Packed height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" placeholder="e.g. 10" value={ v.ShippingHeight }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
 		</fieldset>
 	}
 }

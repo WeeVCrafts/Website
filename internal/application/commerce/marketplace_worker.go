@@ -330,8 +330,14 @@ func (p *MarketplaceProcessor) cancelItems(ctx context.Context, id int64) error 
 			return ports.ErrShippingPending
 		}
 		if !ports.ShipmentCancelled(s.ProviderStatus) {
+			if cancellationHandoverConfirmed(s.ProviderStatus) {
+				return p.recordCancellationHandover(ctx, parcel.ID, s)
+			}
 			if !ports.ShippingPrePickup(s.ProviderStatus) {
-				return ports.ErrInvalidState
+				if err = p.Store.SavePackage(ctx, parcel.ID, s, parcel.PendingAction); err != nil {
+					return err
+				}
+				return ports.ErrShippingPending
 			}
 			if parcel.PendingAction == "cancel" {
 				return ports.ErrShippingPending
@@ -347,6 +353,12 @@ func (p *MarketplaceProcessor) cancelItems(ctx context.Context, id int64) error 
 				return err
 			}
 			if !ports.ShipmentCancelled(s.ProviderStatus) {
+				if cancellationHandoverConfirmed(s.ProviderStatus) {
+					return p.recordCancellationHandover(ctx, parcel.ID, s)
+				}
+				if err = p.Store.SavePackage(ctx, parcel.ID, s, "cancel"); err != nil {
+					return err
+				}
 				return ports.ErrShippingPending
 			}
 		}
@@ -355,6 +367,23 @@ func (p *MarketplaceProcessor) cancelItems(ctx context.Context, id int64) error 
 		}
 	}
 	return p.Store.CompleteCancellation(ctx, id)
+}
+
+func cancellationHandoverConfirmed(status string) bool {
+	stage, _ := domain.MapShipmentStatus(status)
+	switch stage {
+	case "picked_up", "in_transit", "out_for_delivery", "delivered", "ndr", "rto":
+		return true
+	default:
+		return false
+	}
+}
+
+func (p *MarketplaceProcessor) recordCancellationHandover(ctx context.Context, id int64, shipment ports.Shipment) error {
+	if err := p.Store.SavePackage(ctx, id, shipment, ""); err != nil {
+		return err
+	}
+	return ports.ErrCancellationAfterHandover
 }
 func (p *MarketplaceProcessor) refund(ctx context.Context, id int64) error {
 	record, submit, err := p.Store.RefundRecord(ctx, id)

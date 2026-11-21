@@ -55,59 +55,59 @@ func ProductParcelFields(v viewmodels.ProductVariant) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<p>Measure the parcel with its packaging. Enter all four values together. Confirm the final parcel again when packing an order.</p><label>Packed weight (grams)<input name=\"shipping_weight_g\" type=\"number\" min=\"1\" max=\"50000\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<p>Measure the parcel with its protective packaging. Enter all four values together (minimum weight 100g, box dimensions 1-200 cm).</p><label>Packed weight (grams)<input name=\"shipping_weight_g\" type=\"number\" min=\"100\" max=\"50000\" placeholder=\"e.g. 500\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.ShippingWeight)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 13, Col: 121}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 13, Col: 146}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></label> <label>Packed length (cm)<input name=\"shipping_length_cm\" type=\"number\" min=\"1\" max=\"200\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><small class=\"seller-field-hint\">Minimum 100 grams. For light craft items, include the parcel box weight.</small></label> <label>Packed length (cm)<input name=\"shipping_length_cm\" type=\"number\" min=\"1\" max=\"200\" placeholder=\"e.g. 25\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.ShippingLength)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 14, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 14, Col: 139}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"></label> <label>Packed width (cm)<input name=\"shipping_width_cm\" type=\"number\" min=\"1\" max=\"200\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><small class=\"seller-field-hint\">Whole centimetres (1-200 cm).</small></label> <label>Packed width (cm)<input name=\"shipping_width_cm\" type=\"number\" min=\"1\" max=\"200\" placeholder=\"e.g. 15\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.ShippingWidth)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 15, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 15, Col: 136}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"></label> <label>Packed height (cm)<input name=\"shipping_height_cm\" type=\"number\" min=\"1\" max=\"200\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"><small class=\"seller-field-hint\">Whole centimetres (1-200 cm).</small></label> <label>Packed height (cm)<input name=\"shipping_height_cm\" type=\"number\" min=\"1\" max=\"200\" placeholder=\"e.g. 10\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.ShippingHeight)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 16, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/product_parcel.templ`, Line: 16, Col: 139}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></label></fieldset>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><small class=\"seller-field-hint\">Whole centimetres (1-200 cm).</small></label></fieldset>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

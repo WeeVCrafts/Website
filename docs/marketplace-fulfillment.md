@@ -64,6 +64,22 @@ audited retry approval with a fresh attempt receipt. Uncertain submissions only
 reconcile. Repeated callbacks cannot duplicate ledger reversals or
 restock goods twice.
 
+For a cancelled Shiprocket parcel with an AWB or pickup reference, the seller
+sees the shipment result and a separate pickup instruction. Keep the affected
+parcel aside while pickup is being checked. Company operators use the order's
+Support tab to record carrier evidence that the AWB was removed from pickup or
+that the pickup closed without collection. Confirm clearance for that AWB only.
+Other shipments on the same pickup retain their own status. A lost cancellation
+response remains pending until a carrier read confirms the result. Confirmed
+collection sends the request to the delivery exception queue.
+
+WeevCrafts sends the Packed update after it has a carrier label and AWB. Packed
+and tracking notices omit payment totals. The order receipt and refund notices
+use marketplace payment records. Before turning off Shiprocket's overlapping
+Packed email, verify that WeevCrafts delivers its Packed email for the applicable
+channel. Then disable only the overlapping Packed email in Shiprocket Buyer
+Communication and verify that later tracking updates still arrive.
+
 Sellers receive an acceptance reminder after 24 hours and an Admin escalation
 after 48 hours. There is no automatic seller-SLA cancellation. Reconciled earnings
 become eligible seven days after confirmed delivery; unresolved complaints,

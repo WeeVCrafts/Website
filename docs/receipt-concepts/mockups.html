@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WeevCrafts — E-Commerce Receipt & Document Suite</title>
+<style>
+  @font-face { font-family: "DM Sans"; src: url("../../web/assets/fonts/dm-sans-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "DM Sans"; src: url("../../web/assets/fonts/dm-sans-500.woff2") format("woff2"); font-weight: 500; }
+  @font-face { font-family: "DM Sans"; src: url("../../web/assets/fonts/dm-sans-600.woff2") format("woff2"); font-weight: 600; }
+  @font-face { font-family: "DM Sans"; src: url("../../web/assets/fonts/dm-sans-700.woff2") format("woff2"); font-weight: 700; }
+  @font-face { font-family: "Playfair Display"; src: url("../../web/assets/fonts/playfair-display-500.woff2") format("woff2"); font-weight: 500; }
+  @font-face { font-family: "Playfair Display"; src: url("../../web/assets/fonts/playfair-display-600.woff2") format("woff2"); font-weight: 600; }
+
+  :root {
+    --forest: #0e3d30;
+    --forest-light: #165342;
+    --forest-subtle: #edf5f1;
+    --paper: #fcfbf8;
+    --card-bg: #f8f6f0;
+    --card-border: #e6dfd1;
+    --line: #e2dac9;
+    --line-strong: #c8beab;
+    --ink: #1b2823;
+    --ink-light: #37463f;
+    --muted: #627168;
+    --terra: #b84e34;
+    --terra-subtle: #fcf1ee;
+    --gold: #c59436;
+    --gold-subtle: #fcf8ee;
+    --blue-badge: #235584;
+    --blue-subtle: #edf4fa;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #ebe5db;
+    font-family: "DM Sans", -apple-system, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 0;
+  }
+
+  .sheet {
+    position: relative;
+    width: 794px;
+    height: 1123px;
+    margin: 0 auto 40px;
+    padding: 36px 46px 26px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 16px 36px rgba(14, 61, 48, 0.14);
+    box-sizing: border-box;
+  }
+
+  /* ---------- Brand Header ---------- */
+  .brandbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--forest);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-logo-img { width: 44px; height: 44px; border-radius: 10px; object-fit: contain; }
+  .brand-text { display: flex; flex-direction: column; }
+  .wordmark {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 600;
+    font-size: 26px;
+    color: var(--forest);
+    line-height: 1;
+    letter-spacing: -0.4px;
+  }
+  .tagline {
+    font-size: 8px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  .doc-meta { text-align: right; }
+  .doc-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: var(--forest);
+    color: #fff;
+  }
+  .doc-badge.invoice { background: #1c3d5a; }
+  .doc-badge.credit { background: var(--terra); }
+  .doc-badge.slip { background: #334155; }
+  .doc-badge.rma { background: #0d5c48; }
+
+  .doc-id-num { font-size: 13px; font-weight: 700; margin-top: 5px; color: var(--ink); }
+  .doc-id-date { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- Status Banner ---------- */
+  .status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--forest-subtle);
+    border: 1px solid #cce2d6;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 14px;
+  }
+  .status-banner.alert {
+    background: var(--terra-subtle);
+    border-color: #f1cfc6;
+  }
+  .status-banner.logistics {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+  .status-left { display: flex; align-items: center; gap: 10px; }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: #fff;
+    border: 1px solid #b6d8c5;
+    color: var(--forest-light);
+  }
+  .status-pill.alert {
+    border-color: #eec1b5;
+    color: var(--terra);
+  }
+  .status-pill.neutral {
+    border-color: #d8cebc;
+    color: #6d5b40;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--forest-light); }
+  .status-dot.alert { background: var(--terra); }
+  .status-dot.neutral { background: var(--gold); }
+  .status-text { font-size: 11px; color: var(--ink-light); }
+  .status-text strong { color: var(--ink); }
+  .status-ref { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Hero Title (Order Receipt) ---------- */
+  .receipt-hero {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .receipt-hero-title {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--forest);
+    line-height: 1.15;
+    margin: 0;
+  }
+  .receipt-hero-desc {
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+
+  /* ---------- Multi-column Cards ---------- */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .card-val-main { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+  .card-val-sub { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+  .card-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #e6ede8;
+    color: var(--forest);
+    font-size: 8.5px;
+    font-weight: 600;
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+
+  /* ---------- Tables ---------- */
+  .section-title {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 16px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  table.items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  table.items-table thead th {
+    background: var(--card-bg);
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--card-border);
+    text-align: left;
+  }
+  table.items-table thead th.r { text-align: right; }
+  table.items-table thead th.c { text-align: center; }
+
+  table.items-table tbody td {
+    padding: 9px 10px;
+    font-size: 11px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--card-border);
+    vertical-align: middle;
+  }
+  table.items-table tbody tr:last-child td { border-bottom: none; }
+  table.items-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  table.items-table tbody td.c { text-align: center; font-variant-numeric: tabular-nums; }
+
+  .item-thumb-row { display: flex; align-items: center; gap: 10px; }
+  .item-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #fff;
+  }
+  .item-info { display: flex; flex-direction: column; }
+  .item-name { font-size: 11.5px; font-weight: 600; color: var(--ink); }
+  .item-sub { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+  .item-chip {
+    display: inline-block;
+    padding: 1px 5px;
+    background: #edf0ee;
+    color: var(--muted);
+    font-size: 8.5px;
+    font-weight: 600;
+    border-radius: 3px;
+    margin-right: 4px;
+    margin-top: 3px;
+  }
+
+  /* ---------- Financial Summary & QR Block ---------- */
+  .bottom-split {
+    display: grid;
+    grid-template-columns: 1fr 310px;
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .qr-trust-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .qr-img { width: 56px; height: 56px; flex-shrink: 0; }
+  .qr-text { display: flex; flex-direction: column; }
+  .qr-title { font-size: 10px; font-weight: 700; color: var(--ink); }
+  .qr-desc { font-size: 9px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .qr-support { font-size: 9px; color: var(--forest); font-weight: 600; margin-top: 4px; }
+
+  .ledger-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .ledger-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--ink-light);
+    padding: 3px 0;
+  }
+  .ledger-row .num { font-variant-numeric: tabular-nums; }
+  .ledger-row.discount { color: #166534; font-weight: 600; }
+  .ledger-divider { height: 1px; background: var(--card-border); margin: 6px 0; }
+  .ledger-total {
+    background: var(--forest);
+    color: #fff;
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .ledger-total.credit { background: var(--terra); }
+  .ledger-total-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .ledger-total-val { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Disclaimer & Callouts ---------- */
+  .callout-box {
+    background: var(--card-bg);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 6px 6px 0;
+    padding: 8px 12px;
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 12px;
+  }
+  .callout-box.credit { border-left-color: var(--terra); }
+  .callout-box.logistics { border-left-color: var(--forest); }
+  .callout-box strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Barcode & Signatures ---------- */
+  .barcode-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+  }
+  .barcode-svg { width: 150px; height: 32px; }
+  .barcode-text { font-size: 9px; font-family: monospace; font-weight: 600; letter-spacing: 0.15em; color: var(--ink); margin-top: 3px; }
+
+  .sign-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+  .sign-declaration { font-size: 8.5px; color: var(--muted); max-width: 440px; line-height: 1.45; }
+  .sign-block { text-align: right; }
+  .sign-line { width: 150px; height: 28px; border-bottom: 1px dashed var(--line-strong); margin-bottom: 4px; margin-left: auto; }
+  .sign-label { font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .sign-sub { font-size: 9px; color: var(--forest); font-weight: 600; margin-top: 2px; }
+
+  /* ---------- Footer ---------- */
+  .sheet-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8.5px;
+    color: var(--muted);
+  }
+  .sheet-footer b { color: var(--forest); font-weight: 700; }
+  .footer-center { text-align: center; }
+
+  /* ---------- Cut Line for RMA ---------- */
+  .cut-line {
+    border-bottom: 1.5px dashed #94a3b8;
+    position: relative;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .cut-label {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--paper);
+    padding: 0 10px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+
+  /* Steps for RMA */
+  .rma-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .rma-step-card {
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .rma-step-num {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--forest);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .rma-step-title { font-size: 10px; font-weight: 700; color: var(--ink); }
+  .rma-step-desc { font-size: 8.5px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+</style>
+</head>
+<body>
+
+<!-- ===================================================================== -->
+<!-- 1. CUSTOMER ORDER RECEIPT                                             -->
+<!-- ===================================================================== -->
+<section class="sheet" id="order-receipt">
+  <div class="brandbar">
+    <div class="brand">
+      <img src="../../web/assets/images/brand/weevcrafts-logo.png" alt="WeevCrafts" class="brand-logo-img">
+      <div class="brand-text">
+        <div class="wordmark">WeevCrafts</div>
+        <div class="tagline">Indian Artisan Marketplace</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-badge">Customer Order Receipt</div>
+      <div class="doc-id-num">WC-20261120-0344</div>
+      <div class="doc-id-date">20 Nov 2026 · 15:44 IST</div>
+    </div>
+  </div>
+
+  <div class="receipt-hero">
+    <div>
+      <h1 class="receipt-hero-title">Thank you for your order.</h1>
+      <div class="receipt-hero-desc">A handmade piece. A little more meaning. This receipt confirms your payment capture and order placement.</div>
+    </div>
+  </div>
+
+  <div class="status-banner">
+    <div class="status-left">
+      <span class="status-pill"><span class="status-dot"></span>Payment Captured</span>
+      <span class="status-pill neutral"><span class="status-dot neutral"></span>Order Confirmed</span>
+      <span class="status-text">Paid via <strong>UPI / Razorpay</strong></span>
+    </div>
+    <div class="status-ref">Gateway Ref: pay_Qv8492XdLk99 · UPI RRN: 632941098231</div>
+  </div>
+
+  <div class="grid-3">
+    <div class="info-card">
+      <div class="card-label">Shipping Address</div>
+      <div class="card-val-main">Ananya Sharma</div>
+      <div class="card-val-sub">
+        48 Palm Grove Road, Indiranagar<br>
+        Bengaluru, Karnataka - 560038<br>
+        Phone: +91 98450 23189
+      </div>
+      <div class="card-badge">Home Delivery</div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Artisan Guild / Sold By</div>
+      <div class="card-val-main">Kamala Arts</div>
+      <div class="card-val-sub">
+        Studio 14, Mithila Craft Enclave<br>
+        Madhubani, Bihar - 847211<br>
+        GSTIN: 10ABCDE1234F1Z5
+      </div>
+      <div class="card-badge">Verified Maker Guild</div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Delivery & Fulfilment</div>
+      <div class="card-val-main">Artisan Express Delivery</div>
+      <div class="card-val-sub">
+        Carrier: Shiprocket / Blue Dart<br>
+        Est. Dispatch: 21–22 Nov 2026<br>
+        Est. Delivery: 25–27 Nov 2026
+      </div>
+      <div class="card-badge">Package 1 of 1</div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>Ordered Items (2 Items · 3 Pieces)</span>
+    <span>Standard Currency: INR (₹)</span>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Item Description</th>
+        <th class="c" style="width:60px">Qty</th>
+        <th class="r" style="width:110px">Unit Price</th>
+        <th class="r" style="width:120px">Total Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="item-thumb-row">
+            <img src="../../web/assets/images/customer/madhubani-tree.png" alt="Tree of Life" class="item-thumb">
+            <div class="item-info">
+              <span class="item-name">Tree of Life — Hand-Painted Madhubani Art</span>
+              <span class="item-sub">By Kamala Arts · Mithila Painting on Handmade Paper · 46 × 30 cm</span>
+              <div>
+                <span class="item-chip">SKU: WC-113CA55A</span>
+                <span class="item-chip">HSN: 9701</span>
+                <span class="item-chip">Authentic Craft</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="c">1</td>
+        <td class="r">₹1,850.00</td>
+        <td class="r" style="font-weight:600">₹1,850.00</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="item-thumb-row">
+            <img src="../../web/assets/images/customer/blue-tote.png" alt="Cotton Tote" class="item-thumb">
+            <div class="item-info">
+              <span class="item-name">Handwoven Indigo Cotton Craft Tote</span>
+              <span class="item-sub">By Kala Weaves · Natural Dye Handloom Cotton · 38 × 42 cm</span>
+              <div>
+                <span class="item-chip">SKU: WC-88B41C0D</span>
+                <span class="item-chip">HSN: 4202</span>
+                <span class="item-chip">Eco-friendly</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="c">2</td>
+        <td class="r">₹640.00</td>
+        <td class="r" style="font-weight:600">₹1,280.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bottom-split">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="qr-trust-card">
+        <svg class="qr-img" viewBox="0 0 42 42">
+          <!-- Stylized QR Code SVG -->
+          <rect width="42" height="42" fill="#fff" rx="4"/>
+          <path d="M4 4h12v12H4zm2 2v8h8V6zm2 2h4v4H8zM26 4h12v12H26zm2 2v8h8V6zm2 2h4v4h-4zM4 26h12v12H4zm2 2v8h8v-8zm2 2h4v4H8zM22 6h2v6h-2zm-2 8h4v2h-4zm6 6h2v4h-2zm-6 2h4v4h-4zm8 2h6v2h-6zm-4 4h4v4h-4zm6 2h4v4h-4zm4-6h4v2h-4zm2 6h2v4h-2zm-12 4h2v2h-2zm4 2h4v2h-4z" fill="#0e3d30"/>
+        </svg>
+        <div class="qr-text">
+          <div class="qr-title">Track Order & Live Updates</div>
+          <div class="qr-desc">Scan to view delivery status, dispatch updates, and access order support.</div>
+          <div class="qr-support">support@weevcrafts.com · +91 80 4910 8800</div>
+        </div>
+      </div>
+
+      <div class="callout-box">
+        <strong>A note on this document:</strong> This is a customer payment receipt confirming successful transaction capture on WeevCrafts. As an artisan marketplace, your official GST Tax Invoice is issued directly by the registered seller upon parcel dispatch and will be available in your account.
+      </div>
+    </div>
+
+    <div class="ledger-box">
+      <div class="ledger-row">
+        <span>Items Subtotal (3 pcs)</span>
+        <span class="num">₹3,130.00</span>
+      </div>
+      <div class="ledger-row">
+        <span>Artisan Express Shipping</span>
+        <span class="num">₹55.72</span>
+      </div>
+      <div class="ledger-row discount">
+        <span>Platform Artisan Promo</span>
+        <span class="num">− ₹0.00</span>
+      </div>
+      <div class="ledger-row" style="font-size:9.5px;color:var(--muted)">
+        <span>Taxes (Estimated GST)</span>
+        <span class="num">₹166.53 (Included)</span>
+      </div>
+      <div class="ledger-divider"></div>
+      <div class="ledger-total">
+        <span class="ledger-total-lbl">Total Paid</span>
+        <span class="ledger-total-val">₹3,185.72</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-footer">
+    <div><b>WeevCrafts Marketplace</b> · Verified Artisan Network</div>
+    <div class="footer-center">7-Day Replacement Guarantee for Transit Damage</div>
+    <div>Order WC-20261120-0344 · Page 1 of 1</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 2. SELLER GST TAX INVOICE                                             -->
+<!-- ===================================================================== -->
+<section class="sheet" id="tax-invoice">
+  <div class="brandbar">
+    <div class="brand">
+      <img src="../../web/assets/images/brand/weevcrafts-logo.png" alt="WeevCrafts" class="brand-logo-img">
+      <div class="brand-text">
+        <div class="wordmark" style="font-size:22px">Kamala Arts</div>
+        <div class="tagline">Registered Seller on WeevCrafts Marketplace</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-badge invoice">Tax Invoice (Rule 46)</div>
+      <div class="doc-id-num">INV/2026-27/0412</div>
+      <div class="doc-id-date">Invoice Date: 20 Nov 2026 · Original for Recipient</div>
+    </div>
+  </div>
+
+  <div class="status-banner">
+    <div class="status-left">
+      <span class="status-pill"><span class="status-dot"></span>GST Compliant</span>
+      <span class="status-text">Place of Supply: <strong>29 - Karnataka (Inter-State)</strong></span>
+      <span class="status-text">Reverse Charge: <strong>No</strong></span>
+    </div>
+    <div class="status-ref">Order Reference: WC-20261120-0344 · Payment: Prepaid (Razorpay UPI)</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="info-card">
+      <div class="card-label">Sold By / Supplier (Seller)</div>
+      <div class="card-val-main">Kamala Arts</div>
+      <div class="card-val-sub">
+        Studio 14, Mithila Craft Enclave, Near Town Hall<br>
+        Madhubani, Bihar - 847211, India<br>
+        <strong>GSTIN:</strong> 10ABCDE1234F1Z5 &nbsp;|&nbsp; <strong>PAN:</strong> ABCDE1234F<br>
+        State: Bihar · State Code: 10
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Billed To & Shipped To (Buyer)</div>
+      <div class="card-val-main">Ananya Sharma</div>
+      <div class="card-val-sub">
+        48 Palm Grove Road, Indiranagar<br>
+        Bengaluru, Karnataka - 560038, India<br>
+        Phone: +91 98450 23189<br>
+        State: Karnataka · State Code: 29
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>Invoice Line Items & GST Breakdown</span>
+    <span>Values in Indian Rupees (₹)</span>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width:26px">#</th>
+        <th>Description of Goods / Services</th>
+        <th class="c" style="width:52px">HSN</th>
+        <th class="c" style="width:40px">Qty</th>
+        <th class="r" style="width:84px">Unit Price</th>
+        <th class="r" style="width:88px">Taxable Val</th>
+        <th class="c" style="width:54px">IGST %</th>
+        <th class="r" style="width:68px">IGST Amt</th>
+        <th class="r" style="width:94px">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--muted)">1</td>
+        <td>
+          <div class="item-name">Tree of Life — Madhubani Wall Art</div>
+          <div class="item-sub">Natural pigment on handmade paper · 46 × 30 cm · SKU: WC-113CA55A</div>
+        </td>
+        <td class="c">9701</td>
+        <td class="c">1</td>
+        <td class="r">₹1,850.00</td>
+        <td class="r">₹1,850.00</td>
+        <td class="c">5%</td>
+        <td class="r">₹92.50</td>
+        <td class="r" style="font-weight:600">₹1,942.50</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">2</td>
+        <td>
+          <div class="item-name">Handwoven Indigo Cotton Tote Bag</div>
+          <div class="item-sub">Handloom natural-dye cotton · 38 × 42 cm · SKU: WC-88B41C0D</div>
+        </td>
+        <td class="c">4202</td>
+        <td class="c">2</td>
+        <td class="r">₹640.00</td>
+        <td class="r">₹1,280.00</td>
+        <td class="c">5%</td>
+        <td class="r">₹64.00</td>
+        <td class="r" style="font-weight:600">₹1,344.00</td>
+      </tr>
+      <tr>
+        <td style="color:var(--muted)">3</td>
+        <td>
+          <div class="item-name">Marketplace Logistics & Shipping Charges</div>
+          <div class="item-sub">Fulfilment and insured courier delivery to destination</div>
+        </td>
+        <td class="c">9968</td>
+        <td class="c">1</td>
+        <td class="r">₹55.72</td>
+        <td class="r">₹55.72</td>
+        <td class="c">18%</td>
+        <td class="r">₹10.03</td>
+        <td class="r" style="font-weight:600">₹65.75</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bottom-split" style="grid-template-columns: 1fr 310px; margin-top:12px;">
+    <div>
+      <div class="info-card" style="margin-top:0">
+        <div class="card-label">Invoice Amount in Words</div>
+        <div style="font-size:11px;font-weight:600;color:var(--ink)">
+          Indian Rupees Three Thousand Three Hundred Fifty-Two and Twenty-Five Paise Only
+        </div>
+      </div>
+      <div class="callout-box" style="margin-top:8px">
+        <strong>Statutory Declaration:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. Handcrafted items may exhibit subtle variations in shade and texture inherent to traditional artisanal creation.
+      </div>
+    </div>
+
+    <div class="ledger-box">
+      <div class="ledger-row">
+        <span>Total Taxable Value</span>
+        <span class="num">₹3,185.72</span>
+      </div>
+      <div class="ledger-row">
+        <span>IGST Total (Inter-State 10 → 29)</span>
+        <span class="num">₹166.53</span>
+      </div>
+      <div class="ledger-row">
+        <span>CGST (Intra-State)</span>
+        <span class="num">₹0.00</span>
+      </div>
+      <div class="ledger-row">
+        <span>SGST (Intra-State)</span>
+        <span class="num">₹0.00</span>
+      </div>
+      <div class="ledger-divider"></div>
+      <div class="ledger-total">
+        <span class="ledger-total-lbl">Invoice Total</span>
+        <span class="ledger-total-val">₹3,352.25</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sign-grid">
+    <div class="sign-declaration">
+      This is a computer-generated GST tax invoice issued by the registered artisan seller through WeevCrafts Marketplace (Facilitator GSTIN: 29AABCW9821K1ZM). No physical signature required.
+    </div>
+    <div class="sign-block">
+      <div class="sign-line"></div>
+      <div class="sign-label">Authorised Signatory</div>
+      <div class="sign-sub">For Kamala Arts (Madhubani)</div>
+    </div>
+  </div>
+
+  <div class="sheet-footer">
+    <div><b>WeevCrafts</b> · E-Commerce Tax Invoice</div>
+    <div class="footer-center">support@weevcrafts.com · weevcrafts.com</div>
+    <div>INV/2026-27/0412 · Page 1 of 1</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 3. MARKETPLACE CREDIT NOTE                                            -->
+<!-- ===================================================================== -->
+<section class="sheet" id="credit-note">
+  <div class="brandbar">
+    <div class="brand">
+      <img src="../../web/assets/images/brand/weevcrafts-logo.png" alt="WeevCrafts" class="brand-logo-img">
+      <div class="brand-text">
+        <div class="wordmark" style="font-size:22px">Kamala Arts</div>
+        <div class="tagline">Credit Note Issued via WeevCrafts</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-badge credit">GST Credit Note</div>
+      <div class="doc-id-num" style="color:var(--terra)">CN/2026-27/0087</div>
+      <div class="doc-id-date">24 Nov 2026 · Section 34 CGST Act</div>
+    </div>
+  </div>
+
+  <div class="receipt-hero">
+    <div>
+      <h1 class="receipt-hero-title" style="color:var(--terra)">A credit has been issued.</h1>
+      <div class="receipt-hero-desc">Issued against invoice <strong>INV/2026-27/0412</strong> for approved return claim. The credited amount has been refunded to your original payment method.</div>
+    </div>
+  </div>
+
+  <div class="status-banner alert">
+    <div class="status-left">
+      <span class="status-pill alert"><span class="status-dot alert"></span>Refund Completed</span>
+      <span class="status-pill neutral"><span class="status-dot neutral"></span>Transit Damage Claim</span>
+      <span class="status-text">Credited to <strong>UPI Account</strong></span>
+    </div>
+    <div class="status-ref">RMA Reference: RMA-20261124-019 · Refund Ref: REF-639102834</div>
+  </div>
+
+  <div class="grid-3">
+    <div class="info-card">
+      <div class="card-label">Issued By (Seller)</div>
+      <div class="card-val-main">Kamala Arts</div>
+      <div class="card-val-sub">
+        Madhubani, Bihar - 847211<br>
+        GSTIN: 10ABCDE1234F1Z5<br>
+        State Code: 10
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Issued To (Buyer)</div>
+      <div class="card-val-main">Ananya Sharma</div>
+      <div class="card-val-sub">
+        Bengaluru, Karnataka - 560038<br>
+        Place of Supply: 29 - Karnataka<br>
+        State Code: 29
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Reference Documents</div>
+      <div class="card-val-main">INV/2026-27/0412</div>
+      <div class="card-val-sub">
+        Original Date: 20 Nov 2026<br>
+        Order Ref: WC-20261120-0344<br>
+        Claim: Damaged in Transit
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>Adjustment & Reversal Summary</span>
+    <span>Values in Indian Rupees (₹)</span>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Item Description & Reason</th>
+        <th class="c" style="width:52px">HSN</th>
+        <th class="c" style="width:40px">Qty</th>
+        <th class="r" style="width:96px">Taxable Credit</th>
+        <th class="c" style="width:54px">IGST %</th>
+        <th class="r" style="width:78px">IGST Rev.</th>
+        <th class="r" style="width:104px">Total Credit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="item-name">Tree of Life — Hand-Painted Wall Art</div>
+          <div class="item-sub">Returned due to transit frame crushing · Full credit approved · SKU: WC-113CA55A</div>
+        </td>
+        <td class="c">9701</td>
+        <td class="c">1</td>
+        <td class="r">₹1,850.00</td>
+        <td class="c">5%</td>
+        <td class="r">₹92.50</td>
+        <td class="r" style="font-weight:600;color:var(--terra)">₹1,942.50</td>
+      </tr>
+      <tr>
+        <td>
+          <div class="item-name">Outbound Logistics Charges</div>
+          <div class="item-sub">Shipping refunded in full as damage occurred during marketplace transit</div>
+        </td>
+        <td class="c">9968</td>
+        <td class="c">1</td>
+        <td class="r">₹55.72</td>
+        <td class="c">18%</td>
+        <td class="r">₹10.03</td>
+        <td class="r" style="font-weight:600;color:var(--terra)">₹65.75</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="bottom-split" style="grid-template-columns: 1fr 310px; margin-top:12px;">
+    <div>
+      <div class="info-card" style="margin-top:0">
+        <div class="card-label">Refund Payment Details</div>
+        <div style="font-size:11px;font-weight:600;color:var(--ink)">
+          ₹2,008.25 credited to original UPI handle (ananya@okhdfcbank)
+        </div>
+        <div style="font-size:9.5px;color:var(--muted);margin-top:3px">
+          Processed via Razorpay Refund Gateway · Bank RRN: 432890182410
+        </div>
+      </div>
+      <div class="callout-box credit" style="margin-top:8px">
+        <strong>Accounting Notice:</strong> This credit note adjusts and partially reverses the tax liability of original invoice INV/2026-27/0412 under Section 34 of the CGST Act. Both documents must be maintained together for legal and GST tax filings.
+      </div>
+    </div>
+
+    <div class="ledger-box">
+      <div class="ledger-row">
+        <span>Taxable Value Adjusted</span>
+        <span class="num">₹1,905.72</span>
+      </div>
+      <div class="ledger-row">
+        <span>IGST Tax Reversal</span>
+        <span class="num">₹102.53</span>
+      </div>
+      <div class="ledger-row">
+        <span>CGST / SGST Adjusted</span>
+        <span class="num">₹0.00</span>
+      </div>
+      <div class="ledger-divider"></div>
+      <div class="ledger-total credit">
+        <span class="ledger-total-lbl">Total Credited</span>
+        <span class="ledger-total-val">₹2,008.25</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sign-grid">
+    <div class="sign-declaration">
+      This credit note certifies that the stated amount has been refunded to the customer and corresponding tax liabilities adjusted in GSTR-1. Generated digitally via WeevCrafts.
+    </div>
+    <div class="sign-block">
+      <div class="sign-line"></div>
+      <div class="sign-label">Authorised Signatory</div>
+      <div class="sign-sub" style="color:var(--terra)">For Kamala Arts</div>
+    </div>
+  </div>
+
+  <div class="sheet-footer">
+    <div><b>WeevCrafts</b> · Seller Credit Note</div>
+    <div class="footer-center">support@weevcrafts.com · weevcrafts.com</div>
+    <div>CN/2026-27/0087 · Page 1 of 1</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 4. WAREHOUSE / ARTISAN PACKING SLIP                                   -->
+<!-- ===================================================================== -->
+<section class="sheet" id="packing-slip">
+  <div class="brandbar">
+    <div class="brand">
+      <img src="../../web/assets/images/brand/weevcrafts-logo.png" alt="WeevCrafts" class="brand-logo-img">
+      <div class="brand-text">
+        <div class="wordmark">WeevCrafts</div>
+        <div class="tagline">Logistics & Fulfilment Hub</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-badge slip">Package Packing Slip</div>
+      <div class="doc-id-num">PKG-20261120-0142</div>
+      <div class="doc-id-date">Pack Date: 21 Nov 2026 · Package 1 of 1</div>
+    </div>
+  </div>
+
+  <div class="status-banner logistics">
+    <div class="status-left">
+      <span class="status-pill neutral"><span class="status-dot neutral"></span>Ready for Dispatch</span>
+      <span class="status-text">Carrier: <strong>Blue Dart Express (Shiprocket Air)</strong></span>
+      <span class="status-text">Routing Hub: <strong>BLR / 560038</strong></span>
+    </div>
+    <div class="status-ref">Order Ref: WC-20261120-0344 · Weight: 0.92 kg</div>
+  </div>
+
+  <div class="grid-3">
+    <div class="info-card">
+      <div class="card-label">Ship To (Destination)</div>
+      <div class="card-val-main">Ananya Sharma</div>
+      <div class="card-val-sub">
+        48 Palm Grove Road, Indiranagar<br>
+        Bengaluru, Karnataka - 560038<br>
+        Contact: +91 98450 23189
+      </div>
+      <div class="card-badge" style="background:#e2e8f0;color:#1e293b">PIN: 560038</div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Dispatched From</div>
+      <div class="card-val-main">Kamala Arts Dispatch Studio</div>
+      <div class="card-val-sub">
+        Studio 14, Mithila Craft Enclave<br>
+        Madhubani, Bihar - 847211<br>
+        Station ID: BH-MDB-04
+      </div>
+      <div class="card-badge">Verified Artisan Hub</div>
+    </div>
+    <div class="info-card" style="align-items:center;justify-content:center;">
+      <div class="card-label" style="align-self:flex-start">Courier Waybill Scan</div>
+      <div class="barcode-wrap" style="width:100%;margin-top:2px">
+        <svg class="barcode-svg" viewBox="0 0 160 38" preserveAspectRatio="none">
+          <rect x="0" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="5" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="9" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="15" y="0" width="1" height="38" fill="#1C2A24"/>
+          <rect x="18" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="25" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="30" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="34" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="40" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="45" y="0" width="1" height="38" fill="#1C2A24"/>
+          <rect x="48" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="55" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="59" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="65" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="69" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="75" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="79" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="86" y="0" width="1" height="38" fill="#1C2A24"/>
+          <rect x="89" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="95" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="100" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="104" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="110" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="115" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="122" y="0" width="1" height="38" fill="#1C2A24"/>
+          <rect x="125" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="131" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="135" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="142" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="146" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="152" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="156" y="0" width="4" height="38" fill="#1C2A24"/>
+        </svg>
+        <div class="barcode-text">AWB: BD-982140918</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>Package Contents & Verification Checklist (No Pricing Displayed)</span>
+    <span>Security Level: Insured Craft</span>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th class="c" style="width:36px">Check</th>
+        <th>Item Description & SKU</th>
+        <th class="c" style="width:48px">Qty</th>
+        <th style="width:160px">Packaging Specification</th>
+        <th class="c" style="width:72px">QC Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="c" style="font-size:15px;color:var(--forest)">☑</td>
+        <td>
+          <div class="item-thumb-row">
+            <img src="../../web/assets/images/customer/madhubani-tree.png" alt="Tree of Life" class="item-thumb">
+            <div class="item-info">
+              <span class="item-name">Tree of Life — Hand-Painted Wall Art</span>
+              <span class="item-sub">SKU: WC-113CA55A · Kamala Arts · 46 × 30 cm</span>
+            </div>
+          </div>
+        </td>
+        <td class="c" style="font-weight:700">1</td>
+        <td style="font-size:10px;color:var(--muted)">Rolled with acid-free tissue in heavy-duty rigid postal tube</td>
+        <td class="c"><span class="item-chip" style="background:#eaf3ed;color:var(--forest)">Verified</span></td>
+      </tr>
+      <tr>
+        <td class="c" style="font-size:15px;color:var(--forest)">☑</td>
+        <td>
+          <div class="item-thumb-row">
+            <img src="../../web/assets/images/customer/blue-tote.png" alt="Cotton Tote" class="item-thumb">
+            <div class="item-info">
+              <span class="item-name">Handwoven Indigo Cotton Craft Tote</span>
+              <span class="item-sub">SKU: WC-88B41C0D · Kala Weaves · 38 × 42 cm</span>
+            </div>
+          </div>
+        </td>
+        <td class="c" style="font-weight:700">2</td>
+        <td style="font-size:10px;color:var(--muted)">Folded & sealed in moisture-proof recycled kraft wrap</td>
+        <td class="c"><span class="item-chip" style="background:#eaf3ed;color:var(--forest)">Verified</span></td>
+      </tr>
+      <tr>
+        <td class="c" style="font-size:15px;color:var(--forest)">☑</td>
+        <td>
+          <div class="item-thumb-row">
+            <div class="item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:16px;background:#f4efe6">📜</div>
+            <div class="item-info">
+              <span class="item-name">Artisan Story & Authenticity Certificate</span>
+              <span class="item-sub">WeevCrafts Artisan Guarantee Document</span>
+            </div>
+          </div>
+        </td>
+        <td class="c" style="font-weight:700">1</td>
+        <td style="font-size:10px;color:var(--muted)">Enclosed in wax-sealed envelope</td>
+        <td class="c"><span class="item-chip" style="background:#eaf3ed;color:var(--forest)">Verified</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="grid-2" style="margin-top:12px">
+    <div class="info-card">
+      <div class="card-label">Packing Bench Quality Sign-Off</div>
+      <div class="grid-2" style="margin-top:2px;gap:8px">
+        <div>
+          <div style="font-size:8.5px;color:var(--muted);text-transform:uppercase">Packed By:</div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink)">S. Devi · Kamala Arts</div>
+        </div>
+        <div>
+          <div style="font-size:8.5px;color:var(--muted);text-transform:uppercase">Inspection Time:</div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink)">21 Nov 2026, 11:20 IST</div>
+        </div>
+        <div>
+          <div style="font-size:8.5px;color:var(--muted);text-transform:uppercase">Total Parcel Weight:</div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink)">0.920 kg (Gross)</div>
+        </div>
+        <div>
+          <div style="font-size:8.5px;color:var(--muted);text-transform:uppercase">Outer Box Dims:</div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink)">48 × 32 × 8 cm</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card" style="border-left:3px solid var(--forest)">
+      <div class="card-label">Artisan Care & Unpacking Advisory</div>
+      <div style="font-size:9.5px;color:var(--ink-light);line-height:1.45;margin-top:2px">
+        Please unroll the Madhubani artwork on a clean, flat surface and allow 24 hours to acclimatize before framing. Natural mineral pigments require protection from direct harsh sunlight and water moisture.
+      </div>
+    </div>
+  </div>
+
+  <div class="callout-box logistics" style="margin-top:10px">
+    <strong>Delivery Inspection Notice:</strong> Please check parcel condition before signing courier acceptance. If outer packaging shows signs of crushing, tear or water ingress, photograph the box immediately and report to WeevCrafts within 7 days for priority replacement.
+  </div>
+
+  <div class="sheet-footer">
+    <div><b>WeevCrafts</b> · Fulfilment & Dispatch Slip</div>
+    <div class="footer-center">Tracking: weevcrafts.com/track/BD-982140918</div>
+    <div>PKG-20261120-0142 · Page 1 of 1</div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- 5. RETURN AUTHORIZATION SLIP & RETURN LABEL                           -->
+<!-- ===================================================================== -->
+<section class="sheet" id="return-authorization">
+  <!-- Top Portion: Cut-out Shipping Label -->
+  <div style="border:1.5px dashed var(--line-strong);border-radius:8px;padding:12px 14px;background:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="../../web/assets/images/brand/weevcrafts-logo.png" alt="WeevCrafts" style="width:28px;height:28px;object-fit:contain">
+        <span style="font-size:12px;font-weight:700;color:var(--forest);text-transform:uppercase;letter-spacing:0.08em">Prepaid Return Shipping Label</span>
+      </div>
+      <span class="status-pill alert" style="font-size:8.5px">Reverse Courier Pickup</span>
+    </div>
+
+    <div class="grid-2" style="margin-top:8px;gap:12px">
+      <div style="font-size:10px;line-height:1.4">
+        <div style="font-size:8px;font-weight:700;color:var(--muted);text-transform:uppercase">From (Sender / Customer):</div>
+        <div style="font-weight:700;color:var(--ink)">Ananya Sharma</div>
+        <div>48 Palm Grove Road, Indiranagar, Bengaluru - 560038</div>
+        <div>Phone: +91 98450 23189</div>
+      </div>
+      <div style="font-size:10px;line-height:1.4">
+        <div style="font-size:8px;font-weight:700;color:var(--muted);text-transform:uppercase">Return To (Artisan Studio Hub):</div>
+        <div style="font-weight:700;color:var(--forest)">Kamala Arts — WeevCrafts Returns Hub</div>
+        <div>Studio 14, Mithila Craft Enclave, Madhubani - 847211, Bihar</div>
+        <div>Contact: Returns Dept · Hub Ref: BH-MDB-04</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid #f1f5f9">
+      <div class="barcode-wrap" style="padding:4px 8px;border:none">
+        <svg class="barcode-svg" viewBox="0 0 160 38" style="height:24px;width:140px" preserveAspectRatio="none">
+          <rect x="0" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="6" y="0" width="1" height="38" fill="#1C2A24"/>
+          <rect x="9" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="15" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="19" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="26" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="30" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="36" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="41" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="48" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="52" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="57" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="64" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="68" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="74" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="78" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="85" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="90" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="96" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="100" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="106" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="111" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="118" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="122" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="128" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="132" y="0" width="5" height="38" fill="#1C2A24"/>
+          <rect x="139" y="0" width="3" height="38" fill="#1C2A24"/>
+          <rect x="144" y="0" width="4" height="38" fill="#1C2A24"/>
+          <rect x="150" y="0" width="2" height="38" fill="#1C2A24"/>
+          <rect x="154" y="0" width="5" height="38" fill="#1C2A24"/>
+        </svg>
+        <div class="barcode-text" style="font-size:8px">RMA-20261124-019</div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);text-align:right">
+        Carrier: <strong>Shiprocket Reverse Express</strong><br>
+        Reverse AWB: <strong>SR-REV-849201</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cut Line -->
+  <div class="cut-line">
+    <span class="cut-label">✂ Cut along dotted line and affix top label to outer parcel</span>
+  </div>
+
+  <!-- Lower Portion: Return Authorization Slip -->
+  <div class="brandbar" style="border-bottom: 1.5px solid var(--forest); padding-bottom:8px;">
+    <div class="brand">
+      <div class="brand-text">
+        <div class="wordmark" style="font-size:20px">Return Merchandise Authorization</div>
+        <div class="tagline">Place this document inside the return parcel</div>
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-badge rma">RMA Approved</div>
+      <div class="doc-id-num">RMA-20261124-019</div>
+      <div class="doc-id-date">Auth Date: 24 Nov 2026 · Window Closes: 29 Nov 2026</div>
+    </div>
+  </div>
+
+  <div class="status-banner" style="margin-top:10px;padding:8px 12px">
+    <div class="status-left">
+      <span class="status-pill"><span class="status-dot"></span>Pickup Scheduled</span>
+      <span class="status-text">Original Order: <strong>WC-20261120-0344</strong></span>
+      <span class="status-text">Approved Resolution: <strong>Full Refund to UPI</strong></span>
+    </div>
+    <div class="status-ref">Pickup Window: 25 Nov 2026 (10:00–14:00 IST)</div>
+  </div>
+
+  <div class="section-title" style="margin-top:10px">
+    <span>Authorized Return Item</span>
+    <span>Condition: Claim Verified</span>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Item Description</th>
+        <th class="c" style="width:40px">Qty</th>
+        <th style="width:160px">Claimed Reason</th>
+        <th class="r" style="width:110px">Approved Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <div class="item-thumb-row">
+            <img src="../../web/assets/images/customer/madhubani-tree.png" alt="Tree of Life" class="item-thumb">
+            <div class="item-info">
+              <span class="item-name">Tree of Life — Hand-Painted Wall Art</span>
+              <span class="item-sub">SKU: WC-113CA55A · Kamala Arts · 46 × 30 cm</span>
+            </div>
+          </div>
+        </td>
+        <td class="c">1</td>
+        <td style="font-size:9.5px;color:var(--terra);line-height:1.35">
+          <strong>Damaged in transit:</strong> Outer cylinder crushed causing frame creasing. Photo verified.
+        </td>
+        <td class="r" style="font-weight:700;color:var(--forest)">₹2,008.25<br><small style="color:var(--muted);font-weight:400">(Item + Shipping)</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title" style="margin-top:10px">
+    <span>4-Step Return & Inspection Workflow</span>
+  </div>
+
+  <div class="rma-steps">
+    <div class="rma-step-card">
+      <div class="rma-step-num">1</div>
+      <div class="rma-step-title">Pack Securely</div>
+      <div class="rma-step-desc">Wrap item in original protective packaging to prevent further damage.</div>
+    </div>
+    <div class="rma-step-card">
+      <div class="rma-step-num">2</div>
+      <div class="rma-step-title">Enclose Slip</div>
+      <div class="rma-step-desc">Place this authorization slip inside the parcel on top of the goods.</div>
+    </div>
+    <div class="rma-step-card">
+      <div class="rma-step-num">3</div>
+      <div class="rma-step-title">Paste Outer Label</div>
+      <div class="rma-step-desc">Affix the top prepaid shipping label firmly to the outside of the box.</div>
+    </div>
+    <div class="rma-step-card">
+      <div class="rma-step-num">4</div>
+      <div class="rma-step-title">Handover & Credit</div>
+      <div class="rma-step-desc">Hand to pickup courier. Refund credit note is issued upon studio inspection.</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:10px;gap:12px">
+    <div class="info-card">
+      <div class="card-label">Return Verification Checklist</div>
+      <div style="font-size:9px;color:var(--ink-light);line-height:1.6">
+        <div>☑ Item enclosed in original postal container</div>
+        <div>☑ All certificate inserts and note cards included</div>
+        <div>☑ Lower authorization slip placed inside parcel</div>
+        <div>☑ Top prepaid shipping label pasted to exterior</div>
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="card-label">Refund & Credit Note Notice</div>
+      <div style="font-size:9px;color:var(--muted);line-height:1.45">
+        Once received at the artisan hub, our quality team inspects the return within 48 hours. A statutory GST Credit Note (CN/2026-27/0087) is issued, and ₹2,008.25 is refunded to your original UPI account.
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-footer">
+    <div><b>WeevCrafts</b> · Customer Returns Service</div>
+    <div class="footer-center">Questions? support@weevcrafts.com · +91 80 4910 8800</div>
+    <div>RMA-20261124-019 · Page 1 of 1</div>
+  </div>
+</section>
+
+</body>
+</html>

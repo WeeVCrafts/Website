@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	ErrShippingInput         = errors.New("invalid shipment details")
-	ErrShippingPending       = errors.New("shipment operation is awaiting provider confirmation")
-	ErrShippingRejected      = errors.New("shipping provider rejected the request")
-	ErrShippingUnavailable   = errors.New("shipping provider unavailable")
-	ErrShippingParcelMissing = errors.New("shipping parcel data is missing or exceeds limits")
+	ErrShippingInput             = errors.New("invalid shipment details")
+	ErrShippingPending           = errors.New("shipment operation is awaiting provider confirmation")
+	ErrShippingRejected          = errors.New("shipping provider rejected the request")
+	ErrCancellationAfterHandover = errors.New("courier handover was confirmed before cancellation")
+	ErrShippingUnavailable       = errors.New("shipping provider unavailable")
+	ErrShippingParcelMissing     = errors.New("shipping parcel data is missing or exceeds limits")
 )
 
 type Parcel = commerce.ParcelDimensions

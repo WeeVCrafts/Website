@@ -66,6 +66,9 @@ type SellerReadinessOption struct {
 	ProductStatus string
 	ReviewID      int64
 	ReviewStatus  string
+	ImageURL      string
+	HasCustomTax  bool
+	ReturnClass   string
 }
 
 type SetupSubmission struct {

@@ -284,6 +284,16 @@ func (r *CommerceRepository) UpdateDraft(ctx context.Context, ownerUserID, produ
 		if err := saveProductTags(transactionContext, tx, productID, input.SearchTags); err != nil {
 			return err
 		}
+		if input.ShippingParcel != nil {
+			if err := saveVariantParcel(transactionContext, tx, &domaincommerce.ProductVariant{ID: current.VariantID}, input.ShippingParcel); err != nil {
+				return err
+			}
+		}
+		if input.UseSellerParcelDefault {
+			if _, err := tx.Exec(transactionContext, `UPDATE product_variants SET use_seller_parcel_default=true, parcel_profile_id=NULL WHERE id=$1`, current.VariantID); err != nil {
+				return err
+			}
+		}
 		product = current
 		product.Slug = input.Slug
 		product.BrandSlug = input.BrandSlug
@@ -1068,7 +1078,7 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 		}
 		if r.invoiceProfilesRequired {
 			var missing bool
-			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=p.seller_id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE ci.cart_id=$1 AND (ip.seller_id IS NULL OR tp.variant_id IS NULL OR ip.checkout_review_hold OR tp.checkout_review_hold OR (ip.registration='unregistered' AND tp.rate_basis_points<>0)))`, cartID).Scan(&missing); err != nil {
+			if err := tx.QueryRow(transactionContext, `SELECT EXISTS(SELECT 1 FROM cart_items ci JOIN product_variants v ON v.id=ci.variant_id JOIN products p ON p.id=v.product_id LEFT JOIN seller_invoice_profiles ip ON ip.seller_id=p.seller_id LEFT JOIN variant_tax_profiles tp ON tp.variant_id=v.id WHERE ci.cart_id=$1 AND (ip.seller_id IS NULL OR ip.checkout_review_hold OR (tp.variant_id IS NOT NULL AND tp.checkout_review_hold) OR (ip.registration='unregistered' AND tp.variant_id IS NOT NULL AND tp.rate_basis_points<>0)))`, cartID).Scan(&missing); err != nil {
 				return err
 			}
 			if missing {

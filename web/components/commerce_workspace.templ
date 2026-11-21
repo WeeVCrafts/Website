@@ -52,11 +52,23 @@ templ CommerceOrderWorkspace(p viewmodels.MarketplacePage) {
 
     for _,c:=range p.Cases {
      <article class="commerce-panel"><h3>{commerceLabel(c.Kind)} · CASE-{fmt.Sprint(c.ID)}</h3><p>{c.Reason}</p><p>{commerceLabel(c.Status)} · Assigned to: {c.Assignee}</p><p>Next action: {c.NextAction}</p>
-      if c.Status=="open" {
-       <form class="marketplace-form" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
-        @MarketplaceFields(p, "")
-        <input type="hidden" name="case_id" value={fmt.Sprint(c.ID)}/><label>Next action or resolution<textarea name="reason" minlength="4" maxlength="1000" rows="3" required></textarea></label><button type="submit" name="action" value="assign_case">Assign to me</button><button type="submit" name="action" value="resolve_case" data-confirm="Resolve this delivery case with the recorded evidence?">Resolve case</button>
-       </form>
+      if c.Kind=="pickup_clearance" || c.Kind=="cancellation_review" {
+       for _,pkg:=range p.Packages {
+        if pkg.ID==c.PackageID {
+         if pkg.AWB!="" {
+          <p>AWB {pkg.AWB}</p>
+         }
+         if pkg.PickupReference!="" {
+          <p>Pickup reference {pkg.PickupReference}</p>
+         }
+         if pkg.ProviderStatus!="" {
+          <p>Last carrier status: {commerceLabel(pkg.ProviderStatus)}</p>
+         }
+        }
+       }
+      }
+      if c.Status=="open" && (p.Role=="admin" || p.Role=="super_admin") {
+       @MarketplaceCaseForm(p, c)
       }
      </article>
     }

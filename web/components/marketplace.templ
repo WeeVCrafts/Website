@@ -80,7 +80,15 @@ templ MarketplaceReadyForm(p viewmodels.MarketplacePage, seller ports.Marketplac
 }
 
 templ MarketplaceSellerShipmentStatus(p viewmodels.MarketplacePage, pkg ports.MarketplacePackage) {
-	if pkg.PendingAction!="" {
+	if pkg.Status == "cancelled" {
+		if pkg.PickupCleared {
+			<p class="ui-status success" role="status">Pickup cleared</p>
+		} else if pkg.AWB != "" || pkg.PickupReference != "" {
+			<p class="commerce-notice" role="status">Do not hand over this parcel. Pickup is being checked.</p>
+		}
+	} else if pkg.CancellationRequested {
+		<p class="commerce-notice" role="status">Do not hand over this parcel. Shipment cancellation is being checked.</p>
+	} else if pkg.PendingAction!="" {
 		<p role="status">Shiprocket is confirming an update. Wait for it to finish before making another booking change.</p>
 	} else if pkg.Status=="created" {
 		if commerceParcelAwaitingConfirmation(p,pkg) {
@@ -99,6 +107,23 @@ templ MarketplaceSellerShipmentStatus(p viewmodels.MarketplacePage, pkg ports.Ma
 	} else if pkg.Status=="ndr" {
 		<p>Delivery needs attention. Contact WeevCrafts support with the tracking number.</p>
 	}
+}
+
+templ MarketplaceCaseForm(p viewmodels.MarketplacePage, c ports.MarketplaceCase) {
+	<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
+		@MarketplaceFields(p, "")
+		<input type="hidden" name="case_id" value={ fmt.Sprint(c.ID) }/>
+		if c.Kind == "pickup_clearance" {
+			<label>Carrier evidence for this AWB<textarea name="reason" minlength="10" maxlength="1000" rows="3" required></textarea></label>
+			<p>Record where the carrier confirmed this parcel was removed from pickup or the pickup closed without collection.</p>
+			<button type="submit" name="action" value="assign_case">Assign to me</button>
+			<button type="submit" name="action" value="resolve_case" data-confirm="Confirm pickup clearance for this AWB using the recorded carrier evidence?">Confirm pickup cleared</button>
+		} else {
+			<label>Next action or resolution<textarea name="reason" minlength="4" maxlength="1000" rows="3" required></textarea></label>
+			<button type="submit" name="action" value="assign_case">Assign to me</button>
+			<button type="submit" name="action" value="resolve_case" data-confirm="Resolve this delivery case with the recorded evidence?">Resolve case</button>
+		}
+	</form>
 }
 
 templ MarketplaceOperations(p viewmodels.MarketplacePage) {
@@ -144,7 +169,7 @@ if p.Role=="super_admin" {
 				</ul>
 				<h2>Support delivery queues</h2>
 				<nav aria-label="Exception queues">
-					for _,kind:=range []string{"","delayed_order","failed_delivery","ndr","rto","return_dispute","refund_request","seller_escalation","delivery_dispute","unknown_status","provider_error"} {
+					for _,kind:=range []string{"","cancellation_review","pickup_clearance","delayed_order","failed_delivery","ndr","rto","return_dispute","refund_request","seller_escalation","delivery_dispute","unknown_status","provider_error"} {
 						<a href={ templ.SafeURL(p.Root + "?queue=" + url.QueryEscape(kind)) }>
 							{ marketplaceQueueLabel(kind) }
 						</a>
@@ -171,10 +196,7 @@ if p.Role=="super_admin" {
 						if c.NextAction != "" {
 							<p>Next action: { c.NextAction }</p>
 						}
-						<form class="marketplace-form" method="post" action={ templ.SafeURL(p.ActionPath) }>
-							@MarketplaceFields(p, "")
-							<input type="hidden" name="case_id" value={ fmt.Sprint(c.ID) }/><label>Next action or resolution<textarea style="resize:none" name="reason" minlength="4" maxlength="1000" required></textarea></label><button type="submit" name="action" value="assign_case">Assign to me</button> <button type="submit" name="action" value="resolve_case">Resolve case</button>
-						</form>
+						@MarketplaceCaseForm(p, c)
 					</article>
 				}
 				if p.NextCaseID>0 {
@@ -309,7 +331,11 @@ if p.Role=="super_admin" {
 					<h3>
 						Package { fmt.Sprint(pkg.ID) }
 					</h3>
-					<p><strong>{ commerceLabel(pkg.Status) }</strong></p>
+					if pkg.Status == "cancelled" && pkg.DeliveryMethod == "shiprocket" && p.Role != "customer" {
+						<p><strong>Shipment cancelled</strong></p>
+					} else {
+						<p><strong>{ commerceLabel(pkg.Status) }</strong></p>
+					}
 					if pkg.Courier!="" || pkg.AWB!="" {
 						<p>
 							if pkg.Courier!="" {
@@ -322,6 +348,22 @@ if p.Role=="super_admin" {
 								<span>Tracking number { pkg.AWB }</span>
 							}
 						</p>
+					}
+					if p.Role == "admin" || p.Role == "super_admin" {
+						if pkg.PickupReference != "" {
+							<p>Pickup reference { pkg.PickupReference }</p>
+						}
+						if pkg.ProviderStatus != "" {
+							<p>Last carrier status: { commerceLabel(pkg.ProviderStatus) }</p>
+						}
+						if pkg.CancellationNeedsReview || (pkg.Status == "cancelled" && (pkg.AWB != "" || pkg.PickupReference != "") && !pkg.PickupCleared) {
+							<p class="ui-status warning">Needs review</p>
+							if p.Workspace {
+								<a href={ templ.SafeURL(commerceTabURL(p, "support")) }>Review delivery cases</a>
+							}
+						} else if pkg.PickupCleared {
+							<p class="ui-status success">Pickup cleared</p>
+						}
 					}
 					<ul>
 						for _,content:=range pkg.Items {
@@ -363,10 +405,10 @@ if p.Role=="super_admin" {
 						</form>
 					}
 					if p.Role!="customer" && pkg.DeliveryMethod!="manual" {
-						if pkg.LabelURL!="" && pkg.AWB!="" {
+						if pkg.LabelURL!="" && pkg.AWB!="" && pkg.Status!="cancelled" && !pkg.CancellationRequested {
 							<a href={ templ.SafeURL(pkg.LabelURL) } target="_blank" rel="noopener noreferrer">Download carrier label</a>
 						}
-						if pkg.ManifestURL!="" {
+						if pkg.ManifestURL!="" && pkg.Status!="cancelled" && !pkg.CancellationRequested {
 							<a href={ templ.SafeURL(pkg.ManifestURL) } target="_blank" rel="noopener noreferrer">Download pickup manifest</a>
 						}
 						if pkg.Status!="delivered" && pkg.Status!="cancelled" && (p.Role!="seller" || !commerceParcelAwaitingConfirmation(p,pkg)) {
@@ -375,7 +417,7 @@ if p.Role=="super_admin" {
 								<input type="hidden" name="package_id" value={ fmt.Sprint(pkg.ID) }/>
 								<input type="hidden" name="seller_id" value={ fmt.Sprint(pkg.SellerID) }/>
 								<button type="submit" name="action" value="refresh_package">Refresh shipment</button>
-								if pkg.Status=="pickup_scheduled" && pkg.PendingAction=="" {
+								if pkg.Status=="pickup_scheduled" && pkg.PendingAction=="" && !pkg.CancellationRequested {
 									<button type="submit" name="action" value="reschedule_pickup" data-confirm="Reschedule pickup for this package? Confirm that the courier has not collected it.">Reschedule missed pickup</button>
 								}
 							</form>

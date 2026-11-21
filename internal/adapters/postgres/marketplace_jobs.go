@@ -50,9 +50,12 @@ func (r *MarketplaceRepository) FinishJob(ctx context.Context, j ports.Marketpla
 	if workErr != nil {
 		status = "queued"
 		message = "Operation needs provider reconciliation or configuration review"
-		if j.Attempts >= 8 {
+		if j.Attempts >= 8 || errors.Is(workErr, ports.ErrCancellationAfterHandover) {
 			status = "failed"
 		}
+	}
+	if j.Kind == "cancel_items" && workErr != nil {
+		return r.recordCancellationJobFailure(ctx, j, status, delay, workErr)
 	}
 	_, err := r.pool.Exec(ctx, `UPDATE marketplace_jobs SET status=$2,last_error=$3,available_at=now()+$4::interval,claimed_at=NULL WHERE id=$1 AND status='running' AND attempts=$5`, j.ID, status, message, delay.String(), j.Attempts)
 	if err != nil {
@@ -62,6 +65,46 @@ func (r *MarketplaceRepository) FinishJob(ctx context.Context, j ports.Marketpla
 		_, err = r.pool.Exec(ctx, `INSERT INTO marketplace_cases(order_id,seller_id,package_id,kind,reason) SELECT order_id,seller_id,id,'provider_error',$2 FROM marketplace_packages WHERE id=$1 ON CONFLICT DO NOTHING`, j.ResourceID, message)
 	}
 	return err
+}
+
+func (r *MarketplaceRepository) recordCancellationJobFailure(ctx context.Context, j ports.MarketplaceJob, status string, delay time.Duration, workErr error) error {
+	handedOver := errors.Is(workErr, ports.ErrCancellationAfterHandover)
+	reason := "Carrier cancellation could not be verified. Check the affected shipment and pickup with the carrier."
+	if handedOver {
+		reason = "The carrier confirmed handover. Review this request through the delivery exception workflow."
+	} else if errors.Is(workErr, ports.ErrShippingRejected) {
+		reason = "The carrier declined cancellation. Verify the shipment and pickup before taking further action."
+	} else if status == "failed" {
+		reason = "Cancellation checks ran out of retries. Verify the shipment and pickup before taking further action."
+	}
+	return WithinTransaction(ctx, r.pool, func(ctx context.Context, tx pgx.Tx) error {
+		var order int64
+		if err := tx.QueryRow(ctx, `SELECT o.id FROM orders o JOIN marketplace_cancellations c ON c.order_id=o.id WHERE c.id=$1 FOR UPDATE OF o`, j.ResourceID).Scan(&order); err != nil {
+			return err
+		}
+		tag, err := tx.Exec(ctx, `UPDATE marketplace_jobs SET status=$2,last_error=$3,available_at=now()+$4::interval,claimed_at=NULL
+			WHERE id=$1 AND status='running' AND attempts=$5`, j.ID, status, reason, delay.String(), j.Attempts)
+		if err != nil || tag.RowsAffected() == 0 {
+			return err
+		}
+		if _, err = tx.Exec(ctx, `INSERT INTO marketplace_cases(order_id,seller_id,package_id,kind,reason)
+			SELECT c.order_id,oi.seller_id,p.id,'cancellation_review',$2
+			FROM marketplace_cancellations c JOIN order_items oi ON oi.id=c.order_item_id
+			LEFT JOIN LATERAL (
+				SELECT mp.id FROM marketplace_package_items pi JOIN marketplace_packages mp ON mp.id=pi.package_id
+				WHERE pi.order_item_id=oi.id AND mp.status<>'cancelled'
+			) p ON true
+			WHERE c.id=$1 AND c.status='requested' AND ($3=false OR p.id IN
+				(SELECT id FROM marketplace_packages WHERE status IN ('picked_up','in_transit','out_for_delivery','delivered','ndr','rto')))
+			ON CONFLICT (order_id,(COALESCE(seller_id,0)),(COALESCE(package_id,0)),kind) WHERE status='open'
+			DO UPDATE SET reason=EXCLUDED.reason`, j.ResourceID, reason, handedOver); err != nil {
+			return err
+		}
+		if handedOver {
+			_, err = tx.Exec(ctx, `UPDATE marketplace_cancellations SET status='rejected' WHERE id=$1 AND status='requested'`, j.ResourceID)
+		}
+		return err
+	})
 }
 
 func (r *MarketplaceRepository) ShippingOrder(ctx context.Context, id int64) (ports.ShippingOrder, error) {
@@ -146,6 +189,14 @@ func (r *MarketplaceRepository) SavePackage(ctx context.Context, id int64, s por
 			return ports.ErrShippingPending
 		}
 		if previous != target {
+			if target == "cancelled" {
+				if _, err = tx.Exec(ctx, `INSERT INTO marketplace_cases(order_id,seller_id,package_id,kind,reason)
+					SELECT order_id,seller_id,id,'pickup_clearance','Verify that this AWB was removed from the courier pickup or that the courier closed the pickup without collecting it.'
+					FROM marketplace_packages WHERE id=$1 AND delivery_method='shiprocket' AND (awb<>'' OR pickup_reference<>'')
+					ON CONFLICT DO NOTHING`, id); err != nil {
+					return err
+				}
+			}
 			if target == "picked_up" || target == "in_transit" || target == "out_for_delivery" || target == "delivered" {
 				if _, err = tx.Exec(ctx, `UPDATE seller_fulfillments SET handover_at=COALESCE(handover_at,now()) WHERE order_id=$1 AND seller_id=$2`, order, seller); err != nil {
 					return err
@@ -209,8 +260,20 @@ func (r *MarketplaceRepository) SavePackage(ctx context.Context, id int64, s por
 				return err
 			}
 		}
+		if (target == "created" || target == "pickup_scheduled") && s.AWB != "" && s.LabelURL != "" && pending != "cancel" {
+			_, err = tx.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,link_url,source_key,marketplace_package_id)
+				SELECT o.user_id,'order','Package packed','A package for order '||o.order_number||' is packed and awaiting courier handover.',
+					'/orders/'||o.order_number||'?tab=packages','marketplace-package:'||p.id||':packed',p.id
+				FROM marketplace_packages p JOIN orders o ON o.id=p.order_id
+				WHERE p.id=$1 AND NOT EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_cancellations c ON c.order_item_id=pi.order_item_id
+					WHERE pi.package_id=p.id AND c.status='requested')
+				ON CONFLICT (user_id,source_key) WHERE source_key IS NOT NULL DO NOTHING`, id)
+			if err != nil {
+				return err
+			}
+		}
 		if target == "out_for_delivery" || target == "delivered" {
-			_, err = tx.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,link_url) SELECT o.user_id,'order',$3,'Package '||$2||' for order '||o.order_number,$4 FROM orders o WHERE o.id=$1 AND NOT EXISTS(SELECT 1 FROM marketplace_history WHERE package_id=$5 AND to_status=$6 AND id<(SELECT max(id) FROM marketplace_history WHERE package_id=$5 AND to_status=$6)) AND $7<>$6`, order, reference, map[string]string{"out_for_delivery": "Package out for delivery", "delivered": "Package delivered"}[target], "/orders/"+s.OrderNumber+"/fulfillment", id, target, previous)
+			_, err = tx.Exec(ctx, `INSERT INTO notifications(user_id,kind,title,body,link_url,marketplace_package_id) SELECT o.user_id,'order',$3,'Package '||$2||' for order '||o.order_number,$4,$5 FROM orders o WHERE o.id=$1 AND NOT EXISTS(SELECT 1 FROM marketplace_history WHERE package_id=$5 AND to_status=$6 AND id<(SELECT max(id) FROM marketplace_history WHERE package_id=$5 AND to_status=$6)) AND $7<>$6`, order, reference, map[string]string{"out_for_delivery": "Package out for delivery", "delivered": "Package delivered"}[target], "/orders/"+s.OrderNumber+"/fulfillment", id, target, previous)
 			if err != nil {
 				return err
 			}
@@ -386,10 +449,16 @@ func (r *MarketplaceRepository) CompleteCancellation(ctx context.Context, id int
 		if err = tx.QueryRow(ctx, `SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM order_items WHERE order_id=o.id AND quantity>cancelled_quantity) AND NOT EXISTS(SELECT 1 FROM marketplace_packages WHERE order_id=o.id AND status IN ('picked_up','in_transit','out_for_delivery','delivered','ndr','rto')) THEN GREATEST(0,o.shipping_cents-COALESCE(o.shipping_discount_cents,0)-COALESCE((SELECT sum(shipping_cents) FROM marketplace_refunds WHERE order_id=o.id AND status<>'rejected'),0)) ELSE 0 END FROM orders o WHERE id=$1`, order).Scan(&shipping); err != nil {
 			return err
 		}
+		if _, err = tx.Exec(ctx, `UPDATE marketplace_cancellations SET status='completed' WHERE id=$1`, id); err != nil {
+			return err
+		}
 		if _, err = tx.Exec(ctx, `INSERT INTO marketplace_refunds(order_id,seller_id,order_item_id,quantity,amount_cents,shipping_cents,reason,kind,request_key) VALUES($1,$2,$3,$4,$5,$6,$7,'cancellation',$8)`, order, seller, item, qty, amount, shipping, reason, "cancel-refund:"+key); err != nil {
 			return err
 		}
-		if _, err = tx.Exec(ctx, `UPDATE marketplace_cancellations SET status='completed' WHERE id=$1`, id); err != nil {
+		if _, err = tx.Exec(ctx, `UPDATE marketplace_cases mc SET status='resolved',resolution='Shipment cancellation verified',resolved_at=now(),next_action=''
+			WHERE mc.order_id=$1 AND mc.seller_id=$2 AND mc.kind='cancellation_review' AND mc.status='open'
+			AND mc.package_id IN (SELECT package_id FROM marketplace_package_items WHERE order_item_id=$3)
+			AND EXISTS (SELECT 1 FROM marketplace_packages WHERE id=mc.package_id AND status='cancelled')`, order, seller, item); err != nil {
 			return err
 		}
 		if err = marketplaceCase(ctx, tx, order, seller, 0, "refund_request", "Cancelled items require refund approval"); err != nil {

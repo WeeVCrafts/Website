@@ -116,7 +116,7 @@ func (h *MarketplaceHandler) serveCommerceSurface(w http.ResponseWriter, r *http
 		p.Status = summary.Status
 		p.Payment = summary.Financial.DisplayStatus
 		p.Focus = r.URL.Query().Get("focus")
-		if p.OrderTab == "support" {
+		if p.OrderTab == "support" && r.URL.Query().Get("case_id") != "" {
 			selectedCase, _ := strconv.ParseInt(r.URL.Query().Get("case_id"), 10, 64)
 			selected := p.Cases[:0]
 			for _, c := range p.Cases {

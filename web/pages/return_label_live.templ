@@ -3,43 +3,355 @@ package pages
 import "github.com/wecratfs/commerce/internal/web/viewmodels"
 
 templ ReturnLabelLive(p viewmodels.ReturnLabelPage) {
- @Document(p.Customer) {
-  <style>@media print {header,footer,.return-print-controls{display:none!important}.return-slip{border:1px solid #222;padding:16px;color:#000;background:#fff}body{background:#fff}}</style>
-  <main class="container" style="padding:32px 0">
-   <div class="return-print-controls"><a href="/returns">Back to returns</a><button type="button" onclick="window.print()">Print return slip</button></div>
-   <article class="return-slip">
-    <h1>Return authorization slip</h1>
-    <p>Return #{ p.ID } · Order { p.OrderNumber }</p>
-    <dl><dt>Status</dt><dd>{ p.Status }</dd><dt>Requested</dt><dd>{ p.Created }</dd><dt>Reason</dt><dd>{ p.Reason }</dd></dl>
-    <h2>Customer</h2><p>{ p.CustomerName }</p>
-    <address>
-     for _, line := range p.SenderLines {
-      <span>{ line }</span><br/>
-     }
-    </address>
-    <h2>Order items</h2>
-    <table><thead><tr><th>Product</th><th>SKU</th><th>Quantity</th><th>Seller</th></tr></thead><tbody>
-     for _, item := range p.Items {
-      <tr><td>{ item.Name }</td><td>{ item.SKU }</td><td>{ item.Quantity }</td><td>{ item.Seller }</td></tr>
-     }
-    </tbody></table>
-    <h2>Return destination</h2>
-    if len(p.Destinations) > 0 {
-     for _, line := range p.Destinations {
-      <p>{ line }</p>
-     }
-    } else {
-     <p>A return destination has not been recorded. Contact support with this return number before dispatching items.</p>
-    }
-    if p.Instructions != "" {
-     <h2>Marketplace shipping instructions</h2><p style="white-space:pre-wrap">{ p.Instructions }</p>
-    }
-    if p.SupportEmail != "" {
-     <p>Support: <a href={ templ.SafeURL("mailto:" + p.SupportEmail) }>{ p.SupportEmail }</a></p>
-    }
-    <p class="return-print-controls"><a href="/account/support">Contact support about this return</a></p>
-    <p>This slip records your approved return. It is not a prepaid carrier label. Include the return number when arranging delivery with support.</p>
-   </article>
-  </main>
- }
+	@Document(p.Customer) {
+		<style>
+			:root {
+				--forest: #0e3d30;
+				--forest-subtle: #edf5f1;
+				--paper: #fcfbf8;
+				--card-bg: #f8f6f0;
+				--card-border: #e6dfd1;
+				--line: #e2dac9;
+				--ink: #1b2823;
+				--muted: #627168;
+				--terra: #b84e34;
+			}
+			.return-slip-wrapper {
+				max-width: 820px;
+				margin: 0 auto;
+				padding: 24px 0 48px;
+			}
+			.return-print-controls {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+			.return-print-controls a {
+				color: var(--forest);
+				font-weight: 600;
+				text-decoration: none;
+			}
+			.return-print-controls button {
+				background: var(--forest);
+				color: #fff;
+				border: none;
+				border-radius: 6px;
+				padding: 9px 18px;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.return-slip {
+				background: var(--paper);
+				border: 1px solid var(--card-border);
+				border-radius: 8px;
+				padding: 32px 36px;
+				box-shadow: 0 10px 24px rgba(14, 61, 48, 0.08);
+				color: var(--ink);
+			}
+			.cut-label-box {
+				border: 2px dashed #94a3b8;
+				border-radius: 8px;
+				padding: 16px;
+				background: #fff;
+				margin-bottom: 24px;
+			}
+			.cut-label-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 12px;
+			}
+			.cut-label-title {
+				font-weight: 700;
+				font-size: 13px;
+				color: var(--forest);
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+			.cut-divider {
+				position: relative;
+				border-bottom: 1.5px dashed #94a3b8;
+				margin: 20px 0;
+				text-align: center;
+			}
+			.cut-divider span {
+				position: absolute;
+				top: -9px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: var(--paper);
+				padding: 0 12px;
+				font-size: 10px;
+				font-weight: 700;
+				color: #64748b;
+				text-transform: uppercase;
+			}
+			.rma-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: flex-start;
+				border-bottom: 2px solid var(--forest);
+				padding-bottom: 12px;
+				margin-bottom: 16px;
+			}
+			.rma-header h1 {
+				font-size: 24px;
+				color: var(--forest);
+				margin: 0;
+				font-family: Georgia, serif;
+			}
+			.rma-meta-grid {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 12px;
+				margin: 16px 0;
+			}
+			.rma-card {
+				background: var(--card-bg);
+				border: 1px solid var(--card-border);
+				border-radius: 6px;
+				padding: 10px 12px;
+			}
+			.rma-card-lbl {
+				font-size: 9px;
+				font-weight: 700;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.12em;
+				margin-bottom: 4px;
+			}
+			.rma-card-val {
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--ink);
+			}
+			.rma-card-sub {
+				font-size: 11px;
+				color: var(--muted);
+				margin-top: 2px;
+			}
+			.rma-table {
+				width: 100%;
+				border-collapse: separate;
+				border-spacing: 0;
+				border: 1px solid var(--card-border);
+				border-radius: 6px;
+				overflow: hidden;
+				margin: 16px 0;
+			}
+			.rma-table th {
+				background: var(--card-bg);
+				padding: 8px 12px;
+				font-size: 9px;
+				font-weight: 700;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.12em;
+				text-align: left;
+				border-bottom: 1px solid var(--card-border);
+			}
+			.rma-table td {
+				padding: 10px 12px;
+				font-size: 12px;
+				border-bottom: 1px solid var(--card-border);
+			}
+			.rma-table tr:last-child td {
+				border-bottom: none;
+			}
+			.rma-steps-grid {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 10px;
+				margin: 16px 0;
+			}
+			.rma-step-box {
+				background: #fff;
+				border: 1px solid var(--card-border);
+				border-radius: 6px;
+				padding: 10px;
+			}
+			.rma-step-num {
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: var(--forest);
+				color: #fff;
+				font-size: 10px;
+				font-weight: 700;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-bottom: 6px;
+			}
+			.rma-step-title {
+				font-size: 11px;
+				font-weight: 700;
+				color: var(--ink);
+			}
+			.rma-step-desc {
+				font-size: 10px;
+				color: var(--muted);
+				margin-top: 3px;
+				line-height: 1.35;
+			}
+			.rma-notice {
+				background: var(--card-bg);
+				border-left: 3px solid var(--forest);
+				padding: 10px 14px;
+				font-size: 11px;
+				color: var(--muted);
+				line-height: 1.5;
+				margin: 16px 0;
+			}
+			@media print {
+				header, footer, .return-print-controls {
+					display: none !important;
+				}
+				body {
+					background: #fff;
+				}
+				.return-slip {
+					border: 1px solid #000;
+					box-shadow: none;
+					padding: 16px;
+				}
+			}
+		</style>
+		<main class="container return-slip-wrapper">
+			<div class="return-print-controls">
+				<a href="/returns">← Back to returns</a>
+				<button type="button" onclick="window.print()">Print return slip</button>
+			</div>
+			<article class="return-slip">
+				<!-- Top: Outer Package Cut-out Label -->
+				<section class="cut-label-box">
+					<div class="cut-label-header">
+						<span class="cut-label-title">WeevCrafts Return Package Label</span>
+						<span style="font-size:11px;font-weight:700;color:var(--forest)">Return #{ p.ID }</span>
+					</div>
+					<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:11px">
+						<div>
+							<div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase">From (Customer):</div>
+							<div style="font-weight:700;color:var(--ink)">{ p.CustomerName }</div>
+							<address style="font-style:normal;line-height:1.4">
+								for _, line := range p.SenderLines {
+									<span>{ line }</span><br/>
+								}
+							</address>
+						</div>
+						<div>
+							<div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase">Return Destination:</div>
+							if len(p.Destinations) > 0 {
+								for _, line := range p.Destinations {
+									<p style="margin:2px 0;font-weight:600;color:var(--forest)">{ line }</p>
+								}
+							} else {
+								<p style="margin:2px 0;color:var(--terra)">A return destination has not been recorded. Contact support with this return number before dispatching items.</p>
+							}
+						</div>
+					</div>
+					<div style="margin-top:10px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:10px;color:var(--muted)">
+						Order reference: <strong>{ p.OrderNumber }</strong> · Carrier tracking will be updated upon courier scan.
+					</div>
+				</section>
+
+				<div class="cut-divider">
+					<span>✂ Cut along line & affix top label to outer box · Place section below inside parcel</span>
+				</div>
+
+				<!-- Lower: In-Parcel Return Authorization Slip -->
+				<header class="rma-header">
+					<div>
+						<h1>Return authorization slip</h1>
+						<p style="margin:4px 0 0;font-size:12px;color:var(--muted)">Return #{ p.ID } · Order { p.OrderNumber }</p>
+					</div>
+					<div style="text-align:right">
+						<span style="display:inline-block;padding:4px 10px;background:var(--forest);color:#fff;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase">Status: { p.Status }</span>
+						<div style="font-size:10px;color:var(--muted);margin-top:4px">Requested: { p.Created }</div>
+					</div>
+				</header>
+
+				<div class="rma-meta-grid">
+					<div class="rma-card">
+						<div class="rma-card-lbl">Customer</div>
+						<div class="rma-card-val">{ p.CustomerName }</div>
+						<div class="rma-card-sub">Order #{ p.OrderNumber }</div>
+					</div>
+					<div class="rma-card">
+						<div class="rma-card-lbl">Return Reason</div>
+						<div class="rma-card-val">{ p.Reason }</div>
+						<div class="rma-card-sub">Claim Recorded</div>
+					</div>
+					<div class="rma-card">
+						<div class="rma-card-lbl">Approval Status</div>
+						<div class="rma-card-val">{ p.Status }</div>
+						<div class="rma-card-sub">Return Authorized</div>
+					</div>
+				</div>
+
+				<h2 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:20px">Order Items Authorized for Return</h2>
+				<table class="rma-table">
+					<thead>
+						<tr>
+							<th>Product</th>
+							<th style="width:110px">SKU</th>
+							<th style="width:60px;text-align:center">Quantity</th>
+							<th>Seller</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, item := range p.Items {
+							<tr>
+								<td style="font-weight:600">{ item.Name }</td>
+								<td style="font-family:monospace;font-size:11px">{ item.SKU }</td>
+								<td style="text-align:center;font-weight:700">{ item.Quantity }</td>
+								<td>{ item.Seller }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+
+				<h2 style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:20px">4-Step Customer Return Guide</h2>
+				<div class="rma-steps-grid">
+					<div class="rma-step-box">
+						<div class="rma-step-num">1</div>
+						<div class="rma-step-title">Pack Securely</div>
+						<div class="rma-step-desc">Wrap item in its original box with all certificates and note cards.</div>
+					</div>
+					<div class="rma-step-box">
+						<div class="rma-step-num">2</div>
+						<div class="rma-step-title">Enclose Slip</div>
+						<div class="rma-step-desc">Place this lower authorization slip inside the parcel on top of the item.</div>
+					</div>
+					<div class="rma-step-box">
+						<div class="rma-step-num">3</div>
+						<div class="rma-step-title">Paste Label</div>
+						<div class="rma-step-desc">Paste the top shipping label securely to the outside of the parcel.</div>
+					</div>
+					<div class="rma-step-box">
+						<div class="rma-step-num">4</div>
+						<div class="rma-step-title">Handover & Refund</div>
+						<div class="rma-step-desc">Hand over to courier agent. Refund credit note issued upon studio inspection.</div>
+					</div>
+				</div>
+
+				if p.Instructions != "" {
+					<div class="rma-notice">
+						<strong style="color:var(--ink)">Marketplace shipping instructions:</strong>
+						<p style="margin:4px 0 0;white-space:pre-wrap">{ p.Instructions }</p>
+					</div>
+				}
+
+				if p.SupportEmail != "" {
+					<p style="font-size:11px;color:var(--muted);margin-top:12px">Support: <a href={ templ.SafeURL("mailto:" + p.SupportEmail) } style="color:var(--forest);font-weight:600">{ p.SupportEmail }</a></p>
+				}
+
+				<p class="return-print-controls" style="margin-top:16px"><a href="/account/support">Contact support about this return</a></p>
+				<p style="font-size:10px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:14px">
+					This slip records your approved return. It is not a prepaid carrier label. Include the return number when arranging delivery with support.
+				</p>
+			</article>
+		</main>
+	}
 }

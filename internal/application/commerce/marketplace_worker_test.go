@@ -3,14 +3,78 @@ package commerce
 import (
 	"context"
 	"errors"
-	"github.com/wecratfs/commerce/internal/ports"
 	"testing"
+
+	"github.com/wecratfs/commerce/internal/ports"
 )
 
 type marketplaceMemory struct {
 	ports.MarketplaceStore
 	order    ports.ShippingOrder
 	attempts int
+}
+
+type cancellationMemory struct {
+	marketplaceMemory
+	completed int
+}
+
+func (s *cancellationMemory) CancellationPackages(context.Context, int64) ([]ports.MarketplacePackage, error) {
+	return []ports.MarketplacePackage{{ID: 1, Shipment: s.order.Shipment}}, nil
+}
+
+func (s *cancellationMemory) CompleteCancellation(context.Context, int64) error {
+	s.completed++
+	return nil
+}
+
+type cancellationCourier struct {
+	marketplaceCourier
+	status        string
+	cancelledAWBs []string
+}
+
+func (g *cancellationCourier) Status(_ context.Context, shipment ports.Shipment) (ports.Shipment, error) {
+	shipment.ProviderStatus = g.status
+	return shipment, nil
+}
+
+func (g *cancellationCourier) Cancel(_ context.Context, shipment ports.Shipment) error {
+	g.cancelledAWBs = append(g.cancelledAWBs, shipment.AWB)
+	return ports.ErrShippingPending
+}
+
+func TestMarketplaceCancellationReconcilesLostResponseWithoutRepeatingPost(t *testing.T) {
+	store := &cancellationMemory{}
+	store.order.Shipment = ports.Shipment{Reference: "parcel-one", ProviderOrderID: 10, ProviderShipmentID: 20, AWB: "affected-awb", PickupReference: "shared-pickup"}
+	gateway := &cancellationCourier{status: "PICKUP SCHEDULED"}
+	processor := MarketplaceProcessor{Store: store, Shipping: gateway}
+	for _, status := range []string{"PICKUP SCHEDULED", "PICKUP SCHEDULED", "CANCELLATION REQUESTED", "PICKUP EXCEPTION"} {
+		gateway.status = status
+		if err := processor.cancelItems(t.Context(), 1); !errors.Is(err, ports.ErrShippingPending) {
+			t.Fatalf("%s: %v", status, err)
+		}
+	}
+	if store.completed != 0 || len(gateway.cancelledAWBs) != 1 || gateway.cancelledAWBs[0] != "affected-awb" {
+		t.Fatalf("unexpected completion or carrier writes: completed=%d, AWBs=%v", store.completed, gateway.cancelledAWBs)
+	}
+	gateway.status = "CANCELED"
+	if err := processor.cancelItems(t.Context(), 1); err != nil || store.completed != 1 || store.order.PendingAction != "" {
+		t.Fatalf("cancelled reconciliation: completed=%d, shipment=%+v, err=%v", store.completed, store.order.Shipment, err)
+	}
+}
+
+func TestMarketplaceCancellationStopsAfterAuthenticatedHandover(t *testing.T) {
+	store := &cancellationMemory{}
+	store.order.Shipment = ports.Shipment{Reference: "parcel-one", ProviderOrderID: 10, ProviderShipmentID: 20, AWB: "collected-awb"}
+	gateway := &cancellationCourier{status: "PICKED UP"}
+	processor := MarketplaceProcessor{Store: store, Shipping: gateway}
+	if err := processor.cancelItems(t.Context(), 1); !errors.Is(err, ports.ErrCancellationAfterHandover) {
+		t.Fatal(err)
+	}
+	if store.completed != 0 || len(gateway.cancelledAWBs) != 0 || store.order.ProviderStatus != "PICKED UP" {
+		t.Fatalf("unexpected completion or carrier writes after handover: %+v, %v", store.order.Shipment, gateway.cancelledAWBs)
+	}
 }
 
 func (s *marketplaceMemory) ClaimJob(context.Context, int64) (ports.MarketplaceJob, bool, error) {

@@ -7,6 +7,9 @@
 .storefront-body .customer-shopping-header .header-main .header-actions>a>span:last-child,
 .storefront-body .customer-shopping-header .header-main .header-actions .account-label {display:block;font:400 14px/20px var(--sans);}
 .storefront-body .customer-shopping-header .header-main .header-actions>a em {position:absolute;inset:0 auto auto calc(50% + 1px);display:grid;place-items:center;min-width:18px;height:18px;padding-inline:3px;border:0;border-radius:50%;font:400 11px/16px var(--sans);background:var(--terracotta);color:#fff;}
+.storefront-body .customer-shopping-header .header-main .header-actions>a em[hidden] {display:none;}
+.storefront-body .customer-shopping-header .header-main .header-actions>.shopping-notification-bell {padding-inline:8px;border-radius:10px;}
+.storefront-body .customer-shopping-header .header-main .header-actions>.shopping-notification-bell[aria-current="page"] {background:#e9eddb;}
 .storefront-body .customer-shopping-header .header-main .profile-toggle>.account-chevron {display:none;}
 .storefront-body .customer-shopping-header .header-main .header-avatar {width:24px;height:24px;object-fit:cover;border-radius:50%;}
 .customer-shopping-header .notification-action [data-notification-count] {position:static;display:inline-grid;place-items:center;min-width:20px;min-height:20px;padding-inline:4px;border-radius:50%;background:var(--terracotta);color:#fff;font:400 12px/20px var(--sans);}
@@ -40,6 +43,9 @@
 .storefront-body .customer-shopping-header .all-categories .material-symbols-outlined {font-size:24px;}
 .storefront-body .customer-shopping-header .homepage-offers {margin-left:auto;background:#fce6d6;color:#aa3d19;border-radius:24px;padding:0 20px;gap:8px;}
 
+@media(min-width:1101px) {
+ .storefront-body .customer-shopping-header .storefront-nav-inner {min-height:64px;}
+}
 @media(max-width:1100px) and (min-width:801px) {
  .storefront-body .customer-shopping-header .header-main {width:calc(100% - 48px);grid-template-columns:230px minmax(160px,1fr) auto;grid-template-areas:"brand search actions";gap:16px;}
  .customer-shopping-header .homepage-delivery {display:none;}
@@ -69,4 +75,11 @@
 @media(max-width:600px) {
  .storefront-body .customer-shopping-header .header-main>.wordmark>span {display:none;}
  .storefront-body .customer-shopping-header .header-main .header-actions {gap:0;}
+ .storefront-body .customer-shopping-header .header-main .header-actions>.shopping-notification-bell {min-width:48px;padding-inline:4px;}
+ .storefront-body .customer-shopping-header .header-main .header-actions>.shopping-notification-bell>.header-action-label {display:none;}
+}
+@media(max-width:360px) {
+ .storefront-body .customer-shopping-header .header-main .header-actions:has(>.shopping-notification-bell)>a,
+ .storefront-body .customer-shopping-header .header-main .header-actions:has(>.shopping-notification-bell) .profile-toggle {width:48px;min-width:48px;padding-inline:0;}
+ .storefront-body .customer-shopping-header .header-main .header-actions:has(>.shopping-notification-bell) :is(.header-action-label,.account-label) {font-size:12px;}
 }

@@ -1299,9 +1299,18 @@ func productDraftFromForm(r *http.Request, includeStock bool) (domaincommerce.Pr
 	if err != nil {
 		return domaincommerce.ProductDraftInput{}, err
 	}
+	var parcel *domaincommerce.ParcelDimensions
+	if r.FormValue("shipping_weight_g") != "" || r.FormValue("shipping_length_cm") != "" || r.FormValue("shipping_width_cm") != "" || r.FormValue("shipping_height_cm") != "" {
+		if p, pErr := productParcelFromForm(r); pErr == nil {
+			parcel = p
+		}
+	}
+	useDefault := r.FormValue("listing_parcel") == "default"
 	return domaincommerce.ProductDraftInput{
-		SearchTags: strings.Split(r.FormValue("search_tags"), ","),
-		Slug:       slug, BrandSlug: brandSlug, BrandName: brandName,
+		ShippingParcel:         parcel,
+		UseSellerParcelDefault: useDefault,
+		SearchTags:             strings.Split(r.FormValue("search_tags"), ","),
+		Slug:                   slug, BrandSlug: brandSlug, BrandName: brandName,
 		CategorySlug: categorySlug, CategoryName: categoryName, Name: name,
 		Description: description, PriceCents: price, CompareAtCents: compareAt, CostPriceCents: costPrice, SKU: sku,
 		InitialStock: stock, DeliveryLabel: deliveryLabel, ImageURL: imageURL,

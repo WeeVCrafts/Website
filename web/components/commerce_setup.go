@@ -55,16 +55,93 @@ func commerceReadinessMissing(x ports.SellerReadinessOption) string {
 	if !x.ParcelReady() {
 		missing = append(missing, "packed measurements")
 	}
-	if !x.TaxReady || !x.Classified {
-		missing = append(missing, "tax and return details")
-	}
 	if x.Stock <= 0 {
 		missing = append(missing, "stock")
 	}
 	if len(missing) == 0 {
-		return "Setup complete; platform launch controls still apply"
+		return "Ready for checkout"
 	}
 	return "Missing: " + strings.Join(missing, ", ")
+}
+
+func commerceOptionStatus(x ports.SellerReadinessOption) string {
+	if x.ProductStatus != "approved" {
+		return "Pending approval"
+	}
+	if !x.ParcelReady() {
+		return "Needs measurements"
+	}
+	if x.Stock <= 0 {
+		return "Out of stock"
+	}
+	return "Ready for checkout"
+}
+
+func commerceOptionStatusClass(x ports.SellerReadinessOption) string {
+	if x.ProductStatus != "approved" {
+		return "neutral"
+	}
+	if !x.ParcelReady() {
+		return "warning"
+	}
+	if x.Stock <= 0 {
+		return "danger"
+	}
+	return "success"
+}
+
+func commerceOptionParcel(x ports.SellerReadinessOption) string {
+	if x.ParcelReady() {
+		return fmt.Sprintf("%dg · %d × %d × %d cm", x.WeightGrams, x.LengthCM, x.WidthCM, x.HeightCM)
+	}
+	if x.WeightGrams > 0 || x.LengthCM > 0 {
+		return fmt.Sprintf("Incomplete (%dg, %d×%d×%d cm)", x.WeightGrams, x.LengthCM, x.WidthCM, x.HeightCM)
+	}
+	return "Not configured"
+}
+
+func commerceOptionStock(x ports.SellerReadinessOption) string {
+	if x.Stock <= 0 {
+		return "0 units (Out of stock)"
+	}
+	return fmt.Sprintf("%d units available", x.Stock)
+}
+
+func commerceOptionTaxReturn(x ports.SellerReadinessOption) string {
+	if x.HasCustomTax {
+		return "Custom tax override (active)"
+	}
+	return "Seller default (5% GST · Craft return)"
+}
+
+func commerceReadyCount(rows []ports.SellerReadinessOption) int {
+	count := 0
+	for _, r := range rows {
+		if r.ProductStatus == "approved" && r.ParcelReady() && r.Stock > 0 {
+			count++
+		}
+	}
+	return count
+}
+
+func commerceNeedsParcelCount(rows []ports.SellerReadinessOption) int {
+	count := 0
+	for _, r := range rows {
+		if !r.ParcelReady() {
+			count++
+		}
+	}
+	return count
+}
+
+func commerceNeedsStockCount(rows []ports.SellerReadinessOption) int {
+	count := 0
+	for _, r := range rows {
+		if r.Stock <= 0 {
+			count++
+		}
+	}
+	return count
 }
 
 func commerceReviewRows(p viewmodels.CommerceSetupPage) []struct{ Label, Current, Submitted string } {
@@ -93,7 +170,11 @@ func commerceSetupSteps(p viewmodels.CommerceSetupPage) []struct{ Label, State s
 		}
 		return "Missing"
 	}
-	return []struct{ Label, State string }{{"Business details", state(p.Shared.InvoiceReady)}, {"Pickup location", state(p.Shared.PickupVerified)}, {"Packed measurements", state(x.ParcelReady())}, {"Tax & return details", state(x.TaxReady && x.Classified)}}
+	taxState := "Optional (Seller default applied)"
+	if x.HasCustomTax {
+		taxState = "Custom override (active)"
+	}
+	return []struct{ Label, State string }{{"Business details", state(p.Shared.InvoiceReady)}, {"Pickup location", state(p.Shared.PickupVerified)}, {"Packed measurements", state(x.ParcelReady())}, {"Tax & return details", taxState}}
 }
 
 type matchingTaxGroup struct {

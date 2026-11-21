@@ -16,10 +16,11 @@ type MarketplaceLine struct {
 type MarketplacePackage struct {
 	ID int64
 	Shipment
-	Status         string
-	DeliveryMethod string
-	DeliveredAt    *time.Time
-	Items          []MarketplacePackageItem
+	Status                                                        string
+	DeliveryMethod                                                string
+	CancellationRequested, PickupCleared, CancellationNeedsReview bool
+	DeliveredAt                                                   *time.Time
+	Items                                                         []MarketplacePackageItem
 }
 type MarketplacePackageItem struct {
 	OrderItemID int64 `json:"-"`

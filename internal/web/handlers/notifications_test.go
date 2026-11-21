@@ -14,3 +14,17 @@ func TestNotificationRedirectsRemainOnSite(t *testing.T) {
 		}
 	}
 }
+
+func TestNotificationDestinationResolvesRelevantOrderTab(t *testing.T) {
+	for _, tc := range []struct{ title, link, want string }{
+		{"Refund processed", "/orders/WC-1/fulfillment", "/orders/WC-1/fulfillment?tab=returns"},
+		{"Items cancelled", "/seller-admin/orders/WC-1/fulfillment", "/seller-admin/orders/WC-1/fulfillment?tab=returns"},
+		{"Package delivered", "/orders/WC-1/fulfillment", "/orders/WC-1/fulfillment"},
+		{"Refund processed", "/orders/WC-1/fulfillment?tab=returns", "/orders/WC-1/fulfillment?tab=returns"},
+		{"Reply", "", "/notifications?filter=unread"},
+	} {
+		if got := notificationDestination(tc.title, tc.link, "unread"); got != tc.want {
+			t.Errorf("destination for %q and %q = %q, want %q", tc.title, tc.link, got, tc.want)
+		}
+	}
+}

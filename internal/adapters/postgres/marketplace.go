@@ -206,13 +206,18 @@ func (r *MarketplaceRepository) ViewPage(ctx context.Context, actor int64, numbe
 			return v, err
 		}
 	}
-	rows, err = r.readSource().Query(ctx, `SELECT id,seller_id,reference,status,provider_status,awb,courier,label_url,manifest_url,pickup_reference,pending_action,delivered_at,delivery_method,weight_grams,length_cm,width_cm,height_cm FROM marketplace_packages WHERE order_id=$1 AND ($2=0 OR seller_id=$2) ORDER BY id`, v.OrderID, seller)
+	rows, err = r.readSource().Query(ctx, `SELECT p.id,p.seller_id,p.reference,p.status,p.provider_status,p.awb,p.courier,p.label_url,p.manifest_url,p.pickup_reference,p.pending_action,p.delivered_at,p.delivery_method,p.weight_grams,p.length_cm,p.width_cm,p.height_cm,
+		EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_cancellations c ON c.order_item_id=pi.order_item_id WHERE pi.package_id=p.id AND c.status='requested'),
+		EXISTS(SELECT 1 FROM marketplace_cases c WHERE c.package_id=p.id AND c.kind='pickup_clearance' AND c.status='resolved')
+		AND NOT EXISTS(SELECT 1 FROM marketplace_cases c WHERE c.package_id=p.id AND c.kind IN ('pickup_clearance','delivery_dispute') AND c.status='open'),
+		EXISTS(SELECT 1 FROM marketplace_cases c WHERE c.package_id=p.id AND c.kind='cancellation_review' AND c.status='open')
+		FROM marketplace_packages p WHERE p.order_id=$1 AND ($2=0 OR p.seller_id=$2) ORDER BY p.id`, v.OrderID, seller)
 	if err != nil {
 		return v, err
 	}
 	for rows.Next() {
 		var x ports.MarketplacePackage
-		if err = rows.Scan(&x.ID, &x.SellerID, &x.Reference, &x.Status, &x.ProviderStatus, &x.AWB, &x.Courier, &x.LabelURL, &x.ManifestURL, &x.PickupReference, &x.PendingAction, &x.DeliveredAt, &x.DeliveryMethod, &x.WeightGrams, &x.LengthCM, &x.WidthCM, &x.HeightCM); err != nil {
+		if err = rows.Scan(&x.ID, &x.SellerID, &x.Reference, &x.Status, &x.ProviderStatus, &x.AWB, &x.Courier, &x.LabelURL, &x.ManifestURL, &x.PickupReference, &x.PendingAction, &x.DeliveredAt, &x.DeliveryMethod, &x.WeightGrams, &x.LengthCM, &x.WidthCM, &x.HeightCM, &x.CancellationRequested, &x.PickupCleared, &x.CancellationNeedsReview); err != nil {
 			break
 		}
 		v.Packages = append(v.Packages, x)
@@ -306,7 +311,10 @@ func (r *MarketplaceRepository) Act(ctx context.Context, actor int64, c ports.Ma
 			if !a.company() || len(strings.TrimSpace(c.Reason)) < 4 {
 				return ports.ErrForbidden
 			}
-			result, e := tx.Exec(ctx, `UPDATE marketplace_jobs SET status='queued',attempts=0,available_at=now(),last_error='' WHERE id=$1 AND status='failed'`, c.CaseID)
+			result, e := tx.Exec(ctx, `UPDATE marketplace_jobs j SET status='queued',attempts=0,available_at=now(),last_error=''
+				WHERE id=$1 AND status='failed' AND (kind<>'cancel_items' OR EXISTS(
+					SELECT 1 FROM marketplace_cancellations c WHERE c.id=j.resource_id AND c.status='requested'
+				))`, c.CaseID)
 			if e != nil {
 				return e
 			}
@@ -324,7 +332,11 @@ func (r *MarketplaceRepository) Act(ctx context.Context, actor int64, c ports.Ma
 			}
 			result, e := tx.Exec(ctx, `UPDATE marketplace_cases SET assignee_id=$2,status=CASE WHEN $3 THEN 'resolved' ELSE status END,
 				resolution=CASE WHEN $3 THEN $4 ELSE resolution END,next_action=CASE WHEN $3 THEN '' ELSE $4 END,
-				resolved_at=CASE WHEN $3 THEN now() ELSE resolved_at END WHERE id=$1 AND status='open'`, c.CaseID, actor, c.Action == "resolve_case", c.Reason)
+				resolved_at=CASE WHEN $3 THEN now() ELSE resolved_at END WHERE id=$1 AND status='open'
+				AND (kind<>'pickup_clearance' OR NOT $3 OR (length(trim($4))>=10 AND EXISTS(
+					SELECT 1 FROM marketplace_packages p WHERE p.id=marketplace_cases.package_id AND p.status='cancelled'
+					AND (p.awb<>'' OR p.pickup_reference<>'')
+				)))`, c.CaseID, actor, c.Action == "resolve_case", c.Reason)
 			if e != nil {
 				return e
 			}
@@ -507,9 +519,15 @@ func (r *MarketplaceRepository) Act(ctx context.Context, actor int64, c ports.Ma
 				return err
 			}
 			if c.Action == "reschedule_pickup" {
-				_, err = tx.Exec(ctx, `UPDATE marketplace_packages SET pickup_reference='',next_check_at=now() WHERE id=$1 AND status IN ('created','pickup_scheduled') AND pending_action=''`, id)
-				if err != nil {
-					return err
+				tag, e := tx.Exec(ctx, `UPDATE marketplace_packages p SET pickup_reference='',next_check_at=now()
+					WHERE id=$1 AND status IN ('created','pickup_scheduled') AND pending_action=''
+					AND NOT EXISTS(SELECT 1 FROM marketplace_package_items pi JOIN marketplace_cancellations c ON c.order_item_id=pi.order_item_id
+						WHERE pi.package_id=p.id AND c.status='requested')`, id)
+				if e != nil {
+					return e
+				}
+				if tag.RowsAffected() != 1 {
+					return ports.ErrInvalidState
 				}
 			}
 			_, err = tx.Exec(ctx, `SELECT marketplace_enqueue('book_package',$1,$2)`, id, fmt.Sprintf("retry:%d:%s", id, c.Key))

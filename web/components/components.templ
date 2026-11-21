@@ -5,7 +5,7 @@ import (
 )
 
 templ Header(p viewmodels.CustomerPage) {
-  <header class={ "site-header", templ.KV("customer-shopping-header", !p.SellerNotifications) } x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
+  <header class="site-header customer-shopping-header" x-data="{menu:false, profile:false, menuReturn:null, openMenu(trigger){this.menuReturn=trigger;this.closeProfile(false);this.$refs.mobileMenu.showModal();this.$refs.mobileMenu.scrollTop=0;this.menu=true}, closeMenu(){this.$refs.mobileMenu.close();this.menu=false;this.menuReturn?.focus()}, toggleProfile(){if(this.profile){this.closeProfile()}else{this.profile=true;this.$nextTick(()=>this.$refs.profilePanel.querySelector('a').focus())}}, closeProfile(restore=true){if(!this.profile)return;this.profile=false;if(restore)this.$refs.profileButton.focus()}}">
     if p.Route=="/" {
      @HomepageUtility(p)
     }
@@ -15,9 +15,7 @@ templ Header(p viewmodels.CustomerPage) {
         <button class="icon-button menu-toggle" type="button" x-ref="menuButton" aria-label="Open navigation menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="mobile-menu" :aria-expanded="menu" @click="openMenu($el)"><span class="material-symbols-outlined" aria-hidden="true">menu</span><span>Menu</span></button>
       </div>
       <a class="wordmark" href="/" aria-label="Weevcrafts Handmade by India’s Makers home"><img class="wordmark-mark" src={ storefrontLogo(p) } alt="" width="36" height="36"/><span><strong>Weevcrafts</strong>{ " " }<small>Handmade by India’s Makers</small></span></a>
-      if !p.SellerNotifications {
        <a class="homepage-delivery" href="/shipping"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><span><small>Delivering across</small><strong>India</strong></span></a>
-      }
       <div class="header-tools">
         <div class="search-shell">
           <form class="global-search" method="get" action="/search" { headerSearchAttributes(p)... }>
@@ -29,11 +27,9 @@ templ Header(p viewmodels.CustomerPage) {
         </div>
         <div class="header-actions">
           @WishlistAction(p)
- if p.Authenticated && p.SellerNotifications {
- @NotificationBell()
- }
           @ShoppingHeaderAction("cart-count", "/cart", "Cart", "shopping_bag", p.CartCount, false, false)
           if p.Authenticated {
+          @notificationBell(true, p.Route == "/notifications", p.NotificationUnread)
           <div class="profile-disclosure" @click.outside="closeProfile(false)" @keydown.escape.stop.prevent="closeProfile()" @focusout="if ($event.relatedTarget &amp;&amp; !$el.contains($event.relatedTarget)) closeProfile(false)">
             <button class="profile-toggle icon-button" type="button" x-ref="profileButton" aria-label="Account menu" title="Account" aria-expanded="false" :aria-expanded="profile" aria-controls="profile-dropdown" @click="toggleProfile()">
               if p.AvatarURL != "" {
@@ -63,10 +59,6 @@ templ Header(p viewmodels.CustomerPage) {
           }
         </div>
       </div>
-          if p.Authenticated && p.SellerNotifications {
-    <form class="header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span></button></form>
-    }
-
     </div>
     @CartDrawer(p)
     <nav class="storefront-nav" aria-label="Category navigation"><div class="container storefront-nav-inner">
@@ -77,9 +69,6 @@ templ Header(p viewmodels.CustomerPage) {
       for _, category := range NavigationCategories(p) {
         <a href={ "/products?category=" + category.Slug }>{ category.Name }</a>
       }
-      if p.SellerNotifications {
-       <a href="/featured-products">Featured products</a>
-      }
       if p.Storefront != nil {
         for _,link:=range p.Storefront.Navigation {
           <a href={ link.URL }>{ link.Label }</a>
@@ -87,9 +76,7 @@ templ Header(p viewmodels.CustomerPage) {
       } else {
         <a href="/makers">Meet the Makers</a>
       }
-      if !p.SellerNotifications {
        <a class="homepage-offers" href="/deals"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span>Offers</a>
-      }
     </div></nav>
     <dialog id="mobile-menu" x-ref="mobileMenu" class="mobile-menu" aria-labelledby="menu-title" @cancel.prevent="closeMenu()" @close="menu=false" @keydown.tab="const items=$el.querySelectorAll('a,button');const first=items[0],last=items[items.length-1];if($event.shiftKey&amp;&amp;document.activeElement===first){$event.preventDefault();last.focus()}else if(!$event.shiftKey&amp;&amp;document.activeElement===last){$event.preventDefault();first.focus({preventScroll:true});$el.scrollTop=0}" @click="if ($event.target === $refs.mobileMenu) { const r=$refs.mobileMenu.getBoundingClientRect(); if ($event.clientX < r.left || $event.clientX > r.right || $event.clientY < r.top || $event.clientY > r.bottom) closeMenu() }">
       <div class="mobile-menu-heading"><h2 id="menu-title">Explore the store</h2><button class="mobile-menu-close" type="button" aria-label="Close navigation" autofocus @click="closeMenu()"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></div>
@@ -115,7 +102,7 @@ templ Header(p viewmodels.CustomerPage) {
         @MenuLink("/orders", "Orders & tracking", "local_shipping")
         @MenuLink("/wishlist", "Wishlist", "favorite")
         @MenuLink("/cart", "Shopping bag", "shopping_bag")
-        if p.IsCustomer {
+        if p.Authenticated {
           @MenuLink("/notifications", "Notifications", "notifications")
         }
       </nav>

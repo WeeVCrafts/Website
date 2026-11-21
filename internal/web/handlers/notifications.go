@@ -21,6 +21,21 @@ func safeNotificationLink(link string) string {
 	return link
 }
 
+func notificationDestination(title, link, filter string) string {
+	destination := safeNotificationLink(link)
+	if destination == "/notifications" {
+		return notificationFilterURL(filter)
+	}
+	if (title == "Refund processed" || title == "Items cancelled") && !strings.ContainsAny(destination, "?#") {
+		// Older notifications point to fulfillment, which opens Packages by default.
+		_, order, _, ok := marketplaceRoute(destination)
+		if ok && order != "" {
+			return destination + "?tab=returns"
+		}
+	}
+	return destination
+}
+
 func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Request) bool {
 	if r.URL.Path != "/notifications" && r.URL.Path != "/notifications/read" && r.URL.Path != "/ui/notifications" {
 		return false
@@ -67,12 +82,12 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 			http.Error(w, "Invalid notification", 400)
 			return true
 		}
-		var link string
-		if err := h.pool.QueryRow(r.Context(), `UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=$1 AND user_id=$2 RETURNING link_url`, id, session.UserID).Scan(&link); err != nil {
+		var title, link string
+		if err := h.pool.QueryRow(r.Context(), `UPDATE notifications SET read_at=COALESCE(read_at,NOW()) WHERE id=$1 AND user_id=$2 RETURNING title,link_url`, id, session.UserID).Scan(&title, &link); err != nil {
 			http.NotFound(w, r)
 			return true
 		}
-		http.Redirect(w, r, safeNotificationLink(link), 303)
+		http.Redirect(w, r, notificationDestination(title, link, r.FormValue("filter")), 303)
 		return true
 	}
 	if r.Method != http.MethodGet {
@@ -92,13 +107,13 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 	}
 	p := viewmodels.CustomerPage{IsCustomer: workspace == "/account", Route: "/notifications", Title: "Notifications", Authenticated: true, UserName: h.userDisplayName(r, session.UserID), UserEmail: h.userEmail(r, session.UserID), CSRFToken: session.CSRFToken, Now: time.Now()}
 	p.SellerNotifications = workspace == "/seller-admin"
-	p.NotificationFilter = "all"
-	if p.SellerNotifications {
-		p.NotificationFilter = notificationFilter(r.URL.Query().Get("filter"))
-		if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*),COUNT(*) FILTER(WHERE read_at IS NULL) FROM notifications WHERE user_id=$1`, session.UserID).Scan(&p.NotificationTotal, &p.NotificationUnread); err != nil {
-			http.Error(w, "Notifications unavailable", 503)
-			return true
-		}
+	p.NotificationFilter = notificationFilter(r.URL.Query().Get("filter"))
+	if !p.SellerNotifications && (p.NotificationFilter == "orders" || p.NotificationFilter == "support") {
+		p.NotificationFilter = "all"
+	}
+	if err := h.pool.QueryRow(r.Context(), `SELECT COUNT(*) FROM notifications WHERE user_id=$1 AND read_at IS NULL`, session.UserID).Scan(&p.NotificationUnread); err != nil {
+		http.Error(w, "Notifications unavailable", 503)
+		return true
 	}
 	before, _ := strconv.ParseInt(r.URL.Query().Get("before"), 10, 64)
 	rows, err := h.pool.Query(r.Context(), `SELECT id,title,body,link_url,read_at IS NULL,created_at FROM notifications WHERE user_id=$1 AND ($2::bigint=0 OR id<$2) AND ($3='all' OR ($3='unread' AND read_at IS NULL) OR ($3='orders' AND kind='order') OR ($3='support' AND kind IN ('support','seller_coordination'))) ORDER BY id DESC LIMIT 51`, session.UserID, before, p.NotificationFilter)
@@ -109,12 +124,11 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 	defer rows.Close()
 	for rows.Next() {
 		var n viewmodels.CustomerNotification
-		var created time.Time
-		if err := rows.Scan(&n.ID, &n.Title, &n.Body, &n.Link, &n.Unread, &created); err != nil {
+		if err := rows.Scan(&n.ID, &n.Title, &n.Body, &n.Link, &n.Unread, &n.CreatedAt); err != nil {
 			http.Error(w, "Notifications unavailable", 503)
 			return true
 		}
-		n.Date = created.Format("2 Jan 2006, 15:04")
+		n.CreatedAt = n.CreatedAt.In(p.Now.Location())
 		p.Notifications = append(p.Notifications, n)
 	}
 	if rows.Err() != nil {

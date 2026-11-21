@@ -140,7 +140,7 @@ type CustomerPage struct {
 	ReturnPolicyEffective                            string
 	SellerNotifications                              bool
 	NotificationFilter                               string
-	NotificationTotal, NotificationUnread            int64
+	NotificationUnread                               int64
 	AccountURL                                       string
 	ProductQuantity                                  int
 	CheckoutIntentID                                 string
@@ -221,5 +221,6 @@ type CustomerSession struct {
 type CustomerNotification struct {
 	ID                      int64
 	Title, Body, Date, Link string
+	CreatedAt               time.Time
 	Unread                  bool
 }

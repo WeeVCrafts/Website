@@ -277,7 +277,14 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 						</div>
 						<p class="seller-form-wide seller-form-note">Set or update your reusable measurements in <a href="/seller-admin/setup?kind=parcel">Parcel profiles</a>.</p>
 					} else {
-						<p class="seller-form-wide seller-form-note"><a href={ "/seller-admin/inventory?q="+form.SKU }>Update available stock in Inventory</a>. Set each option’s packed measurements below or assign a shared profile in <a href="/seller-admin/setup?kind=parcel">Parcel profiles</a>.</p>
+						<p class="seller-form-wide seller-form-note"><a href={ "/seller-admin/inventory?q="+form.SKU }>Update available stock in Inventory</a>.</p>
+						if len(form.Variants) > 0 {
+							<div class="seller-form-wide">
+								<p class="seller-form-note">Packed measurements for primary option (<strong>{ form.Variants[0].SKU }</strong>). Changes save with this product or in the variant editor below.</p>
+								@components.ProductParcelFields(form.Variants[0])
+							</div>
+						}
+						<p class="seller-form-wide seller-form-note">For multi-variant options, update individual measurements in <a href="#product-variants">Product variants below</a> or reuse a profile in <a href="/seller-admin/setup?kind=parcel">Parcel profiles</a>.</p>
 					}
 				</fieldset>
 				<section class="seller-form-wide seller-product-review" data-product-step="review" hidden><h2 tabindex="-1">Review listing</h2><div data-product-review></div></section>

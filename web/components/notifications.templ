@@ -1,38 +1,128 @@
 package components
 
 import (
- "fmt"
- "github.com/wecratfs/commerce/internal/web/viewmodels"
- "github.com/wecratfs/commerce/internal/identity"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/wecratfs/commerce/internal/identity"
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
 templ NotificationBell() {
- <a class="notification-bell" href="/notifications" data-notification-bell aria-label="Notifications" title="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><em data-notification-count hidden></em></a>
+	@notificationBell(false, false, 0)
 }
 
-templ NotificationList(items []viewmodels.CustomerNotification, csrf string) {
- <div class="notification-list">
- if len(items)==0 {
-  <div class="ui-empty-state"><span class="material-symbols-outlined" aria-hidden="true">notifications_none</span><h2>You’re all caught up</h2><p>Order updates and replies will appear here.</p></div>
- }
- for _, item := range items {
-  <article class="notification-card" data-unread={ fmt.Sprint(item.Unread) }>
-   <span class="material-symbols-outlined" aria-hidden="true">chat_bubble</span>
-   <div><h2>{ identity.DisplayName(item.Title) }</h2><p>{ identity.DisplayName(item.Body) }</p><time>{ item.Date }</time>
-    if item.Unread {
- <span class="notification-unread">Unread</span>
- } else {
- <span class="notification-read">Read</span>
- }
-   </div>
-   <form action="/notifications/read" method="post"><input type="hidden" name="csrf_token" value={ csrf }/><input type="hidden" name="notification_id" value={ fmt.Sprint(item.ID) }/><button class="outline-button" type="submit">
-    if item.Link!="" {
- View update <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-} else {
- Mark as read
- }
-   </button></form>
-  </article>
- }
- </div>
+templ notificationBell(showLabel, active bool, unread int64) {
+	<a class={ "notification-bell", templ.KV("shopping-notification-bell", showLabel) } href="/notifications" data-notification-bell aria-label="Notifications" title="Notifications" aria-current={ notificationBellCurrent(active) }>
+		<span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+		<em data-notification-count hidden?={ unread == 0 }>{ NotificationCount(unread) }</em>
+		if showLabel {
+			<span class="header-action-label">Notifications</span>
+		}
+	</a>
+}
+
+templ NotificationList(items []viewmodels.CustomerNotification, csrf, filter string, now time.Time) {
+	<div class="notification-list">
+		if len(items) == 0 {
+			<div class="ui-empty-state">
+				<span class="material-symbols-outlined" aria-hidden="true">notifications_none</span>
+				if filter == "orders" || filter == "support" {
+					<h2>No matching updates</h2>
+				} else {
+					<h2>You’re all caught up</h2>
+					<p>New updates will appear here.</p>
+				}
+			</div>
+		}
+		for i, item := range items {
+			if i == 0 || !sameNotificationDay(items[i-1].CreatedAt, item.CreatedAt) {
+				<h2 class="notification-day">{ notificationDay(item.CreatedAt, now) }</h2>
+			}
+			<article class="notification-card" data-unread={ strconv.FormatBool(item.Unread) }>
+				<span class="notification-type material-symbols-outlined" aria-hidden="true">{ notificationIcon(item.Title) }</span>
+				<div class="notification-copy">
+					<h3>{ identity.DisplayName(item.Title) }</h3>
+					<p>{ identity.DisplayName(item.Body) }</p>
+					if item.Unread {
+						<span class="notification-unread">Unread</span>
+					} else {
+						<span class="notification-read">Read</span>
+					}
+				</div>
+				<div class="notification-meta">
+					if item.Link != "" || item.Unread {
+						<form action="/notifications/read" method="post">
+							<input type="hidden" name="csrf_token" value={ csrf }/>
+							<input type="hidden" name="notification_id" value={ strconv.FormatInt(item.ID, 10) }/>
+							<input type="hidden" name="filter" value={ filter }/>
+							<button class="notification-open" type="submit" aria-label={ notificationAction(item) + " — " + identity.DisplayName(item.Title) }>
+								{ notificationAction(item) }
+								if item.Link != "" {
+									<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+								}
+							</button>
+						</form>
+					}
+					<time datetime={ item.CreatedAt.Format(time.RFC3339) } title={ item.CreatedAt.Format("2 Jan 2006, 15:04") }>{ item.CreatedAt.Format("15:04") }</time>
+				</div>
+			</article>
+		}
+	</div>
+}
+
+func NotificationCount(unread int64) string {
+	if unread > 99 {
+		return "99+"
+	}
+	return strconv.FormatInt(unread, 10)
+}
+
+func notificationBellCurrent(active bool) string {
+	if active {
+		return "page"
+	}
+	return "false"
+}
+
+func sameNotificationDay(a, b time.Time) bool {
+	return a.Year() == b.Year() && a.YearDay() == b.YearDay()
+}
+
+func notificationDay(date, now time.Time) string {
+	if sameNotificationDay(date, now) {
+		return "Today"
+	}
+	return date.Format("2 Jan 2006")
+}
+
+func notificationIcon(title string) string {
+	switch strings.ToLower(title) {
+	case "refund processed":
+		return "undo"
+	case "items cancelled":
+		return "cancel"
+	case "order confirmed":
+		return "inventory_2"
+	default:
+		return "chat_bubble"
+	}
+}
+
+func notificationAction(item viewmodels.CustomerNotification) string {
+	if item.Link == "" {
+		return "Mark as read"
+	}
+	if strings.HasPrefix(item.Link, "/orders/") {
+		switch strings.ToLower(item.Title) {
+		case "refund processed":
+			return "View refund"
+		case "items cancelled":
+			return "View order"
+		case "order confirmed":
+			return "Track order"
+		}
+	}
+	return "View update"
 }
