@@ -8,7 +8,8 @@ SELECT v.id AS variant_id,p.id AS product_id,p.seller_id,p.name AS product,v.sku
     p.status AS product_status,parcel.shipping_weight_g,parcel.shipping_length_cm,parcel.shipping_width_cm,
     parcel.shipping_height_cm,COALESCE(sp.verified,false) AS pickup_ready,
     (ip.seller_id IS NOT NULL AND NOT ip.checkout_review_hold) AS invoice_ready,
-    COALESCE(NOT COALESCE(tp.checkout_review_hold, false), true) AS tax_ready,
+    (tp.variant_id IS NULL OR COALESCE(NOT tp.checkout_review_hold
+        AND (ip.registration<>'unregistered' OR tp.rate_basis_points=0),false)) AS tax_ready,
     true AS classified,
     COALESCE(i.available_quantity,0) AS stock,lv.variant_id IS NOT NULL AS selected,
     COALESCE(NULLIF(p.image_url,''),(SELECT pm.public_url FROM product_media pm WHERE pm.product_id=p.id AND pm.status='ready' AND pm.content_type LIKE 'image/%' ORDER BY pm.id DESC LIMIT 1),'') AS image_url,
@@ -31,6 +32,7 @@ SELECT variant_id,seller_id,product,sku,seller,shipping_weight_g,shipping_length
 FROM marketplace_option_setup_facts
 WHERE product_status='approved';
 
+-- Preserve the next_step column used by the seller portal.
 CREATE OR REPLACE VIEW marketplace_product_checkout_summary AS
 SELECT v.product_id,
     count(*) FILTER (WHERE o.fulfillment_ready AND o.live_allowed AND o.stock>0) AS ready_count,
@@ -42,7 +44,7 @@ SELECT v.product_id,
             AND o.shipping_length_cm BETWEEN 1 AND 200 AND o.shipping_width_cm BETWEEN 1 AND 200
             AND o.shipping_height_cm BETWEEN 1 AND 200)) THEN 'Add packed measurements'
         ELSE 'Awaiting marketplace launch'
-    END AS checkout_readiness_reason
+    END AS next_step
 FROM product_variants v
 JOIN marketplace_checkout_options o ON o.variant_id=v.id
 GROUP BY v.product_id;
