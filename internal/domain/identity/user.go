@@ -5,15 +5,16 @@ import "time"
 type Role string
 
 const (
-	RoleCustomer   Role = "customer"
-	RoleSeller     Role = "seller"
-	RoleAdmin      Role = "admin"
-	RoleSuperAdmin Role = "super_admin"
+	RoleCustomer        Role = "customer"
+	RoleSeller          Role = "seller"
+	RoleAdmin           Role = "admin"
+	RoleShippingSupport Role = "shipping_support"
+	RoleSuperAdmin      Role = "super_admin"
 )
 
 // ValidRole is the single vocabulary used for role assignment and authorization.
 func ValidRole(role Role) bool {
-	return role == RoleCustomer || role == RoleSeller || role == RoleAdmin || role == RoleSuperAdmin
+	return role == RoleCustomer || role == RoleSeller || role == RoleAdmin || role == RoleShippingSupport || role == RoleSuperAdmin
 }
 func CompanyRole(role Role) bool { return role == RoleAdmin || role == RoleSuperAdmin }
 

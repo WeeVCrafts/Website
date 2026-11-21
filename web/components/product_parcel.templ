@@ -14,6 +14,12 @@ templ ProductParcelFields(v viewmodels.ProductVariant) {
 			<label>Packed length (cm)<input name="shipping_length_cm" type="number" min="1" max="200" placeholder="e.g. 25" value={ v.ShippingLength }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
 			<label>Packed width (cm)<input name="shipping_width_cm" type="number" min="1" max="200" placeholder="e.g. 15" value={ v.ShippingWidth }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
 			<label>Packed height (cm)<input name="shipping_height_cm" type="number" min="1" max="200" placeholder="e.g. 10" value={ v.ShippingHeight }/><small class="seller-field-hint">Whole centimetres (1-200 cm).</small></label>
+			<div class="parcel-dimension-preview" data-parcel-preview hidden>
+				<strong>Package preview</strong>
+				<p>Enter all three dimensions to preview the packed shape used for delivery.</p>
+				<div class="parcel-dimension-canvas" data-parcel-canvas aria-label="3D packed parcel preview" role="img"></div>
+				<small data-parcel-preview-label>Awaiting length, width and height.</small>
+			</div>
 		</fieldset>
 	}
 }

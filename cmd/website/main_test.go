@@ -204,3 +204,35 @@ func TestAuthRateLimitsUseSeparateBucketsForIndependentAccountActions(t *testing
 		}
 	}
 }
+
+func TestRequestConcurrencyReturnsBusyAndKeepsHealthAvailable(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	handler := requestConcurrency(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/health/") {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		close(started)
+		<-release
+		w.WriteHeader(http.StatusNoContent)
+	}), 1)
+	firstDone := make(chan struct{})
+	go func() {
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/api/v1/products", nil))
+		close(firstDone)
+	}()
+	<-started
+	busy := httptest.NewRecorder()
+	handler.ServeHTTP(busy, httptest.NewRequest(http.MethodGet, "/api/v1/products", nil))
+	if busy.Code != http.StatusServiceUnavailable || !strings.Contains(busy.Body.String(), "SERVER_BUSY") {
+		t.Fatalf("expected bounded busy response, got %d %s", busy.Code, busy.Body.String())
+	}
+	health := httptest.NewRecorder()
+	handler.ServeHTTP(health, httptest.NewRequest(http.MethodGet, "/health/ready", nil))
+	if health.Code != http.StatusNoContent {
+		t.Fatalf("health probe should bypass request saturation, got %d", health.Code)
+	}
+	close(release)
+	<-firstDone
+}

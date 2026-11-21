@@ -15,6 +15,9 @@ func roleAllowsPortalPath(role domainidentity.Role, path string) bool {
 		return role == domainidentity.RoleSuperAdmin
 	}
 	if pathUnder(path, "/admin") {
+		if role == domainidentity.RoleShippingSupport {
+			return pathUnder(path, "/admin/support")
+		}
 		return domainidentity.CompanyRole(role) && (!adminRestrictedPath(strings.TrimPrefix(path, "/admin")) || role == domainidentity.RoleSuperAdmin)
 	}
 	if pathUnder(path, "/seller-admin") {
@@ -198,6 +201,8 @@ func roleLabel(role domainidentity.Role) string {
 	switch role {
 	case domainidentity.RoleAdmin:
 		return "Admin"
+	case domainidentity.RoleShippingSupport:
+		return "Shipping Support"
 	case domainidentity.RoleSuperAdmin:
 		return "Super Admin"
 	case domainidentity.RoleSeller:
@@ -208,6 +213,9 @@ func roleLabel(role domainidentity.Role) string {
 	return "Account"
 }
 func portalLabel(role domainidentity.Role) string {
+	if role == domainidentity.RoleShippingSupport {
+		return "Shipping Support"
+	}
 	if role == domainidentity.RoleSuperAdmin {
 		return "Super Admin Portal"
 	}

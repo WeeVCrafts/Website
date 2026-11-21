@@ -635,7 +635,7 @@ func main() {
 	}
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           httpMetrics.Middleware(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, marketplaceHandler.Middleware(mux), cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg)),
+		Handler:           httpMetrics.Middleware(requestConcurrency(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, marketplaceHandler.Middleware(mux), cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg), cfg.HTTPConcurrency)),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,
@@ -793,6 +793,34 @@ func authRateLimit(next http.Handler, limiter ports.RateLimiter) http.Handler {
 			}
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+// requestConcurrency prevents a burst from exhausting the VPS and turning
+// every request into a process-level 503. Health probes remain available so
+// the orchestrator can distinguish saturation from a dead process.
+func requestConcurrency(next http.Handler, limit int) http.Handler {
+	if limit < 1 {
+		limit = 128
+	}
+	sem := make(chan struct{}, limit)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health/live" || r.URL.Path == "/health/ready" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		timer := time.NewTimer(250 * time.Millisecond)
+		defer timer.Stop()
+		select {
+		case sem <- struct{}{}:
+			defer func() { <-sem }()
+			next.ServeHTTP(w, r)
+		case <-r.Context().Done():
+			http.Error(w, "request cancelled", http.StatusRequestTimeout)
+		case <-timer.C:
+			w.Header().Set("Retry-After", "1")
+			writeRateLimitAPIError(w, r, http.StatusServiceUnavailable, "SERVER_BUSY", "The service is busy. Please retry shortly.")
+		}
 	})
 }
 

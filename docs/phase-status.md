@@ -2,7 +2,7 @@
 
 # WeevCrafts phase status
 
-**Current status — 4 November 2026:** The application uses the real Go/templ/PostgreSQL/Redis services. Normal startup preserves data and does not seed accounts or products. The current model has Customer, Seller, Admin and Super Admin; Seller Admin is the Seller workspace. Hostinger VPS/Coolify is the selected production host.
+**Current status — 4 November 2026:** The application uses the real Go/templ/PostgreSQL/Redis services. Normal startup preserves data and does not seed accounts or products. The current model has Customer, Seller, Admin, Shipping Support and Super Admin; Seller Admin is the Seller workspace. Hostinger VPS/Coolify is the selected production host.
 
 **Current gate:** Release-candidate cleanup and verification are in progress. No current completion percentage or production approval is asserted. Use the [candidate evidence register](release-candidate-2026-11-04.md), [current handbook](operations-handbook.md) and [reconciled backlog](production-readiness-backlog-2026-11-04.csv).
 

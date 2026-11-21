@@ -15,6 +15,7 @@ type Config struct {
 	StagingUsername         string
 	StagingPassword         string
 	Address                 string
+	HTTPConcurrency         int
 	Environment             string
 	PublicURL               string
 	DatabaseURL             string
@@ -70,6 +71,7 @@ func FromEnv() Config {
 		StagingUsername:         env("WECRATFS_STAGING_USERNAME", ""),
 		StagingPassword:         env("WECRATFS_STAGING_PASSWORD", ""),
 		Address:                 env("WECRATFS_ADDR", ":"+port),
+		HTTPConcurrency:         intEnv("WECRATFS_HTTP_CONCURRENCY", 128),
 		Environment:             environment,
 		PublicURL:               publicURL,
 		DatabaseURL:             env("DATABASE_URL", "postgres://wecratfs:wecratfs@localhost:5432/wecratfs?sslmode=disable"),
@@ -124,4 +126,16 @@ func env(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func intEnv(key string, fallback int) int {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 1 || parsed > 10000 {
+		return fallback
+	}
+	return parsed
 }

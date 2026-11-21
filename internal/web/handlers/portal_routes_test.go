@@ -25,6 +25,18 @@ func TestFourRolePortalBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestShippingSupportIsLimitedToSupportWorkspace(t *testing.T) {
+	role := identity.RoleShippingSupport
+	if !roleAllowsPortalPath(role, "/admin/support") || !roleAllowsPortalPath(role, "/admin/support/cases") {
+		t.Fatal("shipping support should reach the support workspace")
+	}
+	for _, path := range []string{"/admin/orders", "/admin/finance", "/admin/users", "/super-admin/orders", "/seller-admin/orders"} {
+		if roleAllowsPortalPath(role, path) {
+			t.Fatalf("shipping support role reached restricted path %s", path)
+		}
+	}
+}
 func TestRetiredCompanyBookmarks(t *testing.T) {
 	for _, path := range []string{"/marketplace-admin/orders", "/finance-portal/finance-reconciliation", "/operations-portal/returns"} {
 		for _, role := range []identity.Role{identity.RoleAdmin, identity.RoleSuperAdmin} {

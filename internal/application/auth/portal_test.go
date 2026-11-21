@@ -14,6 +14,7 @@ func TestLoginDestinationRoutesSingleRoleToItsPortal(t *testing.T) {
 		{domainidentity.RoleCustomer, "/"},
 		{domainidentity.RoleSeller, "/seller-admin"},
 		{domainidentity.RoleAdmin, "/admin"},
+		{domainidentity.RoleShippingSupport, "/admin/support"},
 		{domainidentity.RoleSuperAdmin, "/super-admin"},
 		{domainidentity.RoleAdmin, "/admin"},
 		{domainidentity.RoleAdmin, "/admin"},

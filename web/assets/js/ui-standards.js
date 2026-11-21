@@ -289,9 +289,58 @@
         const preview=input.closest('form')?.querySelector('[data-main-image-preview]');
         if(!preview || !file || !input.checkValidity()) return;
         previewURL=URL.createObjectURL(file);
-        const img=document.createElement('img'); img.src=previewURL; img.alt="Selected image preview"; img.className="maker-portrait-preview";
-        preview.replaceChildren(img);
+        const images = preview.querySelectorAll('[data-image-preview-image]');
+        if (images.length) {
+          images.forEach(img => { img.src=previewURL; img.alt="Selected product card preview"; });
+        } else {
+          const img=document.createElement('img'); img.src=previewURL; img.alt="Selected image preview"; img.className="maker-portrait-preview";
+          preview.replaceChildren(img);
+        }
       });
+    });
+    root.querySelectorAll('[data-main-image-preview]').forEach(preview => {
+      if (preview.dataset.cardPreviewBound) return;
+      preview.dataset.cardPreviewBound = 'true';
+      const fit = preview.querySelector('[data-image-fit]');
+      const zoom = preview.querySelector('[data-image-zoom]');
+      const x = preview.querySelector('[data-image-position-x]');
+      const y = preview.querySelector('[data-image-position-y]');
+      const images = Array.from(preview.querySelectorAll('[data-image-preview-image]'));
+      images.forEach(img => {
+        const source = img.dataset.imageSource;
+        if (source) img.src = source;
+      });
+      const apply = () => {
+        const mode = fit?.value || 'contain', scale = Number(zoom?.value || 1), position = `${Number(x?.value || 50)}% ${Number(y?.value || 50)}%`;
+        images.forEach(img => { img.style.objectFit = mode; img.style.objectPosition = position; img.style.transform = `scale(${scale})`; });
+        const fill = mode === 'cover';
+        [zoom,x,y].forEach(control => { if (control) control.disabled = false; });
+        preview.dataset.imageFit = fill ? 'fill' : 'whole';
+      };
+      [fit,zoom,x,y].forEach(control => control?.addEventListener('input', apply));
+      [fit,zoom,x,y].forEach(control => control?.addEventListener('change', apply));
+      apply();
+    });
+    root.querySelectorAll('[data-parcel-preview]').forEach(preview => {
+      if (preview.dataset.bound) return;
+      preview.dataset.bound = 'true';
+      const scope = preview.closest('fieldset');
+      const field = name => scope?.querySelector(`[name="${name}"]`);
+      const canvas = preview.querySelector('[data-parcel-canvas]'), label = preview.querySelector('[data-parcel-preview-label]');
+      const update = () => {
+        const length = Number(field('shipping_length_cm')?.value), width = Number(field('shipping_width_cm')?.value), height = Number(field('shipping_height_cm')?.value);
+        if (![length,width,height].every(value => Number.isFinite(value) && value > 0)) { preview.hidden = true; return; }
+        preview.hidden = false;
+        const scale = 115 / Math.max(length,width,height), l = Math.max(44, length * scale), w = Math.max(36, width * scale * .72), h = Math.max(42, height * scale * .72);
+        const ox = 150, oy = 140, dx = w * .65, dy = w * .35;
+        const a = [ox,oy], b = [ox+l,oy], c = [ox+l+dx,oy-dy], d = [ox+dx,oy-dy], e = [ox,oy-h], f = [ox+l,oy-h], g = [ox+l+dx,oy-h-dy], q = [ox+dx,oy-h-dy];
+        const point = p => p.join(',');
+        const arrow = (p1,p2,text,tx,ty) => `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" marker-start="url(#parcel-arrow)" marker-end="url(#parcel-arrow)"/><text x="${tx}" y="${ty}" text-anchor="middle">${text}</text>`;
+        canvas.innerHTML = `<svg viewBox="0 0 320 210" role="img" aria-label="Packed parcel ${length} by ${width} by ${height} centimetres"><defs><marker id="parcel-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs><g class="parcel-box" fill="var(--ui-surface,#fffdf8)" stroke="var(--ui-primary,#124534)" stroke-width="2"><polygon points="${[a,b,c,d].map(point).join(' ')}"/><polygon points="${[a,d,q,e].map(point).join(' ')}"/><polygon points="${[b,c,g,f].map(point).join(' ')}"/></g><g class="parcel-dimension-lines" fill="currentColor" stroke="currentColor" stroke-width="1">${arrow([a[0],a[1]+14],[b[0],b[1]+14],`${length} cm`,(a[0]+b[0])/2,oy+28)}${arrow([b[0]+14,b[1]],[c[0]+14,c[1]],`${width} cm`,c[0]+28,(b[1]+c[1])/2)}${arrow([a[0]-18,a[1]],[e[0]-18,e[1]],`${height} cm`,a[0]-32,(a[1]+e[1])/2)}</g><text x="160" y="202" text-anchor="middle" fill="currentColor" font-size="11">Auto-rotating packed shape preview</text></svg>`;
+        label.textContent = `Packed size: ${length} × ${width} × ${height} cm. This is a proportionate preview, not a courier quote.`;
+      };
+      ['shipping_length_cm','shipping_width_cm','shipping_height_cm'].forEach(name => { field(name)?.addEventListener('input', update); field(name)?.addEventListener('change', update); });
+      update();
     });
     root.querySelectorAll("img").forEach(img => {
       // Gallery owns loading, failure, and Retry. Replacing its source here

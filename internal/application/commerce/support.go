@@ -142,7 +142,7 @@ func (s *SupportService) agentAllowed(ctx context.Context, userID int64) bool {
 	if userID <= 0 || s.repository == nil || s.roles == nil {
 		return false
 	}
-	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, userID, domainidentity.RoleAdmin, domainidentity.RoleShippingSupport, domainidentity.RoleSuperAdmin)
 	return err == nil && ok
 }
 

@@ -24,6 +24,7 @@ available for QA.
 | Customer | `/products` | Shopping, personal account, orders, reviews, returns and customer cases. |
 | Seller | `/seller-admin` | Its owned business, listings, stock, fulfilment, seller support and earnings. |
 | Admin | `/admin` | Marketplace review, customer cases, delivery/returns and finance operations. |
+| Shipping Support | `/admin/support` | Support queue and delivery coordination only. No finance, catalog, security or account administration. |
 | Super Admin | `/super-admin` | Company operations, accounts, role assignments, security and categories. |
 
 Sign in with username or email and password. The stored account role determines
@@ -33,8 +34,8 @@ Admin and Super Admin use no MFA by the owner's 4 November decision; this remain
 an explicit security exception. Use individual accounts, not shared operator
 credentials. Use **Forgot password** (`/forgot-password`) for verified recovery;
 inspect the saved identity after recovery and do not disclose reset links. Seller
-Admin is the Seller workspace, not another role. Seller staff,
-Support, Finance and Operations are not assignable separate roles.
+Admin is the Seller workspace, not another role. Shipping Support is the only
+separate operational support role and is deliberately limited to `/admin/support`.
 
 The company must name the primary and backup people for finance, support,
 account recovery and infrastructure before launch. Contact names, response hours,
@@ -141,6 +142,12 @@ characters. The receiver queues a status read after matching a saved parcel.
 The worker also polls the provider. Sandbox bookings do not advance live
 fulfilment. Production uses `WECRATFS_SHIPROCKET_MODE=live`, a separate API user,
 production pickup profiles and the webhook secret.
+
+The HTTP server also applies an in-process VPS saturation guard to non-health
+requests. Set `WECRATFS_HTTP_CONCURRENCY` to tune the maximum in-flight request
+count (default `128`, bounded to `1–10000`). Saturated API requests return a
+retryable `503 SERVER_BUSY` response with `Retry-After: 1`; liveness and readiness
+probes remain available so Coolify can distinguish a busy process from a dead one.
 
 ### Verify a release candidate
 

@@ -324,7 +324,7 @@ components:
   schemas:
     AccountRole:
       type: string
-      enum: [customer, seller, admin, super_admin]
+      enum: [customer, seller, admin, shipping_support, super_admin]
       description: Exactly one role per account. Public registration always assigns customer.
     PrivateSellerRequest:
       type: object

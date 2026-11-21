@@ -17,6 +17,7 @@ var portalWorkspaces = []Workspace{
 	{Role: domainidentity.RoleCustomer, Label: "Customer", Path: "/"},
 	{Role: domainidentity.RoleSeller, Label: "Seller", Path: "/seller-admin"},
 	{Role: domainidentity.RoleAdmin, Label: "Admin", Path: "/admin"},
+	{Role: domainidentity.RoleShippingSupport, Label: "Shipping Support", Path: "/admin/support"},
 	{Role: domainidentity.RoleSuperAdmin, Label: "Super Admin", Path: "/super-admin"},
 }
 

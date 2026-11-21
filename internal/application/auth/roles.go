@@ -13,7 +13,7 @@ import (
 var ErrInvalidRoleAssignment = errors.New("role assignment request is invalid")
 
 var RoleAdminAssignableRoles = []domainidentity.Role{
-	domainidentity.RoleCustomer, domainidentity.RoleSeller, domainidentity.RoleAdmin, domainidentity.RoleSuperAdmin,
+	domainidentity.RoleCustomer, domainidentity.RoleSeller, domainidentity.RoleAdmin, domainidentity.RoleShippingSupport, domainidentity.RoleSuperAdmin,
 }
 
 type RoleAdminService struct {

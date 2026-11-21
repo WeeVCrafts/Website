@@ -28,7 +28,7 @@ func (s *SellerConfirmationService) company(ctx context.Context, id int64) bool 
 	if s.roles == nil {
 		return false
 	}
-	ok, err := s.roles.HasAnyRole(ctx, id, identity.RoleAdmin, identity.RoleSuperAdmin)
+	ok, err := s.roles.HasAnyRole(ctx, id, identity.RoleAdmin, identity.RoleShippingSupport, identity.RoleSuperAdmin)
 	return id > 0 && err == nil && ok
 }
 func (s *SellerConfirmationService) seller(ctx context.Context, id int64) bool {

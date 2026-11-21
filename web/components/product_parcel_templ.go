@@ -107,7 +107,7 @@ func ProductParcelFields(v viewmodels.ProductVariant) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><small class=\"seller-field-hint\">Whole centimetres (1-200 cm).</small></label></fieldset>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"><small class=\"seller-field-hint\">Whole centimetres (1-200 cm).</small></label><div class=\"parcel-dimension-preview\" data-parcel-preview hidden><strong>Package preview</strong><p>Enter all three dimensions to preview the packed shape used for delivery.</p><div class=\"parcel-dimension-canvas\" data-parcel-canvas aria-label=\"3D packed parcel preview\" role=\"img\"></div><small data-parcel-preview-label>Awaiting length, width and height.</small></div></fieldset>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

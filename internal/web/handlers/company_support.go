@@ -41,7 +41,7 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 	if len(roles) == 1 {
 		role = roles[0]
 	}
-	if (sellerReply && role != identity.RoleSeller) || (!sellerReply && (!identity.CompanyRole(role) || (root == "/super-admin" && role != identity.RoleSuperAdmin))) {
+	if (sellerReply && role != identity.RoleSeller) || (!sellerReply && (!identity.CompanyRole(role) && role != identity.RoleShippingSupport || (root == "/super-admin" && role != identity.RoleSuperAdmin))) {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return true
 	}
@@ -93,7 +93,7 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 			w.Header().Set("Cache-Control", "private, no-store")
 			page.EmailHistory = h.loadEmailHistory(r, support.SelectedCase.Order, root+"/support", url.Values{"ticket_id": {strconv.FormatInt(support.SelectedCase.DatabaseID, 10)}})
 		}
-		page.Admin = viewmodels.AdminPage{ActorID: session.UserID, Active: "support", NavActive: "support", Title: "Support & delivery", Subtitle: "Review the case, confirm with the seller and keep the customer informed.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: true, CanManageCatalog: true, CanSecurity: role == identity.RoleSuperAdmin, Pagination: support.Pagination, Notice: r.URL.Query().Get("notice"), DataWarning: support.DataWarning}
+		page.Admin = viewmodels.AdminPage{ActorID: session.UserID, Active: "support", NavActive: "support", Title: "Shipping support", Subtitle: "Coordinate packed orders, courier choices and delivery updates without changing customer pricing.", PortalRoot: root, PortalLabel: portalLabel(role), RoleLabel: roleLabel(role), DisplayName: h.userDisplayName(r, session.UserID), CSRFToken: session.CSRFToken, CanFinance: role != identity.RoleShippingSupport, CanManageCatalog: role != identity.RoleShippingSupport, CanSecurity: role == identity.RoleSuperAdmin, Pagination: support.Pagination, Notice: r.URL.Query().Get("notice"), DataWarning: support.DataWarning}
 		if role == identity.RoleSuperAdmin {
 			page.Support.StatusFilter = supportInsightFilter(r)
 			page.Support.Range = r.URL.Query().Get("range")

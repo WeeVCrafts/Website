@@ -244,9 +244,18 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					<p>Choose a clear photo of this exact product. Additional gallery images and videos can be added below after the first draft save.</p>
 					<label class="seller-form-wide">Choose image (JPEG, PNG or WebP, up to 25 MB)<input type="file" id="product-image_file" aria-invalid={ sellerProductInvalid(form, "image_file") } aria-describedby={ sellerProductErrorID(form, "image_file") } name="image_file" accept="image/png,image/jpeg,image/webp" data-main-image/></label>
 					<div class="seller-form-wide" data-main-image-preview>
-						if form.Image != "" {
-							<img class="product-media-square" src={ form.Image } alt={ "Current image for " + form.Name }/>
-						}
+						<div class="seller-image-preview-toolbar">
+							<strong>Card preview</strong>
+							<label>Fit mode<select data-image-fit><option value="contain">Show whole photo</option><option value="cover">Fill frame</option></select></label>
+							<label>Zoom<input type="range" min="1" max="2" step="0.05" value="1" data-image-zoom/></label>
+							<label>Horizontal position<input type="range" min="0" max="100" step="1" value="50" data-image-position-x/></label>
+							<label>Vertical position<input type="range" min="0" max="100" step="1" value="50" data-image-position-y/></label>
+						</div>
+						<p class="seller-form-note">Show whole photo keeps the complete product visible. Fill frame crops the card only. The original is kept for the product gallery and zoom view.</p>
+						<div class="seller-image-card-previews">
+							<figure><figcaption>Desktop card</figcaption><div class="seller-image-card seller-image-card--desktop"><img data-image-preview-image data-image-source={ form.Image } alt={ "Desktop card preview for " + form.Name }/></div></figure>
+							<figure><figcaption>Mobile card</figcaption><div class="seller-image-card seller-image-card--mobile"><img data-image-preview-image data-image-source={ form.Image } alt={ "Mobile card preview for " + form.Name }/></div></figure>
+						</div>
 					</div>
 					<details class="seller-form-wide"><summary>Use an existing image URL</summary><label>Product image URL<input name="image_url" value={ form.Image }/></label></details>
 				</fieldset>

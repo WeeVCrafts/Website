@@ -1,4 +1,4 @@
-# Four-role operations
+# Role operations
 
 This contract supersedes the role descriptions in dated audit reports. Historical audit evidence and message authorship remain unchanged.
 
@@ -7,7 +7,8 @@ This contract supersedes the role descriptions in dated audit reports. Historica
 | `customer` | `/products` | Shopping, account, orders, reviews, returns and customer support. Public registration always assigns this role. |
 | `seller` | `/seller-admin` | One login per independent business, owning its catalogue, media, inventory, fulfilment, recorded tracking, earnings and support. Profile approval and suspension still apply. |
 | `admin` | `/admin` | Company marketplace, support, delivery follow-up, returns and existing finance operations. |
-| `super_admin` | `/super-admin` | Company operations plus account creation, all four role assignments, platform security, settings and audit access. |
+| `shipping_support` | `/admin/support` | Narrow support and delivery coordination workspace. It can work the support queue and coordinate courier follow-up, but cannot access finance, catalog, security or account administration. |
+| `super_admin` | `/super-admin` | Company operations plus account creation, all five role assignments, platform security, settings and audit access. |
 
 Sign in with username or email and password. The server reads the account's assigned role; users do not select or gain a role by entering a name. Admin and Super Admin do not require a second factor by the owner's 4 November 2026 decision. This is an explicit MFA exception, not evidence of equivalent protection.
 
@@ -60,4 +61,4 @@ Before rollout:
 
 The owner previously requested four designated accounts for local and then-hosted environments: Customer, Seller, Admin and Super Admin, with matching usernames and emails at `weevcrafts.com`. Existing designated accounts are renamed in place to preserve IDs and seller ownership; the missing local Admin is created explicitly. Other accounts and business records remain. Passwords are supplied privately to the opt-in `cmd/sync-designated-accounts` tool, hashed with Argon2id and never committed. Credential changes revoke prior sessions. Usernames are unique account identities and remain stable when Super Admin changes a role. Public registration and password changes retain the 12-character policy; the operator tool supports the owner-approved bootstrap credentials independently.
 
-Shipping remains seller-booked and payouts are manual external bank transfers recorded by separate operators. The current finance-control implementation and verification are tracked in the [candidate register](release-candidate-2026-11-04.md); never use an old mock-payout action as transfer evidence. Refund reconciliation already has application support and still requires release-candidate failure/recovery verification. Privileged MFA is owner-deferred. This role contract does not establish production readiness.
+Shipping Support may coordinate the seller's packed order and courier comparison from the support workspace. A provider booking remains a separately authorized operational action and must record the selected courier, estimate, actual charge and any Super Admin variance approval. The customer-facing total is not changed by an internal variance. Payouts are manual external bank transfers recorded by separate operators. The current finance-control implementation and verification are tracked in the [candidate register](release-candidate-2026-11-04.md); never use an old mock-payout action as transfer evidence. Refund reconciliation already has application support and still requires release-candidate failure/recovery verification. Privileged MFA is owner-deferred. This role contract does not establish production readiness.

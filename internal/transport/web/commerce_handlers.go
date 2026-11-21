@@ -716,7 +716,7 @@ func (h *Handler) sellerEditProduct(w http.ResponseWriter, r *http.Request) {
 		h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(productID, 10)+"/edit?step=photos&notice=Product+details+saved.+Image+upload+failed%3B+choose+the+image+again+to+retry.+Your+previous+cover+is+preserved.")
 		return
 	}
-	h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(productID, 10)+"/edit?step=review&notice=Product+details+saved")
+	h.redirect(w, r, "/seller-admin/products?notice=Product+details+saved.+Fulfillment+setup+is+available+from+your+product+list")
 }
 
 func sellerProductID(path string) (int64, error) {
@@ -829,7 +829,7 @@ func (h *Handler) sellerProducts(w http.ResponseWriter, r *http.Request) {
 		h.redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?step=photos&notice=Draft+saved.+Image+upload+failed%3B+choose+the+image+again+to+retry+on+this+saved+draft.")
 		return
 	}
-	http.Redirect(w, r, "/seller-admin/products/"+strconv.FormatInt(product.ID, 10)+"/edit?step=review&notice=Product+draft+created", http.StatusSeeOther)
+	http.Redirect(w, r, "/seller-admin/products?notice=Product+draft+created.+Open+the+product+when+you+are+ready+to+review+fulfillment+setup", http.StatusSeeOther)
 }
 
 func productSlug(value string) string {

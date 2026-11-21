@@ -256,7 +256,7 @@ category photographs/order, product cross-listing, the four homepage product
 sections and the opt-in `cmd/import-catalog` workflow. Its default is read-only
 validation; actual merchant inventory and photographs are required for listings.
 
-WeevCrafts uses Customer, Seller, Admin and Super Admin, with one role per account. See [four-role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.
+WeevCrafts uses Customer, Seller, Admin, Shipping Support and Super Admin, with one role per account. See [role operations](docs/four-role-workflow.md) for permissions, private seller confirmations, migration and rollout. Dated audit reports describe historical builds.
 
 ## Docker preview with Air
 
