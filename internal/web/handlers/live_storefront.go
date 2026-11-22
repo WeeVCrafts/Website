@@ -2038,6 +2038,10 @@ func (h *LiveStorefrontHandler) uiMutation(w http.ResponseWriter, r *http.Reques
 		quantity, _ = strconv.ParseInt(raw, 10, 64)
 	}
 	if r.FormValue("intent") == "buy" {
+		if h.policyCheckout && !h.checkoutEnabled {
+			http.Error(w, "Checkout is temporarily unavailable. Your cart is saved.", http.StatusServiceUnavailable)
+			return
+		}
 		if !authenticated {
 			http.Redirect(w, r, "/login?next="+url.QueryEscape("/products/"+slug), 303)
 			return
@@ -2450,10 +2454,12 @@ func (h *LiveStorefrontHandler) customerProductVariants(r *http.Request, slug st
 		}
 		view := viewmodels.ProductVariant{ID: strconv.FormatInt(id, 10), Name: name, SKU: sku, PriceCents: strconv.FormatInt(price, 10),
 			Available: strconv.FormatInt(available, 10), Reserved: strconv.FormatInt(reserved, 10), Status: status,
-			Price: storefrontMoney(price), InStock: available > 0, StockMessage: "Currently unavailable"}
+			Price: storefrontMoney(price), InStock: available > 0, CheckoutBlocked: !purchasable, StockMessage: "Currently unavailable"}
 		if view.InStock {
 			view.StockMessage = "In stock"
-			if !purchasable {
+			if h.policyCheckout && purchasable {
+				view.StockMessage = "Available for checkout"
+			} else if !purchasable {
 				view.StockMessage = "Checkout is unavailable for this option"
 			}
 		}

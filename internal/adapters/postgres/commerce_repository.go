@@ -1294,7 +1294,8 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 			return err
 		}
 		if r.policyCheckoutRequired {
-			if _, err := tx.Exec(transactionContext, `UPDATE marketplace_policy_settings SET pilot_order_id=$1 WHERE id AND shipping_mode='pilot'`, order.ID); err != nil {
+			if _, err := tx.Exec(transactionContext, `UPDATE marketplace_policy_settings SET pilot_order_id=$1 WHERE id AND shipping_mode='pilot'
+				AND NOT EXISTS(SELECT 1 FROM marketplace_checkout_health WHERE id)`, order.ID); err != nil {
 				return err
 			}
 		}
@@ -1320,6 +1321,9 @@ func (r *CommerceRepository) createOrder(ctx context.Context, userID, cartID int
 	})
 	if err == nil && order.ID > 0 {
 		err = r.pool.QueryRow(ctx, `SELECT credit_cents FROM orders WHERE id=$1`, order.ID).Scan(&order.CreditCents)
+	}
+	if r.policyCheckoutRequired && errors.Is(err, ports.ErrDeliveryUnavailable) {
+		r.rememberCheckoutWait(ctx, userID, cartID)
 	}
 	return order, err
 }

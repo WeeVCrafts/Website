@@ -144,7 +144,8 @@ func restoreOrderCredit(ctx context.Context, tx pgx.Tx, order, amount int64, key
 }
 
 func checkPolicyCheckout(ctx context.Context, tx pgx.Tx, user, cart int64, lock bool) error {
-	query := `SELECT shipping_mode,COALESCE(pilot_user_id,0),COALESCE(pilot_variant_id,0),COALESCE(pilot_order_id,0),published_at IS NOT NULL FROM marketplace_policy_settings WHERE id`
+	query := `SELECT CASE WHEN EXISTS(SELECT 1 FROM marketplace_checkout_health WHERE id) THEN 'automatic' ELSE shipping_mode END,
+		COALESCE(pilot_user_id,0),COALESCE(pilot_variant_id,0),COALESCE(pilot_order_id,0),published_at IS NOT NULL FROM marketplace_policy_settings WHERE id`
 	if lock {
 		query += " FOR UPDATE"
 	}
@@ -154,7 +155,7 @@ func checkPolicyCheckout(ctx context.Context, tx pgx.Tx, user, cart int64, lock 
 	if err := tx.QueryRow(ctx, query).Scan(&mode, &allowedUser, &variant, &order, &published); err != nil {
 		return err
 	}
-	if !published || mode != "pilot" && mode != "live" {
+	if !published || mode != "pilot" && mode != "live" && mode != "automatic" {
 		return ports.ErrDeliveryUnavailable
 	}
 	var count, quantity int

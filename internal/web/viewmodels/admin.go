@@ -102,6 +102,7 @@ type ProductVariant struct {
 	ID, Name, SKU, PriceCents, CompareAtCents, Available, Reserved, Status string
 	Price, CompareAt, Discount, StockMessage                               string
 	HasCompareAt, InStock                                                  bool
+	CheckoutBlocked                                                        bool
 }
 
 type AdminInventory struct {

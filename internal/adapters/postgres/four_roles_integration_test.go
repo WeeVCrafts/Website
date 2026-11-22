@@ -234,6 +234,7 @@ func TestPrivateSellerConfirmationsScopeIdempotencyAndLifecycle(t *testing.T) {
 	one := newCommerceFixture(t, pool, 1, 4)
 	two := newCommerceFixture(t, pool, 1, 4)
 	admin := roleFixture(t, pool, "admin")
+	shippingSupport := roleFixture(t, pool, "shipping_support")
 	super := roleFixture(t, pool, "super_admin")
 	customer := one.userIDs[0]
 	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'seller'),($2,'seller'),($3,'customer')`, one.ownerID, two.ownerID, customer); err != nil {
@@ -269,6 +270,13 @@ func TestPrivateSellerConfirmationsScopeIdempotencyAndLifecycle(t *testing.T) {
 	id, err := service.Create(ctx, admin, ticket.ID, sellerOne, "Please confirm dispatch", key)
 	if err != nil {
 		t.Fatal(err)
+	}
+	shippingQueue, err := service.Queue(ctx, shippingSupport, ticket.ID, false, "open", 0)
+	if err != nil || len(shippingQueue) != 1 || shippingQueue[0].ID != id {
+		t.Fatalf("shipping support could not view its coordination queue: %#v, %v", shippingQueue, err)
+	}
+	if err := managementAuthorize(ctx, pool, shippingSupport, "settings"); !errors.Is(err, ports.ErrForbidden) {
+		t.Fatalf("shipping support acquired settings permissions: %v", err)
 	}
 	if err = service.Close(ctx, admin, id, "Premature outcome before seller confirmation"); !errors.Is(err, ports.ErrSupportState) {
 		t.Fatal("open request closed before reply", err)

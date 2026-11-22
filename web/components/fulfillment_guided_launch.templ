@@ -5,6 +5,38 @@ import (
  "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
+templ GuidedCheckoutChecks(p viewmodels.MarketplacePage) {
+ <p>Eligible product options open to all customers automatically when these checks pass.</p>
+ if !p.CheckoutCheckedAt.IsZero() {
+  <p>Last recorded check <time datetime={p.CheckoutCheckedAt.UTC().Format("2006-01-02T15:04:05Z")}>{p.CheckoutCheckedAt.UTC().Format("2 Jan 2006 15:04 UTC")}</time></p>
+ }
+ <ul class="guided-checklist">
+  for _, check := range p.CheckoutChecks {
+   <li><strong>{check.Label}</strong> <span>{check.Status}</span>
+    if check.Status!="Passed" {
+     <p>{check.Next}</p>
+    }
+   </li>
+  }
+ </ul>
+ <p><a href={templ.SafeURL(guidedStepURL(p,"policy"))}>Review returns policy</a></p>
+ <form class="marketplace-form" data-fulfillment-setup-action="check_checkout_health" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+  @MarketplaceFields(p,"check_checkout_health") @SetupErrors(p,"check_checkout_health")
+  <button type="submit">Check again</button>
+ </form>
+ if p.CheckoutPaused {
+  <form class="marketplace-form" data-fulfillment-setup-action="resume_checkout" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+   @MarketplaceFields(p,"resume_checkout") @SetupErrors(p,"resume_checkout")
+   @GuidedLaunchReason(p,"resume_checkout","Reason","Resume new orders when the readiness checks pass","Resume checkout")
+  </form>
+ } else {
+  <form class="marketplace-form" data-fulfillment-setup-action="pause_shipping" method="post" action={templ.SafeURL(p.ActionPath)} novalidate>
+   @MarketplaceFields(p,"pause_shipping") @SetupErrors(p,"pause_shipping")
+   @GuidedLaunchReason(p,"pause_shipping","Reason","Pause new checkout and bookings while existing reconciliation continues","Pause checkout and bookings")
+  </form>
+ }
+}
+
 templ GuidedLaunchStep(p viewmodels.MarketplacePage) {
  <a href={templ.SafeURL(guidedStepURL(p,"review"))}>← Back to review</a>
  if p.SetupStep=="policy" {

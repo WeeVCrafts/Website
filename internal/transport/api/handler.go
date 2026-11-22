@@ -390,7 +390,7 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request, noPayment boo
 			return
 		}
 		if errors.Is(err, ports.ErrDeliveryUnavailable) {
-			writeError(w, http.StatusUnprocessableEntity, "DELIVERY_UNAVAILABLE", "Delivery is unavailable for this PIN code. Choose another Indian delivery address.")
+			writeError(w, http.StatusUnprocessableEntity, "DELIVERY_UNAVAILABLE", "An item or its delivery is unavailable. Your cart is saved. Review your items and delivery PIN code.")
 			return
 		}
 		if errors.Is(err, ports.ErrInvalidState) {

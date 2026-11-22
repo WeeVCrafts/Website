@@ -122,6 +122,20 @@ periodic scheduling.
 
 ## Invoices and live activation
 
+Production checkout uses the existing `WECRATFS_CHECKOUT_ENABLED` switch and
+opens eligible options to all customers automatically. Use **Super Admin →
+Fulfillment → Checkout readiness** to review the active checks or request a
+retry. A published returns policy, verified seller pickup and invoice details,
+valid parcel measurements, stock, and current provider checks are required.
+Razorpay order access, the Shiprocket pickup list and wallet balance are checked
+with read-only requests. The webhook check reports configured signing secrets.
+Verify delivery of signed callbacks separately in staging.
+
+The worker refreshes results every minute. Results expire after five minutes;
+missing or failed checks stop affected new purchases while existing payment and
+shipment reconciliation continues. An explicit Super Admin pause also stops new
+bookings until resumed. Existing pilot records remain available for audit.
+
 Super Admin verifies each seller's legal name, address, registration, state,
 invoice prefix and each variant's HSN/tax rate. Catalog prices are tax-inclusive.
 The platform issues separate invoices on the seller's behalf using immutable

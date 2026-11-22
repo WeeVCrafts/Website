@@ -58,8 +58,20 @@ func commerceReadinessMissing(x ports.SellerReadinessOption) string {
 	if x.Stock <= 0 {
 		missing = append(missing, "stock")
 	}
+	if !x.InvoiceReady {
+		missing = append(missing, "business details")
+	}
+	if !x.TaxReady {
+		missing = append(missing, "tax details")
+	}
+	if !x.PickupReady || x.LiveBlocker == "pickup" {
+		missing = append(missing, "WeevCrafts pickup verification")
+	}
 	if len(missing) == 0 {
-		return "Ready for checkout"
+		if x.LiveCheckout {
+			return "Available for checkout"
+		}
+		return "Waiting for WeevCrafts to verify checkout"
 	}
 	return "Missing: " + strings.Join(missing, ", ")
 }
@@ -74,7 +86,13 @@ func commerceOptionStatus(x ports.SellerReadinessOption) string {
 	if x.Stock <= 0 {
 		return "Out of stock"
 	}
-	return "Ready for checkout"
+	if !x.InvoiceReady || !x.TaxReady {
+		return "Action needed"
+	}
+	if x.LiveCheckout {
+		return "Available for checkout"
+	}
+	return "Waiting for WeevCrafts"
 }
 
 func commerceOptionStatusClass(x ports.SellerReadinessOption) string {
@@ -86,6 +104,9 @@ func commerceOptionStatusClass(x ports.SellerReadinessOption) string {
 	}
 	if x.Stock <= 0 {
 		return "danger"
+	}
+	if !x.LiveCheckout {
+		return "warning"
 	}
 	return "success"
 }
@@ -117,7 +138,7 @@ func commerceOptionTaxReturn(x ports.SellerReadinessOption) string {
 func commerceReadyCount(rows []ports.SellerReadinessOption) int {
 	count := 0
 	for _, r := range rows {
-		if r.ProductStatus == "approved" && r.ParcelReady() && r.Stock > 0 {
+		if r.LiveCheckout {
 			count++
 		}
 	}

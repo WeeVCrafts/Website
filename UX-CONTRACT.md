@@ -6,6 +6,13 @@ Seller Fulfillment links Operations and Setup. The seller submits invoice detail
 
 Checkout progresses from Delivery address to Review and pay. A quote reflects the current PIN, cart lines, prices and credits. Back navigation preserves form values. Recovery identifies the protected field or offers a route back to the saved cart. Only provider-confirmed transit estimates are shown. Payment verification uses the saved order reference and server payment state.
 
+Production seller Products, Fulfillment and customer purchase controls use the
+same checkout eligibility. Seller actions link to the relevant setup or inventory
+screen; marketplace checks belong to Super Admin. When checkout is unavailable,
+Buy Now is disabled and shoppers can keep items in their cart. Authorized staff
+see the action they can take, and shoppers see actionable delivery guidance
+without provider configuration details.
+
 Seller and Super Admin workspace guidance shares the portal task component. Catalog, inventory, orders, returns, support, publishing, finance and access workflows have contextual next actions. Read-only dashboards, reports and audit screens point to the relevant records. Existing record pages and forms retain their permission checks, confirmation and audit behavior.
 
 ## Fulfillment setup — 17 November 2026

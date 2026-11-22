@@ -7,7 +7,16 @@ import (
 
 templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
  <div class="guided-workspace">
-  if p.Setup.Query.VariantID==0 {
+  if p.AutomaticCheckout && (p.SetupStep=="readiness" || p.SetupStep=="policy") {
+   <header class="guided-heading"><h1>Checkout readiness</h1><a href={templ.SafeURL(p.OverviewURL())}>Back to products</a></header>
+   <div class="guided-task">
+    if p.SetupStep=="policy" {
+     @GuidedLaunchStep(p)
+    } else {
+     @GuidedCheckoutChecks(p)
+    }
+   </div>
+  } else if p.Setup.Query.VariantID==0 {
    if p.SetupStep=="invoice" || p.SetupStep=="pickup" {
     <header class="guided-heading"><div><h1>{p.Setup.Seller} fulfillment setup</h1><a href={templ.SafeURL(p.OverviewURL())}>Back to seller setup</a></div></header>
     <div class="guided-task">
@@ -76,6 +85,9 @@ templ MarketplaceSetupWorkspace(p viewmodels.MarketplacePage) {
 templ GuidedOverview(p viewmodels.MarketplacePage) {
  <div class="guided-overview-chrome"><strong>Fulfillment</strong><span><i class="material-symbols-outlined" aria-hidden="true">person</i>Super Admin</span></div>
  <nav class="guided-overview-tabs" aria-label="Fulfillment sections"><a href={templ.SafeURL(p.Root+"?tab=operations")}>Operations</a><a href={templ.SafeURL(p.SetupURL())} aria-current="page">Guided setup</a></nav>
+ if p.AutomaticCheckout {
+  @TaskGuidance("", "Checkout readiness", "Check marketplace integrations and resolve anything blocking customers from ordering.", p.SetupURL("step", "readiness"), "View checkout checks")
+ }
  <header class="guided-heading"><div><h1>Finish seller setup</h1><p>Choose a seller to verify shared details and review product exceptions.</p></div></header>
  <form class="guided-filters" method="get" action={templ.SafeURL(p.Root)}><input type="hidden" name="tab" value="setup"/>
   <label>Seller<select name="seller_id">@SetupOptions(p.Setup.Sellers,p.Setup.Query.SellerID,"All sellers")</select></label>
@@ -136,7 +148,11 @@ templ GuidedOverview(p viewmodels.MarketplacePage) {
    <a href={templ.SafeURL(p.SetupURL("seller_before",""))}>First seller page</a>
   }
  </nav>
- <p class="guided-footnote">Completing product setup does not automatically open checkout. Review stock, policy and the genuine delivery pilot before launch.</p>
+ if p.AutomaticCheckout {
+  <p class="guided-footnote">Eligible options open for checkout when marketplace integration checks pass.</p>
+ } else {
+  <p class="guided-footnote">Review product setup and the checkout controls for this environment.</p>
+ }
 }
 
 templ GuidedMissing(p viewmodels.MarketplacePage,key,label string) {
@@ -214,16 +230,27 @@ templ GuidedReview(p viewmodels.MarketplacePage) {
    if !p.CheckoutEnabled||!p.BookingsEnabled||!p.ShippingConfigured {
     <li>Production checkout, shipping bookings or the shipping connection is unavailable. Product setup can still be saved.</li>
    }
-   if p.Policy.ShippingMode!="live"||!p.CatalogIncludes(*p.Setup.Selected) {
-    <li>Complete a genuine prepaid delivery pilot, then select the approved launch catalog.</li>
+   if p.AutomaticCheckout {
+    if p.Setup.Selected.LiveBlocker=="pickup" {
+     <li>Confirm the saved pickup location and PIN still match Shiprocket. <a href={templ.SafeURL(guidedStepURL(p,"pickup"))}>Verify pickup</a></li>
+    } else if !p.PurchaseReady() {
+     <li><a href={templ.SafeURL(guidedStepURL(p,"readiness"))}>Review marketplace checkout checks</a>.</li>
+    }
+   } else if p.Policy.ShippingMode!="live"||!p.CatalogIncludes(*p.Setup.Selected) {
+    <li>Review the launch controls for this environment.</li>
    }
   </ul></div>
  }
  <div class="guided-actions">
-  if p.StepComplete("review") {
+  if p.AutomaticCheckout && p.StepComplete("review") {
+   <a class="guided-primary" href={templ.SafeURL(guidedStepURL(p,"readiness"))}>View checkout checks</a>
+  } else if p.StepComplete("review") {
    <a class="guided-primary" href={templ.SafeURL(guidedStepURL(p,"pilot"))}>Continue to pilot setup</a>
   } else {
    <a class="guided-primary" href={templ.SafeURL(guidedStepURL(p,p.FirstMissingStep()))}>Complete missing details →</a>
   }
- <a class="guided-secondary" href={templ.SafeURL(p.OverviewURL())}>Back to products</a></div><nav class="guided-utility-links" aria-label="Launch controls"><a href={templ.SafeURL(guidedStepURL(p,"launch"))}>Launch catalog</a><a href={templ.SafeURL(guidedStepURL(p,"pause"))}>Pause new shipping</a></nav>
+ <a class="guided-secondary" href={templ.SafeURL(p.OverviewURL())}>Back to products</a></div>
+ if !p.AutomaticCheckout {
+  <nav class="guided-utility-links" aria-label="Launch controls"><a href={templ.SafeURL(guidedStepURL(p,"launch"))}>Launch catalog</a><a href={templ.SafeURL(guidedStepURL(p,"pause"))}>Pause new shipping</a></nav>
+ }
 }

@@ -140,7 +140,7 @@ templ Document(p viewmodels.CustomerPage) {
               if (sku) sku.textContent = option.dataset.sku || "";
               detailQuantity?.dispatchEvent(new CustomEvent("detail:stock-change", {detail: limit}));
               document.querySelectorAll(".detail-actions button, .mobile-buy-bar button").forEach(function (button) {
-                button.disabled = !available;
+                button.disabled = !available || button.hasAttribute("data-buy-now") && option.dataset.checkoutBlocked === "true";
               });
             };
             select.addEventListener("change", updateVariant);
@@ -411,7 +411,7 @@ templ CheckoutSummaryItems(items []viewmodels.CartItem) {
             }
             <small>Qty { item.Quantity }</small>
             if item.CheckoutBlocked {
-              <small class="ui-field-error">Checkout is unavailable for this option.</small>
+              <small class="ui-field-error">This option can’t be purchased right now. Your cart is saved.</small>
             }
           </div><b>{ checkoutMoney("INR "+storefrontReadMoney(item.Product.PriceCents*int64(item.Quantity))) }</b></li>
         }
@@ -687,7 +687,7 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           if showVariantChoice(p.Product) {
             <fieldset class="product-variant-select"><label for="detail-variant">Choose an option</label><select id="detail-variant" name="variant_id" data-product-variant-select>
               for _, variant := range p.Product.Variants {
-                <option value={ variant.ID } data-price={ variant.Price } data-compare-at={ variant.CompareAt } data-discount={ variant.Discount } data-sku={ variant.SKU } data-stock-message={ variant.StockMessage } data-stock-limit={ fmt.Sprint(variantQuantityLimit(variant)) } selected?={ selectedProductVariant(variant, p.Product) }>{ components.CustomerOption(variant.Name) } · { variant.Price }</option>
+                <option value={ variant.ID } data-price={ variant.Price } data-compare-at={ variant.CompareAt } data-discount={ variant.Discount } data-sku={ variant.SKU } data-stock-message={ variant.StockMessage } data-stock-limit={ fmt.Sprint(variantQuantityLimit(variant)) } data-checkout-blocked={ fmt.Sprint(variant.CheckoutBlocked) } selected?={ selectedProductVariant(variant, p.Product) }>{ components.CustomerOption(variant.Name) } · { variant.Price }</option>
               }
             </select></fieldset>
           } else if len(p.Product.Variants) == 1 {
@@ -696,7 +696,7 @@ templ ProductDetail(p viewmodels.CustomerPage) {
           <div class="quantity-row"><label id="detail-quantity-label">Quantity <span class="quantity-control" role="group" aria-labelledby="detail-quantity-label" data-detail-quantity-controls data-stock-limit={ fmt.Sprint(productQuantityLimit(p.Product)) }><button type="button" aria-label={ "Decrease " + p.Product.Name + " quantity" } aria-disabled={ fmt.Sprint(productInitialQuantity(p) <= 1) } data-detail-quantity-decrease>-</button><output aria-live="polite">{ productInitialQuantity(p) }</output><button type="button" aria-label={ "Increase " + p.Product.Name + " quantity" } aria-disabled={ fmt.Sprint(productInitialQuantity(p) >= productQuantityLimit(p.Product)) } data-detail-quantity-increase>+</button></span></label><span class="stock"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><span data-selected-variant-stock>{ productStockMessage(p.Product) }</span></span></div>
           <p class="sr-only" data-detail-quantity-status role="status"></p>
           <input id="detail-quantity" type="hidden" name="quantity" value={fmt.Sprint(productInitialQuantity(p))}/>
-          <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
+          <div class="detail-actions"><button type="button" class="outline-button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span> Add to cart</button><button type="button" class="primary-button" data-buy-now hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock || productCheckoutBlocked(p.Product) }><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Buy now</button></div>
           if len(p.Product.Variants) > 0 {
             <form class="product-delivery-check" data-product-delivery action={ "/api/v1/products/" + p.Product.Slug + "/delivery" } method="get" novalidate hidden>
               <label for="product-delivery-pin">Check delivery</label>
@@ -764,7 +764,7 @@ templ ProductDetail(p viewmodels.CustomerPage) {
     if len(availableProducts(p.Products, p.Product.Slug, 4)) > 0 {
       <section class="container section">@SectionHeading("YOU MAY ALSO LIKE", "More to explore", "Keep exploring the beautiful things our makers make.")<div class="product-grid product-grid--four" data-backend-products="listing">@ProductCards(availableProducts(p.Products, p.Product.Slug, 4), true)</div></section>
     }
-    <div class="mobile-buy-bar"><div class="mobile-buy-price"><span data-mobile-price>{ p.Product.Price }</span><small>Selected option</small></div><button class="outline-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }>Add to cart</button><button class="primary-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }>Buy now</button></div>
+    <div class="mobile-buy-bar"><div class="mobile-buy-price"><span data-mobile-price>{ p.Product.Price }</span><small>Selected option</small></div><button class="outline-button" type="button" hx-post={ "/ui/cart/" + p.Product.Slug } hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock }>Add to cart</button><button class="primary-button" type="button" data-buy-now hx-post={ "/ui/cart/" + p.Product.Slug } hx-vals='{"intent":"buy"}' hx-include="#detail-quantity,#detail-variant" hx-target="#cart-count" hx-swap="none" hx-indicator="#ui-loading" hx-disabled-elt="this" disabled?={ !p.Product.InStock || productCheckoutBlocked(p.Product) }>Buy now</button></div>
     <section class="container seller-callout"><img src={ components.ProductImage(p.Product.ImageURL) } srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL,p.Product.ImageSrcSet) } sizes="(max-width:720px) calc(100vw - 32px), 520px" loading="lazy" alt={ "A piece from " + p.Product.Seller } width="520" height="360"/><div><p class="eyebrow">SELLER</p><h2>{ p.Product.Seller }</h2><p>This product is listed by { p.Product.Seller }.</p><a class="text-link" href={ sellerPath(p.Product) }>Visit the seller&apos;s storefront <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a></div></section>
   }
 }

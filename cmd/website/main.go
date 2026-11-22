@@ -92,7 +92,7 @@ func main() {
 		logger.Error("invalid Firebase configuration", "error", err)
 		os.Exit(1)
 	}
-	if err := cfg.ValidateSecurity(); err != nil {
+	if err := cfg.ValidateRuntimeSecurity(); err != nil {
 		logger.Error("invalid security configuration", "error", err)
 		os.Exit(1)
 	}
@@ -501,7 +501,7 @@ func main() {
 
 	var marketplaceGateway ports.ShippingGateway
 	var productDelivery ports.ProductDeliveryReader
-	if cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live" {
+	if (cfg.Shipping.Mode == "sandbox" || cfg.Shipping.Mode == "live") && cfg.ValidateShipping() == nil {
 		gateway := configuredShiprocket(cfg.Shipping)
 		if cfg.Shipping.Mode == "live" {
 			marketplaceGateway = gateway
@@ -623,6 +623,22 @@ func main() {
 		return marketplaceRepository.SendNotificationEmail(ctx, notificationID, orderEmails, cfg.PublicURL)
 	}
 	marketplaceHandler := &webHandlers.MarketplaceHandler{Repository: marketplaceRepository, Sessions: sessionService, ShippingConfigured: marketplaceGateway != nil, BookingsEnabled: marketplaceProcessor.BookingsEnabled, CheckoutEnabled: cfg.CheckoutEnabled}
+	if strings.EqualFold(cfg.Environment, "production") && !cfg.Staging {
+		settingsKey := checkoutSettingsKey(cfg)
+		if err := marketplaceRepository.InitializeAutomaticCheckout(startupContext, settingsKey); err != nil {
+			logger.Error("initialize checkout readiness", "error", err)
+			os.Exit(1)
+		}
+		worker.RegisterDurablePeriodic(workerContext, checkoutCheckInterval, checkoutCheckJob, marketplaceRepository, durableHandlers, func(ctx context.Context) error {
+			return refreshCheckoutHealth(ctx, cfg, settingsKey, marketplaceRepository, paymentGateway, marketplaceGateway)
+		})
+		if err := marketplaceRepository.EnqueueScheduled(startupContext, checkoutCheckJob, checkoutCheckKey(time.Now())); err != nil {
+			logger.Warn("initial checkout check could not be queued")
+		}
+		marketplaceHandler.RequestCheckoutCheck = func(ctx context.Context) error {
+			return marketplaceRepository.EnqueueScheduled(ctx, checkoutCheckJob, "manual:"+checkoutCheckKey(time.Now()))
+		}
+	}
 	marketplaceHandler.Storage = mediaStorage
 	if checker, ok := marketplaceGateway.(interface {
 		PickupPostcodes(context.Context) (map[string]string, error)

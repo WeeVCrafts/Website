@@ -51,6 +51,8 @@ type ShippingReadiness struct {
 	PickupReady, InvoiceReady, TaxReady, Classified bool
 	Stock                                           int
 	Selected                                        bool
+	LiveCheckout                                    bool
+	LiveBlocker                                     string
 }
 
 func (r ShippingReadiness) Ready() bool {

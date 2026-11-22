@@ -2418,13 +2418,13 @@ func (h *LivePortalHandler) sellerProducts(r *http.Request, sellerID int64, quer
 			product.Buyability = nextStep
 			switch {
 			case checkoutEnabled && ready > 0 && ready == variants:
-				product.Buyability = "Ready to buy"
+				product.Buyability = "Available for checkout"
 			case checkoutEnabled && ready > 0:
 				product.Buyability = fmt.Sprintf("%d of %d options ready to buy", ready, variants)
 			case !checkoutEnabled && nextStep == "Awaiting marketplace launch":
 				product.Buyability = "Marketplace checkout paused"
 			}
-			if ready == 0 && nextStep != "Awaiting marketplace launch" {
+			if ready == 0 && nextStep != "Awaiting marketplace launch" && !strings.HasPrefix(nextStep, "Waiting for WeevCrafts") {
 				product.ReadinessAction = "/seller-admin/setup"
 				if nextStep == "Out of stock" {
 					product.ReadinessAction = "/seller-admin/inventory?q=" + url.QueryEscape(name)

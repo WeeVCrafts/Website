@@ -35,6 +35,7 @@ type MarketplaceHandler struct {
 	Sessions                            *applicationauth.SessionService
 	ShippingConfigured, BookingsEnabled bool
 	CheckoutEnabled                     bool
+	RequestCheckoutCheck                func(context.Context) error
 	PickupChecker                       interface {
 		PickupPostcodes(context.Context) (map[string]string, error)
 	}
@@ -213,7 +214,13 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 						return
 					}
 					e = h.uploadClaimEvidence(r.Context(), session.UserID, c.CaseID, r.MultipartForm.File["evidence"][0])
-				case "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
+				case "check_checkout_health":
+					if view.Role != "super_admin" || h.RequestCheckoutCheck == nil {
+						http.Error(w, "Forbidden", http.StatusForbidden)
+						return
+					}
+					e = h.RequestCheckoutCheck(r.Context())
+				case "publish_policy", "pause_shipping", "resume_checkout", "configure_pilot", "classify_variant", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 					if f.Get("confirmed") != "yes" {
 						http.Error(w, "Confirm the policy or shipping change", 422)
 						return
@@ -415,6 +422,10 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 			p.SetupValues = setupValues
 			p.SetupErrors = setupErrors
 			p.SetupAction = setupAction
+			if err := h.loadCheckoutChecks(r.Context(), &p); err != nil {
+				marketplaceHTTPError(w, err)
+				return
+			}
 			if err := h.loadSetup(r.Context(), session.UserID, &p); err != nil {
 				marketplaceHTTPError(w, err)
 				return
@@ -449,6 +460,8 @@ func (h *MarketplaceHandler) Middleware(next http.Handler) http.Handler {
 					p.Notice = "Seller pickup verified with Shiprocket and saved."
 				case "classify_variant":
 					p.Notice = "Product return classification saved."
+				case "check_checkout_health":
+					p.Notice = "Readiness check requested. Refresh this page in a moment for the latest result."
 				default:
 					p.Notice = "Shipping policy configuration saved."
 				}

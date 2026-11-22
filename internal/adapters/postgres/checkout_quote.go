@@ -151,5 +151,8 @@ func (r *CommerceRepository) QuoteOrderForDelivery(ctx context.Context, userID, 
 		}
 		return err
 	})
+	if r.policyCheckoutRequired && errors.Is(err, ports.ErrDeliveryUnavailable) {
+		r.rememberCheckoutWait(ctx, userID, cartID)
+	}
 	return quote, err
 }

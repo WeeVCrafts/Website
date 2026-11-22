@@ -10,6 +10,13 @@ import (
 
 templ CompanySupport(p viewmodels.CompanySupportPage) {
  @AdminDocument(p.Admin) {
+  if p.CheckoutPickupIssue {
+   if p.Admin.CanSecurity {
+    @components.TaskGuidance("", "Seller pickup verification needed", "Check the saved pickup location against Shiprocket so eligible products can open for checkout.", "/super-admin/fulfillment?step=readiness", "View checkout checks")
+   } else {
+    <section class="admin-panel" aria-label="Checkout guidance"><h2>Seller pickup verification needed</h2><p>Ask Super Admin to verify the affected seller’s registered pickup location and PIN in Fulfillment Setup.</p></section>
+   }
+  }
   if p.Admin.CanSecurity {
 @StatGrid(p.Admin)
 <p><a class="admin-button" href={p.Admin.PortalRoot+"/support/email"}>Email delivery history</a></p>

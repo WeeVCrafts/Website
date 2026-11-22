@@ -98,8 +98,10 @@ Approved information can be published independently of new checkout:
 `WECRATFS_CHECKOUT_ENABLED` defaults to false in every environment. While false,
 new checkout pages and APIs return HTTP 503 before order/reservation handlers run.
 Existing orders, payment recovery and signed provider callbacks remain available.
-Enabling checkout in production requires approved content and nonempty Razorpay
-order and webhook credentials; live/test key safeguards continue to apply.
+After the production switch is enabled, eligible options open automatically when
+the returns policy, seller setup, and current provider checks pass. Super Admin
+can inspect the results in Fulfillment → Checkout readiness. Approved content,
+live Razorpay credentials and webhook configuration are required.
 
 Production `/health/metrics` requires the dedicated bearer token configured as
 `WECRATFS_METRICS_TOKEN` (at least 32 characters). It preserves existing search

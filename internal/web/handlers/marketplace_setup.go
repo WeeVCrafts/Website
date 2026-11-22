@@ -43,7 +43,7 @@ func setupPostContext(values url.Values) url.Values {
 
 func isMarketplaceSetupAction(action string) bool {
 	switch action {
-	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "save_setup_parcel", "save_setup_tax", "publish_policy", "pause_shipping", "configure_pilot", "classify_variant", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
+	case "save_shipping_profile", "save_invoice_profile", "save_tax_profile", "save_setup_parcel", "save_setup_tax", "publish_policy", "pause_shipping", "resume_checkout", "check_checkout_health", "configure_pilot", "classify_variant", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 		return true
 	}
 	return false
@@ -89,9 +89,12 @@ func parseTaxPercent(values url.Values) (int, error) {
 
 func validateSetup(action string, f url.Values) map[string]string {
 	e := map[string]string{}
+	if action == "check_checkout_health" {
+		return e
+	}
 	minimum := 4
 	switch action {
-	case "publish_policy", "pause_shipping", "configure_pilot", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
+	case "publish_policy", "pause_shipping", "resume_checkout", "configure_pilot", "configure_live_catalog", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
 		minimum = 10
 	}
 	if action != "classify_variant" && action != "save_setup_parcel" && len(strings.TrimSpace(f.Get("reason"))) < minimum {
@@ -191,6 +194,16 @@ func (h *MarketplaceHandler) loadSetup(ctx context.Context, actor int64, p *view
 	}
 	p.Setup = &d
 	p.States = domain.IndianStates()
+	if p.AutomaticCheckout {
+		switch q.Get("step") {
+		case "pilot", "launch", "readiness", "pause":
+			p.SetupStep = "readiness"
+			return nil
+		case "policy":
+			p.SetupStep = "policy"
+			return nil
+		}
+	}
 	if d.Query.VariantID > 0 {
 		p.SetupStep = q.Get("step")
 		switch p.SetupStep {

@@ -8,10 +8,20 @@ import (
 
 // ValidateSecurity rejects development defaults before connecting or serving.
 func (c Config) ValidateSecurity() error {
+	return c.validateSecurity(false)
+}
+
+// ValidateRuntimeSecurity lets the operator portal report incomplete commerce
+// configuration. The checkout worker and adapter initialization fail closed.
+func (c Config) ValidateRuntimeSecurity() error {
+	return c.validateSecurity(strings.EqualFold(c.Environment, "production") && !c.Staging)
+}
+
+func (c Config) validateSecurity(reportCommerceSetup bool) error {
 	if err := c.SMS.Validate(c.Environment, c.Staging); err != nil {
 		return err
 	}
-	if err := c.ValidateShipping(); err != nil {
+	if err := c.ValidateShipping(); err != nil && !reportCommerceSetup {
 		return err
 	}
 	if c.OperationalMetricsToken != "" && len(c.OperationalMetricsToken) < 32 {
@@ -31,7 +41,7 @@ func (c Config) ValidateSecurity() error {
 	if !strings.EqualFold(c.Environment, "production") {
 		return nil
 	}
-	if c.CheckoutEnabled {
+	if c.CheckoutEnabled && !reportCommerceSetup {
 		if !c.PublicContentApproved {
 			return errors.New("checkout requires approved public content")
 		}

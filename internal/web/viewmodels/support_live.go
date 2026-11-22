@@ -35,6 +35,7 @@ type CompanySupportPage struct {
 	RequestKey             string
 	QueueStatus, QueueNext string
 	EmailHistory           EmailDeliveryHistory
+	CheckoutPickupIssue    bool
 }
 
 type EmailDeliveryHistory struct {

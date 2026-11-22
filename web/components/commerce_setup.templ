@@ -134,7 +134,7 @@ templ CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) {
     </div>
     <div class="commerce-kpi-stat is-ready">
      <span class="commerce-kpi-num">{ fmt.Sprint(commerceReadyCount(p.Rows)) }</span>
-     <span class="commerce-kpi-label">Ready for Checkout</span>
+     <span class="commerce-kpi-label">Available for checkout</span>
     </div>
     if commerceNeedsParcelCount(p.Rows) > 0 {
      <div class="commerce-kpi-stat is-warning">
@@ -199,7 +199,7 @@ templ CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) {
           <span class="spec-val">{ commerceOptionTaxReturn(row) }</span>
          </div>
         </div>
-        if commerceReadinessMissing(row) != "Ready for checkout" {
+        if !row.LiveCheckout {
          <div class="commerce-option-alert">
           <span class="material-symbols-outlined" aria-hidden="true">info</span>
           <span>{ commerceReadinessMissing(row) }</span>

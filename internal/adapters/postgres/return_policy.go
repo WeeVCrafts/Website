@@ -31,6 +31,16 @@ func (r *MarketplaceRepository) ConfigurePolicy(ctx context.Context, actor int64
 			return err
 		}
 		switch action {
+		case "configure_pilot", "activate_ready_catalog", "activate_pilot_seller", "restore_limited_catalog":
+			var automatic bool
+			if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM marketplace_checkout_health WHERE id)`).Scan(&automatic); err != nil {
+				return err
+			}
+			if automatic {
+				return ports.ErrInvalidState
+			}
+		}
+		switch action {
 		case "publish_policy":
 			content, _ := json.Marshal(domain.ReturnPolicySections())
 			if _, err = tx.Exec(ctx, `INSERT INTO marketplace_policy_versions(version,content,published_at,published_by) VALUES($1,$2,now(),$3) ON CONFLICT(version) DO NOTHING`, domain.ReturnPolicyVersion, content, actor); err != nil {
@@ -38,7 +48,16 @@ func (r *MarketplaceRepository) ConfigurePolicy(ctx context.Context, actor int64
 			}
 			_, err = tx.Exec(ctx, `UPDATE marketplace_policy_settings SET version=$1,published_at=COALESCE(published_at,now()),published_by=$2,updated_at=now() WHERE id`, domain.ReturnPolicyVersion, actor)
 		case "pause_shipping":
-			_, err = tx.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode='off',updated_at=now() WHERE id`)
+			_, err = tx.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode='off',checkout_paused=true,updated_at=now() WHERE id`)
+		case "resume_checkout":
+			result, e := tx.Exec(ctx, `UPDATE marketplace_policy_settings SET shipping_mode='live',checkout_paused=false,updated_at=now()
+				WHERE id AND checkout_paused AND EXISTS(SELECT 1 FROM marketplace_checkout_health WHERE id)`)
+			if e != nil {
+				return e
+			}
+			if result.RowsAffected() != 1 {
+				return ports.ErrInvalidState
+			}
 		case "activate_ready_catalog":
 			result, e := tx.Exec(ctx, `UPDATE marketplace_policy_settings m
 				SET shipping_mode='live',live_catalog_scope='ready',live_catalog_seller_id=NULL,updated_at=now()
@@ -115,7 +134,7 @@ func (r *MarketplaceRepository) ConfigureLiveCatalog(ctx context.Context, actor,
 			return ports.ErrForbidden
 		}
 		var published bool
-		if err = tx.QueryRow(ctx, `SELECT published_at IS NOT NULL
+		if err = tx.QueryRow(ctx, `SELECT published_at IS NOT NULL AND NOT EXISTS(SELECT 1 FROM marketplace_checkout_health WHERE id)
 			FROM marketplace_policy_settings WHERE id FOR UPDATE`).Scan(&published); err != nil {
 			return err
 		}

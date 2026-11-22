@@ -31,8 +31,10 @@ func (r *MarketplaceRepository) SellerReadiness(ctx context.Context, actor, befo
 			f.shipping_weight_g,f.shipping_length_cm,f.shipping_width_cm,f.shipping_height_cm,
 			f.pickup_ready,f.invoice_ready,f.tax_ready,f.classified,f.stock,f.selected,
 			COALESCE(review.id,0),COALESCE(review.status,''),
-			COALESCE(f.image_url,''),COALESCE(f.has_custom_tax,false),COALESCE(f.return_class,'')
+			COALESCE(f.image_url,''),COALESCE(f.has_custom_tax,false),COALESCE(f.return_class,''),
+			COALESCE(o.fulfillment_ready AND o.live_allowed AND o.stock>0,false),COALESCE(o.live_blocker,'')
 		FROM marketplace_option_setup_facts f
+		LEFT JOIN marketplace_checkout_options o ON o.variant_id=f.variant_id
 		LEFT JOIN LATERAL (
 			SELECT id,status FROM marketplace_setup_submissions
 			WHERE seller_id=f.seller_id AND (variant_id=f.variant_id OR kind='invoice')
@@ -46,7 +48,7 @@ func (r *MarketplaceRepository) SellerReadiness(ctx context.Context, actor, befo
 	defer rows.Close()
 	for rows.Next() {
 		var x ports.SellerReadinessOption
-		if err = rows.Scan(&x.VariantID, &x.ProductID, &x.SellerID, &x.Product, &x.SKU, &x.Seller, &x.ProductStatus, &x.WeightGrams, &x.LengthCM, &x.WidthCM, &x.HeightCM, &x.PickupReady, &x.InvoiceReady, &x.TaxReady, &x.Classified, &x.Stock, &x.Selected, &x.ReviewID, &x.ReviewStatus, &x.ImageURL, &x.HasCustomTax, &x.ReturnClass); err != nil {
+		if err = rows.Scan(&x.VariantID, &x.ProductID, &x.SellerID, &x.Product, &x.SKU, &x.Seller, &x.ProductStatus, &x.WeightGrams, &x.LengthCM, &x.WidthCM, &x.HeightCM, &x.PickupReady, &x.InvoiceReady, &x.TaxReady, &x.Classified, &x.Stock, &x.Selected, &x.ReviewID, &x.ReviewStatus, &x.ImageURL, &x.HasCustomTax, &x.ReturnClass, &x.LiveCheckout, &x.LiveBlocker); err != nil {
 			return nil, 0, err
 		}
 		list = append(list, x)

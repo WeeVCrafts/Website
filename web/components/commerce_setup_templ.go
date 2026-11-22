@@ -479,7 +479,7 @@ func CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</span> <span class=\"commerce-kpi-label\">Ready for Checkout</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</span> <span class=\"commerce-kpi-label\">Available for checkout</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -758,7 +758,7 @@ func CommerceSetupWorkspace(p viewmodels.CommerceSetupPage) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					if commerceReadinessMissing(row) != "Ready for checkout" {
+					if !row.LiveCheckout {
 						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, "<div class=\"commerce-option-alert\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">info</span> <span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err

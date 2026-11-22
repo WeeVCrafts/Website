@@ -23,7 +23,10 @@ func managementAuthorize(ctx context.Context, db interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }, actorID int64, section string) error {
 	var allowed bool
-	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND (ur.role_slug='super_admin' OR (ur.role_slug='admin' AND $2 NOT IN ('settings','customers'))))`, actorID, section).Scan(&allowed); err != nil {
+	if err := db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id
+		WHERE u.id=$1 AND u.status='active' AND (ur.role_slug='super_admin'
+			OR (ur.role_slug='admin' AND $2 NOT IN ('settings','customers'))
+			OR (ur.role_slug='shipping_support' AND $2='support')))`, actorID, section).Scan(&allowed); err != nil {
 		return err
 	}
 	if !allowed {

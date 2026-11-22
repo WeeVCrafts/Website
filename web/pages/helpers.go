@@ -986,7 +986,7 @@ func productDescription(product viewmodels.Product) string {
 
 func productStockMessage(product viewmodels.Product) string {
 	for _, variant := range product.Variants {
-		if selectedProductVariant(variant, product) && variant.StockMessage != "" {
+		if (selectedProductVariant(variant, product) || len(product.Variants) == 1) && variant.StockMessage != "" {
 			return variant.StockMessage
 		}
 	}
@@ -994,6 +994,15 @@ func productStockMessage(product viewmodels.Product) string {
 		return "In stock"
 	}
 	return "Currently unavailable"
+}
+
+func productCheckoutBlocked(product viewmodels.Product) bool {
+	for _, variant := range product.Variants {
+		if selectedProductVariant(variant, product) || len(product.Variants) == 1 {
+			return variant.CheckoutBlocked
+		}
+	}
+	return false
 }
 
 func firstProductVariant(product viewmodels.Product) viewmodels.ProductVariant {

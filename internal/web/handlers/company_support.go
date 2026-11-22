@@ -89,6 +89,7 @@ func (h *LivePortalHandler) serveCompanySupport(w http.ResponseWriter, r *http.R
 			support.SelectedCase = viewmodels.SupportPortalCase{}
 		}
 		page := viewmodels.CompanySupportPage{Support: support, RequestKey: rand.Text()}
+		_ = h.queryRow(r, `SELECT EXISTS(SELECT 1 FROM marketplace_checkout_issue WHERE owner_id=$1 AND code='pickup')`, session.UserID).Scan(&page.CheckoutPickupIssue)
 		if support.SelectedCase.DatabaseID > 0 && strings.TrimSpace(support.SelectedCase.Order) != "" {
 			w.Header().Set("Cache-Control", "private, no-store")
 			page.EmailHistory = h.loadEmailHistory(r, support.SelectedCase.Order, root+"/support", url.Values{"ticket_id": {strconv.FormatInt(support.SelectedCase.DatabaseID, 10)}})

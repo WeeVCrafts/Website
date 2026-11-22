@@ -4,6 +4,7 @@ import (
 	domain "github.com/wecratfs/commerce/internal/domain/commerce"
 	"github.com/wecratfs/commerce/internal/ports"
 	"net/url"
+	"time"
 )
 
 type MarketplacePickupChoice struct{ Name, PIN string }
@@ -32,6 +33,14 @@ type MarketplacePage struct {
 	SetupContext                                   url.Values
 	SetupAction                                    string
 	SetupStep                                      string
+	AutomaticCheckout                              bool
+	CheckoutPaused                                 bool
+	CheckoutCheckedAt                              time.Time
+	CheckoutChecks                                 []CheckoutCheck
+}
+
+type CheckoutCheck struct {
+	Label, Status, Next string
 }
 
 type GuidedSetupStep struct {
@@ -109,6 +118,9 @@ func (p MarketplacePage) PurchaseReady() bool {
 }
 
 func (p MarketplacePage) CatalogIncludes(option ports.ShippingReadiness) bool {
+	if p.AutomaticCheckout {
+		return option.LiveCheckout
+	}
 	switch p.Policy.LiveCatalogScope {
 	case "ready":
 		return true
@@ -120,6 +132,9 @@ func (p MarketplacePage) CatalogIncludes(option ports.ShippingReadiness) bool {
 }
 
 func (p MarketplacePage) LiveOptionAllowed(option ports.ShippingReadiness) bool {
+	if p.AutomaticCheckout {
+		return p.CheckoutEnabled && option.LiveCheckout
+	}
 	return p.CatalogIncludes(option) && p.CheckoutEnabled && p.BookingsEnabled &&
 		p.ShippingConfigured && p.Policy.PublishedAt != nil && p.Policy.ShippingMode == "live"
 }

@@ -93,7 +93,7 @@ func (r *MarketplaceRepository) FulfillmentSetup(ctx context.Context, actor int6
 			return d, err
 		}
 		var readiness ports.ShippingReadiness
-		err = r.pool.QueryRow(ctx, `SELECT variant_id,seller_id,product,sku,seller,shipping_weight_g,shipping_length_cm,shipping_width_cm,shipping_height_cm,pickup_ready,invoice_ready,tax_ready,classified,stock,selected FROM marketplace_variant_readiness WHERE variant_id=$1`, q.VariantID).Scan(&readiness.VariantID, &readiness.SellerID, &readiness.Product, &readiness.SKU, &readiness.Seller, &readiness.WeightGrams, &readiness.LengthCM, &readiness.WidthCM, &readiness.HeightCM, &readiness.PickupReady, &readiness.InvoiceReady, &readiness.TaxReady, &readiness.Classified, &readiness.Stock, &readiness.Selected)
+		err = r.pool.QueryRow(ctx, `SELECT variant_id,seller_id,product,sku,seller,shipping_weight_g,shipping_length_cm,shipping_width_cm,shipping_height_cm,pickup_ready,invoice_ready,tax_ready,classified,stock,selected,fulfillment_ready AND live_allowed AND stock>0,live_blocker FROM marketplace_checkout_options WHERE variant_id=$1`, q.VariantID).Scan(&readiness.VariantID, &readiness.SellerID, &readiness.Product, &readiness.SKU, &readiness.Seller, &readiness.WeightGrams, &readiness.LengthCM, &readiness.WidthCM, &readiness.HeightCM, &readiness.PickupReady, &readiness.InvoiceReady, &readiness.TaxReady, &readiness.Classified, &readiness.Stock, &readiness.Selected, &readiness.LiveCheckout, &readiness.LiveBlocker)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return d, err
 		}

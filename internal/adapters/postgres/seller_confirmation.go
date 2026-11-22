@@ -9,7 +9,7 @@ import (
 	"github.com/wecratfs/commerce/internal/ports"
 )
 
-const confirmationCompany = `EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('admin','super_admin'))`
+const confirmationCompany = `EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug IN ('admin','shipping_support','super_admin'))`
 const confirmationSeller = `s.owner_user_id=$1 AND s.status='active' AND EXISTS(SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id WHERE u.id=$1 AND u.status='active' AND ur.role_slug='seller')`
 
 func (r *CommerceRepository) CaseSellers(ctx context.Context, actor, ticket int64) ([]domain.CaseSeller, error) {

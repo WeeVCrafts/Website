@@ -75,6 +75,11 @@ func (h *MarketplaceHandler) serveCommerceSetup(w http.ResponseWriter, r *http.R
 			marketplaceHTTPError(w, err)
 			return
 		}
+		if !h.CheckoutEnabled {
+			for i := range p.Rows {
+				p.Rows[i].LiveCheckout = false
+			}
+		}
 		if p.Selected == nil {
 			p.Kind = r.URL.Query().Get("kind")
 			p.VariantID, _ = strconv.ParseInt(r.URL.Query().Get("variant_id"), 10, 64)

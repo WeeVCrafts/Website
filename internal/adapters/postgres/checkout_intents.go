@@ -53,6 +53,14 @@ func (r *CommerceRepository) CreateCheckoutIntent(ctx context.Context, userID, v
 		if available < quantity {
 			return ports.ErrInsufficientStock
 		}
+		if r.policyCheckoutRequired {
+			if err := tx.QueryRow(ctx, `SELECT marketplace_option_can_checkout($1,$2,$3::integer)`, variantID, userID, quantity).Scan(&allowed); err != nil {
+				return err
+			}
+			if !allowed {
+				return ports.ErrDeliveryUnavailable
+			}
+		}
 		err = tx.QueryRow(ctx, `INSERT INTO carts(user_id,purpose,checkout_token,intent_request_key,expires_at) VALUES($1,'buy_now',$2,$3,NOW()+INTERVAL '24 hours') RETURNING id,expires_at`, userID, token, key).Scan(&result.CartID, &result.ExpiresAt)
 		if err != nil {
 			return err
