@@ -32,6 +32,15 @@ func TestDatabasePoolConfig_TuningDefaults(t *testing.T) {
 	if poolCfg.HealthCheckPeriod != time.Minute {
 		t.Errorf("expected HealthCheckPeriod=1m, got %v", poolCfg.HealthCheckPeriod)
 	}
+	if poolCfg.ConnConfig.ConnectTimeout != 5*time.Second {
+		t.Errorf("expected ConnectTimeout=5s, got %v", poolCfg.ConnConfig.ConnectTimeout)
+	}
+	if poolCfg.ConnConfig.RuntimeParams["statement_timeout"] != "15000" {
+		t.Errorf("expected statement_timeout=15000, got %s", poolCfg.ConnConfig.RuntimeParams["statement_timeout"])
+	}
+	if poolCfg.ConnConfig.RuntimeParams["idle_in_transaction_session_timeout"] != "10000" {
+		t.Errorf("expected idle_in_transaction_session_timeout=10000, got %s", poolCfg.ConnConfig.RuntimeParams["idle_in_transaction_session_timeout"])
+	}
 }
 
 func TestDatabasePoolConfig_ZeroDefaults(t *testing.T) {

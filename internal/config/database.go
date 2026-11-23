@@ -29,6 +29,12 @@ func (c Config) DatabasePoolConfig() (*pgxpool.Config, error) {
 	pool.MaxConnLifetime = time.Hour
 	pool.MaxConnIdleTime = 15 * time.Minute
 	pool.HealthCheckPeriod = time.Minute
+	pool.ConnConfig.ConnectTimeout = 5 * time.Second
+	if pool.ConnConfig.RuntimeParams == nil {
+		pool.ConnConfig.RuntimeParams = make(map[string]string)
+	}
+	pool.ConnConfig.RuntimeParams["statement_timeout"] = "15000"
+	pool.ConnConfig.RuntimeParams["idle_in_transaction_session_timeout"] = "10000"
 	if c.DatabaseCACert == "" {
 		return pool, nil
 	}

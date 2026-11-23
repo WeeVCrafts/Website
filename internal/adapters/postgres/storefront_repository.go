@@ -6,12 +6,27 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/wecratfs/commerce/internal/domain/storefront"
 	"github.com/wecratfs/commerce/internal/ports"
 )
+
+var (
+	publishedStorefrontMu      sync.RWMutex
+	publishedStorefrontCache   storefront.Revision
+	publishedStorefrontExpires time.Time
+)
+
+// InvalidatePublishedStorefrontCache clears the in-memory cache of the published storefront release.
+func InvalidatePublishedStorefrontCache() {
+	publishedStorefrontMu.Lock()
+	publishedStorefrontExpires = time.Time{}
+	publishedStorefrontMu.Unlock()
+}
 
 type StorefrontRepository struct{ pool *pgxpool.Pool }
 type StorefrontDraft = storefront.Draft
@@ -74,6 +89,7 @@ func (r *StorefrontRepository) Bootstrap(ctx context.Context) error {
 			return e
 		}
 		_, e = tx.Exec(ctx, `INSERT INTO storefront_head(singleton,release_id) VALUES(true,$1)`, id)
+		InvalidatePublishedStorefrontCache()
 		return e
 	})
 }
@@ -83,6 +99,18 @@ func ReadPublishedStorefront(ctx context.Context, q interface {
 	if rev, ok := storefront.Current(ctx); ok {
 		return rev, nil
 	}
+	// Bypass in-memory cache when running inside an explicit transaction
+	// so transactional callers observe their own changes immediately.
+	if _, isTx := q.(pgx.Tx); !isTx {
+		publishedStorefrontMu.RLock()
+		if time.Now().Before(publishedStorefrontExpires) {
+			cached := publishedStorefrontCache
+			publishedStorefrontMu.RUnlock()
+			return cached, nil
+		}
+		publishedStorefrontMu.RUnlock()
+	}
+
 	var rev storefront.Revision
 	var data []byte
 	e := q.QueryRow(ctx, `SELECT r.id,r.config FROM storefront_head h JOIN storefront_releases r ON r.id=h.release_id WHERE h.singleton`).Scan(&rev.ID, &data)
@@ -93,6 +121,12 @@ func ReadPublishedStorefront(ctx context.Context, q interface {
 	if e == nil {
 		e = json.Unmarshal(data, &rev.Config)
 		rev.Config.ApplyCompatibleDefaults()
+		if _, isTx := q.(pgx.Tx); !isTx {
+			publishedStorefrontMu.Lock()
+			publishedStorefrontCache = rev
+			publishedStorefrontExpires = time.Now().Add(15 * time.Second)
+			publishedStorefrontMu.Unlock()
+		}
 	}
 	return rev, e
 }
@@ -325,6 +359,9 @@ func (r *StorefrontRepository) Transition(ctx context.Context, actor, id, expect
 		}
 		if _, e = tx.Exec(ctx, `UPDATE storefront_drafts SET state=$2,version=version+1,review_note=$3,updated_by=$4,updated_at=now() WHERE id=$1`, id, next, note, actor); e != nil {
 			return e
+		}
+		if action == "publish" {
+			InvalidatePublishedStorefrontCache()
 		}
 		return storefrontAudit(ctx, tx, actor, id, action, note)
 	})

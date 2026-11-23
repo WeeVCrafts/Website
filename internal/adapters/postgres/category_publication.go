@@ -133,6 +133,7 @@ func (r *StorefrontRepository) PublishCategory(ctx context.Context, actor, expec
 		if _, err = tx.Exec(ctx, `UPDATE storefront_head SET release_id=$1 WHERE singleton`, release); err != nil {
 			return err
 		}
+		InvalidatePublishedStorefrontCache()
 		_, err = tx.Exec(ctx, `INSERT INTO audit_logs(actor_id,action,resource_type,resource_id,request_id,metadata) VALUES($1,$2,'category',$3,$4,jsonb_build_object('reason',$5::text,'previous_release',$6::bigint,'release',$7::bigint))`, fmt.Sprint(actor), "category."+action, category.Slug, ports.RequestID(ctx), reason, head, release)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ports.ErrNotFound
