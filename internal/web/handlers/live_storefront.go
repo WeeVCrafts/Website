@@ -2490,9 +2490,6 @@ func cents(value string) int64 {
 }
 
 func storefrontMoney(value int64) string {
-	if value%100 == 0 {
-		return fmt.Sprintf("INR %d", value/100)
-	}
 	return fmt.Sprintf("INR %d.%02d", value/100, value%100)
 }
 

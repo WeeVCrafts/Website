@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/wecratfs/commerce/internal/web/viewmodels"
@@ -108,4 +109,57 @@ func confirmationTone(status string) string {
 		return "warning"
 	}
 	return "neutral"
+}
+
+type DimensionInfo struct {
+	Length, Width, Height string
+	Unit                  string
+	Label                 string
+}
+
+func ProductDimensionInfo(p viewmodels.Product) (DimensionInfo, bool) {
+	for _, v := range p.Variants {
+		if v.ShippingLength != "" && v.ShippingWidth != "" && v.ShippingHeight != "" {
+			return DimensionInfo{
+				Length: v.ShippingLength,
+				Width:  v.ShippingWidth,
+				Height: v.ShippingHeight,
+				Unit:   "cm",
+				Label:  fmt.Sprintf("%s × %s × %s cm", v.ShippingLength, v.ShippingWidth, v.ShippingHeight),
+			}, true
+		}
+	}
+	raw := SpecificationValue(p.Description, "Dimensions")
+	if raw != "" {
+		cleaned := strings.ReplaceAll(raw, "×", "x")
+		parts := strings.Split(cleaned, "x")
+		if len(parts) >= 3 {
+			l := strings.TrimSpace(parts[0])
+			w := strings.TrimSpace(parts[1])
+			h := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(parts[2]), "cm"))
+			h = strings.TrimSpace(h)
+			if l != "" && w != "" && h != "" {
+				return DimensionInfo{
+					Length: l,
+					Width:  w,
+					Height: h,
+					Unit:   "cm",
+					Label:  raw,
+				}, true
+			}
+		}
+		return DimensionInfo{
+			Length: "10",
+			Width:  "10",
+			Height: "10",
+			Unit:   "cm",
+			Label:  raw,
+		}, true
+	}
+	return DimensionInfo{}, false
+}
+
+func HasProductDimensions(p viewmodels.Product) bool {
+	_, ok := ProductDimensionInfo(p)
+	return ok
 }

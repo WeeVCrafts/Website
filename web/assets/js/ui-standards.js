@@ -308,8 +308,12 @@
       const images = Array.from(preview.querySelectorAll('[data-image-preview-image]'));
       images.forEach(img => {
         const source = img.dataset.imageSource;
-        if (source) img.src = source;
+        if (source) {
+          img.crossOrigin = 'anonymous';
+          img.src = source;
+        }
       });
+      let isAdjusted = false;
       const apply = () => {
         const mode = fit?.value || 'contain', scale = Number(zoom?.value || 1), position = `${Number(x?.value || 50)}% ${Number(y?.value || 50)}%`;
         images.forEach(img => { img.style.objectFit = mode; img.style.objectPosition = position; img.style.transform = `scale(${scale})`; });
@@ -317,9 +321,83 @@
         [zoom,x,y].forEach(control => { if (control) control.disabled = false; });
         preview.dataset.imageFit = fill ? 'fill' : 'whole';
       };
-      [fit,zoom,x,y].forEach(control => control?.addEventListener('input', apply));
-      [fit,zoom,x,y].forEach(control => control?.addEventListener('change', apply));
+      [fit,zoom,x,y].forEach(control => control?.addEventListener('input', () => { isAdjusted = true; apply(); }));
+      [fit,zoom,x,y].forEach(control => control?.addEventListener('change', () => { isAdjusted = true; apply(); }));
       apply();
+
+      const form = preview.closest('form');
+      const fileInput = form?.querySelector('input[name="image_file"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', () => { isAdjusted = true; });
+      }
+
+      if (form && !form.dataset.cropSubmitBound) {
+        form.dataset.cropSubmitBound = 'true';
+        form.addEventListener('submit', async (e) => {
+          if (form.dataset.croppingDone === 'true') {
+            delete form.dataset.croppingDone;
+            return;
+          }
+          const activeImg = preview.querySelector('[data-image-preview-image]');
+          if (!activeImg || (!fileInput?.files?.length && !isAdjusted)) return;
+          if (!activeImg.complete || !activeImg.naturalWidth) return;
+
+          e.preventDefault();
+          try {
+            const CW = 800, CH = 800;
+            const canvas = document.createElement('canvas');
+            canvas.width = CW; canvas.height = CH;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fcfbf8';
+            ctx.fillRect(0, 0, CW, CH);
+
+            const mode = fit?.value || 'contain';
+            const scale = Number(zoom?.value || 1);
+            const posX = Number(x?.value || 50) / 100;
+            const posY = Number(y?.value || 50) / 100;
+            const nw = activeImg.naturalWidth, nh = activeImg.naturalHeight;
+
+            const ratio = (mode === 'cover') ? Math.max(CW / nw, CH / nh) : Math.min(CW / nw, CH / nh);
+            const baseW = nw * ratio;
+            const baseH = nh * ratio;
+            const drawX = (CW - baseW) * posX;
+            const drawY = (CH - baseH) * posY;
+            const centerX = drawX + baseW / 2;
+            const centerY = drawY + baseH / 2;
+            const finalW = baseW * scale;
+            const finalH = baseH * scale;
+            const finalX = centerX - finalW / 2;
+            const finalY = centerY - finalH / 2;
+
+            ctx.drawImage(activeImg, finalX, finalY, finalW, finalH);
+
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/webp', 0.92));
+            if (blob && fileInput) {
+              const file = new File([blob], 'product-cover.webp', { type: 'image/webp' });
+              const dt = new DataTransfer();
+              dt.items.add(file);
+              fileInput.files = dt.files;
+            }
+          } catch (cropErr) {
+            console.warn('Could not export cropped image:', cropErr);
+          }
+          form.dataset.croppingDone = 'true';
+          const submitter = e.submitter;
+          if (submitter && submitter.name) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = submitter.name;
+            hidden.value = submitter.value;
+            form.appendChild(hidden);
+            requestAnimationFrame(() => hidden.remove());
+          }
+          if (form.requestSubmit) {
+            form.requestSubmit(submitter);
+          } else {
+            form.submit();
+          }
+        });
+      }
     });
     root.querySelectorAll('[data-parcel-preview]').forEach(preview => {
       if (preview.dataset.bound) return;
@@ -332,11 +410,11 @@
         if (![length,width,height].every(value => Number.isFinite(value) && value > 0)) { preview.hidden = true; return; }
         preview.hidden = false;
         const scale = 115 / Math.max(length,width,height), l = Math.max(44, length * scale), w = Math.max(36, width * scale * .72), h = Math.max(42, height * scale * .72);
-        const ox = 150, oy = 140, dx = w * .65, dy = w * .35;
+        const ox = 115, oy = 160, dx = w * .65, dy = w * .35;
         const a = [ox,oy], b = [ox+l,oy], c = [ox+l+dx,oy-dy], d = [ox+dx,oy-dy], e = [ox,oy-h], f = [ox+l,oy-h], g = [ox+l+dx,oy-h-dy], q = [ox+dx,oy-h-dy];
         const point = p => p.join(',');
-        const arrow = (p1,p2,text,tx,ty) => `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" marker-start="url(#parcel-arrow)" marker-end="url(#parcel-arrow)"/><text x="${tx}" y="${ty}" text-anchor="middle">${text}</text>`;
-        canvas.innerHTML = `<svg viewBox="0 0 320 210" role="img" aria-label="Packed parcel ${length} by ${width} by ${height} centimetres"><defs><marker id="parcel-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs><g class="parcel-box" fill="var(--ui-surface,#fffdf8)" stroke="var(--ui-primary,#124534)" stroke-width="2"><polygon points="${[a,b,c,d].map(point).join(' ')}"/><polygon points="${[a,d,q,e].map(point).join(' ')}"/><polygon points="${[b,c,g,f].map(point).join(' ')}"/></g><g class="parcel-dimension-lines" fill="currentColor" stroke="currentColor" stroke-width="1">${arrow([a[0],a[1]+14],[b[0],b[1]+14],`${length} cm`,(a[0]+b[0])/2,oy+28)}${arrow([b[0]+14,b[1]],[c[0]+14,c[1]],`${width} cm`,c[0]+28,(b[1]+c[1])/2)}${arrow([a[0]-18,a[1]],[e[0]-18,e[1]],`${height} cm`,a[0]-32,(a[1]+e[1])/2)}</g><text x="160" y="202" text-anchor="middle" fill="currentColor" font-size="11">Auto-rotating packed shape preview</text></svg>`;
+        const arrow = (p1,p2,text,tx,ty,anchor='middle') => `<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" marker-start="url(#parcel-arrow)" marker-end="url(#parcel-arrow)"/><text x="${tx}" y="${ty}" text-anchor="${anchor}">${text}</text>`;
+        canvas.innerHTML = `<svg viewBox="0 0 380 230" role="img" aria-label="Packed parcel ${length} by ${width} by ${height} centimetres"><defs><marker id="parcel-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="currentColor"/></marker></defs><g class="parcel-box" fill="var(--ui-surface,#fffdf8)" stroke="var(--ui-primary,#124534)" stroke-width="2"><polygon points="${[a,b,c,d].map(point).join(' ')}"/><polygon points="${[a,d,q,e].map(point).join(' ')}"/><polygon points="${[b,c,g,f].map(point).join(' ')}"/></g><g class="parcel-dimension-lines" fill="currentColor" stroke="currentColor" stroke-width="1">${arrow([a[0],a[1]+14],[b[0],b[1]+14],`${length} cm`,(a[0]+b[0])/2,oy+28)}${arrow([b[0]+14,b[1]],[c[0]+14,c[1]],`${width} cm`,c[0]+14,(b[1]+c[1])/2,'start')}${arrow([a[0]-18,a[1]],[e[0]-18,e[1]],`${height} cm`,a[0]-24,(a[1]+e[1])/2,'end')}</g><text x="190" y="220" text-anchor="middle" fill="currentColor" font-size="11">Auto-rotating packed shape preview</text></svg>`;
         label.textContent = `Packed size: ${length} × ${width} × ${height} cm. This is a proportionate preview, not a courier quote.`;
       };
       ['shipping_length_cm','shipping_width_cm','shipping_height_cm'].forEach(name => { field(name)?.addEventListener('input', update); field(name)?.addEventListener('change', update); });

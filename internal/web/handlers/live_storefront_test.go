@@ -39,14 +39,20 @@ func TestLiveTotalsUsesIntegerCents(t *testing.T) {
 	items, shipping, discount, total := liveTotals([]viewmodels.CartItem{{
 		Product: viewmodels.Product{PriceCents: 24900}, Quantity: 2,
 	}})
-	if items != "INR 498" || shipping != "INR 99" || discount != "INR 0" || total != "INR 597" {
+	if items != "INR 498.00" || shipping != "INR 99.00" || discount != "INR 0.00" || total != "INR 597.00" {
 		t.Fatalf("liveTotals() = (%q, %q, %q, %q)", items, shipping, discount, total)
 	}
 }
 
 func TestStorefrontMoneyPreservesMinorUnits(t *testing.T) {
 	if got := storefrontMoney(24950); got != "INR 249.50" {
-		t.Fatalf("storefrontMoney() = %q, want INR 249.50", got)
+		t.Fatalf("storefrontMoney(24950) = %q, want INR 249.50", got)
+	}
+	if got := storefrontMoney(17900); got != "INR 179.00" {
+		t.Fatalf("storefrontMoney(17900) = %q, want INR 179.00", got)
+	}
+	if got := storefrontMoney(9900); got != "INR 99.00" {
+		t.Fatalf("storefrontMoney(9900) = %q, want INR 99.00", got)
 	}
 }
 

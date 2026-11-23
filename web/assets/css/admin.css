@@ -15,8 +15,8 @@
   --admin-line: #e8e4df;
   --admin-muted: #5d6b82;
   --admin-shadow: 0 5px 16px rgba(31, 42, 66, .035);
-  --admin-serif: "Roboto", Arial, sans-serif;
-  --admin-sans: "Inter", Arial, sans-serif;
+  --admin-serif: "Playfair Display", Georgia, serif;
+  --admin-sans: "DM Sans", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }

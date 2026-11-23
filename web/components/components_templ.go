@@ -1965,4 +1965,100 @@ func ShoppingHeaderAction(id, href, label, icon string, count int, active, oob b
 	})
 }
 
+func ProductDimensionDiagram(p viewmodels.Product) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var105 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var105 == nil {
+			templ_7745c5c3_Var105 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		if info, ok := ProductDimensionInfo(p); ok {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "<div class=\"product-dimension-card\" role=\"img\" aria-label=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var106 string
+			templ_7745c5c3_Var106, templ_7745c5c3_Err = templ.ResolveAttributeValue("Dimensions: " + info.Label)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 291, Col: 89}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var106)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "\"><svg viewBox=\"0 0 500 500\" width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"dim-arrow-start\" markerWidth=\"8\" markerHeight=\"8\" refX=\"2\" refY=\"4\" orient=\"auto\"><path d=\"M6,1 L2,4 L6,7\" fill=\"none\" stroke=\"#124534\" stroke-width=\"1.5\"></path></marker> <marker id=\"dim-arrow-end\" markerWidth=\"8\" markerHeight=\"8\" refX=\"6\" refY=\"4\" orient=\"auto\"><path d=\"M2,1 L6,4 L2,7\" fill=\"none\" stroke=\"#124534\" stroke-width=\"1.5\"></path></marker></defs> <rect width=\"500\" height=\"500\" fill=\"#fcfbf8\" rx=\"8\"></rect> <g transform=\"translate(40, 20)\"><polygon points=\"120,160 270,160 350,110 200,110\" fill=\"#f5f0e6\" stroke=\"#124534\" stroke-width=\"2\"></polygon> <polygon points=\"120,160 270,160 270,320 120,320\" fill=\"#fffdf8\" stroke=\"#124534\" stroke-width=\"2\"></polygon> <polygon points=\"270,160 350,110 350,270 270,320\" fill=\"#ede5d8\" stroke=\"#124534\" stroke-width=\"2\"></polygon> <line x1=\"120\" y1=\"345\" x2=\"270\" y2=\"345\" stroke=\"#124534\" stroke-width=\"1.5\" marker-start=\"url(#dim-arrow-start)\" marker-end=\"url(#dim-arrow-end)\"></line> <text x=\"195\" y=\"370\" text-anchor=\"middle\" font-family=\"'DM Sans', Arial, sans-serif\" font-size=\"16\" font-weight=\"600\" fill=\"#124534\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var107 string
+			templ_7745c5c3_Var107, templ_7745c5c3_Err = templ.JoinStringErrs(info.Length)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 307, Col: 152}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var107))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, " cm (Length)</text> <line x1=\"285\" y1=\"328\" x2=\"365\" y2=\"278\" stroke=\"#124534\" stroke-width=\"1.5\" marker-start=\"url(#dim-arrow-start)\" marker-end=\"url(#dim-arrow-end)\"></line> <text x=\"345\" y=\"320\" text-anchor=\"start\" font-family=\"'DM Sans', Arial, sans-serif\" font-size=\"16\" font-weight=\"600\" fill=\"#124534\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var108 string
+			templ_7745c5c3_Var108, templ_7745c5c3_Err = templ.JoinStringErrs(info.Width)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 309, Col: 150}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var108))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, " cm (Width)</text> <line x1=\"95\" y1=\"160\" x2=\"95\" y2=\"320\" stroke=\"#124534\" stroke-width=\"1.5\" marker-start=\"url(#dim-arrow-start)\" marker-end=\"url(#dim-arrow-end)\"></line> <text x=\"80\" y=\"245\" text-anchor=\"end\" font-family=\"'DM Sans', Arial, sans-serif\" font-size=\"16\" font-weight=\"600\" fill=\"#124534\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var109 string
+			templ_7745c5c3_Var109, templ_7745c5c3_Err = templ.JoinStringErrs(info.Height)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 311, Col: 148}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var109))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, " cm (Height)</text></g> <text x=\"250\" y=\"50\" text-anchor=\"middle\" font-family=\"'Playfair Display', Georgia, serif\" font-size=\"20\" font-weight=\"600\" fill=\"#124534\">Product Scale &amp; Dimensions</text> <text x=\"250\" y=\"465\" text-anchor=\"middle\" font-family=\"'DM Sans', Arial, sans-serif\" font-size=\"14\" fill=\"#625e54\">Total size: ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var110 string
+			templ_7745c5c3_Var110, templ_7745c5c3_Err = templ.JoinStringErrs(info.Label)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/components.templ`, Line: 314, Col: 144}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var110))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, " · Proportionate craft measurement</text></svg></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
 var _ = templruntime.GeneratedTemplate

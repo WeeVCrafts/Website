@@ -12,8 +12,9 @@ module.exports = {
         line: '#cdd3dc',
       },
       fontFamily: {
-        sans: ['Inter', 'Arial', 'sans-serif'],
-        display: ['Roboto', 'Arial', 'sans-serif'],
+        sans: ['"DM Sans"', 'Arial', 'sans-serif'],
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
       },
     },
   },

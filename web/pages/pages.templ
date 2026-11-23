@@ -656,6 +656,19 @@ templ ProductDetail(p viewmodels.CustomerPage) {
                 </button>
               }
             }
+            if components.HasProductDimensions(p.Product) {
+              <button type="button" data-gallery-select class="gallery-dimension-thumb" aria-label={ "Show " + p.Product.Name + " scale and dimensions guide" } aria-pressed="false">
+                <span class="gallery-dimension-thumb-inner">
+                  <svg viewBox="0 0 48 48" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M24 6 L40 15 L24 24 L8 15 Z" fill="#e8eae6"></path>
+                    <path d="M8 15 L24 24 L24 41 L8 32 Z" fill="#d0d5ce"></path>
+                    <path d="M40 15 L24 24 L24 41 L40 32 Z" fill="#bcc4b9"></path>
+                    <line x1="4" y1="16" x2="4" y2="31" stroke="#9d4031" stroke-width="2"></line>
+                  </svg>
+                  <small>Scale</small>
+                </span>
+              </button>
+            }
           </div>
           <div class="gallery-main">
             <img data-gallery-media src={ components.ProductImage(p.Product.ImageURL) } alt={ p.Product.Name } width="800" height="800" srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet) } sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" loading="eager" fetchpriority="high"/>
@@ -667,6 +680,11 @@ templ ProductDetail(p viewmodels.CustomerPage) {
                   <img data-gallery-media hidden data-src={ components.ProductImage(media.URL) } data-srcset={components.ResponsiveImageSrcSet(media.URL,"")} sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" alt={ "Product image " + fmt.Sprint(i+1) } width="800" height="800"/>
                 }
               }
+            }
+            if components.HasProductDimensions(p.Product) {
+              <div data-gallery-media hidden class="gallery-dimension-slide" aria-label={ "Product scale and dimensions for " + p.Product.Name }>
+                @components.ProductDimensionDiagram(p.Product)
+              </div>
             }
             @components.DetailWishlistButton(p.Product)
             <button class="icon-button gallery-zoom" type="button" data-gallery-zoom aria-label={ "Enlarge " + p.Product.Name + " image" }><span class="material-symbols-outlined" aria-hidden="true">zoom_in</span></button>

@@ -16,7 +16,7 @@
 .seller-image-card-previews { display:grid; grid-template-columns:minmax(0,1fr) minmax(150px,.62fr); gap:16px; margin-top:12px; }
 .seller-image-card-previews figure { margin:0; min-width:0; }
 .seller-image-card-previews figcaption { margin-bottom:6px; font-size:13px; color:var(--ui-muted); }
-.seller-image-card { display:grid; place-items:center; overflow:hidden; aspect-ratio:2.2 / 1; border:1px solid var(--ui-line); border-radius:8px; background:#f5f1ea; }
+.seller-image-card { display:grid; place-items:center; overflow:hidden; aspect-ratio:1 / 1; border:1px solid var(--ui-line); border-radius:8px; background:#f5f1ea; }
 .seller-image-card--mobile { aspect-ratio:1 / 1; }
 .seller-image-card img { width:100%; height:100%; object-fit:contain; object-position:50% 50%; transform:scale(1); transition:object-fit 120ms ease,transform 120ms ease,object-position 120ms ease; }
 .seller-image-card img[src=""] { display:none; }
@@ -28,7 +28,7 @@
 .parcel-dimension-preview small { color:var(--ui-muted); }
 @keyframes parcel-preview-turn { from { transform:translateX(-6px) rotateY(-7deg); } to { transform:translateX(6px) rotateY(7deg); } }
 @media(prefers-reduced-motion:reduce){.parcel-dimension-canvas .parcel-box{animation:none}}
-@media(max-width:600px){.seller-image-card-previews{grid-template-columns:1fr}.seller-image-card--desktop{aspect-ratio:1.65 / 1}.seller-image-preview-toolbar label{min-width:calc(50% - 10px)}}
+@media(max-width:600px){.seller-image-card-previews{grid-template-columns:1fr}.seller-image-card--desktop{aspect-ratio:1 / 1}.seller-image-preview-toolbar label{min-width:calc(50% - 10px)}}
 .product-media-dropzone { display: grid; place-items: center; min-height: 130px; padding: 18px; border: 2px dashed #c9bcae; border-radius: 10px; background: #fcfaf7; color: var(--seller-ink); text-align: center; cursor: pointer; }
 .product-media-dropzone.is-dragging { border-color: var(--seller-green); background: #eef7f2; }
 .product-media-dropzone input { width: 100%; max-width: 100%; min-width: 0; margin-top: 10px; }
@@ -92,8 +92,8 @@
   --seller-green-soft: #e2f1e5;
   --seller-gold: #c2862a;
   --seller-gold-soft: #fff0ca;
-  --seller-serif: "Roboto", Arial, sans-serif;
-  --seller-sans: "Inter", Arial, sans-serif;
+  --seller-serif: "Playfair Display", Georgia, serif;
+  --seller-sans: "DM Sans", Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
