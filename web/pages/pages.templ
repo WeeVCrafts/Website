@@ -2,6 +2,7 @@ package pages
 
 import (
   "encoding/json"
+  "strings"
 "github.com/wecratfs/commerce/web/assets"
 	"fmt"
 	"net/url"
@@ -30,11 +31,30 @@ templ Document(p viewmodels.CustomerPage) {
         <meta property="og:image" content={ image }/>
         <meta name="twitter:image" content={ image }/>
       }
+      if strings.HasPrefix(p.Route, "/products/") && p.Product.PriceCents > 0 {
+        <meta property="product:price:amount" content={ fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100) }/>
+        <meta property="product:price:currency" content="INR"/>
+        if p.Product.InStock || p.Product.Available > 0 {
+          <meta property="product:availability" content="in stock"/>
+        } else {
+          <meta property="product:availability" content="out of stock"/>
+        }
+        <meta property="product:condition" content="new"/>
+        if p.Product.SKU != "" {
+          <meta property="product:retailer_item_id" content={ p.Product.SKU }/>
+        }
+        if p.Product.Seller != "" {
+          <meta property="product:brand" content={ p.Product.Seller }/>
+        }
+      }
       if schema := websiteStructuredData(p); schema != "" {
         @templ.JSONScript("website-schema", json.RawMessage(schema)).WithType("application/ld+json")
       }
       if schema := productStructuredData(p); schema != "" {
         @templ.JSONScript("product-schema", json.RawMessage(schema)).WithType("application/ld+json")
+      }
+      if schema := breadcrumbStructuredData(p); schema != "" {
+        @templ.JSONScript("breadcrumb-schema", json.RawMessage(schema)).WithType("application/ld+json")
       }
       <title>{ pageDocumentTitle(p) }</title>
       <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>

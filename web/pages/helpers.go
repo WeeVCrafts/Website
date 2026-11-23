@@ -78,8 +78,50 @@ func websiteStructuredData(p viewmodels.CustomerPage) string {
 	data := map[string]any{
 		"@context": "https://schema.org",
 		"@graph": []any{
-			map[string]any{"@type": "WebSite", "@id": pageCanonicalURL(p) + "#website", "name": identity.Name, "alternateName": aliases, "url": pageCanonicalURL(p), "description": identity.Description, "publisher": map[string]string{"@id": organizationID}},
-			map[string]any{"@type": "Organization", "@id": organizationID, "name": identity.Name, "alternateName": aliases, "description": identity.Description, "url": pageCanonicalURL(p), "logo": absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png")},
+			map[string]any{
+				"@type":         "WebSite",
+				"@id":           pageCanonicalURL(p) + "#website",
+				"name":          identity.Name,
+				"alternateName": aliases,
+				"url":           pageCanonicalURL(p),
+				"description":   identity.Description,
+				"publisher":     map[string]string{"@id": organizationID},
+				"potentialAction": map[string]any{
+					"@type": "SearchAction",
+					"target": map[string]any{
+						"@type":       "EntryPoint",
+						"urlTemplate": pageCanonicalURL(p) + "/search?q={search_term_string}",
+					},
+					"query-input": "required name=search_term_string",
+				},
+			},
+			map[string]any{
+				"@type":         "Organization",
+				"@id":           organizationID,
+				"name":          identity.Name,
+				"alternateName": aliases,
+				"description":   identity.Description,
+				"url":           pageCanonicalURL(p),
+				"logo":          absolutePageURL(p, "/assets/images/brand/weevcrafts-logo.png"),
+				"telephone":     "+91-8374632008",
+				"email":         "support@weevcrafts.com",
+				"sameAs":        []string{"https://www.instagram.com/weevcrafts/"},
+				"address": map[string]any{
+					"@type":           "PostalAddress",
+					"streetAddress":   "Hyderabad",
+					"addressLocality": "Hyderabad",
+					"addressRegion":   "Telangana",
+					"postalCode":      "500084",
+					"addressCountry":  "IN",
+				},
+				"contactPoint": map[string]any{
+					"@type":             "ContactPoint",
+					"telephone":         "+91-8374632008",
+					"contactType":       "customer service",
+					"areaServed":        "IN",
+					"availableLanguage": []string{"en", "hi"},
+				},
+			},
 		},
 	}
 	encoded, err := json.Marshal(data)
@@ -217,19 +259,64 @@ func productStructuredData(p viewmodels.CustomerPage) string {
 	if p.Product.InStock || p.Product.Available > 0 {
 		availability = "https://schema.org/InStock"
 	}
+	images := []string{absolutePageURL(p, p.Product.ImageURL)}
+	for _, m := range p.Product.Media {
+		if !m.IsVideo && m.URL != "" && m.URL != p.Product.ImageURL {
+			images = append(images, absolutePageURL(p, m.URL))
+		}
+	}
 	data := map[string]any{
 		"@context":    "https://schema.org",
 		"@type":       "Product",
 		"name":        p.Product.Name,
 		"description": pageOGDescription(p),
-		"image":       []string{absolutePageURL(p, p.Product.ImageURL)},
+		"image":       images,
 		"sku":         p.Product.SKU,
 		"offers": map[string]any{
-			"@type":         "Offer",
-			"url":           pageCanonicalURL(p),
-			"priceCurrency": "INR",
-			"price":         fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100),
-			"availability":  availability,
+			"@type":           "Offer",
+			"url":             pageCanonicalURL(p),
+			"priceCurrency":   "INR",
+			"price":           fmt.Sprintf("%.2f", float64(p.Product.PriceCents)/100),
+			"availability":    availability,
+			"itemCondition":   "https://schema.org/NewCondition",
+			"priceValidUntil": "2027-12-31",
+			"hasMerchantReturnPolicy": map[string]any{
+				"@type":                "MerchantReturnPolicy",
+				"applicableCountry":    "IN",
+				"returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+				"merchantReturnDays":   2,
+				"returnMethod":         "https://schema.org/ReturnByMail",
+				"returnFees":           "https://schema.org/FreeReturn",
+				"refundType":           "https://schema.org/FullRefund",
+				"returnPolicyLink":     absolutePageURL(p, "/pages/returns"),
+			},
+			"shippingDetails": map[string]any{
+				"@type": "OfferShippingDetails",
+				"shippingRate": map[string]any{
+					"@type":    "MonetaryAmount",
+					"value":    "0.00",
+					"currency": "INR",
+				},
+				"shippingDestination": map[string]any{
+					"@type":          "DefinedRegion",
+					"addressCountry": "IN",
+				},
+				"deliveryTime": map[string]any{
+					"@type": "ShippingDeliveryTime",
+					"handlingTime": map[string]any{
+						"@type":    "QuantitativeValue",
+						"minValue": 1,
+						"maxValue": 2,
+						"unitCode": "d",
+					},
+					"transitTime": map[string]any{
+						"@type":    "QuantitativeValue",
+						"minValue": 3,
+						"maxValue": 5,
+						"unitCode": "d",
+					},
+				},
+			},
 		},
 	}
 	if strings.TrimSpace(p.Product.Seller) != "" {
@@ -239,6 +326,96 @@ func productStructuredData(p viewmodels.CustomerPage) string {
 		data["aggregateRating"] = map[string]any{
 			"@type": "AggregateRating", "ratingValue": rating, "reviewCount": p.Product.Reviews,
 		}
+	}
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(encoded)
+}
+
+func breadcrumbStructuredData(p viewmodels.CustomerPage) string {
+	var items []map[string]any
+	base := strings.TrimRight(strings.TrimSpace(p.PublicURL), "/")
+	if base == "" {
+		base = "https://weevcrafts.com"
+	}
+
+	items = append(items, map[string]any{
+		"@type":    "ListItem",
+		"position": 1,
+		"name":     "Home",
+		"item":     base + "/",
+	})
+
+	if strings.HasPrefix(p.Route, "/products/") && strings.TrimSpace(p.Product.Name) != "" {
+		cat := strings.TrimSpace(p.Product.Category)
+		if cat != "" {
+			catSlug := strings.ToLower(strings.ReplaceAll(cat, " ", "-"))
+			items = append(items, map[string]any{
+				"@type":    "ListItem",
+				"position": 2,
+				"name":     cat,
+				"item":     base + "/categories/" + catSlug,
+			})
+			items = append(items, map[string]any{
+				"@type":    "ListItem",
+				"position": 3,
+				"name":     p.Product.Name,
+				"item":     pageCanonicalURL(p),
+			})
+		} else {
+			items = append(items, map[string]any{
+				"@type":    "ListItem",
+				"position": 2,
+				"name":     "Products",
+				"item":     base + "/products",
+			})
+			items = append(items, map[string]any{
+				"@type":    "ListItem",
+				"position": 3,
+				"name":     p.Product.Name,
+				"item":     pageCanonicalURL(p),
+			})
+		}
+	} else if strings.HasPrefix(p.Route, "/categories/") {
+		categoryName := strings.TrimPrefix(p.Route, "/categories/")
+		categoryName = strings.ReplaceAll(categoryName, "-", " ")
+		items = append(items, map[string]any{
+			"@type":    "ListItem",
+			"position": 2,
+			"name":     "Categories",
+			"item":     base + "/categories",
+		})
+		items = append(items, map[string]any{
+			"@type":    "ListItem",
+			"position": 3,
+			"name":     strings.Title(categoryName),
+			"item":     pageCanonicalURL(p),
+		})
+	} else if strings.HasPrefix(p.Route, "/makers/") {
+		makerName := strings.TrimPrefix(p.Route, "/makers/")
+		makerName = strings.ReplaceAll(makerName, "-", " ")
+		items = append(items, map[string]any{
+			"@type":    "ListItem",
+			"position": 2,
+			"name":     "Meet the Makers",
+			"item":     base + "/makers",
+		})
+		items = append(items, map[string]any{
+			"@type":    "ListItem",
+			"position": 3,
+			"name":     strings.Title(makerName),
+			"item":     pageCanonicalURL(p),
+		})
+	} else {
+		return ""
+	}
+
+	data := map[string]any{
+		"@context":        "https://schema.org",
+		"@type":           "BreadcrumbList",
+		"itemListElement": items,
 	}
 	encoded, err := json.Marshal(data)
 	if err != nil {

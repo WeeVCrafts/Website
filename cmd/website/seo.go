@@ -40,7 +40,7 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=86400")
-		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /account\nDisallow: /checkout\nDisallow: /orders\nDisallow: /cart\nDisallow: /wishlist\nDisallow: /login\nDisallow: /register\nDisallow: /admin\nDisallow: /seller-admin\nDisallow: /super-admin\n\nCrawl-delay: 1\n\nSitemap: " + base + "/sitemap.xml\n"))
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /account\nDisallow: /checkout\nDisallow: /orders\nDisallow: /cart\nDisallow: /wishlist\nDisallow: /login\nDisallow: /register\nDisallow: /admin\nDisallow: /seller-admin\nDisallow: /super-admin\nDisallow: /ui/\nDisallow: /api/\nDisallow: /*?*sort=\nDisallow: /*?*q=\n\nCrawl-delay: 1\n\nSitemap: " + base + "/sitemap.xml\n"))
 	}
 	sitemap := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {

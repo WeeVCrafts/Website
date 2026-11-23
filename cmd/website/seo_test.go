@@ -125,6 +125,27 @@ func TestSitemapIncludesOnlyVisibleCanonicalContentPages(t *testing.T) {
 	}
 }
 
+func TestRobotsDirectives(t *testing.T) {
+	robots, _ := seoHandler(nil, "https://weevcrafts.com")
+	w := httptest.NewRecorder()
+	robots(w, httptest.NewRequest("GET", "/robots.txt", nil))
+	body := w.Body.String()
+	for _, expected := range []string{
+		"Disallow: /admin",
+		"Disallow: /checkout",
+		"Disallow: /ui/",
+		"Disallow: /api/",
+		"Disallow: /*?*sort=",
+		"Disallow: /*?*q=",
+		"Crawl-delay: 1",
+		"Sitemap: https://weevcrafts.com/sitemap.xml",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Errorf("robots.txt missing expected directive: %s", expected)
+		}
+	}
+}
+
 func TestLegacyStorefrontRedirectsHaveRelevantReplacements(t *testing.T) {
 	h := canonicalHostRedirect(http.NotFoundHandler(), "https://weevcrafts.com", "production")
 	for _, tc := range []struct{ source, target string }{{"/pages/about-us", "/about"}, {"/collections/frontpage", "/products"}, {"/collections/arts-collection", "/categories/arts"}, {"/collections/sarees", "/categories/textiles"}} {

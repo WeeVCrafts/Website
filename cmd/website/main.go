@@ -443,8 +443,10 @@ func main() {
 	}
 	mux.HandleFunc("/health/metrics", healthHandler.Metrics)
 	robotsHandler, sitemapHandler := seoHandler(pool, cfg.PublicURL)
+	feedHandler := merchantFeedHandler(pool, cfg.PublicURL)
 	mux.HandleFunc("/robots.txt", robotsHandler)
 	mux.HandleFunc("/sitemap.xml", sitemapHandler)
+	mux.HandleFunc("/feeds/google-merchant.xml", feedHandler)
 	mux.HandleFunc("/api/v1/products", apiHandler.Products)
 	mux.HandleFunc("/api/v1/products/", apiHandler.Products)
 	mux.HandleFunc("/api/v1/search", apiHandler.Search)
