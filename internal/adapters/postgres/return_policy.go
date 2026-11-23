@@ -262,7 +262,7 @@ func policyClaimAction(ctx context.Context, tx pgx.Tx, actor, order int64, a mar
 		if err != nil {
 			return err
 		}
-		if version != domain.ReturnPolicyVersion || delivered == nil || !domain.ClaimWithinWindow(c.Kind, *delivered, time.Now()) || c.Quantity > total-used {
+		if (version != domain.ReturnPolicyVersion && version != "2026-11-16-v1") || delivered == nil || !domain.ClaimWithinWindow(c.Kind, *delivered, time.Now()) || c.Quantity > total-used {
 			return ports.ErrInvalidState
 		}
 		var packageRemaining int

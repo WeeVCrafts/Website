@@ -5320,7 +5320,7 @@ func ProductDetail(p viewmodels.CustomerPage) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 410, "</p><p>Report damage, defects or wrong items within 48 hours of delivery. Eligible textile and craft change-of-mind requests must be made within 72 hours. Conditions and exclusions apply.</p><p><a href=\"/shipping\">Read shipping information</a> · <a href=\"/returns-replacements-authenticity\">Read return, replacement and authenticity policy</a></p></details><div class=\"benefits\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><b>Delivery</b><small>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 410, "</p><p>Handmade crafts and handlooms are unique and generally not eligible for change-of-mind returns. Report damage, defects, or incorrect items within 48 hours of delivery with unboxing photos or video for an eligible replacement or refund.</p><p><a href=\"/shipping\">Read shipping information</a> · <a href=\"/returns-replacements-authenticity\">Read returns &amp; refunds policy</a></p></details><div class=\"benefits\"><span><span class=\"material-symbols-outlined\" aria-hidden=\"true\">local_shipping</span><b>Delivery</b><small>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -10441,7 +10441,7 @@ func Checkout(p viewmodels.CustomerPage) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 844, "</strong></h3><p class=\"checkout-summary-policy\">Prepaid orders only. Review the <a href=\"/returns-replacements-authenticity\">returns, replacements and authenticity policy</a> before ordering. Eligible claim windows and return fees apply.</p><small>Items are held for up to 30 minutes while payment is completed.</small></div></details></aside></section>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 844, "</strong></h3><p class=\"checkout-summary-policy\">Prepaid orders only. Review our <a href=\"/returns-replacements-authenticity\">returns &amp; refunds policy</a> before ordering. Handmade crafts are protected with video verification; report damage or incorrect items within 48 hours.</p><small>Items are held for up to 30 minutes while payment is completed.</small></div></details></aside></section>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

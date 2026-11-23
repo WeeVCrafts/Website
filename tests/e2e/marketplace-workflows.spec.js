@@ -19,8 +19,8 @@ test('HTML policy and claim evidence work at phone and desktop widths', async ({
     const {context,page,root}=await rolePage(browser,'customer',width);
     const policy=await page.goto(`${base}/returns-replacements-authenticity`);
     expect(policy.status()).toBe(200);
-    await expect(page.getByRole('heading',{name:'Returns, replacements & authenticity',exact:true})).toBeVisible();
-    await expect(page.getByRole('heading',{name:'Using store credit',exact:true})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Returns & Refunds Policy',exact:true})).toBeVisible();
+    await expect(page.getByRole('heading',{name:'4. Refunds & Replacements',exact:true})).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
     await page.keyboard.press('Tab');
     expect(await page.evaluate(()=>document.activeElement.tagName!=='BODY')).toBe(true);

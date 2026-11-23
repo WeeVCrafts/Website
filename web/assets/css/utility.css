@@ -104,7 +104,11 @@
 .policy-copy h2 { margin-top: 16px; margin-bottom: 0; font-size: 24px; }
 .policy-copy h2:first-child { margin-top: 0; }
 .policy-copy p { margin: 0; color: var(--muted); font-size: 14px; }
+.policy-copy ul { margin: 6px 0 0 20px; padding: 0; list-style-type: disc; display: grid; gap: 6px; }
+.policy-copy li { color: var(--muted); font-size: 14px; line-height: 1.5; }
 .policy-copy a { color: var(--terracotta); font-weight: 700; }
+.info-hero .policy-mantra { margin: 6px 0 2px; font-weight: 600; color: var(--forest); font-size: 16px; }
+.info-hero .policy-effective { margin: 0; color: var(--muted); font-size: 13px; }
 .story-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
 .story-columns > div { min-height: 180px; padding: 25px; background: var(--surface); }
 .story-columns .material-symbols-outlined { color: var(--terracotta); font-size: 27px; }

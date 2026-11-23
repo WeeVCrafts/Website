@@ -835,20 +835,20 @@ func MarketplacePolicyClaims(p viewmodels.MarketplacePage) templ.Component {
 								}
 							}
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</select></label><label>Reason for claim<select name=\"claim_kind\"><option value=\"damage\">Transit damage</option><option value=\"defect\">Manufacturing or weaving defect</option><option value=\"wrong_item\">Wrong item or design</option><option value=\"change_of_mind\">Change of mind — eligible textiles and crafts</option></select></label><label>Quantity<input type=\"number\" name=\"quantity\" min=\"1\" max=\"")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "</select></label><label>Reason for claim<select name=\"claim_kind\"><option value=\"damage\">Transit damage</option><option value=\"defect\">Manufacturing or weaving defect</option><option value=\"wrong_item\">Wrong item or design</option><option value=\"change_of_mind\">Change of mind (non-handmade items only)</option></select></label><label>Quantity<input type=\"number\" name=\"quantity\" min=\"1\" max=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var41 string
 						templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprint(item.Quantity - item.Cancelled))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 86, Col: 440}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/policy_claims.templ`, Line: 86, Col: 433}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "\" value=\"1\" required></label><label>What happened?<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" rows=\"4\" required></textarea></label><p>Damage/wrong-item/defect claims: 48 hours after delivery. Change of mind: three days, subject to category and condition. Credit is the discounted item amount less ₹200 per return pickup; original delivery charges are excluded. Upload evidence after saving this claim.</p><button type=\"submit\">Submit claim for review</button></form>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "\" value=\"1\" required></label><label>What happened?<textarea name=\"reason\" minlength=\"10\" maxlength=\"1000\" style=\"resize:none\" rows=\"4\" required></textarea></label><p>Report damaged, defective, incorrect or incomplete products preferably within 48 hours of delivery. Handmade crafts and handlooms are generally not eligible for change-of-mind returns. Upload unboxing photos or video evidence after saving this claim.</p><button type=\"submit\">Submit claim for review</button></form>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}

@@ -330,7 +330,7 @@ func (h *LiveStorefrontHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			http.Error(w, "Policy temporarily unavailable", 503)
 			return
 		}
-		page.Title = "Returns, replacements & authenticity"
+		page.Title = "Returns & refunds policy"
 		page.ReturnPolicyEffective = effective.In(time.FixedZone("IST", 19800)).Format("2 January 2006")
 		component = pages.ReturnPolicy(page)
 	case page.StorefrontPage != nil && !page.StorefrontPage.Legacy:

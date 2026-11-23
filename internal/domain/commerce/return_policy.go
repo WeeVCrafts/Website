@@ -2,7 +2,7 @@ package commerce
 
 import "time"
 
-const ReturnPolicyVersion = "2026-11-16-v1"
+const ReturnPolicyVersion = "2026-11-23-v2"
 const ReversePickupFeeCents int64 = 20000
 
 func ClaimWithinWindow(kind string, delivered, submitted time.Time) bool {
@@ -60,18 +60,51 @@ func BusinessDeadline(start time.Time, hours int) time.Time {
 	return current
 }
 
-type PolicySection struct{ Title, Text string }
+type PolicySection struct {
+	Title   string   `json:"Title"`
+	Text    string   `json:"Text,omitempty"`
+	Bullets []string `json:"Bullets,omitempty"`
+}
 
 func ReturnPolicySections() []PolicySection {
 	return []PolicySection{
-		{"Our commitment to authentic craftsmanship", "WeevCrafts brings together handmade items, fine arts, traditional crafts and handlooms from independent Indian artisans. Subtle variations in weave, yarn tension, texture, brush strokes, motif placement and natural dye shades are inherent handmade characteristics, rather than defects."},
-		{"Damage, defects and wrong items", "Report transit damage, a verified manufacturing or weaving defect, or an incorrect item within 48 hours of delivery. Approved claims receive a free replacement. If a suitable replacement is unavailable, we refund the eligible amount to the original payment method. This refund fallback also applies to fragile items. Partial claims cover affected items; original delivery charges are refunded once all items in the order qualify."},
-		{"Unboxing evidence", "Please provide a continuous, unedited 360-degree unboxing video showing the sealed outer package, shipping label and opening of the parcel. Submit your claim within 48 hours even if evidence needs further review. Company staff can accept alternative evidence in exceptional cases and will record the reason for that decision."},
-		{"Change of mind and preference", "For eligible textiles and crafts, request a return within three days of delivery. Items must be unused, unwashed, unworn and unaltered, with original tags, artisan provenance cards and packaging intact. Approved returns receive account-bound store credit for the discounted item amount, less ₹200 once per approved return pickup. Original delivery charges are excluded. We show the expected credit before you proceed; no negative credit or additional return charge is imposed."},
-		{"Using store credit", "Store credit is valid for six calendar months from issuance and can be used partly or fully across WeevCrafts sellers. It is nontransferable and cannot be withdrawn as cash. Pay any remaining checkout amount through Razorpay. If a qualifying cancellation or refund restores redeemed credit, its validity is the original expiry or 30 days after restoration, whichever is later. Only the portion paid through Razorpay is refunded through Razorpay."},
-		{"Fragile fine art, paintings and sculptures", "Fragile fine art, paintings and sculptures are excluded from change-of-mind store-credit returns because of transit breakage risk. Eligible damage, defect and wrong-item claims remain available, with free replacement or a refund if a suitable replacement is unavailable."},
-		{"When returns are unavailable", "Slight colour differences caused by lighting or screen calibration, natural yarn slubs, minor handloom irregularities and organic imperfections in craft materials are not defects. Claims for used, stained, washed, altered or tagless items, perfume or detergent odour, damage after delivery, or failure to follow care instructions are not eligible under this policy."},
-		{"Order cancellations", "You may cancel for a full original-payment refund within 12 hours of placing the order or before dispatch, whichever is earlier. Dispatch means actual courier handover, not merely generating an AWB or label. Pre-dispatch quality-check evidence is retained with the order. After dispatch, contact support about a delivery or product issue."},
-		{"Review, collection and inspection", "Our quality team reviews claims within 24–48 business hours. Approved reverse pickups are arranged within 2–4 business days, subject to courier serviceability. Once returned items pass inspection, eligible store credit or original-payment refunds are processed within 5–7 business days. Your request shows actual progress; submitting a claim does not itself approve a return, replacement or refund."},
+		{
+			Title: "1. Handmade & Handloom Products",
+			Bullets: []string{
+				"Handmade crafts and handloom products are generally not eligible for change-of-mind returns.",
+				"Minor natural variations in colour, texture, weave and finish are part of traditional craftsmanship.",
+				"This restriction does not apply to defective, damaged, incorrect or materially misdescribed products.",
+			},
+		},
+		{
+			Title: "2. Damaged or Incorrect Products",
+			Text:  "If you receive a damaged, defective, incorrect or incomplete product:",
+			Bullets: []string{
+				"Report the issue to WeevCrafts as soon as possible, preferably within 48 hours of delivery.",
+				"Upload clear photographs or an unboxing video showing the parcel, shipping label and product.",
+				"Keep the original packaging and product until the complaint is resolved.",
+				"We will review your complaint and arrange an eligible replacement or refund.",
+			},
+		},
+		{
+			Title: "3. Video Verification – Our Transparency Promise",
+			Bullets: []string{
+				"Every seller must record a pre-dispatch packing video for each order.",
+				"The video will be uploaded to WeevCrafts and shared with the customer through a secure link, including WhatsApp notifications where applicable.",
+				"Customers are encouraged to record an unboxing video when opening their parcel.",
+				"If an unboxing video is unavailable, other relevant evidence may be considered.",
+			},
+		},
+		{
+			Title: "4. Refunds & Replacements",
+			Text:  "Approved refunds will be processed to the original payment method wherever possible. Return shipping for verified seller-side or transit-related issues will be arranged without additional cost to the customer, subject to applicable law.",
+		},
+		{
+			Title: "5. Important & Customer Support",
+			Text:  "Our video verification process is designed to ensure fairness, transparency and protection for both customers and sellers. Nothing in this policy limits consumer rights available under applicable Indian law.",
+			Bullets: []string{
+				"For assistance, please contact WeevCrafts Customer Support at support@weevcrafts.com",
+			},
+		},
 	}
 }

@@ -288,7 +288,7 @@ func productStructuredData(p viewmodels.CustomerPage) string {
 				"returnMethod":         "https://schema.org/ReturnByMail",
 				"returnFees":           "https://schema.org/FreeReturn",
 				"refundType":           "https://schema.org/FullRefund",
-				"returnPolicyLink":     absolutePageURL(p, "/pages/returns"),
+				"returnPolicyLink":     absolutePageURL(p, "/returns-replacements-authenticity"),
 			},
 			"shippingDetails": map[string]any{
 				"@type": "OfferShippingDetails",
