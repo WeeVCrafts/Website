@@ -8,10 +8,17 @@ import (
 templ Notifications(p viewmodels.CustomerPage, workspace string) {
 	@Document(p) {
 		<section class={ "container notification-inbox", templ.KV("seller-notification-view", p.SellerNotifications) } aria-labelledby="notifications-heading">
-			<a class="notification-back" href={ workspace }>
-				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-				Back to your workspace
-			</a>
+			if p.IsCustomer {
+				<a class="notification-back" href="/account">
+					<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+					Back to account
+				</a>
+			} else {
+				<a class="notification-back" href={ workspace }>
+					<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+					Back to workspace
+				</a>
+			}
 			<header class="notification-heading">
 				<div>
 					<h1 id="notifications-heading">Notifications</h1>

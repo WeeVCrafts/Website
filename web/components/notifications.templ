@@ -26,13 +26,16 @@ templ notificationBell(showLabel, active bool, unread int64) {
 templ NotificationList(items []viewmodels.CustomerNotification, csrf, filter string, now time.Time) {
 	<div class="notification-list">
 		if len(items) == 0 {
-			<div class="ui-empty-state">
-				<span class="material-symbols-outlined" aria-hidden="true">notifications_none</span>
+			<div class="notification-empty-state">
+				<div class="notification-empty-icon">
+					<span class="material-symbols-outlined" aria-hidden="true">notifications_none</span>
+				</div>
 				if filter == "orders" || filter == "support" {
 					<h2>No matching updates</h2>
+					<p>You don’t have any updates in this category.</p>
 				} else {
 					<h2>You’re all caught up</h2>
-					<p>New updates will appear here.</p>
+					<p>New updates regarding your orders, refunds, and messages will appear here.</p>
 				}
 			</div>
 		}

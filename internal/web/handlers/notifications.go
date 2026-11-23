@@ -105,7 +105,8 @@ func (h *LivePortalHandler) serveNotifications(w http.ResponseWriter, r *http.Re
 		_ = json.NewEncoder(w).Encode(map[string]int64{"unread": unread})
 		return true
 	}
-	p := viewmodels.CustomerPage{IsCustomer: workspace == "/account", Route: "/notifications", Title: "Notifications", Authenticated: true, UserName: h.userDisplayName(r, session.UserID), UserEmail: h.userEmail(r, session.UserID), CSRFToken: session.CSRFToken, Now: time.Now()}
+	isCustomer := workspace == "/" || workspace == "/account"
+	p := viewmodels.CustomerPage{IsCustomer: isCustomer, Route: "/notifications", Title: "Notifications", Authenticated: true, UserName: h.userDisplayName(r, session.UserID), UserEmail: h.userEmail(r, session.UserID), CSRFToken: session.CSRFToken, Now: time.Now()}
 	p.SellerNotifications = workspace == "/seller-admin"
 	p.NotificationFilter = notificationFilter(r.URL.Query().Get("filter"))
 	if !p.SellerNotifications && (p.NotificationFilter == "orders" || p.NotificationFilter == "support") {
