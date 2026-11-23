@@ -1004,6 +1004,12 @@ func (h *LiveStorefrontHandler) page(r *http.Request) (viewmodels.CustomerPage, 
 		if err != nil {
 			return viewmodels.CustomerPage{}, err
 		}
+		if len(page.ProductReviews) > 0 {
+			page.Product.Reviews = len(page.ProductReviews)
+			if len(page.Products) > 0 {
+				page.Products[0].Reviews = page.Product.Reviews
+			}
+		}
 	}
 	if !isDraftPreview(r) && h.cart != nil && (authenticated || guestCartHash(r) != "") {
 		cart, cartErr := h.liveCart(r.Context(), userID, guestCartHash(r), csrf)

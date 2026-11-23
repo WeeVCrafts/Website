@@ -156,6 +156,9 @@ mark { padding: 3px 7px; color: var(--terracotta); background: #f7e4d9; font-siz
 .product-copy p { margin-bottom: 6px; color: var(--muted); font-size: 14px; }
 .rating, .stars { display: flex; align-items: center; gap: 3px; color: #80633a; font-size: 14px; }
 .rating .material-symbols-outlined, .stars .material-symbols-outlined { color: var(--gold); font-size: 14px; font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 20; }
+.rating-star { display: inline-block; font-size: 15px; line-height: 1; vertical-align: middle; }
+.rating-star.is-filled { color: #d97706; }
+.rating-star.is-empty { color: #d1d5db; }
 .price { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .price strong { color: var(--terracotta); font-size: 15px; font-weight: 700; }
 .price del { color: #6f6258; font-size: 14px; }

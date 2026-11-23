@@ -1177,7 +1177,12 @@ templ CartContent(p viewmodels.CustomerPage) {
     <input type="hidden" name="quantity" value={ cartQuantityValue(p.CartCount) }/>
   }
   <section class="container page-intro compact-intro">
-    @Breadcrumb("Home", "Your Cart")<p class="eyebrow">ALMOST YOURS</p><h1>{ storefrontNativeHeading(p,"Your cart") }</h1><p data-backend-cart-count>{ p.CartCount } items from independent Indian makers</p>
+    @Breadcrumb("Home", "Your Cart")<p class="eyebrow">ALMOST YOURS</p><h1>{ storefrontNativeHeading(p,"Your cart") }</h1>
+    if p.CartCount == 1 {
+      <p data-backend-cart-count>1 item from independent Indian makers</p>
+    } else {
+      <p data-backend-cart-count>{ fmt.Sprint(p.CartCount) } items from independent Indian makers</p>
+    }
   </section>
   <section id="cart-layout" class={ templ.KV("container cart-layout",len(p.Cart)>0), templ.KV("container cart-layout cart-layout--empty",len(p.Cart)==0) } data-backend-cart><div class="cart-items">
     @CartRows(p.Cart)</div>

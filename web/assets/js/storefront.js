@@ -325,7 +325,11 @@
     }
     if (options.open) openCartDrawer(options.trigger);
     const cartCountLabel = document.querySelector("[data-backend-cart-count]");
-    if (cartCountLabel) { cartCountLabel.textContent = cartItemCount(cart.items) + " items from independent Indian makers"; markReady(cartCountLabel); }
+    if (cartCountLabel) {
+      const count = cartItemCount(cart.items);
+      cartCountLabel.textContent = (count === 1 ? "1 item" : count + " items") + " from independent Indian makers";
+      markReady(cartCountLabel);
+    }
     const wishlistCountLabel = document.querySelector("[data-backend-wishlist-count]");
     if (wishlistCountLabel) { wishlistCountLabel.textContent = (wishlist.length === 1 ? "1 item" : wishlist.length + " items") + " in your wishlist"; markReady(wishlistCountLabel); }
     if (cartRoot) {

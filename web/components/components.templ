@@ -1,6 +1,7 @@
 package components
 
 import (
+  "fmt"
   "github.com/wecratfs/commerce/internal/web/viewmodels"
 )
 
@@ -127,7 +128,13 @@ templ CartDrawer(p viewmodels.CustomerPage) {
   <dialog id="cart-drawer" class="cart-drawer" aria-labelledby="cart-drawer-title" data-backend-cart-drawer>
     <div class="cart-drawer-shell">
       <header class="cart-drawer-header">
-        <div><p class="eyebrow">YOUR BAG</p><h2 id="cart-drawer-title">Shopping bag</h2><p data-cart-drawer-count>{ p.CartCount } items from independent Indian makers</p></div>
+        <div><p class="eyebrow">YOUR BAG</p><h2 id="cart-drawer-title">Shopping bag</h2>
+          if p.CartCount == 1 {
+            <p data-cart-drawer-count>1 item from independent Indian makers</p>
+          } else {
+            <p data-cart-drawer-count>{ fmt.Sprint(p.CartCount) } items from independent Indian makers</p>
+          }
+        </div>
         <button class="icon-button cart-drawer-close" type="button" data-cart-drawer-close aria-label="Close shopping bag"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
       </header>
       <div class="cart-drawer-items" data-cart-drawer-items>
@@ -189,9 +196,8 @@ templ WishlistCountMutation(p viewmodels.CustomerPage) {
 
 templ RatingStars(rating string) {
   for i := 0; i < ratingStars(rating); i++ {
-    <span class="material-symbols-outlined" aria-hidden="true">star</span>
-    }
-
+    <span class="material-symbols-outlined is-filled" aria-hidden="true">star</span>
+  }
 }
 
 templ WishlistMutation(p viewmodels.CustomerPage, product viewmodels.Product, remove bool, actions ...bool) {
