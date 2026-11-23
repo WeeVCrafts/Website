@@ -16,6 +16,9 @@ type Config struct {
 	StagingPassword         string
 	Address                 string
 	HTTPConcurrency         int
+	LogFormat               string
+	DatabaseMaxConns        int
+	DatabaseMinConns        int
 	Environment             string
 	PublicURL               string
 	DatabaseURL             string
@@ -72,6 +75,9 @@ func FromEnv() Config {
 		StagingPassword:         env("WECRATFS_STAGING_PASSWORD", ""),
 		Address:                 env("WECRATFS_ADDR", ":"+port),
 		HTTPConcurrency:         intEnv("WECRATFS_HTTP_CONCURRENCY", 128),
+		LogFormat:               env("LOG_FORMAT", ""),
+		DatabaseMaxConns:        intEnv("DATABASE_MAX_CONNS", 25),
+		DatabaseMinConns:        intEnv("DATABASE_MIN_CONNS", 5),
 		Environment:             environment,
 		PublicURL:               publicURL,
 		DatabaseURL:             env("DATABASE_URL", "postgres://wecratfs:wecratfs@localhost:5432/wecratfs?sslmode=disable"),

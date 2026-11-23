@@ -55,6 +55,7 @@ type ProductReview struct {
 	ProductName, ProductSlug, SellerName           string
 	Rating                                         int
 	Title, Body, Status, Created, ImageURL, Author string
+	Photos                                         []string
 	VerifiedPurchase                               bool
 }
 

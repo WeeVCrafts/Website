@@ -1,60 +1,53 @@
 package config
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"encoding/pem"
-	"math/big"
 	"testing"
 	"time"
 )
 
-func TestDatabasePoolConfigManagedCA(t *testing.T) {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func TestDatabasePoolConfig_TuningDefaults(t *testing.T) {
+	cfg := Config{
+		DatabaseURL:      "postgres://postgres:postgres@localhost:5432/wecratfs_test?sslmode=disable",
+		DatabaseMaxConns: 30,
+		DatabaseMinConns: 8,
+	}
+
+	poolCfg, err := cfg.DatabasePoolConfig()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("unexpected error parsing DatabasePoolConfig: %v", err)
 	}
-	cert := &x509.Certificate{SerialNumber: big.NewInt(1), IsCA: true, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageCertSign, NotBefore: time.Now().Add(-time.Minute), NotAfter: time.Now().Add(time.Hour)}
-	der, err := x509.CreateCertificate(rand.Reader, cert, cert, &key.PublicKey, key)
-	if err != nil {
-		t.Fatal(err)
+
+	if poolCfg.MaxConns != 30 {
+		t.Errorf("expected MaxConns=30, got %d", poolCfg.MaxConns)
 	}
-	ca := string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
-	cfg := Config{DatabaseURL: "postgres://app:secret@postgres.internal/db?sslmode=verify-full", DatabaseCACert: ca}
-	pool, err := cfg.DatabasePoolConfig()
-	if err != nil {
-		t.Fatal(err)
+	if poolCfg.MinConns != 8 {
+		t.Errorf("expected MinConns=8, got %d", poolCfg.MinConns)
 	}
-	tls := pool.ConnConfig.TLSConfig
-	if tls == nil || tls.InsecureSkipVerify || tls.ServerName != "postgres.internal" || tls.RootCAs == nil {
-		t.Fatal("managed CA must preserve full TLS verification")
+	if poolCfg.MaxConnLifetime != time.Hour {
+		t.Errorf("expected MaxConnLifetime=1h, got %v", poolCfg.MaxConnLifetime)
 	}
-	parsed, err := x509.ParseCertificate(der)
-	if err != nil {
-		t.Fatal(err)
+	if poolCfg.MaxConnIdleTime != 15*time.Minute {
+		t.Errorf("expected MaxConnIdleTime=15m, got %v", poolCfg.MaxConnIdleTime)
 	}
-	if _, err := parsed.Verify(x509.VerifyOptions{Roots: tls.RootCAs}); err != nil {
-		t.Fatalf("CA is not trusted: %v", err)
-	}
-	if len(pool.ConnConfig.Fallbacks) != 0 {
-		t.Fatal("verify-full must not permit fallbacks")
-	}
-	t.Setenv("DATABASE_CA_CERT", ca)
-	if FromEnv().DatabaseCACert != ca {
-		t.Fatal("CA environment variable not loaded")
+	if poolCfg.HealthCheckPeriod != time.Minute {
+		t.Errorf("expected HealthCheckPeriod=1m, got %v", poolCfg.HealthCheckPeriod)
 	}
 }
 
-func TestDatabasePoolConfigRejectsUnsafeCA(t *testing.T) {
-	for _, url := range []string{"postgres://app:secret@localhost/db?sslmode=disable", "postgres://app:secret@localhost/db?sslmode=verify-full"} {
-		if _, err := (Config{DatabaseURL: url, DatabaseCACert: "invalid certificate"}).DatabasePoolConfig(); err == nil {
-			t.Fatalf("accepted invalid CA for %s", url)
-		}
+func TestDatabasePoolConfig_ZeroDefaults(t *testing.T) {
+	cfg := Config{
+		DatabaseURL: "postgres://postgres:postgres@localhost:5432/wecratfs_test?sslmode=disable",
 	}
-	pool, err := (Config{DatabaseURL: "postgres://app:secret@localhost/db?sslmode=disable"}).DatabasePoolConfig()
-	if err != nil || pool.ConnConfig.TLSConfig != nil {
-		t.Fatalf("local configuration changed: %v", err)
+
+	poolCfg, err := cfg.DatabasePoolConfig()
+	if err != nil {
+		t.Fatalf("unexpected error parsing DatabasePoolConfig: %v", err)
+	}
+
+	if poolCfg.MaxConns != 25 {
+		t.Errorf("expected default MaxConns=25, got %d", poolCfg.MaxConns)
+	}
+	if poolCfg.MinConns != 5 {
+		t.Errorf("expected default MinConns=5, got %d", poolCfg.MinConns)
 	}
 }

@@ -1325,7 +1325,8 @@ func (h *LiveStorefrontHandler) loadCustomerReviews(ctx context.Context, userID 
 
 func (h *LiveStorefrontHandler) publishedProductReviews(ctx context.Context, productID int64) ([]viewmodels.ProductReview, error) {
 	rows, err := h.pool.Query(ctx, `
-		SELECT pr.rating, pr.title, pr.body, split_part(u.display_name,' ',1), pr.created_at, pr.verified_purchase
+		SELECT pr.id, pr.rating, pr.title, pr.body, split_part(u.display_name,' ',1), pr.created_at, pr.verified_purchase,
+		       COALESCE((SELECT array_agg(rp.photo_url ORDER BY rp.id) FROM review_photos rp WHERE rp.review_id=pr.id), ARRAY[]::text[])
 		FROM product_reviews pr JOIN users u ON u.id=pr.user_id
 		WHERE pr.product_id=$1 AND pr.status='published'
 		ORDER BY pr.created_at DESC, pr.id DESC LIMIT 50`, productID)
@@ -1337,7 +1338,7 @@ func (h *LiveStorefrontHandler) publishedProductReviews(ctx context.Context, pro
 	for rows.Next() {
 		var review viewmodels.ProductReview
 		var created time.Time
-		if err := rows.Scan(&review.Rating, &review.Title, &review.Body, &review.Author, &created, &review.VerifiedPurchase); err != nil {
+		if err := rows.Scan(&review.ID, &review.Rating, &review.Title, &review.Body, &review.Author, &created, &review.VerifiedPurchase, &review.Photos); err != nil {
 			return nil, err
 		}
 		review.Created = created.Format("2 Jan 2006")
@@ -1406,7 +1407,8 @@ func (h *LiveStorefrontHandler) submitProductReview(w http.ResponseWriter, r *ht
 		http.Error(w, "provide a rating from 1 to 5, a title, and a review of 10 to 2000 characters", http.StatusUnprocessableEntity)
 		return
 	}
-	result, err := h.pool.Exec(r.Context(), `
+	var reviewID int64
+	err := h.pool.QueryRow(r.Context(), `
 		INSERT INTO product_reviews (product_id,user_id,order_id,rating,title,body,status,verified_purchase)
 		SELECT $1,$2,$3,$4,$5,$6,'pending',TRUE
 		FROM orders o
@@ -1415,14 +1417,20 @@ func (h *LiveStorefrontHandler) submitProductReview(w http.ResponseWriter, r *ht
 		JOIN products p ON p.id=pv.product_id
 		JOIN seller_fulfillments sf ON sf.order_id=o.id AND sf.seller_id=p.seller_id AND sf.status='delivered'
 		WHERE o.id=$3 AND o.user_id=$2 AND pv.product_id=$1
-		ON CONFLICT DO NOTHING`, productID, userID, orderID, rating, title, body)
+		ON CONFLICT DO NOTHING RETURNING id`, productID, userID, orderID, rating, title, body).Scan(&reviewID)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && reviewID == 0) {
+		http.Error(w, "a delivered purchase is required and each purchase can be reviewed once", http.StatusConflict)
+		return
+	}
 	if err != nil {
 		http.Error(w, "review could not be saved", http.StatusServiceUnavailable)
 		return
 	}
-	if result.RowsAffected() == 0 {
-		http.Error(w, "a delivered purchase is required and each purchase can be reviewed once", http.StatusConflict)
-		return
+	for _, photoURL := range r.Form["photos"] {
+		photoURL = strings.TrimSpace(photoURL)
+		if photoURL != "" && len(photoURL) < 500 {
+			_, _ = h.pool.Exec(r.Context(), `INSERT INTO review_photos (review_id, product_id, user_id, photo_url) VALUES ($1,$2,$3,$4)`, reviewID, productID, userID, photoURL)
+		}
 	}
 	http.Redirect(w, r, "/account/reviews?notice=Review+submitted+for+moderation", http.StatusSeeOther)
 }

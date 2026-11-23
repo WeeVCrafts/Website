@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"github.com/wecratfs/commerce/internal/ports"
@@ -89,7 +90,7 @@ func TestSearchMapsCategoryFacetDistribution(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode facet payload: %v", err)
 		}
-		if len(payload.Facets) != 1 || payload.Facets[0] != "category_slug" {
+		if !slices.Contains(payload.Facets, "category_slug") {
 			t.Fatalf("category facets were not requested: %+v", payload)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{

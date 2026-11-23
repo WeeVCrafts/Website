@@ -15,8 +15,23 @@ import (
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
+const migrationAdvisoryLockID = 7821941038472
+
 func ApplyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
-	if _, err := pool.Exec(ctx, `
+	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire connection for migrations: %w", err)
+	}
+	defer conn.Release()
+
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, migrationAdvisoryLockID); err != nil {
+		return fmt.Errorf("acquire migration advisory lock: %w", err)
+	}
+	defer func() {
+		_, _ = conn.Exec(context.Background(), `SELECT pg_advisory_unlock($1)`, migrationAdvisoryLockID)
+	}()
+
+	if _, err := conn.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version BIGINT PRIMARY KEY,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -40,7 +55,7 @@ func ApplyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 
 		var applied bool
-		if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)`, version).Scan(&applied); err != nil {
+		if err := conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)`, version).Scan(&applied); err != nil {
 			return fmt.Errorf("check migration %s: %w", entry.Name(), err)
 		}
 		if applied {
@@ -51,7 +66,7 @@ func ApplyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		if err != nil {
 			return fmt.Errorf("read migration %s: %w", entry.Name(), err)
 		}
-		tx, err := pool.Begin(ctx)
+		tx, err := conn.Begin(ctx)
 		if err != nil {
 			return fmt.Errorf("begin migration %s: %w", entry.Name(), err)
 		}

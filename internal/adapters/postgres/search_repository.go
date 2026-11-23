@@ -2,9 +2,11 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	domaincatalog "github.com/wecratfs/commerce/internal/domain/catalog"
@@ -270,4 +272,40 @@ func (r *ProductSearchRepository) ListApprovedForIndex(ctx context.Context) ([]p
 		documents = append(documents, document)
 	}
 	return documents, rows.Err()
+}
+
+func (r *ProductSearchRepository) FindApprovedForIndex(ctx context.Context, productID int64) (*ports.SearchDocument, error) {
+	row := r.pool.QueryRow(ctx, `
+		SELECT p.id, p.slug, p.name, p.description, b.name, p.brand_slug, p.category_slug,
+		       (SELECT ARRAY_AGG(search_variant.sku) FROM product_variants search_variant WHERE search_variant.product_id = p.id AND search_variant.status = 'active'),
+		       pv.price_cents, COALESCE(pv.compare_at_cents, 0), COALESCE(pv.compare_at_cents > pv.price_cents, false), COALESCE(i.available_quantity, 0)
+		FROM products p
+		JOIN product_search_documents sd ON sd.product_id=p.id
+		JOIN sellers s ON s.id = p.seller_id AND s.status = 'active'
+		JOIN brands b ON b.slug = p.brand_slug
+		LEFT JOIN LATERAL (
+			SELECT candidate.id, candidate.sku, candidate.price_cents, candidate.compare_at_cents
+			FROM product_variants candidate
+			LEFT JOIN inventory_stock candidate_stock ON candidate_stock.variant_id = candidate.id
+			WHERE candidate.product_id = p.id AND candidate.status = 'active'
+			ORDER BY (COALESCE(candidate_stock.available_quantity, 0) > 0) DESC, candidate.id
+			LIMIT 1
+		) pv ON TRUE
+		LEFT JOIN inventory_stock i ON i.variant_id = pv.id
+		WHERE p.status = 'approved' AND p.id = $1`, productID)
+
+	var doc ports.SearchDocument
+	var skus []string
+	var brandName string
+	err := row.Scan(&doc.ID, &doc.Slug, &doc.Name, &doc.Description, &brandName, &doc.BrandSlug, &doc.CategorySlug,
+		&skus, &doc.PriceCents, &doc.CompareAtCents, &doc.HasOffer, &doc.Available)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	doc.Brand = brandName
+	doc.SKUs = skus
+	return &doc, nil
 }

@@ -42,10 +42,42 @@ func (s *indexSource) ListApprovedForIndex(context.Context) ([]ports.SearchDocum
 	return s.documents, s.err
 }
 
+func (s *indexSource) FindApprovedForIndex(_ context.Context, productID int64) (*ports.SearchDocument, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	for _, doc := range s.documents {
+		if doc.ID == productID {
+			return &doc, nil
+		}
+	}
+	if len(s.documents) > 0 {
+		return &s.documents[0], nil
+	}
+	return nil, nil
+}
+
 type indexer struct {
 	calls     int
 	documents []ports.SearchDocument
 	err       error
+}
+
+func (i *indexer) Rebuild(_ context.Context, documents []ports.SearchDocument) error {
+	i.calls++
+	i.documents = documents
+	return i.err
+}
+
+func (i *indexer) IndexDocument(_ context.Context, document ports.SearchDocument) error {
+	i.calls++
+	i.documents = append(i.documents, document)
+	return i.err
+}
+
+func (i *indexer) DeleteDocument(_ context.Context, _ string) error {
+	i.calls++
+	return i.err
 }
 
 type cacheInvalidator struct {
@@ -56,12 +88,6 @@ type cacheInvalidator struct {
 func (c *cacheInvalidator) DeletePrefix(_ context.Context, prefix string) error {
 	c.prefixes = append(c.prefixes, prefix)
 	return c.err
-}
-
-func (i *indexer) Rebuild(_ context.Context, documents []ports.SearchDocument) error {
-	i.calls++
-	i.documents = documents
-	return i.err
 }
 
 func TestProductIndexProcessorRebuildsAndAcknowledgesProductEvents(t *testing.T) {

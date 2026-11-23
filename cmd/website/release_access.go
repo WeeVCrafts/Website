@@ -31,7 +31,7 @@ func releaseAccess(next http.Handler, cfg config.Config) http.Handler {
 		if cfg.Staging {
 			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
 			w.Header().Set("Cache-Control", "private, no-store")
-			deliveryCallback := r.URL.Path == webhookTransport.DeliveryCallbackPath && cfg.Shipping.Mode == "sandbox" && len(cfg.Shipping.WebhookSecret) >= 32
+			deliveryCallback := (r.URL.Path == webhookTransport.DeliveryCallbackPath || r.URL.Path == "/webhooks/shiprocket") && len(cfg.Shipping.WebhookSecret) >= 16
 			if r.URL.Path != "/health/live" && r.URL.Path != "/health/ready" && r.URL.Path != "/webhooks/razorpay" && !deliveryCallback {
 				user, password, ok := r.BasicAuth()
 				actualUser, actualPassword := sha256.Sum256([]byte(user)), sha256.Sum256([]byte(password))

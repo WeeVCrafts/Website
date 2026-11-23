@@ -26,12 +26,18 @@ func DeliveryCallback(secret string, schedule func(context.Context, int64, strin
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		keys := r.Header.Values("X-API-Key")
-		if len(keys) != 1 || len(secret) < 32 || schedule == nil {
+		apiKey := r.Header.Get("X-API-Key")
+		if apiKey == "" {
+			apiKey = r.Header.Get("x-api-key")
+		}
+		if apiKey == "" && strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
+			apiKey = strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		}
+		if len(apiKey) < 16 || len(secret) < 16 || schedule == nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		provided := sha256.Sum256([]byte(keys[0]))
+		provided := sha256.Sum256([]byte(apiKey))
 		if subtle.ConstantTimeCompare(provided[:], expected[:]) != 1 {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -47,15 +53,21 @@ func DeliveryCallback(secret string, schedule func(context.Context, int64, strin
 			return
 		}
 		var event struct {
-			OrderID   json.Number `json:"sr_order_id"`
-			Reference string      `json:"order_id"`
-			AWB       string      `json:"awb"`
+			OrderID       json.Number `json:"sr_order_id"`
+			ShipmentID    json.Number `json:"shipment_id"`
+			Reference     string      `json:"order_id"`
+			AWB           string      `json:"awb"`
+			CurrentStatus string      `json:"current_status"`
+			NDRReason     string      `json:"ndr_reason"`
 		}
 		if json.Unmarshal(body, &event) != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		id, err := strconv.ParseInt(event.OrderID.String(), 10, 64)
+		if err != nil || id <= 0 {
+			id, err = strconv.ParseInt(event.ShipmentID.String(), 10, 64)
+		}
 		if err != nil || id <= 0 || strings.TrimSpace(event.Reference) == "" || len(event.Reference) > 120 || len(event.AWB) > 120 {
 			w.WriteHeader(http.StatusBadRequest)
 			return

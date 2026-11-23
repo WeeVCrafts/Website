@@ -24,6 +24,18 @@ const previewFiles = [
   "support-portal.css",
 ];
 
+const storefrontBundleFiles = [
+  "theme.css",
+  "utility.css",
+  "customer-polish.css",
+  "ui-standards.css",
+  "experience.css",
+  "storefront-reference.css",
+  "brand.css",
+  "auth-gallery.css",
+  "customer-header.css",
+];
+
 function minifyPreviewCSS(root = path.resolve(__dirname, ".."), files = previewFiles) {
   for (const file of files) {
     const inputPath = path.join(root, "web", "assets", "css", file);
@@ -39,6 +51,24 @@ function minifyPreviewCSS(root = path.resolve(__dirname, ".."), files = previewF
     }
     const minified = `${result.styles}\n`;
     if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, "utf8") !== minified) fs.writeFileSync(outputPath, minified);
+  }
+
+  // Generate consolidated storefront CSS bundle
+  let bundleSource = "";
+  for (const file of storefrontBundleFiles) {
+    const inputPath = path.join(root, "web", "assets", "css", file);
+    if (fs.existsSync(inputPath)) {
+      bundleSource += fs.readFileSync(inputPath, "utf8") + "\n";
+    }
+  }
+  const bundleResult = new CleanCSS({ level: 2 }).minify(bundleSource);
+  if (bundleResult.errors.length > 0) {
+    throw new Error(`storefront-bundle: ${bundleResult.errors.join("; ")}`);
+  }
+  const bundleOutputPath = path.join(root, "web", "assets", "css", "storefront-bundle.min.css");
+  const bundleMinified = `${bundleResult.styles}\n`;
+  if (!fs.existsSync(bundleOutputPath) || fs.readFileSync(bundleOutputPath, "utf8") !== bundleMinified) {
+    fs.writeFileSync(bundleOutputPath, bundleMinified);
   }
 }
 

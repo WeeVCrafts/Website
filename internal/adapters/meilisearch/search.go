@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -33,7 +34,7 @@ func NewSearchEngineWithKey(address, apiKey string) *SearchEngine {
 }
 
 func (s *SearchEngine) Search(ctx context.Context, request ports.SearchRequest) (ports.SearchResult, error) {
-	payloadValues := map[string]any{"q": request.Query, "limit": request.Limit, "offset": request.Offset, "filter": searchFilter(request), "facets": []string{"category_slug"}}
+	payloadValues := map[string]any{"q": request.Query, "limit": request.Limit, "offset": request.Offset, "filter": searchFilter(request), "facets": []string{"category_slug", "brand_slug"}}
 	if sort := meiliSort(request.Sort); sort != "" {
 		payloadValues["sort"] = []string{sort}
 	}
@@ -82,7 +83,31 @@ func (s *SearchEngine) Search(ctx context.Context, request ports.SearchRequest) 
 		}
 		return facets[i].Count > facets[j].Count
 	})
-	return ports.SearchResult{ProductSlugs: slugs, Total: result.Total, Facets: facets}, nil
+
+	brandFacets := make([]ports.SearchFacet, 0)
+	for value, count := range result.FacetDistribution["brand_slug"] {
+		brandFacets = append(brandFacets, ports.SearchFacet{Value: value, Label: value, Count: count})
+	}
+	sort.Slice(brandFacets, func(i, j int) bool {
+		if brandFacets[i].Count == brandFacets[j].Count {
+			return brandFacets[i].Value < brandFacets[j].Value
+		}
+		return brandFacets[i].Count > brandFacets[j].Count
+	})
+
+	return ports.SearchResult{ProductSlugs: slugs, Total: result.Total, Facets: facets, BrandFacets: brandFacets}, nil
+}
+
+func (s *SearchEngine) IndexDocument(ctx context.Context, document ports.SearchDocument) error {
+	body, err := json.Marshal([]ports.SearchDocument{document})
+	if err != nil {
+		return err
+	}
+	return s.request(ctx, http.MethodPost, "/indexes/products/documents?primaryKey=slug", body, nil)
+}
+
+func (s *SearchEngine) DeleteDocument(ctx context.Context, slug string) error {
+	return s.request(ctx, http.MethodDelete, "/indexes/products/documents/"+url.PathEscape(slug), nil, nil)
 }
 
 func (s *SearchEngine) Rebuild(ctx context.Context, documents []ports.SearchDocument) error {

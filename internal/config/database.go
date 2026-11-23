@@ -3,6 +3,7 @@ package config
 import (
 	"crypto/x509"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,6 +15,20 @@ func (c Config) DatabasePoolConfig() (*pgxpool.Config, error) {
 	if err != nil {
 		return nil, errors.New("invalid DATABASE_URL configuration")
 	}
+
+	maxConns := int32(c.DatabaseMaxConns)
+	if maxConns <= 0 {
+		maxConns = 25
+	}
+	minConns := int32(c.DatabaseMinConns)
+	if minConns <= 0 {
+		minConns = 5
+	}
+	pool.MaxConns = maxConns
+	pool.MinConns = minConns
+	pool.MaxConnLifetime = time.Hour
+	pool.MaxConnIdleTime = 15 * time.Minute
+	pool.HealthCheckPeriod = time.Minute
 	if c.DatabaseCACert == "" {
 		return pool, nil
 	}

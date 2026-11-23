@@ -68,4 +68,5 @@ type SearchObserver interface {
 
 type ApprovedIndexSource interface {
 	ListApprovedForIndex(ctx context.Context) ([]SearchDocument, error)
+	FindApprovedForIndex(ctx context.Context, productID int64) (*SearchDocument, error)
 }

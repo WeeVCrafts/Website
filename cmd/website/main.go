@@ -43,13 +43,18 @@ import (
 	webTransport "github.com/wecratfs/commerce/internal/transport/web"
 	webhookTransport "github.com/wecratfs/commerce/internal/transport/webhook"
 	webHandlers "github.com/wecratfs/commerce/internal/web/handlers"
+	"github.com/wecratfs/commerce/internal/web/middleware"
 	"github.com/wecratfs/commerce/internal/worker"
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	slog.SetDefault(logger)
 	cfg := config.FromEnv()
+	var logHandler slog.Handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	if strings.EqualFold(cfg.LogFormat, "json") || strings.EqualFold(cfg.Environment, "production") {
+		logHandler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	}
+	logger := slog.New(logHandler)
+	slog.SetDefault(logger)
 	if len(os.Args) == 2 && os.Args[1] == "check-msg91" {
 		check := cfg.SMS
 		check.Enabled = true
@@ -539,9 +544,11 @@ func main() {
 		portalHandler.SetShipping(shipping)
 		portalHandler.SetDeliveryExceptions(commerceRepository)
 		if cfg.Shipping.WebhookSecret != "" {
-			mux.Handle(webhookTransport.DeliveryCallbackPath, webhookTransport.DeliveryCallback(cfg.Shipping.WebhookSecret, func(ctx context.Context, id int64, reference, awb string) error {
+			deliveryHandler := webhookTransport.DeliveryCallback(cfg.Shipping.WebhookSecret, func(ctx context.Context, id int64, reference, awb string) error {
 				return errors.Join(shipping.ScheduleCheck(ctx, id, reference, awb), marketplaceRepository.WakePackage(ctx, id, reference, awb))
-			}))
+			})
+			mux.Handle(webhookTransport.DeliveryCallbackPath, deliveryHandler)
+			mux.Handle("/webhooks/shiprocket", deliveryHandler)
 		}
 		worker.RegisterDurablePeriodic(workerContext, time.Minute, "legacy-shipping-reconciliation", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
 			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
@@ -649,9 +656,14 @@ func main() {
 	for consumer := 0; consumer < 2; consumer++ {
 		go worker.RunMarketplaceQueue(workerContext, redisClient, marketplaceRepository, marketplaceProcessor.Process, fmt.Sprintf("%s-%d-%d", consumerID, os.Getpid(), consumer))
 	}
+	securityMiddleware := middleware.EnterpriseSecurityHeaders(middleware.SecurityOptions{
+		IsProduction: strings.EqualFold(cfg.Environment, "production"),
+	})
+	recoveryMiddleware := middleware.Recovery(logger)
+
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           httpMetrics.Middleware(requestConcurrency(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, marketplaceHandler.Middleware(mux), cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg), cfg.HTTPConcurrency)),
+		Handler:           recoveryMiddleware(securityMiddleware(httpMetrics.Middleware(requestConcurrency(releaseAccess(requestID(authRateLimit(accountSecurity(canonicalHostRedirect(webHandlers.StorefrontMiddleware(pool, marketplaceHandler.Middleware(mux), cfg.PaymentMode), cfg.PublicURL, cfg.Environment), sessionService), rateLimiter)), cfg), cfg.HTTPConcurrency)))),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

@@ -35,13 +35,15 @@ func (h *Handler) publicMedia(w http.ResponseWriter, r *http.Request, mediaID st
 		return
 	}
 	info := media.Info()
+	versioned := r.URL.Query().Get("v") != ""
 	if width := photographWidth(r, info, true); width != 0 {
 		photo, err := responsivePhotograph(r.Context(), media, width)
 		if err != nil {
 			h.renderError(w, http.StatusServiceUnavailable, "Media unavailable", "This product image is temporarily unavailable.")
 			return
 		}
-		mediaHeaders(w, photo.contentType, true)
+		mediaHeaders(w, photo.contentType, true, versioned)
+		w.Header().Set("Cache-Tag", fmt.Sprintf("product-media,product-media-%d", id))
 		photographETag(w, photo.data)
 		http.ServeContent(w, r, "product-photograph", time.Time{}, bytes.NewReader(photo.data))
 		return
@@ -89,11 +91,15 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 		h.notFound(w, r)
 		return
 	}
+	versioned := r.URL.Query().Get("v") != ""
 	// S3 objects implement ReadSeeker. ServeContent requests only the byte range
 	// needed by the browser, so a video preview never buffers a whole 25 MiB file.
 	if strings.HasPrefix(info.ContentType, "video/") {
 		if seeker, ok := body.(io.ReadSeeker); ok {
-			mediaHeaders(w, info.ContentType, public)
+			mediaHeaders(w, info.ContentType, public, versioned)
+			if public {
+				w.Header().Set("Cache-Tag", fmt.Sprintf("product-media,product-media-%d", mediaID))
+			}
 			http.ServeContent(w, r, "product-media-"+strconv.FormatInt(mediaID, 10), time.Time{}, seeker)
 			return
 		}
@@ -103,9 +109,12 @@ func (h *Handler) serveMedia(w http.ResponseWriter, r *http.Request, mediaID int
 		h.renderError(w, http.StatusServiceUnavailable, "Media unavailable", "This product media is temporarily unavailable.")
 		return
 	}
-	mediaHeaders(w, info.ContentType, public)
-	if public && strings.HasPrefix(info.ContentType, "image/") {
-		photographETag(w, data)
+	mediaHeaders(w, info.ContentType, public, versioned)
+	if public {
+		w.Header().Set("Cache-Tag", fmt.Sprintf("product-media,product-media-%d", mediaID))
+		if strings.HasPrefix(info.ContentType, "image/") {
+			photographETag(w, data)
+		}
 	}
 	http.ServeContent(w, r, "product-media-"+strconv.FormatInt(mediaID, 10), time.Time{}, bytes.NewReader(data))
 }
@@ -125,9 +134,17 @@ func photographWidth(r *http.Request, info ports.ObjectInfo, public bool) int {
 	return 0
 }
 
-func mediaHeaders(w http.ResponseWriter, contentType string, public bool) {
+func mediaHeaders(w http.ResponseWriter, contentType string, public bool, versioned bool) {
 	if public {
-		w.Header().Set("Cache-Control", "public, max-age=300")
+		if versioned {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			w.Header().Set("CDN-Cache-Control", "max-age=31536000")
+			w.Header().Set("Cloudflare-CDN-Cache-Control", "max-age=31536000")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400")
+			w.Header().Set("CDN-Cache-Control", "max-age=604800")
+			w.Header().Set("Cloudflare-CDN-Cache-Control", "max-age=604800")
+		}
 	} else {
 		w.Header().Set("Cache-Control", "private, no-store")
 	}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/wecratfs/commerce/internal/adapters/postgres"
@@ -13,12 +14,21 @@ import (
 )
 
 type sitemapURLSet struct {
-	XMLName xml.Name       `xml:"urlset"`
-	XMLNS   string         `xml:"xmlns,attr"`
-	URLs    []sitemapEntry `xml:"url"`
+	XMLName    xml.Name       `xml:"urlset"`
+	XMLNS      string         `xml:"xmlns,attr"`
+	ImageXMLNS string         `xml:"xmlns:image,attr,omitempty"`
+	URLs       []sitemapEntry `xml:"url"`
 }
 type sitemapEntry struct {
-	Loc string `xml:"loc"`
+	Loc        string        `xml:"loc"`
+	LastMod    string        `xml:"lastmod,omitempty"`
+	ChangeFreq string        `xml:"changefreq,omitempty"`
+	Priority   string        `xml:"priority,omitempty"`
+	Image      *sitemapImage `xml:"image:image,omitempty"`
+}
+type sitemapImage struct {
+	Loc   string `xml:"image:loc"`
+	Title string `xml:"image:title,omitempty"`
 }
 
 func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.HandlerFunc) {
@@ -29,14 +39,18 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /account\nDisallow: /checkout\nDisallow: /orders\nDisallow: /cart\nDisallow: /wishlist\nDisallow: /login\nDisallow: /register\nDisallow: /admin\nDisallow: /seller-admin\nDisallow: /super-admin\nSitemap: " + base + "/sitemap.xml\n"))
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		_, _ = w.Write([]byte("User-agent: *\nAllow: /\nDisallow: /account\nDisallow: /checkout\nDisallow: /orders\nDisallow: /cart\nDisallow: /wishlist\nDisallow: /login\nDisallow: /register\nDisallow: /admin\nDisallow: /seller-admin\nDisallow: /super-admin\n\nCrawl-delay: 1\n\nSitemap: " + base + "/sitemap.xml\n"))
 	}
 	sitemap := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		set := sitemapURLSet{XMLNS: "http://www.sitemaps.org/schemas/sitemap/0.9"}
+		set := sitemapURLSet{
+			XMLNS:      "http://www.sitemaps.org/schemas/sitemap/0.9",
+			ImageXMLNS: "http://www.google.com/schemas/sitemap-image/1.1",
+		}
 		content := storefront.Defaults()
 		if pool != nil {
 			revision, err := postgres.ReadPublishedStorefront(r.Context(), pool)
@@ -48,10 +62,68 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			content = revision.Config
 		}
 		for _, path := range sitemapContentPaths(content) {
-			set.URLs = append(set.URLs, sitemapEntry{Loc: base + path})
+			priority := "0.8"
+			changeFreq := "weekly"
+			if path == "/" {
+				priority = "1.0"
+				changeFreq = "daily"
+			} else if path == "/categories" || path == "/products" {
+				priority = "0.9"
+				changeFreq = "daily"
+			}
+			set.URLs = append(set.URLs, sitemapEntry{
+				Loc:        base + path,
+				Priority:   priority,
+				ChangeFreq: changeFreq,
+			})
 		}
 		if pool != nil {
-			appendRows := func(query, prefix string, maker bool) error {
+			// Query products with rich images and modification dates
+			prodRows, err := pool.Query(r.Context(), `
+				SELECT p.slug, p.name, COALESCE(p.image_url, ''), p.updated_at
+				FROM products p
+				JOIN sellers s ON s.id=p.seller_id
+				WHERE p.status='approved' AND s.status='active'
+				ORDER BY p.id LIMIT 5000`)
+			if err != nil {
+				w.Header().Set("Retry-After", "300")
+				http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			defer prodRows.Close()
+			for prodRows.Next() {
+				var slug, name, imageURL string
+				var updatedAt time.Time
+				if err := prodRows.Scan(&slug, &name, &imageURL, &updatedAt); err != nil {
+					w.Header().Set("Retry-After", "300")
+					http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
+					return
+				}
+				entry := sitemapEntry{
+					Loc:        base + "/products/" + url.PathEscape(slug),
+					LastMod:    updatedAt.UTC().Format("2006-01-02"),
+					ChangeFreq: "weekly",
+					Priority:   "0.8",
+				}
+				if imageURL != "" {
+					imgLoc := imageURL
+					if strings.HasPrefix(imgLoc, "/") {
+						imgLoc = base + imgLoc
+					}
+					entry.Image = &sitemapImage{
+						Loc:   imgLoc,
+						Title: name,
+					}
+				}
+				set.URLs = append(set.URLs, entry)
+			}
+			if err := prodRows.Err(); err != nil {
+				w.Header().Set("Retry-After", "300")
+				http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
+				return
+			}
+
+			appendRows := func(query, prefix string, maker bool, priority, changeFreq string) error {
 				rows, err := pool.Query(r.Context(), query)
 				if err != nil {
 					return err
@@ -65,12 +137,16 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 					if maker {
 						slug = identity.MakerSlug(slug)
 					}
-					set.URLs = append(set.URLs, sitemapEntry{Loc: base + prefix + url.PathEscape(slug)})
+					set.URLs = append(set.URLs, sitemapEntry{
+						Loc:        base + prefix + url.PathEscape(slug),
+						Priority:   priority,
+						ChangeFreq: changeFreq,
+					})
 				}
 				return rows.Err()
 			}
 			for _, source := range sitemapCatalogSources {
-				if err := appendRows(source.query, source.prefix, source.maker); err != nil {
+				if err := appendRows(source.query, source.prefix, source.maker, source.priority, source.changeFreq); err != nil {
 					w.Header().Set("Retry-After", "300")
 					http.Error(w, "Sitemap temporarily unavailable", http.StatusServiceUnavailable)
 					return
@@ -78,7 +154,7 @@ func seoHandler(pool *pgxpool.Pool, publicURL string) (http.HandlerFunc, http.Ha
 			}
 		}
 		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		w.Header().Set("Cache-Control", "public, max-age=300")
+		w.Header().Set("Cache-Control", "public, max-age=3600, s-maxage=86400")
 		if r.Method == http.MethodHead {
 			return
 		}
@@ -112,13 +188,13 @@ var legacyPublicURLs = map[string]string{
 }
 
 var sitemapCatalogSources = []struct {
-	query, prefix string
-	maker         bool
+	query, prefix       string
+	maker               bool
+	priority, changeFreq string
 }{
-	{`SELECT p.slug FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.status='approved' AND s.status='active' ORDER BY p.id LIMIT 5000`, "/products/", false},
-	{`SELECT DISTINCT s.display_name FROM sellers s WHERE s.status='active' AND EXISTS (SELECT 1 FROM products p WHERE p.seller_id=s.id AND p.status='approved') ORDER BY s.display_name LIMIT 5000`, "/makers/", true},
-	{`SELECT b.slug FROM brands b WHERE EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.brand_slug=b.slug AND p.status='approved' AND s.status='active') ORDER BY b.slug LIMIT 5000`, "/brands/", false},
-	{`SELECT c.slug FROM categories c WHERE EXISTS (SELECT 1 FROM product_categories pc JOIN products p ON p.id=pc.product_id JOIN sellers s ON s.id=p.seller_id WHERE pc.category_slug=c.slug AND p.status='approved' AND s.status='active') ORDER BY c.slug LIMIT 5000`, "/categories/", false},
+	{`SELECT DISTINCT s.display_name FROM sellers s WHERE s.status='active' AND EXISTS (SELECT 1 FROM products p WHERE p.seller_id=s.id AND p.status='approved') ORDER BY s.display_name LIMIT 5000`, "/makers/", true, "0.7", "weekly"},
+	{`SELECT b.slug FROM brands b WHERE EXISTS (SELECT 1 FROM products p JOIN sellers s ON s.id=p.seller_id WHERE p.brand_slug=b.slug AND p.status='approved' AND s.status='active') ORDER BY b.slug LIMIT 5000`, "/brands/", false, "0.8", "weekly"},
+	{`SELECT c.slug FROM categories c WHERE EXISTS (SELECT 1 FROM product_categories pc JOIN products p ON p.id=pc.product_id JOIN sellers s ON s.id=p.seller_id WHERE pc.category_slug=c.slug AND p.status='approved' AND s.status='active') ORDER BY c.slug LIMIT 5000`, "/categories/", false, "0.8", "weekly"},
 }
 
 func canonicalHostRedirect(next http.Handler, canonical string, environment string) http.Handler {

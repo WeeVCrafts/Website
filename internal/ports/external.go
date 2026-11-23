@@ -70,6 +70,8 @@ type SearchDocument struct {
 
 type SearchIndexer interface {
 	Rebuild(ctx context.Context, documents []SearchDocument) error
+	IndexDocument(ctx context.Context, document SearchDocument) error
+	DeleteDocument(ctx context.Context, slug string) error
 }
 
 type SearchRequest struct {
@@ -89,6 +91,7 @@ type SearchResult struct {
 	ProductSlugs []string
 	Total        int
 	Facets       []SearchFacet
+	BrandFacets  []SearchFacet
 }
 
 // ObjectStorage owns file bytes and returns opaque references to them. Product

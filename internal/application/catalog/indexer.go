@@ -2,8 +2,10 @@ package catalog
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/wecratfs/commerce/internal/ports"
@@ -37,21 +39,50 @@ func (p *ProductIndexProcessor) Process(ctx context.Context, limit int) (process
 		return 0, err
 	}
 	for _, event := range events {
-		documents, sourceErr := p.source.ListApprovedForIndex(ctx)
-		if sourceErr != nil {
-			_ = p.events.Fail(ctx, event.ID, time.Minute, sourceErr.Error())
-			if err == nil {
-				err = sourceErr
+		if productID, parseErr := strconv.ParseInt(event.AggregateID, 10, 64); parseErr == nil && productID > 0 {
+			doc, sourceErr := p.source.FindApprovedForIndex(ctx, productID)
+			if sourceErr != nil {
+				_ = p.events.Fail(ctx, event.ID, time.Minute, sourceErr.Error())
+				if err == nil {
+					err = sourceErr
+				}
+				continue
 			}
-			continue
-		}
-		if indexErr := p.indexer.Rebuild(ctx, documents); indexErr != nil {
-			_ = p.events.Fail(ctx, event.ID, time.Minute, indexErr.Error())
-			if err == nil {
-				err = indexErr
+			if doc != nil {
+				if indexErr := p.indexer.IndexDocument(ctx, *doc); indexErr != nil {
+					_ = p.events.Fail(ctx, event.ID, time.Minute, indexErr.Error())
+					if err == nil {
+						err = indexErr
+					}
+					continue
+				}
+			} else {
+				var payload struct {
+					Slug string `json:"slug"`
+				}
+				_ = json.Unmarshal(event.Payload, &payload)
+				if payload.Slug != "" {
+					_ = p.indexer.DeleteDocument(ctx, payload.Slug)
+				}
 			}
-			continue
+		} else {
+			documents, sourceErr := p.source.ListApprovedForIndex(ctx)
+			if sourceErr != nil {
+				_ = p.events.Fail(ctx, event.ID, time.Minute, sourceErr.Error())
+				if err == nil {
+					err = sourceErr
+				}
+				continue
+			}
+			if indexErr := p.indexer.Rebuild(ctx, documents); indexErr != nil {
+				_ = p.events.Fail(ctx, event.ID, time.Minute, indexErr.Error())
+				if err == nil {
+					err = indexErr
+				}
+				continue
+			}
 		}
+
 		if p.invalidator != nil {
 			if invalidateErr := p.invalidator.DeletePrefix(ctx, "catalog:search:"); invalidateErr != nil {
 				_ = p.events.Fail(ctx, event.ID, time.Minute, invalidateErr.Error())
