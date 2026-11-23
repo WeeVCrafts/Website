@@ -78,7 +78,8 @@ html { scroll-padding-block: calc(var(--ui-header-height,72px) + 16px) calc(var(
 .global-search:focus-within .search-clear:not([hidden]) { display: grid; }
 .global-search .search-clear[hidden] { display: none !important; }
 .storefront-body .gallery-main { position: relative; aspect-ratio: 1; min-height: 0; background: var(--surface-2); }
-.storefront-body .gallery-main > :is(img,video) { width: 100%; height: 100%; object-fit: contain; }
+.storefront-body .gallery-main > img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.storefront-body .gallery-main > video { width: 100%; height: 100%; object-fit: contain; background: #211b17; }
 .storefront-body [data-gallery-media][hidden] { display: none !important; }
 .storefront-body .gallery-main { touch-action: pan-y pinch-zoom; }
 .storefront-body .detail-grid { grid-template-columns: minmax(0,1fr) minmax(0,.85fr); }

@@ -218,7 +218,7 @@ html:has(.mobile-menu[open]) { scrollbar-gutter: auto; }
 .filter-sidebar .facet-options label { padding-block: 6px; }
 .product-story { white-space: pre-line; max-width: 70ch; }
 .gallery .thumbs button[aria-pressed=true] { outline: 2px solid var(--forest); outline-offset: 2px; }
-.gallery-main img { object-fit: contain; background: var(--surface-2); }
+.gallery-main img { object-fit: cover; object-position: center; }
 .cart-layout--empty { display: block; }
 .cart-layout--empty .empty-state { padding-block: 64px; }
 .account-overview-intro { padding-block: 32px 16px; }

@@ -108,7 +108,7 @@ button:disabled { cursor: not-allowed; opacity: .65; }
 .product-media-upload {min-width:0;grid-template-columns:minmax(0,1fr);}
 .product-media-upload > * {min-width:0;max-width:100%;overflow-wrap:anywhere;}
 .product-media-upload input[type=file] {width:100%;min-width:0;}
-.product-media-selection :is(img,video), .maker-portrait-preview, [data-main-image-preview] img { width:180px; max-width:100%; height:180px; object-fit:contain; background:var(--ui-surface); border:1px solid var(--ui-line); border-radius:8px; }
+.product-media-selection :is(img,video), .maker-portrait-preview, [data-main-image-preview] > img { width:180px; max-width:100%; height:180px; object-fit:contain; background:var(--ui-surface); border:1px solid var(--ui-line); border-radius:8px; }
 .seller-profile .seller-avatar { width:180px; height:220px; border-radius:8px; flex:none; }
 .seller-profile .seller-avatar img { width:100%; height:100%; object-fit:cover; }
 .seller-profile .seller-description { max-width:65ch; }

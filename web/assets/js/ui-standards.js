@@ -315,7 +315,7 @@
       });
       let isAdjusted = false;
       const apply = () => {
-        const mode = fit?.value || 'contain', scale = Number(zoom?.value || 1), position = `${Number(x?.value || 50)}% ${Number(y?.value || 50)}%`;
+        const mode = fit?.value || 'cover', scale = Number(zoom?.value || 1), position = `${Number(x?.value || 50)}% ${Number(y?.value || 50)}%`;
         images.forEach(img => { img.style.objectFit = mode; img.style.objectPosition = position; img.style.transform = `scale(${scale})`; });
         const fill = mode === 'cover';
         [zoom,x,y].forEach(control => { if (control) control.disabled = false; });
@@ -351,7 +351,7 @@
             ctx.fillStyle = '#fcfbf8';
             ctx.fillRect(0, 0, CW, CH);
 
-            const mode = fit?.value || 'contain';
+            const mode = fit?.value || 'cover';
             const scale = Number(zoom?.value || 1);
             const posX = Number(x?.value || 50) / 100;
             const posY = Number(y?.value || 50) / 100;
