@@ -1,6 +1,6 @@
 /* Shared identity. Semantic status and destructive-action tokens stay independent. */
 :root {
-  --brand-wordmark-font: "Cormorant Garamond", Georgia, serif;
+  --brand-wordmark-font: "Playfair Display", Georgia, serif;
   --brand-primary: #123f32;
   --brand-hover: #0d3529;
   --brand-paper: #f8f2e8;

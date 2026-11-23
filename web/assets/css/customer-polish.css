@@ -460,7 +460,9 @@ html {scroll-padding-block-start:90px;}
 .payment-recovery [data-backend-message]:empty {display: none;}
 .confirmation-help {margin-block-start: 16px; color: var(--muted);}
 .confirmation-help a {text-decoration: underline; color: var(--forest);}
-.checkout-amount, .checkout-summary :is(b,strong), .order-detail-layout .summary :is(b,strong), .order-receipt strong {font-family: var(--sans); font-variant-numeric: tabular-nums;}
+.checkout-amount, .checkout-summary :is(b,strong), .order-detail-layout .summary :is(b,strong), .order-receipt strong, .order-card header > div:nth-child(2) strong, .compact-order strong {font-family: var(--sans); font-variant-numeric: tabular-nums;}
+.order-card header h2, .compact-order header h2 { font-family: var(--sans) !important; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.account-stats b { font-family: var(--sans) !important; font-variant-numeric: tabular-nums; }
 .confirmation-facts .checkout-amount {font-size: 1.25rem;}
 @media (max-width: 600px) {
   .confirmation-facts, .confirmation-progress {grid-template-columns: minmax(0, 1fr);}

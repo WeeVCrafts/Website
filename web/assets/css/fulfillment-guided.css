@@ -1,9 +1,9 @@
 /* Approved guided fulfillment concepts, 17 November 2026. Scoped to setup. */
-body.fulfillment-guided .guided-workspace{--fg-bg:#f7f5ee;--fg-surface:#fffdf8;--fg-ink:#20362d;--fg-muted:#56665d;--fg-border:#dfd8ca;--fg-green:#123f32;--fg-missing:#9a6700;background:var(--fg-bg);color:var(--fg-ink);font-family:Inter,sans-serif;font-size:17px;line-height:1.5}
+body.fulfillment-guided .guided-workspace{--fg-bg:#f7f5ee;--fg-surface:#fffdf8;--fg-ink:#20362d;--fg-muted:#56665d;--fg-border:#dfd8ca;--fg-green:#123f32;--fg-missing:#9a6700;background:var(--fg-bg);color:var(--fg-ink);font-family:var(--admin-sans,"DM Sans",Arial,sans-serif);font-size:17px;line-height:1.5}
 body.fulfillment-guided .marketplace-workspace{display:block;margin:0;padding:0;border:0;background:none}
 body.fulfillment-guided .marketplace-workspace>nav,body.fulfillment-guided .fulfillment-tabs{display:none}
 body.fulfillment-guided .guided-workspace a{color:var(--fg-green);text-underline-offset:4px}
-body.fulfillment-guided .guided-workspace h1,body.fulfillment-guided .guided-workspace h2,body.fulfillment-guided .guided-workspace h3{font-family:Roboto,Inter,sans-serif;color:var(--fg-ink);letter-spacing:-.5px;font-weight:700;line-height:1.2}
+body.fulfillment-guided .guided-workspace h1,body.fulfillment-guided .guided-workspace h2,body.fulfillment-guided .guided-workspace h3{font-family:var(--admin-serif,"Playfair Display",Georgia,serif);color:var(--fg-ink);letter-spacing:-.5px;font-weight:700;line-height:1.2}
 body.fulfillment-guided .guided-workspace h1{font-size:38px;margin:0}
 body.fulfillment-guided .guided-workspace .guided-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 0 14px;border-bottom:1px solid var(--fg-border);margin-bottom:12px}
 body.fulfillment-guided .guided-workspace .guided-heading>a{font-size:17px;font-weight:600;white-space:nowrap}
@@ -29,7 +29,7 @@ body.fulfillment-guided .guided-workspace .guided-task h2,body.fulfillment-guide
 body.fulfillment-guided .guided-workspace .guided-task p{margin:0 0 20px;color:var(--fg-muted);font-size:17px}
 body.fulfillment-guided .guided-workspace .guided-task .marketplace-form{display:block;width:100%;max-width:none;padding:0;margin:0;border:0;background:none;box-shadow:none}
 body.fulfillment-guided .guided-workspace .marketplace-form label,body.fulfillment-guided .guided-workspace .guided-filters label{display:block;font-size:17px;font-weight:600;margin:0 0 5px;color:#26312b}
-body.fulfillment-guided .guided-workspace .marketplace-form input:not([type=checkbox]):not([type=hidden]),body.fulfillment-guided .guided-workspace .marketplace-form select,body.fulfillment-guided .guided-workspace .marketplace-form textarea,body.fulfillment-guided .guided-workspace .guided-filters input,body.fulfillment-guided .guided-workspace .guided-filters select{width:100%;min-height:44px;border:1px solid #a9a89d;border-radius:6px;background:#fffdfa;color:#29372e;padding:9px 14px;font:400 17px/1.3 Inter,sans-serif;box-shadow:none;margin:0 0 4px}
+body.fulfillment-guided .guided-workspace .marketplace-form input:not([type=checkbox]):not([type=hidden]),body.fulfillment-guided .guided-workspace .marketplace-form select,body.fulfillment-guided .guided-workspace .marketplace-form textarea,body.fulfillment-guided .guided-workspace .guided-filters input,body.fulfillment-guided .guided-workspace .guided-filters select{width:100%;min-height:44px;border:1px solid #a9a89d;border-radius:6px;background:#fffdfa;color:#29372e;padding:9px 14px;font:400 17px/1.3 var(--admin-sans,"DM Sans",Arial,sans-serif);box-shadow:none;margin:0 0 4px}
 body.fulfillment-guided .guided-workspace .marketplace-form textarea{height:76px;min-height:76px;resize:vertical}
 body.fulfillment-guided .guided-workspace .marketplace-form small{display:block;color:var(--fg-muted);font-size:13px;line-height:1.4;margin-bottom:12px}
 body.fulfillment-guided .guided-workspace small.fulfillment-field-error:empty{display:none}body.fulfillment-guided .guided-workspace .marketplace-form small.fulfillment-field-error:not(:empty){color:#ae351d;margin:4px 0 10px}
@@ -37,7 +37,7 @@ body.fulfillment-guided .guided-workspace .marketplace-form>input:not([type=hidd
 body.fulfillment-guided .guided-workspace .guided-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:0 0 12px}body.fulfillment-guided .guided-workspace .guided-field-grid>div{min-width:0}
 body.fulfillment-guided .guided-workspace .guided-actions{display:flex;align-items:center;gap:20px;border-top:1px solid var(--fg-border);padding-top:20px;margin-top:24px;flex-wrap:wrap}
 body.fulfillment-guided .guided-workspace .guided-actions>small{margin:0 0 0 auto;font-size:13px}body.fulfillment-guided .guided-workspace .guided-actions>button,body.fulfillment-guided .guided-workspace .guided-actions>.guided-primary{margin-left:auto}
-body.fulfillment-guided .guided-workspace button:not(.admin-menu-button):not(.admin-sidebar-close):not(.admin-sidebar-backdrop):not(.ui-dialog-close),body.fulfillment-guided .guided-workspace .guided-primary,body.fulfillment-guided .guided-workspace .guided-secondary{min-height:46px;border-radius:6px;padding:10px 22px;font:600 16px/1.5 Inter,sans-serif;background:#12583e;color:#fff;border:1px solid #12583e;box-shadow:none;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:14px;cursor:pointer}
+body.fulfillment-guided .guided-workspace button:not(.admin-menu-button):not(.admin-sidebar-close):not(.admin-sidebar-backdrop):not(.ui-dialog-close),body.fulfillment-guided .guided-workspace .guided-primary,body.fulfillment-guided .guided-workspace .guided-secondary{min-height:46px;border-radius:6px;padding:10px 22px;font:600 16px/1.5 var(--admin-sans,"DM Sans",Arial,sans-serif);background:#12583e;color:#fff;border:1px solid #12583e;box-shadow:none;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:14px;cursor:pointer}
 body.fulfillment-guided .guided-workspace .guided-secondary{background:transparent;color:var(--fg-green);border-color:var(--fg-green)}
 body.fulfillment-guided .guided-workspace :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #b08028;outline-offset:3px}
 body.fulfillment-guided .guided-workspace .guided-task-alert,body.fulfillment-guided .guided-workspace .guided-alert,body.fulfillment-guided .guided-workspace .guided-alert-block{border:1px solid #e7bc76;background:#fff2d9;color:#8b5500;border-radius:6px;padding:12px 16px;font-weight:600;margin-bottom:20px}
@@ -105,7 +105,7 @@ body.fulfillment-guided .guided-workspace .guided-saved{margin:12px 0 22px!impor
 body.fulfillment-guided .guided-workspace .guided-task .guided-alert .material-symbols-outlined{font-size:24px}
 
 body.fulfillment-guided .guided-workspace .guided-overview-chrome{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--fg-border);padding:0 0 22px;gap:20px}
-body.fulfillment-guided .guided-workspace .guided-overview-chrome>strong{font:700 28px/1.4 Roboto,Inter,sans-serif}
+body.fulfillment-guided .guided-workspace .guided-overview-chrome>strong{font:700 28px/1.4 var(--admin-serif,"Playfair Display",Georgia,serif)}
 body.fulfillment-guided .guided-workspace .guided-overview-chrome>span{display:flex;align-items:center;gap:10px;font-size:17px}
 body.fulfillment-guided .guided-workspace .guided-overview-chrome i{font-size:28px;font-style:normal}
 body.fulfillment-guided .guided-workspace .guided-overview-tabs{display:flex;gap:28px;border-bottom:1px solid var(--fg-border);margin-bottom:32px}
