@@ -1,0 +1,165 @@
+package admin
+
+import (
+	"github.com/wecratfs/commerce/internal/web/viewmodels"
+)
+
+templ AdminProfilePage(p viewmodels.AdminPage) {
+	@AdminDocument(p) {
+		<div class="admin-panel">
+			<div class="panel-heading">
+				<h2>{ p.Title }</h2>
+				<p>{ p.Subtitle }</p>
+			</div>
+			if p.Notice != "" {
+				<div class="admin-notice" style="margin-bottom:1rem;padding:0.75rem 1rem;background:#e8f5e9;color:#1b5e20;border-radius:6px;font-weight:600;" role="status">
+					{ p.Notice }
+				</div>
+			}
+			if p.ProfileError != "" {
+				<div class="admin-error" style="margin-bottom:1rem;padding:0.75rem 1rem;background:#ffebee;color:#b71c1c;border-radius:6px;font-weight:600;" role="alert">
+					{ p.ProfileError }
+				</div>
+			}
+			<form method="post" action={ templ.SafeURL(p.PortalRoot + "/profile") } enctype="multipart/form-data" class="admin-product-editor-form">
+				<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+				<input type="hidden" name="return_to" value={ p.PortalRoot + "/profile" }/>
+				
+				<div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;padding:1rem;background:#faf8f5;border-radius:8px;">
+					if p.HasAvatar {
+						<img src={ p.PortalRoot + "/profile/photo" } alt={ p.DisplayName } width="80" height="80" style="border-radius:9999px;object-fit:cover;border:2px solid #deddd7;"/>
+					} else {
+						<div style="width:80px;height:80px;border-radius:9999px;background:#075238;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;">
+							{ displayInitials(p.DisplayName) }
+						</div>
+					}
+					<div style="flex:1;">
+						<label style="margin-bottom:0.5rem;">
+							<span>Profile photo</span>
+							<input type="file" name="photo" accept="image/jpeg,image/png,image/webp"/>
+							<small style="color:var(--admin-muted);">JPEG, PNG or WebP · up to 5 MiB</small>
+						</label>
+						if p.HasAvatar {
+							<label style="display:inline-flex;align-items:center;gap:0.5rem;font-weight:normal;cursor:pointer;margin-top:0.5rem;">
+								<input type="checkbox" name="remove_photo" value="1" style="width:auto;min-height:auto;"/>
+								<span>Remove current photo</span>
+							</label>
+						}
+					</div>
+				</div>
+
+				<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:1rem;">
+					<label>
+						<span>Display name <strong style="color:#d32f2f;">*</strong></span>
+						<input name="name" value={ p.DisplayName } minlength="2" maxlength="100" autocomplete="name" required/>
+					</label>
+					<label>
+						<span>Phone number <strong style="color:#d32f2f;">*</strong></span>
+						<input name="phone" value={ p.UserPhone } type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required placeholder="+91 98765 43210"/>
+						<small style="color:var(--admin-muted);">Include country code, e.g. +91.</small>
+					</label>
+					<label>
+						<span>Email address</span>
+						<input type="email" value={ p.UserEmail } disabled style="background:#f5f5f5;color:#757575;cursor:not-allowed;"/>
+						<small style="color:var(--admin-muted);">Account email cannot be modified directly.</small>
+					</label>
+					<label>
+						<span>Assigned role</span>
+						<input value={ p.RoleLabel } disabled style="background:#f5f5f5;color:#757575;cursor:not-allowed;"/>
+					</label>
+				</div>
+
+				<div style="margin-top:1.5rem;">
+					<button class="admin-button primary" type="submit">Save profile</button>
+				</div>
+			</form>
+		</div>
+
+		<div class="admin-panel" style="margin-top:2rem;">
+			<div class="panel-heading">
+				<h2>Saved addresses</h2>
+				<p>Manage default dispatch, return, and billing addresses for your role.</p>
+			</div>
+
+			if len(p.Addresses) > 0 {
+				<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:1.5rem;margin-bottom:2rem;">
+					for _, addr := range p.Addresses {
+						<div style="border:1px solid #deddd7;border-radius:8px;padding:1.25rem;background:#fff;display:flex;flex-direction:column;justify-content:space-between;">
+							<div>
+								<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+									<h3 style="margin:0;font-size:1.1rem;color:var(--admin-navy);">{ addr.Name }</h3>
+									<span style="font-size:0.85rem;color:var(--admin-muted);">{ addr.Phone }</span>
+								</div>
+								<p style="margin:0.25rem 0;color:#424242;line-height:1.4;">
+									{ addr.Line1 }
+									if addr.Line2 != "" {
+										<br/>{ addr.Line2 }
+									}
+									<br/>{ addr.City }, { addr.State } { addr.PostalCode }
+									<br/>India
+								</p>
+							</div>
+							<div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid #f0f0f0;display:flex;gap:0.75rem;">
+								<form method="post" action={ templ.SafeURL(p.PortalRoot + "/addresses/delete") } onsubmit="return confirm('Delete this saved address?');">
+									<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+									<input type="hidden" name="address_id" value={ addr.ID }/>
+									<input type="hidden" name="return_to" value={ p.PortalRoot + "/profile" }/>
+									<button type="submit" class="admin-button secondary" style="color:#d32f2f;border-color:#ffcdd2;">
+										Delete
+									</button>
+								</form>
+							</div>
+						</div>
+					}
+				</div>
+			} else {
+				<p style="color:var(--admin-muted);margin-bottom:1.5rem;">No saved addresses yet. Add one below.</p>
+			}
+
+			<details style="border:1px solid #deddd7;border-radius:8px;padding:1rem;background:#faf8f5;">
+				<summary style="font-weight:600;cursor:pointer;color:var(--admin-navy);">
+					+ Add new address
+				</summary>
+				<form method="post" action={ templ.SafeURL(p.PortalRoot + "/addresses") } class="admin-product-editor-form" style="margin-top:1rem;">
+					<input type="hidden" name="csrf_token" value={ p.CSRFToken }/>
+					<input type="hidden" name="return_to" value={ p.PortalRoot + "/profile" }/>
+					<input type="hidden" name="country_code" value="IN"/>
+					
+					<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:1rem;">
+						<label>
+							<span>Recipient / Contact name <strong style="color:#d32f2f;">*</strong></span>
+							<input name="recipient_name" autocomplete="name" maxlength="100" required placeholder="Full name"/>
+						</label>
+						<label>
+							<span>Contact phone <strong style="color:#d32f2f;">*</strong></span>
+							<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required placeholder="+91 98765 43210"/>
+						</label>
+						<label style="grid-column:1 / -1;">
+							<span>Address line 1 <strong style="color:#d32f2f;">*</strong></span>
+							<input name="line1" autocomplete="address-line1" maxlength="250" required placeholder="House/Flat/Building no., Street"/>
+						</label>
+						<label style="grid-column:1 / -1;">
+							<span>Address line 2 (Optional)</span>
+							<input name="line2" autocomplete="address-line2" maxlength="250" placeholder="Apartment, suite, landmark"/>
+						</label>
+						<label>
+							<span>City <strong style="color:#d32f2f;">*</strong></span>
+							<input name="city" autocomplete="address-level2" maxlength="100" required placeholder="City"/>
+						</label>
+						<label>
+							<span>State <strong style="color:#d32f2f;">*</strong></span>
+							<input name="state" autocomplete="address-level1" maxlength="100" required placeholder="State"/>
+						</label>
+						<label>
+							<span>Postal Code (PIN) <strong style="color:#d32f2f;">*</strong></span>
+							<input name="postal_code" autocomplete="postal-code" inputmode="numeric" pattern="[1-9][0-9]{5}" minlength="6" maxlength="6" required placeholder="6-digit PIN code"/>
+						</label>
+					</div>
+					<div style="margin-top:1.25rem;">
+						<button class="admin-button primary" type="submit">Save address</button>
+					</div>
+				</form>
+			</details>
+		</div>
+	}
+}

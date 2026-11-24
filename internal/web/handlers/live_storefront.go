@@ -573,7 +573,7 @@ func ensureGuestCartCookie(w http.ResponseWriter, r *http.Request) string {
 }
 
 func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Request) {
-	userID, ok := h.customerMutationActor(w, r)
+	userID, ok := h.authenticatedAddressActor(w, r)
 	if !ok {
 		return
 	}
@@ -628,11 +628,19 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "address could not be saved", http.StatusServiceUnavailable)
 		return
 	}
-	http.Redirect(w, r, "/account/addresses?notice=Address+saved", http.StatusSeeOther)
+	returnTo := r.Form.Get("return_to")
+	if returnTo == "" || !strings.HasPrefix(returnTo, "/") {
+		returnTo = "/account/addresses"
+	}
+	sep := "?"
+	if strings.Contains(returnTo, "?") {
+		sep = "&"
+	}
+	http.Redirect(w, r, returnTo+sep+"notice=Address+saved", http.StatusSeeOther)
 }
 
 func (h *LiveStorefrontHandler) deleteAddress(w http.ResponseWriter, r *http.Request) {
-	userID, ok := h.customerMutationActor(w, r)
+	userID, ok := h.authenticatedAddressActor(w, r)
 	if !ok {
 		return
 	}
@@ -654,7 +662,36 @@ func (h *LiveStorefrontHandler) deleteAddress(w http.ResponseWriter, r *http.Req
 		http.NotFound(w, r)
 		return
 	}
-	http.Redirect(w, r, "/account/addresses?notice=Address+deleted", http.StatusSeeOther)
+	returnTo := r.Form.Get("return_to")
+	if returnTo == "" || !strings.HasPrefix(returnTo, "/") {
+		returnTo = "/account/addresses"
+	}
+	sep := "?"
+	if strings.Contains(returnTo, "?") {
+		sep = "&"
+	}
+	http.Redirect(w, r, returnTo+sep+"notice=Address+deleted", http.StatusSeeOther)
+}
+
+func (h *LiveStorefrontHandler) authenticatedAddressActor(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	userID, csrf, authenticated := h.session(r)
+	if !authenticated {
+		http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusSeeOther)
+		return 0, false
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid address form", http.StatusBadRequest)
+		return 0, false
+	}
+	token := r.Header.Get("X-CSRF-Token")
+	if token == "" {
+		token = r.Form.Get("csrf_token")
+	}
+	if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(csrf)) != 1 {
+		http.Error(w, "invalid CSRF token", http.StatusForbidden)
+		return 0, false
+	}
+	return userID, true
 }
 
 func (h *LiveStorefrontHandler) customerMutationActor(w http.ResponseWriter, r *http.Request) (int64, bool) {

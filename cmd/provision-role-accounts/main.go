@@ -33,6 +33,8 @@ var roleAccounts = []account{
 	{Email: "seller@weevcrafts.test", Name: "QA Seller", Role: "seller"},
 	{Email: "admin@weevcrafts.test", Name: "QA Admin", Role: "admin"},
 	{Email: "superadmin@weevcrafts.test", Name: "QA Super Admin", Role: "super_admin"},
+	{Email: "suppport@weevcrafts.com", Name: "WeevCrafts Support", Role: "admin"},
+	{Email: "support@weevcrafts.com", Name: "WeevCrafts Support", Role: "admin"},
 }
 
 func main() {

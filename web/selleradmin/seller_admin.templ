@@ -86,7 +86,14 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
       </form>
 
       @components.NotificationBell()
- <a class="seller-user" href="/seller-admin/settings"><span class="seller-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
+      <a class="seller-user" href="/seller-admin/profile" title="Account profile">
+        if p.HasAvatar {
+          <img class="seller-user-avatar" src="/seller-admin/profile/photo" alt={ p.DisplayName } width="36" height="36" style="border-radius:9999px;object-fit:cover;"/>
+        } else {
+          <span class="seller-user-avatar">{ p.Initials }</span>
+        }
+        <span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span>
+      </a>
       <form class="seller-header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </div>
     <nav class="seller-global-nav" aria-label="Store navigation"><a href="/categories">Categories <span class="material-symbols-outlined" aria-hidden="true">expand_more</span></a><a href="/products?category=offers">Offers</a><a href="/makers">Makers</a><span></span><a href="/">Storefront</a></nav>
@@ -96,7 +103,14 @@ templ SellerHeader(p viewmodels.SellerAdminPage) {
 templ SellerSidebar(p viewmodels.SellerAdminPage) {
   <aside id="seller-sidebar" class="seller-sidebar" data-navigation-media="(max-width: 960px)" :class="sidebar ? 'is-open' : ''">
     <button class="seller-sidebar-close" type="button" x-ref="sellerSidebarClose" aria-label="Close seller navigation" @click="sidebar=false; $nextTick(() => $refs.sellerMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="seller-profile-mini"><span class="seller-profile-avatar">{ p.Initials }</span><span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/seller-admin/onboarding">Seller application status</a></span></div>
+    <div class="seller-profile-mini">
+      if p.HasAvatar {
+        <img class="seller-profile-avatar" src="/seller-admin/profile/photo" alt={ p.SellerName } width="36" height="36" style="border-radius:9999px;object-fit:cover;"/>
+      } else {
+        <span class="seller-profile-avatar">{ p.Initials }</span>
+      }
+      <span><strong>{ p.SellerName }</strong><small>{ p.UserEmail }</small><a href="/seller-admin/profile">Account profile</a></span>
+    </div>
     <nav class="seller-nav" aria-label="Seller portal navigation">
       @SellerNav("dashboard", "Dashboard", "dashboard", p.Active, "/seller-admin")
       if p.CanProducts {
@@ -120,6 +134,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
         @SellerNav("support", "Support", "support_agent", p.Active, "/seller-admin/support")
         @SellerNav("settings", "Store profile", "store", p.Active, "/seller-admin/settings")
       }
+      @SellerNav("profile", "Account profile", "person", p.Active, "/seller-admin/profile")
       <a class="seller-nav-link" href="/notifications" aria-label="Notifications" data-tooltip="Notifications"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span>Notifications</span></a>
  <a class="seller-nav-link" href="/" aria-label="Go to storefront" data-tooltip="Storefront"><span class="material-symbols-outlined" aria-hidden="true">storefront</span><span>Storefront</span></a>
 

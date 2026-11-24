@@ -15,6 +15,9 @@ type AdminPage struct {
 	Active, NavActive, Workspace, Title, Subtitle, Query, Range, Notice, DataWarning string
 	StatusFilter, RoleFilter                                                         string
 	PortalRoot, PortalLabel, RoleLabel, DisplayName                                  string
+	UserEmail, UserPhone, ProfileError                                               string
+	HasAvatar                                                                        bool
+	Addresses                                                                        []Address
 	SettlementRoot                                                                   string
 	OrderStage                                                                       string
 	OrderQueueUnavailable                                                            bool
@@ -207,7 +210,10 @@ type SellerAdminPage struct {
 	Pagination                                                                       PortalPagination
 	LedgerPagination, SettlementPagination                                           PortalPagination
 	Active, Workspace, Title, Subtitle, Query, Range, Tab, Notice, DataWarning       string
-	DisplayName, UserEmail, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
+	DisplayName, UserEmail, UserPhone, SellerName, SellerStatus, RoleLabel, Initials, CSRFToken string
+	ProfileError                                                                     string
+	HasAvatar                                                                        bool
+	Addresses                                                                        []Address
 	RangeLabel                                                                       string
 	PublicLocation, PublicStory, PublicTechnique, PublicPortrait                     string
 	LowStockThreshold                                                                int

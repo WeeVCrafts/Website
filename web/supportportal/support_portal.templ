@@ -59,7 +59,7 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
         <span class="material-symbols-outlined" aria-hidden="true">search</span>
         <input id="support-search" name="q" value={ p.Query } placeholder="Search cases, orders, customers, sellers or anything..."/>
       </form>
-      <div class="support-user"><span class="support-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+      <a class="support-user" href="/admin/profile" title="View Profile" style="text-decoration:none;color:inherit;"><span class="support-user-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a>
       <form class="support-header-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out" title="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
     </div>
   </header>
@@ -68,7 +68,7 @@ templ SupportHeader(p viewmodels.SupportPortalPage) {
 templ SupportSidebar(p viewmodels.SupportPortalPage) {
   <aside id="support-sidebar" class="support-sidebar" :class="sidebar ? 'is-open' : ''">
     <button class="support-sidebar-close" type="button" x-ref="supportSidebarClose" aria-label="Close support navigation" @click="sidebar=false; $nextTick(() => $refs.supportMenu.focus())"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
-    <div class="support-profile-mini"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+    <div class="support-profile-mini"><a href="/admin/profile" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:0.75rem;"><span class="support-profile-avatar">{ p.Initials }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></a></div>
     <nav class="support-nav" aria-label="Support portal navigation">
       @SupportNav("dashboard", "Dashboard", "home", p.Active, "/support-portal")
       @SupportNav("cases", "Cases", "work_outline", p.Active, "/support-portal/cases")

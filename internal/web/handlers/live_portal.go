@@ -390,6 +390,14 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.adminUserExport(w, r)
 		return
 	}
+	if r.Method == http.MethodGet && (r.URL.Path == "/admin/profile/photo" || r.URL.Path == "/super-admin/profile/photo" || r.URL.Path == "/seller-admin/profile/photo") {
+		if h.storefrontPreview != nil {
+			h.storefrontPreview.profilePhoto(w, r)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	if r.URL.Path == "/workspaces" {
 		http.Redirect(w, r, applicationauth.LoginDestination(roles), http.StatusSeeOther)
 		return
@@ -417,6 +425,18 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				denyPortalAccess(w, r)
 				return
 			}
+			if r.URL.Path == root+"/profile" && h.storefrontPreview != nil {
+				h.storefrontPreview.saveCustomerProfile(w, r)
+				return
+			}
+			if r.URL.Path == root+"/addresses" && h.storefrontPreview != nil {
+				h.storefrontPreview.saveAddress(w, r)
+				return
+			}
+			if r.URL.Path == root+"/addresses/delete" && h.storefrontPreview != nil {
+				h.storefrontPreview.deleteAddress(w, r)
+				return
+			}
 			if r.URL.Path == "/super-admin/inventory/adjust" {
 				h.delegateWithPortalRedirect(w, r, root)
 				return
@@ -439,6 +459,18 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if pathUnder(r.URL.Path, "/seller-admin") {
 			if currentRole != domainidentity.RoleSeller {
 				denyPortalAccess(w, r)
+				return
+			}
+			if r.URL.Path == "/seller-admin/profile" && h.storefrontPreview != nil {
+				h.storefrontPreview.saveCustomerProfile(w, r)
+				return
+			}
+			if r.URL.Path == "/seller-admin/addresses" && h.storefrontPreview != nil {
+				h.storefrontPreview.saveAddress(w, r)
+				return
+			}
+			if r.URL.Path == "/seller-admin/addresses/delete" && h.storefrontPreview != nil {
+				h.storefrontPreview.deleteAddress(w, r)
 				return
 			}
 			if r.URL.Path == "/seller-admin/orders/shiprocket" {
@@ -498,8 +530,8 @@ func (h *LivePortalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			denyPortalAccess(w, r)
 			return
 		}
-		if r.URL.Path == "/seller-admin/profile" || r.URL.Path == "/seller-admin/account" {
-			http.Redirect(w, r, "/seller-admin/settings", http.StatusSeeOther)
+		if r.URL.Path == "/seller-admin/account" {
+			http.Redirect(w, r, "/seller-admin/profile", http.StatusSeeOther)
 			return
 		}
 		name := h.userDisplayName(r, session.UserID)
@@ -941,6 +973,22 @@ func (h *LivePortalHandler) renderAdmin(w http.ResponseWriter, r *http.Request, 
 		component = adminpages.PortalAnalytics(page)
 	case "security":
 		component = adminpages.PortalSecurity(page)
+	case "profile":
+		page.Title = "My Profile"
+		page.Subtitle = "Manage your profile details, avatar, and saved addresses."
+		if h.storefrontPreview != nil {
+			email, phone, name, hasAvatar, _ := h.storefrontPreview.LoadUserProfile(r.Context(), actorID)
+			page.UserEmail = email
+			page.UserPhone = phone
+			if name != "" {
+				page.DisplayName = name
+			}
+			page.HasAvatar = hasAvatar
+			page.Addresses, _ = h.storefrontPreview.UserAddresses(r.Context(), actorID)
+		}
+		page.ProfileError = r.URL.Query().Get("error")
+		page.Notice = r.URL.Query().Get("notice")
+		component = adminpages.AdminProfilePage(page)
 	default:
 		http.NotFound(w, r)
 		return
@@ -1968,6 +2016,22 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 		component = sellerpages.PortalAnalytics(page)
 	case "settings":
 		component = sellerpages.PortalSettings(page)
+	case "profile":
+		page.Title = "Account profile"
+		page.Subtitle = "Manage your account photo, name, phone, and addresses."
+		if h.storefrontPreview != nil {
+			email, phone, name, hasAvatar, _ := h.storefrontPreview.LoadUserProfile(r.Context(), userID)
+			page.UserEmail = email
+			page.UserPhone = phone
+			if name != "" {
+				page.DisplayName = name
+			}
+			page.HasAvatar = hasAvatar
+			page.Addresses, _ = h.storefrontPreview.UserAddresses(r.Context(), userID)
+		}
+		page.ProfileError = r.URL.Query().Get("error")
+		page.Notice = r.URL.Query().Get("notice")
+		component = sellerpages.PortalProfile(page)
 	default:
 		component = sellerpages.PortalUnavailable(page)
 	}

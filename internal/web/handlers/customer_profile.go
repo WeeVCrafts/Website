@@ -14,6 +14,8 @@ import (
 	_ "image/png"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -88,6 +90,15 @@ func validProfile(name, phone string) bool {
 }
 
 func (h *LiveStorefrontHandler) profileError(w http.ResponseWriter, r *http.Request, message string, status int) {
+	returnTo := r.Form.Get("return_to")
+	if returnTo != "" && strings.HasPrefix(returnTo, "/") && returnTo != "/account/profile" {
+		sep := "?"
+		if strings.Contains(returnTo, "?") {
+			sep = "&"
+		}
+		http.Redirect(w, r, returnTo+sep+"error="+url.QueryEscape(message), http.StatusSeeOther)
+		return
+	}
 	page, err := h.page(r)
 	if err != nil {
 		http.Error(w, message, status)
@@ -101,8 +112,8 @@ func (h *LiveStorefrontHandler) profileError(w http.ResponseWriter, r *http.Requ
 
 func (h *LiveStorefrontHandler) saveCustomerProfile(w http.ResponseWriter, r *http.Request) {
 	userID, csrf, ok := h.session(r)
-	if !ok || !h.customerRole(userID, r) {
-		http.Error(w, "Authentication required.", http.StatusForbidden)
+	if !ok {
+		http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusSeeOther)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarBytes+(64<<10))
@@ -185,7 +196,7 @@ func (h *LiveStorefrontHandler) saveCustomerProfile(w http.ResponseWriter, r *ht
 		// Serialize updates with deletion/suspension and recheck the role inside
 		// the transaction; a stale form must never resurrect a deleted profile.
 		var active bool
-		if err := tx.QueryRow(ctx, `SELECT status='active' AND (SELECT count(*) FROM user_roles WHERE user_id=$1)=1 AND EXISTS(SELECT 1 FROM user_roles WHERE user_id=$1 AND role_slug='customer') FROM users WHERE id=$1 FOR UPDATE`, userID).Scan(&active); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT status='active' FROM users WHERE id=$1 FOR UPDATE`, userID).Scan(&active); err != nil {
 			return err
 		}
 		if !active {
@@ -211,7 +222,15 @@ func (h *LiveStorefrontHandler) saveCustomerProfile(w http.ResponseWriter, r *ht
 		h.profileError(w, r, "Profile could not be saved. Your previous details are unchanged.", 503)
 		return
 	}
-	http.Redirect(w, r, "/account/profile?notice=Profile+updated", http.StatusSeeOther)
+	returnTo := r.Form.Get("return_to")
+	if returnTo == "" || !strings.HasPrefix(returnTo, "/") {
+		returnTo = "/account/profile"
+	}
+	sep := "?"
+	if strings.Contains(returnTo, "?") {
+		sep = "&"
+	}
+	http.Redirect(w, r, returnTo+sep+"notice=Profile+updated", http.StatusSeeOther)
 }
 
 func (h *LiveStorefrontHandler) profilePhoto(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +241,7 @@ func (h *LiveStorefrontHandler) profilePhoto(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	userID, _, ok := h.session(r)
-	if !ok || !h.customerRole(userID, r) {
+	if !ok {
 		w.WriteHeader(403)
 		return
 	}
@@ -288,6 +307,31 @@ func (h *LiveStorefrontHandler) CleanupAvatars(ctx context.Context) error {
 // orders and addresses solely for the header would expose and query too much.
 func (h *LiveStorefrontHandler) loadProfileSummary(ctx context.Context, userID int64, pageName, phone *string, hasPhoto *bool) error {
 	return h.pool.QueryRow(ctx, `SELECT display_name,phone,EXISTS(SELECT 1 FROM user_avatars WHERE user_id=$1) FROM users WHERE id=$1 AND status='active'`, userID).Scan(pageName, phone, hasPhoto)
+}
+
+func (h *LiveStorefrontHandler) LoadUserProfile(ctx context.Context, userID int64) (email, phone, name string, hasPhoto bool, err error) {
+	err = h.pool.QueryRow(ctx, `SELECT email, phone, display_name, EXISTS(SELECT 1 FROM user_avatars WHERE user_id=$1) FROM users WHERE id=$1 AND status='active'`, userID).Scan(&email, &phone, &name, &hasPhoto)
+	return email, phone, name, hasPhoto, err
+}
+
+func (h *LiveStorefrontHandler) UserAddresses(ctx context.Context, userID int64) ([]viewmodels.Address, error) {
+	rows, err := h.pool.Query(ctx, `SELECT id, recipient_name, phone, line1, line2, city, state, postal_code, country_code FROM addresses WHERE user_id = $1 ORDER BY id DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make([]viewmodels.Address, 0)
+	for rows.Next() {
+		var address viewmodels.Address
+		var addressID int64
+		if err := rows.Scan(&addressID, &address.Name, &address.Phone, &address.Line1, &address.Line2, &address.City, &address.State, &address.PostalCode, &address.CountryCode); err != nil {
+			return nil, err
+		}
+		address.ID = strconv.FormatInt(addressID, 10)
+		address.Lines = strings.Join(nonEmptyAddressLines(address), ", ")
+		result = append(result, address)
+	}
+	return result, rows.Err()
 }
 
 func (h *LiveStorefrontHandler) AccessUnavailable(w http.ResponseWriter, r *http.Request) {

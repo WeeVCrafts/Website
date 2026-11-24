@@ -216,9 +216,17 @@ templ Sidebar(p viewmodels.AdminPage) {
 
       }
 
+      @AdminNav("profile", "My Profile", "person", p.NavActive, p.PortalRoot + "/profile")
+
     </nav>
 
-    <div class="workspace-identity"><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small><a href="/notifications">Notifications <span class="material-symbols-outlined" aria-hidden="true">notifications</span></a></div>
+    <div class="workspace-identity">
+      <a href={ templ.SafeURL(p.PortalRoot + "/profile") } style="text-decoration:none;color:inherit;display:block;">
+        <strong>{ p.DisplayName }</strong>
+        <small>{ p.RoleLabel }</small>
+      </a>
+      <a href="/notifications">Notifications <span class="material-symbols-outlined" aria-hidden="true">notifications</span></a>
+    </div>
 
   </aside>
 
@@ -268,7 +276,14 @@ templ AdminHeader(p viewmodels.AdminPage) {
 
 
     @components.NotificationBell()
- <div class="admin-user"><span class="admin-avatar">{ displayInitials(p.DisplayName) }</span><span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span></div>
+    <a class="admin-user" href={ templ.SafeURL(p.PortalRoot + "/profile") } style="text-decoration:none;color:inherit;" title="My Profile">
+      if p.HasAvatar {
+        <img class="admin-avatar" src={ p.PortalRoot + "/profile/photo" } alt={ p.DisplayName } width="36" height="36" style="border-radius:9999px;object-fit:cover;"/>
+      } else {
+        <span class="admin-avatar">{ displayInitials(p.DisplayName) }</span>
+      }
+      <span><strong>{ p.DisplayName }</strong><small>{ p.RoleLabel }</small></span>
+    </a>
 
     <form class="admin-logout" action="/logout" method="post"><input type="hidden" name="csrf_token" value={ p.CSRFToken }/><button type="submit" aria-label="Log out"><span class="material-symbols-outlined" aria-hidden="true">logout</span><span>Log out</span></button></form>
 

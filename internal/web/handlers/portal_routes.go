@@ -15,6 +15,9 @@ func roleAllowsPortalPath(role domainidentity.Role, path string) bool {
 		return role == domainidentity.RoleSuperAdmin
 	}
 	if pathUnder(path, "/admin") {
+		if pathUnder(path, "/admin/profile") || pathUnder(path, "/admin/addresses") {
+			return domainidentity.CompanyRole(role) || role == domainidentity.RoleShippingSupport
+		}
 		if role == domainidentity.RoleShippingSupport {
 			return pathUnder(path, "/admin/support")
 		}
@@ -40,7 +43,7 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 	}
 	relative := strings.Trim(strings.TrimPrefix(path, "/seller-admin"), "/")
 	switch relative {
-	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "profile", "account", "onboarding", "support", "terms":
+	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "profile", "account", "onboarding", "support", "terms", "addresses":
 		return true
 	}
 	return isSellerProductEditPath(relative) || sellerOrderDetailPath(relative)
@@ -112,7 +115,7 @@ func knownAdminPage(path string) bool {
 	switch strings.Trim(path, "/") {
 	case "", "dashboard", "sellers", "products", "inventory", "orders", "returns", "finance", "support", "marketing", "analytics", "security",
 		"brands", "customers", "category-management", "commission-rules", "settings", "reviews", "payments", "failed-payments", "refunds", "settlements", "finance-reconciliation",
-		"roles", "users", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health", "seller-approvals", "seller-suspensions":
+		"roles", "users", "audit-logs", "security-events", "system-health", "search-indexing-health", "worker-queue-health", "seller-approvals", "seller-suspensions", "profile", "addresses":
 		return true
 	}
 	return false

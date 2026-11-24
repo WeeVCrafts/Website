@@ -289,14 +289,14 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" placeholder=\"Search cases, orders, customers, sellers or anything...\"></form><div class=\"support-user\"><span class=\"support-user-avatar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" placeholder=\"Search cases, orders, customers, sellers or anything...\"></form><a class=\"support-user\" href=\"/admin/profile\" title=\"View Profile\" style=\"text-decoration:none;color:inherit;\"><span class=\"support-user-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 163}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -309,7 +309,7 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 116}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 201}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -322,13 +322,13 @@ func SupportHeader(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 147}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 62, Col: 232}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</small></span></div><form class=\"support-header-logout\" action=\"/logout\" method=\"post\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</small></span></a><form class=\"support-header-logout\" action=\"/logout\" method=\"post\"><input type=\"hidden\" name=\"csrf_token\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -370,14 +370,14 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<aside id=\"support-sidebar\" class=\"support-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"support-sidebar-close\" type=\"button\" x-ref=\"supportSidebarClose\" aria-label=\"Close support navigation\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"support-profile-mini\"><span class=\"support-profile-avatar\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<aside id=\"support-sidebar\" class=\"support-sidebar\" :class=\"sidebar ? 'is-open' : ''\"><button class=\"support-sidebar-close\" type=\"button\" x-ref=\"supportSidebarClose\" aria-label=\"Close support navigation\" @click=\"sidebar=false; $nextTick(() => $refs.supportMenu.focus())\"><span class=\"material-symbols-outlined\" aria-hidden=\"true\">close</span></button><div class=\"support-profile-mini\"><a href=\"/admin/profile\" style=\"text-decoration:none;color:inherit;display:flex;align-items:center;gap:0.75rem;\"><span class=\"support-profile-avatar\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(p.Initials)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 87}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 200}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -390,7 +390,7 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(p.DisplayName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 125}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 238}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -403,13 +403,13 @@ func SupportSidebar(p viewmodels.SupportPortalPage) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(p.RoleLabel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/supportportal/support_portal.templ`, Line: 71, Col: 269}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</small></span></div><nav class=\"support-nav\" aria-label=\"Support portal navigation\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</small></span></a></div><nav class=\"support-nav\" aria-label=\"Support portal navigation\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
