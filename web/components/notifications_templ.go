@@ -410,6 +410,9 @@ func NotificationList(items []viewmodels.CustomerNotification, csrf, filter stri
 }
 
 func NotificationCount(unread int64) string {
+	if unread <= 0 {
+		return ""
+	}
 	if unread > 99 {
 		return "99+"
 	}

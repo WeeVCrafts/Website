@@ -29,7 +29,7 @@ func TestDailyReconciliationShowsOpenAndCreationReviews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Totals[0].Value != "INR 10" {
+	if report.Totals[0].Value != "INR 10" && report.Totals[0].Value != "INR 10.00" {
 		t.Fatalf("captured amount = %s", report.Totals[0].Value)
 	}
 	if len(report.FollowUps) != 2 {

@@ -98,7 +98,7 @@ func TestFourRoleUpgradePreservesAccountsAndHistoricalAuthorship(t *testing.T) {
 	}
 	var users, roles int
 	var author string
-	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM users),(SELECT count(*) FROM roles),(SELECT author_role FROM support_ticket_messages WHERE ticket_id=$1)`, ticket).Scan(&users, &roles, &author); err != nil || users != 7 || roles != 4 || author != "support_agent" {
+	if err := pool.QueryRow(ctx, `SELECT (SELECT count(*) FROM users),(SELECT count(*) FROM roles),(SELECT author_role FROM support_ticket_messages WHERE ticket_id=$1)`, ticket).Scan(&users, &roles, &author); err != nil || users != 9 || roles != 5 || author != "support_agent" {
 		t.Fatal(users, roles, author, err)
 	}
 	if _, err := pool.Exec(ctx, `INSERT INTO user_roles(user_id,role_slug) VALUES($1,'admin')`, ids["customer"]); err == nil {

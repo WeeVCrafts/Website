@@ -270,7 +270,7 @@ func (x marketplaceFixture) capture(t *testing.T) {
 	}
 }
 func (x marketplaceFixture) command(action string) ports.MarketplaceCommand {
-	return ports.MarketplaceCommand{Action: action, Number: x.order.OrderNumber, SellerID: x.seller}
+	return ports.MarketplaceCommand{Action: action, Number: x.order.OrderNumber, SellerID: x.seller, QCEvidence: "qc passed and inspected"}
 }
 func TestMarketplacePaidAcceptanceAndMultiplePackages(t *testing.T) {
 	x := newMarketplaceFixture(t)

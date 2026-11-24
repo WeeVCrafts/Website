@@ -76,6 +76,9 @@ templ NotificationList(items []viewmodels.CustomerNotification, csrf, filter str
 }
 
 func NotificationCount(unread int64) string {
+	if unread <= 0 {
+		return ""
+	}
 	if unread > 99 {
 		return "99+"
 	}
