@@ -683,13 +683,13 @@ templ ProductDetail(p viewmodels.CustomerPage) {
             }
           </div>
           <div class="gallery-main">
-            <img data-gallery-media src={ components.ProductImage(p.Product.ImageURL) } alt={ p.Product.Name } width="800" height="800" srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet) } sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" loading="eager" fetchpriority="high"/>
+            <img data-gallery-media src={ components.ProductImage(p.Product.ImageURL) } alt={ p.Product.Name } width="800" height="1000" srcset={ components.ResponsiveImageSrcSet(p.Product.ImageURL, p.Product.ImageSrcSet) } sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" loading="eager" fetchpriority="high"/>
             for i, media := range p.Product.Media {
               if media.URL != p.Product.ImageURL {
                 if media.IsVideo {
                   <video data-gallery-media hidden controls playsinline preload="none" poster={components.ProductImagePreview(p.Product.ImageURL)} aria-label={ "Product video " + fmt.Sprint(i+1) }><source data-src={ media.URL } type={ media.ContentType }/>Your browser cannot play this product video.</video>
                 } else {
-                  <img data-gallery-media hidden data-src={ components.ProductImage(media.URL) } data-srcset={components.ResponsiveImageSrcSet(media.URL,"")} sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" alt={ "Product image " + fmt.Sprint(i+1) } width="800" height="800"/>
+                  <img data-gallery-media hidden data-src={ components.ProductImage(media.URL) } data-srcset={components.ResponsiveImageSrcSet(media.URL,"")} sizes="(max-width:720px) calc(100vw - 32px), (max-width:1288px) calc((100vw - 90px) / 1.85 - 82px), 566px" alt={ "Product image " + fmt.Sprint(i+1) } width="800" height="1000"/>
                 }
               }
             }

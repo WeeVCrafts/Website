@@ -388,7 +388,7 @@ func TestLiveProductImagesExposeIntrinsicSizing(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
 	body := recorder.Body.String()
-	if !strings.Contains(body, `width="640" height="640"`) || !strings.Contains(body, `sizes="(max-width:360px) calc(100vw - 32px)`) {
+	if !strings.Contains(body, `width="600" height="800"`) || !strings.Contains(body, `sizes="(max-width:360px) calc(100vw - 32px)`) {
 		t.Fatal("product cards are missing intrinsic image sizing")
 	}
 }

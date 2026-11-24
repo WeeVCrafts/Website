@@ -293,7 +293,7 @@ func CollectionTile(href, image, title, copy string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" sizes=\"(max-width:720px) 240px, 260px\" alt=\"\" width=\"320\" height=\"160\" loading=\"lazy\"><span><strong>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" sizes=\"(max-width:720px) 240px, 260px\" alt=\"\" width=\"360\" height=\"150\" loading=\"lazy\"><span><strong>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -409,7 +409,7 @@ func HomeMakers(p viewmodels.CustomerPage) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" width=\"180\" height=\"160\" loading=\"lazy\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" width=\"320\" height=\"180\" loading=\"lazy\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

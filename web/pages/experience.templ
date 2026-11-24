@@ -44,11 +44,12 @@ templ HeroSlide(title, copy, image, alt, href, action string, first bool) {
     <div class="hero-image">
       if first {
     <picture>
-      <source media="(max-width: 800px)" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/craft-mobile-banner.webp", "") } sizes="100vw"/>
-      <img src={ image } srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1536" height="1024" loading="eager" fetchpriority="high"/>
+      <source media="(max-width: 599px)" srcset={ components.ResponsiveImageSrcSet("/assets/images/customer/craft-mobile-banner.webp", "") } sizes="100vw" width="1080" height="1350"/>
+      <source media="(max-width: 899px)" srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" width="1200" height="800"/>
+      <img src={ image } srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1920" height="800" loading="eager" fetchpriority="high"/>
     </picture>
       } else {
-        <img data-src={ image } data-srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1254" height="1254" loading="lazy" decoding="async"/>
+        <img data-src={ image } data-srcset={ components.ResponsiveImageSrcSet(image, "") } sizes="100vw" alt={ alt } width="1920" height="800" loading="lazy" decoding="async"/>
     }
 
     </div>

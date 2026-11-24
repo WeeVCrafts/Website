@@ -16,7 +16,7 @@
 .customer-shopping-header .notification-action [data-notification-count][hidden] {display:none;}
 .auth-gallery-page .login-gallery {min-height:0;padding-block:24px;}
 .auth-gallery-page .gallery-form>.gallery-browse {margin-bottom:12px;}
-.storefront-body .customer-shopping-header {position:relative;background:var(--brand-paper,#fffdf8);border-top:4px solid var(--brand-primary);border-bottom:0;box-shadow:none;}
+.storefront-body .customer-shopping-header {position:sticky;top:0;z-index:80;background:var(--brand-paper,#fffdf8);border-top:4px solid var(--brand-primary);border-bottom:0;box-shadow:none;}
 .storefront-body .customer-shopping-header .header-main {display:grid;grid-template-columns:270px 175px minmax(160px,1fr) auto;grid-template-areas:"brand delivery search actions";grid-template-rows:auto;align-items:center;gap:22px;min-height:79px;width:calc(100% - 96px);padding:8px 0;}
 .storefront-body .customer-shopping-header .header-main {max-width:1440px;}
 .storefront-body .customer-shopping-header .header-main .header-actions {grid-area:actions;}

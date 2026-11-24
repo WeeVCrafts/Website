@@ -33,7 +33,7 @@ templ HomeCategoryRail(p viewmodels.CustomerPage) {
 }
 
 templ CollectionTile(href, image, title, copy string) {
-	<a class="reference-collection" href={ href }><img src={ storefrontCollectionImage(image) } srcset={ components.ResponsiveImageSrcSet(storefrontCollectionImage(image), "") } sizes="(max-width:720px) 240px, 260px" alt="" width="320" height="160" loading="lazy"/><span><strong>{ title }</strong><small>{ copy }</small></span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
+	<a class="reference-collection" href={ href }><img src={ storefrontCollectionImage(image) } srcset={ components.ResponsiveImageSrcSet(storefrontCollectionImage(image), "") } sizes="(max-width:720px) 240px, 260px" alt="" width="360" height="150" loading="lazy"/><span><strong>{ title }</strong><small>{ copy }</small></span><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
 }
 
 templ HomeMakers(p viewmodels.CustomerPage) {
@@ -45,7 +45,7 @@ templ HomeMakers(p viewmodels.CustomerPage) {
 			if i < 3 {
 				<article class={ "home-maker", templ.KV("home-maker--no-portrait", seller.PortraitURL == "") }>
 					if seller.PortraitURL != "" {
-						<img src={ seller.PortraitURL } alt={ "Portrait shared by " + seller.Name } width="180" height="160" loading="lazy"/>
+						<img src={ seller.PortraitURL } alt={ "Portrait shared by " + seller.Name } width="320" height="180" loading="lazy"/>
 					}
 					<div>
 						<h3><a href={ "/makers/" + seller.Slug }>{ seller.Name }</a></h3>
