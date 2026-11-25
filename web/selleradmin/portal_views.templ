@@ -93,6 +93,7 @@ templ PortalProducts(p viewmodels.SellerAdminPage) {
 			<label>Show<select name="tab"><option value="">All products</option><option value="ready" selected?={ p.Tab=="ready" }>Ready to buy</option><option value="needs-action" selected?={ p.Tab=="needs-action" }>Checkout needs action</option><option value="review" selected?={ p.Tab=="review" || p.Tab=="approval" }>In review</option><option value="changes" selected?={ p.Tab=="changes" }>Changes requested</option><option value="draft" selected?={ p.Tab=="draft" }>Drafts</option><option value="archived" selected?={ p.Tab=="archived" }>Archived</option></select></label>
 			<button class="seller-button outline" type="submit">Apply filters</button><a class="seller-button outline" href="/seller-admin/products">Clear</a>
 			if p.CanProductWrite {
+				<a class="seller-button outline" href="/seller-admin/image-studio">AI Image Studio</a>
 				<a class="seller-button primary" href="/seller-admin/products/new">Add product</a>
 			}
 		</form>
@@ -313,7 +314,7 @@ templ ProductForm(p viewmodels.SellerAdminPage, form viewmodels.SellerProductFor
 					} else {
 						<p>Images update the main product photo and appear in the customer product gallery after approval.</p>
 					}
-					<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><button class="seller-button outline" type="button" data-media-upload>Upload media</button>
+					<label class="product-media-dropzone" data-media-drop>Drop images or videos here or choose files<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" multiple data-media-file/></label><div class="studio-inline-actions"><button class="seller-button outline" type="button" data-media-upload>Upload media</button><a class="seller-button outline" href={ "/seller-admin/image-studio?product_id=" + form.ID }>Open AI Image Studio</a></div>
 					<div class="product-media-selection" data-media-selection></div>
 					<p role="status" aria-live="polite" data-media-status></p>
 					<div class="product-media-assets">

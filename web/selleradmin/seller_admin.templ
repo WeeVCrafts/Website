@@ -24,6 +24,9 @@ templ Document(p viewmodels.SellerAdminPage) {
       <script defer src={ assets.URL("js/alpine.min.js") }></script>
       <script defer src={ assets.URL("js/product-media.min.js") }></script>
       <script defer src={ assets.URL("js/seller-workflows.min.js") }></script>
+      if p.Active == "image-studio" {
+        <script defer src={ assets.URL("js/image-studio.min.js") }></script>
+      }
     <link rel="stylesheet" href={ assets.URL("css/brand.min.css") }/>
 <link rel="stylesheet" href={ assets.URL("css/seller-reference.min.css") }/>
 <link rel="icon" type="image/png" href="/assets/images/brand/favicon.png"/>
@@ -115,6 +118,7 @@ templ SellerSidebar(p viewmodels.SellerAdminPage) {
       @SellerNav("dashboard", "Dashboard", "dashboard", p.Active, "/seller-admin")
       if p.CanProducts {
         @SellerNav("products", "Products", "category", p.Active, "/seller-admin/products")
+        @SellerNav("image-studio", "AI Image Studio", "auto_fix_high", p.Active, "/seller-admin/image-studio")
       }
       if p.CanInventory {
         @SellerNav("inventory", "Inventory", "inventory", p.Active, "/seller-admin/inventory")

@@ -21,6 +21,7 @@ import (
 
 	emailadapter "github.com/wecratfs/commerce/internal/adapters/email"
 	firebaseadapter "github.com/wecratfs/commerce/internal/adapters/firebase"
+	imagestudioadapter "github.com/wecratfs/commerce/internal/adapters/imagestudio"
 	localpayment "github.com/wecratfs/commerce/internal/adapters/localpayment"
 	"github.com/wecratfs/commerce/internal/adapters/meilisearch"
 	metricsadapter "github.com/wecratfs/commerce/internal/adapters/metrics"
@@ -34,6 +35,7 @@ import (
 	applicationcatalog "github.com/wecratfs/commerce/internal/application/catalog"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
 	applicationcommunication "github.com/wecratfs/commerce/internal/application/communication"
+	applicationimagestudio "github.com/wecratfs/commerce/internal/application/imagestudio"
 	applicationpayment "github.com/wecratfs/commerce/internal/application/payment"
 	applicationprivacy "github.com/wecratfs/commerce/internal/application/privacy"
 	"github.com/wecratfs/commerce/internal/config"
@@ -224,6 +226,9 @@ func main() {
 		logger.Warn("S3 media bucket unavailable", "error", err)
 	}
 	mediaService := applicationcommerce.NewMediaService(mediaStorage, postgres.NewMediaRepository(pool), roleAuthorizer)
+	imageEngine := imagestudioadapter.NewEngine(cfg.ImageStudioModelPath, cfg.ImageStudioORTPath, cfg.ImageStudioWorkers, cfg.ImageStudioORTThreads, 45*time.Second)
+	defer imageEngine.Close()
+	imageStudioService := applicationimagestudio.NewService(postgres.NewImageStudioRepository(pool), mediaStorage, imageEngine, mediaService, roleAuthorizer)
 	supportAttachmentService := applicationcommerce.NewSupportAttachmentService(mediaStorage, commerceRepository, roleAuthorizer)
 	paymentMetrics := &metricsadapter.PaymentMetrics{}
 	paymentOrderService := applicationpayment.NewOrderService(paymentGateway, paymentRepository).WithCreationObserver(paymentMetrics.Observe)
@@ -245,7 +250,7 @@ func main() {
 	webHandler.SetSupportService(supportService)
 	webHandler.SetSupportAttachmentService(supportAttachmentService)
 	webHandler.SetReturnService(returnService)
-	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService).WithNoPaymentDemo(cfg.NoPaymentDemo)
+	apiHandler := apiTransport.NewCompleteHandlerWithMediaPaymentRefundAndRecovery(catalogService, searchService, authService, sessionService, cartService, orderService, privacyService, mediaService, paymentOrderService, refundService, recoveryService, cfg.SecureCookies).WithCheckoutPaymentVerification(checkoutPaymentService).WithNoPaymentDemo(cfg.NoPaymentDemo).WithImageStudio(imageStudioService)
 	var firebaseProvider *firebaseadapter.Provider
 	if project := os.Getenv("WECRATFS_FIREBASE_PROJECT_ID"); project != "" {
 		credentialFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -312,6 +317,7 @@ func main() {
 	}
 	workerContext, stopWorker := context.WithCancel(context.Background())
 	backgroundWorker.Start(workerContext)
+	imageStudioService.StartWorkers(workerContext)
 	worker.RegisterDurablePeriodic(workerContext, time.Hour, "email-delivery-retention", marketplaceRepository, durableHandlers, emailDeliveryRepository.ExpireEmailDeliveries)
 	if storageErr == nil {
 		worker.RegisterDurablePeriodic(workerContext, time.Minute, "product-image-derivatives", marketplaceRepository, durableHandlers, func(ctx context.Context) error {
@@ -493,6 +499,7 @@ func main() {
 	mux.HandleFunc("/api/v1/seller/products/media-upload/", apiHandler.MediaUpload)
 	mux.HandleFunc("/api/v1/seller/products/media-finalize", apiHandler.MediaFinalize)
 	mux.HandleFunc("/api/v1/seller/products/media-delete", apiHandler.MediaDelete)
+	mux.HandleFunc("/api/v1/seller/image-studio/", apiHandler.ImageStudio)
 	if cfg.LocalMode && !strings.EqualFold(cfg.Environment, "production") {
 		mux.Handle("/api/v1/local/", apiTransport.NewLocalDemoHandler(pool, sessionService))
 	}
@@ -580,6 +587,7 @@ func main() {
 	})
 	portalHandler.SetRoleAdminService(roleAdminService)
 	portalHandler.SetSupportAttachmentService(supportAttachmentService)
+	portalHandler.SetImageStudio(imageStudioService)
 	storefrontHandler := webHandlers.NewLiveStorefrontHandler(catalogService, searchService, cartService, orderService, sessionService, pool, cfg.PaymentMode, cfg.RazorpayKeyID, cfg.RazorpayKeyID != "" && cfg.RazorpayKeySecret != "", webHandler, cfg.NoPaymentDemo, cfg.PublicURL, supportAttachmentService)
 	storefrontHandler.SetCheckoutAvailability(cfg.Environment == "production", cfg.CheckoutEnabled)
 	storefrontHandler.SetProfileStorage(mediaStorage)
@@ -690,6 +698,7 @@ func main() {
 		if err := backgroundWorker.Shutdown(shutdownContext); err != nil {
 			logger.Error("background worker shutdown failed", "error", err)
 		}
+		imageStudioService.Wait()
 		if err := server.Shutdown(shutdownContext); err != nil {
 			logger.Error("graceful shutdown failed", "error", err)
 		}

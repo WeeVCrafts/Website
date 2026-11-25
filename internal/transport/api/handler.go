@@ -16,6 +16,7 @@ import (
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	applicationcatalog "github.com/wecratfs/commerce/internal/application/catalog"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	applicationimagestudio "github.com/wecratfs/commerce/internal/application/imagestudio"
 	applicationpayment "github.com/wecratfs/commerce/internal/application/payment"
 	applicationprivacy "github.com/wecratfs/commerce/internal/application/privacy"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
@@ -32,6 +33,7 @@ type Handler struct {
 	orders          *applicationcommerce.OrderService
 	privacy         *applicationprivacy.Service
 	media           *applicationcommerce.MediaService
+	imageStudio     *applicationimagestudio.Service
 	payment         *applicationpayment.OrderService
 	checkoutPayment *applicationpayment.CheckoutVerificationService
 	noPaymentDemo   bool
@@ -94,6 +96,11 @@ func (h *Handler) WithCheckoutPaymentVerification(service *applicationpayment.Ch
 
 func (h *Handler) WithNoPaymentDemo(enabled bool) *Handler {
 	h.noPaymentDemo = enabled
+	return h
+}
+
+func (h *Handler) WithImageStudio(service *applicationimagestudio.Service) *Handler {
+	h.imageStudio = service
 	return h
 }
 

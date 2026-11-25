@@ -23,6 +23,7 @@ import (
 
 	applicationauth "github.com/wecratfs/commerce/internal/application/auth"
 	applicationcommerce "github.com/wecratfs/commerce/internal/application/commerce"
+	applicationimagestudio "github.com/wecratfs/commerce/internal/application/imagestudio"
 	domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
 	domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 	"github.com/wecratfs/commerce/internal/identity"
@@ -51,6 +52,7 @@ type LivePortalHandler struct {
 	sessions           *applicationauth.SessionService
 	roleAdmin          *applicationauth.RoleAdminService
 	supportAttachments *applicationcommerce.SupportAttachmentService
+	imageStudio        *applicationimagestudio.Service
 	fallback           http.Handler
 	assets             http.Handler
 	paymentMode        string
@@ -317,6 +319,10 @@ func (h *LivePortalHandler) SetRoleAdminService(service *applicationauth.RoleAdm
 
 func (h *LivePortalHandler) SetSupportAttachmentService(service *applicationcommerce.SupportAttachmentService) {
 	h.supportAttachments = service
+}
+
+func (h *LivePortalHandler) SetImageStudio(service *applicationimagestudio.Service) {
+	h.imageStudio = service
 }
 
 func NewLivePortalHandler(pool *pgxpool.Pool, sessions *applicationauth.SessionService, fallback http.Handler) *LivePortalHandler {
@@ -2004,6 +2010,20 @@ func (h *LivePortalHandler) renderSeller(w http.ResponseWriter, r *http.Request,
 		component = sellerpages.PortalOnboarding(page)
 	case "products":
 		component = sellerpages.PortalProducts(page)
+	case "image-studio":
+		page.Title = "AI Image Studio"
+		page.Subtitle = "Remove backgrounds locally, preview studio scenes, adjust framing, and save approved photos to your product gallery."
+		page.StudioProductID = strings.TrimSpace(r.URL.Query().Get("product_id"))
+		if h.imageStudio != nil {
+			products, prodErr := h.imageStudio.ListProducts(r.Context(), userID)
+			if prodErr == nil {
+				page.StudioProducts = products
+				if page.StudioProductID == "" && len(products) > 0 {
+					page.StudioProductID = strconv.FormatInt(products[0].ID, 10)
+				}
+			}
+		}
+		component = sellerpages.PortalImageStudio(page)
 	case "inventory":
 		component = sellerpages.PortalInventory(page)
 	case "orders":

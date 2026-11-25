@@ -190,6 +190,9 @@ func allowedStoredObjectType(key, contentType string, size int64) bool {
 	if financeObjectKeyPattern.MatchString(key) {
 		return size <= 5<<20 && (contentType == "application/pdf" || contentType == "image/png" || contentType == "image/jpeg")
 	}
+	if studioObjectKeyPattern.MatchString(key) {
+		return size > 0 && size <= 25<<20 && (contentType == "image/png" || contentType == "image/jpeg" || contentType == "image/webp")
+	}
 	return allowedStoredMediaType(contentType)
 }
 
@@ -198,9 +201,10 @@ var claimEvidenceKeyPattern = regexp.MustCompile(`^private/claim-evidence/[a-f0-
 var avatarObjectKeyPattern = regexp.MustCompile(`^avatars/[1-9][0-9]*/[a-f0-9]{32}$`)
 var categoryObjectKeyPattern = regexp.MustCompile(`^categories/[a-f0-9]{32}\.jpg$`)
 var storefrontObjectKeyPattern = regexp.MustCompile(`^storefront/item-[a-f0-9]{24}(-(480|960))?\.jpg$`)
+var studioObjectKeyPattern = regexp.MustCompile(`^studio/[1-9][0-9]*/[a-f0-9]{32}(\.(png|jpg|webp))?$`)
 
 // Private support files are streamed through an ownership-checked application
 // endpoint. Product presigned upload/download endpoints remain product-only.
 func validStoredObjectKey(value string) bool {
-	return claimEvidenceKeyPattern.MatchString(value) || financeObjectKeyPattern.MatchString(value) || validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value)
+	return claimEvidenceKeyPattern.MatchString(value) || financeObjectKeyPattern.MatchString(value) || validProductObjectKey(value) || supportObjectKeyPattern.MatchString(value) || avatarObjectKeyPattern.MatchString(value) || categoryObjectKeyPattern.MatchString(value) || storefrontObjectKeyPattern.MatchString(value) || studioObjectKeyPattern.MatchString(value)
 }

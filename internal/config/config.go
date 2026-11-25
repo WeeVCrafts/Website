@@ -52,6 +52,10 @@ type Config struct {
 	S3SecretKey             string
 	S3Bucket                string
 	S3Secure                bool
+	ImageStudioModelPath    string
+	ImageStudioORTPath      string
+	ImageStudioWorkers      int
+	ImageStudioORTThreads   int
 	Shipping                ShippingConfig
 	SMS                     SMSConfig
 }
@@ -111,6 +115,10 @@ func FromEnv() Config {
 		S3SecretKey:             env("S3_SECRET_KEY", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"),
 		S3Bucket:                env("S3_BUCKET", "wecratfs-media"),
 		S3Secure:                boolEnv("S3_SECURE", false),
+		ImageStudioModelPath:    env("WECRATFS_IMAGE_MODEL_PATH", defaultImageStudioModelPath()),
+		ImageStudioORTPath:      env("WECRATFS_ONNXRUNTIME_PATH", ""),
+		ImageStudioWorkers:      intEnv("WECRATFS_IMAGE_WORKERS", 1),
+		ImageStudioORTThreads:   intEnv("WECRATFS_IMAGE_ORT_THREADS", 2),
 	}
 }
 
@@ -132,6 +140,15 @@ func env(key, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func defaultImageStudioModelPath() string {
+	for _, candidate := range []string{"models/isnet-general-use.onnx", "models/u2netp.onnx"} {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+	return "models/u2netp.onnx"
 }
 
 func intEnv(key string, fallback int) int {

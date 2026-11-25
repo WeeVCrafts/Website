@@ -1,0 +1,201 @@
+package selleradmin
+
+import "github.com/wecratfs/commerce/internal/web/viewmodels"
+
+templ PortalImageStudio(p viewmodels.SellerAdminPage) {
+	@Document(p) {
+		if p.SellerStatus != "active" {
+			<div class="seller-callout" role="status">
+				<span class="material-symbols-outlined" aria-hidden="true">info</span>
+				<p>
+					<strong>Image Studio is locked</strong>
+					<small>Your seller profile must be approved before you can process and publish product images. <a href="/seller-admin/onboarding">View application status</a>.</small>
+				</p>
+			</div>
+		}
+		<section class="studio-shell" data-image-studio data-csrf-token={ p.CSRFToken } data-selected-product-id={ p.StudioProductID } data-seller-active={ sellerBoolAttr(p.SellerStatus == "active") }>
+			<div class="studio-top-grid">
+				<article class="seller-panel studio-upload-panel">
+					<div class="seller-panel-heading">
+						<div>
+							<span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+							<span>
+								<h2>1. Select product &amp; upload photo</h2>
+								<p>Upload a product photograph (JPEG, PNG, or WebP, up to 25 MB). Your original photo is always preserved.</p>
+							</span>
+						</div>
+					</div>
+					<form class="studio-upload-form" data-studio-upload-form>
+						<label>
+							Product
+							<select name="product_id" data-studio-product required disabled?={ p.SellerStatus != "active" || len(p.StudioProducts) == 0 }>
+								if len(p.StudioProducts) == 0 {
+									<option value="">No active or draft products yet</option>
+								}
+								for _, prod := range p.StudioProducts {
+									<option value={ sellerInt64(prod.ID) } selected?={ sellerInt64(prod.ID) == p.StudioProductID } data-category-slug={ prod.CategorySlug } data-category-name={ prod.CategoryName }>
+										{ prod.Name } ({ prod.CategoryName })
+									</option>
+								}
+							</select>
+						</label>
+						<label class="product-media-dropzone studio-dropzone" data-studio-dropzone>
+							<span class="material-symbols-outlined" aria-hidden="true">upload</span>
+							<strong>Drop product photos here or choose files</strong>
+							<small>Supports JPG, JPEG, PNG, WebP (single or multiple) · Local CPU processing · Originals never overwritten</small>
+							<input type="file" name="image" accept="image/jpeg,image/png,image/webp" multiple data-studio-file disabled?={ p.SellerStatus != "active" }/>
+						</label>
+						<div class="studio-upload-actions">
+							<button class="seller-button primary" type="submit" data-studio-process-btn disabled?={ p.SellerStatus != "active" || len(p.StudioProducts) == 0 }>
+								<span class="material-symbols-outlined" aria-hidden="true">auto_fix_high</span>
+								Remove background &amp; generate variations
+							</button>
+							<a class="seller-button outline" href="/seller-admin/products/new" data-studio-new-product-link>Create new product</a>
+						</div>
+						<p class="studio-status-line" role="status" aria-live="polite" data-studio-status></p>
+					</form>
+					<div class="studio-jobs-history" data-studio-jobs-wrap>
+						<h3>Recent studio sessions for selected product</h3>
+						<div class="studio-jobs-list" data-studio-jobs-list>
+							<p class="studio-empty-note">Select a product and upload a photograph to begin.</p>
+						</div>
+					</div>
+				</article>
+
+				<article class="seller-panel studio-analysis-panel">
+					<div class="seller-panel-heading">
+						<div>
+							<span class="material-symbols-outlined" aria-hidden="true">compare</span>
+							<span>
+								<h2>2. Original vs. extracted product</h2>
+								<p>Verify that colors, labels, and details remain untouched after background removal.</p>
+							</span>
+						</div>
+					</div>
+					<div class="studio-compare-grid" data-studio-compare hidden>
+						<figure class="studio-preview-box">
+							<figcaption>Original photograph (preserved)</figcaption>
+							<div class="studio-frame"><img data-studio-original-img alt="Original uploaded product photograph"/></div>
+						</figure>
+						<figure class="studio-preview-box">
+							<figcaption>Transparent cutout (PNG)</figcaption>
+							<div class="studio-frame studio-checkerboard"><img data-studio-cutout-img alt="Extracted transparent product cutout"/></div>
+						</figure>
+					</div>
+					<div class="studio-empty-state" data-studio-analysis-empty>
+						<span class="material-symbols-outlined" aria-hidden="true">photo_camera</span>
+						<p>Upload a product photo or open a recent session to inspect the transparent cutout and AI recommendations.</p>
+					</div>
+					<div class="studio-insights" data-studio-insights hidden>
+						<div class="studio-meta-row">
+							<span class="ui-status" data-studio-engine-badge>Local AI Engine</span>
+							<span class="studio-dimensions" data-studio-dimensions></span>
+						</div>
+						<div class="studio-swatches" data-studio-swatches aria-label="Detected dominant product colors"></div>
+						<div class="studio-recommendation-box" data-studio-recommendation></div>
+					</div>
+				</article>
+			</div>
+
+			<section class="seller-panel studio-editor-panel" data-studio-editor hidden>
+				<div class="seller-panel-heading">
+					<div>
+						<span class="material-symbols-outlined" aria-hidden="true">tune</span>
+						<span>
+							<h2>3. Interactive Composition Editor</h2>
+							<p>Drag the product directly on the canvas (or use arrow keys), resize, pick a background, and save your custom studio shot.</p>
+						</span>
+					</div>
+					<div class="studio-editor-header-actions">
+						<button class="seller-button outline" type="button" data-studio-reset>Reset adjustments</button>
+						<button class="seller-button primary" type="button" data-studio-apply>Apply &amp; save variation</button>
+					</div>
+				</div>
+				<div class="studio-editor-grid">
+					<div class="studio-canvas-stage">
+						<div class="studio-tool-bar" role="toolbar" aria-label="Editor tools">
+							<button class="studio-tool-btn is-selected" type="button" data-studio-tool="move" aria-pressed="true">Move &amp; frame</button>
+							<button class="studio-tool-btn" type="button" data-studio-tool="erase" aria-pressed="false">Erase background</button>
+							<button class="studio-tool-btn" type="button" data-studio-tool="restore" aria-pressed="false">Restore product</button>
+						</div>
+						<div class="studio-brush-row" data-studio-brush-controls hidden>
+							<label>
+								<span class="studio-range-head"><span>Brush size</span><span><span data-studio-brush-val>24</span> px</span></span>
+								<input type="range" min="8" max="72" step="2" value="24" data-studio-brush-size/>
+							</label>
+							<div class="studio-brush-actions">
+								<button class="seller-button outline" type="button" data-studio-mask-undo disabled>Undo</button>
+								<button class="seller-button outline" type="button" data-studio-mask-reset disabled>Reset mask</button>
+								<button class="seller-button primary" type="button" data-studio-mask-save disabled>Save cutout edits</button>
+							</div>
+						</div>
+						<canvas class="studio-canvas" width="600" height="600" tabindex="0" aria-label="Interactive product composition canvas. Drag or use arrow keys to move the product, plus or minus to resize." data-studio-canvas></canvas>
+						<p class="studio-canvas-hint" data-studio-canvas-hint>Tip: Drag product to reposition · Arrow keys nudge · + / - keys scale</p>
+					</div>
+					<div class="studio-controls">
+						<fieldset class="studio-control-group">
+							<legend>Recommended &amp; studio backgrounds</legend>
+							<div class="studio-preset-grid" data-studio-presets></div>
+						</fieldset>
+						<fieldset class="studio-control-group">
+							<legend>Placement &amp; framing</legend>
+							<label>
+								Background fit mode
+								<select data-studio-fit>
+									<option value="contain" selected>Contain (show whole product)</option>
+									<option value="cover">Cover (fill frame)</option>
+									<option value="fill">Fill frame</option>
+								</select>
+							</label>
+							<label>
+								<span class="studio-range-head"><span>Product scale</span><span><span data-studio-scale-val>0.80</span>×</span></span>
+								<input type="range" min="0.30" max="1.40" step="0.02" value="0.80" data-studio-scale/>
+							</label>
+							<label>
+								<span class="studio-range-head"><span>Horizontal position</span><span data-studio-x-val>0%</span></span>
+								<input type="range" min="-0.45" max="0.45" step="0.01" value="0" data-studio-x/>
+							</label>
+							<label>
+								<span class="studio-range-head"><span>Vertical position</span><span data-studio-y-val>0%</span></span>
+								<input type="range" min="-0.45" max="0.45" step="0.01" value="0" data-studio-y/>
+							</label>
+							<label>
+								<span class="studio-range-head"><span>Contact shadow</span><span data-studio-shadow-val>35%</span></span>
+								<input type="range" min="0" max="1" step="0.05" value="0.35" data-studio-shadow/>
+							</label>
+						</fieldset>
+					</div>
+				</div>
+			</section>
+
+			<section class="seller-panel studio-variations-panel" data-studio-variations-section hidden>
+				<div class="seller-panel-heading">
+					<div>
+						<span class="material-symbols-outlined" aria-hidden="true">collections</span>
+						<span>
+							<h2>4. Variations, comparison &amp; gallery approval</h2>
+							<p>Compare generated studio images against the original, reject unsuitable options, or approve your favorite to add it directly to the product gallery.</p>
+						</span>
+					</div>
+					<div class="studio-variations-actions">
+						<button class="seller-button outline" type="button" data-studio-compare-toggle aria-pressed="false">Compare with original</button>
+						<button class="seller-button outline" type="button" data-studio-regenerate>Regenerate variations</button>
+						<button class="seller-button danger" type="button" data-studio-reject-job>Reject batch</button>
+					</div>
+				</div>
+				<div class="studio-variations-grid" data-studio-variations-grid></div>
+			</section>
+		</section>
+	}
+}
+
+func sellerBoolAttr(v bool) string {
+	if v {
+		return "true"
+	}
+	return "false"
+}
+
+func sellerInt64(v int64) string {
+	return sellerInt(int(v))
+}

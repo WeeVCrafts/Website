@@ -43,7 +43,7 @@ func sellerPortalAllowed(path string, isOwner bool, permissions []string) bool {
 	}
 	relative := strings.Trim(strings.TrimPrefix(path, "/seller-admin"), "/")
 	switch relative {
-	case "", "products", "products/new", "inventory", "orders", "returns", "earnings", "analytics", "settings", "profile", "account", "onboarding", "support", "terms", "addresses":
+	case "", "products", "products/new", "image-studio", "inventory", "orders", "returns", "earnings", "analytics", "settings", "profile", "account", "onboarding", "support", "terms", "addresses":
 		return true
 	}
 	return isSellerProductEditPath(relative) || sellerOrderDetailPath(relative)

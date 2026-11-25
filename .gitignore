@@ -25,3 +25,7 @@ web/static/
 /.tmp/
 /.taskplane/
 /playwright-report/
+/models/*.onnx
+/models/*.dll
+/models/*.so
+/models/*.dylib

@@ -2,6 +2,7 @@ package viewmodels
 
 import domainidentity "github.com/wecratfs/commerce/internal/domain/identity"
 import domaincommerce "github.com/wecratfs/commerce/internal/domain/commerce"
+import domainstudio "github.com/wecratfs/commerce/internal/domain/imagestudio"
 
 // AdminPage is the view model for the live marketplace operations workspace.
 type AdminPage struct {
@@ -231,6 +232,11 @@ type SellerAdminPage struct {
 	Settlements                                                                      []SellerAdminSettlement
 	AnalyticsBars                                                                    []SellerAdminBar
 	Team                                                                             []SellerTeamMember
+	StudioProducts                                                                   []domainstudio.ProductOption
+	StudioPresets                                                                    []domainstudio.Preset
+	StudioJobs                                                                       []domainstudio.Job
+	StudioProductID                                                                  string
+	StudioONNXActive                                                                 bool
 }
 
 type SellerAdminStat struct {
