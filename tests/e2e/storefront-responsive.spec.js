@@ -109,24 +109,22 @@ test('responsive storefront hero keeps the photograph clear and leaves controls 
   for (const width of [320, 390, 599, 600, 800, 801, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(copy).toHaveCSS('background-image', 'none');
-    const overlay = await slide.evaluate(el => {
-      const layer = getComputedStyle(el, '::before');
-      return { image: layer.backgroundImage, inset: layer.inset, pointerEvents: layer.pointerEvents };
-    });
+    const overlays = await slide.evaluate(el => ['::before', '::after'].map(pseudo => getComputedStyle(el, pseudo).backgroundImage));
+    expect(overlays).toEqual(['none', 'none']);
     if (width <= 599) {
-      expect(overlay.image).toContain('linear-gradient(');
-      expect(overlay.image).toContain('to right');
-      expect(overlay.image).toMatch(/255, 253, 248.*90%/);
-      expect(overlay.inset).toBe('0px');
-      expect(overlay.pointerEvents).toBe('none');
+      const photo = slide.locator('.hero-image img');
+      await expect(photo).toHaveCSS('filter', 'none');
+      await expect(photo).toHaveCSS('opacity', '1');
+      const photoBox = await photo.boundingBox();
+      const copyBox = await copy.boundingBox();
+      expect(photoBox.height).toBeGreaterThan(150);
+      expect(copyBox.y).toBeGreaterThanOrEqual(photoBox.y + photoBox.height - 1);
       await expect(copy.locator('h1')).toHaveCSS('color', 'rgb(18, 63, 50)');
       await expect(copy.locator('h1 em')).toHaveCSS('color', 'rgb(157, 64, 49)');
       const slideBox = await slide.boundingBox();
       const controlsBox = await hero.locator('[data-hero-controls]').boundingBox();
       expect(controlsBox.y).toBeGreaterThanOrEqual(slideBox.y + slideBox.height - 1);
       for (const link of await copy.getByRole('link').all()) await link.click({ trial: true });
-    } else {
-      expect(overlay.image).toBe('none');
     }
     await expectPageReflow(page);
   }
@@ -139,6 +137,11 @@ test('responsive storefront hero keeps the photograph clear and leaves controls 
     await expect(selectors.nth(index)).toHaveAttribute('aria-pressed', 'true');
     const activeSlide = hero.locator('[data-hero-slide]').nth(index);
     await expect(activeSlide).toBeVisible();
+    const activePhoto = activeSlide.locator('.hero-image img');
+    await expect.poll(() => activePhoto.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+    const activePhotoBox = await activePhoto.boundingBox();
+    const activeCopyBox = await activeSlide.locator('.hero-copy').boundingBox();
+    expect(activeCopyBox.y).toBeGreaterThanOrEqual(activePhotoBox.y + activePhotoBox.height - 1);
     await expect(activeSlide.locator('.hero-actions a').first()).toBeInViewport();
     for (const link of await activeSlide.locator('.hero-actions a').all()) await link.click({ trial: true });
     expect(await activeSlide.evaluate(el => el.getAnimations().length)).toBe(0);
