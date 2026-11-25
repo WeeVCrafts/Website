@@ -67,6 +67,22 @@ func registerRecoveryRoutes(mux *http.ServeMux) {
 		p.Product = mug
 		renderFixture(w, r, pages.ProductDetail(p))
 	})
+	mux.HandleFunc("GET /products/layout-gallery", func(w http.ResponseWriter, r *http.Request) {
+		p := recoveryCustomerPage(r)
+		product := mug
+		product.Slug = "layout-gallery"
+		product.Variants = append([]viewmodels.ProductVariant(nil), mug.Variants...)
+		product.Variants[0].ShippingLength, product.Variants[0].ShippingWidth, product.Variants[0].ShippingHeight = "12", "10", "8"
+		for _, photo := range []string{"terracotta-planter", "terracotta-lamp", "blue-tote", "brass-elephant", "wooden-box", "madhubani-tree", "black-cushion", "saree-blue"} {
+			product.Media = append(product.Media, viewmodels.ProductMedia{URL: "/assets/images/customer/" + photo + ".webp", ContentType: "image/webp"})
+		}
+		product.Media = append(product.Media, viewmodels.ProductMedia{URL: "/qa-gallery-video.mp4", ContentType: "video/mp4", IsVideo: true})
+		p.Product = product
+		renderFixture(w, r, pages.ProductDetail(p))
+	})
+	mux.HandleFunc("GET /qa-gallery-video.mp4", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "tests/e2e/fixtures/flower.mp4")
+	})
 	mux.HandleFunc("GET /ui/search-suggest", func(w http.ResponseWriter, r *http.Request) {
 		query := strings.TrimSpace(r.URL.Query().Get("q"))
 		var products []viewmodels.Product

@@ -59,7 +59,7 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE weevcrafts_finance_20261104'
       - run: go vet ./...
       - run: go test -p 1 ./...
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Verify shopper and seller browser regressions
         run: npx playwright test -c tests/e2e/customer-layout.config.js --project=chromium
       - name: Verify storefront media loading and keyboard controls

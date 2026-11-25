@@ -380,6 +380,7 @@
       gallery.dataset.bound = "true";
       const media = Array.from(gallery.querySelectorAll("[data-gallery-media]"));
       const thumbnails = Array.from(gallery.querySelectorAll("[data-gallery-select]"));
+      const thumbnailRail = gallery.querySelector(".thumbs");
       const zoom = gallery.querySelector("[data-gallery-zoom]");
       // Native first-frame previews request metadata/ranges only as thumbnails
       // enter view. Full gallery video stays deferred until explicitly selected.
@@ -442,6 +443,28 @@
         video.addEventListener('canplay',()=>{delete video.dataset.failed;videoState();});
       });
       retryVideo.addEventListener('click',()=>{const video=media[active];if(video.tagName!=='VIDEO')return;delete video.dataset.failed;video.load();videoState();});
+      const mediaName = element => {
+        if (element.tagName === "VIDEO") return "video";
+        if (element.matches(".gallery-dimension-slide")) return "scale and dimensions guide";
+        return "image";
+      };
+      thumbnails.forEach((button, i) => {
+        button.setAttribute("aria-label", "Show " + mediaName(media[i]) + " " + (i + 1) + " of " + media.length);
+      });
+      function revealThumbnail(button) {
+        const rail = thumbnailRail.getBoundingClientRect();
+        const thumb = button.getBoundingClientRect();
+        const inset = 4;
+        if (getComputedStyle(thumbnailRail).flexDirection === "row") {
+          const left = thumb.left - rail.left - inset;
+          const right = thumb.right - (rail.left + thumbnailRail.clientWidth) + inset;
+          thumbnailRail.scrollLeft += left < 0 ? left : Math.max(0, right);
+        } else {
+          const top = thumb.top - rail.top - inset;
+          const bottom = thumb.bottom - (rail.top + thumbnailRail.clientHeight) + inset;
+          thumbnailRail.scrollTop += top < 0 ? top : Math.max(0, bottom);
+        }
+      }
       function show(index, announce = true) {
         active = (index + media.length) % media.length;
         media.forEach((element,i)=>{
@@ -450,13 +473,13 @@
         });
         loadMedia(media[active]);
         videoState();
-        thumbnails.forEach((button,i)=>{
-          button.setAttribute("aria-pressed",String(i===active));
-          button.setAttribute("aria-label", "Show " + (media[i]?.tagName === "VIDEO" ? "video" : "image") + " " + (i+1) + " of " + media.length);
-        });
+        thumbnails.forEach((button,i)=>button.setAttribute("aria-pressed",String(i===active)));
         gallery.querySelector("[data-gallery-count]").textContent = (active+1) + " / " + media.length;
-        zoom.hidden = media[active].tagName === "VIDEO";
-        if (announce) gallery.querySelector("[data-gallery-status]").textContent = "Showing " + (media[active].tagName === "VIDEO" ? "video" : "image") + " " + (active+1) + " of " + media.length;
+        zoom.hidden = media[active].tagName !== "IMG";
+        if (announce) {
+          gallery.querySelector("[data-gallery-status]").textContent = "Showing " + mediaName(media[active]) + " " + (active+1) + " of " + media.length;
+          revealThumbnail(thumbnails[active]);
+        }
         imageState();
       }
       gallery.querySelector("[data-gallery-controls]").hidden = media.length < 2;
@@ -464,7 +487,7 @@
       thumbnails.forEach((button,i)=>button.addEventListener("click",()=>show(i)));
       gallery.querySelector("[data-gallery-prev]").addEventListener("click",()=>show(active-1));
       gallery.querySelector("[data-gallery-next]").addEventListener("click",()=>show(active+1));
-      gallery.querySelector(".thumbs").addEventListener("keydown",event=>{
+      thumbnailRail.addEventListener("keydown",event=>{
         if (!["ArrowLeft","ArrowRight","Home","End"].includes(event.key)) return;
         event.preventDefault();
         show(event.key==="Home"?0:event.key==="End"?media.length-1:active+(event.key==="ArrowRight"?1:-1));
@@ -482,6 +505,7 @@
       });
       zoom.addEventListener("click",()=>{
         const source=media[active];
+        if (source.tagName !== "IMG") return;
         const dialog=document.createElement("dialog"); dialog.className="media-lightbox";
         const header=document.createElement("header"),title=document.createElement("h2"),close=document.createElement("button");
         title.id="media-lightbox-title"; title.textContent=gallery.dataset.galleryName;
