@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -577,14 +578,10 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 	if !ok {
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid address form", http.StatusBadRequest)
-		return
-	}
 	address, err := applicationcommerce.NormalizeAddressInput(domaincommerce.AddressInput{
-		RecipientName: r.Form.Get("recipient_name"), Phone: r.Form.Get("phone"),
-		Line1: r.Form.Get("line1"), Line2: r.Form.Get("line2"), City: r.Form.Get("city"),
-		State: firstFormValue(r.Form, "state", "region", "city"), PostalCode: r.Form.Get("postal_code"), CountryCode: r.Form.Get("country_code"),
+		RecipientName: r.PostForm.Get("recipient_name"), Phone: r.PostForm.Get("phone"),
+		Line1: r.PostForm.Get("line1"), Line2: r.PostForm.Get("line2"), City: r.PostForm.Get("city"),
+		State: firstFormValue(r.PostForm, "state", "region", "city"), PostalCode: r.PostForm.Get("postal_code"), CountryCode: r.PostForm.Get("country_code"),
 	})
 	if err != nil {
 		if errors.Is(err, applicationcommerce.ErrInvalidPhone) {
@@ -594,7 +591,7 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "shipping address is invalid", http.StatusUnprocessableEntity)
 		return
 	}
-	addressIDText := strings.TrimSpace(r.Form.Get("address_id"))
+	addressIDText := strings.TrimSpace(r.PostForm.Get("address_id"))
 	if addressIDText == "" {
 		err = postgres.WithinTransaction(r.Context(), h.pool, func(ctx context.Context, tx pgx.Tx) error {
 			if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('saved-address:'||$1::bigint::text,0))`, userID); err != nil {
@@ -628,7 +625,7 @@ func (h *LiveStorefrontHandler) saveAddress(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "address could not be saved", http.StatusServiceUnavailable)
 		return
 	}
-	returnTo := r.Form.Get("return_to")
+	returnTo := r.PostForm.Get("return_to")
 	if returnTo == "" || !strings.HasPrefix(returnTo, "/") {
 		returnTo = "/account/addresses"
 	}
@@ -644,11 +641,7 @@ func (h *LiveStorefrontHandler) deleteAddress(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid address form", http.StatusBadRequest)
-		return
-	}
-	addressID, err := strconv.ParseInt(strings.TrimSpace(r.Form.Get("address_id")), 10, 64)
+	addressID, err := strconv.ParseInt(strings.TrimSpace(r.PostForm.Get("address_id")), 10, 64)
 	if err != nil || addressID <= 0 {
 		http.Error(w, "invalid address id", http.StatusBadRequest)
 		return
@@ -662,7 +655,7 @@ func (h *LiveStorefrontHandler) deleteAddress(w http.ResponseWriter, r *http.Req
 		http.NotFound(w, r)
 		return
 	}
-	returnTo := r.Form.Get("return_to")
+	returnTo := r.PostForm.Get("return_to")
 	if returnTo == "" || !strings.HasPrefix(returnTo, "/") {
 		returnTo = "/account/addresses"
 	}
@@ -679,13 +672,23 @@ func (h *LiveStorefrontHandler) authenticatedAddressActor(w http.ResponseWriter,
 		http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.RequestURI()), http.StatusSeeOther)
 		return 0, false
 	}
-	if err := r.ParseForm(); err != nil {
+	const maxAddressFormBytes = 32 << 10
+	r.Body = http.MaxBytesReader(w, r.Body, maxAddressFormBytes)
+	mediaType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	var err error
+	if mediaType == "multipart/form-data" {
+		// The portal's enhanced forms send FormData. ParseForm alone leaves it unread.
+		err = r.ParseMultipartForm(maxAddressFormBytes)
+	} else {
+		err = r.ParseForm()
+	}
+	if err != nil {
 		http.Error(w, "invalid address form", http.StatusBadRequest)
 		return 0, false
 	}
 	token := r.Header.Get("X-CSRF-Token")
 	if token == "" {
-		token = r.Form.Get("csrf_token")
+		token = r.PostForm.Get("csrf_token")
 	}
 	if token == "" || subtle.ConstantTimeCompare([]byte(token), []byte(csrf)) != 1 {
 		http.Error(w, "invalid CSRF token", http.StatusForbidden)

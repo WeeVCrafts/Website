@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -79,4 +81,55 @@ func TestAddressEditRejectsForeignOrMissingAddressWithoutCreatingOne(t *testing.
 	if count != 0 || recipient != "Original owner" {
 		t.Fatalf("foreign/missing edit changed persisted data: count=%d recipient=%q", count, recipient)
 	}
+	t.Run("multipart portal save and delete require session CSRF", func(t *testing.T) {
+		post := func(path string, fields map[string]string, handle http.HandlerFunc) *httptest.ResponseRecorder {
+			t.Helper()
+			var body bytes.Buffer
+			writer := multipart.NewWriter(&body)
+			for name, value := range fields {
+				if err := writer.WriteField(name, value); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := writer.Close(); err != nil {
+				t.Fatal(err)
+			}
+			request := httptest.NewRequest(http.MethodPost, path, &body).WithContext(ctx)
+			request.Header.Set("Content-Type", writer.FormDataContentType())
+			request.AddCookie(&http.Cookie{Name: "wecratfs_session", Value: session.ID})
+			response := httptest.NewRecorder()
+			handle(response, request)
+			return response
+		}
+		fields := map[string]string{
+			"return_to": "/seller-admin/profile", "recipient_name": "QA recipient", "phone": "9000000000",
+			"line1": "3 QA Lane", "city": "Bengaluru", "state": "Karnataka", "postal_code": "560001", "country_code": "IN",
+		}
+		for _, token := range []string{"", "incorrect"} {
+			fields["csrf_token"] = token
+			response := post("/seller-admin/addresses", fields, handler.saveAddress)
+			if response.Code != http.StatusForbidden {
+				t.Fatalf("invalid token returned %d, want 403", response.Code)
+			}
+		}
+		fields["csrf_token"] = session.CSRFToken
+		response := post("/seller-admin/addresses", fields, handler.saveAddress)
+		if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/seller-admin/profile?notice=Address+saved" {
+			t.Fatalf("valid save returned %d: %s", response.Code, response.Body.String())
+		}
+		var savedID int64
+		if err := pool.QueryRow(ctx, `SELECT id FROM addresses WHERE user_id=$1 AND recipient_name='QA recipient'`, otherID).Scan(&savedID); err != nil {
+			t.Fatal(err)
+		}
+		deleteFields := map[string]string{
+			"csrf_token": session.CSRFToken, "address_id": fmt.Sprint(savedID), "return_to": "/seller-admin/profile",
+		}
+		response = post("/seller-admin/addresses/delete", deleteFields, handler.deleteAddress)
+		if response.Code != http.StatusSeeOther || response.Header().Get("Location") != "/seller-admin/profile?notice=Address+deleted" {
+			t.Fatalf("valid delete returned %d: %s", response.Code, response.Body.String())
+		}
+		if err := pool.QueryRow(ctx, `SELECT COUNT(*) FROM addresses WHERE user_id=$1`, otherID).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("after deleting saved address: count=%d err=%v", count, err)
+		}
+	})
 }
